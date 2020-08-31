@@ -1,0 +1,84 @@
+{
+  "name": "@dreamcatcher-tech/interblock",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "DEBUG_COLORS=1 DEBUG=interblock:* jest",
+    "watch": "DEBUG_COLORS=1 DEBUG=interblock:* jest --watch",
+    "build:lambda": "cd w202-lambda-stream-processor && webpack",
+    "sls:lambda": "cd w202-lambda-stream-processor && DEBUG='interblock:deploy*' sls --debug",
+    "test:lambda": "DEBUG_COLORS=1 jest awsWebsocket",
+    "deploy:lambda": "yarn run build:lambda && yarn run sls:lambda && yarn run test:lambda",
+    "dev": "nodemon --exec 'yarn run deploy:lambda'",
+    "troll": "nodemon ./w204-lambda-deployment/src/troller"
+  },
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "ajv": "^6.10.2",
+    "ansi-colors": "^4.1.1",
+    "aws-xray-sdk": "^3.1.0",
+    "clear": "^0.1.0",
+    "cli-truncate": "^2.1.0",
+    "columnify": "^1.5.4",
+    "debug": "^4.1.1",
+    "dotenv": "^8.2.0",
+    "dynamodb-lock-client": "^0.7.2",
+    "fast-json-stable-stringify": "^2.1.0",
+    "immer": "^3.2.0",
+    "is-circular": "^1.0.2",
+    "lodash": "^4.17.20",
+    "node-object-hash": "^2.0.0",
+    "object-hash": "^2.0.3",
+    "pad": "^3.2.0",
+    "pretty-bytes": "^5.3.0",
+    "rimraf": "^3.0.0",
+    "secure-random": "^1.1.2",
+    "sodium-native": "^3.2.0",
+    "sodium-plus": "^0.9.0",
+    "supports-color": "^7.1.0",
+    "tar": "^4.4.10",
+    "uuid": "^3.3.3",
+    "xstate": "^4.11.0"
+  },
+  "devDependencies": {
+    "@serverless/core": "^1.1.2",
+    "aws-sdk": "^2.537.0",
+    "benchmark": "^2.1.4",
+    "clean-webpack-plugin": "^3.0.0",
+    "commander": "^3.0.2",
+    "inquirer": "^7.0.0",
+    "inquirer-command-prompt": "0.0.23",
+    "jest": "^24.9.0",
+    "madge": "^3.6.0",
+    "nodemon": "^2.0.4",
+    "prettier": "^2.1.1",
+    "webpack": "^4.43.0",
+    "webpack-bundle-analyzer": "^3.8.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-node-externals": "^1.7.2",
+    "ws": "^7.1.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  },
+  "nodemonConfig": {
+    "verbose": true,
+    "ignore": [
+      "**/.serverless",
+      "**/dist"
+    ],
+    "watch": [
+      "./"
+    ],
+    "ext": "js,json,yml"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  }
+}

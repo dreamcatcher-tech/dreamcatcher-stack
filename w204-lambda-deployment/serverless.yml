@@ -1,0 +1,153 @@
+app: interblock
+stage: dev
+
+sqsDeadLetter:
+  component: '@serverless/aws-sqs'
+  inputs:
+    name: 'sqsDeadLetter'
+    delaySeconds: 0
+    region: 'eu-central-1'
+sqsSafety:
+  component: '@serverless/aws-sqs'
+  inputs:
+    name: 'sqsSafety'
+    delaySeconds: 0
+    region: 'eu-central-1'
+    redrivePolicy:
+      deadLetterTargetArn: ${sqsDeadLetter.arn}
+      maxReceiveCount: 10
+
+apiGateway:
+  component: '@serverless/aws-websockets'
+  name: apiGateway
+  inputs:
+    name: apiGateway
+    routeSelectionExpression: $request.body.action
+    routes:
+      $connect: ${env.LAMBDA_STREAM_PROCESSOR}
+      $disconnect: ${env.LAMBDA_STREAM_PROCESSOR}
+      $default: ${env.LAMBDA_STREAM_PROCESSOR}
+    region: 'eu-central-1'
+
+dbPools:
+  component: '@serverless/aws-dynamodb'
+  inputs:
+    name: dbPools
+    attributeDefinitions:
+      - AttributeName: chainId
+        AttributeType: S
+      - AttributeName: originChainId_height_type
+        AttributeType: S
+      # - AttributeName: interblockHash
+      #   AttributeType: 'S'
+      # - AttributeName: isDeleted
+      #   AttributeType: 'BOOL'
+    keySchema:
+      - AttributeName: chainId
+        KeyType: HASH
+      - AttributeName: originChainId_height_type
+        KeyType: RANGE
+    region: eu-central-1
+wbInterBucket:
+  component: '@serverless/aws-s3'
+  inputs:
+    name: wbinterbucket
+    accelerated: false
+    region: eu-central-1
+    # originChainId/height_targetChainId_hash
+
+dbChains:
+  component: '@serverless/aws-dynamodb'
+  inputs:
+    name: dbChains
+    attributeDefinitions:
+      - AttributeName: chainId
+        AttributeType: S
+      - AttributeName: height
+        AttributeType: N
+      # - AttributeName: blockHash # detect S3 tamper
+      #   AttributeType: S
+      # - AttributeName: shortestLineage
+      #   AttributeType: N
+    keySchema:
+      - AttributeName: chainId
+        KeyType: HASH
+      - AttributeName: height
+        KeyType: RANGE
+    region: eu-central-1
+wbBlockBucket:
+  component: '@serverless/aws-s3'
+  inputs:
+    name: wbblockbucket
+    accelerated: false
+    region: eu-central-1
+    # chainId_height_hash
+
+dbSubscribers:
+  component: '@serverless/aws-dynamodb'
+  inputs:
+    name: dbSubscribers
+    attributeDefinitions:
+      - AttributeName: chainId
+        AttributeType: S
+      - AttributeName: targetChainId
+        AttributeType: S
+      # - AttributeName: 'heavyHeight'
+      #   AttributeType: 'N'
+      # - AttributeName: 'lineageHeight'
+      #   AttributeType: 'N'
+      # - AttributeName: 'height'
+      #   AttributeType: 'N'
+    keySchema:
+      - AttributeName: chainId
+        KeyType: HASH
+      - AttributeName: targetChainId
+        KeyType: RANGE
+    region: eu-central-1
+dbSockets:
+  component: '@serverless/aws-dynamodb'
+  inputs:
+    name: dbSockets
+    attributeDefinitions:
+      - AttributeName: chainId
+        AttributeType: S
+      - AttributeName: socketId
+        AttributeType: S
+      # - AttributeName: updatedTime
+      #   AttributeType: N # unix epoch time in seconds
+      # - AttributeName: socketJson
+      #   AttributeType: S
+    keySchema:
+      - AttributeName: chainId
+        KeyType: HASH
+      - AttributeName: socketId
+        KeyType: RANGE
+    region: eu-central-1
+dbLocks:
+  component: '@serverless/aws-dynamodb'
+  inputs:
+    name: dbLocks
+    attributeDefinitions:
+      - AttributeName: chainId
+        AttributeType: S
+    keySchema:
+      - AttributeName: chainId
+        KeyType: HASH
+    region: eu-central-1
+dbCrypto: # temporary solution until key management is implemented
+  component: '@serverless/aws-dynamodb'
+  inputs:
+    name: dbCrypto
+    attributeDefinitions:
+      - AttributeName: keyname
+        AttributeType: S
+      # - AttributeName: 'keypairJson'
+      #   AttributeType: 'S'
+    keySchema:
+      - AttributeName: keyname
+        KeyType: HASH
+    region: eu-central-1
+# postDeployCheck:
+#   component: './src/postDeployCheck'
+#   inputs:
+#     apiGateway: ${apiGateway}

@@ -1,0 +1,25 @@
+const assert = require('assert')
+const { addressModel, rxRequestModel } = require('..')
+
+describe('rxRequest', () => {
+  test('addresses are identical', () => {
+    const address = addressModel.create('test address')
+    assert(!address.isLoopback())
+    assert(!address.isUnknown())
+    const request = rxRequestModel.create('test', {}, address, 55)
+    const requestAddress = request.getAddress()
+    assert(!requestAddress.isLoopback())
+    assert(!requestAddress.isUnknown())
+    assert(address === requestAddress)
+  })
+  test('loopback sequence returns correct address', () => {
+    const address = addressModel.create('LOOPBACK')
+    assert(address.isLoopback())
+    assert(!address.isUnknown())
+    const request = rxRequestModel.create('test', {}, address, 55)
+    const requestAddress = request.getAddress()
+    assert(requestAddress.isLoopback())
+    assert(!requestAddress.isUnknown())
+    assert(address === requestAddress)
+  })
+})
