@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - command `namegen` to generate random names for identities and servers
 - lambda layer used in deployment, so deploy over tor is quicker
+- xray tracing with debug logging as metadata
 
 ## [0.0.0] - 2020-08-07
 

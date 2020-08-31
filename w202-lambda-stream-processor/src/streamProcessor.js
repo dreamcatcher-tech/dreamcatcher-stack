@@ -39,61 +39,53 @@ const queueToModelMap = {
   sqsIncrease: addressModel,
 }
 const MODES = {
-  SELF: 'SELF',
   THREAD: 'THREAD',
   SQS: 'SQS',
   LAMBDA: 'LAMBDA',
   SOCKET: 'SOCKET',
 }
 
-const handler = async (event, context) => {
-  // called by sqs trigger, and lambda direct invoke, and rxSocket
-  const invokeMode = detectInvokeMode(event)
+const startXraySegment = (key, value) => {
   const baseSegment = AWSXRay.getSegment()
-  const invokeSegment = baseSegment.addNewSubsegment(`Invoke: ${invokeMode}`)
-  AWSXRay.setSegment(invokeSegment) // capture all subsequent requests as children of this segment
-  invokeSegment.addAnnotation(`InvokeMode`, invokeMode)
+  const subsegment = baseSegment.addNewSubsegment(`${key}: ${value}`)
+  AWSXRay.setSegment(subsegment) // capture all subsequent requests as children of this segment
+  subsegment.addAnnotation(key, value)
+  const parentConsoleLog = require('debug').log
+  const consoleLog = patchXrayLogger()
 
-  const consoleLog = []
-  require('debug').log = (msg) => {
-    const timestamp = new Date().toISOString()
-    const lines = msg.split(`\n`)
-    lines.map((line) => consoleLog.push(timestamp + ' ' + line))
+  return () => {
+    assert(!subsegment.isClosed())
+    subsegment.addMetadata('console.log', consoleLog, 'debug')
+    subsegment.close()
+    AWSXRay.setSegment(baseSegment) // else end up with endless children
+    require('debug').log = parentConsoleLog
   }
+}
 
-  let statusCode = 200
+const handler = async (event, context) => {
+  const invokeMode = detectInvokeMode(event)
+  const closeXray = startXraySegment(`InvokeMode`, invokeMode)
+  debug(`initial remaining time: %o ms`, context.getRemainingTimeInMillis())
+  debug(`handler event: %O context: %O`, event, context)
+  let result = { statusCode: 200 }
   switch (invokeMode) {
     case MODES.SQS:
-      statusCode = await invokedBySqs(event, context)
+      result = await invokedBySqs(event, context)
       break
     case MODES.LAMBDA:
-      statusCode = await invokedByLambda(event, context)
+      result = await invokedByLambda(event, context)
       break
     case MODES.SOCKET:
-      statusCode = await invokedBySocket(event, context)
+      result = await invokedBySocket(event, context)
       break
     default:
       throw new Error(`Unknown invokeMode: ${invokeMode}`)
   }
   // TODO signal success to original invoker, then scavenge cpu cycles
 
-  invokeSegment.addMetadata('console.log', consoleLog, 'debug')
-  invokeSegment.close()
-  AWSXRay.setSegment(baseSegment) // else end up with endless children
-  return { statusCode }
-}
-
-const getActionType = (routeKey, body) => {
-  console.log(`getActionType`, routeKey, body)
-  const map = { $connect: 'CONNECT', $disconnect: 'DISCONNECT' }
-  if (!map[routeKey]) {
-    assert.equal(routeKey, '$default')
-    if (body.startsWith('PING_LAMBDA')) {
-      return 'PING_LAMBDA'
-    }
-    // use the action key of body instead to define custom actions
-  }
-  return map[routeKey]
+  debug(`remaining: %o ms`, context.getRemainingTimeInMillis())
+  closeXray()
+  return result
 }
 
 const invokedBySocket = async (event, context) => {
@@ -107,11 +99,7 @@ const invokedBySocket = async (event, context) => {
   } = requestContext
 
   const actionType = getActionType(routeKey, body)
-  const type = `Socket: ${actionType}`
-  const baseSegment = AWSXRay.getSegment()
-  const socketSegment = baseSegment.addNewSubsegment(type)
-  AWSXRay.setSegment(socketSegment)
-  socketSegment.addAnnotation('SocketType', actionType)
+  const closeXray = startXraySegment(`SocketType`, actionType)
 
   debug('event %O', event)
   debug('context %O', context)
@@ -127,7 +115,7 @@ const invokedBySocket = async (event, context) => {
 
   const socket = { id, type: 'awsApiGw', info: { id, domain, stage } }
 
-  let statusCode = 200
+  const result = { statusCode: 200 }
   switch (actionType) {
     case 'CONNECT':
       // check flood protection, conduct auth if new
@@ -143,11 +131,10 @@ const invokedBySocket = async (event, context) => {
       break
     default:
       debug(`unknown actionType`)
-      statusCode = 400
+      result.statusCode = 400
   }
-  socketSegment.close() // think same as flush() - sends data to the daemon
-  AWSXRay.setSegment(baseSegment) // else end up with endless children
-  return statusCode
+  closeXray()
+  return result
 }
 
 const sendToClient = async (socket, Data) => {
@@ -164,6 +151,19 @@ const sendToClient = async (socket, Data) => {
     })
     .promise()
   debug(`transmit complete`)
+}
+
+const getActionType = (routeKey, body) => {
+  console.log(`getActionType`, routeKey, body)
+  const map = { $connect: 'CONNECT', $disconnect: 'DISCONNECT' }
+  if (!map[routeKey]) {
+    assert.equal(routeKey, '$default')
+    if (body.startsWith('PING_LAMBDA')) {
+      return 'PING_LAMBDA'
+    }
+    // use the action key of body instead to define custom actions
+  }
+  return map[routeKey]
 }
 
 const generateEngine = (queueName, locksIdentifier) => {
@@ -384,7 +384,15 @@ const getQueueUrl = (arn) => {
   const queueUrl = sqs.endpoint.href + accountId + '/' + queueName
   return queueUrl
 }
-
+const patchXrayLogger = () => {
+  const consoleLog = []
+  require('debug').log = (msg) => {
+    const timestamp = new Date().toISOString()
+    const lines = msg.split(`\n`)
+    lines.map((line) => consoleLog.push(timestamp + ' ' + line))
+  }
+  return consoleLog
+}
 const recordExample = {
   Records: [
     {
