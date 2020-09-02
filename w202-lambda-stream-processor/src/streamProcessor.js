@@ -15,7 +15,11 @@ const {
   setLogger,
 } = require('../../w017-standard-engine')
 const { awsLogger } = require('./awsLogger')
-const { startXrayLoggingSegment, startXraySegment } = require('./xrayTracer')
+const {
+  startXrayLogging,
+  startXrayParentSegment,
+  startXraySegment,
+} = require('./xrayTracer')
 // setLogger(awsLogger)
 const debug = require('debug')('interblock:aws:streamProcessor')
 
@@ -33,8 +37,9 @@ const MODES = {
 }
 
 const handler = async (event, context) => {
+  const stopXrayLogging = startXrayLogging()
   const invokeMode = detectInvokeMode(event)
-  await startXrayLoggingSegment(`InvokeMode`, invokeMode, async () => {
+  await startXrayParentSegment(`InvokeMode`, invokeMode, async () => {
     debug(`initial remaining time: %o ms`, context.getRemainingTimeInMillis())
     const { body, ...eventWithoutBody } = event
     debug(`handler event: %O context: %O`, eventWithoutBody, context)
@@ -56,6 +61,7 @@ const handler = async (event, context) => {
     // TODO signal success to original invoker, then scavenge cpu cycles
     debug(`remaining: %o ms`, context.getRemainingTimeInMillis())
   })
+  stopXrayLogging()
   return { statusCode: 200 }
 }
 
@@ -64,7 +70,7 @@ const invokedBySocket = async (event, context) => {
   const { routeKey, stage } = requestContext
   const { connectionId: id, domainName: domain } = requestContext
   const actionType = detectActionType(routeKey, body)
-  await startXrayLoggingSegment(`SocketType`, actionType, async () => {
+  await startXrayParentSegment(`SocketType`, actionType, async () => {
     const socket = { id, type: 'awsApiGw', info: { id, domain, stage } }
     switch (actionType) {
       case 'CONNECT':

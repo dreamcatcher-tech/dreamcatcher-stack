@@ -48,9 +48,52 @@ AWSXRay.appendAWSWhitelist({
 })
 const debug = require('debug')('interblock:aws:xray')
 
+const startXrayLogging = () => {
+  const parentSegment = AWSXRay.getSegment().addNewSubsegment(`Logging`)
+  parentSegment.flush()
+  let logSegment
+
+  const originalConsoleLog = require('debug').log
+
+  const consoleLog = []
+  let logLength = 0
+  const closeLog = () => {
+    if (logSegment) {
+      logSegment.addMetadata(`console.log`, consoleLog, `debug`)
+      logSegment.close() && logSegment.flush()
+    }
+    consoleLog.length = 0
+    logLength = 0
+    logSegment = undefined
+  }
+
+  require('debug').log = (msg) => {
+    const timestamp = new Date().toISOString()
+    const lines = msg.split(`\n`)
+    const count = msg.length + lines.length * (timestamp.length + 1)
+    const xraySegmentLimit = 60000 // 65kB is UDP packet maximum
+    if (logLength + count > xraySegmentLimit) {
+      closeLog()
+    }
+    if (!logSegment) {
+      logSegment = parentSegment.addNewSubsegment(timestamp)
+    }
+    lines.map((line) => consoleLog.push(timestamp + ' ' + line))
+    logLength += count
+    // originalConsoleLog(msg)
+  }
+
+  return () => {
+    require('debug').log = originalConsoleLog
+    closeLog()
+    parentSegment.close()
+    parentSegment.flush()
+  }
+}
+
 const parentSegments = []
-const startXrayLoggingSegment = async (key, value, tracedFunction) => {
-  debug(`startXraySegment %o %o`, key, value)
+const startXrayParentSegment = async (key, value, tracedFunction) => {
+  debug(`startXrayParentSegment %o %o`, key, value)
   if (!parentSegments.length) {
     parentSegments.push(AWSXRay.getSegment())
   }
@@ -58,29 +101,13 @@ const startXrayLoggingSegment = async (key, value, tracedFunction) => {
   const subsegment = parentSegment.addNewSubsegment(`${key}: ${value}`)
   parentSegments.push(subsegment)
   subsegment.addAnnotation(key, value)
-  const parentConsoleLog = require('debug').log
-  const consoleLog = patchXrayLogger(parentConsoleLog)
 
   const closeXray = () => {
     assert(!subsegment.isClosed())
-    let logTip = []
-    let length = 0
-    const xraySegmentLimit = 45000
-    consoleLog.forEach((line) => {
-      if (length + line.length < xraySegmentLimit) {
-        logTip.push(line)
-        length += line.length
-      }
-    })
-    if (logTip.length < consoleLog.length) {
-      logTip.push(`truncated by ${consoleLog.length - logTip.length} lines`)
-    }
-    subsegment.addMetadata('console.log', logTip, 'debug')
     subsegment.close()
     subsegment.flush()
     const parentSegment = parentSegments.pop()
     assert.equal(parentSegment, subsegment)
-    require('debug').log = parentConsoleLog
     debug(`closeXraySegment %o %o`, key, value)
   }
 
@@ -108,14 +135,4 @@ const startXraySegment = async (key, value, tracedFunction) => {
   }
 }
 
-const patchXrayLogger = () => {
-  const consoleLog = []
-  require('debug').log = (msg) => {
-    const timestamp = new Date().toISOString()
-    const lines = msg.split(`\n`)
-    lines.map((line) => consoleLog.push(timestamp + ' ' + line))
-  }
-  return consoleLog
-}
-
-module.exports = { startXrayLoggingSegment, startXraySegment }
+module.exports = { startXrayLogging, startXrayParentSegment, startXraySegment }
