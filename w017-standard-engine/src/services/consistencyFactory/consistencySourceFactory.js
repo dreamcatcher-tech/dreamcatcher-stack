@@ -332,11 +332,19 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     const updatedTime = parseInt(Date.now() / 1000) // used to expire item
     const socketJson = socket.serialize()
     const item = { chainId, socketId, updatedTime, socketJson }
+    // put in the cleanup table first, and if succeed, put in real table
+    // use same expiration time, so know dynamo will eventually clean up
     await db.putSocket(item)
     debug(`putSocket complete`)
   }
 
-  const delSocket = async ({}) => {}
+  const delSocket = async ({}) => {
+    // read the cleanup table to get the address mappings
+    // for each one,
+    // delete from the main table
+    // if succeed, delete from the cleanup table
+    // throw if any errors
+  }
 
   const getIsPresent = (address) => db.queryLatest(address.getChainId())
 

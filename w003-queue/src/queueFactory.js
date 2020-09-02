@@ -128,10 +128,15 @@ const sqsQueueFactory = (name, model) => {
   assert(name && typeof name === 'string')
   const debug = require('debug')('interblock:queue:sqs:' + name)
   const queue = ioQueueFactory(name, model)
+  /**
+   * Bypasses whatever infrastructure is connected to the queue,
+   * pushing straight onto the engine queue underneath.  Used in
+   * aws to execute actions in the same thread, rather than going
+   * via SQS queues, or any other means
+   * @param {object} action
+   */
   const pushDirect = async (action) => {
-    // TODO does it need to wait ?
-    queue.push(action)
-    await Promise.resolve()
+    await queue.push(action)
   }
   let _sqsProcessor = pushDirect
   const assertQueueEmpty = () =>

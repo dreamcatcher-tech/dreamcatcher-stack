@@ -7,13 +7,11 @@ module.exports = function (wallaby) {
       '!**/*.test.js',
     ],
 
-    tests: ['w*/**/*.test.js', '!**/node_modules', '!**/awsReal.test.js'],
+    tests: ['w*/**/*.test.js', '!**/node_modules', '!**/*aws*.test.js'],
 
     env: {
       type: 'node',
     },
     testFramework: 'jest',
-    // trace: true,
-    useWsl: true, // seems to be slower with this on.  Suspect zombie processes from this off.
   }
 }

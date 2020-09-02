@@ -1,23 +1,6 @@
-require('dotenv').config()
 const uuid = require('uuid/v4')
 const AWSXRay = require('aws-xray-sdk-core')
-AWSXRay.capturePromise() // not sure this does anything...
 const AWS = AWSXRay.captureAWS(require('aws-sdk'))
-const awsRegion = { region: 'eu-central-1' }
-AWSXRay.appendAWSWhitelist({
-  services: {
-    s3: {
-      operations: {
-        getObject: {
-          request_parameters: ['Bucket', 'Key'],
-        },
-        putObject: {
-          request_parameters: ['Bucket', 'Key'],
-        },
-      },
-    },
-  },
-})
 const assert = require('assert')
 const {
   cryptoCacher,
@@ -29,7 +12,11 @@ const {
   standardEngineFactory,
   consistencyFactory,
   cryptoFactory,
+  setLogger,
 } = require('../../w017-standard-engine')
+const { awsLogger } = require('./awsLogger')
+const { startXrayLoggingSegment, startXraySegment } = require('./xrayTracer')
+// setLogger(awsLogger)
 const debug = require('debug')('interblock:aws:streamProcessor')
 
 const queueToModelMap = {
@@ -45,153 +32,88 @@ const MODES = {
   SOCKET: 'SOCKET',
 }
 
-const startXraySegment = (key, value) => {
-  const baseSegment = AWSXRay.getSegment()
-  const subsegment = baseSegment.addNewSubsegment(`${key}: ${value}`)
-  AWSXRay.setSegment(subsegment) // capture all subsequent requests as children of this segment
-  subsegment.addAnnotation(key, value)
-  const parentConsoleLog = require('debug').log
-  const consoleLog = patchXrayLogger()
-
-  return () => {
-    assert(!subsegment.isClosed())
-    subsegment.addMetadata('console.log', consoleLog, 'debug')
-    subsegment.close()
-    AWSXRay.setSegment(baseSegment) // else end up with endless children
-    require('debug').log = parentConsoleLog
-  }
-}
-
 const handler = async (event, context) => {
   const invokeMode = detectInvokeMode(event)
-  const closeXray = startXraySegment(`InvokeMode`, invokeMode)
-  debug(`initial remaining time: %o ms`, context.getRemainingTimeInMillis())
-  debug(`handler event: %O context: %O`, event, context)
-  let result = { statusCode: 200 }
-  switch (invokeMode) {
-    case MODES.SQS:
-      result = await invokedBySqs(event, context)
-      break
-    case MODES.LAMBDA:
-      result = await invokedByLambda(event, context)
-      break
-    case MODES.SOCKET:
-      result = await invokedBySocket(event, context)
-      break
-    default:
-      throw new Error(`Unknown invokeMode: ${invokeMode}`)
-  }
-  // TODO signal success to original invoker, then scavenge cpu cycles
-
-  debug(`remaining: %o ms`, context.getRemainingTimeInMillis())
-  closeXray()
-  return result
+  await startXrayLoggingSegment(`InvokeMode`, invokeMode, async () => {
+    debug(`initial remaining time: %o ms`, context.getRemainingTimeInMillis())
+    const { body, ...eventWithoutBody } = event
+    debug(`handler event: %O context: %O`, eventWithoutBody, context)
+    switch (invokeMode) {
+      case MODES.THREAD:
+        break
+      case MODES.SQS:
+        await invokedBySqs(event, context)
+        break
+      case MODES.LAMBDA:
+        await invokedByLambda(event, context)
+        break
+      case MODES.SOCKET:
+        await invokedBySocket(event, context)
+        break
+      default:
+        throw new Error(`Unknown invokeMode: ${invokeMode}`)
+    }
+    // TODO signal success to original invoker, then scavenge cpu cycles
+    debug(`remaining: %o ms`, context.getRemainingTimeInMillis())
+  })
+  return { statusCode: 200 }
 }
 
 const invokedBySocket = async (event, context) => {
   const { requestContext, body } = event
-  const {
-    routeKey,
-    eventType,
-    connectionId: id,
-    domainName: domain,
-    stage,
-  } = requestContext
-
-  const actionType = getActionType(routeKey, body)
-  const closeXray = startXraySegment(`SocketType`, actionType)
-
-  debug('event %O', event)
-  debug('context %O', context)
-
-  const rxInterblock = async (socket, interblock) => {
-    debug(`rxInterblock`)
-    const locksIdentifier = uuid()
-    const tx = await convertToModel({ socket, interblock }, txModel)
-    const queueName = `sqsRx`
-    const awsProcessor = generateEngine(queueName, locksIdentifier)
-    await awsProcessor(tx)
-  }
-
-  const socket = { id, type: 'awsApiGw', info: { id, domain, stage } }
-
-  const result = { statusCode: 200 }
-  switch (actionType) {
-    case 'CONNECT':
-      // check flood protection, conduct auth if new
-      break
-    case 'DISCONNECT':
-      // clean up socket entry in socket table
-      break
-    case 'PING_LAMBDA':
-      await sendToClient(socket, body.replace(`PING`, `PONG`))
-      break
-    case 'INTERBLOCK':
-      await rxInterblock(socket, interblock)
-      break
-    default:
-      debug(`unknown actionType`)
-      result.statusCode = 400
-  }
-  closeXray()
-  return result
-}
-
-const sendToClient = async (socket, Data) => {
-  const { id, domain, stage } = socket.info
-  debug(`transmitting to socket.id: %o`, id)
-  const client = new AWS.ApiGatewayManagementApi({
-    apiVersion: '2018-11-29',
-    endpoint: `https://${domain}/${stage}`,
-  })
-  await client
-    .postToConnection({
-      ConnectionId: id,
-      Data,
-    })
-    .promise()
-  debug(`transmit complete`)
-}
-
-const getActionType = (routeKey, body) => {
-  console.log(`getActionType`, routeKey, body)
-  const map = { $connect: 'CONNECT', $disconnect: 'DISCONNECT' }
-  if (!map[routeKey]) {
-    assert.equal(routeKey, '$default')
-    if (body.startsWith('PING_LAMBDA')) {
-      return 'PING_LAMBDA'
+  const { routeKey, stage } = requestContext
+  const { connectionId: id, domainName: domain } = requestContext
+  const actionType = detectActionType(routeKey, body)
+  await startXrayLoggingSegment(`SocketType`, actionType, async () => {
+    const socket = { id, type: 'awsApiGw', info: { id, domain, stage } }
+    switch (actionType) {
+      case 'CONNECT':
+        // check flood protection, conduct auth if new
+        break
+      case 'DISCONNECT':
+        // clean up socket entry in socket table
+        break
+      case 'PING_LAMBDA':
+        await sendToClient(socket, body.replace(`PING`, `PONG`))
+        break
+      case 'INTERBLOCK':
+        await rxInterblock(socket, body)
+        break
+      default:
+        throw new Error(`Unknown action type: ${actionType}`)
     }
-    // use the action key of body instead to define custom actions
-  }
-  return map[routeKey]
+  })
+}
+const rxInterblock = async (socket, interblockJson) => {
+  debug(`rxInterblock`)
+  const interblock = JSON.parse(interblockJson)
+  const rx = await convertToModel({ socket, interblock }, txModel)
+
+  const locksIdentifier = uuid()
+  const lambdaEngine = generateLambdaEngine(locksIdentifier)
+  await pushSelf(`sqsRx`, rx, lambdaEngine)
+  // TODO WARNING might stall the engine, if pushToSelf is loaded
+  await lambdaEngine.settle()
 }
 
-const generateEngine = (queueName, locksIdentifier) => {
-  assert(queueToModelMap[queueName], `unknown queueName: ${queueName}`)
-  // try keep segments separate by invocation
-
+const generateLambdaEngine = (locksIdentifier) => {
+  // create segment dedicated to engine here
   const engine = standardEngineFactory()
 
   replaceQueueProcessors(engine)
   replaceConsistencyProcessor(engine, locksIdentifier)
   replaceCryptoProcessor(engine)
 
-  return async (instance) => {
-    // act like we are the processor on the end of a queue
-    // wire up outbound queues to connect to infra - sqs, lambda
-    // push into the queue directly, and await completion
-
-    const subseg = AWSXRay.getSegment().addNewSubsegment(queueName)
-    subseg.addAnnotation('QueueName', queueName)
-    const model = queueToModelMap[queueName]
-    assert(model, `invalid model for ${queueName}`)
-    assert(model.isModel(instance), `instance not model: ${instance}`)
-    debug(`processing: ${queueName}`)
-    const processor = engine[queueName].getProcessor()
-    await processor(instance)
-    // ? wait for engine to settle ?
-    subseg.close()
+  const settle = async () => {
+    const queues = Object.values(engine)
+    while (queues.some((q) => q.length() || q.awaitingLength())) {
+      const awaits = queues.map((q) => q.settle())
+      await Promise.all(awaits)
+      await new Promise(setImmediate)
+    }
   }
+
+  return { ...engine, settle }
 }
 const invokedByLambda = async (event, context) => {
   debug(`invokeLambda`, event)
@@ -201,7 +123,6 @@ const invokedByLambda = async (event, context) => {
   const isValidPayload = await awsEngine(body)
   !isValidPayload && debug(`invalid payload`)
 }
-
 const invokedBySqs = async (event, context) => {
   // break the batch up, and for each one, run the engine
   // detect the specific mode of the message, as they come in jumbled now
@@ -238,7 +159,6 @@ const invokedBySqs = async (event, context) => {
   debug(`processing complete`)
   batchSegment.close()
 }
-
 const detectInvokeMode = (event) => {
   if (event.Records) {
     assert(Array.isArray(event.Records))
@@ -246,17 +166,67 @@ const detectInvokeMode = (event) => {
   }
   return MODES.SOCKET
 }
-
-const switchSqsTarget = () => {
+const switchSqsTarget = (queueName) => {
   // looks at current system load, and decides where to route the request
   // assesses backpressure in queues, and current system load
+  if (queueName === `sqsTx`) {
+    return MODES.SELF
+  }
   return MODES.SELF
 }
+const pushSelf = async (queueName, action, engine) => {
+  startXraySegment(`Queue`, queueName, async () => {
+    debug(`pushSelf: %o`, queueName)
+    // ? place a trace in each queue, so can see how it moves around the machine ?
+    await engine[queueName].pushDirect(action)
+  })
+}
+const pushThread = async (queueName, action) => {
+  // call and engine running on another thread on the same machine
+  throw new Error(`Not implemented`)
+}
+const pushSqs = async (queueName, action) => {
+  // TODO add xray segment ID if not automatic ?
 
+  const MessageBody = action.serialize()
+  const sqs = new AWS.SQS({ apiVersion: '2012-11-05' })
+  await sqs.sendMessage({ QueueUrl, MessageBody }).promise()
+}
+const pushLambda = async () => {
+  debug(`invoking lambda`)
+  const Payload = JSON.stringify({ queueName, action })
+  const params = {
+    FunctionName: 'streamProcessor',
+    InvocationType: 'Event',
+    Payload,
+  }
+  const lambda = new AWS.Lambda()
+  const result = await lambda.invoke(params).promise()
+  debug(`result: `, result)
+  // TODO failover to sqs if lambda is throttling
+}
+const deleteMessage = async (ReceiptHandle, eventSourceARN) => {
+  const queueName = eventSourceARN.split(':').pop()
+  const QueueUrl = getQueueUrl(eventSourceARN)
+  const AWS = AWSXRay.captureAWS(require('aws-sdk'))
+  AWS.config.update(awsRegion)
+  const sqs = new AWS.SQS({ apiVersion: '2012-11-05' })
+  debug(`deleting ${ReceiptHandle.substring(0, 16)} from ${queueName}`)
+  await sqs.deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+}
+const replaceQueueProcessors = (engine) => {
+  const { sqsTx, sqsRx, sqsTransmit, sqsPool, sqsIncrease } = engine
+  sqsTx.setProcessor(apiGatewayProcessor(engine))
+
+  sqsTx.setSqsProcessor(sqsQueueProcessor('sqsTx', engine))
+  sqsRx.setSqsProcessor(sqsQueueProcessor('sqsRx', engine))
+  sqsTransmit.setSqsProcessor(sqsQueueProcessor('sqsTransmit', engine))
+  sqsPool.setSqsProcessor(sqsQueueProcessor('sqsPool', engine))
+  sqsIncrease.setSqsProcessor(sqsQueueProcessor('sqsIncrease', engine))
+}
 const sqsQueueProcessor = (queueName, engine) => async (action) => {
-  debug(`queueProcessor: ${queueName}`)
   assert(queueToModelMap[queueName])
-  const target = switchSqsTarget()
+  const target = switchSqsTarget(queueName)
   switch (target) {
     case MODES.SELF:
       await pushSelf(queueName, action, engine)
@@ -274,79 +244,17 @@ const sqsQueueProcessor = (queueName, engine) => async (action) => {
       throw new Error(`Unknown target: ${target}`)
   }
 }
-
-const pushSelf = async (queueName, action, engine) => {
-  // set up a new instance of engine, to make new xray segments
-  await engine[queueName].pushDirect(action)
-}
-
-const pushThread = async (queueName, action) => {
-  // call and engine running on another thread on the same machine
-  throw new Error(`Not implemented`)
-}
-
-const pushSqs = async (queueName, action) => {
-  // TODO add xray segment ID if not automatic ?
-
-  const MessageBody = action.serialize()
-  const sqs = new AWS.SQS({ apiVersion: '2012-11-05' })
-  await sqs.sendMessage({ QueueUrl, MessageBody }).promise()
-}
-
-const pushLambda = async () => {
-  debug(`invoking lambda`)
-  const Payload = JSON.stringify({ queueName, action })
-  const params = {
-    FunctionName: 'streamProcessor',
-    InvocationType: 'Event',
-    Payload,
-  }
-  const lambda = new AWS.Lambda()
-  const result = await lambda.invoke(params).promise()
-  debug(`result: `, result)
-  // TODO failover to sqs if lambda is throttling
-}
-
-const deleteMessage = async (ReceiptHandle, eventSourceARN) => {
-  const queueName = eventSourceARN.split(':').pop()
-  const QueueUrl = getQueueUrl(eventSourceARN)
-  const AWS = AWSXRay.captureAWS(require('aws-sdk'))
-  AWS.config.update(awsRegion)
-  const sqs = new AWS.SQS({ apiVersion: '2012-11-05' })
-  debug(`deleting ${ReceiptHandle.substring(0, 16)} from ${queueName}`)
-  await sqs.deleteMessage({ QueueUrl, ReceiptHandle }).promise()
-}
-
-const replaceQueueProcessors = (engine) => {
-  const { sqsTx, sqsRx, sqsTransmit, sqsPool, sqsIncrease } = engine
-  // const { sqsRxUrl, sqsTransmitUrl, sqsPoolUrl, sqsIncreaseUrl } = process.env
-  // assert(sqsRxUrl && sqsTransmitUrl && sqsPoolUrl && sqsIncreaseUrl)
-
-  sqsTx.setSqsProcessor(apiGatewayProcessor('sqsTx', engine))
-  sqsRx.setSqsProcessor(sqsQueueProcessor('sqsRx', engine))
-  sqsTransmit.setSqsProcessor(sqsQueueProcessor('sqsTransmit', engine))
-  sqsPool.setSqsProcessor(sqsQueueProcessor('sqsPool', engine))
-  sqsIncrease.setSqsProcessor(sqsQueueProcessor('sqsIncrease', engine))
-}
-
 const replaceConsistencyProcessor = ({ ioConsistency }, lockName) => {
-  const AWS = AWSXRay.captureAWS(require('aws-sdk'))
-  AWS.config.update(awsRegion)
   const dynamoDb = new AWS.DynamoDB.DocumentClient()
   const s3 = new AWS.S3()
   ioConsistency.setProcessor(consistencyFactory(dynamoDb, s3, lockName))
 }
-
 const replaceCryptoProcessor = ({ ioCrypto }) => {
-  const AWS = AWSXRay.captureAWS(require('aws-sdk'))
-  AWS.config.update(awsRegion)
   const dynamoDb = new AWS.DynamoDB.DocumentClient()
   const cryptoProcessor = cryptoFactory(dynamoDb, 'aws1')
   ioCrypto.setProcessor(cryptoProcessor)
 }
-
-const apiGatewayProcessor = (queueName, { ioConsistency }) => async (tx) => {
-  assert.equal(queueName, 'sqsTx')
+const apiGatewayProcessor = ({ ioConsistency }) => async (tx) => {
   assert(txModel.isModel(tx))
   const { socket, interblock } = tx
   const data = interblock.serialize()
@@ -360,7 +268,6 @@ const apiGatewayProcessor = (queueName, { ioConsistency }) => async (tx) => {
     }
   }
 }
-
 const convertToModel = async (obj, model) => {
   try {
     if (typeof obj === 'string') {
@@ -374,7 +281,6 @@ const convertToModel = async (obj, model) => {
     debug(`convertToModel error: ${e.message}`)
   }
 }
-
 const getQueueUrl = (arn) => {
   const accountId = arn.split(':')[4]
   const queueName = arn.split(':')[5]
@@ -384,15 +290,39 @@ const getQueueUrl = (arn) => {
   const queueUrl = sqs.endpoint.href + accountId + '/' + queueName
   return queueUrl
 }
-const patchXrayLogger = () => {
-  const consoleLog = []
-  require('debug').log = (msg) => {
-    const timestamp = new Date().toISOString()
-    const lines = msg.split(`\n`)
-    lines.map((line) => consoleLog.push(timestamp + ' ' + line))
+const detectActionType = (routeKey, body) => {
+  const map = { $connect: 'CONNECT', $disconnect: 'DISCONNECT' }
+  if (!map[routeKey]) {
+    assert.equal(routeKey, '$default')
+    if (body.startsWith('PING_LAMBDA')) {
+      return 'PING_LAMBDA'
+    }
+    return 'INTERBLOCK'
   }
-  return consoleLog
+  return map[routeKey]
 }
+
+let sendToClient = async (socket, Data) => {
+  const { id, domain, stage } = socket.info
+  debug(`transmitting to socket.id: %o`, id)
+  const client = new AWS.ApiGatewayManagementApi({
+    apiVersion: '2018-11-29',
+    endpoint: `https://${domain}/${stage}`,
+  })
+  await client
+    .postToConnection({
+      ConnectionId: id,
+      Data,
+    })
+    .promise()
+  debug(`transmit complete`)
+}
+
+const _patchSendToClient = (newSendToClient) => {
+  debug(`_patchSendToClient`)
+  sendToClient = newSendToClient
+}
+
 const recordExample = {
   Records: [
     {
@@ -414,4 +344,4 @@ const recordExample = {
   ],
 }
 
-module.exports = { handler }
+module.exports = { handler, _patchSendToClient }

@@ -27,7 +27,7 @@ const s3Factory = (s3 = ramS3Factory()) => {
       Bucket: 'wbinterbucket',
       Key,
     }
-    debug(`getInterblock: %O`, Key)
+    debug(`getInterblock`)
     try {
       const result = await s3.getObject(params).promise()
       const interblockJson = result.Body.toString()

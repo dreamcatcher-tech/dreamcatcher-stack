@@ -49,6 +49,7 @@ const {
 } = require('../../w015-models')
 
 const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
+  // TODO use metrology in streamProcessor
   debug(`metrologyFactory`)
   const engine = standardEngineFactory()
   const {

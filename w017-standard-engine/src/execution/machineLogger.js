@@ -46,7 +46,7 @@ const machineLogger = (type, machine) => {
   }
   const logTransition = (item) => {
     transitionCount++
-    debug(`TRANSITION: ${pad(3, transitionCount)} %j`, item)
+    debug(`TRANSITION: ${pad(3, transitionCount)} %O`, item)
   }
   const logTermination = (item) => {
     debug(

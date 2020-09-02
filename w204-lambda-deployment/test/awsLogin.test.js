@@ -9,7 +9,7 @@ const {
   interblockModel,
 } = require('../../w015-models')
 
-describe('awsReal', () => {
+describe('awsLogin', () => {
   /**
    * 2020-07-04 280,000ms to do a single ping by proxy, stream on local machine
    * 2020-07-06 61,000 ms ping, local processing, fixed wifi
@@ -22,12 +22,11 @@ describe('awsReal', () => {
   test('terminal ping', async () => {
     jest.setTimeout(6000000)
 
-    require('debug').enable('*metro* *awsFactory *tests:aws')
+    require('debug').enable('*metro* *awsFactory *tests:aws *shell*')
     debug(`start`)
     const client = await effectorFactory('eff')
 
     const websockets = new Map()
-    let sendId = 0
     const wssTx = async (tx) => {
       assert(txModel.isModel(tx))
 
@@ -39,6 +38,7 @@ describe('awsReal', () => {
       if (!websockets.has(url)) {
         // TODO make this tightly couple with rxSocket decoding
         // TODO pack multiple interblocks in a single message
+        // TODO check maximum message size / max interblock size
         const WebSocket = require('ws')
         const raw = new WebSocket(url)
         const isOpen = new Promise((resolve) => {
@@ -83,12 +83,15 @@ describe('awsReal', () => {
         })
         const ws = {
           open: () => isOpen,
-          send: async (interblock) => {
-            debug(`sending: `, sendId)
-            const id = `id:${sendId++}`
-            const data = `${id}_${interblock.serialize()}`
-            raw.send(data)
-          },
+          send: async (interblock) =>
+            new Promise((resolve) => {
+              debug(
+                `sending interblock heavy: %o`,
+                !interblock.getTargetAddress()
+              )
+              const blankOptions = {}
+              raw.send(interblock.serialize(), blankOptions, resolve)
+            }),
         }
 
         websockets.set(url, ws)
@@ -99,12 +102,13 @@ describe('awsReal', () => {
     }
     client.sqsTx.setProcessor(wssTx)
 
-    const terminalChainId = 'REPLACE'
-    const wssUrl = process.env.WEBSOCKET
+    const terminalChainId =
+      'd755493f14273110a9654c7f2bac5415fe3e9e93515701eba4dd36690390d919'
+    const { url } = require('../.serverless/Template.apiGateway.json')
     const hyperAddress = addressModel.create(terminalChainId)
     const awsSocket = socketModel.create({
       type: 'awsApiGw',
-      info: { wssUrl },
+      info: { wssUrl: url },
     })
     await client.addTransport(hyperAddress, awsSocket.info)
 
@@ -116,12 +120,13 @@ describe('awsReal', () => {
     }
     const result = await client.login(creds)
     debug(`login result: `, result)
-    debug(`begin ping`)
+    debug(`begin block ping`)
     const start = Date.now()
     const pong = await client.ping('terminal')
     debug(`terminal ping result: `, pong)
     debug(`ping RTT: `, Date.now() - start)
     assert.equal(pong.type, 'PONG')
     await client.engine.settle()
+    // halt the socket
   })
 })

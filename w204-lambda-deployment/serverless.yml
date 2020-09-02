@@ -147,7 +147,3 @@ dbCrypto: # temporary solution until key management is implemented
       - AttributeName: keyname
         KeyType: HASH
     region: eu-central-1
-# postDeployCheck:
-#   component: './src/postDeployCheck'
-#   inputs:
-#     apiGateway: ${apiGateway}

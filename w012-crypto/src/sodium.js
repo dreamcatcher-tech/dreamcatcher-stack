@@ -72,7 +72,6 @@ const signHash = async (messageHash, secretKey) => {
 const verifyHashSync = (messageHash, signature, publicKey) => {
   const key = `${messageHash}_${signature}_${publicKey}`
   const isVerified = _verifiedSet.has(key)
-  debug(`verifyHashSync: `, isVerified, key)
   return isVerified
 }
 
@@ -84,8 +83,9 @@ const verifyHash = async (messageHash, signature, publicKey) => {
   const key = `${messageHash}_${signature}_${publicKey}`
   if (ver) {
     _verifiedSet.add(key)
+  } else {
+    debug(`verifyHash failed`)
   }
-  debug(`verifyHash: `, ver, key)
   return ver
 }
 
