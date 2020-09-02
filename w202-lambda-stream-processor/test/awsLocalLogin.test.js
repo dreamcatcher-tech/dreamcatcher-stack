@@ -26,7 +26,7 @@ describe('awsLocalLogin', () => {
     const context = { getRemainingTimeInMillis: () => {} }
     await assert.doesNotReject(() => runInXray(event, context))
   })
-  test.only('processes login remotely', async () => {
+  test.skip('processes login remotely', async () => {
     jest.setTimeout(1800000)
     require('debug').enable('*metro* *aws:tests* *aws:stream* *aws* *shell*')
     debug(`start`)

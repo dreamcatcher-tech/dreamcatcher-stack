@@ -2,7 +2,7 @@ const assert = require('assert')
 const debug = require('debug')('interblock:test:awsWebsocket')
 const { tcpTransportFactory } = require('../src/tcpTransportFactory')
 describe('awsWebsocket', () => {
-  jest.setTimeout(20000)
+  jest.setTimeout(10000)
 
   require('debug').enable(`interblock:test:awsWebsocket *:transport`)
   test('connect', async () => {

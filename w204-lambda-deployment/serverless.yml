@@ -18,7 +18,7 @@ sqsSafety:
       maxReceiveCount: 10
 
 apiGateway:
-  component: '@serverless/aws-websockets'
+  component: '../../aws-websockets'
   name: apiGateway
   inputs:
     name: apiGateway
@@ -121,6 +121,23 @@ dbSockets:
       - AttributeName: chainId
         KeyType: HASH
       - AttributeName: socketId
+        KeyType: RANGE
+    region: eu-central-1
+dbSocketsCleanup: # reverse lookup, to clean the dbSockets table
+  component: '@serverless/aws-dynamodb'
+  inputs:
+    name: dbSocketsCleanup
+    attributeDefinitions:
+      - AttributeName: socketId
+        AttributeType: S
+      - AttributeName: chainId
+        AttributeType: S
+      # - AttributeName: updatedTime
+      #   AttributeType: N # unix epoch time in seconds
+    keySchema:
+      - AttributeName: socketId
+        KeyType: HASH
+      - AttributeName: chainId
         KeyType: RANGE
     region: eu-central-1
 dbLocks:

@@ -36,3 +36,4 @@ Components: 2.34.8
 1. attach the policy `AmazonAPIGatewayInvokeFullAccess` to the lambda execution role, to allow lambda to push to websocket clients
 1. deploy the component `sls --debug`
 1. set up a trigger from sqsSafety to the lambda function
+1. replace references to `terminalChainId` with the newly created terminal chainId

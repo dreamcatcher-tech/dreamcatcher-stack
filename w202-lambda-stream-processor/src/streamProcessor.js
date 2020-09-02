@@ -13,6 +13,7 @@ const {
   consistencyFactory,
   cryptoFactory,
   setLogger,
+  consistencyQueueToFunctions,
 } = require('../../w017-standard-engine')
 const { awsLogger } = require('./awsLogger')
 const {
@@ -24,6 +25,7 @@ const {
 const debug = require('debug')('interblock:aws:streamProcessor')
 
 const queueToModelMap = {
+  sqsTx: txModel,
   sqsRx: txModel,
   sqsTransmit: interblockModel,
   sqsPool: interblockModel,
@@ -180,7 +182,46 @@ const switchSqsTarget = (queueName) => {
   }
   return MODES.SELF
 }
-const pushSelf = async (queueName, action, engine) => {
+const deleteMessage = async (ReceiptHandle, eventSourceARN) => {
+  const queueName = eventSourceARN.split(':').pop()
+  const QueueUrl = getQueueUrl(eventSourceARN)
+  const AWS = AWSXRay.captureAWS(require('aws-sdk'))
+  AWS.config.update(awsRegion)
+  const sqs = new AWS.SQS({ apiVersion: '2012-11-05' })
+  debug(`deleting ${ReceiptHandle.substring(0, 16)} from ${queueName}`)
+  await sqs.deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+}
+const replaceQueueProcessors = (engine) => {
+  const { sqsTx, sqsRx, sqsTransmit, sqsPool, sqsIncrease } = engine
+  sqsTx.setProcessor(apiGatewayProcessor(engine))
+
+  sqsTx.setSqsProcessor(sqsQueueProcessor('sqsTx', engine))
+  sqsRx.setSqsProcessor(sqsQueueProcessor('sqsRx', engine))
+  sqsTransmit.setSqsProcessor(sqsQueueProcessor('sqsTransmit', engine))
+  sqsPool.setSqsProcessor(sqsQueueProcessor('sqsPool', engine))
+  sqsIncrease.setSqsProcessor(sqsQueueProcessor('sqsIncrease', engine))
+}
+const sqsQueueProcessor = (queueName, engine) => async (action) => {
+  assert(queueToModelMap[queueName], `bad queueName: ${queueName}`)
+  const target = switchSqsTarget(queueName)
+  switch (target) {
+    case MODES.SELF:
+      pushSelf(queueName, action, engine)
+      break
+    case MODES.THREAD:
+      await pushThread(queueName, action)
+      break
+    case MODES.LAMBDA:
+      await pushLambda(queueName, action)
+      break
+    case MODES.SQS:
+      await pushSqs(queueName, action)
+      break
+    default:
+      throw new Error(`Unknown target: ${target}`)
+  }
+}
+const pushSelf = (queueName, action, engine) => {
   startXraySegment(`Queue`, queueName, async () => {
     debug(`pushSelf: %o`, queueName)
     // ? place a trace in each queue, so can see how it moves around the machine ?
@@ -211,45 +252,6 @@ const pushLambda = async () => {
   debug(`result: `, result)
   // TODO failover to sqs if lambda is throttling
 }
-const deleteMessage = async (ReceiptHandle, eventSourceARN) => {
-  const queueName = eventSourceARN.split(':').pop()
-  const QueueUrl = getQueueUrl(eventSourceARN)
-  const AWS = AWSXRay.captureAWS(require('aws-sdk'))
-  AWS.config.update(awsRegion)
-  const sqs = new AWS.SQS({ apiVersion: '2012-11-05' })
-  debug(`deleting ${ReceiptHandle.substring(0, 16)} from ${queueName}`)
-  await sqs.deleteMessage({ QueueUrl, ReceiptHandle }).promise()
-}
-const replaceQueueProcessors = (engine) => {
-  const { sqsTx, sqsRx, sqsTransmit, sqsPool, sqsIncrease } = engine
-  sqsTx.setProcessor(apiGatewayProcessor(engine))
-
-  sqsTx.setSqsProcessor(sqsQueueProcessor('sqsTx', engine))
-  sqsRx.setSqsProcessor(sqsQueueProcessor('sqsRx', engine))
-  sqsTransmit.setSqsProcessor(sqsQueueProcessor('sqsTransmit', engine))
-  sqsPool.setSqsProcessor(sqsQueueProcessor('sqsPool', engine))
-  sqsIncrease.setSqsProcessor(sqsQueueProcessor('sqsIncrease', engine))
-}
-const sqsQueueProcessor = (queueName, engine) => async (action) => {
-  assert(queueToModelMap[queueName])
-  const target = switchSqsTarget(queueName)
-  switch (target) {
-    case MODES.SELF:
-      await pushSelf(queueName, action, engine)
-      break
-    case MODES.THREAD:
-      await pushThread(queueName, action)
-      break
-    case MODES.LAMBDA:
-      await pushLambda(queueName, action)
-      break
-    case MODES.SQS:
-      await pushSqs(queueName, action)
-      break
-    default:
-      throw new Error(`Unknown target: ${target}`)
-  }
-}
 const replaceConsistencyProcessor = ({ ioConsistency }, lockName) => {
   const dynamoDb = new AWS.DynamoDB.DocumentClient()
   const s3 = new AWS.S3()
@@ -267,10 +269,12 @@ const apiGatewayProcessor = ({ ioConsistency }) => async (tx) => {
   try {
     await sendToClient(socket, data)
   } catch (e) {
-    debug(`transmit error: %O %O `, e.message, e)
-    if (e.message === '401') {
-      // extend txModel to have forAddress so can delete from db directly
-      await ioConsistency.delSocket()
+    if (e.code === 'GoneException') {
+      debug(`deleting gone socket`)
+      const consistency = consistencyQueueToFunctions(ioConsistency)
+      await consistency.delSocket(socket)
+    } else {
+      debug(`transmit error: %O %O `, e.message, e)
     }
   }
 }

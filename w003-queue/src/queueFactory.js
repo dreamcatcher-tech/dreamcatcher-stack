@@ -132,13 +132,15 @@ const sqsQueueFactory = (name, model) => {
    * Bypasses whatever infrastructure is connected to the queue,
    * pushing straight onto the engine queue underneath.  Used in
    * aws to execute actions in the same thread, rather than going
-   * via SQS queues, or any other means
+   * via SQS queues, or any other means.
    * @param {object} action
    */
-  const pushDirect = async (action) => {
-    await queue.push(action)
+  const pushDirect = queue.push
+  let _sqsProcessor = (action) => {
+    // push without waiting - this is the purpose of sqs queues
+    queue.push(action)
   }
-  let _sqsProcessor = pushDirect
+
   const assertQueueEmpty = () =>
     !queue.getProcessor() || queue.setProcessor(queue.getProcessor())
   return {

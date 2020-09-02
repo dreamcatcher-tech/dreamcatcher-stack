@@ -338,7 +338,10 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     debug(`putSocket complete`)
   }
 
-  const delSocket = async ({}) => {
+  const delSocket = async (socket) => {
+    assert(socketModel.isModel(socket))
+    debug(`delSocket %o`, socket.id)
+
     // read the cleanup table to get the address mappings
     // for each one,
     // delete from the main table

@@ -61,6 +61,7 @@ const startXrayLogging = () => {
     if (logSegment) {
       logSegment.addMetadata(`console.log`, consoleLog, `debug`)
       logSegment.close() && logSegment.flush()
+      parentSegment.flush()
     }
     consoleLog.length = 0
     logLength = 0
@@ -108,6 +109,7 @@ const startXrayParentSegment = async (key, value, tracedFunction) => {
     subsegment.flush()
     const parentSegment = parentSegments.pop()
     assert.equal(parentSegment, subsegment)
+    parentSegments.forEach((seg) => seg.flush())
     debug(`closeXraySegment %o %o`, key, value)
   }
 
@@ -132,6 +134,7 @@ const startXraySegment = async (key, value, tracedFunction) => {
   } finally {
     segment.close()
     segment.flush()
+    parentSegment.flush()
   }
 }
 

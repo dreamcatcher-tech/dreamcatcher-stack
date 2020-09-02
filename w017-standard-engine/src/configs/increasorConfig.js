@@ -98,7 +98,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           isLockAcquired = lock.block
           !lock.block && debug(`WARNING missing chain locked`)
         }
-        debug(`isLockAcquired: `, isLockAcquired)
+        debug(`isLockAcquired: `, !!isLockAcquired)
         return isLockAcquired
       },
       isProposer: () => true,

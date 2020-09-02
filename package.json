@@ -8,7 +8,7 @@
     "watch": "DEBUG_COLORS=1 DEBUG=interblock:* jest --watch",
     "build:lambda": "cd w202-lambda-stream-processor && webpack",
     "sls:lambda": "cd w202-lambda-stream-processor && DEBUG='interblock:deploy*' sls --debug",
-    "test:lambda": "DEBUG_COLORS=1 jest awsWebsocket",
+    "test:lambda": "DEBUG_COLORS=1 jest awsWebsocket && jest awsLogin",
     "deploy:lambda": "yarn run build:lambda && yarn run sls:lambda && yarn run test:lambda",
     "dev": "nodemon --exec 'yarn run deploy:lambda'",
     "troll": "nodemon ./w204-lambda-deployment/src/troller"

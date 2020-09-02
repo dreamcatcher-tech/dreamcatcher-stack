@@ -20,7 +20,7 @@ describe('awsLogin', () => {
    * 2020-07-14 6,420 ms lambda, ping RTT 1,550 ms - no sqs, invoke straight from socket
    */
   test('terminal ping', async () => {
-    jest.setTimeout(6000000)
+    jest.setTimeout(60000)
 
     require('debug').enable('*metro* *awsFactory *tests:aws *shell*')
     debug(`start`)
@@ -103,7 +103,7 @@ describe('awsLogin', () => {
     client.sqsTx.setProcessor(wssTx)
 
     const terminalChainId =
-      'd755493f14273110a9654c7f2bac5415fe3e9e93515701eba4dd36690390d919'
+      '34e3c74c43c0e9b2f3f2ef9f93a0f427ededf5878891b23d792d8f7c1a174b94'
     const { url } = require('../.serverless/Template.apiGateway.json')
     const hyperAddress = addressModel.create(terminalChainId)
     const awsSocket = socketModel.create({
