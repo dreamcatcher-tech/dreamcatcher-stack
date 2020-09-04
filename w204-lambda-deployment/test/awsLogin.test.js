@@ -68,13 +68,14 @@ describe('awsLogin', () => {
           } else {
             debug(`interblock received`)
             // TODO use the obj once know why fails
-            await cryptoCacher.cacheVerifyHash(JSON.parse(data))
+            const obj = JSON.parse(data)
+            await cryptoCacher.cacheVerifyHash(obj)
             try {
-              interblockModel.clone(data)
+              interblockModel.clone(obj)
             } catch (e) {
               debug(`error: `, e, data)
             }
-            const interblock = interblockModel.clone(data)
+            const interblock = interblockModel.clone(obj)
 
             const tx = txModel.create(awsSocket, interblock)
             await client.sqsRx.push(tx)
@@ -126,6 +127,7 @@ describe('awsLogin', () => {
     debug(`terminal ping result: `, pong)
     debug(`ping RTT: `, Date.now() - start)
     assert.equal(pong.type, 'PONG')
+    await client.removeTransports()
     await client.engine.settle()
     // halt the socket
   })

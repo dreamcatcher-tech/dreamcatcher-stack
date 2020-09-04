@@ -9,5 +9,5 @@ module.exports = async ({ spinner, blockchain }) => {
 
 module.exports.help = `
 List and modify the transports used.  These are typically URLs
-which point to various block producing peers.
+which point to various block producing peers
 `

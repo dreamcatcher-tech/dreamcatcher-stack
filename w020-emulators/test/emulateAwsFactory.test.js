@@ -27,15 +27,16 @@ describe('awsFactory', () => {
      */
 
     const { hyperAddress } = aws
-    debug(`hyperAddress: ${hyperAddress.getChainId()}`)
+    const hyperChainId = hyperAddress.getChainId()
+    debug(`hyperAddress: ${hyperChainId}`)
     const testSocketInfo = { url: 'testingSocketInfo' }
-    await client.addTransport(hyperAddress, testSocketInfo)
+    await client.addTransport(hyperChainId, testSocketInfo)
 
     const creds = {
       method: 'password',
       user: 'test user',
       pass: 'test pass',
-      terminal: hyperAddress.getChainId(),
+      terminal: hyperChainId,
     }
     // TODO test rejected ping before login passes
     const loginResult = await client.login(creds)

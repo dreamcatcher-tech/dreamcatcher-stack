@@ -91,7 +91,13 @@ const tcpTransportFactory = (url) => {
     })
   }
 
-  return { connect, ping, pingLambda, close }
+  const interblock = async (interblock) => {
+    const OPEN = 1
+    assert.equal(ws.readyState, OPEN, `websocket not open`)
+    ws.send(interblock.serialize())
+  }
+
+  return { connect, ping, pingLambda, close, interblock }
 }
 
 module.exports = { tcpTransportFactory }

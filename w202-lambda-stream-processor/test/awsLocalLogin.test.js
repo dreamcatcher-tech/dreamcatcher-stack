@@ -51,19 +51,18 @@ describe('awsLocalLogin', () => {
 
     const terminalChainId =
       'd755493f14273110a9654c7f2bac5415fe3e9e93515701eba4dd36690390d919'
-    const hyperAddress = addressModel.create(terminalChainId)
     const wssUrl = 'wss://fake'
     const awsSocket = socketModel.create({
       type: 'awsApiGw',
       info: { wssUrl },
     })
-    await client.addTransport(hyperAddress, awsSocket.info)
+    await client.addTransport(terminalChainId, awsSocket.info)
 
     const creds = {
       method: 'password',
       user: 'test user',
       pass: 'test pass',
-      terminal: hyperAddress.getChainId(),
+      terminal: terminalChainId.getChainId(),
     }
     const result = await client.login(creds)
     debug(`login result: `, result)

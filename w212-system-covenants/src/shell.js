@@ -37,9 +37,9 @@ const config = {
     },
     login: async (context, event) => {
       debug(`login: %O`, event.payload.terminal)
-      const { terminal, ...rest } = event.payload
+      const { chainId, ...rest } = event.payload
       // TODO check terminal regex is a chainId
-      const connectToTerminal = connect('terminal', terminal)
+      const connectToTerminal = connect('terminal', chainId)
       await invoke(connectToTerminal)
 
       // TODO import from authenticator / terminal functions

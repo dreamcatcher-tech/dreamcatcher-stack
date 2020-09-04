@@ -2,14 +2,21 @@ const debug = require('debug')('dos-shell:commands:add')
 const chalk = require('ansi-colors')
 const { prompt } = require('enquirer')
 
-module.exports = async ({ spinner, blockchain }, path) => {
+module.exports = async ({ spinner, blockchain }, ...paths) => {
   // TODO handle nested and remote paths
-  debug(`add: %O`, path)
-  const result = await blockchain.add(path)
-  const { alias, chainId } = result
+  debug(`add: %O`, paths)
+  let out = ``
+  for (const path of paths) {
+    // TODO handle partial failure
+    // TODO allow submitting multiple requests simultaneously
+    spinner.text = `adding ${path}...`
+    const { alias, chainId } = await blockchain.add(path)
+    spinner.succeed(`added ${path}`).start()
+    out += `Added: ${chalk.red(alias)}
+ - chainId: ${chalk.greenBright(chainId)}\n`
+  }
   return {
-    out: `Added: ${chalk.red(alias)}
-chainId: ${chalk.greenBright(chainId)}`,
+    out: out.trim(),
   }
 }
 

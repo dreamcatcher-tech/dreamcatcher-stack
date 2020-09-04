@@ -1,52 +1,49 @@
 {
-    "name": "dos-shell",
-    "version": "0.0.1",
-    "description": "Terminal interface to the HyperNet",
-    "main": "src/index.js",
-    "bin": {
-        "dos-shell": "src/bin.js"
-    },
-    "scripts": {
-        "start": "DEBUG='dos* enquirer*' node src/bin",
-        "dev": "DEBUG='dos* *translator* *metro*' nodemon src/bin",
-        "build": "webpack",
-        "build:watch": "nodemon --exec npm run build"
-    },
-    "author": "",
-    "license": "AGPL-3.0-or-later",
-    "dependencies": {
-        "better-opn": "^2.0.0",
-        "chalk": "^4.1.0",
-        "clear": "^0.1.0",
-        "cliui": "^6.0.0",
-        "debug": "^4.1.0",
-        "dedent": "^0.7.0",
-        "detect-node": "^2.0.4",
-        "docker-names": "^1.1.1",
-        "enquirer": "^2.3.6",
-        "figlet": "^1.2.4",
-        "filesize": "^3.6.1",
-        "localforage": "^1.9.0",
-        "ora": "^3.0.0",
-        "pretty-ms": "^7.0.0",
-        "pull-stream": "^3.6.9",
-        "random-hash": "^4.0.1",
-        "wordwrap": "^1.0.0"
-    },
-    "devDependencies": {
-        "nodemon": "^1.19.3"
-    },
-    "nodemonConfig": {
-        "verbose": false,
-        "watch": [
-            "./"
-        ],
-        "ignore": [
-            "dist"
-        ]
-    },
-    "jest": {
-        "testEnvironment": "node",
-        "transform": {}
-    }
+  "name": "dos-shell",
+  "version": "0.0.1",
+  "description": "Terminal interface to the HyperNet",
+  "main": "src/index.js",
+  "bin": {
+    "dos-shell": "src/bin.js"
+  },
+  "scripts": {
+    "start": "DEBUG='dos* enquirer*' node src/bin",
+    "dev": "DEBUG='' nodemon src/bin",
+    "build": "webpack",
+    "build:watch": "nodemon --exec npm run build"
+  },
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "better-opn": "^2.0.0",
+    "chalk": "^4.1.0",
+    "clear": "^0.1.0",
+    "cliui": "^6.0.0",
+    "debug": "^4.1.0",
+    "dedent": "^0.7.0",
+    "detect-node": "^2.0.4",
+    "docker-names": "^1.1.1",
+    "enquirer": "^2.3.6",
+    "figlet": "^1.2.4",
+    "filesize": "^3.6.1",
+    "localforage": "^1.9.0",
+    "ora": "^3.0.0",
+    "pretty-ms": "^7.0.0",
+    "pull-stream": "^3.6.9",
+    "random-hash": "^4.0.1",
+    "wordwrap": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.3"
+  },
+  "nodemonConfig": {
+    "verbose": false,
+    "watch": [
+      "./"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  }
 }

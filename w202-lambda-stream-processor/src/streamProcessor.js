@@ -37,8 +37,19 @@ const MODES = {
   LAMBDA: 'LAMBDA',
   SOCKET: 'SOCKET',
 }
-
+const checkAssert = () => {
+  try {
+    assert.fail()
+  } catch (e) {
+    return
+  }
+  throw new Error(`Assert is essential to safe operation`)
+}
 const handler = async (event, context) => {
+  checkAssert()
+  assert.equal(typeof event, 'object')
+  assert.equal(typeof context, 'object')
+
   const stopXrayLogging = startXrayLogging()
   const invokeMode = detectInvokeMode(event)
   await startXrayParentSegment(`InvokeMode`, invokeMode, async () => {

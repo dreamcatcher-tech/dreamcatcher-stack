@@ -1,10 +1,3 @@
-const assert = require('assert')
-const { metrologyFactory } = require('../../w017-standard-engine')
-const _ = require('lodash')
-const debug = require('debug')('interblock:effector')
-const { actions: dmzActions } = require('../../w021-dmz-reducer')
-const { shell } = require('../../w212-system-covenants')
-const { socketModel } = require('../../w015-models')
 /**
  * Provides a dispatch function which returns two nested promises,
  * one for when processed, and one for when resolved.
@@ -39,6 +32,14 @@ const { socketModel } = require('../../w015-models')
  *      to allow emulation mode.
  *
  */
+const assert = require('assert')
+const { metrologyFactory } = require('../../w017-standard-engine')
+const _ = require('lodash')
+const debug = require('debug')('interblock:effector')
+const { actions: dmzActions } = require('../../w021-dmz-reducer')
+const { shell } = require('../../w212-system-covenants')
+const { addressModel, socketModel } = require('../../w015-models')
+const { tcpTransportFactory } = require('./tcpTransportFactory')
 
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
@@ -74,25 +75,48 @@ const effectorFactory = async (identifier) => {
 
   const getContext = () => childShell.getState().state.xstate.context
   const subscribe = childShell.subscribe
-  const addTransport = async (address, info) => {
-    // TODO clients should supply the actual socketModel ?
-    const socket = socketModel.create({ type: 'awsApiGw', info })
+  const addTransport = async (chainId, socketInfo) => {
+    // TODO handle duplicate additions gracefully
+
+    // set sqsRx & sqsTx
+
+    assert.equal(typeof socketInfo, 'object')
+    assert.equal(typeof chainId, 'string')
+    assert.equal(typeof socketInfo.url, 'string')
+    const { url } = socketInfo
+    const tcpTransport = tcpTransportFactory(url)
+    await tcpTransport.connect()
+    debug(`connected to %o`, url)
+    const latency = await tcpTransport.pingLambda() // TODO do a version check too
+    debug(`latency of %o ms to %o `, latency, url)
+
+    const address = addressModel.create(chainId)
+
+    const socket = socketModel.create({ type: 'awsApiGw', info: socketInfo })
     const action = { type: 'PUT_SOCKET', payload: { address, socket } }
     await ioConsistency.push(action)
+    return latency
+  }
+  const removeTransports = async () => {
+    // close all the websockets
+    // reset the sqs queues back to defaults
   }
   const shellActions = mapDispatchToShellActions(dispatch)
   const { sqsTx, sqsRx } = metrology.getEngine()
   await metrology.settle()
+  // start the net watcher, to reconcile hardware with chainware
   return {
     ...shellActions,
     dispatch,
     getState,
-    getContext,
+    getContext, // TODO change to use getState with a path ?
     subscribe,
-    addTransport,
+    addTransport, // move this to be a net subcommand to the shell
+    removeTransports,
     sqsTx,
     sqsRx,
     engine: metrology,
+    _debug: require('debug'), // used to expose debug info in the os
   }
 }
 

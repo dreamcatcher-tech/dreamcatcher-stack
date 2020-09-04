@@ -1,12 +1,23 @@
+const debug = require('debug')('dos-shell:commands:login')
 const timeout = (ms) => new Promise((res) => setTimeout(res, ms))
 
-module.exports = async (ctx, ...args) => {
-  console.log(
-    `
-`
-  )
-  require('open')('https://aws.amazon.com/cognito/')
-  return timeout(2000)
+module.exports = async ({ spinner, blockchain }, ...args) => {
+  // see if we have a url for this particular chain address
+
+  // choose the default to connect to
+  const {
+    url,
+  } = require('../../../w204-lambda-deployment/.serverless/Template.apiGateway.json')
+  const chainId =
+    '34e3c74c43c0e9b2f3f2ef9f93a0f427ededf5878891b23d792d8f7c1a174b94'
+  spinner.info(`logging in to ${chainId}`).start()
+  spinner.text = `connecting to: ${url}`
+  const latency = await blockchain.addTransport(chainId, { url })
+  spinner.succeed(`latency of ${latency} ms ${url}`).start()
+  spinner.text = `logging in to chain`
+  await blockchain.login({ chainId })
+  spinner.succeed(`login successful`)
+  return { out: url }
 }
 
 module.exports.help = `Loop the user through a signon process that links
