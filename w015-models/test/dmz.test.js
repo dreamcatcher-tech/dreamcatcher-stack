@@ -6,10 +6,10 @@ describe('dmz', () => {
   test('create defaults', () => {
     const dmz = dmzModel.create()
     const clone = dmzModel.clone(dmz)
-    assert(dmz === clone)
+    assert(dmz.equals(clone))
     const emptyClone = dmzModel.clone()
     const reclone = dmzModel.clone(emptyClone)
-    assert(emptyClone === reclone)
+    assert(emptyClone.equals(reclone))
   })
 
   test('create', () => {
@@ -19,7 +19,7 @@ describe('dmz', () => {
       encryption: same1.encryption,
     })
     assert.deepStrictEqual(same1, same2)
-    assert(same1 === same2)
+    assert(same1.equals(same2))
   })
   test.todo('nextAction cycles through all possible channels')
   test.todo('nextAction returns undefined if no next action')

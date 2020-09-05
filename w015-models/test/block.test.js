@@ -30,7 +30,7 @@ describe('block', () => {
     test('generate unique genesis by default', async () => {
       const block = await blockModel.create()
       const clone = blockModel.clone(block)
-      assert(clone === block)
+      assert(clone.equals(block))
       assert(blockModel.isModel(clone))
       const second = await blockModel.create()
       assert(second !== block)

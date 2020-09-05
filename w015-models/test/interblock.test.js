@@ -30,7 +30,7 @@ describe('interblock', () => {
     const interblock = interblockModel.create(validatedBlock, 'effects')
     assert(interblock)
     const clone = interblockModel.clone(interblock)
-    assert(clone === interblock)
+    assert(clone.equals(interblock))
     assert.throws(interblockModel.clone)
   })
   test('interblock must have validated block', async () => {

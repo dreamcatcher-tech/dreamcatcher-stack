@@ -51,7 +51,7 @@ describe('channelProducer', () => {
     const action = actionModel.create()
     tx = txRequest(tx, action)
     assert(channelModel.isModel(tx))
-    assert(tx.requests[0] === action)
+    assert(action.equals(tx.requests[0]))
     assert.equal(Object.keys(tx.requests).length, 1)
     assert.equal(tx.requestsLength, 1)
   })

@@ -68,11 +68,11 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
       const lineageTip = _.without(channel.lineageTip, ...purgeableTips)
 
       // trim lineage to start with heavy, or lineageTip
-      const heavyIndex = channel.lineage.findIndex(
-        (integrity) => integrity === channel.heavy.provenance.reflectIntegrity()
+      const heavyIndex = channel.lineage.findIndex((integrity) =>
+        integrity.equals(channel.heavy.provenance.reflectIntegrity())
       )
-      const lineageTipIndex = channel.lineage.findIndex(
-        (integrity) => integrity === lineageTip[0].provenance.reflectIntegrity()
+      const lineageTipIndex = channel.lineage.findIndex((integrity) =>
+        integrity.equals(lineageTip[0].provenance.reflectIntegrity())
       )
       const minIndex =
         heavyIndex < lineageTipIndex ? heavyIndex : lineageTipIndex
@@ -91,8 +91,8 @@ const _getAlias = (network, address) => {
   // speed up by not cloning network each interblock
   assert(addressModel.isModel(address))
   assert(!address.isUnknown())
-  const alias = Object.keys(network).find(
-    (key) => network[key].address === address
+  const alias = Object.keys(network).find((key) =>
+    network[key].address.equals(address)
   )
   return alias
 }
@@ -132,7 +132,7 @@ const _respond = (network, request, reply) =>
     const alias = network.getAlias(address)
     const channel = network[alias]
     assert(channelModel.isModel(channel))
-    assert(channel.address === address)
+    assert(channel.address.equals(address))
     assert.equal(channel.rxRequest(), request)
     const index = request.getIndex()
     assert(!channel.replies[index])

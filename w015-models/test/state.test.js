@@ -16,7 +16,7 @@ describe('state', () => {
   test('clone', () => {
     const s1 = stateModel.clone()
     const s2 = stateModel.create()
-    assert(s1 === s2)
+    assert(s1.equals(s2))
   })
   test.todo('logically wrong action sequences')
   test.todo('sequence pattern wrong')

@@ -7,9 +7,9 @@ describe('lock', () => {
     const lock = lockModel.create()
     assert(lock && lock.isLocked() && !lock.block)
     const clone = lockModel.clone(lock)
-    assert(clone === lock)
-    const json = lockModel.clone(clone.serialize())
-    assert(json === clone && json.isLocked())
+    assert(clone.equals(lock))
+    const fromJson = lockModel.clone(clone.serialize())
+    assert(fromJson.equals(clone) && fromJson.isLocked())
   })
   test('lock expiration', () => {
     const lock = lockModel.create()

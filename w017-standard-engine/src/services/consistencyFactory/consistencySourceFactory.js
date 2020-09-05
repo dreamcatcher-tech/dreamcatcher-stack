@@ -87,7 +87,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     const poolItems = affectedAddresses.map((address) => {
       // TODO move scavenging up to FSMs explicitly, and only in sqsRx
       let interblockToPool = light
-      if (interblock.getTargetAddress() === address) {
+      if (address.equals(interblock.getTargetAddress())) {
         isHeavyUsed = true
         interblockToPool = interblock
       } else {
@@ -167,7 +167,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     // TODO check getting latest is still the correct previous ?
     if (previous && !previous.isNext(block)) {
       debug(`block is not next %O`, block.provenance.height)
-      debug(`no change: `, block === previous)
+      debug(`no change: `, previous.equals(block))
     } else if (!previous && !block.provenance.address.isGenesis()) {
       debug(`next was not genesis: %O`, block.height)
     } else {

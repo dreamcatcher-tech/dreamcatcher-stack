@@ -17,7 +17,7 @@ const _ingestInterblock = (channel, interblock) =>
     debug('ingestInterblock')
     // TODO if genesis or config change, set the validators
     assert(interblockModel.isModel(interblock))
-    assert(channel.address === interblock.provenance.getAddress())
+    assert(channel.address.equals(interblock.provenance.getAddress()))
     const { provenance } = interblock
     const integrity = provenance.reflectIntegrity()
     const remote = interblock.getRemote()

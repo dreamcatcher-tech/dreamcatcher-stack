@@ -51,7 +51,7 @@ const blockModel = standardize({
     debug('logicize')
     const isLoop = instance.network.getAliases().some((alias) => {
       const { address } = instance.network[alias]
-      return instance.provenance.getAddress() === address
+      return instance.provenance.getAddress().equals(address)
     })
     assert(!isLoop, `Loop detected`)
     const { provenance, ...copy } = instance
@@ -61,7 +61,7 @@ const blockModel = standardize({
       const template = integrityModel.create()
       const hash = dmz.getHash()
       const dmzIntegrity = integrityModel.clone({ ...template, hash })
-      return dmzIntegrity === instance.provenance.dmzIntegrity
+      return dmzIntegrity.equals(instance.provenance.dmzIntegrity)
     }
     assert(check(dmz), 'blockModel: provenance check failed')
 

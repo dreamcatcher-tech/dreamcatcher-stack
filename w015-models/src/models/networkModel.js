@@ -84,8 +84,8 @@ const networkModel = standardize({
       assert(addressModel.isModel(address))
       assert(!address.isUnknown())
 
-      const alias = getAliases().find(
-        (key) => instance[key].address === address
+      const alias = getAliases().find((key) =>
+        instance[key].address.equals(address)
       )
       return alias
     }
@@ -104,7 +104,7 @@ const networkModel = standardize({
         lineageIncludes = true
       }
       if (provenance.height === channel.lineageHeight) {
-        const isTip = provenance === _.last(channel.lineageTip).provenance
+        const isTip = provenance.equals(_.last(channel.lineageTip).provenance)
         assert(isTip)
       }
       const remote = interblock.getRemote()

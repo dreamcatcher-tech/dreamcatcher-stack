@@ -51,7 +51,7 @@ describe('standard model', () => {
 
     const clone = addressModel.clone(raw)
     assert(!clone.equals(raw))
-    assert(clone.equals( address))
+    assert(clone.equals(address))
     assert(clone.chainId.equals(integrity), 'integrity not reinflated')
   })
   test('objects are immutable', () => {
@@ -82,9 +82,9 @@ describe('standard model', () => {
     network = networkModel.clone(network, (draft) => {
       draft.testPattern = channelModel.create()
     })
-    assert(network.testPattern === tx)
+    assert(network.testPattern.equals(tx))
     const clone = networkModel.clone(network.serialize())
-    assert(clone.testPattern === tx)
+    assert(clone.testPattern.equals(tx))
   })
   test('objects have no functions attached as enumerable properties', () => {
     const transmission = channelModel.create()
@@ -102,9 +102,9 @@ describe('standard model', () => {
     network = networkModel.clone(network, (draft) => {
       draft.testPattern = channelModel.create()
     })
-    assert(network.testPattern === tx)
+    assert(network.testPattern.equals(tx))
     const clone = networkModel.clone(network.serialize())
-    assert(clone.testPattern === tx)
+    assert(clone.testPattern.equals(tx))
   })
   test('array items are inflated', async () => {
     const undefinedDmz = undefined

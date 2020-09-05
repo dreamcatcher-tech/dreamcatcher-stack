@@ -7,7 +7,7 @@ describe('integrity', () => {
     const reverse = { two: 2, one: 1 }
     const fi = integrityModel.create(forward)
     const ri = integrityModel.create(reverse)
-    assert(fi === ri)
+    assert(fi.equals(ri))
   })
   test('no params returns unknown integrity', () => {
     const unknown = integrityModel.create()
@@ -41,7 +41,7 @@ describe('integrity', () => {
     const integrity = integrityModel.create({})
     assert(integrity && !integrity.isUnknown())
     const duplicate = integrityModel.create({})
-    assert(duplicate === integrity)
+    assert(duplicate.equals(integrity))
     assert(integrity.isIntegrityMatch({}))
   })
   test(`getHash returns the stored hash`, () => {

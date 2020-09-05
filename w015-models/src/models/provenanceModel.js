@@ -66,13 +66,13 @@ const provenanceModel = standardize({
     const selfIntegrity = () => {
       const check = _.omit(instance, ['integrity', 'signatures'])
       const integrity = integrityModel.create(check)
-      const selfIntegrity = integrity === instance.integrity
+      const selfIntegrity = integrity.equals(instance.integrity)
       return selfIntegrity
     }
     const signatureIntegrity = () =>
       instance.signatures.length &&
       instance.signatures.every(
-        (signature) => signature.integrity === instance.integrity
+        (signature) => signature.integrity.equals(instance.integrity)
         // TODO check order the signatures is alphabetical / stable
       )
 
@@ -102,7 +102,7 @@ const provenanceModel = standardize({
       // TODO check signatures match ?
       const isHigher = child.height > instance.height
       const childPubkey = child.signatures[0].publicKey
-      // const isSigned = childPubkey === instance.signatures[0].publicKey
+      // const isSigned = childPubkey.equals( instance.signatures[0].publicKey )
       // TODO cannot determine isSigned without the dmz, since config changes
       return isParent && isHigher
     }

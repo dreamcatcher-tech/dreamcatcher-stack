@@ -10,7 +10,7 @@ describe('rxRequest', () => {
     const requestAddress = request.getAddress()
     assert(!requestAddress.isLoopback())
     assert(!requestAddress.isUnknown())
-    assert(address === requestAddress)
+    assert(address.equals(requestAddress))
   })
   test('loopback sequence returns correct address', () => {
     const address = addressModel.create('LOOPBACK')
@@ -20,6 +20,6 @@ describe('rxRequest', () => {
     const requestAddress = request.getAddress()
     assert(requestAddress.isLoopback())
     assert(!requestAddress.isUnknown())
-    assert(address === requestAddress)
+    assert(address.equals(requestAddress))
   })
 })

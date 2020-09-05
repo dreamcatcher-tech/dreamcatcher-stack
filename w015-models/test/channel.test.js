@@ -47,7 +47,7 @@ describe('channel', () => {
       const provenance = await provenanceModel.create()
       const address = provenance.getAddress()
       const channel = channelModel.create(address)
-      assert(channel.address === address)
+      assert(channel.address.equals(address))
     })
   })
   describe('clone', () => {

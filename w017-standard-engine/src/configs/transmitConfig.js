@@ -133,7 +133,7 @@ const transmitConfig = (ioConsistency) => {
         assert(interblockModel.isModel(interblock))
         const block = await consistency.getBlock(interblock.provenance)
         assert(blockModel.isModel(block))
-        assert(block.provenance === interblock.provenance)
+        assert(block.provenance.equals(interblock.provenance))
         debug(`fetchBlock height: ${block.provenance.height}`)
         return { block }
       },

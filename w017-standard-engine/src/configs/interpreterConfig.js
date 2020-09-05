@@ -18,7 +18,7 @@ const interpreterConfig = (isolatedTick, dmz, anvil, address) => {
   assert(addressModel.isModel(address))
   assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
   if (rxRequestModel.isModel(anvil)) {
-    assert(anvil.getAddress() === address)
+    assert(anvil.getAddress().equals(address))
   }
   debug(
     `interpreterConfig: %o from chainId: %o`,
@@ -144,7 +144,7 @@ const interpreterConfig = (isolatedTick, dmz, anvil, address) => {
       isResponseDone: ({ dmz, anvil, address }) => {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
-        assert(anvil.getAddress() === address)
+        assert(anvil.getAddress().equals(address))
         const index = anvil.getIndex()
         const isResponseDone = dmz.network.isResponseDone(address, index)
         debug(`isResponseDone: ${!!isResponseDone} anvil: %o`, anvil.type)

@@ -31,7 +31,7 @@ describe('keypair', () => {
     const kp1 = await crypto.generateKeyPair()
     const s1 = await keypairModel.create('CI', kp1)
     const s2 = await keypairModel.create('CI', kp1)
-    assert(s1 === s2)
+    assert(s1.equals(s2))
   })
   test('refuse to sign blank inputs', async () => {
     const keypair = await keypairModel.create()
