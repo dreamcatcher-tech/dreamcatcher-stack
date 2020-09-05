@@ -78,7 +78,7 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
   const tap = enableLoggingWithTap(engine, identifier)
-  tap.on()
+  // tap.on()
   const initializePromise = createBase(ioConsistency, sqsPool)
 
   /** Fluent interfaces

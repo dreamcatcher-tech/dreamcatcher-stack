@@ -18,8 +18,9 @@ describe('awsLogin', () => {
    * 2020-07-07 8,258 ms lamba - made forked provenance (ping alone RTT is 1,751 ms)
    * 2020-07-12 4,204 ms lambda, ping RTT 1,016 ms - sodium crypto
    * 2020-07-14 6,420 ms lambda, ping RTT 1,550 ms - no sqs, invoke straight from socket
+   * 2020-09-05 6,420 ms lambda, ping RTT 1,550 ms - no sqs, invoke straight from socket
    */
-  test('terminal ping', async () => {
+  test.only('terminal ping', async () => {
     jest.setTimeout(60000)
 
     require('debug').enable('*metro* *awsFactory *tests:aws *shell*')
@@ -106,18 +107,17 @@ describe('awsLogin', () => {
     const terminalChainId =
       '34e3c74c43c0e9b2f3f2ef9f93a0f427ededf5878891b23d792d8f7c1a174b94'
     const { url } = require('../.serverless/Template.apiGateway.json')
-    const hyperAddress = addressModel.create(terminalChainId)
     const awsSocket = socketModel.create({
       type: 'awsApiGw',
-      info: { wssUrl: url },
+      info: { url },
     })
-    await client.addTransport(hyperAddress, awsSocket.info)
+    await client.addTransport(terminalChainId, awsSocket.info)
 
     const creds = {
       method: 'password',
       user: 'test user',
       pass: 'test pass',
-      terminal: hyperAddress.getChainId(),
+      terminal: terminalChainId,
     }
     const result = await client.login(creds)
     debug(`login result: `, result)

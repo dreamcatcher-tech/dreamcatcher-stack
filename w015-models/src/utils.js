@@ -67,6 +67,12 @@ const standardize = (model) => {
       }
       return jsonString
     }
+    const equals = (other) => {
+      if (!isModel(other)) {
+        return false
+      }
+      return _.isEqual(completeModel, other)
+    }
     const getHash = () => hash
     const getProof = () => {
       if (!proof) {
@@ -77,6 +83,7 @@ const standardize = (model) => {
     const functions = {
       ...modelFunctions,
       serialize,
+      equals,
       getHash,
       getProof,
     }

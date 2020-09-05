@@ -34,7 +34,7 @@ const pack = async (packagePath, logger = console) => {
       tarballPath = path.join(tmpdir, `${tarballName}`)
     })
     npm.on('close', (code) => {
-      if (code == 0) {
+      if (code === 0) {
         npm.unref()
       }
       try {

@@ -49,7 +49,7 @@ const installCovenant = async (covenantHash, logger, persistence) => {
       reject(errorMessage)
     })
     npm.on('close', async (code) => {
-      if (code == 0) {
+      if (code === 0) {
         npm.unref()
       }
       //This is saving a stream to cas:

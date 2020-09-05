@@ -7,7 +7,7 @@
  *
  * Filesystem: all we have is sendParent, and we want to get to send() so other side can reply()
  *
- * The context of the interpreter == Dmz
+ * The context of the interpreter === Dmz
  * Interpreter has no side effects - it only modifies context.
  *
  */

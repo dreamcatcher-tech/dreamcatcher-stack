@@ -4,7 +4,7 @@ const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.co
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('effector', () => {
-  require('debug').enable('*metrology* *tests:effector* *shell*')
+  require('debug').enable('*metrology* *tests:effector*')
 
   test('ping single', async () => {
     debug(`start`)
@@ -34,16 +34,17 @@ describe('effector', () => {
      * 2020-07-03 499ms shell uses xstate and loopback instead of direct
      * 2020-07-03 418ms logging off
      * 2020-07-10 428ms real crypto sodium, 121ms ping RTT.  Previously was 1 second
+     * 2020-09-05 760ms moved to whonix vm, 227ms RTT
      */
   })
-  test('ping many times', async () => {
-    jest.setTimeout(6000)
+  test.skip('ping many times', async () => {
+    jest.setTimeout(10000)
     debug(`start`)
     const client = await effectorFactory()
-    client.engine.enableLogging()
+    // client.engine.enableLogging()
     let count = 0
     const promises = []
-    while (count < 50) {
+    while (count < 100) {
       const reply = client.ping('.', { count })
       promises.push(reply)
       count++
@@ -61,6 +62,7 @@ describe('effector', () => {
      * 2020-05-11 4,616ms 100 pings, batchsize 10, 36 blocks in total
      * 2020-06-02 2,521ms 100 pings, batchsize 10, 23 blocks in total
      * 2020-06-24 2,908ms 100 pings, batchsize 10, 23 blocks in total
+     * 2020-09-05 5,496ms 100 pings, batchsize 10, 23 blocks in total move to whonix vm
      *
      */
   })
