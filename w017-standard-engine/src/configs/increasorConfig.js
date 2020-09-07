@@ -153,17 +153,14 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         // TODO when a new channel opens, make a new provenance that shortcuts proof needed
         const nextBlock = await generateNext(nextDmz, block, crypto.sign)
 
-        const json = nextBlock.serialize()
-        const clone = blockModel.clone(json)
-
         return nextBlock
       },
       unlockChain: async ({ nextLock }) => {
         assert(lockModel.isModel(nextLock))
         debug(`unlockChain`)
         // TODO handle unlock rejection
-        const result = await consistency.putUnlockChain(nextLock)
-        return result
+        await consistency.putUnlockChain(nextLock)
+        return
       },
     },
   })

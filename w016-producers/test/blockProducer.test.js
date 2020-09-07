@@ -26,7 +26,7 @@ describe('blockProducer', () => {
       const dmz = block.getDmz()
       await assert.rejects(() => blockProducer.generateNext(dmz, block))
     })
-    test.only('pass serialize test', async () => {
+    test('pass serialize test', async () => {
       const block = await blockModel.create()
       const state = { test: 'state' }
       const nextDmz = dmzModel.clone({ ...block.getDmz(), state })

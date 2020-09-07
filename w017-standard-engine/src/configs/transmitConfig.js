@@ -97,7 +97,7 @@ const transmitConfig = (ioConsistency) => {
           debug(`removeListeningTxs`)
           const targetSockets = targetTxs.map(({ socket }) => socket)
           const filtered = listeningTxs.filter(
-            ({ socket }) => !targetSockets.includes(socket)
+            ({ socket }) => !targetSockets.some((ts) => ts.equals(socket))
           )
           debug(`filter removed: ${targetSockets.length - filtered.length}`)
           return filtered

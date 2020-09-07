@@ -43,11 +43,10 @@ const _ingestInterblock = (channel, interblock) =>
         debug(`ingested heavy: ${provenance.height}`)
       }
     }
-
     const last = _.last(channel.lineageTip)
     if (!last) {
       if (provenance.address.isGenesis()) {
-        debug(`ingested genesis`)
+        debug(`ingesting genesis`)
         pushLight()
         pushHeavy()
       }
@@ -56,7 +55,7 @@ const _ingestInterblock = (channel, interblock) =>
     }
     if (remote && draft.heavy) {
       if (provenance.height > draft.heavy.provenance.height) {
-        if (immerLineage.includes(integrity)) {
+        if (immerLineage.some((parent) => parent.equals(integrity))) {
           // if can access prior blocks easily, can avoid the 'lineage' key
           pushHeavy()
         }

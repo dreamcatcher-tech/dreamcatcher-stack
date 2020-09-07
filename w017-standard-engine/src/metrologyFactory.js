@@ -110,7 +110,7 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
 
     // TODO change to be plain variables ?
     const dispatch = ({ type, payload, to = '.' }) => {
-      debug(`dispatch to: %o action: %O`, to, type)
+      debug(`dispatch to: %o action: %O payload: %O`, to, type, payload)
       const promise = injector({ type, payload, to })
       sqsIncrease.push(address)
       return promise
@@ -158,7 +158,7 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
       return () => subscribers.delete(callback)
     }
 
-    const spawn = (alias, spawnOptions) =>
+    const spawn = (alias, spawnOptions = {}) =>
       dispatch(actions.spawn(alias, spawnOptions))
     const getChildren = () => {
       // TODO make children resolve directly

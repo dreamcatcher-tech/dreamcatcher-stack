@@ -4,14 +4,15 @@ const { metrologyFactory } = require('../src/metrologyFactory')
 const { blockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()
 
-require('debug').enable('*metro* *cont* *increas* *pool*')
+require('debug').enable('*metro* *sqsIncrease')
 
 describe('continuation', () => {
   describe('loopback', () => {
-    test('loopback cleared immediately', async () => {
+    test.only('loopback cleared immediately', async () => {
       const base = await metrologyFactory()
       base.enableLogging()
       await base.spawn('loop')
+      // await base.settle()
       const causeIncrease = await base.dispatch({
         type: 'PING',
         to: 'loop',

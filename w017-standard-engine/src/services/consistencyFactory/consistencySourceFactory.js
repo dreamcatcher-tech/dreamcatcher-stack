@@ -182,8 +182,8 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     const routePromise = _updateRouteTable(block, previous)
     const purgePromise = _purgePool(previousLock, incomingLock)
     await Promise.all([routePromise, purgePromise])
-    await lock.release(chainId, incomingLock.uuid)
     locks.delete(chainId)
+    await lock.release(chainId, incomingLock.uuid)
     debug(`putUnlockChain complete`)
   }
   const _updateRouteTable = async (block, previous) => {

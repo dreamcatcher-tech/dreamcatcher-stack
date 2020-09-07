@@ -110,7 +110,7 @@ const networkModel = standardize({
       const remote = interblock.getRemote()
       if (remote && lineageIncludes) {
         if (provenance.height === channel.heavy.provenance.height) {
-          assert.equal(interblock, channel.heavy)
+          assert(interblock.equals(channel.heavy))
         }
         return provenance.height <= channel.heavy.provenance.height
       }

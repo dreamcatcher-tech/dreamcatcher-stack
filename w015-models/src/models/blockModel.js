@@ -46,7 +46,6 @@ const blockModel = standardize({
     return block
   },
   logicize(instance) {
-    debug('logicize')
     const isLoop = instance.network.getAliases().some((alias) => {
       const { address } = instance.network[alias]
       return instance.provenance.getAddress().equals(address)

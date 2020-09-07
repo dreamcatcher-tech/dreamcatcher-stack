@@ -5,7 +5,7 @@ const { blockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()
 
 describe('pool', () => {
-  require('debug').enable('*metro* *crypto')
+  require('debug').enable('*metro* *crypto *lock')
   describe('initializeStorage', () => {
     test('initial conditions creates new baseChain', async () => {
       const metrology = await metrologyFactory('A')
@@ -36,8 +36,8 @@ describe('pool', () => {
 
   describe('poolInterblock', () => {
     describe('birthChild', () => {
-      test.only('new child created from genesis', async () => {
-        require('debug').enable('*metro* *crypto *s3 *db')
+      test('new child created from genesis', async () => {
+        require('debug').enable('*metro*')
         const base = await metrologyFactory('birthChild').spawn('child')
         const baseState = base.getState()
         assert(blockModel.isModel(baseState))
@@ -64,9 +64,8 @@ describe('pool', () => {
         assert.equal(parentChannel.lineageHeight, baseState.provenance.height)
         assert.equal(parentChannel.heavyHeight, baseState.provenance.height)
         const { lineage } = parentChannel
-        const isLineageMatch = lineage.every(
-          (hash, index) =>
-            hash === base.getState(index).provenance.reflectIntegrity()
+        const isLineageMatch = lineage.every((parent, index) =>
+          parent.equals(base.getState(index).provenance.reflectIntegrity())
         )
         assert(isLineageMatch)
         await base.settle()

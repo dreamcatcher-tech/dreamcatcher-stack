@@ -1,15 +1,25 @@
-const debug = require('debug')('interblock:aws:lock')
 const DynamoDBLockClient = require('dynamodb-lock-client')
 const { promisify } = require('util')
-const {} = require('./ramDynamoDbFactory')
-const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
-  const locks = new Map()
+const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
 
+let instanceId = 0
+
+const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
+  const debug = require('debug')(`interblock:aws:lock:id-${instanceId++}`)
+
+  const locks = new Map()
   const tryAcquire = async (chainId, awsRequestId, expiryMs) => {
+    debug(
+      `attempting to lock %o %o %o`,
+      chainId.substring(0, 16),
+      awsRequestId,
+      expiryMs
+    )
     if (locks.has(chainId)) {
       debug(`already locked to this thread: ${chainId}`)
       return
     }
+    locks.set(chainId, `acquisition in progress`)
     const failOpen = new DynamoDBLockClient.FailOpen({
       dynamodb,
       lockTable: 'dbLocks',
@@ -35,7 +45,6 @@ const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
       }
 
       const acquireLock = promisify(failOpen.acquireLock).bind(failOpen)
-      debug(`attempting to lock ${chainId}`)
       const dynamoDbLock = await acquireLock(chainId)
       // TODO fail if gets acquired already - ie: do not wait for it ?
       const { fencingToken } = dynamoDbLock
@@ -44,6 +53,7 @@ const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
         try {
           const release = promisify(dynamoDbLock.release).bind(dynamoDbLock)
           await release()
+          locks.delete(chainId)
           debug(`released lock for ${chainId}`)
         } catch (e) {
           debug(`failed to release lock for ${chainId} ${e.message}`)
@@ -56,6 +66,10 @@ const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
       return uuid
     } catch (error) {
       debug(`failed to lock: ${chainId} %O`, error)
+      const existing = locks.get(chainId)
+      if (typeof existing === 'string') {
+        locks.delete(chainId)
+      }
       return
     }
   }

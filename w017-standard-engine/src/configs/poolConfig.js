@@ -261,7 +261,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       unlockChain: async ({ lock }) => {
         assert(lockModel.isModel(lock))
         debug(`unlockChain`)
-        const isRedriveRequired = await consistency.putUnlockChain(lock)
+        await consistency.putUnlockChain(lock)
         return
       },
       poolBirthBlock: async ({ lock }) => {

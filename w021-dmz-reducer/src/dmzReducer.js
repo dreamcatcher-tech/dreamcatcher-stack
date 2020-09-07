@@ -78,8 +78,8 @@ const reducer = async (dmz, action) => {
     switch (request.type) {
       case '@@GENESIS':
         const { genesis, alias, originAction } = request.payload
-        assert(blockModel.isModel(genesis))
-        const payload = { alias, chainId: genesis.getChainId() }
+        const genesisModel = blockModel.clone(genesis)
+        const payload = { alias, chainId: genesisModel.getChainId() }
         const resolveAction = resolve(originAction, payload)
         debug('reply received for @@GENESIS')
         actions.push(resolveAction)

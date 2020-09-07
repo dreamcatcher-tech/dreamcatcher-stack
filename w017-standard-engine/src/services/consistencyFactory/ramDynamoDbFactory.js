@@ -70,11 +70,16 @@ const ramDynamoDbFactory = () => {
     }
   }
 
-  const put = ({ TableName, Item }, callback) => {
+  const put = ({ TableName, Item, ...rest }, callback) => {
     debug(`put %O %O`, TableName, Item.chainId)
     if (callback) {
       setImmediate(async () => {
-        callback(null, await ret.promise())
+        try {
+          const result = await ret.promise()
+          callback(null, result)
+        } catch (e) {
+          callback(e)
+        }
       })
     }
 

@@ -49,7 +49,8 @@ const createTap = (prefix = 'interblock:blocktap') => {
     assert(blockModel.isModel(block))
     const chainIdRaw = block.provenance.getAddress().getChainId()
     const isNewChain = !cache[chainIdRaw]
-    const isDuplicate = !isNewChain && cache[chainIdRaw].includes(block)
+    const isDuplicate =
+      cache[chainIdRaw] && cache[chainIdRaw].some((b) => b.equals(block))
     insertBlock(block, cache)
     if (!isOn) {
       return
@@ -64,7 +65,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     if (!cache[chainId]) {
       cache[chainId] = []
     }
-    if (!cache[chainId].includes(block)) {
+    if (!cache[chainId].some((b) => b.equals(block))) {
       cache[chainId].push(block)
     }
   }

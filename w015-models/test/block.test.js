@@ -9,7 +9,7 @@ const {
 const crypto = require('../../w012-crypto')
 
 describe('block', () => {
-  describe.only('instantiation', () => {
+  describe('instantiation', () => {
     test('default isValidated', async () => {
       const defaultBlock = await blockModel.create()
       assert(defaultBlock.isValidated())

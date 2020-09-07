@@ -34,6 +34,7 @@ const ioQueueFactory = (name, model) => {
     } catch (e) {
       debug(`${name} rejected: %O %O`, envelope, e)
       setImmediate(reject, e)
+      throw e
     }
     loop()
     assert(_awaiting.has(envelope))

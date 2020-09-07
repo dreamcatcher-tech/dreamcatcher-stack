@@ -20,7 +20,7 @@ describe.skip('awsLogin', () => {
    * 2020-07-14 6,420 ms lambda, ping RTT 1,550 ms - no sqs, invoke straight from socket
    * 2020-09-05 6,420 ms lambda, ping RTT 1,550 ms - no sqs, invoke straight from socket
    */
-  test.only('terminal ping', async () => {
+  test('terminal ping', async () => {
     jest.setTimeout(60000)
 
     require('debug').enable('*metro* *awsFactory *tests:aws *shell*')
