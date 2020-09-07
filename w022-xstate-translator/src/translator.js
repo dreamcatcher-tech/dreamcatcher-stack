@@ -129,7 +129,7 @@ const translator = (machine) => {
     const transientState = machine.transition(resolvedState, action)
     debug(`next machine state: `, transientState.value)
 
-    const json = transientState.toJSON()
+    const json = transientState.toJSON() // TODO use traverse to remove circular https://www.npmjs.com/package/traverse
     const { actions, ...nextState } = json
     const cleanNextState = JSON.parse(JSON.stringify(nextState))
     const { context, event } = cleanNextState

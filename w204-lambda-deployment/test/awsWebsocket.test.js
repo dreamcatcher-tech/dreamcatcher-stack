@@ -3,7 +3,7 @@ const debug = require('debug')('interblock:test:awsWebsocket')
 const {
   tcpTransportFactory,
 } = require('../../w020-emulators/src/tcpTransportFactory')
-describe('awsWebsocket', () => {
+describe.skip('awsWebsocket', () => {
   jest.setTimeout(10000)
 
   require('debug').enable(`interblock:test:awsWebsocket *:transport`)

@@ -1,12 +1,24 @@
 const assert = require('assert')
-const { dmzModel, provenanceModel, blockModel, keypairModel } = require('..')
+const {
+  dmzModel,
+  provenanceModel,
+  blockModel,
+  keypairModel,
+  cryptoCacher,
+} = require('..')
 const crypto = require('../../w012-crypto')
 
 describe('block', () => {
-  describe('instantiation', () => {
+  describe.only('instantiation', () => {
     test('default isValidated', async () => {
       const defaultBlock = await blockModel.create()
       assert(defaultBlock.isValidated())
+    })
+    test('default serialization', async () => {
+      const defaultBlock = await blockModel.create()
+      const json = defaultBlock.serialize()
+      const clone = blockModel.clone(json)
+      assert(defaultBlock.equals(clone))
     })
     test('custom key isValidated', async () => {
       const keypair = keypairModel.create('CUSTOM-KEY')

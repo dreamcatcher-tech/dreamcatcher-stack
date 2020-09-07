@@ -131,7 +131,7 @@ const provenanceSchema = {
     address: addressSchema,
     lineage: {
       type: 'object',
-      description: `Array of previous blockhashes this provenance item extends.
+      description: `Object of previous blockhashes this provenance item extends.
   There may be many, but at least one is the most recent block provenance.
   Others might be those resulting from overdrive consensus,
   or periodic shortcutting of the chain history to quick lookup purposes.
@@ -146,7 +146,7 @@ const provenanceSchema = {
   Key gives the provenance id, which can be height, or foreignChain:height.
   Value gives the hash of the block at the provenance id.`,
       patternProperties: {
-        '(.*?)': integritySchema,
+        '(.*?)': integritySchema, // TODO apply naming convention to regex
       },
     },
     height: {

@@ -23,4 +23,10 @@ describe('acl', () => {
     const a2 = actionModel.create()
     assert(a1.equals(a2))
   })
+  test.only('no undefined in payloads', () => {
+    const original = { type: 'test', payload: { missing: undefined } }
+    assert.throws(() => actionModel.create(original))
+    const nested = { type: 'test', payload: { deep: { missing: undefined } } }
+    assert.throws(() => actionModel.create(nested))
+  })
 })

@@ -55,7 +55,7 @@ const channelModel = standardize({
       assert(lineageHeight >= heavyHeight)
       const { provenance } = _.last(lineageTip)
       assert.equal(provenance.height, lineageHeight)
-      assert.equal(_.last(lineage), provenance.reflectIntegrity())
+      assert(_.last(lineage).equals(provenance.reflectIntegrity()))
     }
     assert(lineageTip.every((interblock) => !interblock.getRemote()))
     checkMonotonic(requests) // TODO check requests length matches

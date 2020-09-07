@@ -14,7 +14,7 @@ module.exports = async ({ spinner, blockchain }, count = 1) => {
   }
 
   return {
-    out
+    out,
   }
 }
 

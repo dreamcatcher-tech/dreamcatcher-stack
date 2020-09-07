@@ -12,7 +12,8 @@ const {
 } = require('../../w015-models')
 const { handler, _patchSendToClient } = require('../src/streamProcessor')
 require('debug').enable('*')
-describe('awsLocalLogin', () => {
+
+describe.skip('awsLocalLogin', () => {
   test('ping lambda', async () => {
     const event = {
       requestContext: {

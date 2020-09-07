@@ -11,93 +11,95 @@ const crypto = require('../../w012-crypto')
 const standardize = (model) => {
   checkStructure(model)
   let defaultInstance
-  const mapObjectToModel = new Map()
-  const mapHashToModel = new Map()
-  const cloneSet = new WeakSet()
-  let dupeCount = 0
-  const clone = (instance, reducer) => {
-    if (!instance) {
+  const modelWeakSet = new WeakSet()
+  const objectToModelWeakMap = new WeakMap()
+  const isModel = (test) => modelWeakSet.has(test)
+  const clone = (object, reducer) => {
+    if (!object) {
       if (!defaultInstance) {
         defaultInstance = standardModel.create()
         // TODO WARNING some models are async creators
       }
       return defaultInstance
     }
-    if (isModel(instance) && !reducer) {
-      return instance
+    if (isModel(object) && !reducer) {
+      return object
     }
-    if (instance && typeof reducer === 'function') {
-      assert(isModel(instance), `instance must be ${model.schema.title}`)
-      instance = produce(instance, reducer)
+    if (object && typeof reducer === 'function') {
+      assert(isModel(object), `instance must be ${model.schema.title}`)
+      object = produce(object, reducer)
     }
-    if (mapObjectToModel.has(instance)) {
-      return mapObjectToModel.get(instance)
+    if (typeof object === 'string') {
+      object = JSON.parse(object)
     }
-    if (typeof instance === 'string') {
-      instance = JSON.parse(instance)
+    if (objectToModelWeakMap.has(object)) {
+      return objectToModelWeakMap.get(object)
     }
-    const inflated = modelInflator(model.schema, instance)
-
-    const { hash, proof } = generateHash(model.schema, inflated)
-    if (mapHashToModel.has(hash)) {
-      // TODO move to read lookups to detect duplicates
-      dupeCount++
-      // debug(`dupe hit #: ${dupeCount} for: ${model.schema.title}`)
-      if (dupeCount > 99) {
-        // debug(`hundy`)
-      }
-      const hashEquivalent = mapHashToModel.get(hash)
-      mapObjectToModel.set(instance, hashEquivalent)
-      return hashEquivalent
-    }
+    const inflated = modelInflator(model.schema, object)
 
     const modelFunctions = model.logicize(inflated)
-    let jsonString
-    const serialize = () => {
-      // TODO serialize quicker using schemas with https://www.npmjs.com/package/fast-json-stringify
-      // TODO model away serialize
-      if (!jsonString) {
-        jsonString = stringify(completeModel)
-        if (mapObjectToModel.has(jsonString)) {
-          assert.equal(mapObjectToModel.get(jsonString), completeModel)
-        } else {
-          mapObjectToModel.set(jsonString, completeModel)
-          assert.equal(jsonString, completeModel.serialize())
-        }
-      }
-      return jsonString
-    }
-    const equals = (other) => {
-      if (!isModel(other)) {
-        return false
-      }
-      return _.isEqual(completeModel, other)
-    }
-    const getHash = () => hash
-    const getProof = () => {
-      if (!proof) {
-        throw new Error(`no proof defined ${model.schema.title}`)
-      }
-      return proof
-    }
+
+    const { serialize, getHash, getProof, equals } = closure(
+      model.schema,
+      inflated,
+      isModel
+    )
     const functions = {
       ...modelFunctions,
-      serialize,
       equals,
+      serialize,
       getHash,
       getProof,
     }
     const completeModel = proxy(inflated, functions)
-    cloneSet.add(completeModel)
-    mapHashToModel.set(hash, completeModel)
-    mapObjectToModel.set(instance, completeModel)
+    modelWeakSet.add(completeModel)
+    objectToModelWeakMap.set(object, completeModel)
     return completeModel
   }
 
   // TODO add produce function so clone isn't overloaded
-  const isModel = (test) => cloneSet.has(test)
   const standardModel = Object.freeze({ ...model, clone, isModel })
   return standardModel
+}
+
+const closure = (schema, inflated, isModel) => {
+  const equals = (other) => {
+    if (!isModel(other)) {
+      return false
+    }
+    return _.isEqual(inflated, other)
+  }
+  let jsonString
+  const serialize = () => {
+    // TODO serialize quicker using schemas with https://www.npmjs.com/package/fast-json-stringify
+    // TODO model away serialize
+    if (!jsonString) {
+      jsonString = stringify(inflated)
+    }
+    return jsonString
+  }
+  let cachedHash, cachedProof
+  const _generateHashWithProof = () => {
+    assert.equal(typeof inflated, 'object')
+    const { hash, proof } = generateHash(schema, inflated)
+    cachedHash = hash
+    cachedProof = proof
+  }
+  const getHash = () => {
+    if (!cachedHash) {
+      _generateHashWithProof()
+      assert(cachedHash)
+    }
+    return cachedHash
+  }
+  const getProof = () => {
+    if (!cachedProof) {
+      _generateHashWithProof()
+      assert(cachedProof)
+    }
+    return cachedProof
+  }
+  return { equals, serialize, getHash, getProof }
 }
 
 const generateHash = (schema, instance) => {

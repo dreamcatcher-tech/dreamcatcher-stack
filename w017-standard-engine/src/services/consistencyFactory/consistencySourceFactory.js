@@ -375,8 +375,8 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     debug(`s3.getBlock(s3Key)`, s3Key)
     const block = await s3.getBlock(s3Key)
     assert(blockModel.isModel(block))
+    assert(address.equals(block.provenance.getAddress()))
     assert.equal(block.getHash(), blockItem.blockHash)
-    assert.equal(block.provenance.getAddress(), address)
     assert.equal(block.provenance.height, height)
     debug(`getBlock complete`)
     return block

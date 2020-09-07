@@ -17,7 +17,7 @@ describe('pool', () => {
 
       const { sqsIncrease } = metrology.getEngine()
       const address = await sqsIncrease.awaitNextPush()
-      assert.equal(address, block.provenance.getAddress())
+      assert(address.equals(block.provenance.getAddress()))
       await metrology.settle()
     })
     test('two metrology bases have different addresses', async () => {
@@ -36,7 +36,7 @@ describe('pool', () => {
 
   describe('poolInterblock', () => {
     describe('birthChild', () => {
-      test('new child created from genesis', async () => {
+      test.only('new child created from genesis', async () => {
         require('debug').enable('*metro* *crypto *s3 *db')
         const base = await metrologyFactory('birthChild').spawn('child')
         const baseState = base.getState()
@@ -58,12 +58,9 @@ describe('pool', () => {
         assert.equal(Object.keys(child.getChannels()).length, 2)
         assert.equal(Object.keys(base.getChannels()).length, 3)
         assert.equal(baseState.network.child.systemRole, './')
-        assert.equal(
-          baseState.network.child.address,
-          childState.provenance.getAddress()
-        )
+        assert(childChannel.address.equals(childState.provenance.getAddress()))
         const parentChannel = childState.network['..']
-        assert.equal(parentChannel.address, baseState.provenance.getAddress())
+        assert(parentChannel.address.equals(baseState.provenance.getAddress()))
         assert.equal(parentChannel.lineageHeight, baseState.provenance.height)
         assert.equal(parentChannel.heavyHeight, baseState.provenance.height)
         const { lineage } = parentChannel

@@ -34,7 +34,7 @@ const blockModel = standardize({
     dmz = dmzModel.clone(dmz)
     // TODO move await out of models and in to the blockProducer
     const previousBlock = undefined
-    const forkedLineages = []
+    const forkedLineages = {}
     const provenance = await provenanceModel.create(
       dmz,
       previousBlock,
@@ -42,10 +42,8 @@ const blockModel = standardize({
       asyncSigner
     )
     // TODO verify that we are able to sign this dmz ?
-    debug('clone')
-    const clone = blockModel.clone({ ...dmz, provenance })
-    debug('complete')
-    return clone
+    const block = blockModel.clone({ ...dmz, provenance })
+    return block
   },
   logicize(instance) {
     debug('logicize')
@@ -54,16 +52,11 @@ const blockModel = standardize({
       return instance.provenance.getAddress().equals(address)
     })
     assert(!isLoop, `Loop detected`)
-    const { provenance, ...copy } = instance
-    const dmz = dmzModel.clone(copy)
+    const { provenance, ...spreadDmz } = instance
+    const dmz = dmzModel.clone(spreadDmz)
 
-    const check = (dmz) => {
-      const template = integrityModel.create()
-      const hash = dmz.getHash()
-      const dmzIntegrity = integrityModel.clone({ ...template, hash })
-      return dmzIntegrity.equals(instance.provenance.dmzIntegrity)
-    }
-    assert(check(dmz), 'blockModel: provenance check failed')
+    const hash = dmz.getHash()
+    assert.deepStrictEqual(hash, provenance.dmzIntegrity.hash)
 
     const isValidated = () => {
       if (provenance.address.isGenesis()) {
@@ -75,10 +68,10 @@ const blockModel = standardize({
         (signature) => signature.publicKey
       )
       const allRequired = requiredPublicKeys.every((key) =>
-        providedPublicKeys.includes(key)
+        providedPublicKeys.some((providedKey) => providedKey.equals(key))
       )
       const onlyRequired = providedPublicKeys.every((key) =>
-        requiredPublicKeys.includes(key)
+        requiredPublicKeys.some((requiredKey) => requiredKey.equals(key))
       )
       return allRequired && onlyRequired
     }
@@ -103,15 +96,14 @@ const blockModel = standardize({
       })
     }
 
-    const isNext = (block) => {
+    const isNext = (nextBlock) => {
       // TODO work out validators being succeeded
-      const blockness = blockModel.isModel(block) && block.isValidated()
-      const provenance = instance.provenance.isNext(block.provenance)
+      const blockness = blockModel.isModel(nextBlock) && nextBlock.isValidated()
+      const provenance = instance.provenance.isNext(nextBlock.provenance)
       // TODO check if forked lineage was applied if required
       return blockness && provenance
     }
     const getChainId = () => instance.provenance.getAddress().getChainId()
-    debug('logicize complete')
     return { isValidated, getDmz, whoami, isNext, getChainId }
   },
 })

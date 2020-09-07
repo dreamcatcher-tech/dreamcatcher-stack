@@ -1,5 +1,7 @@
 const assert = require('assert')
 const _ = require('lodash')
+const traverse = require('traverse')
+
 /**
  * ACTION CREATORS FOR USE INSIDE COVENANTS
  *
@@ -23,6 +25,7 @@ const request = (type = 'PING', payload = {}, to = '.') => {
   if (typeof payload !== 'object') {
     throw new Error(`"payload" must be an object: ${payload}`)
   }
+  _assertNoUndefined(payload)
   const request = {
     type,
     payload,
@@ -51,6 +54,7 @@ const _txReply = (type = '@@RESOLVE', payload = {}, request) => {
   if (typeof payload !== 'object') {
     throw new Error(`payload must be object: ${payload}`)
   }
+  _assertNoUndefined(payload)
   const reply = {
     type,
     payload,
@@ -86,6 +90,14 @@ const isReplyFor = (reply, request) => {
 const replyTypes = ['@@PROMISE', '@@RESOLVE', '@@REJECT']
 const isNotReply = (reply) => {
   return !reply || !reply.type || !replyTypes.includes(reply.type)
+}
+
+const _assertNoUndefined = (obj) => {
+  traverse(obj).forEach(function (val) {
+    if (typeof val === 'undefined') {
+      throw new Error(`Values cannot be undefined: ${this.path}`)
+    }
+  })
 }
 
 module.exports = { request, promise, resolve, reject, isReplyFor }

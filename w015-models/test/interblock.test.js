@@ -53,9 +53,9 @@ describe('interblock', () => {
     const relineage = lineage.getWithoutRemote()
     assert(lineage !== heavy)
     assert(heavy !== derived)
-    assert.equal(lineage, derived)
-    assert.equal(derived, relineage)
-    assert.equal(lineage, relineage)
+    assert(lineage.equals(derived))
+    assert(derived.equals(relineage))
+    assert(lineage.equals(relineage))
   })
   test('throws if no valid address to send to', () => {
     // no point making an interblock of the target alias does not have an address

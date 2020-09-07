@@ -106,7 +106,7 @@ const types = {
   open: '@@OPEN_CHILD',
 }
 
-actions.spawn = (alias, spawnOpts) => ({
+actions.spawn = (alias, spawnOpts = {}) => ({
   type: types.spawn,
   payload: { alias, spawnOpts },
 })

@@ -15,13 +15,19 @@ const ciSigner = async (integrity) => {
 
 const provenanceModel = standardize({
   schema: provenanceSchema,
-  async create(dmz, parent, lineageForks = {}, asyncSigner = ciSigner) {
+  async create(
+    dmz,
+    parentProvenance,
+    extraLineages = {},
+    asyncSigner = ciSigner
+  ) {
     const { dmzModel } = require('./dmzModel') // avoid circular reference
     dmz = dmz || dmzModel.create()
     assert(dmzModel.isModel(dmz))
-    assert(!parent || provenanceModel.isModel(parent))
-    assert.equal(typeof lineageForks, 'object')
-    assert(Object.values(lineageForks).every(integrityModel.isModel))
+    assert(!parentProvenance || provenanceModel.isModel(parentProvenance))
+    assert.equal(typeof extraLineages, 'object')
+    assert(Object.values(extraLineages).every(integrityModel.isModel))
+    assert(!Object.keys(extraLineages).length || parentProvenance)
 
     const template = integrityModel.create()
     dmzIntegrity = integrityModel.clone({
@@ -31,13 +37,17 @@ const provenanceModel = standardize({
 
     let address = addressModel.create('GENESIS')
     let height = 0
-    const parentIntegrities = { ...lineageForks }
-    if (parent) {
-      const parentIntegrity = parent.reflectIntegrity()
-      assert(!Object.values(parentIntegrities).includes(parentIntegrity))
-      parentIntegrities[parent.height] = parentIntegrity
-      height = parent.height + 1
-      address = parent.getAddress()
+    const parentIntegrities = { ...extraLineages }
+    if (parentProvenance) {
+      const parentIntegrity = parentProvenance.reflectIntegrity()
+      assert(
+        !Object.values(parentIntegrities).some((integrity) =>
+          integrity.equals(parentIntegrity)
+        )
+      )
+      parentIntegrities[parentProvenance.height] = parentIntegrity
+      height = parentProvenance.height + 1
+      address = parentProvenance.getAddress()
     }
     const provenance = {
       dmzIntegrity,
@@ -98,7 +108,9 @@ const provenanceModel = standardize({
 
     const reflectIntegrity = () => reflectedIntegrity
     const isNext = (child) => {
-      const isParent = Object.values(child.lineage).includes(reflectIntegrity())
+      const isParent = Object.values(child.lineage).some((lineage) =>
+        lineage.equals(reflectIntegrity())
+      )
       // TODO check signatures match ?
       const isHigher = child.height > instance.height
       const childPubkey = child.signatures[0].publicKey

@@ -5,6 +5,8 @@ module.exports = function (wallaby) {
       '**/sampleFile.txt',
       '!**/node_modules',
       '!**/*.test.js',
+      '!**/.serverless',
+      '!**/dist',
     ],
 
     tests: ['w*/**/*.test.js', '!**/node_modules', '!**/aws*.test.js'],
@@ -13,5 +15,6 @@ module.exports = function (wallaby) {
       type: 'node',
     },
     testFramework: 'jest',
+    trace: true,
   }
 }

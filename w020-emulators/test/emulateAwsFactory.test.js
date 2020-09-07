@@ -6,7 +6,7 @@ require('../../w012-crypto').testMode()
 describe('awsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal
   // one after the other should result in correct connections for both
-  test('connect', async () => {
+  test.skip('connect', async () => {
     require('debug').enable('*metro* *awsFactory *increas*')
     debug(`start`)
     const client = await effectorFactory('eff')

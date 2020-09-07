@@ -133,7 +133,7 @@ const _respond = (network, request, reply) =>
     const channel = network[alias]
     assert(channelModel.isModel(channel))
     assert(channel.address.equals(address))
-    assert.equal(channel.rxRequest(), request)
+    assert(channel.rxRequest().equals(request))
     const index = request.getIndex()
     assert(!channel.replies[index])
     let nextChannel = channelProducer.txReply(channel, reply)

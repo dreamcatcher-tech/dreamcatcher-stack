@@ -5,6 +5,7 @@ const { txRequestModel } = require('../transients/txRequestModel')
 const { txReplyModel } = require('../transients/txReplyModel')
 const { rxReplyModel } = require('../transients/rxReplyModel')
 const { rxRequestModel } = require('../transients/rxRequestModel')
+const { assertNoUndefined } = require('../assertNoUndefined')
 
 const schema = {
   title: 'State',
@@ -135,8 +136,10 @@ const stateModel = standardize({
   },
 })
 const assertSerializable = (object) => {
+  assertNoUndefined(object)
   // TODO ensure this check is sufficient for stringify
   if (isCircular(object)) {
+    // TODO move to traverse
     throw new Error(`state must be stringifiable`)
   }
 }

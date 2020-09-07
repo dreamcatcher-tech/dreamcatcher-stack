@@ -11,9 +11,9 @@ describe('keypair', () => {
     const keypairDefault2 = keypairModel.create()
     const keypair1 = keypairModel.create('KP1', kp1)
     const keypair2 = keypairModel.create('KP2', kp2)
-    assert.equal(keypairDefault1, keypairDefault2)
-    assert.notEqual(keypair1, keypair2)
-    assert.notEqual(keypairDefault1, keypair1)
+    assert(keypairDefault1.equals(keypairDefault2))
+    assert(!keypair1.equals(keypair2))
+    assert(!keypairDefault1.equals(keypair1))
     const degraded = { ...keypair1, publicKey: keypair2.publicKey }
     assert.throws(() => keypairModel.clone(degraded))
     assert.equal(keypairDefault1.name, 'CI')
@@ -22,7 +22,7 @@ describe('keypair', () => {
   test('default create is same each time', () => {
     const s1 = keypairModel.create()
     const s2 = keypairModel.create()
-    assert.equal(s1, s2)
+    assert(s1.equals(s2))
     const c1 = keypairModel.clone()
     const c2 = keypairModel.clone()
     assert.equal(c1, c2)

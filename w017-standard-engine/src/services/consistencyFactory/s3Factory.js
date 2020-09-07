@@ -59,6 +59,7 @@ const s3Factory = (s3 = ramS3Factory()) => {
   }
 
   const putBlock = async (Key, model) => {
+    assert(blockModel.isModel(model))
     const params = {
       Bucket: 'wbblockbucket',
       Key,
@@ -81,7 +82,7 @@ const s3Factory = (s3 = ramS3Factory()) => {
     const obj = JSON.parse(blockJson)
     // TODO move to use obj once know why fails
     await cryptoCacher.cacheVerifyHash(obj)
-    const block = blockModel.clone(blockJson)
+    const block = blockModel.clone(obj)
     debug(`getBlock complete: %O`, Key)
     return block
   }

@@ -146,9 +146,16 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       signBlock: async ({ lock, nextDmz }) => {
         // TODO only sign the block if it is different to previous ?
         assert(dmzModel.isModel(nextDmz))
+        assert(lockModel.isModel(lock))
         const { block } = lock
+        assert(block)
+
         // TODO when a new channel opens, make a new provenance that shortcuts proof needed
         const nextBlock = await generateNext(nextDmz, block, crypto.sign)
+
+        const json = nextBlock.serialize()
+        const clone = blockModel.clone(json)
+
         return nextBlock
       },
       unlockChain: async ({ nextLock }) => {

@@ -80,7 +80,7 @@ const interpreterConfig = (isolatedTick, dmz, anvil, address) => {
           debug('respondRequest')
           assert(dmzModel.isModel(dmz))
           assert(rxRequestModel.isModel(anvil))
-          assert.equal(anvil.getAddress(), address)
+          assert(anvil.getAddress().equals(address))
           const network = networkProducer.respondRequest(dmz.network, anvil)
           return dmzModel.clone({ ...dmz, network })
         },

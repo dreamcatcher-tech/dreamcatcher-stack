@@ -18,6 +18,10 @@ describe('state', () => {
     const s2 = stateModel.create()
     assert(s1.equals(s2))
   })
+  test('no undefined state keys', () => {
+    assert.throws(() => stateModel.create({ missing: undefined }))
+    assert.throws(() => stateModel.create({ nested: { missing: undefined } }))
+  })
   test.todo('logically wrong action sequences')
   test.todo('sequence pattern wrong')
   test.todo('state non serializable')

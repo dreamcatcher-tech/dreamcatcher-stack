@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "DEBUG_COLORS=1 DEBUG=interblock:* jest",
-    "watch": "DEBUG_COLORS=1 DEBUG=interblock:* jest --watch",
+    "test": "DEBUG_COLORS=1 DEBUG='' jest",
+    "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
     "build:lambda": "cd w202-lambda-stream-processor && webpack",
     "sls:lambda": "cd w202-lambda-stream-processor && DEBUG='interblock:deploy*' sls --debug",
     "test:lambda": "DEBUG_COLORS=1 jest awsWebsocket && jest awsLogin",
@@ -40,6 +40,7 @@
     "sodium-plus": "^0.9.0",
     "supports-color": "^7.1.0",
     "tar": "^4.4.10",
+    "traverse": "^0.6.6",
     "uuid": "^3.3.3",
     "xstate": "^4.11.0"
   },

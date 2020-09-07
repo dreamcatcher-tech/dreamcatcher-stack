@@ -1,5 +1,6 @@
 const { standardize } = require('../utils')
 const { actionSchema } = require('../schemas/modelSchemas')
+const { assertNoUndefined } = require('../assertNoUndefined')
 
 const defaultAction = 'DEFAULT_ACTION'
 
@@ -15,6 +16,7 @@ const actionModel = standardize({
     return actionModel.clone(action)
   },
   logicize(instance) {
+    assertNoUndefined(instance)
     return {}
   },
 })

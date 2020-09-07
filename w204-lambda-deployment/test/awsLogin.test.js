@@ -9,7 +9,7 @@ const {
   interblockModel,
 } = require('../../w015-models')
 
-describe('awsLogin', () => {
+describe.skip('awsLogin', () => {
   /**
    * 2020-07-04 280,000ms to do a single ping by proxy, stream on local machine
    * 2020-07-06 61,000 ms ping, local processing, fixed wifi

@@ -1,6 +1,7 @@
 const assert = require('assert')
 const { standardize } = require('../utils')
 const { continuationSchema } = require('../schemas/modelSchemas')
+const { assertNoUndefined } = require('../assertNoUndefined')
 
 const continuationModel = standardize({
   schema: continuationSchema,
@@ -16,6 +17,8 @@ const continuationModel = standardize({
         `Promises cannot have payloads`
       )
     }
+    assertNoUndefined(instance)
+
     const isPromise = () => instance.type === '@@PROMISE'
     const isRejection = () => instance.type === '@@REJECT'
     const isResolve = () => instance.type === '@@RESOLVE'

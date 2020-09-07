@@ -56,7 +56,7 @@ describe('awsConsistency', () => {
       await consistencySource.putUnlockChain(incomingLock)
       const nextLock = await consistencySource.putLockChain(address)
       assert(nextLock)
-      assert.equal(nextLock.block, block)
+      assert(nextLock.block.equals(block))
       await consistencySource.putUnlockChain(nextLock)
     })
   })
