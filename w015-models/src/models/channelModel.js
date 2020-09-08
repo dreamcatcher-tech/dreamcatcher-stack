@@ -119,7 +119,7 @@ const channelModel = standardize({
     const getRemoteReplyIndices = () => _getSortedIndices(remote.replies)
     const isTxGreaterThan = (previous) => {
       assert(channelModel.isModel(previous))
-      const isAddressChanged = previous.address !== address
+      const isAddressChanged = !previous.address.equals(address)
       const isNewReplies = isNewActions(replies, previous.replies)
       const isNewRequests = isNewActions(requests, previous.requests)
       const isNewPromises = isNewPromiseSettled(replies, previous.replies)

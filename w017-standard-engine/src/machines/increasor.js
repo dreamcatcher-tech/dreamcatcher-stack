@@ -40,7 +40,7 @@ const definition = {
             cond: 'isLockAcquired',
             actions: 'assignLock',
           },
-          { target: 'done' },
+          { target: 'done', actions: `unassignTxInterblocks` },
         ],
         onError: 'error',
       },

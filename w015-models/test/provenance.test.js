@@ -31,7 +31,7 @@ describe('provenance', () => {
     const dmz = dmzModel.create()
     const g1 = await provenanceModel.create(dmz)
     const g2 = await provenanceModel.create(dmz)
-    assert(g1 !== g2)
+    assert(!g1.equals(g2))
   })
   test('genesis address is stable', async () => {
     const g = await provenanceModel.create()

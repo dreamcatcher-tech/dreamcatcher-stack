@@ -1,5 +1,6 @@
 const assert = require('assert')
 const _ = require('lodash')
+const pad = require('pad')
 const { sqsQueueFactory } = require('../../w003-queue')
 const {
   interblockModel,
@@ -8,7 +9,7 @@ const {
   socketModel,
 } = require('../../w015-models')
 const { fsmFactory } = require('./fsmFactory')
-const debug = require('debug')('interblock:stdeng')
+const debugBase = require('debug')('interblock:engine')
 
 /**
  * Takes the finite state machines and connects them up using queues.
@@ -17,9 +18,10 @@ const debug = require('debug')('interblock:stdeng')
  * sqs queues threadbreak, in that they cannot be awaited on for a result.
  */
 const standardEngineFactory = () => {
-  debug(`standardEngineFactory`)
+  debugBase(`standardEngineFactory`)
 
   const receiver = (ioReceive, sqsPool, sqsTransmit) => async (tx) => {
+    const debug = debugBase.extend('receiver')
     debug(`receiver`)
     assert(txModel.isModel(tx))
     const { interblock } = tx
@@ -38,6 +40,7 @@ const standardEngineFactory = () => {
     await Promise.all(awaits)
   }
   const transmitter = (ioTransmit, sqsTx, sqsPool) => async (interblock) => {
+    const debug = debugBase.extend('transmitter')
     debug(`transmitter`)
     assert(interblockModel.isModel(interblock))
     // TODO split into multiple calls, so can push out earlier
@@ -56,6 +59,7 @@ const standardEngineFactory = () => {
   }
 
   const pooler = (ioPool, sqsIncrease) => async (interblock) => {
+    const debug = debugBase.extend('pooler')
     debug(`pooler`)
     assert(interblockModel.isModel(interblock))
     const affectedAddresses = await ioPool.push(interblock)
@@ -68,59 +72,40 @@ const standardEngineFactory = () => {
 
   // TODO test behaviour independently, concurrent - maybe with dirty queues ?
   // TODO generalize the throttling function
-  const increasor = (ioIncrease, sqsTransmit, sqsIncrease) => {
-    const lockStack = new Map()
-
+  let invokeCount = 0
+  const increasor = (ioIncrease, sqsTransmit) => {
+    const redrives = new Map()
+    const locks = new Map()
     const throttler = async (address) => {
-      assert(addressModel.isModel(address))
+      const debug = debugBase.extend('increasor').extend(pad(3, invokeCount++))
       debug(`throttler`)
+      assert(addressModel.isModel(address))
+      const chainId = address.getChainId()
 
-      const stack = lockStack.get(address) || []
-      lockStack.set(address, stack)
+      if (!locks.get(chainId)) {
+        do {
+          redrives.delete(chainId)
+          locks.set(chainId, true)
 
-      if (stack.length >= 2) {
-        debug(`dropped:   %o`, address.getChainId())
-        return
-      }
-      const promise = new Promise((resolve) => {
-        stack.push(resolve)
-      })
-      if (stack.length === 1) {
-        stackReduce(address, stack)
-      }
-      return promise
-    }
-    const stackReduce = async (address, stack) => {
-      while (stack.length) {
-        const resolve = stack[0]
-        const transmissions = await increase(address, ioIncrease)
-        if (!transmissions) {
-          debug(`redrive:   %o`, address.getChainId())
-          await sqsIncrease.push(address)
-          stack.length = 0
-        }
-        debug(`increased: %o`, address.getChainId())
-        stack.shift()
-        resolve(transmissions)
-      }
-      lockStack.delete(address)
-    }
-    const increase = async (address, ioIncrease) => {
-      // TODO maybe move to independent queue
-      const transmissions = await ioIncrease.push(address)
-      if (transmissions) {
-        assert(Array.isArray(transmissions))
-        assert(transmissions.every(interblockModel.isModel))
-        debug(`transmission count: ${transmissions.length}`)
-        const awaits = transmissions.map((interblock) =>
-          sqsTransmit.push(interblock)
-        )
-        await Promise.all(awaits)
-        // TODO see if can speed up by increasing next block before this completes ?
+          const transmissions = await ioIncrease.push(address)
+          if (transmissions) {
+            assert(Array.isArray(transmissions))
+            assert(transmissions.every(interblockModel.isModel))
+            debug(`transmission count: ${transmissions.length}`)
+            const awaits = transmissions.map((interblock) =>
+              sqsTransmit.push(interblock)
+            )
+            await Promise.all(awaits)
+            // TODO speed up by increasing next block before this completes
+          } else {
+            debug(`could not externally lock: %o`, chainId)
+          }
+          locks.delete(chainId)
+        } while (redrives.get(chainId))
       } else {
-        debug(`no increase occured for ${address.getChainId()}`)
+        redrives.set(chainId, true)
+        debug(`redrive raised`)
       }
-      return transmissions
     }
     return throttler
   }

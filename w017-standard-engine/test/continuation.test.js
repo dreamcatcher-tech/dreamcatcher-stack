@@ -4,11 +4,11 @@ const { metrologyFactory } = require('../src/metrologyFactory')
 const { blockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()
 
-require('debug').enable('*metro* *sqsIncrease')
+require('debug').enable('*metro* ')
 
 describe('continuation', () => {
   describe('loopback', () => {
-    test.only('loopback cleared immediately', async () => {
+    test('loopback cleared immediately', async () => {
       const base = await metrologyFactory()
       base.enableLogging()
       await base.spawn('loop')

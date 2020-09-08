@@ -4,9 +4,9 @@ const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.co
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('effector', () => {
-  require('debug').enable('*metrology* *tests:effector*')
+  require('debug').enable('*metrology* *tests*')
 
-  test('ping single', async () => {
+  test.only('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
     debug(`effector ready`)
@@ -35,6 +35,7 @@ describe('effector', () => {
      * 2020-07-03 418ms logging off
      * 2020-07-10 428ms real crypto sodium, 121ms ping RTT.  Previously was 1 second
      * 2020-09-05 760ms moved to whonix vm, 227ms RTT
+     * 2020-09-09 1,169ms 358ms RTT - remove reference equality from models
      */
   })
   test.skip('ping many times', async () => {

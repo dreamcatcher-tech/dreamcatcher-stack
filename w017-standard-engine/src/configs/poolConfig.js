@@ -94,7 +94,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         lock: ({ lock, nextBlock }) => {
           assert(lockModel.isModel(lock))
           assert(blockModel.isModel(nextBlock))
-          debug(`mergeBlockToLock increased: ${lock.block !== nextBlock}`)
+          debug(`mergeBlockToLock increased: ${!nextBlock.equals(lock.block)}`)
           const nextLock = lockProducer.reconcile(lock, nextBlock)
           return nextLock
         },

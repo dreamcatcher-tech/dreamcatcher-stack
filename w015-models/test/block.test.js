@@ -45,7 +45,7 @@ describe('block', () => {
       assert(clone.equals(block))
       assert(blockModel.isModel(clone))
       const second = await blockModel.create()
-      assert(second !== block)
+      assert(!second.equals(block))
     })
 
     test('check of provenance passes', async () => {
@@ -67,7 +67,7 @@ describe('block', () => {
     test('validation throws if provenance does not match', () => {
       const dmz1 = dmzModel.create()
       const dmz2 = dmzModel.create({ config: { isPierced: true } })
-      assert(dmz1 !== dmz2)
+      assert(!dmz1.equals(dmz2))
 
       const b1 = blockModel.create(dmz1)
       const b2 = blockModel.create(dmz2)

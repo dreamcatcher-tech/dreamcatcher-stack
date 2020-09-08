@@ -47,7 +47,7 @@ const cryptoSourceFactory = (dynamoDb, keyname = 'CI') => {
       const retrievedObj = JSON.parse(retrieved)
       await cacheVerifyKeypair(retrievedObj)
       _keypair = keypairModel.clone(retrievedObj)
-      if (_keypair !== keypairAttempt) {
+      if (!_keypair.equals(keypairAttempt)) {
         debug(`collision avoided for: `, keyname)
       }
     }

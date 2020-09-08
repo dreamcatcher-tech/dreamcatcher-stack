@@ -88,6 +88,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           return interblocks
         },
       }),
+      unassignTxInterblocks: assign({ txInterblocks: undefined }),
     },
     guards: {
       isLockAcquired: (context, event) => {

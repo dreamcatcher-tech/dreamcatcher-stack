@@ -16,7 +16,7 @@ const respond = (payload) => {
   }
   return {
     type: '@@RESPOND',
-    payload,
+    data: payload,
   }
 }
 const send = (action, path = '.') => ({
@@ -61,7 +61,7 @@ const translator = (machine) => {
     xstate: machine.initialState,
     promises: [],
     requestId: 0,
-    originAction: undefined,
+    originAction: null,
   }
   return async (state = initialState, action) => {
     assert(!state.actions, `Actions key disallowed in state`)
@@ -80,6 +80,7 @@ const translator = (machine) => {
       // TODO move to unmap function
       // we clobber the data key
       action = { ...action, data: action.payload }
+      delete action.payload
     }
 
     debug('translator reducer action: %O', action)
@@ -94,7 +95,10 @@ const translator = (machine) => {
       const tracker = promises.find(
         ({ response }) => response && isReplyFor(action, response)
       )
-      assert(tracker, `No promise found for action ${action.type}`)
+      if (!tracker) {
+        debug(`No promise found for action ${action.type}`)
+        return state
+      }
       const accumulator = [...tracker.accumulator]
       accumulator.push(action.payload)
       const transientTracker = { ...tracker, accumulator }
@@ -116,7 +120,7 @@ const translator = (machine) => {
       action = createDoneInvoke(nextTracker.response, nextTracker.src) // TODO use proper id
     } else {
       // TODO handle dangling promises resets originAction
-      if (!originAction) {
+      if (!originAction && action.type !== '@@INIT') {
         debug(`setting originAction: %O`, action.type)
         originAction = action
       }
@@ -185,6 +189,7 @@ const translator = (machine) => {
             const execResult = xstateAction.exec(context, event)
             debug(`execResult %O`, execResult)
             const mapped = mapXstateToContinuation(execResult, originAction)
+            debug(`mapped %O`, mapped)
             protocolActions.push(mapped)
           } else {
             debug(`standard action ? %O`, xstateAction)
@@ -197,13 +202,13 @@ const translator = (machine) => {
 
     await Promise.all(awaits)
 
-    if (!protocolActions.length) {
+    if (!protocolActions.length && action.type !== '@@INIT') {
       // the state machine is exhausted, and so the origin action can be resolved
       protocolActions.push(resolve(originAction))
-      originAction = undefined
+      originAction = null
     }
     if (isResolved(protocolActions, originAction)) {
-      originAction = undefined
+      originAction = null
     }
 
     debug(`shell actions length: `, protocolActions.length)
@@ -316,13 +321,15 @@ const mapXstateToContinuation = (xstateAction, originAction) => {
       return // TODO
     case '@@RESPOND':
       // TODO use the origin action
-      const resolveAction = resolve(originAction, xstateAction.payload)
-      debug(`respond: `, resolveAction.type)
+      const resolveAction = resolve(originAction, xstateAction.data)
+      debug(`respond: `, resolveAction)
       return resolveAction
     default:
       if (xstateAction.type.startsWith('done.invoke.')) {
         // we clobber data key
-        return { ...xstateAction, payload: xstateAction.data }
+        const mapped = { ...xstateAction, payload: xstateAction.data }
+        delete mapped.data
+        return mapped
       }
       return xstateAction
   }
