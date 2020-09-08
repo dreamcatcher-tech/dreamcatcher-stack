@@ -81,6 +81,7 @@ const _isReply = (type) =>
 const stateModel = standardize({
   schema,
   create(state = {}, defaultAction) {
+    assert.equal(typeof state, 'object')
     let { actions, ...rest } = state
     if (defaultAction) {
       assert(

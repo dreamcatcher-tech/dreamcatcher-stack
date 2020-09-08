@@ -19,6 +19,7 @@ describe('state', () => {
     assert(s1.equals(s2))
   })
   test('no undefined state keys', () => {
+    assert(stateModel.create({ not: 'missing' }))
     assert.throws(() => stateModel.create({ missing: undefined }))
     assert.throws(() => stateModel.create({ nested: { missing: undefined } }))
   })

@@ -12,7 +12,6 @@ describe('continuation', () => {
       const base = await metrologyFactory()
       base.enableLogging()
       await base.spawn('loop')
-      // await base.settle()
       const causeIncrease = await base.dispatch({
         type: 'PING',
         to: 'loop',

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - lambda layer used in deployment, so deploy over tor is quicker
 - xray tracing with debug logging as metadata
 
+### Removed
+
+- Reference equality in models, to avoid hashing overheads
+
 ## [0.0.0] - 2020-08-07
 
 Bitcoin block hash: `00000000000000000005beb71246c34a52ba47d1f0f8f6d7d42f54d9fb1d88ac`

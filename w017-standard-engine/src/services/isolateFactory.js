@@ -27,11 +27,13 @@ const ramIsolate = (preloadedCovenants) => {
     tick: async ({ containerId, state, action }) => {
       debug(`tick: %o action: %o`, containerId.substring(0, 9), action.type)
       const container = containers[containerId]
-      assert(container, `No container found for: ${containerId}`)
+      assert(container, `No tick container for: ${containerId}`)
       const nextState = await container.covenant.reducer(state, action)
       return nextState
     },
     unloadCovenant: async (containerId) => {
+      debug(`attempting to unload: %o`, containerId)
+      await Promise.resolve()
       assert(containers[containerId], `No container for: ${containerId}`)
       delete containers[containerId]
     },
@@ -40,7 +42,7 @@ const ramIsolate = (preloadedCovenants) => {
 
 const isolateFactory = (preloadedCovenants) => {
   const isolation = ramIsolate(preloadedCovenants)
-  return async (action) => {
+  return (action) => {
     switch (action.type) {
       case 'LOAD_COVENANT':
         return isolation.loadCovenant(action.payload)

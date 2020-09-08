@@ -6,7 +6,7 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 describe('effector', () => {
   require('debug').enable('*metrology* *tests*')
 
-  test.only('ping single', async () => {
+  test('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
     debug(`effector ready`)

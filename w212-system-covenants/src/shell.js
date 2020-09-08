@@ -25,7 +25,7 @@ const config = {
       // if ping '.' respond, else engage in remote pinging
       debug(`ping: %O`, event)
       const { type, payload } = event
-      const { to, ...rest } = payload
+      const { to = '.', ...rest } = payload
       assert(type === 'PING')
       if (to === '.') {
         debug(`ping to self`)
@@ -283,7 +283,7 @@ const actions = {
     type: 'LOGIN',
     payload,
   }),
-  add: (alias, spawnOptions, to = '.') => ({
+  add: (alias, spawnOptions = {}, to = '.') => ({
     // TODO interpret datums and ask for extra data
     // TODO use path info
     type: 'ADD',

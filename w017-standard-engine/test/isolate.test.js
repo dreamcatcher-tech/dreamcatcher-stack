@@ -1,12 +1,12 @@
 const assert = require('assert')
+const debug = require('debug')('interblock:tests:isolate')
 const { ioQueueFactory } = require('../../w003-queue')
 const {
   isolateFactory,
   toFunctions,
 } = require('../src/services/isolateFactory')
 const { covenantIdModel, dmzModel, blockModel } = require('../../w015-models')
-require('../../w012-crypto').testMode()
-
+require('debug').enable('*tests* *isolate*')
 describe('isolation', () => {
   test('handle two covenants', async () => {
     const reducer1 = () => ({
@@ -48,9 +48,12 @@ describe('isolation', () => {
     assert.deepEqual(await r1, { test: 'reducer1' })
     assert.deepEqual(await r2, { test: 'reducer2' })
 
-    assert.rejects(() => isolate.unloadCovenant('not valid containerId'))
-    isolate.unloadCovenant(await id1)
-    assert.rejects(async () => isolate.tick(tick1))
+    debug(`unload tests`)
+    await assert.rejects(() => isolate.unloadCovenant('not valid containerId'))
+    debug(`unloading id1`)
+    await isolate.unloadCovenant(await id1)
+    debug(`attempting tick1`)
+    await assert.rejects(() => isolate.tick(tick1))
 
     assert.deepEqual(await id1, block1.provenance.reflectIntegrity().hash)
   })

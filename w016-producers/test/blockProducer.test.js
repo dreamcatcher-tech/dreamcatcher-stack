@@ -6,9 +6,10 @@ require('../../w012-crypto').testMode()
 describe('blockProducer', () => {
   describe('generateNext', () => {
     test('defaults', async () => {
-      const dmz = dmzModel.create()
-      const block = await blockModel.create(dmz)
-      const next = await blockProducer.generateNext(block.getDmz(), block)
+      const block = await blockModel.create()
+      const dmz = dmzModel.create({ state: { test: 'changedState' } })
+
+      const next = await blockProducer.generateNext(dmz, block)
       assert(next.isValidated())
       assert(block.isNext(next))
     })

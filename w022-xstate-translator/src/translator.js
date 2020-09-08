@@ -211,7 +211,7 @@ const translator = (machine) => {
       originAction = null
     }
 
-    debug(`shell actions length: `, protocolActions.length)
+    debug(`shell actions length: `, protocolActions)
     return {
       actions: protocolActions,
       xstate: cleanNextState,
