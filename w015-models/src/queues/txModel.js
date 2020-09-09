@@ -1,5 +1,4 @@
 const assert = require('assert')
-const uuid = require('uuid/v4')
 const { standardize } = require('../utils')
 const { interblockModel } = require('../models/interblockModel')
 const { socketModel } = require('./socketModel')

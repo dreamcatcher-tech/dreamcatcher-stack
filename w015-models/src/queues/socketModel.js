@@ -1,5 +1,5 @@
 const assert = require('assert')
-const uuid = require('uuid/v4')
+const { v4: uuid } = require('uuid')
 const { standardize } = require('../utils')
 
 const selfSocket = {

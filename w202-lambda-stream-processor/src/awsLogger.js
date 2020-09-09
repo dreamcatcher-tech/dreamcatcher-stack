@@ -1,5 +1,5 @@
 const assert = require('assert')
-const uuidv4 = require('uuid/v4')
+const { v4: uuidv4 } = require('uuid')
 const pad = require('pad/dist/pad.umd')
 const AWSXRay = require('aws-xray-sdk-core')
 const util = require('util')

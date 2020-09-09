@@ -1,4 +1,4 @@
-const uuidv4 = require('uuid/v4')
+const { v4: uuidv4 } = require('uuid')
 const pad = require('pad/dist/pad.umd')
 const machineLogger = (type, machine) => {
   const invocation = uuidv4()

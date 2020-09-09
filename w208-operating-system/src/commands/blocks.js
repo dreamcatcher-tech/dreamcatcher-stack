@@ -7,13 +7,14 @@ module.exports = async ({ blockchain }) => {
 
   // set payload layer tasks in parallel to fetch all required
   let block
-  let nextHeight = blockchain.getState().provenance.height
+  const topHeight = blockchain.getState().provenance.height
+  let nextHeight = 0
   let out = ''
-  while (nextHeight >= 0) {
+  while (nextHeight <= topHeight) {
     const path = '.'
     block = blockchain.getState(path, nextHeight)
     out += blockPrint(block, '/test/') + `\n`
-    nextHeight = block.provenance.height - 1
+    nextHeight++
     debug(`next height: `, nextHeight)
   }
   return { out }

@@ -3,7 +3,7 @@ const { promisify } = require('util')
 const path = require('path')
 const fs = require('fs')
 const rimraf = require('rimraf')
-const uuid = require('uuid/v4')
+const { v4: uuid } = require('uuid')
 const rimrafAsync = promisify(rimraf)
 
 const makeTmpDir = async (optionalPrefix, logger = console) => {
