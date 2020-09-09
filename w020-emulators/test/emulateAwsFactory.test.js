@@ -3,10 +3,10 @@ const { effectorFactory, awsFactory } = require('..')
 const debug = require('debug')('interblock:tests:awsFactory')
 require('../../w012-crypto').testMode()
 
-describe('awsFactory', () => {
+describe('emulateAwsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal
   // one after the other should result in correct connections for both
-  test.skip('connect', async () => {
+  test('connect', async () => {
     require('debug').enable('*metro* *awsFactory *increas*')
     debug(`start`)
     const client = await effectorFactory('eff')
