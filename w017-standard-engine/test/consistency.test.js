@@ -37,6 +37,7 @@ describe('awsConsistency', () => {
     test('lock is exclusive between consistency sources', async () => {
       const address = addressModel.create('exclusive')
       const db = ramDynamoDbFactory()
+      delete db._getTables // skip the ram db optimization
       const source1 = consistencySourceFactory(db)
       const source2 = consistencySourceFactory(db)
 

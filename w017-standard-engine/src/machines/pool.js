@@ -110,7 +110,10 @@ const definition = {
         },
         done: { type: 'final' },
       },
-      onDone: 'poolInterblock',
+      onDone: [
+        { target: 'done', cond: 'isInitialConditions' },
+        { target: 'poolInterblock' },
+      ],
     },
     poolInterblock: {
       initial: 'isGenesis',
@@ -127,17 +130,14 @@ const definition = {
             fetchAffectedAddresses: {
               invoke: {
                 src: 'fetchAffectedAddresses',
-                onDone: [
-                  {
-                    target: 'isConnectionAttempt',
-                    actions: 'assignAffectedAddresses',
-                  },
-                ],
+                onDone: {
+                  target: 'isConnectionAttempt',
+                  actions: 'assignAffectedAddresses',
+                },
               },
             },
             isConnectionAttempt: {
               always: [
-                { target: 'done', cond: 'isStorageEmpty' },
                 {
                   target: 'isConnectable',
                   cond: 'isConnectionAttempt',

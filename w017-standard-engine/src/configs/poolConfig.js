@@ -158,9 +158,12 @@ const poolConfig = (ioCrypto, ioConsistency) => {
     },
     guards: {
       isStorageEmpty: (context, event) => {
-        const isStorageEmpty = event.data
+        const { isStorageEmpty } = event.data
         debug(`isStorageEmpty: ${isStorageEmpty}`)
         return isStorageEmpty
+      },
+      isInitialConditions: ({ baseDmz }) => {
+        return !!baseDmz
       },
       isGenesis: ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
@@ -223,8 +226,9 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         const firstBlock = await consistency.getBlock({
           address: blankAddress,
         })
-        debug(`isStorageEmpty: ${!firstBlock}`)
-        return !firstBlock
+        const isStorageEmpty = !firstBlock
+        debug(`isStorageEmpty: ${isStorageEmpty}`)
+        return { isStorageEmpty }
       },
       checkIsOriginPresent: async ({ interblock }) => {
         // check the origin of the genesis interblock is hosted by us

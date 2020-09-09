@@ -6,7 +6,7 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 describe('effector', () => {
   require('debug').enable('*metrology* *tests*')
 
-  test.only('ping single', async () => {
+  test('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
     debug(`effector ready`)
@@ -18,6 +18,7 @@ describe('effector', () => {
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
 
     await client.engine.settle()
+
     debug(`stop`)
     /**
      * 2020-05-11 736ms no crypto

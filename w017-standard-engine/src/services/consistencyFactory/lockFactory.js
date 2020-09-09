@@ -3,7 +3,7 @@ const { promisify } = require('util')
 const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
 
 let instanceId = 0
-
+let ramLockId = 1
 const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
   const debug = require('debug')(`interblock:aws:lock:id-${instanceId++}`)
 
@@ -18,6 +18,17 @@ const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
     if (locks.has(chainId)) {
       debug(`already locked to this thread: ${chainId}`)
       return
+    }
+    if (dynamodb._getTables) {
+      const uuid = 'ramLockId-' + ramLockId++
+      const hardwareLock = {
+        uuid,
+        tryRelease() {
+          debug(`ram tryRelease for uuid: %o and chainId: %o`, uuid, chainId)
+        },
+      }
+      locks.set(chainId, hardwareLock)
+      return uuid
     }
     locks.set(chainId, `acquisition in progress`)
     const failOpen = new DynamoDBLockClient.FailOpen({
@@ -53,7 +64,6 @@ const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
         try {
           const release = promisify(dynamoDbLock.release).bind(dynamoDbLock)
           await release()
-          locks.delete(chainId)
           debug(`released lock for ${chainId}`)
         } catch (e) {
           debug(`failed to release lock for ${chainId} ${e.message}`)
