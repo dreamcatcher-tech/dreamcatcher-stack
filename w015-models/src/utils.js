@@ -55,6 +55,7 @@ const standardize = (model) => {
       getProof,
     }
     const completeModel = proxy(inflated, functions)
+    Object.freeze(completeModel) // immer skips checking frozen items
     modelWeakSet.add(completeModel)
     objectToModelWeakMap.set(object, completeModel)
     return completeModel

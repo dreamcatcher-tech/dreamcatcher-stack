@@ -22,9 +22,9 @@ const ingestInterblock = (channel, interblock) =>
     const integrity = provenance.reflectIntegrity()
     const remote = interblock.getRemote()
     const light = interblock.getWithoutRemote()
-
+    const immerLineage = [...channel.lineage]
     const pushLight = () => {
-      draft.lineage.push(integrity)
+      immerLineage.push(integrity)
       draft.lineageTip.push(light)
       draft.lineageHeight = provenance.height
       debug(`ingested lineage: ${provenance.height}`)
@@ -53,12 +53,13 @@ const ingestInterblock = (channel, interblock) =>
     }
     if (remote && draft.heavy) {
       if (provenance.height > draft.heavy.provenance.height) {
-        if (draft.lineage.some((parent) => parent.equals(integrity))) {
+        if (immerLineage.some((parent) => parent.equals(integrity))) {
           // if can access prior blocks easily, can avoid the 'lineage' key
           pushHeavy()
         }
       }
     }
+    draft.lineage = immerLineage
   })
 
 const setAddress = (channel, address) =>
