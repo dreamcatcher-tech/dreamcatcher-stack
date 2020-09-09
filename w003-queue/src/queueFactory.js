@@ -116,7 +116,7 @@ const ioQueueFactory = (name, model) => {
 const _assertAddable = (model, action) => {
   if (model) {
     assert(typeof model.isModel === 'function')
-    assert(model.isModel(action), `${JSON.stringify(action, null, 4)}`)
+    assert(model.isModel(action), `model is not addable`)
   }
 }
 

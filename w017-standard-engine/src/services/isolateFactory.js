@@ -1,4 +1,3 @@
-const truncate = require('cli-truncate')
 const assert = require('assert')
 const { blockModel } = require('../../../w015-models')
 const systemCovenants = require('../../../w212-system-covenants')
@@ -18,7 +17,7 @@ const ramIsolate = (preloadedCovenants) => {
       assert(covenants[name], `No covenant loaded: ${name}`)
 
       debug(`loadCovenant %o from %o`, name, Object.keys(covenants))
-      debug(`containerId: %o`, truncate(containerId, 9))
+      debug(`containerId: %o`, containerId.substring(0, 9))
       containers[containerId] = { covenant: covenants[name], block }
       return containerId
     },

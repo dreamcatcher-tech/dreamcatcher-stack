@@ -58,10 +58,14 @@ const interblockModel = standardize({
       )
     }
 
+    let extractedGenesis
     const extractGenesis = () => {
-      const genesis = blockModel.clone(remote.requests[0].payload.genesis)
-      assert(genesis.provenance.address.isGenesis())
-      return genesis
+      if (!extractedGenesis) {
+        const genesis = blockModel.clone(remote.requests[0].payload.genesis)
+        assert(genesis.provenance.address.isGenesis())
+        extractedGenesis = genesis
+      }
+      return extractedGenesis
     }
     const getTargetAddress = () =>
       // TODO remove as unused, so can scavenge blocks between chains

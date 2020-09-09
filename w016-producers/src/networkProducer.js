@@ -58,7 +58,7 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
         if (interblock.isConnectionResponse()) {
           // TODO assertion tests on state of channel
         }
-        if (!channel.heavy) {
+        if (!channel.heavy || channel.equals(network[alias])) {
           return
         }
         immerNetwork[alias] = channel
@@ -87,7 +87,9 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
       assert(minIndex >= 0, `minIndex out of bounds`)
       const lineage = channel.lineage.slice(minIndex)
       channel = channelModel.clone({ ...channel, lineage, lineageTip })
-      immerNetwork[alias] = channel
+      if (!channel.equals(original)) {
+        immerNetwork[alias] = channel
+      }
     })
     Object.keys(immerNetwork).forEach((key) => (draft[key] = immerNetwork[key]))
 

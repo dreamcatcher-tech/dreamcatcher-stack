@@ -10,12 +10,12 @@ describe('effector', () => {
     debug(`start`)
     const client = await effectorFactory()
     debug(`effector ready`)
-    const start = Date.now()
+    const pingStart = Date.now()
     const reply = await client.ping()
     debug(`reply: `, reply)
     assert.equal(reply.type, 'PONG')
     debug(`pong received`)
-    debug(`ping RTT: ${Date.now() - start} ms`)
+    debug(`ping RTT: ${Date.now() - pingStart} ms`)
 
     await client.engine.settle()
     debug(`stop`)
@@ -37,7 +37,7 @@ describe('effector', () => {
      * 2020-09-05 760ms moved to whonix vm, 227ms RTT
      * 2020-09-09 1,169ms 358ms RTT - remove reference equality from models
      * 2020-09-09 1,088ms 295ms RTT - no printing
-     * 2020-09-09 608ms 183ms RTT - s3 caching, machine reuse
+     * 2020-09-09 580ms 172ms RTT - s3 caching, machine reuse, immer correction
      */
   })
   test.skip('ping many times', async () => {
@@ -66,6 +66,7 @@ describe('effector', () => {
      * 2020-06-02 2,521ms 100 pings, batchsize 10, 23 blocks in total
      * 2020-06-24 2,908ms 100 pings, batchsize 10, 23 blocks in total
      * 2020-09-05 5,496ms 100 pings, batchsize 10, 23 blocks in total move to whonix vm
+     * 2020-09-09 4,211ms 100 pings, batchsize 10, 23 blocks in total tuning
      *
      */
   })

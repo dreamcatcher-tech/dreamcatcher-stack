@@ -29,6 +29,7 @@ const definition = {
   context: {
     lock: undefined,
     dmz: undefined,
+    isolation: () => 'isolation function',
   },
   strict: true,
   states: {
