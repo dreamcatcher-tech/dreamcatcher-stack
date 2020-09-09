@@ -1,5 +1,4 @@
 const assert = require('assert')
-const isCircular = require('is-circular')
 const { standardize } = require('../utils')
 const { txRequestModel } = require('../transients/txRequestModel')
 const { txReplyModel } = require('../transients/txReplyModel')
@@ -104,7 +103,6 @@ const stateModel = standardize({
   },
   logicize(instance) {
     // all logic checks go here, to cover cloning
-    assertSerializable(instance)
     const { actions = [], ...state } = instance
     assert(Array.isArray(actions), `actions must be an array: ${actions}`)
 
@@ -136,12 +134,5 @@ const stateModel = standardize({
     return { getRequests, getReplies, getState }
   },
 })
-const assertSerializable = (object) => {
-  assertNoUndefined(object)
-  // TODO ensure this check is sufficient for stringify
-  if (isCircular(object)) {
-    // TODO move to traverse
-    throw new Error(`state must be stringifiable`)
-  }
-}
+
 module.exports = { stateModel }

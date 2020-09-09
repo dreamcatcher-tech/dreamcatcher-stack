@@ -9,15 +9,18 @@ const {
 const { ramS3Factory } = require('./ramS3Factory')
 
 const s3Factory = (s3 = ramS3Factory()) => {
+  const cache = new Map()
   const putInterblock = async (Key, model) => {
     // TODO retry several times if fail
+    const Body = s3._isRam ? model : model.serialize()
     const params = {
       Bucket: 'wbinterbucket',
       Key,
-      Body: model.serialize(),
+      Body,
       ContentType: 'application/json',
     }
     const result = await s3.putObject(params).promise()
+    cache.set(Key, model)
     debug(`putInterblock: %O`, Key)
     assert(result)
   }
@@ -28,15 +31,23 @@ const s3Factory = (s3 = ramS3Factory()) => {
       Key,
     }
     debug(`getInterblock`)
+    if (cache.has(Key)) {
+      debug(`interblock cache hit for %o`, Key)
+      return cache.get(Key)
+    }
     try {
       const result = await s3.getObject(params).promise()
-      const interblockJson = result.Body.toString()
-      const obj = JSON.parse(interblockJson)
-      await cryptoCacher.cacheVerifyHash(obj)
-      // TODO find why using obj fails, but json passes
-      const interblock = interblockModel.clone(interblockJson)
-      debug(`s3GetInterblock complete`)
-      return interblock
+      if (interblockModel.isModel(result.Body)) {
+        return result.Body
+      } else {
+        const interblockJson = result.Body.toString()
+        const obj = JSON.parse(interblockJson)
+        await cryptoCacher.cacheVerifyHash(obj)
+        // TODO find why using obj fails, but json passes
+        const interblock = interblockModel.clone(interblockJson)
+        debug(`s3GetInterblock complete`)
+        return interblock
+      }
     } catch (e) {
       debug(`error fetching: %O %O`, Key, e.message)
       // TODO only allow if key not found
@@ -53,6 +64,7 @@ const s3Factory = (s3 = ramS3Factory()) => {
         Key,
       }
       await s3.deleteObject(params).promise()
+      cache.delete(Key)
     })
     await Promise.all(awaits)
     debug(`deleteInterblocks complete`)
@@ -60,13 +72,15 @@ const s3Factory = (s3 = ramS3Factory()) => {
 
   const putBlock = async (Key, model) => {
     assert(blockModel.isModel(model))
+    const Body = s3._isRam ? model : model.serialize()
     const params = {
       Bucket: 'wbblockbucket',
       Key,
-      Body: model.serialize(),
+      Body,
       ContentType: 'application/json',
     }
     const result = await s3.putObject(params).promise()
+    cache.set(Key, model)
     debug(`putBlock: %O`, Key)
     assert(result)
   }
@@ -77,7 +91,14 @@ const s3Factory = (s3 = ramS3Factory()) => {
       Key,
     }
     debug(`getBlock: %O`, Key)
+    if (cache.has(Key)) {
+      debug(`block cache hit for: %o`, Key)
+      return cache.get(Key)
+    }
     const result = await s3.getObject(params).promise()
+    if (blockModel.isModel(result.Body)) {
+      return result.Body
+    }
     const blockJson = result.Body.toString()
     const obj = JSON.parse(blockJson)
     // TODO move to use obj once know why fails

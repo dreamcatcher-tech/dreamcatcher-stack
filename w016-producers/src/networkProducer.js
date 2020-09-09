@@ -148,13 +148,13 @@ const tx = (network, state) =>
     const requests = state.getRequests()
     const replies = state.getReplies()
     debug(`tx requests: ${requests.length} replies: ${replies.length}`)
-    const nextNetwork = { ...network }
+    const immerNetwork = {} // immer breaks isModel test
     requests.forEach((request) => {
       assert(txRequestModel.isModel(request))
       const { to } = request
       // TODO resolve the "to" alias name to rationalize it
       // TODO detect child construction by the path, so ensure role is correct
-      let channel = nextNetwork[to]
+      let channel = immerNetwork[to] || network[to]
       if (!channel) {
         // TODO handle children ?  if no pathing or starts with ./ ?
         const systemRole = 'SYMLINK'
@@ -162,7 +162,7 @@ const tx = (network, state) =>
         debug(`channel created with systemRole: ${systemRole}`)
         channel = channelModel.create(address, systemRole)
       }
-      nextNetwork[to] = channelProducer.txRequest(channel, request.getAction())
+      immerNetwork[to] = channelProducer.txRequest(channel, request.getAction())
     })
     replies.forEach((reply) => {
       assert(txReplyModel.isModel(reply))
@@ -173,12 +173,15 @@ const tx = (network, state) =>
         debug(`No alias found for: %O`, reply)
         return
       }
-      const channel = nextNetwork[alias]
+      const channel = immerNetwork[alias] || network[alias]
       const continuation = reply.getContinuation()
-      nextNetwork[alias] = channelProducer.txReply(channel, continuation, index)
+      immerNetwork[alias] = channelProducer.txReply(
+        channel,
+        continuation,
+        index
+      )
     })
-    // TODO speed up immer by using draft instead of new object ?
-    return nextNetwork
+    Object.keys(immerNetwork).forEach((key) => (draft[key] = immerNetwork[key]))
   })
 
 const _cloneArray = (toBeArray, cloneFunction) => {

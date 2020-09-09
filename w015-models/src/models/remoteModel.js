@@ -7,13 +7,19 @@ const remoteModel = standardize({
   schema: remoteSchema,
   create(remote = {}) {
     assert(typeof remote === 'object')
-    const supplied = _.pick(remote, [
+    const supplied = {}
+    const keys = [
       'address',
       'requests',
       'replies',
       'heavyHeight',
       'lineageHeight',
-    ])
+    ]
+    keys.forEach((key) => {
+      if (remote[key]) {
+        supplied[key] = remote[key]
+      }
+    })
     const defaultInstance = {
       address: addressModel.create(),
       requests: {},

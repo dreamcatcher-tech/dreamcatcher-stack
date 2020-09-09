@@ -1,5 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:utils')
+const isCircular = require('is-circular')
 const _ = require('lodash')
 const stringify = require('fast-json-stable-stringify')
 const { produce, setAutoFreeze } = require('immer')
@@ -7,6 +8,8 @@ setAutoFreeze(false) // attempt to speed up producers
 const { modelInflator } = require('./modelInflator')
 const { registry } = require('./registry')
 const crypto = require('../../w012-crypto')
+const { assertNoUndefined } = require('./assertNoUndefined')
+const equal = require('fast-deep-equal')
 
 const standardize = (model) => {
   checkStructure(model)
@@ -67,13 +70,17 @@ const closure = (schema, inflated, isModel) => {
     if (!isModel(other)) {
       return false
     }
-    return _.isEqual(inflated, other)
+    return equal(inflated, other)
   }
   let jsonString
   const serialize = () => {
     // TODO serialize quicker using schemas with https://www.npmjs.com/package/fast-json-stringify
     // TODO model away serialize
     if (!jsonString) {
+      // TODO ensure this check is sufficient for stringify
+      assertNoUndefined(inflated)
+      // TODO move to traverse
+      assert(!isCircular(inflated), `state must be stringifiable`)
       jsonString = stringify(inflated)
     }
     return jsonString

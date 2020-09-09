@@ -1,6 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:xstate:translator')
 const _ = require('lodash')
+const equal = require('fast-deep-equal')
 const { State } = require('xstate')
 const {
   request,
@@ -223,7 +224,7 @@ const translator = (machine) => {
 }
 
 const isResolved = (protocolActions, originAction) =>
-  protocolActions.some(({ request }) => _.isEqual(request, originAction))
+  protocolActions.some(({ request }) => equal(request, originAction))
 
 const exhaust = async (machine, tracker, requestId) => {
   // TODO handle torn promises - stop if state has moved on ?

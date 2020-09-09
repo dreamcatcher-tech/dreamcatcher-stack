@@ -1,6 +1,5 @@
-const assert = require('assert')
-const _ = require('lodash')
 const traverse = require('traverse')
+const equal = require('fast-deep-equal')
 
 /**
  * ACTION CREATORS FOR USE INSIDE COVENANTS
@@ -83,7 +82,7 @@ const isReplyFor = (reply, request) => {
   return (
     repliedRequest &&
     repliedRequest.type === type &&
-    _.isEqual(repliedRequest.payload, payload)
+    equal(repliedRequest.payload, payload)
   )
 }
 

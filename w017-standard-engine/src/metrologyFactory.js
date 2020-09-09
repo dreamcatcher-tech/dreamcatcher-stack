@@ -78,7 +78,7 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
   const tap = enableLoggingWithTap(engine, identifier)
-  tap.on()
+  // tap.on()
   const initializePromise = createBase(ioConsistency, sqsPool)
 
   /** Fluent interfaces
@@ -110,7 +110,7 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
 
     // TODO change to be plain variables ?
     const dispatch = ({ type, payload, to = '.' }) => {
-      debug(`dispatch to: %o type: %O payload: %O`, to, type, payload)
+      debug(`dispatch to: %o type: %O`, to, type)
       const promise = injector({ type, payload, to })
       sqsIncrease.push(address)
       return promise
@@ -132,9 +132,9 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
       if (blockItem) {
         const s3Key = s3Keys.fromBlockItem(blockItem)
         const { wbblockbucket } = ramS3._getBuckets()
-        const jsonBlock = wbblockbucket[s3Key]
-        assert(jsonBlock)
-        return blockModel.clone(jsonBlock)
+        const block = wbblockbucket[s3Key]
+        assert(blockModel.isModel(block))
+        return block
       }
     }
 

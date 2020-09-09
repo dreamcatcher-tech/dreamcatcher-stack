@@ -55,7 +55,7 @@ const blockModel = standardize({
     const dmz = dmzModel.clone(spreadDmz)
 
     const hash = dmz.getHash()
-    assert.deepStrictEqual(hash, provenance.dmzIntegrity.hash)
+    assert(hash === provenance.dmzIntegrity.hash)
 
     const isValidated = () => {
       if (provenance.address.isGenesis()) {

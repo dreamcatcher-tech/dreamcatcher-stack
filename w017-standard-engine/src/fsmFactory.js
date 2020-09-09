@@ -26,32 +26,32 @@ const fsmFactory = () => {
   ioCrypto.setProcessor(cryptoFactory())
   ioConsistency.setProcessor(consistencyFactory())
 
+  const poolMachine = poolConfig(ioCrypto, ioConsistency)
   ioPool.setProcessor(async (payload) => {
     assert(interblockModel.isModel(payload))
     const action = { type: 'POOL_INTERBLOCK', payload }
-    const pool = poolConfig(ioCrypto, ioConsistency)
-    const result = await thread(action, pool)
+    const result = await thread(action, poolMachine)
     return result
   })
+  const increasorMachine = increasorConfig(ioCrypto, ioConsistency, ioIsolate)
   ioIncrease.setProcessor(async (payload) => {
     assert(addressModel.isModel(payload))
     const action = { type: 'INCREASE_CHAIN', payload }
-    const increasor = increasorConfig(ioCrypto, ioConsistency, ioIsolate)
-    const result = await thread(action, increasor)
+    const result = await thread(action, increasorMachine)
     return result
   })
+  const receiverMachine = receiveConfig(ioConsistency)
   ioReceive.setProcessor(async (payload) => {
     assert(txModel.isModel(payload))
     const action = { type: 'RECEIVE_INTERBLOCK', payload }
-    const receiver = receiveConfig(ioConsistency)
-    const result = await thread(action, receiver)
+    const result = await thread(action, receiverMachine)
     return result
   })
+  const transmitterMachine = transmitConfig(ioConsistency)
   ioTransmit.setProcessor(async (payload) => {
     assert(interblockModel.isModel(payload))
     const action = { type: 'TRANSMIT_INTERBLOCK', payload }
-    const transmitter = transmitConfig(ioConsistency)
-    const result = await thread(action, transmitter)
+    const result = await thread(action, transmitterMachine)
     return result
   })
 

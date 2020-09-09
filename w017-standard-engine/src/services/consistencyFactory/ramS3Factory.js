@@ -12,7 +12,7 @@ const ramS3Factory = () => {
     debug(`putObject %O %O`, Bucket, Key)
     assert(typeof Bucket === 'string')
     assert(typeof Key === 'string')
-    assert(typeof Body === 'string')
+    assert(typeof Body === 'object')
     return {
       promise: async () => {
         await Promise.resolve()
@@ -57,7 +57,8 @@ const ramS3Factory = () => {
   }
 
   const _getBuckets = () => buckets
-  return { putObject, getObject, deleteObject, _getBuckets }
+  const _isRam = true
+  return { putObject, getObject, deleteObject, _getBuckets, _isRam }
 }
 
 module.exports = { ramS3Factory }

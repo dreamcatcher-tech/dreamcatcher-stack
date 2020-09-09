@@ -9,7 +9,7 @@ const {
   continuationModel,
 } = require('../../w015-models')
 
-const _ingestInterblock = (channel, interblock) =>
+const ingestInterblock = (channel, interblock) =>
   // TODO do some logic on the channel counts, and if they match ours ?
   // check this transmission naturally extends the remote transmission ?
   // handle validator change in lineage
@@ -62,11 +62,6 @@ const _ingestInterblock = (channel, interblock) =>
       }
     }
   })
-const ingestInterblock = _.memoize(
-  // no noticeable improvement
-  _ingestInterblock,
-  (channel, interblock) => `${channel.getHash()}_${interblock.getHash()}`
-)
 
 const setAddress = (channel, address) =>
   channelModel.clone(channel, (draft) => {
