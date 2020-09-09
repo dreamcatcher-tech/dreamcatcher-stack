@@ -23,9 +23,7 @@ const ingestInterblock = (channel, interblock) =>
     const remote = interblock.getRemote()
     const light = interblock.getWithoutRemote()
 
-    const immerLineage = [...channel.lineage]
     const pushLight = () => {
-      immerLineage.push(integrity)
       draft.lineage.push(integrity)
       draft.lineageTip.push(light)
       draft.lineageHeight = provenance.height
@@ -55,7 +53,7 @@ const ingestInterblock = (channel, interblock) =>
     }
     if (remote && draft.heavy) {
       if (provenance.height > draft.heavy.provenance.height) {
-        if (immerLineage.some((parent) => parent.equals(integrity))) {
+        if (draft.lineage.some((parent) => parent.equals(integrity))) {
           // if can access prior blocks easily, can avoid the 'lineage' key
           pushHeavy()
         }

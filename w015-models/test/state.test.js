@@ -18,10 +18,10 @@ describe('state', () => {
     const s2 = stateModel.create()
     assert(s1.equals(s2))
   })
-  test('no undefined state keys', () => {
-    assert(stateModel.create({ not: 'missing' }))
-    assert.throws(() => stateModel.create({ missing: undefined }))
-    assert.throws(() => stateModel.create({ nested: { missing: undefined } }))
+  test('no undefined state keys during serialize', () => {
+    assert(stateModel.create({ not: 'missing' }).serialize())
+    assert.throws(() => stateModel.create({ missing: undefined }).serialize())
+    assert.throws(() => stateModel.create({ n: { m: undefined } }).serialize())
   })
   test.todo('logically wrong action sequences')
   test.todo('sequence pattern wrong')

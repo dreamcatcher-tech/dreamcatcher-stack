@@ -17,6 +17,15 @@ const {
 const channelProducer = require('./channelProducer')
 
 const defaultConfig = configModel.create()
+
+/**
+ * Interblocks cannot:
+ *    1. cause any new channels to open, except the public connection one
+ *    2. be destined for any channel that does not already exist
+ *
+ * Note that only one interblock can be accepted by the public channel,
+ * and no others, until the block has finished.
+ */
 const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
   networkModel.clone(network, (draft) => {
     // implicit that this is called once per blockmaking, as it purges lineage
@@ -24,12 +33,12 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
     assert(configModel.isModel(config))
     debug(`ingestInterblocks count: ${interblocks.length}`)
     interblocks.sort((a, b) => a.provenance.height - b.provenance.height)
-    let nextNetwork = network // DANGER draft demodelizes
 
+    const immerNetwork = {} // draft causes failure to model check
     interblocks.forEach((interblock) => {
       const address = interblock.provenance.getAddress()
       // TODO handle multiple aliases having the same address ?
-      const alias = _getAlias(nextNetwork, address)
+      const alias = network.getAlias(address)
       const isPublic = config.isPublicChannelOpen
       if (!alias && isPublic && interblock.isConnectionAttempt()) {
         debug(`connection attempt accepted`)
@@ -40,12 +49,11 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
           ...blankChannel,
           requests: { 0: accept },
         })
-        const newChannel = { [name]: acceptChannel }
-
-        nextNetwork = { ...nextNetwork, ...newChannel }
+        draft[name] = acceptChannel
       }
       if (alias) {
-        let channel = nextNetwork[alias]
+        let channel = immerNetwork[alias] || network[alias]
+        assert(channelModel.isModel(channel))
         channel = channelProducer.ingestInterblock(channel, interblock)
         if (interblock.isConnectionResponse()) {
           // TODO assertion tests on state of channel
@@ -53,18 +61,18 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
         if (!channel.heavy) {
           return
         }
-        nextNetwork = { ...nextNetwork, [alias]: channel }
+        immerNetwork[alias] = channel
       }
     })
-    // TODO purge all channels of lineage
-    Object.keys(nextNetwork).forEach((alias) => {
+    network.getAliases().forEach((alias) => {
       // trim lineageTip to only the last one from the previous block
-      const originalChannel = network[alias]
-      let channel = nextNetwork[alias]
-      if (!originalChannel || !channel.address.isResolved() || !channel.heavy) {
+      const original = network[alias]
+      if (!original || !original.address.isResolved() || !original.heavy) {
         return
       }
-      const purgeableTips = originalChannel.lineageTip.slice(0, -1)
+      let channel = immerNetwork[alias] || original
+
+      const purgeableTips = original.lineageTip.slice(0, -1)
       const lineageTip = _.without(channel.lineageTip, ...purgeableTips)
 
       // trim lineage to start with heavy, or lineageTip
@@ -79,24 +87,12 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
       assert(minIndex >= 0, `minIndex out of bounds`)
       const lineage = channel.lineage.slice(minIndex)
       channel = channelModel.clone({ ...channel, lineage, lineageTip })
-      nextNetwork = { ...nextNetwork, [alias]: channel }
+      immerNetwork[alias] = channel
     })
+    Object.keys(immerNetwork).forEach((key) => (draft[key] = immerNetwork[key]))
 
     // TODO close all timed out connection attempts
-    // TODO speed up immer by using draft instead of new object ?
-    return nextNetwork
   })
-
-const _getAlias = (network, address) => {
-  // speed up by not cloning network each interblock
-  assert(addressModel.isModel(address))
-  assert(!address.isUnknown())
-  const alias = Object.keys(network).find((key) =>
-    network[key].address.equals(address)
-  )
-  return alias
-}
-
 const respondReply = (network, address) =>
   networkModel.clone(network, (draft) => {
     assert(networkModel.isModel(network))

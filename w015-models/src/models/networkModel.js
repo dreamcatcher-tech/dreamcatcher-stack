@@ -35,6 +35,7 @@ const networkModel = standardize({
   logicize(instance) {
     assert(!instance[undefined])
     const aliases = Object.keys(instance)
+    Object.freeze(aliases)
     assert(aliases.includes('..'))
     assert(aliases.includes('.'))
     assert(channelModel.isModel(instance['.']), 'channel invalid')
@@ -74,7 +75,7 @@ const networkModel = standardize({
       return action
     }
     const rx = () => rxReply() || rxRequest()
-    const getAliases = () => [...aliases]
+    const getAliases = () => aliases
     const getResolvedAliases = () =>
       getAliases().filter((alias) => instance[alias].address.isResolved())
 
