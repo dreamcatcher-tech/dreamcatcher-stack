@@ -1,5 +1,5 @@
 const Path = require('path').posix || require('path')
-const debug = require('debug')('dos-shell:commands:ls')
+const debug = require('debug')('dos:commands:ls')
 const cliui = require('cliui')
 const chalk = require('ansi-colors')
 const pad = require('pad/dist/pad.umd')

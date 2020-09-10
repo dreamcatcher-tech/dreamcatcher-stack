@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:rm')
+const debug = require('debug')('dos:commands:rm')
 const chalk = require('ansi-colors')
 const { prompt } = require('enquirer')
 

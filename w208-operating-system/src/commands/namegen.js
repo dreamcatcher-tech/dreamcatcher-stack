@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:namegen')
+const debug = require('debug')('dos:commands:namegen')
 const dockerNames = require('docker-names')
 
 module.exports = async ({ spinner, blockchain }, count = 1) => {

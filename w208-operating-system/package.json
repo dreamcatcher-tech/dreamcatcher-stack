@@ -1,10 +1,10 @@
 {
-  "name": "dos-shell",
+  "name": "@dreamcatcher-tech/dos",
   "version": "0.0.1",
   "description": "Terminal interface to the HyperNet",
   "main": "src/index.js",
   "bin": {
-    "dos-shell": "src/bin.js"
+    "dos": "src/bin.js"
   },
   "scripts": {
     "start": "DEBUG='dos* enquirer*' node src/bin",

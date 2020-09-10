@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:blocks')
+const debug = require('debug')('dos:commands:blocks')
 const { blockPrint } = require('../../../w017-standard-engine')
 
 module.exports = async ({ blockchain }) => {

@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell')
+const debug = require('debug')('dos')
 const repl = require('./repl')
 const { evaluate } = require('./eval')
 const { withSpin } = require('./spinner')

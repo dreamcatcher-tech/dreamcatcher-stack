@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:repl')
+const debug = require('debug')('dos:repl')
 const ora = require('ora')
 const { effectorFactory } = require('../..')
 const { read } = require('./read')

@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:pkg')
+const debug = require('debug')('dos:commands:pkg')
 
 module.exports = async ({ spinner }, subcmd, ...args) => {
   debug(subcmd, args)

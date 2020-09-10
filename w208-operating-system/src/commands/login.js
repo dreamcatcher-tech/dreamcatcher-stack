@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:login')
+const debug = require('debug')('dos:commands:login')
 const timeout = (ms) => new Promise((res) => setTimeout(res, ms))
 
 module.exports = async ({ spinner, blockchain }, ...args) => {

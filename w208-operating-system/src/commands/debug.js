@@ -6,7 +6,7 @@ module.exports = async ({ blockchain }, ...args) => {
   const interblockNamespaces = blockchain._debug.disable()
   const dosShellNamespaces = debug.disable()
   let out = `current interblock flags: ` + interblockNamespaces
-  out += `\ncurrent dos-shell flags: ` + dosShellNamespaces
+  out += `\ncurrent dos flags: ` + dosShellNamespaces
   out += `\nsetting flags to: ` + argsString
   blockchain._debug.enable(argsString)
   debug.enable(argsString)

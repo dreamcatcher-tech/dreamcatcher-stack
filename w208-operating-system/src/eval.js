@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:eval')
+const debug = require('debug')('dos:eval')
 const Commands = require('./commands')
 
 module.exports.evaluate = (ctx, cmd, cmdArgs) => {

@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:auto-complete')
+const debug = require('debug')('dos:auto-complete')
 const Chalk = require('ansi-colors')
 const { withSpin } = require('./spinner')
 const Commands = require('./commands')

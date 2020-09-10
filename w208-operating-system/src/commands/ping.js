@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:ping')
+const debug = require('debug')('dos:commands:ping')
 
 module.exports = async ({ spinner, blockchain }, path, options) => {
   // TODO handle nested and remote paths

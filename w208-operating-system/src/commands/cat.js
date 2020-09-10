@@ -1,5 +1,5 @@
 const util = require('util')
-const debug = require('debug')('dos-shell:commands:cat')
+const debug = require('debug')('dos:commands:cat')
 const chalk = require('ansi-colors')
 const { prompt } = require('enquirer')
 

@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:reset')
+const debug = require('debug')('dos:commands:reset')
 const { prompt } = require('enquirer')
 
 module.exports = async ({ spinner, blockchain }) => {

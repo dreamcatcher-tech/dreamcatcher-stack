@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:whoami')
+const debug = require('debug')('dos:commands:whoami')
 const chalk = require('ansi-colors')
 const cliui = require('cliui')
 

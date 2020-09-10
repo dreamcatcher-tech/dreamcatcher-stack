@@ -2,7 +2,7 @@ const Fs = require('fs')
 const Path = require('path')
 const { promisify } = require('util')
 const Os = require('os')
-const debug = require('debug')('dos-shell:commands:config')
+const debug = require('debug')('dos:commands:config')
 const { getHomePath } = require('./cd')
 
 // const readFile = promisify(Fs.readFile)

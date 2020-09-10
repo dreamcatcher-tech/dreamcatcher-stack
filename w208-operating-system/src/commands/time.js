@@ -1,5 +1,5 @@
 const pretty = require('pretty-ms')
-const debug = require('debug')('dos-shell:commands:time')
+const debug = require('debug')('dos:commands:time')
 
 module.exports = async (ctx, ...args) => {
   const { evaluate } = require('../eval')

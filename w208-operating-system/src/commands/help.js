@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:help')
+const debug = require('debug')('dos:commands:help')
 const cliui = require('cliui')
 const commands = require('.')
 const dedent = require('dedent')

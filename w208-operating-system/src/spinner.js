@@ -1,5 +1,5 @@
 const ora = require('ora')
-const debug = require('debug')('dos-shell:spinner')
+const debug = require('debug')('dos:spinner')
 exports.withSpin = (fn) => {
   return async function fnWithSpin(ctx) {
     debug(`spinner`)

@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:su')
+const debug = require('debug')('dos:commands:su')
 
 const commander = require('commander')
 const program = new commander.Command()

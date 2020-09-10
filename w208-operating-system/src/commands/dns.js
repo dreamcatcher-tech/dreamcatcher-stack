@@ -1,4 +1,4 @@
-const debug = require('debug')('dos-shell:commands:dns')
+const debug = require('debug')('dos:commands:dns')
 const chalk = require('ansi-colors')
 const { prompt } = require('enquirer')
 

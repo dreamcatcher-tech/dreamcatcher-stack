@@ -1,5 +1,5 @@
 const Chalk = require('ansi-colors')
-const debug = require('debug')('dos-shell:print')
+const debug = require('debug')('dos:print')
 
 module.exports = async function print(func) {
   try {
