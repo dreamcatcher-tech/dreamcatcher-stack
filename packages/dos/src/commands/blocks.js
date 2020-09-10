@@ -1,0 +1,28 @@
+const debug = require('debug')('dos:commands:blocks')
+const { engine } = require('@dreamcatcher-tech/interblock')
+const { blockPrint } = engine
+
+module.exports = async ({ blockchain }) => {
+  debug(`blocks`)
+  // try open up the path if we do not have open already
+
+  // set payload layer tasks in parallel to fetch all required
+  let block
+  const topHeight = blockchain.getState().provenance.height
+  let nextHeight = 0
+  let out = ''
+  while (nextHeight <= topHeight) {
+    const path = '.'
+    block = blockchain.getState(path, nextHeight)
+    out += blockPrint(block, '/test/') + `\n`
+    nextHeight++
+    debug(`next height: `, nextHeight)
+  }
+  return { out }
+}
+
+module.exports.help = `
+Show the blocks of any given blockchain.
+If no chain ID or alias given, print the blocks of the 
+blockchain at the cwd
+`
