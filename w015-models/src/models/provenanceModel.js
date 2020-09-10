@@ -66,11 +66,11 @@ const provenanceModel = standardize({
         `Dmz not a genuine type of integrity: ${instance.dmzIntegrity.hash}`
       )
     }
-    const lineageKeys = Object.keys(instance.lineage)
+    const lineageKeys = Object.keys(instance.lineage).map((i) => parseInt(i))
     assert(lineageKeys.length || instance.address.isGenesis())
     assert(instance.height || instance.address.isGenesis())
     // later, will allow foreign chains as prefixes to the provenance index
-    assert(lineageKeys.every((key) => parseInt(key) >= 0))
+    assert(lineageKeys.every((i) => i >= 0 && i < instance.height))
     assert.equal(instance.signatures.length, 1, `single signer in prototype`)
 
     const selfIntegrity = () => {
@@ -94,8 +94,8 @@ const provenanceModel = standardize({
     }
 
     const reflectedIntegrity = integrityModel.create(instance)
-    let { address, height } = instance
-    if (height === 0) {
+    let { address } = instance
+    if (instance.height === 0) {
       assert(address.isGenesis())
       address = addressModel.create(reflectedIntegrity)
     }
@@ -119,9 +119,11 @@ const provenanceModel = standardize({
       return isParent && isHigher
     }
     const getShortestHeight = () => {
-      const ints = lineageKeys.map(parseInt)
+      const ints = [...lineageKeys]
       ints.sort((a, b) => a - b)
-      return ints.shift()
+      const shortest = ints.shift()
+      assert(shortest >= 0 && shortest < instance.height)
+      return shortest
     }
     return {
       merge,
