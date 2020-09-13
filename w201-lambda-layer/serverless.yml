@@ -1,8 +1,0 @@
-app: interblock
-name: lambda-layer
-component: aws-lambda-layer
-inputs:
-  src: ./layerBase
-  runtimes:
-    - nodejs12.x
-  region: 'eu-central-1'

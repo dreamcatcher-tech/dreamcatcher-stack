@@ -21,7 +21,7 @@ const generateNext = async (dmz, block, asyncSigner = ciSigner) => {
   assert(dmzModel.isModel(dmz))
   assert(blockModel.isModel(block))
   assert(!dmz.equals(block.getDmz()))
-  assert(typeof asyncSigner === 'function')
+  assert(typeof asyncSigner === 'function') // TODO move into blockModel
 
   const isNewChannels = dmz.network.isNewChannels(block.network)
   const extraLineage = {}
