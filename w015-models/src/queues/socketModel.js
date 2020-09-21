@@ -18,7 +18,7 @@ const socketModel = standardize({
     properties: {
       id: { type: 'string' }, // TODO regex for uuid
       type: {
-        enum: ['internal', 'websocket', 'https', 'email', 'udp', 'awsApiGw'],
+        enum: ['internal', 'websocket', 'https', 'email', 'udp'],
       },
       info: { type: 'object' },
     },

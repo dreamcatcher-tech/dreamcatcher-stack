@@ -7,9 +7,10 @@ describe('emulateAwsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal
   // one after the other should result in correct connections for both
   test('connect', async () => {
-    require('debug').enable('*metro* *awsFactory *increas*')
+    require('debug').enable('*metro* *awsFactory *:net')
     debug(`start`)
     const client = await effectorFactory('eff')
+    client.engine.enableLogging()
     const aws = await awsFactory('aws')
 
     // cross over internet
@@ -26,11 +27,18 @@ describe('emulateAwsFactory', () => {
      * 6. reopening a previously closed connection
      */
 
+    const testSocketInfo = {
+      name: 'testSocket',
+      type: 'internal',
+      url: 'testUrl',
+    }
+    await client.net.add(testSocketInfo) // TODO add optional chainId ?
+    assert(client.net[testSocketInfo.name])
+
     const { hyperAddress } = aws
     const hyperChainId = hyperAddress.getChainId()
     debug(`hyperAddress: ${hyperChainId}`)
-    const testSocketInfo = { url: 'testingSocketInfo' }
-    await client.addTransport(hyperChainId, testSocketInfo)
+    client.net.testSocket.addChainId(hyperChainId)
 
     const creds = {
       method: 'password',

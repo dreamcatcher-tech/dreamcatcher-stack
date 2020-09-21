@@ -37,15 +37,15 @@ const { metrologyFactory } = require('../../w017-standard-engine')
 const _ = require('lodash')
 const debug = require('debug')('interblock:effector')
 const { actions: dmzActions } = require('../../w021-dmz-reducer')
-const { shell } = require('../../w212-system-covenants')
+const { shell: shellCov, net: netCov } = require('../../w212-system-covenants')
 const { addressModel, socketModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
 
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
-  const metrology = await metrologyFactory(identifier).spawn('shell', shell)
-  const { ioConsistency } = metrology.getEngine()
-  const childShell = metrology.getChildren().shell
+  const metrology = await metrologyFactory(identifier)
+    .spawn('shell', shellCov)
+    .spawn('net', netCov)
 
   const emulateAws = async (reifiedCovenantMap) => {
     // TODO kill existing emulator ?
@@ -62,54 +62,47 @@ const effectorFactory = async (identifier) => {
     return metrology.dispatch({ type, payload, to })
   }
 
-  const getState = (path = '.', height) => {
+  const awaits = metrology.getChildren()
+  const shell = await awaits.shell // TODO move shell to be /
+  const shellActions = mapDispatchToActions(dispatch, shellCov)
+  const netMetro = await awaits.net
+  const netChildren = {}
+  const _netDispatch = ({ type, payload }) => {
+    debug(`_netDispatch action.type: %O`, type)
+    const to = 'net'
+    return new Promise(async (resolve) => {
+      const result = await metrology.dispatch({ type, payload, to })
+      // resync the children, since net makes sockets
+
+      resolve(result)
+    })
+  }
+
+  const netActions = mapDispatchToActions(_netDispatch, netCov)
+  Object.assign(netMetro, netActions)
+  const net = { ...netMetro }
+
+  const getState = (height, path = []) => {
     // asking with no path will return the "state" key of this actor.
     // asking for any other path will return "state" key of that path
     // throw if we do not have it in the "remote" key of the transmission
     // path may include regex patterns
-    return childShell.getState(height)
+    const childState = shell.getState(height, path)
+    return childState
   }
 
-  const getContext = () => childShell.getState().state.xstate.context
-  const subscribe = childShell.subscribe
-  const addTransport = async (chainId, socketInfo) => {
-    // TODO handle duplicate additions gracefully
-
-    // set sqsRx & sqsTx
-
-    assert.strictEqual(typeof socketInfo, 'object')
-    assert.strictEqual(typeof chainId, 'string')
-    assert.strictEqual(typeof socketInfo.url, 'string')
-    const { url } = socketInfo
-    const tcpTransport = tcpTransportFactory(url)
-    await tcpTransport.connect()
-    debug(`connected to %o`, url)
-    const latency = await tcpTransport.pingLambda() // TODO do a version check too
-    debug(`latency of %o ms to %o `, latency, url)
-
-    const address = addressModel.create(chainId)
-
-    const socket = socketModel.create({ type: 'awsApiGw', info: socketInfo })
-    const action = { type: 'PUT_SOCKET', payload: { address, socket } }
-    await ioConsistency.push(action)
-    return latency
-  }
-  const removeTransports = async () => {
-    // close all the websockets
-    // reset the sqs queues back to defaults
-  }
-  const shellActions = mapDispatchToShellActions(dispatch)
+  const getContext = () => shell.getState(['state', 'xstate', 'context'])
+  const subscribe = shell.subscribe
   const { sqsTx, sqsRx } = metrology.getEngine()
   await metrology.settle()
   // start the net watcher, to reconcile hardware with chainware
   return {
     ...shellActions,
+    net,
     dispatch,
     getState,
     getContext, // TODO change to use getState with a path ?
     subscribe,
-    addTransport, // move this to be a net subcommand to the shell
-    removeTransports,
     sqsTx,
     sqsRx,
     engine: metrology,
@@ -117,15 +110,27 @@ const effectorFactory = async (identifier) => {
   }
 }
 
-const mapDispatchToShellActions = (dispatch) => {
-  const shellActions = {}
-  _.forOwn(shell.actions, (actionCreator, key) => {
-    shellActions[key] = (...args) => {
-      const action = actionCreator(...args)
+const resyncNet = async (net, netMetro) => {
+  const children = netMetro.getChildren()
+  Object.keys(net).forEach(
+    (key) => netMetro[key] || children[key] || delete net[key]
+  )
+  for (const key in children) {
+    assert(!netMetro[key], `child overrides function: ${key}`)
+    net[key] = await children(key)
+  }
+  // now need to spread the child reducer functions and wrap over.. ?
+}
+
+const mapDispatchToActions = (dispatch, covenant) => {
+  const mappedActions = {}
+  for (const key in covenant.actions) {
+    mappedActions[key] = (...args) => {
+      const action = covenant.actions[key](...args)
       return dispatch(action)
     }
-  })
-  return shellActions
+  }
+  return mappedActions
 }
 
 module.exports = { effectorFactory }

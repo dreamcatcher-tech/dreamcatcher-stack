@@ -9,6 +9,7 @@ describe('effector', () => {
   test('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
+    client.engine.enableLogging()
     debug(`effector ready`)
     const pingStart = Date.now()
     const reply = await client.ping()
@@ -73,11 +74,13 @@ describe('effector', () => {
   })
   test('create child', async () => {
     const client = await effectorFactory()
+    client.engine.enableLogging()
     reply = await client.add('child1')
     debug(`reply: `, reply)
     assert.strictEqual(reply.alias, 'child1')
-    const { child1 } = client.getState().network
+    const { child1 } = await client.getState().network
     assert.strictEqual(child1.address.getChainId(), reply.chainId)
+    await client.engine.settle()
   })
   test('ping created child', async () => {
     const client = await effectorFactory()

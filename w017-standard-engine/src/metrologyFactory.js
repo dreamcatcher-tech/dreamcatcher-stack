@@ -113,10 +113,12 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
       debug(`dispatch to: %o type: %O`, to, type)
       const promise = injector({ type, payload, to })
       sqsIncrease.push(address)
+      // TODO await the promise, then resync the children, in case something changed ?
       return promise
     }
 
-    const getState = (height) => {
+    const getState = (height, path = []) => {
+      // honour path requests
       // a synchronous snapshot of the current state of storage
       const { dbChains } = ramDb._getTables()
       const chain = dbChains[address.getChainId()] || {}
@@ -134,7 +136,12 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
         const { wbblockbucket } = ramS3._getBuckets()
         const block = wbblockbucket[s3Key]
         assert(blockModel.isModel(block))
-        return block
+        let ret = block
+        path.forEach((segment) => {
+          assert(ret[segment], `No segment: ${segment}`)
+          ret = ret[segment]
+        })
+        return ret
       }
     }
 
@@ -158,10 +165,12 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
       return () => subscribers.delete(callback)
     }
 
-    const spawn = (alias, spawnOptions = {}) =>
-      dispatch(actions.spawn(alias, spawnOptions))
+    const spawn = (
+      alias,
+      spawnOptions = {} // TODO replace with 'ADD' into shell covenant
+    ) => dispatch(actions.spawn(alias, spawnOptions))
     const getChildren = () => {
-      // TODO make children resolve directly
+      // TODO make children resolve synchronously and in their own context
       const block = getState()
       const aliases = block.network.getAliases()
       const children = {}
@@ -295,16 +304,17 @@ const enableLoggingWithTap = (engine, identifier) => {
   const tap = createTap(debugPrefix)
   sqsPool.subscribe(async (action, queuePromise) => {
     // await queuePromise
-    tap.interblockPool(action)
+    // tap.interblockPool(action)
   })
   sqsTransmit.subscribe(async (action, queuePromise) => {
     // await queuePromise
-    tap.interblockTransmit(action)
+    // tap.interblockTransmit(action)
   })
 
   ioConsistency.subscribe(async (action, queuePromise) => {
     if (action.type === 'UNLOCK') {
       await queuePromise
+      // TODO check if the children need resyncing ?
       tap.block(action.payload.block)
     }
   })

@@ -3,7 +3,7 @@ const assert = require('assert')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
 const { spawn, connect } = dmzReducer.actions
-const { socketModel } = require('../../w015-models')
+const { socketModel, covenantIdModel } = require('../../w015-models')
 const {
   respond,
   send,
@@ -16,61 +16,18 @@ const config = {
   actions: {},
   guards: {},
   services: {
-    ping: async (context, event) => {
-      // if ping '.' respond, else engage in remote pinging
-      debug(`ping: %O`, event)
-      const { type, payload } = event
-      const { to, ...rest } = payload
-      assert(type === 'PING')
-      if (to === '.') {
-        debug(`ping to self`)
-        return { type: 'PONG', payload: rest } // TODO move to state machine
-      }
-      const result = await invoke(type, {}, to)
-      debug(`ping result: %O`, result)
-      return result
+    addTransport: async (context, event) => {
+      // checkSchema( event, schema.addTransport)
+      debug(`event: %O`, event)
+      const { name, type, url } = event.payload
+      // TODO check that all children have different urls by calling loopback
+      const covenantId = covenantIdModel.create('socket')
+      const state = { type, url }
+      await invoke(spawn(name, { covenantId, state }))
     },
-    login: async (context, event) => {
-      debug(`login: %O`, event.payload.terminal)
-      const { chainId, ...rest } = event.payload
-      // TODO check terminal regex is a chainId
-      const connectToTerminal = connect('terminal', chainId)
-      await invoke(connectToTerminal)
-
-      // TODO import from authenticator / terminal functions
-      const loginResult = await invoke('@@INTRO', rest, 'terminal')
-      debug(`loginResult: %O`, loginResult)
-      return { loginResult }
-    },
-    addActor: async (context, event) => {
-      assert.strictEqual(typeof event.payload, 'object')
-      const { alias, spawnOptions, to } = event.payload
-      debug(`addActor`, alias, to)
-      const { type, payload } = spawn(alias, spawnOptions)
-      const addActor = await invoke(type, payload, to)
-
-      // calculate path based on working directory
-
-      // TODO if this was remote, open a path to the child ?
-      // but don't transmit anything ?
-      return { addActor }
-    },
-    listActors: async (context, event) => {},
-    changeDirectory: async (context, event) => {
-      const { path } = event.payload
-      debug(`changeDirectory`, path)
-      assert.strictEqual(typeof path, 'string')
-
-      // walk the path, checking with self if each path exists
-
-      // if path doesn't exist, need to open it
-
-      // if fail to open, reject
-    },
-    removeActor: async (context, event) => {
-      debug(`removeActor`, event)
-      // refuse to delete self
-      // try open path to child
+    rmTransport: async () => {
+      // close all the websockets
+      // reset the sqs queues back to defaults
     },
   },
 }
@@ -87,9 +44,35 @@ const machine = Machine(
           ADD: 'addTransport',
           RM: 'rmTransport',
           PING: 'ping',
+          PING_LAMBDA: 'pingLambda',
+          VERSION: 'version',
         },
       },
       addTransport: {
+        invoke: {
+          src: `addTransport`,
+          onDone: 'idle',
+        },
+      },
+      rmTransport: {
+        invoke: {
+          src: `addTransport`,
+          onDone: 'idle',
+        },
+      },
+      ping: {
+        invoke: {
+          src: `addTransport`,
+          onDone: 'idle',
+        },
+      },
+      pingLambda: {
+        invoke: {
+          src: `addTransport`,
+          onDone: 'idle',
+        },
+      },
+      version: {
         invoke: {
           src: `addTransport`,
           onDone: 'idle',
@@ -109,36 +92,38 @@ const machine = Machine(
 )
 
 const actions = {
-  ADD: ({ name, socketType, url }) => {
-    // example of overriding 'add' function
-    // check the schema ?
-    return {
-      type: `ADD`,
-      payload: {
-        socketType,
-        url,
-      },
-    }
+  add: ({ name, type, url }) => ({
+    type: `ADD`,
+    payload: {
+      name,
+      type,
+      url,
+    },
+  }),
+  rm: (name, force = false) => {
+    // remove a socket
   },
-  RM: (name, force = false) => {},
+  ping: () => {},
+  pingLambda: () => {},
+  version: () => {},
 }
 
 const schemas = {
-  ADD: {
+  add: {
     type: 'object',
     description: 'Add a new transport.  Will result in a child of this chain.',
     required: ['url'],
     properties: {
       url: { type: 'url' },
-      socketType: socketModel.schema.properties.type,
+      type: socketModel.schema.properties.type,
       name: { type: 'string' },
     },
   },
-  RM: {
+  rm: {
     description: `Removes a transport.  Gracefully attempts to close the connection.
         Force will terminate immediately by deleting the chain`,
   },
-  PING: {
+  ping: {
     description: `Ping the transport, or the function.  Pings to chain are handled by the chain directly`,
   },
 }

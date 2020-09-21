@@ -1,9 +1,10 @@
 const { v4: uuidv4 } = require('uuid')
 const pad = require('pad/dist/pad.umd')
+const debugFactory = require('debug')
 const machineLogger = (type, machine) => {
   const invocation = uuidv4()
   const startTime = Date.now()
-  const debug = require('debug')(`interblock:machines:${pad(machine, 11)}`)
+  const debug = debugFactory(`interblock:machines:${pad(machine, 11)}`)
   debug(`INVOCATION: ${machine} -> ${type}`)
   let lastTime = startTime
   const history = []
