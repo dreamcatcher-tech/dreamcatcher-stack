@@ -19,6 +19,7 @@
     "ajv": "^6.12.4",
     "ansi-colors": "^4.1.1",
     "aws-xray-sdk": "^3.1.0",
+    "bufferutil": "^4.0.1",
     "clear": "^0.1.0",
     "cli-truncate": "^2.1.0",
     "columnify": "^1.5.4",
@@ -42,6 +43,7 @@
     "supports-color": "^7.2.0",
     "tar": "^6.0.5",
     "traverse": "^0.6.6",
+    "utf-8-validate": "^5.0.2",
     "uuid": "^8.3.0",
     "xstate": "^4.11.0"
   },

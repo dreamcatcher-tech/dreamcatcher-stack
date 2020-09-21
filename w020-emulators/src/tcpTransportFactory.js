@@ -78,6 +78,20 @@ const tcpTransportFactory = (url) => {
       const start = Date.now()
       ws.send(`PING_LAMBDA ${data}`)
       ws.on('message', (response) => {
+        assert.strictEqual(response.toString(), `PONG_LAMBDA ${data}`)
+        resolve(Date.now() - start)
+      })
+    })
+  }
+
+  /**
+   * Returns the version of the foreign lambda function.
+   */
+  const version = async () => {
+    debug(`version`)
+    return new Promise((resolve) => {
+      ws.send(`VERSION`)
+      ws.on('message', (response) => {
         assert.equal(response.toString(), `PONG_LAMBDA ${data}`)
         resolve(Date.now() - start)
       })
@@ -97,7 +111,7 @@ const tcpTransportFactory = (url) => {
     ws.send(interblock.serialize())
   }
 
-  return { connect, ping, pingLambda, close, interblock }
+  return { connect, ping, pingLambda, version, close, interblock }
 }
 
 module.exports = { tcpTransportFactory }

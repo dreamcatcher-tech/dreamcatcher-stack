@@ -32,9 +32,9 @@ const generateKeyPair = async (seed) => {
   seed = seed || (await sodium.randombytes_buf(32))
   const keypairRaw = await sodium.crypto_sign_seed_keypair(seed)
   const secret = await sodium.crypto_sign_secretkey(keypairRaw)
-  const public = await sodium.crypto_sign_publickey(keypairRaw)
+  const pub = await sodium.crypto_sign_publickey(keypairRaw)
   const keypair = {
-    publicKey: public.toString('base64'),
+    publicKey: pub.toString('base64'),
     secretKey: secret.toString('base64'),
   }
   const { publicKey, secretKey } = keypair
@@ -77,9 +77,9 @@ const verifyHashSync = (messageHash, signature, publicKey) => {
 
 const verifyHash = async (messageHash, signature, publicKey) => {
   const sig = Buffer.from(signature, 'base64')
-  const public = Ed25519PublicKey.from(publicKey, 'base64')
+  const pub = Ed25519PublicKey.from(publicKey, 'base64')
   const sodium = await sodiumLoader()
-  const ver = await sodium.crypto_sign_verify_detached(messageHash, public, sig)
+  const ver = await sodium.crypto_sign_verify_detached(messageHash, pub, sig)
   const key = `${messageHash}_${signature}_${publicKey}`
   if (ver) {
     _verifiedSet.add(key)

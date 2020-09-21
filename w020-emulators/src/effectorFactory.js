@@ -43,12 +43,9 @@ const { tcpTransportFactory } = require('./tcpTransportFactory')
 
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
-  const { covenantId } = shell
-  const metrology = await metrologyFactory(identifier).spawn('shell', {
-    covenantId,
-  })
+  const metrology = await metrologyFactory(identifier).spawn('shell', shell)
   const { ioConsistency } = metrology.getEngine()
-  const childShell = await metrology.getChildren().shell
+  const childShell = metrology.getChildren().shell
 
   const emulateAws = async (reifiedCovenantMap) => {
     // TODO kill existing emulator ?
@@ -80,9 +77,9 @@ const effectorFactory = async (identifier) => {
 
     // set sqsRx & sqsTx
 
-    assert.equal(typeof socketInfo, 'object')
-    assert.equal(typeof chainId, 'string')
-    assert.equal(typeof socketInfo.url, 'string')
+    assert.strictEqual(typeof socketInfo, 'object')
+    assert.strictEqual(typeof chainId, 'string')
+    assert.strictEqual(typeof socketInfo.url, 'string')
     const { url } = socketInfo
     const tcpTransport = tcpTransportFactory(url)
     await tcpTransport.connect()

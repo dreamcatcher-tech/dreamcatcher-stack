@@ -165,7 +165,7 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
       const block = getState()
       const aliases = block.network.getAliases()
       const children = {}
-      aliases.map((alias) => {
+      aliases.forEach((alias) => {
         const channel = block.network[alias]
         if (channel.systemRole === './') {
           const { address } = channel
