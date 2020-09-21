@@ -6,7 +6,7 @@ const { txRequestSchema } = require('../schemas/transientSchemas')
 const txRequestModel = standardize({
   schema: txRequestSchema,
   create(type = 'DEFAULT_TX_REQUEST', payload = {}, to = '.') {
-    assert.equal(typeof payload, 'object')
+    assert.strictEqual(typeof payload, 'object')
     const txRequest = { type, payload, to }
     return txRequestModel.clone(txRequest)
   },

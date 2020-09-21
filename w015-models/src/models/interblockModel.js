@@ -47,7 +47,7 @@ const interblockModel = standardize({
     const remote = originAlias && network[originAlias]
     assert(!remote || remoteModel.isModel(remote))
     if (originAlias) {
-      assert.equal(Object.keys(network).length, 1)
+      assert.strictEqual(Object.keys(network).length, 1)
       const channel = network[originAlias]
       // TODO check the integrity proof covers all data in the interblock
       // assert(integrity.checkEntryProof('network', originAlias, channel))

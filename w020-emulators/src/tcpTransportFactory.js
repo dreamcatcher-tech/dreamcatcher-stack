@@ -61,7 +61,7 @@ const tcpTransportFactory = (url) => {
       const start = Date.now()
       ws.ping(data)
       ws.on('pong', (response) => {
-        assert.equal(response.toString(), data)
+        assert.strictEqual(response.toString(), data)
         resolve(Date.now() - start)
       })
     })
@@ -92,7 +92,7 @@ const tcpTransportFactory = (url) => {
     return new Promise((resolve) => {
       ws.send(`VERSION`)
       ws.on('message', (response) => {
-        assert.equal(response.toString(), `PONG_LAMBDA ${data}`)
+        assert.strictEqual(response.toString(), `PONG_LAMBDA ${data}`)
         resolve(Date.now() - start)
       })
     })
@@ -107,7 +107,7 @@ const tcpTransportFactory = (url) => {
 
   const interblock = async (interblock) => {
     const OPEN = 1
-    assert.equal(ws.readyState, OPEN, `websocket not open`)
+    assert.strictEqual(ws.readyState, OPEN, `websocket not open`)
     ws.send(interblock.serialize())
   }
 

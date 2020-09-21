@@ -15,7 +15,7 @@ const _addressFromChainId = (chainId) => {
   const blank = integrityModel.create()
   const integrity = integrityModel.clone({ ...blank, hash: chainId })
   const address = addressModel.create(integrity)
-  assert.equal(address.getChainId(), chainId)
+  assert.strictEqual(address.getChainId(), chainId)
   return address
 }
 
@@ -130,7 +130,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
         return
       }
       assert(interblockModel.isModel(interblock))
-      assert.equal(poolItem.interblockHash, interblock.getHash())
+      assert.strictEqual(poolItem.interblockHash, interblock.getHash())
       return interblock
     })
     const resolved = await Promise.all(interblockAwaits)
@@ -376,8 +376,8 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     const block = await s3.getBlock(s3Key)
     assert(blockModel.isModel(block))
     assert(address.equals(block.provenance.getAddress()))
-    assert.equal(block.getHash(), blockItem.blockHash)
-    assert.equal(block.provenance.height, height)
+    assert.strictEqual(block.getHash(), blockItem.blockHash)
+    assert.strictEqual(block.provenance.height, height)
     debug(`getBlock complete`)
     return block
   }
@@ -390,7 +390,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     }
     assert(baseItem.chainId)
     const address = addressModel.create(baseItem.chainId)
-    assert.equal(baseItem.chainId, address.getChainId())
+    assert.strictEqual(baseItem.chainId, address.getChainId())
     debug(`getBaseAddress: ${address.getChainId()}`)
     return address
   }

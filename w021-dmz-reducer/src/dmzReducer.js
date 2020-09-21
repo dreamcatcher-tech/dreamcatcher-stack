@@ -143,7 +143,7 @@ const connectReducer = (network, action) =>
   networkModel.clone(network, (draft) => {
     assert(networkModel.isModel(network))
     const address = addressModel.create(action.payload.chainId)
-    assert.equal(address.getChainId(), action.payload.chainId)
+    assert.strictEqual(address.getChainId(), action.payload.chainId)
     const { alias } = action.payload
     assert(alias && typeof alias === 'string')
     const channel = network[alias] || channelModel.create(address)

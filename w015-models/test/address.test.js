@@ -39,7 +39,7 @@ describe('address', () => {
     const address = addressModel.create(integrity)
     assert(!address.isGenesis())
     assert(!address.isUnknown())
-    assert.equal(address.getChainId(), integrity.hash)
+    assert.strictEqual(address.getChainId(), integrity.hash)
     const clone = addressModel.clone(address)
     assert(clone.equals(address))
   })

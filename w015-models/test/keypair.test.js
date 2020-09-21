@@ -16,7 +16,7 @@ describe('keypair', () => {
     assert(!keypairDefault1.equals(keypair1))
     const degraded = { ...keypair1, publicKey: keypair2.publicKey }
     assert.throws(() => keypairModel.clone(degraded))
-    assert.equal(keypairDefault1.name, 'CI')
+    assert.strictEqual(keypairDefault1.name, 'CI')
   })
 
   test('default create is same each time', () => {
@@ -25,7 +25,7 @@ describe('keypair', () => {
     assert(s1.equals(s2))
     const c1 = keypairModel.clone()
     const c2 = keypairModel.clone()
-    assert.equal(c1, c2)
+    assert.strictEqual(c1, c2)
   })
   test('create with same seed is same', async () => {
     const kp1 = await crypto.generateKeyPair()

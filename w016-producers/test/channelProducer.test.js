@@ -52,23 +52,23 @@ describe('channelProducer', () => {
     tx = txRequest(tx, action)
     assert(channelModel.isModel(tx))
     assert(action.equals(tx.requests[0]))
-    assert.equal(Object.keys(tx.requests).length, 1)
-    assert.equal(tx.requestsLength, 1)
+    assert.strictEqual(Object.keys(tx.requests).length, 1)
+    assert.strictEqual(tx.requestsLength, 1)
   })
   test('multiple actions requested', () => {
     let twoActions = channelModel.create()
     const action = actionModel.create()
     twoActions = txRequest(twoActions, action)
     twoActions = txRequest(twoActions, action)
-    assert.equal(Object.keys(twoActions.requests).length, 2)
-    assert.equal(twoActions.requestsLength, 2)
+    assert.strictEqual(Object.keys(twoActions.requests).length, 2)
+    assert.strictEqual(twoActions.requestsLength, 2)
 
     let many = channelModel.create()
     Array(10)
       .fill(action)
       .forEach((action) => (many = txRequest(many, action)))
-    assert.equal(Object.keys(many.requests).length, 10)
-    assert.equal(many.requestsLength, 10)
+    assert.strictEqual(Object.keys(many.requests).length, 10)
+    assert.strictEqual(many.requestsLength, 10)
   })
   test('resolve can update previous promises', async () => {
     const action = actionModel.create()
@@ -96,8 +96,8 @@ describe('channelProducer', () => {
     assert(local.replies[1].type === promiseAction.type)
     assert(local.replies[2].type === resolveAction.type)
 
-    assert.equal(local.requestsLength, 0)
-    assert.equal(remote.requestsLength, 3)
+    assert.strictEqual(local.requestsLength, 0)
+    assert.strictEqual(remote.requestsLength, 3)
   })
 
   test('rxReply returns undefined if no remote yet', () => {

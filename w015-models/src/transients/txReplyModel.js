@@ -7,7 +7,7 @@ const splitSequence = require('./splitSequence')
 const txReplyModel = standardize({
   schema: txReplySchema,
   create(type = '@@RESOLVE', payload = {}, sequence) {
-    assert.equal(typeof payload, 'object')
+    assert.strictEqual(typeof payload, 'object')
     const txReply = { type, payload, request: { sequence } }
     return txReplyModel.clone(txReply)
   },

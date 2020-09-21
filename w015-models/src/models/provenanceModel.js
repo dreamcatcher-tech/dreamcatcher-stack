@@ -25,7 +25,7 @@ const provenanceModel = standardize({
     dmz = dmz || dmzModel.create()
     assert(dmzModel.isModel(dmz))
     assert(!parentProvenance || provenanceModel.isModel(parentProvenance))
-    assert.equal(typeof extraLineages, 'object')
+    assert.strictEqual(typeof extraLineages, 'object')
     assert(Object.values(extraLineages).every(integrityModel.isModel))
     assert(!Object.keys(extraLineages).length || parentProvenance)
 
@@ -71,7 +71,7 @@ const provenanceModel = standardize({
     assert(instance.height || instance.address.isGenesis())
     // later, will allow foreign chains as prefixes to the provenance index
     assert(lineageKeys.every((i) => i >= 0 && i < instance.height))
-    assert.equal(instance.signatures.length, 1, `single signer in prototype`)
+    assert.strictEqual(instance.signatures.length, 1, `single signer only`)
 
     const selfIntegrity = () => {
       const check = _.omit(instance, ['integrity', 'signatures'])

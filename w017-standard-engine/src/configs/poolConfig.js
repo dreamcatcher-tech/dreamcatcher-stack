@@ -195,7 +195,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       verifyLineage: ({ interblock }, event) => {
         const lineage = event.data
         assert(lineage.length)
-        assert.equal(interblock.getChainId(), lineage[0].getChainId())
+        assert.strictEqual(interblock.getChainId(), lineage[0].getChainId())
         assert(!lineage[0].provenance.height)
         debug(`verifyLineage`)
         // TODO check lineage is complete in the dmz, but does not include the interblock
@@ -251,7 +251,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         const lineage = await consistency.getLineage({ provenance })
         assert(Array.isArray(lineage))
         assert(lineage.every(interblockModel.isModel))
-        assert.equal(lineage[0].provenance.height, 0)
+        assert.strictEqual(lineage[0].provenance.height, 0)
         debug(`fetchParentLineage length: ${lineage.length}`)
         return lineage
       },

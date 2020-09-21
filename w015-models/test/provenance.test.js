@@ -48,7 +48,7 @@ describe('provenance', () => {
   test('lineage checks', async () => {
     const dmz = dmzModel.create()
     const parent = await provenanceModel.create(dmz)
-    assert.equal(Object.keys(parent.lineage).length, 0)
+    assert.strictEqual(Object.keys(parent.lineage).length, 0)
     const child = await provenanceModel.create(dmz, parent)
     const [parentIntegrity, ...other] = Object.values(child.lineage)
 

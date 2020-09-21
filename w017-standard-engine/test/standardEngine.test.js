@@ -5,7 +5,7 @@ describe('standardEngine', () => {
   test('multiple increase requests successfully lock chain twice', async () => {
     const base = await metrologyFactory()
     const { sqsIncrease, ioConsistency } = base.getEngine()
-    assert.equal(base.getHeight(), 0)
+    assert.strictEqual(base.getHeight(), 0)
     const address = base.getState().provenance.getAddress()
     let lockCount = 0
     let unlockCount = 0
@@ -22,9 +22,9 @@ describe('standardEngine', () => {
     const increases = Array(10).fill(address)
     increases.map(sqsIncrease.push)
     await base.settle()
-    assert.equal(lockCount, unlockCount)
-    assert.equal(lockCount, 2)
-    assert.equal(base.getHeight(), 0)
+    assert.strictEqual(lockCount, unlockCount)
+    assert.strictEqual(lockCount, 2)
+    assert.strictEqual(base.getHeight(), 0)
   })
 
   test.todo(

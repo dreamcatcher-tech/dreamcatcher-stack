@@ -49,7 +49,7 @@ describe('emulateAwsFactory', () => {
     const start = Date.now()
     const pong = await client.ping('terminal')
     debug(`terminal ping result: `, pong)
-    assert.equal(pong.type, 'PONG')
+    assert.strictEqual(pong.type, 'PONG')
     debug(`ping RTT: ${Date.now() - start} ms`)
 
     await aws.engine.settle()

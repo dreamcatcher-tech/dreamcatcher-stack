@@ -88,7 +88,7 @@ const closure = (schema, inflated, isModel) => {
   }
   let cachedHash, cachedProof
   const _generateHashWithProof = () => {
-    assert.equal(typeof inflated, 'object')
+    assert.strictEqual(typeof inflated, 'object')
     const { hash, proof } = generateHash(schema, inflated)
     cachedHash = hash
     cachedProof = proof

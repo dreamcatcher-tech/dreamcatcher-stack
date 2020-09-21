@@ -72,7 +72,7 @@ describe('translator', () => {
       require('debug').enable('*translator ')
       const reducer = translator(testMachine)
       let state = await reducer(undefined, 'TRANSITION_HOLD')
-      assert.equal(state.xstate.value, 'transitionHold')
+      assert.strictEqual(state.xstate.value, 'transitionHold')
       delete state.actions
 
       await assert.rejects(() => reducer(state, 'TRANSITION_HOLD'))
@@ -85,35 +85,35 @@ describe('translator', () => {
       let state
       state = await shell.reducer(undefined, ping)
       let { actions: a1, ...rest1 } = state
-      assert.equal(rest1.xstate.value, 'ping')
-      assert.equal(a1.length, 2)
+      assert.strictEqual(rest1.xstate.value, 'ping')
+      assert.strictEqual(a1.length, 2)
       const [promise, a1Done] = a1
-      assert.equal(a1Done.type, 'done.invoke.ping')
-      assert.equal(promise.type, '@@PROMISE')
+      assert.strictEqual(a1Done.type, 'done.invoke.ping')
+      assert.strictEqual(promise.type, '@@PROMISE')
 
       state = await shell.reducer(rest1, a1Done)
       let { actions: a2, ...rest2 } = state
-      assert.equal(rest2.xstate.value, 'idle')
-      assert.equal(a2.length, 1)
+      assert.strictEqual(rest2.xstate.value, 'idle')
+      assert.strictEqual(a2.length, 1)
       const [a2Resolve] = a2
-      assert.equal(a2Resolve.type, '@@RESOLVE')
-      assert.equal(a2Resolve.payload.type, 'PONG')
-      assert.equal(a2Resolve.request, ping)
+      assert.strictEqual(a2Resolve.type, '@@RESOLVE')
+      assert.strictEqual(a2Resolve.payload.type, 'PONG')
+      assert.strictEqual(a2Resolve.request, ping)
 
       assert(!state.originAction)
-      assert.equal(state.promises.length, 0)
+      assert.strictEqual(state.promises.length, 0)
     })
     test('remote ping', async () => {
       let state
       const pingRemote = shell.actions.ping('remote')
       state = await shell.reducer(undefined, pingRemote)
       let { actions: a1, ...rest1 } = state
-      assert.equal(rest1.xstate.value, 'ping')
-      assert.equal(a1.length, 2)
+      assert.strictEqual(rest1.xstate.value, 'ping')
+      assert.strictEqual(a1.length, 2)
       const [promise, invoke] = a1
-      assert.equal(invoke.type, 'PING')
-      assert.equal(invoke.to, 'remote')
-      assert.equal(promise.type, '@@PROMISE')
+      assert.strictEqual(invoke.type, 'PING')
+      assert.strictEqual(invoke.to, 'remote')
+      assert.strictEqual(promise.type, '@@PROMISE')
 
       const { type, payload } = invoke
       const replyPayload = { remoteReply: 'remoteReply' }
@@ -121,12 +121,12 @@ describe('translator', () => {
       const reply = rxReplyModel.create('@@RESOLVE', replyPayload, action)
       state = await shell.reducer(rest1, reply)
       let { actions: a2, ...rest2 } = state
-      assert.equal(rest2.xstate.value, 'idle')
-      assert.equal(a2.length, 1)
+      assert.strictEqual(rest2.xstate.value, 'idle')
+      assert.strictEqual(a2.length, 1)
       const [resolve] = a2
-      assert.equal(resolve.type, '@@RESOLVE')
-      assert.deepEqual(resolve.payload, replyPayload)
-      assert.equal(resolve.request, pingRemote)
+      assert.strictEqual(resolve.type, '@@RESOLVE')
+      assert.deepStrictEqual(resolve.payload, replyPayload)
+      assert.strictEqual(resolve.request, pingRemote)
     })
     test('double ping', async () => {
       const ping = shell.actions.ping()
@@ -139,22 +139,22 @@ describe('translator', () => {
       state = await shell.reducer(rest1, p1Done)
       let { actions: p1Resolve, ...rest2 } = state
       assert(!state.originAction)
-      assert.equal(state.promises.length, 0)
+      assert.strictEqual(state.promises.length, 0)
 
       const ping2 = { ...ping, sequence: 'secondPing' }
       state = await shell.reducer(rest2, ping2)
       let { actions: p2Request, ...rest3 } = state
-      assert.equal(p2Request.length, 2)
+      assert.strictEqual(p2Request.length, 2)
       const [promise2, p2Done] = p2Request
 
       state = await shell.reducer(rest3, p2Done)
       let { actions: p2Resolve, ...rest4 } = state
       const [p2ResolveAction] = p2Resolve
-      assert.equal(p2ResolveAction.type, '@@RESOLVE')
-      assert.equal(p2ResolveAction.request, ping2)
+      assert.strictEqual(p2ResolveAction.type, '@@RESOLVE')
+      assert.strictEqual(p2ResolveAction.request, ping2)
 
       assert(!state.originAction)
-      assert.equal(state.promises.length, 0)
+      assert.strictEqual(state.promises.length, 0)
     })
     test.todo('cascaded ping')
     test.todo('rejecting ping')
@@ -181,12 +181,12 @@ describe('translator', () => {
 
     actions = state.actions
     delete state.actions
-    assert.equal(state.xstate.value, 'testInvoke')
-    assert.equal(actions.length, 2)
+    assert.strictEqual(state.xstate.value, 'testInvoke')
+    assert.strictEqual(actions.length, 2)
     const [promise, invoke] = actions
-    assert.equal(invoke.type, 'testInvokeSelf')
-    assert.equal(promise.type, '@@PROMISE')
-    assert.equal(promise.request, undefined)
+    assert.strictEqual(invoke.type, 'testInvokeSelf')
+    assert.strictEqual(promise.type, '@@PROMISE')
+    assert.strictEqual(promise.request, undefined)
 
     debug(`sending first reply`)
     const reply = createReply(invoke, `first reply`)
@@ -194,51 +194,51 @@ describe('translator', () => {
 
     actions = state.actions
     delete state.actions
-    assert.equal(state.xstate.value, 'testInvoke')
-    assert.equal(actions.length, 1)
+    assert.strictEqual(state.xstate.value, 'testInvoke')
+    assert.strictEqual(actions.length, 1)
     debug(`actions: `, actions)
     const [secondInvoke] = actions
-    assert.equal(secondInvoke.type, 'secondInvoke')
-    assert.equal(secondInvoke.payload.requestId, 1)
+    assert.strictEqual(secondInvoke.type, 'secondInvoke')
+    assert.strictEqual(secondInvoke.payload.requestId, 1)
     const reply2 = createReply(secondInvoke, `second reply`)
     state = await reducer(state, reply2)
 
     // assert the original promise was resolved
-    assert.equal(state.xstate.value, 'done')
-    assert.equal(state.promises.length, 0)
-    assert.equal(state.actions.length, 1)
+    assert.strictEqual(state.xstate.value, 'done')
+    assert.strictEqual(state.promises.length, 0)
+    assert.strictEqual(state.actions.length, 1)
     const [resolve] = state.actions
     debug(resolve)
-    assert.equal(resolve.type, '@@RESOLVE')
-    assert.deepEqual(resolve.request, { type: 'INVOKE' })
-    assert.deepEqual(resolve.payload, {})
+    assert.strictEqual(resolve.type, '@@RESOLVE')
+    assert.deepStrictEqual(resolve.request, { type: 'INVOKE' })
+    assert.deepStrictEqual(resolve.payload, {})
   })
   test('instant services return', async () => {
     require('debug').enable('*')
     const reducer = translator(testMachine)
     const request = { type: 'INVOKE_INSTANT' }
     let nextState = await reducer(undefined, request)
-    assert.equal(nextState.actions.length, 2)
+    assert.strictEqual(nextState.actions.length, 2)
     const [promise, doneInvoke] = nextState.actions
-    assert.equal(doneInvoke.type, 'done.invoke.instantInvoker')
+    assert.strictEqual(doneInvoke.type, 'done.invoke.instantInvoker')
     delete nextState.actions
 
     nextState = await reducer(nextState, doneInvoke)
-    assert.equal(nextState.actions.length, 1)
-    assert.equal(nextState.xstate.value, 'done')
+    assert.strictEqual(nextState.actions.length, 1)
+    assert.strictEqual(nextState.xstate.value, 'done')
     const [resolve] = nextState.actions
-    assert.equal(resolve.request, request)
-    assert.equal(resolve.type, '@@RESOLVE')
-    assert.deepEqual(resolve.payload, {})
+    assert.strictEqual(resolve.request, request)
+    assert.strictEqual(resolve.type, '@@RESOLVE')
+    assert.deepStrictEqual(resolve.payload, {})
   })
   test('undefined response from service', async () => {
     require('debug').enable('*')
     const reducer = translator(testMachine)
     const request = { type: 'INVOKE_UNDEFINED' }
     const nextState = await reducer(undefined, request)
-    assert.equal(nextState.actions.length, 2)
+    assert.strictEqual(nextState.actions.length, 2)
     const [promise, doneInvoke] = nextState.actions
-    assert.equal(doneInvoke.type, 'done.invoke.testInvokeUndefinedResult')
+    assert.strictEqual(doneInvoke.type, 'done.invoke.testInvokeUndefinedResult')
   })
   test.todo('instant return after multiple awaits')
   test.todo('multiple parallel invokes')

@@ -51,10 +51,10 @@ const channelModel = standardize({
     assert(remote)
     if (heavy) {
       assert(heavy.getRemote() || heavyHeight === 0)
-      assert.equal(heavy.provenance.height, heavyHeight)
+      assert.strictEqual(heavy.provenance.height, heavyHeight)
       assert(lineageHeight >= heavyHeight)
       const { provenance } = _.last(lineageTip)
-      assert.equal(provenance.height, lineageHeight)
+      assert.strictEqual(provenance.height, lineageHeight)
       assert(_.last(lineage).equals(provenance.reflectIntegrity()))
     }
     assert(lineageTip.every((interblock) => !interblock.getRemote()))

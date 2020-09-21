@@ -42,7 +42,7 @@ const ramDynamoDbFactory = () => {
       KeyConditionExpression,
       ExpressionAttributeValues,
     } = params
-    assert.equal(KeyConditionExpression, 'chainId = :hkey')
+    assert.strictEqual(KeyConditionExpression, 'chainId = :hkey')
     const chainId = ExpressionAttributeValues[':hkey']
     assert(chainId)
 
@@ -103,7 +103,7 @@ const ramDynamoDbFactory = () => {
   const scan = ({ TableName, Limit }) => {
     debug(`scan: %O %O`, TableName, Limit)
     assert(['dbChains', 'dbCrypto'].includes(TableName))
-    assert.equal(Limit, 1)
+    assert.strictEqual(Limit, 1)
     return {
       promise: async () => {
         await Promise.resolve()

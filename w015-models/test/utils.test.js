@@ -28,7 +28,7 @@ describe('standard model', () => {
   test('equals works after serialize', () => {
     const integrity = integrityModel.create({ test: 'test' })
     const json = integrity.serialize()
-    assert.equal(typeof json, 'string')
+    assert.strictEqual(typeof json, 'string')
     const reflated = integrityModel.clone(json)
     const clone = integrityModel.clone(reflated)
     assert(clone.equals(integrity))
@@ -37,7 +37,7 @@ describe('standard model', () => {
   test('equals works after serialize for nested types', () => {
     const id = covenantIdModel.create('test')
     const json = id.serialize()
-    assert.equal(typeof json, 'string')
+    assert.strictEqual(typeof json, 'string')
     const reflated = covenantIdModel.clone(json)
     const clone = covenantIdModel.clone(reflated)
     assert(clone.equals(id))
@@ -61,7 +61,7 @@ describe('standard model', () => {
     const s1 = i1.serialize()
     const s2 = i2.serialize()
     const s1next = i1.serialize()
-    assert.equal(s1, s1next)
+    assert.strictEqual(s1, s1next)
     assert.notEqual(s1, s2)
   })
   test('objects are immutable', () => {
@@ -121,7 +121,7 @@ describe('standard model', () => {
     const provenance = await provenanceModel.create()
     const { signatures } = provenance
     assert(Array.isArray(signatures))
-    assert.equal(signatures.length, 1)
+    assert.strictEqual(signatures.length, 1)
     const json = JSON.stringify(provenance)
     const revived = provenanceModel.clone(json)
     assert(revived.equals(provenance))

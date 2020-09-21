@@ -13,7 +13,7 @@ describe('effector', () => {
     const pingStart = Date.now()
     const reply = await client.ping()
     debug(`reply: `, reply)
-    assert.equal(reply.type, 'PONG')
+    assert.strictEqual(reply.type, 'PONG')
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
 
@@ -75,9 +75,9 @@ describe('effector', () => {
     const client = await effectorFactory()
     reply = await client.add('child1')
     debug(`reply: `, reply)
-    assert.equal(reply.alias, 'child1')
+    assert.strictEqual(reply.alias, 'child1')
     const { child1 } = client.getState().network
-    assert.equal(child1.address.getChainId(), reply.chainId)
+    assert.strictEqual(child1.address.getChainId(), reply.chainId)
   })
   test('ping created child', async () => {
     const client = await effectorFactory()
@@ -134,14 +134,14 @@ describe.skip('client fluent interface', () => {
     const ping = actions.ping()
     const resultPromise = client.dispatch(ping, './ping') // make this default action of the app ?
     const state = client.cat('./ping') // recursive cat ?
-    assert.equal(state.ping.pingCount, 0)
-    assert.equal(state.pong.pongCount, 0)
+    assert.strictEqual(state.ping.pingCount, 0)
+    assert.strictEqual(state.pong.pongCount, 0)
 
     await resultPromise
     const stateAfter = client.getState()
-    assert.equal(stateAfter.ping.pingCount, 1)
-    assert.equal(stateAfter.pong.pongCount, 1)
-    assert.equal(result, 'ponged the ping')
+    assert.strictEqual(stateAfter.ping.pingCount, 1)
+    assert.strictEqual(stateAfter.pong.pongCount, 1)
+    assert.strictEqual(result, 'ponged the ping')
   })
   test.todo('defaults to cwd if no address on action')
   test.todo('can connect two clients to the same dev instance')

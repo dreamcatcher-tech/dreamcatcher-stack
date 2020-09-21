@@ -152,8 +152,8 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
     })
     const subscribe = (callback, path = '.') => {
       // TODO handle path
-      assert.equal(typeof callback, 'function')
-      assert.equal(typeof path, 'string')
+      assert.strictEqual(typeof callback, 'function')
+      assert.strictEqual(typeof path, 'string')
       subscribers.add(callback)
       return () => subscribers.delete(callback)
     }

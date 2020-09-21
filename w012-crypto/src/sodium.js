@@ -47,8 +47,8 @@ const verifyKeyPairSync = ({ publicKey, secretKey }) =>
   _verifiedSet.has(`${publicKey}_${secretKey}`)
 
 const verifyKeyPair = async ({ publicKey, secretKey }) => {
-  assert.equal(typeof publicKey, 'string')
-  assert.equal(typeof secretKey, 'string')
+  assert.strictEqual(typeof publicKey, 'string')
+  assert.strictEqual(typeof secretKey, 'string')
   const mapKey = `${publicKey}_${secretKey}`
   try {
     const { signature } = await signHash(_hashTemplate, secretKey)
@@ -60,13 +60,13 @@ const verifyKeyPair = async ({ publicKey, secretKey }) => {
   return _verifiedSet.has(mapKey)
 }
 
-const signHash = async (messageHash, secretKey) => {
-  assert.equal(messageHash.length, _hashTemplate.length, `use objectHash()`)
+const signHash = async (hash, secretKey) => {
+  assert.strictEqual(hash.length, _hashTemplate.length, `use objectHash()`)
   const secret = Ed25519SecretKey.from(secretKey, 'base64')
   const sodium = await sodiumLoader()
-  const sig = await sodium.crypto_sign_detached(messageHash, secret)
+  const sig = await sodium.crypto_sign_detached(hash, secret)
   const signature = sig.toString('base64')
-  return { messageHash, signature }
+  return { messageHash: hash, signature }
 }
 
 const verifyHashSync = (messageHash, signature, publicKey) => {

@@ -14,7 +14,7 @@ describe('interpreter', () => {
     const pingerDispatch = { ...ping, to: 'pinger' }
     const reply = await base.dispatch(pingerDispatch)
     await base.settle()
-    assert.equal(reply.type, 'PONG')
+    assert.strictEqual(reply.type, 'PONG')
   })
   test.todo('tick with no response is an instant resolve')
   test.todo('connect on existing is the same as move')

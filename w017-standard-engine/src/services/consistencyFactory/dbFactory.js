@@ -116,7 +116,7 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
     const { ConsumedCapacity, Items } = result
     assert(Array.isArray(Items))
     if (Items.length) {
-      assert.equal(Items.length, 1)
+      assert.strictEqual(Items.length, 1)
       const [firstItem] = Items
       return firstItem
     }

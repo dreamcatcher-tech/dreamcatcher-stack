@@ -48,7 +48,7 @@ const inflatePattern = (schema, instance) => {
   assert(schema.type === 'object')
   assert(schema.patternProperties)
   assert(!schema.additionalProperties)
-  assert.equal(Object.keys(schema.patternProperties).length, 1)
+  assert.strictEqual(Object.keys(schema.patternProperties).length, 1)
   // check min and max
   const regex = Object.keys(schema.patternProperties)[0]
   const isIntegerRegex = regex === '[0-9]*'
@@ -80,7 +80,7 @@ const inflateArray = (schema, instance) => {
 }
 
 const isKeysValidated = (schema, instance) => {
-  assert.equal(schema.additionalProperties, false)
+  assert(!schema.additionalProperties)
   const instanceKeys = Object.keys(instance)
   const propKeys = Object.keys(schema.properties)
   const isRequired = schema.required.every((key) => instanceKeys.includes(key))

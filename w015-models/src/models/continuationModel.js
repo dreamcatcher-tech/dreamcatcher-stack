@@ -11,7 +11,7 @@ const continuationModel = standardize({
   },
   logicize(instance) {
     if (instance.type === '@@PROMISE') {
-      assert.equal(
+      assert.strictEqual(
         Object.keys(instance.payload).length,
         0,
         `Promises cannot have payloads`

@@ -46,7 +46,7 @@ describe('integrity', () => {
   })
   test(`getHash returns the stored hash`, () => {
     const integrity = integrityModel.create('test hash')
-    assert.equal(integrity.hash, integrity.getHash())
+    assert.strictEqual(integrity.hash, integrity.getHash())
   })
   test.todo('detects tampered proof')
   test.todo('detects tampered nested proof')

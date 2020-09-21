@@ -43,7 +43,7 @@ const config = {
       return { loginResult }
     },
     addActor: async (context, event) => {
-      assert.equal(typeof event.payload, 'object')
+      assert.strictEqual(typeof event.payload, 'object')
       const { alias, spawnOptions, to } = event.payload
       debug(`addActor`, alias, to)
       const { type, payload } = spawn(alias, spawnOptions)
@@ -59,7 +59,7 @@ const config = {
     changeDirectory: async (context, event) => {
       const { path } = event.payload
       debug(`changeDirectory`, path)
-      assert.equal(typeof path, 'string')
+      assert.strictEqual(typeof path, 'string')
 
       // walk the path, checking with self if each path exists
 

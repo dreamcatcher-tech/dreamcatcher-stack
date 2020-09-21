@@ -6,7 +6,7 @@ describe('network', () => {
     const network = networkModel.create()
     assert(network['..'])
     assert(network['.'])
-    assert.equal(network.getAliases().length, 2)
+    assert.strictEqual(network.getAliases().length, 2)
   })
   test('parent is unknown by default', () => {
     const network = networkModel.create()
@@ -17,7 +17,7 @@ describe('network', () => {
   test('aliases are frozen', () => {
     const network = networkModel.create()
     const aliases = network.getAliases()
-    assert.equal(aliases.length, 2)
+    assert.strictEqual(aliases.length, 2)
     assert.throws(() => aliases.push('test'))
   })
   test.todo('rxReply always selected before rxRequest')

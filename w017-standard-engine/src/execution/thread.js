@@ -43,7 +43,7 @@ const thread = async (event, machine) => {
 }
 
 const setLogger = (logger) => {
-  assert.equal(typeof logger, 'function')
+  assert.strictEqual(typeof logger, 'function')
   _logFactory = logger
 }
 

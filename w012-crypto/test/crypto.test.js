@@ -15,12 +15,12 @@ describe('crypto', () => {
     const hash = sodium.objectHash(testString)
     const previous =
       'a46092d2aaf8df017b1ede7ef3a2d2a427eb23cc240bbf3687d69a1ba17f4a27'
-    assert.equal(hash, previous)
+    assert.strictEqual(hash, previous)
   }
   const hashObject = () => {
     const testObject = { some: 'test', obj: 'etc' }
     const hash = sodium.objectHash(testObject)
-    assert.equal(
+    assert.strictEqual(
       hash,
       '70b467b32a6ea695555039bc52eba599305f2cbeaa7e4b59ced78aed3a07aebb',
       'hash does not match the expected value'
@@ -101,7 +101,7 @@ describe('crypto', () => {
       const hash = sodium.objectHash(testString)
       const previous =
         'a46092d2aaf8df017b1ede7ef3a2d2a427eb23cc240bbf3687d69a1ba17f4a27'
-      assert.equal(hash, previous)
+      assert.strictEqual(hash, previous)
       const different = sodium.objectHash('different string')
       assert.notEqual(hash, different)
     })
@@ -110,7 +110,7 @@ describe('crypto', () => {
       const hash = sodium.objectHash(testObject)
       const previous =
         '70b467b32a6ea695555039bc52eba599305f2cbeaa7e4b59ced78aed3a07aebb'
-      assert.equal(hash, previous, 'hash does not match the expected value')
+      assert.strictEqual(hash, previous, 'hash does not match')
       const different = sodium.objectHash({
         ...testObject,
         obj: 'etd',
@@ -128,7 +128,7 @@ describe('crypto', () => {
         attr2: [1, 2, 3],
         attr1: 'val1',
       }
-      assert.equal(
+      assert.strictEqual(
         sodium.objectHash(testObject),
         sodium.objectHash(testObjectReOrder),
         'same object hashed to different values'
@@ -165,12 +165,12 @@ describe('crypto', () => {
       const hash = sodium.objectHash('test hash')
       const { publicKey, secretKey } = keypair
       const { signature } = await sodium.signHash(hash, secretKey)
-      assert.equal(await sodium.verifyHash(hash, signature, publicKey), true)
+      assert(await sodium.verifyHash(hash, signature, publicKey))
       const tamp = 'a different hash'
       const isNotOk = await sodium.verifyHash(tamp, signature, publicKey)
-      assert.equal(isNotOk, false)
+      assert(!isNotOk)
       const isNotOkSync = sodium.verifyHashSync(tamp, signature, publicKey)
-      assert.equal(isNotOkSync, false)
+      assert(!isNotOkSync)
     })
     test('throws if hash not a secure hash', async () => {
       const notSecure = 'random'
@@ -184,11 +184,11 @@ describe('crypto', () => {
       const { publicKey, secretKey } = await sodium.generateKeyPair()
       const { size } = sodium._verifiedSet
       const { signature } = await sodium.signHash(testHash, secretKey)
-      assert.equal(sodium._verifiedSet.size, size)
+      assert.strictEqual(sodium._verifiedSet.size, size)
       assert(!sodium.verifyHashSync(testHash, signature, publicKey))
       const verified = await sodium.verifyHash(testHash, signature, publicKey)
       assert(verified)
-      assert.equal(sodium._verifiedSet.size, size + 1)
+      assert.strictEqual(sodium._verifiedSet.size, size + 1)
       assert(sodium.verifyHashSync(testHash, signature, publicKey))
     })
     test.todo('caches created signatures for instant verify')
@@ -202,27 +202,27 @@ describe('crypto', () => {
         publicKey,
         secretKey,
       })
-      assert.equal(isVerified, true)
+      assert.strictEqual(isVerified, true)
     })
     test('returns false for a known bad keyPair', async () => {
       const isVerifiedKeyPair = await sodium.verifyKeyPair({
         publicKey: 'random public key',
         secretKey: 'random secret key',
       })
-      assert.equal(isVerifiedKeyPair, false)
+      assert.strictEqual(isVerifiedKeyPair, false)
       const { secretKey } = await sodium.generateKeyPair()
       const { publicKey } = await sodium.generateKeyPair()
       const swapped = await sodium.verifyKeyPair({
         publicKey,
         secretKey,
       })
-      assert.equal(swapped, false)
-      assert.equal(sodium.verifyKeyPairSync(swapped), false)
+      assert(!swapped)
+      assert(!sodium.verifyKeyPairSync(swapped))
     })
     test('caches already verified keypairs', async () => {
       const { size } = sodium._verifiedSet
       const keypair = await sodium.generateKeyPair()
-      assert.equal(sodium._verifiedSet.size, size + 1)
+      assert.strictEqual(sodium._verifiedSet.size, size + 1)
       assert(sodium.verifyKeyPairSync(keypair))
     })
     test.todo('caches created keypairs for instant verify')
