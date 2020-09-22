@@ -1,34 +1,44 @@
 const assert = require('assert')
 const { isReplyFor, request } = require('../../w002-api')
 const debug = require('debug')('interblock:effector:dispatchCovenant')
+const { unity } = require('../../w212-system-covenants')
 
-const dispatchCovenantFactory = () => {
+const dispatchCovenantFactory = (wrappedReducer = unity.reducer) => {
   // TODO make this a HOR that wraps any reducer
   const promises = new Map()
   const dispatches = []
-  const reducer = (state = {}, reply) => {
-    assert(reply, `must supply an action`)
-    debug('reducer: %o', reply.type)
+  const reducer = (state, action) => {
+    assert(action, `must supply an action`)
+    debug('reducer: %o', action.type)
     // TODO settle promises only when a new block is formed, not during isolation, as too early
     // make the promise await for block to store, then resolve what was resolved here
+    let consumed = false
     for (const [request, { pending, settled }] of promises) {
-      if (isReplyFor(reply, request)) {
-        debug(`reply received: %j for: %j`, reply.type, request.type)
+      if (isReplyFor(action, request)) {
+        debug(`reply received: %j for: %j`, action.type, request.type)
+        consumed = true
         pending.resolve()
-        switch (reply.type) {
+        switch (action.type) {
           case '@@REJECT':
-            settled.reject(reply.payload)
+            settled.reject(action.payload)
+            promises.delete(request)
             break
           case '@@PROMISE':
             throw new Error(`Promises should never be seen by covenants`)
           case '@@RESOLVE':
-            settled.resolve(reply.payload)
+            settled.resolve(action.payload)
             promises.delete(request)
             break
         }
       }
     }
-    const actions = [...dispatches]
+    let wrappedActions = []
+    if (!consumed) {
+      state = wrappedReducer(state, action)
+      assert.strictEqual(typeof state, 'object', `wrappedReducer invalid state`)
+      Array.isArray(state.actions) && wrappedActions.push(...state.actions)
+    }
+    const actions = [...dispatches, ...wrappedActions]
     dispatches.length = 0
     return { ...state, actions }
   }
@@ -60,4 +70,4 @@ const dispatchCovenantFactory = () => {
   return { injector, reducer }
 }
 
-module.exports = dispatchCovenantFactory
+module.exports = { dispatchCovenantFactory }

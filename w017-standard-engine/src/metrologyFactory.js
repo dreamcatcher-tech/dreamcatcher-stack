@@ -31,7 +31,7 @@ const assert = require('assert')
 const debugBase = require('debug')('interblock:metrology')
 const _ = require('lodash')
 const { standardEngineFactory } = require('./standardEngineFactory')
-const dispatchCovenantFactory = require('./dispatchCovenantFactory')
+const { dispatchCovenantFactory } = require('./dispatchCovenantFactory')
 const { isolateFactory } = require('./services/isolateFactory')
 const {
   consistencyFactory,
@@ -98,6 +98,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
 
     const getState = (height, path = []) => {
       // a synchronous snapshot of the current state of storage
+      // TODO pull straight from blocks ?
       const { dbChains } = ramDb._getTables()
       const chain = dbChains[address.getChainId()] || {}
       let blockItem
@@ -154,7 +155,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
         const channel = block.network[alias]
         if (channel.systemRole === './') {
           const { address } = channel
-          children[alias] = metrology(address)
+          children[alias] = metrology(address) // TODO dispatch still goes to origin ?
         }
       })
       return children
