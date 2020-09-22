@@ -44,8 +44,9 @@ const { tcpTransportFactory } = require('./tcpTransportFactory')
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
   const metrology = await metrologyFactory(identifier)
-    .spawn('shell', shellCov)
-    .spawn('net', netCov)
+  metrology.spawn('shell', shellCov)
+  metrology.spawn('net', netCov)
+  await metrology.settle()
 
   const emulateAws = async (reifiedCovenantMap) => {
     // TODO kill existing emulator ?
@@ -62,10 +63,9 @@ const effectorFactory = async (identifier) => {
     return metrology.dispatch({ type, payload, to })
   }
 
-  const awaits = metrology.getChildren()
-  const shell = await awaits.shell // TODO move shell to be /
+  const { shell, net: netMetro } = metrology.getChildren()
+  // TODO move shell to be /
   const shellActions = mapDispatchToActions(dispatch, shellCov)
-  const netMetro = await awaits.net
   const netChildren = {}
   const _netDispatch = ({ type, payload }) => {
     debug(`_netDispatch action.type: %O`, type)

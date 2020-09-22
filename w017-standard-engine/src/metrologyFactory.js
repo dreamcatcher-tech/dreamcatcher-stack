@@ -28,7 +28,7 @@
  */
 
 const assert = require('assert')
-const debug = require('debug')('interblock:metrology')
+const debugBase = require('debug')('interblock:metrology')
 const _ = require('lodash')
 const { standardEngineFactory } = require('./standardEngineFactory')
 const dispatchCovenantFactory = require('./dispatchCovenantFactory')
@@ -47,11 +47,12 @@ const {
   interblockModel,
   addressModel,
 } = require('../../w015-models')
-
-const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
+let id = 0
+const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
   // TODO use metrology in streamProcessor
   assert.strictEqual(typeof reifiedCovenantMap, 'object')
-  debug(`metrologyFactory`)
+  identifier = identifier || `id-${id++}`
+  const debug = debugBase.extend(`${identifier}`)
   const engine = standardEngineFactory()
   const {
     sqsTx,
@@ -80,25 +81,10 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
   const tap = enableLoggingWithTap(engine, identifier)
   // tap.on()
-  const initializePromise = createBase(ioConsistency, sqsPool)
 
-  /** Fluent interfaces
-   * Three kinds of function:
-   * 1. dispatch, which resolves with its actual result
-   * 2. promisers, which resolve with all the functions of the toolkit
-   * 3. getters, which resolve if called from a promise, or return their results directly
-   *
-   * If a promise is returned, then all functions on it return a promise.
-   * At the start, the engine must finish initializing before any of the decorated functions can execute
-   *
-   * getChildren needs to return a new interface that has baseAddress set to one of the children
-   */
+  const baseAddress = await createBase(ioConsistency, sqsPool)
 
-  const makeBaseFunctions = async (baseAddressPromise) => {
-    const address =
-      typeof baseAddressPromise.then === 'function'
-        ? await baseAddressPromise
-        : baseAddressPromise
+  const metrology = (address) => {
     assert(addressModel.isModel(address))
 
     // TODO change to be plain variables ?
@@ -225,62 +211,7 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
       enableLogging,
     }
   }
-
-  const metrology = (baseAddressPromise) => {
-    const makeBasePromise = makeBaseFunctions(baseAddressPromise)
-    const functions = [
-      'dispatch',
-      'getState',
-      'getChildren',
-      'getParent',
-      'getSelf',
-      'getChannels',
-      'getEngine',
-      'getPersistence',
-      'getChainId',
-      'getHeight',
-      'getPool',
-      'settle',
-      'enableLogging',
-      'spawn',
-    ]
-    const passThrus = ['spawn']
-    const decorate = (promise) => {
-      assert(typeof promise.then === 'function')
-      functions.map((name) => {
-        promise[name] = (...args) => {
-          const awaiter = async (...args) => {
-            // debug(`awaiter: ${name}`)
-            const baseFunctions = await makeBasePromise
-            await promise
-            const result = baseFunctions[name](...args)
-            // debug(`result: ${name}`)
-            if (result && typeof result.then === 'function') {
-              if (name !== 'dispatch') {
-                const resolveOverride = async () => {
-                  await result
-                  // debug(`resolveOverride: ${name}`)
-                  return baseFunctions
-                }
-                return decorate(resolveOverride())
-              }
-              // debug(`dispatch being decorated: ${name}`)
-              return decorate(result)
-            } else if (passThrus.includes(name)) {
-              return baseFunctions
-            } else {
-              return result
-            }
-          }
-          const awaiterPromise = awaiter(...args)
-          return decorate(awaiterPromise)
-        }
-      })
-      return promise
-    }
-    return decorate(makeBasePromise)
-  }
-  return metrology(initializePromise)
+  return metrology(baseAddress)
 }
 const enableLoggingWithTap = (engine, identifier) => {
   const { sqsPool, sqsTransmit, ioConsistency } = engine

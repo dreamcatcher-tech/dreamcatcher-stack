@@ -38,7 +38,8 @@ describe('pool', () => {
     describe('birthChild', () => {
       test('new child created from genesis', async () => {
         require('debug').enable('*metro*')
-        const base = await metrologyFactory('birthChild').spawn('child')
+        const base = await metrologyFactory('birthChild')
+        await base.spawn('child')
         const baseState = base.getState()
         assert(blockModel.isModel(baseState))
         assert.strictEqual(baseState.provenance.height, 1)
