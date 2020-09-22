@@ -21,6 +21,7 @@ const definition = {
     dmz: undefined,
     reduceRejection: undefined,
     reduceResolve: undefined,
+    originalLoopback: undefined,
   },
   strict: true,
   states: {
@@ -73,6 +74,7 @@ const definition = {
       initial: 'isRejection',
       states: {
         isRejection: {
+          entry: 'assignOriginalLoopback',
           always: [
             { target: 'done', cond: 'isRejection' },
             { target: 'mergeSystem', cond: 'isSystem' },

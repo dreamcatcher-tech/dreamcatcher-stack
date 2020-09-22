@@ -108,16 +108,24 @@ const txReply = (channel, reply, replyIndex) =>
     draft.replies[replyIndex] = reply
   })
 
-const shiftTxRequest = (channel) =>
+const shiftTxRequest = (channel, originalLoopback) =>
   channelModel.clone(channel, (draft) => {
+    assert(channelModel.isModel(channel))
     assert(channel.rxReply())
+
     debug(`shiftTxRequest requestsLength: ${channel.requestsLength}`)
-    const index = channel.rxReplyIndex()
-    assert(channel.requests[index], `nothing to remove at ${index}`)
-    delete draft.requests[index]
-    if (channel.systemRole === '.') {
+    const isLoopback = channel.systemRole === '.'
+    let index = channel.rxReplyIndex()
+    if (isLoopback) {
+      // loopback crossover is the only way the replies array change during execution
+      assert(channelModel.isModel(originalLoopback))
+      assert(originalLoopback.address.isLoopback())
+      index = originalLoopback.rxReplyIndex()
+      assert(channel.replies[index], `loopback empty at ${index}`)
       delete draft.replies[index]
     }
+    assert(channel.requests[index], `nothing to remove at ${index}`)
+    delete draft.requests[index]
   })
 
 module.exports = {

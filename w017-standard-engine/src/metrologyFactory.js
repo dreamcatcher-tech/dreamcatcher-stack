@@ -42,6 +42,7 @@ const {
 const { createBase } = require('./execution/createBase')
 const { createTap } = require('./execution/tap')
 const { actions } = require('../../w021-dmz-reducer')
+const { shell } = require('../../w212-system-covenants')
 const {
   blockModel,
   interblockModel,
@@ -71,7 +72,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     throw new Error(`injector was not overridden`)
   }
   if (!reifiedCovenantMap.hyper) {
-    const hyper = dispatchCovenantFactory()
+    const hyper = dispatchCovenantFactory(shell.reducer)
     reifiedCovenantMap = { ...reifiedCovenantMap, hyper }
   }
   injector = reifiedCovenantMap.hyper.injector
@@ -80,7 +81,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
   const tap = enableLoggingWithTap(engine, identifier)
-  // tap.on()
+  tap.on()
 
   const baseAddress = await createBase(ioConsistency, sqsPool)
 
@@ -92,7 +93,6 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       debug(`dispatch to: %o type: %O`, to, type)
       const promise = injector({ type, payload, to })
       sqsIncrease.push(address)
-      // TODO await the promise, then resync the children, in case something changed ?
       return promise
     }
 

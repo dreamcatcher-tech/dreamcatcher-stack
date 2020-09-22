@@ -4,7 +4,7 @@ const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.co
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('effector', () => {
-  require('debug').enable('*metrology* *tests*')
+  require('debug').enable('*metro* *tests*')
 
   test('ping single', async () => {
     debug(`start`)

@@ -30,6 +30,7 @@ const definition = {
     lock: undefined,
     dmz: undefined,
     isolation: () => 'isolation function',
+    hasPierced: false,
   },
   strict: true,
   states: {
@@ -50,34 +51,34 @@ const definition = {
     loadCovenant: {
       invoke: {
         src: 'loadCovenant',
-        onDone: {
-          target: 'reduceActionless',
-          actions: 'assignContainerId',
-        },
+        onDone: { target: 'isExhausted', actions: 'assignContainerId' },
+        onError: 'error',
+      },
+    },
+    isExhausted: {
+      always: [
+        { target: 'reduceActionless', cond: 'isPiercable' },
+        { target: 'unloadCovenant', cond: 'isExhausted' },
+        { target: 'reduce' },
+      ],
+    },
+    reduce: {
+      // TODO run repeatedly with timer, sending updates to parent each time
+      invoke: {
+        src: 'reduce',
+        onDone: { target: 'isExhausted', actions: 'updateDmz' },
         onError: 'error',
       },
     },
     reduceActionless: {
       invoke: {
         src: 'reduceActionless',
-        onDone: 'isExhausted',
+        onDone: {
+          target: 'isExhausted',
+          actions: ['updateDmz', 'assignHasPierced'],
+        },
         onError: 'error',
       },
-    },
-    reduce: {
-      // TODO run repeatedly with timer, sending updates to parent each time
-      invoke: {
-        src: 'reduce',
-        onDone: 'isExhausted',
-        onError: 'error',
-      },
-    },
-    isExhausted: {
-      entry: 'updateDmz',
-      always: [
-        { target: 'unloadCovenant', cond: 'isExhausted' },
-        { target: 'reduce' },
-      ],
     },
     unloadCovenant: {
       invoke: {

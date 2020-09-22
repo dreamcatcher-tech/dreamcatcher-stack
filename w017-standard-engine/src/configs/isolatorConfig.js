@@ -12,7 +12,7 @@ const isolatorMachine = machine.withConfig({
   actions: {
     assignLock: assign({
       lock: (context, event) => {
-        const lock = event.payload
+        const { lock } = event.payload
         assert(lockModel.isModel(lock))
         assert(lock.block, `can only isolate for existing chains`)
         return lock
@@ -33,18 +33,20 @@ const isolatorMachine = machine.withConfig({
     }),
     assignContainerId: assign({
       containerId: (context, event) => {
-        const containerId = event.data
+        const { containerId } = event.data
+        assert(containerId)
         return containerId
       },
     }),
     updateDmz: assign({
       dmz: (context, event) => {
         debug(`updateDmz`)
-        const nextDmz = event.data
+        const { nextDmz } = event.data
         assert(dmzModel.isModel(nextDmz))
         return nextDmz
       },
     }),
+    assignHasPierced: assign({ hasPierced: () => true }),
   },
   guards: {
     isDmzChangeable: ({ dmz }) => {
@@ -55,6 +57,14 @@ const isolatorMachine = machine.withConfig({
       const isDmzChangeable = isPierced || rx
       debug(`isDmzChangeable: ${isDmzChangeable}`)
       return isDmzChangeable
+    },
+    isPiercable: ({ dmz, hasPierced }) => {
+      assert(dmzModel.isModel(dmz))
+      const isExhausted = !dmz.network.rx()
+      const { isPierced } = dmz.config
+      const isPiercable = isExhausted && isPierced && !hasPierced
+      debug(`isPiercable: %O`, isPiercable)
+      return isPiercable
     },
     isExhausted: ({ dmz }) => {
       // TODO check the time available, probably as a parallel transition
@@ -69,7 +79,7 @@ const isolatorMachine = machine.withConfig({
       assert(lockModel.isModel(lock))
       const containerId = await isolation.loadCovenant(lock.block)
       debug(`loadCovenant containerId: ${containerId.substring(0, 9)}`)
-      return containerId
+      return { containerId }
     },
     reduceActionless: async ({ dmz, containerId, isolation }) => {
       debug(`reduceActionless`)
@@ -79,14 +89,13 @@ const isolatorMachine = machine.withConfig({
       const tick = createTick(containerId, isolation.tick)
       const interpreter = interpreterConfig(tick, dmz, anvil, address)
       const nextDmz = await thread('TICK', interpreter)
-      // TODO destroy debug object
       assert(dmzModel.isModel(nextDmz))
-      return nextDmz
+      return { nextDmz }
     },
     reduce: async ({ dmz, containerId, isolation }) => {
       assert(dmzModel.isModel(dmz))
       assert(dmz.network.rx())
-      const { event: anvil, channel, alias } = dmz.network.rx()
+      const { event: anvil, channel } = dmz.network.rx()
       const nextReplyIndex = channel.getNextReplyIndex()
       debug(`reduce: `, anvil.type, nextReplyIndex)
       const { address } = channel
@@ -95,7 +104,7 @@ const isolatorMachine = machine.withConfig({
       const interpreter = interpreterConfig(tick, dmz, anvil, address)
       const nextDmz = await thread('TICK', interpreter)
       assert(dmzModel.isModel(nextDmz))
-      return nextDmz
+      return { nextDmz }
     },
     unloadCovenant: async ({ containerId, isolation }) => {
       debug(`unloadCovenant containerId: %o`, containerId.substring(0, 9))
@@ -112,6 +121,6 @@ const isolatorConfig = (ioIsolate) => {
 const createTick = (containerId, tick) => (state, action) =>
   tick({ containerId, state, action })
 const createTimestampAnvil = (address) =>
-  rxRequestModel.create('@@TIMESTAMP', { timestamp: Date.now() }, address, 0)
+  rxRequestModel.create('@@PIERCE', { timestamp: Date.now() }, address, 0)
 
 module.exports = { isolatorConfig }

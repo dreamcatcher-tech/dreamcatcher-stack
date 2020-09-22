@@ -137,7 +137,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       isolate: async ({ lock }) => {
         const executeCovenant = {
           type: 'EXECUTE_COVENANT',
-          payload: lock,
+          payload: { lock },
         }
         const isolator = isolatorConfig(ioIsolate)
         const dmz = await thread(executeCovenant, isolator)

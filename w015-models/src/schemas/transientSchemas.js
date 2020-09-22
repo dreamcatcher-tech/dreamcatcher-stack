@@ -48,13 +48,14 @@ const txReplySchema = {
 }
 const rxReplySchema = {
   title: `rxReply`,
-  description: `System created
-Create requires the sequence to be included, and it to be valid ?`,
+  description: `System created.
+Create requires the sequence to be included.
+@@PROMISE cannot ever be dispatched to a reducer, hence its exclusion from "type"`,
   type: 'object',
   required: ['type', 'payload', 'request'],
   additionalProperties: false,
   properties: {
-    type: { type: 'string', enum: ['@@REJECT', '@@PROMISE', '@@RESOLVE'] },
+    type: { type: 'string', enum: ['@@REJECT', '@@RESOLVE'] },
     payload: { type: 'object' },
     request: {
       description: `Covenants original request, without the 'to' field`,

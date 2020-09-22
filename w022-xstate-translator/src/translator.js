@@ -67,7 +67,7 @@ const translator = (machine) => {
   return async (state = initialState, action) => {
     assert(!state.actions, `Actions key disallowed in state`)
     // TODO start new or upgraded covenants with @@INIT ?
-    if (action.type === '@@TIMESTAMP') {
+    if (action.type === '@@PIERCE') {
       if (!state.xstate) {
         action = '@@INIT'
       } else {

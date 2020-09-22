@@ -6,6 +6,7 @@ const {
   addressModel,
   stateModel,
   dmzModel,
+  channelModel,
 } = require('../../../w015-models')
 const { networkProducer } = require('../../../w016-producers')
 const dmzReducer = require('../../../w021-dmz-reducer')
@@ -19,6 +20,9 @@ const interpreterMachine = machine.withConfig({
     }),
     assignResolve: assign({
       reduceResolve: (context, event) => event.data,
+    }),
+    assignOriginalLoopback: assign({
+      originalLoopback: ({ dmz }) => dmz.network['.'],
     }),
     mergeSystem: assign({
       dmz: ({ reduceResolve }) => {
@@ -44,15 +48,22 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     respondReply: assign({
-      dmz: ({ dmz, address }) => {
-        debug('respondReply')
+      dmz: ({ dmz, address, originalLoopback }) => {
         assert(dmzModel.isModel(dmz))
-        const network = networkProducer.respondReply(dmz.network, address)
+        assert(channelModel.isModel(originalLoopback))
+        assert(addressModel.isModel(address))
+        debug('respondReply')
+        const network = networkProducer.respondReply(
+          dmz.network,
+          address,
+          originalLoopback
+        )
         return dmzModel.clone({ ...dmz, network })
       },
     }),
     respondRejection: assign({
       dmz: ({ dmz, anvil, reduceRejection }) => {
+        assert(anvil.type === '@@REJECT')
         assert(dmzModel.isModel(dmz))
         const network = networkProducer.respondRejection(
           dmz.network,
@@ -89,7 +100,7 @@ const interpreterMachine = machine.withConfig({
   guards: {
     isSystem: ({ anvil, address }) => {
       // TODO move to statechart conditions
-      if (anvil.type === '@@TIMESTAMP') {
+      if (anvil.type === '@@PIERCE') {
         return false
       }
       assert(addressModel.isModel(address))
@@ -106,7 +117,7 @@ const interpreterMachine = machine.withConfig({
       }
     },
     isChannelUnavailable: ({ anvil, dmz, address }) => {
-      if (anvil.type === '@@TIMESTAMP') {
+      if (anvil.type === '@@PIERCE') {
         debug(`isChannelUnavailable: `, true)
         return true
       }
@@ -118,8 +129,12 @@ const interpreterMachine = machine.withConfig({
     },
     isReply: ({ anvil }) => {
       assert(anvil)
-      debug(`isReply type: ${anvil.type} isReply: ${anvil.isReply()}`)
-      return anvil.isReply()
+      const isReply = anvil.isReply()
+      debug(`isReply: %O`, isReply)
+      if (isReply) {
+        assert(rxReplyModel.isModel(anvil))
+      }
+      return isReply
     },
     isRejection: ({ reduceRejection }) => {
       debug(`isRejection ${!!reduceRejection}`)

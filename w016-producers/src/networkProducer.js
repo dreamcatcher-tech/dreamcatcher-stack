@@ -95,17 +95,19 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
 
     // TODO close all timed out connection attempts
   })
-const respondReply = (network, address) =>
+const respondReply = (network, address, originalLoopback) =>
   networkModel.clone(network, (draft) => {
     assert(networkModel.isModel(network))
+    assert(addressModel.isModel(address))
+    assert(channelModel.isModel(originalLoopback))
     const alias = network.getAlias(address)
     debug(`respondReply alias: ${alias}`)
 
     const channel = network[alias]
-    const reply = channel.rxReply()
-    assert(reply)
-    // TODO WRONG must use the sequence of the reply, which might be a promise
-    const nextChannel = channelProducer.shiftTxRequest(channel)
+    const nextChannel = channelProducer.shiftTxRequest(
+      channel,
+      originalLoopback
+    )
     draft[alias] = nextChannel
   })
 

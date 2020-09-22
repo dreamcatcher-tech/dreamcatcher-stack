@@ -44,9 +44,10 @@ const { tcpTransportFactory } = require('./tcpTransportFactory')
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
   const metrology = await metrologyFactory(identifier)
-  metrology.spawn('shell', shellCov)
-  metrology.spawn('net', netCov)
+  metrology.spawn('net', netCov) // TODO replace with ADD
   await metrology.settle()
+  // TODO subscribe to self, and all children, in case children change ?
+  // for each new chain, if we have the covenant actions, map them to dispatch
 
   const emulateAws = async (reifiedCovenantMap) => {
     // TODO kill existing emulator ?
@@ -59,13 +60,14 @@ const effectorFactory = async (identifier) => {
   }
   const dispatch = ({ type, payload }) => {
     debug(`dispatch action.type: %O`, type)
-    const to = 'shell'
-    return metrology.dispatch({ type, payload, to })
+    return metrology.dispatch({ type, payload })
+    // TODO await the promise, then resync the children, in case something changed ?
   }
 
-  const { shell, net: netMetro } = metrology.getChildren()
-  // TODO move shell to be /
   const shellActions = mapDispatchToActions(dispatch, shellCov)
+
+  const { net: netMetro } = metrology.getChildren()
+
   const netChildren = {}
   const _netDispatch = ({ type, payload }) => {
     debug(`_netDispatch action.type: %O`, type)
@@ -87,14 +89,14 @@ const effectorFactory = async (identifier) => {
     // asking for any other path will return "state" key of that path
     // throw if we do not have it in the "remote" key of the transmission
     // path may include regex patterns
-    const childState = shell.getState(height, path)
-    return childState
+    const state = metrology.getState(height, path)
+    return state
   }
 
-  const getContext = () => shell.getState(['state', 'xstate', 'context'])
-  const subscribe = shell.subscribe
+  const getContext = () => getState(['state', 'xstate', 'context'])
+  const subscribe = metrology.subscribe
   const { sqsTx, sqsRx } = metrology.getEngine()
-  await metrology.settle()
+
   // start the net watcher, to reconcile hardware with chainware
   return {
     ...shellActions,
@@ -107,18 +109,6 @@ const effectorFactory = async (identifier) => {
     _debug: require('debug'), // used to expose debug info in the os
   }
   // do the wrapping of children in effector, not metrology ?
-}
-
-const resyncNet = async (net, netMetro) => {
-  const children = netMetro.getChildren()
-  Object.keys(net).forEach(
-    (key) => netMetro[key] || children[key] || delete net[key]
-  )
-  for (const key in children) {
-    assert(!netMetro[key], `child overrides function: ${key}`)
-    net[key] = await children(key)
-  }
-  // now need to spread the child reducer functions and wrap over.. ?
 }
 
 const mapDispatchToActions = (dispatch, covenant) => {
