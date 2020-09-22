@@ -50,6 +50,7 @@ const {
 
 const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
   // TODO use metrology in streamProcessor
+  assert.strictEqual(typeof reifiedCovenantMap, 'object')
   debug(`metrologyFactory`)
   const engine = standardEngineFactory()
   const {
@@ -66,13 +67,13 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
   } = engine
 
   let injector = () => {
-    throw new Error(`injector was overridden`)
+    throw new Error(`injector was not overridden`)
   }
   if (!reifiedCovenantMap.hyper) {
     const hyper = dispatchCovenantFactory()
-    injector = hyper.injector
-    reifiedCovenantMap = { hyper }
+    reifiedCovenantMap = { ...reifiedCovenantMap, hyper }
   }
+  injector = reifiedCovenantMap.hyper.injector
   ioIsolate.setProcessor(isolateFactory(reifiedCovenantMap))
   const ramDb = ramDynamoDbFactory()
   const ramS3 = ramS3Factory()
@@ -99,14 +100,6 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
         ? await baseAddressPromise
         : baseAddressPromise
     assert(addressModel.isModel(address))
-    const dispatchMany = (...actions) => {
-      const promises = actions.map(({ type, payload, to = '.' }) => {
-        debug(`dispatch to: %o action: %O`, to, type)
-        return injector({ type, payload, to })
-      })
-      sqsIncrease.push(address)
-      return Promise.all(promises)
-    }
 
     // TODO change to be plain variables ?
     const dispatch = ({ type, payload, to = '.' }) => {
@@ -118,7 +111,6 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
     }
 
     const getState = (height, path = []) => {
-      // honour path requests
       // a synchronous snapshot of the current state of storage
       const { dbChains } = ramDb._getTables()
       const chain = dbChains[address.getChainId()] || {}
@@ -157,10 +149,8 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
         }
       }
     })
-    const subscribe = (callback, path = '.') => {
-      // TODO handle path
+    const subscribe = (callback) => {
       assert.strictEqual(typeof callback, 'function')
-      assert.strictEqual(typeof path, 'string')
       subscribers.add(callback)
       return () => subscribers.delete(callback)
     }
@@ -183,14 +173,12 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
       })
       return children
     }
-    const getParent = () => {}
-    const getSelf = () => {}
     const getChannels = () => {
       const block = getState()
       const aliases = block.network.getAliases()
       return _.pick(block.network, aliases)
     }
-    const getEngine = () => ({ ...engine })
+    const getEngine = () => engine
     const getPersistence = () => ioConsistency.getProcessor().persistence
     const getChainId = () => getState().provenance.getAddress().getChainId()
     const getHeight = () => getState().provenance.height
@@ -223,11 +211,9 @@ const metrologyFactory = (identifier, reifiedCovenantMap = {}) => {
     const enableLogging = () => tap.on()
     return {
       dispatch,
-      getState,
       subscribe,
+      getState,
       getChildren,
-      getParent,
-      getSelf,
       getChannels,
       getEngine,
       getPersistence,

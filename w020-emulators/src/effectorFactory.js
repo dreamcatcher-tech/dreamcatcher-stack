@@ -103,11 +103,10 @@ const effectorFactory = async (identifier) => {
     getState,
     getContext, // TODO change to use getState with a path ?
     subscribe,
-    sqsTx,
-    sqsRx,
-    engine: metrology,
+    metrology,
     _debug: require('debug'), // used to expose debug info in the os
   }
+  // do the wrapping of children in effector, not metrology ?
 }
 
 const resyncNet = async (net, netMetro) => {

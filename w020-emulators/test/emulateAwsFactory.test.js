@@ -10,12 +10,12 @@ describe('emulateAwsFactory', () => {
     require('debug').enable('*metro* *awsFactory *:net')
     debug(`start`)
     const client = await effectorFactory('eff')
-    client.engine.enableLogging()
+    client.metrology.enableLogging()
     const aws = await awsFactory('aws')
 
     // cross over internet
-    client.sqsTx.setProcessor(aws.sqsRx.push)
-    aws.sqsTx.setProcessor(client.sqsRx.push)
+    client.metrology.getEngine().sqsTx.setProcessor(aws.sqsRx.push)
+    aws.sqsTx.setProcessor(client.metrology.getEngine().sqsRx.push)
 
     /**
      * Somehwere in here, these features need to be leveraged:

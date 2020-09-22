@@ -9,7 +9,7 @@ describe('effector', () => {
   test('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
-    client.engine.enableLogging()
+    client.metrology.enableLogging()
     debug(`effector ready`)
     const pingStart = Date.now()
     const reply = await client.ping()
@@ -18,7 +18,7 @@ describe('effector', () => {
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
 
-    await client.engine.settle()
+    await client.metrology.settle()
 
     debug(`stop`)
     /**
@@ -46,7 +46,7 @@ describe('effector', () => {
     jest.setTimeout(10000)
     debug(`start`)
     const client = await effectorFactory()
-    // client.engine.enableLogging()
+    // client.metrology.enableLogging()
     let count = 0
     const promises = []
     while (count < 100) {
@@ -58,7 +58,7 @@ describe('effector', () => {
       }
     }
     const results = await Promise.all(promises)
-    await client.engine.settle()
+    await client.metrology.settle()
     assert(results.every((reply) => reply && reply.type === 'PONG'))
     assert(results.every((reply, index) => reply.payload.count === index))
     debug(`stop`)
@@ -74,20 +74,20 @@ describe('effector', () => {
   })
   test('create child', async () => {
     const client = await effectorFactory()
-    client.engine.enableLogging()
+    client.metrology.enableLogging()
     reply = await client.add('child1')
     debug(`reply: `, reply)
     assert.strictEqual(reply.alias, 'child1')
     const { child1 } = await client.getState().network
     assert.strictEqual(child1.address.getChainId(), reply.chainId)
-    await client.engine.settle()
+    await client.metrology.settle()
   })
   test('ping created child', async () => {
     const client = await effectorFactory()
     await client.add('testChild')
     const reply = await client.ping('testChild')
     assert(reply)
-    await client.engine.settle()
+    await client.metrology.settle()
   })
   test.skip('cannot create same child twice', async () => {
     // TODO handle errors in the translator

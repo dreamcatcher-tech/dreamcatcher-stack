@@ -131,6 +131,8 @@ const standardEngineFactory = () => {
   sqsTransmit.setProcessor(transmitter(ioTransmit, sqsTx, sqsPool))
   sqsPool.setProcessor(pooler(ioPool, sqsIncrease))
   sqsIncrease.setProcessor(increasor(ioIncrease, sqsTransmit, sqsIncrease))
-  return { ...fsm, ...sqsQueues }
+  const engine = { ...fsm, ...sqsQueues }
+  Object.freeze(engine)
+  return engine
 }
 module.exports = { standardEngineFactory }
