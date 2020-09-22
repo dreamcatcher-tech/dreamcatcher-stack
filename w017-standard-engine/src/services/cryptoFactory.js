@@ -78,4 +78,4 @@ const toFunctions = (queue) => ({
   getValidatorEntry: () => queue.push({ type: 'VALIDATOR' }),
 })
 
-module.exports = { cryptoFactory, toFunctions }
+module.exports = { cryptoFactory, toFunctions, crypto }

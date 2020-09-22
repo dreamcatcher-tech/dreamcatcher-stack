@@ -27,9 +27,20 @@ const sodiumLoader = () => {
 
 const _hashTemplate = objectHash('template')
 
-const generateKeyPair = async (seed) => {
+const generateKeyPair = async (seed = '') => {
   const sodium = await sodiumLoader()
-  seed = seed || (await sodium.randombytes_buf(32))
+  // TODO pad out seed or truncate if too long - make it easy to supply
+  assert.strictEqual(typeof seed, 'string')
+  assert(seed.length <= 32, `seed too long: ${seed.length}`)
+  if (seed.length) {
+    debug(`INSECURE padding seed to 32 bytes - got ${seed.length}`)
+  }
+  while (seed.length && seed.length < 32) {
+    seed += '_'
+  }
+  if (!seed.length) {
+    seed = await sodium.randombytes_buf(32)
+  }
   const keypairRaw = await sodium.crypto_sign_seed_keypair(seed)
   const secret = await sodium.crypto_sign_secretkey(keypairRaw)
   const pub = await sodium.crypto_sign_publickey(keypairRaw)
