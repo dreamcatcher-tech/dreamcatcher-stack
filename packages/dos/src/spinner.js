@@ -3,7 +3,7 @@ const debug = require('debug')('dos:spinner')
 exports.withSpin = (fn) => {
   return async function fnWithSpin(ctx) {
     debug(`spinner`)
-    ctx.spinner = ora({ spinner: 'clock' }).start()
+    ctx.spinner = ora({ spinner: 'arrow3' }).start()
     try {
       return await fn.apply(this, arguments)
     } catch (e) {
