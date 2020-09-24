@@ -7,7 +7,7 @@
     "dos": "src/bin.js"
   },
   "scripts": {
-    "start": "DEBUG='dos* enquirer*' node src/bin",
+    "start": "DEBUG='' node src/bin",
     "dev": "DEBUG='' nodemon src/bin",
     "build": "webpack",
     "build:watch": "nodemon --exec npm run build"
