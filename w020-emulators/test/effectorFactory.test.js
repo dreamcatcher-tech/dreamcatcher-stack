@@ -9,7 +9,7 @@ describe('effector', () => {
   test('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
-    client.metrology.enableLogging()
+    client.enableLogging()
     debug(`effector ready`)
     const pingStart = Date.now()
     const reply = await client.ping()
@@ -18,7 +18,7 @@ describe('effector', () => {
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
 
-    await client.metrology.settle()
+    await client.settle()
 
     debug(`stop`)
     /**
@@ -74,20 +74,22 @@ describe('effector', () => {
   })
   test('create child', async () => {
     const client = await effectorFactory()
-    client.metrology.enableLogging()
+    client.enableLogging()
     reply = await client.add('child1')
     debug(`reply: `, reply)
     assert.strictEqual(reply.alias, 'child1')
     const { child1 } = await client.getState().network
     assert.strictEqual(child1.address.getChainId(), reply.chainId)
-    await client.metrology.settle()
+    await client.settle()
   })
   test('ping created child', async () => {
     const client = await effectorFactory()
     await client.add('testChild')
+    const pingStart = Date.now()
     const reply = await client.ping('testChild')
+    debug(`ping RTT: ${Date.now() - pingStart} ms`)
     assert(reply)
-    await client.metrology.settle()
+    await client.settle()
   })
   test.skip('cannot create same child twice', async () => {
     // TODO handle errors in the translator

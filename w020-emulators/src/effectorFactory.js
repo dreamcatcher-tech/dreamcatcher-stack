@@ -36,16 +36,62 @@ const assert = require('assert')
 const { metrologyFactory } = require('../../w017-standard-engine')
 const _ = require('lodash')
 const debug = require('debug')('interblock:effector')
-const { actions: dmzActions } = require('../../w021-dmz-reducer')
-const { shell: shellCov, net: netCov } = require('../../w212-system-covenants')
+const covenants = require('../../w212-system-covenants')
+const { shell, net: netCov } = covenants
 const { addressModel, socketModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
 
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
   const metrology = await metrologyFactory(identifier)
-  metrology.spawn('net', netCov) // TODO replace with ADD
-  await metrology.settle()
+  // start the watcher, which maps functions to objects as they are formed
+  // if we have a dispatch path, map the functions, else give usable functions like getState
+  const effector = {}
+  const base = {
+    ...metrology,
+    _debug: require('debug'), // used to expose debug info in the os
+  }
+  const functions = {}
+  const children = {}
+  let covenantId, resolveShellLoaded
+  const shellLoaded = new Promise((resolve) => {
+    resolveShellLoaded = resolve
+  })
+  metrology.subscribe(() => {
+    const state = metrology.getState()
+    const currentCovenant = getCovenant(state)
+    if (!currentCovenant.covenantId.equals(covenantId)) {
+      covenantId = currentCovenant.covenantId
+      debug(`covenantId: %O`, covenantId)
+      // wrap all the functions
+      if (covenantId.name === 'hyper') {
+        // TODO fix nasty cheap workaround
+        const mappedActions = mapDispatchToActions(metrology.dispatch, shell)
+        Object.assign(functions, mappedActions)
+        resolveShellLoaded()
+      }
+    }
+
+    const children = metrology.getChildren()
+    if (!_.isEqual(children)) {
+      // check children by their chainId
+      // update the base obj for creates and deletes
+      // children will take care of their own children, and expose their own functions
+      // if childnre have changed, reattach
+      // wrap the children in effectors, so they auto detect their functions, and update themselves
+    }
+
+    // for each child, wrap in an effector wrapper
+    // when running effector, determine covenant, grab the functions, wrap with dispatch
+    // later, finesse the functions with what our permissions are
+  })
+  await shellLoaded
+  Object.assign(effector, base, functions, children)
+
+  debug(`effector: %O`, effector)
+
+  await effector.add('net', { covenantId: netCov.covenantId })
+
   // TODO subscribe to self, and all children, in case children change ?
   // for each new chain, if we have the covenant actions, map them to dispatch
 
@@ -58,57 +104,21 @@ const effectorFactory = async (identifier) => {
 
     // ? make shell login to aws ?
   }
-  const dispatch = ({ type, payload }) => {
-    debug(`dispatch action.type: %O`, type)
-    return metrology.dispatch({ type, payload })
-    // TODO await the promise, then resync the children, in case something changed ?
-  }
-
-  const shellActions = mapDispatchToActions(dispatch, shellCov)
-
-  const { net: netMetro } = metrology.getChildren()
-
-  const netChildren = {}
-  const _netDispatch = ({ type, payload }) => {
-    debug(`_netDispatch action.type: %O`, type)
-    const to = 'net'
-    return new Promise(async (resolve) => {
-      const result = await metrology.dispatch({ type, payload, to })
-      // resync the children, since net makes sockets
-
-      resolve(result)
-    })
-  }
-
-  const netActions = mapDispatchToActions(_netDispatch, netCov)
-  Object.assign(netMetro, netActions)
-  const net = { ...netMetro }
-
-  const getState = (height, path = []) => {
-    // asking with no path will return the "state" key of this actor.
-    // asking for any other path will return "state" key of that path
-    // throw if we do not have it in the "remote" key of the transmission
-    // path may include regex patterns
-    const state = metrology.getState(height, path)
-    return state
-  }
-
-  const getContext = () => getState(['state', 'xstate', 'context'])
-  const subscribe = metrology.subscribe
-  const { sqsTx, sqsRx } = metrology.getEngine()
 
   // start the net watcher, to reconcile hardware with chainware
-  return {
-    ...shellActions,
-    net,
-    dispatch,
-    getState,
-    getContext, // TODO change to use getState with a path ?
-    subscribe,
-    metrology,
-    _debug: require('debug'), // used to expose debug info in the os
+
+  return effector
+}
+
+const getCovenant = ({ covenantId }) => {
+  let covenant = covenants.unity
+  for (const key in covenants) {
+    if (covenants[key].covenantId.equals(covenantId)) {
+      assert(covenant === covenants.unity)
+      covenant = covenants[key]
+    }
   }
-  // do the wrapping of children in effector, not metrology ?
+  return covenant
 }
 
 const mapDispatchToActions = (dispatch, covenant) => {

@@ -15,6 +15,6 @@ module.exports = function (wallaby) {
       type: 'node',
     },
     testFramework: 'jest',
-    trace: true,
+    // trace: true,
   }
 }

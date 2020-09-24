@@ -96,7 +96,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       return promise
     }
 
-    const getState = (height, path = []) => {
+    const getState = (path = [], height) => {
       // a synchronous snapshot of the current state of storage
       // TODO pull straight from blocks ?
       const { dbChains } = ramDb._getTables()
@@ -123,6 +123,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
         return ret
       }
     }
+    const getContext = () => getState(['state', 'xstate', 'context'])
 
     const subscribers = new Set()
     const blocks = new Set()
@@ -130,18 +131,18 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       if (action.type === 'UNLOCK') {
         await queuePromise
         const { block } = action.payload
-        if (!blocks.has(block)) {
+        if (!blocks.has(block) && block.getChainId() === address.getChainId()) {
           blocks.add(block)
           subscribers.forEach((callback) => callback())
         }
       }
     })
+    setImmediate(() => subscribers.forEach((callback) => callback()))
     const subscribe = (callback) => {
       assert.strictEqual(typeof callback, 'function')
       subscribers.add(callback)
       return () => subscribers.delete(callback)
     }
-
     const spawn = (
       alias,
       spawnOptions = {} // TODO replace with 'ADD' into shell covenant
@@ -200,6 +201,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       dispatch,
       subscribe,
       getState,
+      getContext,
       getChildren,
       getChannels,
       getEngine,

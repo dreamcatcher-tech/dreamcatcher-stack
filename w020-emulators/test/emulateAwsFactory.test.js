@@ -6,16 +6,16 @@ require('../../w012-crypto').testMode()
 describe('emulateAwsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal
   // one after the other should result in correct connections for both
-  test('connect', async () => {
-    require('debug').enable('*metro* *awsFactory *:net')
+  test.only('connect', async () => {
+    require('debug').enable('*metro* *awsFactory *:net *effector*')
     debug(`start`)
     const client = await effectorFactory('eff')
-    client.metrology.enableLogging()
+    client.enableLogging()
     const aws = await awsFactory('aws')
 
     // cross over internet
-    client.metrology.getEngine().sqsTx.setProcessor(aws.sqsRx.push)
-    aws.sqsTx.setProcessor(client.metrology.getEngine().sqsRx.push)
+    client.getEngine().sqsTx.setProcessor(aws.sqsRx.push)
+    aws.sqsTx.setProcessor(client.getEngine().sqsRx.push)
 
     /**
      * Somehwere in here, these features need to be leveraged:
