@@ -33,6 +33,8 @@ const sendParent = (action) => ({
 
 const invokeFactory = () => {
   //Used to make remote requests, and await their return.
+  // TODO use UUID to know which instance is hooked ?
+  // use a UUID on each invocation of invoke ?
   const invoke = async (type, payload, to) => {
     const requestAction = request(type, payload, to)
     debug(`invoke: %O`, requestAction.type)

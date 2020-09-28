@@ -91,6 +91,7 @@ const isKeysValidated = (schema, instance) => {
 
 const schemaMap = new WeakMap()
 const validate = (schema, instance) => {
+  assert(schema, `No schema supplied`)
   let validator = schemaMap.get(schema)
   if (!validator) {
     try {

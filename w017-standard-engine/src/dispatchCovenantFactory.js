@@ -5,7 +5,6 @@ const { unity } = require('../../w212-system-covenants')
 const { v4: uuid } = require('uuid')
 
 const dispatchCovenantFactory = (wrappedReducer = unity.reducer) => {
-  // TODO make this a HOR that wraps any reducer
   const promises = new Map()
   const dispatches = []
   const id = uuid()
@@ -23,6 +22,7 @@ const dispatchCovenantFactory = (wrappedReducer = unity.reducer) => {
   const reducer = async (state, action) => {
     assert.strictEqual(typeof action, 'object', `must supply an action object`)
     debug('reducer: %O', action.type)
+    // TODO WARNING if the pierce does not cause a new block, it will be lost
     if (isPiercedReply(action)) {
       for (const [request, { pending, settled }] of promises) {
         if (isReplyFor(action, request)) {

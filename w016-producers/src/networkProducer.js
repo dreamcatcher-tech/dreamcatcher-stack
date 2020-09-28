@@ -157,10 +157,10 @@ const tx = (network, state) =>
       let channel = immerNetwork[to] || network[to]
       if (!channel) {
         // TODO handle children ?  if no pathing or starts with ./ ?
-        const systemRole = 'SYMLINK'
-        const address = addressModel.create(systemRole)
-        debug(`channel created with systemRole: ${systemRole}`)
+        const systemRole = 'DOWN_LINK'
+        const address = addressModel.create()
         channel = channelModel.create(address, systemRole)
+        debug(`channel created with systemRole: ${systemRole}`)
       }
       immerNetwork[to] = channelProducer.txRequest(channel, request.getAction())
     })

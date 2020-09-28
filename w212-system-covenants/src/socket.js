@@ -16,7 +16,7 @@ const config = {
   actions: {},
   guards: {},
   services: {
-    addTransport: async (chainId, socketInfo) => {
+    addChainId: async (context, event) => {
       // TODO handle duplicate additions gracefully
 
       // set sqsRx & sqsTx
@@ -110,16 +110,16 @@ const machine = Machine(
       idle: {
         on: {
           '@@INIT': 'idle',
-          ADD: 'addTransport',
+          ADD: 'addChainId',
           RM: 'rmTransport',
           PING: 'ping',
           PING_LAMBDA: 'pingLambda',
           VERSION: 'version',
         },
       },
-      addTransport: {
+      addChainId: {
         invoke: {
-          src: `addTransport`,
+          src: `addChainId`,
           onDone: 'idle',
         },
       },
@@ -161,12 +161,15 @@ const machine = Machine(
 )
 
 const actions = {
+  addChainId: (chainId) => ({
+    type: 'ADD',
+    payload: { chainId },
+  }),
   connect: () => {},
   disconnect: () => {},
   ping: () => {},
   pingLambda: () => {},
   version: () => {},
-  addChainId: () => {},
   rmChainId: () => {},
 }
 

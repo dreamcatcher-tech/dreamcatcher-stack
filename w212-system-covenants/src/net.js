@@ -18,12 +18,13 @@ const config = {
   services: {
     addTransport: async (context, event) => {
       // checkSchema( event, schema.addTransport)
-      debug(`event: %O`, event)
+      debug(`event: %o`, event.payload)
       const { name, type, url } = event.payload
       // TODO check that all children have different urls by calling loopback
       const covenantId = covenantIdModel.create('socket')
       const state = { type, url }
-      await invoke(spawn(name, { covenantId, state }))
+      const config = { isPierced: true }
+      await invoke(spawn(name, { covenantId, state, config }))
     },
     rmTransport: async () => {
       // close all the websockets

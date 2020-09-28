@@ -37,63 +37,18 @@ const { metrologyFactory } = require('../../w017-standard-engine')
 const _ = require('lodash')
 const debug = require('debug')('interblock:effector')
 const covenants = require('../../w212-system-covenants')
-const { shell, net: netCov } = covenants
+const { shell, net, hyper } = covenants
 const { addressModel, socketModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
 
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
   const metrology = await metrologyFactory(identifier)
-  // start the watcher, which maps functions to objects as they are formed
-  // if we have a dispatch path, map the functions, else give usable functions like getState
-  const effector = {}
-  const base = {
-    ...metrology,
-    _debug: require('debug'), // used to expose debug info in the os
-  }
-  const functions = {}
-  const children = {}
-  let covenantId, resolveShellLoaded
-  const shellLoaded = new Promise((resolve) => {
-    resolveShellLoaded = resolve
-  })
-  metrology.subscribe(() => {
-    const state = metrology.getState()
-    const currentCovenant = getCovenant(state)
-    if (!currentCovenant.covenantId.equals(covenantId)) {
-      covenantId = currentCovenant.covenantId
-      debug(`covenantId: %O`, covenantId)
-      // wrap all the functions
-      if (covenantId.name === 'hyper') {
-        // TODO fix nasty cheap workaround
-        const mappedActions = mapDispatchToActions(metrology.dispatch, shell)
-        Object.assign(functions, mappedActions)
-        resolveShellLoaded()
-      }
-    }
+  const shell = effector(metrology)
 
-    const children = metrology.getChildren()
-    if (!_.isEqual(children)) {
-      // check children by their chainId
-      // update the base obj for creates and deletes
-      // children will take care of their own children, and expose their own functions
-      // if childnre have changed, reattach
-      // wrap the children in effectors, so they auto detect their functions, and update themselves
-    }
+  await shell.add('net', { covenantId: net.covenantId })
 
-    // for each child, wrap in an effector wrapper
-    // when running effector, determine covenant, grab the functions, wrap with dispatch
-    // later, finesse the functions with what our permissions are
-  })
-  await shellLoaded
-  Object.assign(effector, base, functions, children)
-
-  debug(`effector: %O`, effector)
-
-  await effector.add('net', { covenantId: netCov.covenantId })
-
-  // TODO subscribe to self, and all children, in case children change ?
-  // for each new chain, if we have the covenant actions, map them to dispatch
+  // start the net watcher, to reconcile hardware with chainware
 
   const emulateAws = async (reifiedCovenantMap) => {
     // TODO kill existing emulator ?
@@ -105,12 +60,88 @@ const effectorFactory = async (identifier) => {
     // ? make shell login to aws ?
   }
 
-  // start the net watcher, to reconcile hardware with chainware
-
-  return effector
+  return shell
 }
 
-const getCovenant = ({ covenantId }) => {
+const effector = (metrology) => {
+  const base = {
+    ...metrology,
+    _debug: require('debug'), // used to expose debug info in the os
+  }
+  const children = {}
+  let covenantId
+  const mapFunctions = () => {
+    const state = metrology.getState()
+    if (!state) {
+      return
+    }
+    const currentCovenant = getCovenant(state, covenants)
+    if (currentCovenant && !currentCovenant.covenantId.equals(covenantId)) {
+      covenantId = currentCovenant.covenantId
+      debug(`set covenant to: %O`, covenantId.name)
+      let covenant = covenants[covenantId.name]
+      if (state.network['..'].address.isRoot()) {
+        debug(`assinging shell in special case root chain`)
+        covenant = covenants.shell // TODO fix special initial case
+      }
+      const mappedActions = mapDispatchToActions(metrology.dispatch, covenant)
+      stripCovenantActions(base, metrology)
+      Object.assign(base, mappedActions)
+    }
+
+    const metroChildren = metrology.getChildren()
+    debug(`currentChildren`, Object.keys(metroChildren))
+    if (!isChildrenEqual(metroChildren, children)) {
+      stripChildren(base, children)
+      for (const key in metroChildren) {
+        debug(`creating child: %O`, key)
+        children[key] = effector(metroChildren[key])
+      }
+
+      // check children by their chainId
+      // update the base obj for creates and deletes
+      // children will take care of their own children, and expose their own functions
+      // if childnre have changed, reattach
+      // wrap the children in effectors, so they auto detect their functions, and update themselves
+      Object.assign(base, children)
+
+      // for each child, wrap in an effector wrapper
+      // when running effector, determine covenant, grab the functions, wrap with dispatch
+      // later, finesse the functions with what our permissions are
+    }
+  }
+
+  mapFunctions()
+  metrology.subscribe(mapFunctions)
+  return base
+}
+
+const isChildrenEqual = (current, previous) => {
+  // if we deleted one, or added one
+  const currentKeys = Object.keys(current).sort()
+  const previousKeys = Object.keys(previous).sort()
+  return _.isEqual(currentKeys, previousKeys)
+}
+
+const stripChildren = (effector, children) => {
+  for (const key in children) {
+    delete effector[key]
+    delete children[key]
+  }
+}
+
+const stripCovenantActions = (effector, metrology) => {
+  for (const key in effector) {
+    if (key === '_debug' || metrology[key]) {
+      continue
+    }
+    if (typeof effector[key] === 'function') {
+      delete effector[key]
+    }
+  }
+}
+
+const getCovenant = ({ covenantId }, covenants) => {
   let covenant = covenants.unity
   for (const key in covenants) {
     if (covenants[key].covenantId.equals(covenantId)) {

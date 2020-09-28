@@ -85,14 +85,14 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
 
   const baseAddress = await createBase(ioConsistency, sqsPool)
 
-  const metrology = (address) => {
+  const metrology = (address, dispatchPath = '.') => {
     assert(addressModel.isModel(address))
 
     // TODO change to be plain variables ?
-    const dispatch = ({ type, payload, to = '.' }) => {
+    const dispatch = ({ type, payload, to = dispatchPath }) => {
       debug(`dispatch to: %o type: %O`, to, type)
       const promise = injector({ type, payload, to })
-      sqsIncrease.push(address)
+      sqsIncrease.push(baseAddress)
       return promise
     }
 
@@ -156,7 +156,8 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
         const channel = block.network[alias]
         if (channel.systemRole === './') {
           const { address } = channel
-          children[alias] = metrology(address) // TODO dispatch still goes to origin ?
+          const childDispatchPath = alias // TODO handle more than first level children
+          children[alias] = metrology(address, childDispatchPath) // TODO dispatch still goes to origin ?
         }
       })
       return children
@@ -197,6 +198,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       }
     }
     const enableLogging = () => tap.on()
+    const disableLogging = () => tap.off()
     return {
       dispatch,
       subscribe,
@@ -212,6 +214,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       spawn,
       settle,
       enableLogging,
+      disableLogging,
     }
   }
   return metrology(baseAddress)

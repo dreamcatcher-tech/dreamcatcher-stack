@@ -12,6 +12,7 @@ describe('emulateAwsFactory', () => {
     const client = await effectorFactory('eff')
     client.enableLogging()
     const aws = await awsFactory('aws')
+    aws.engine.disableLogging()
 
     // cross over internet
     client.getEngine().sqsTx.setProcessor(aws.sqsRx.push)
@@ -38,7 +39,7 @@ describe('emulateAwsFactory', () => {
     const { hyperAddress } = aws
     const hyperChainId = hyperAddress.getChainId()
     debug(`hyperAddress: ${hyperChainId}`)
-    client.net.testSocket.addChainId(hyperChainId)
+    await client.net.testSocket.addChainId(hyperChainId)
 
     const creds = {
       method: 'password',
