@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "DEBUG='' node src/bin",
-    "dev": "DEBUG='' nodemon src/bin",
+    "dev": "DEBUG='*' nodemon src/bin",
     "build": "webpack",
     "build:watch": "nodemon --exec npm run build"
   },
