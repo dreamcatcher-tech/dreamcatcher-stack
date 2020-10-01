@@ -162,4 +162,5 @@ describe.skip('client fluent interface', () => {
       // this is the real blockchain network - be careful
     }
   })
+  test.todo('subscribers only triggered once per block, and always in order')
 })

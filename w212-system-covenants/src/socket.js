@@ -13,7 +13,18 @@ const {
 } = require('../../w022-xstate-translator')
 
 const config = {
-  actions: {},
+  actions: {
+    addChainId: assign({
+      chainIds: ({ chainIds }, event) => {
+        assert(Array.isArray(chainIds))
+        const { chainId } = event.payload
+        assert(typeof chainId === 'string')
+        chainIds = [...chainIds, chainId]
+        debug(`chainIds length: %o`, chainIds)
+        return chainIds
+      },
+    }),
+  },
   guards: {},
   services: {
     addChainId: async (context, event) => {
@@ -103,7 +114,11 @@ const machine = Machine(
   {
     id: 'net',
     initial: 'idle',
-    context: {},
+    context: {
+      chainIds: [],
+      type: '',
+      url: '',
+    },
     strict: true,
     states: {
       idle: {
@@ -117,10 +132,8 @@ const machine = Machine(
         },
       },
       addChainId: {
-        invoke: {
-          src: `addChainId`,
-          onDone: 'idle',
-        },
+        entry: 'addChainId',
+        always: 'idle',
       },
       rmTransport: {
         invoke: {
@@ -178,5 +191,15 @@ const schemas = {
   },
 }
 
+const reactor = ({ dispatch, getState, subscribe }) => {
+  assert.strictEqual(typeof dispatch, 'function')
+  assert.strictEqual(typeof getState, 'function')
+  assert.strictEqual(typeof subscribe, 'function')
+  let state
+  subscribe(() => {
+    const newState = getState()
+  })
+}
+
 const reducer = translator(machine)
-module.exports = { actions, schemas, reducer }
+module.exports = { actions, schemas, reducer, reactor }

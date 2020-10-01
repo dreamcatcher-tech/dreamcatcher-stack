@@ -7,7 +7,7 @@ describe('emulateAwsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal
   // one after the other should result in correct connections for both
   test('connect', async () => {
-    require('debug').enable(' *dmzReducer *metro* *socket*')
+    require('debug').enable('*metro* *socket*')
     debug(`start`)
     const client = await effectorFactory('eff')
     client.enableLogging()
