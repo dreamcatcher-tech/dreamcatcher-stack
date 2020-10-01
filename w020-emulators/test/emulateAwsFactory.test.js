@@ -6,8 +6,8 @@ require('../../w012-crypto').testMode()
 describe('emulateAwsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal
   // one after the other should result in correct connections for both
-  test.only('connect', async () => {
-    require('debug').enable('*metro* *awsFactory *:net *effector*')
+  test('connect', async () => {
+    require('debug').enable(' *dmzReducer *metro* *socket*')
     debug(`start`)
     const client = await effectorFactory('eff')
     client.enableLogging()
@@ -40,17 +40,14 @@ describe('emulateAwsFactory', () => {
     const hyperChainId = hyperAddress.getChainId()
     debug(`hyperAddress: ${hyperChainId}`)
     await client.net.testSocket.addChainId(hyperChainId)
-
-    const creds = {
+    const credentials = {
       method: 'password',
       user: 'test user',
       pass: 'test pass',
-      terminal: hyperChainId,
     }
     // TODO test rejected ping before login passes
-    const loginResult = await client.login(creds)
+    const loginResult = await client.login(hyperChainId, credentials)
     debug(`loginResult: `, loginResult)
-    // causes terminal to pass more commands of ours on
     await client.engine.settle(aws.engine)
 
     require('debug').enable('*metro* *shell *awsFactory')

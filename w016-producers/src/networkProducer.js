@@ -15,7 +15,6 @@ const {
   configModel,
 } = require('../../w015-models')
 const channelProducer = require('./channelProducer')
-
 const defaultConfig = configModel.create()
 
 /**
@@ -97,7 +96,6 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
   })
 const respondReply = (network, address, originalLoopback) =>
   networkModel.clone(network, (draft) => {
-    assert(networkModel.isModel(network))
     assert(addressModel.isModel(address))
     assert(channelModel.isModel(originalLoopback))
     const alias = network.getAlias(address)
@@ -157,6 +155,7 @@ const tx = (network, state) =>
       let channel = immerNetwork[to] || network[to]
       if (!channel) {
         // TODO handle children ?  if no pathing or starts with ./ ?
+        // TODO maybe do path opening here, working backwards
         const systemRole = 'DOWN_LINK'
         const address = addressModel.create()
         channel = channelModel.create(address, systemRole)

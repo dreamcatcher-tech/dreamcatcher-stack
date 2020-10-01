@@ -286,7 +286,9 @@ const channelSchema = {
   networkProducer.tx() function will flip outbound and inbound.  This is used
   in the self channel.
   
-  Counter is required to know where the request counter is up to`,
+  Counter is required to know where the request counter is up to, which needs independent
+  tracking as the channel might be cleared completely, but we cannot reuse numbers until
+  looparound at 32bit limit or similar`,
   type: 'object',
   required: [
     ...remoteSchema.required,

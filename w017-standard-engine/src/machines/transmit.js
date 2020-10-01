@@ -196,11 +196,7 @@ const definition = {
               always: [
                 {
                   target: 'fetchLineageToGenesis',
-                  cond: 'isConnectionResponse',
-                },
-                {
-                  target: 'fetchLineageToGenesis',
-                  cond: 'isConnectionResolve',
+                  cond: 'isInitiatingAction',
                 },
                 { target: 'done' },
               ],

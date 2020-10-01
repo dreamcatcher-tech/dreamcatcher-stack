@@ -11,7 +11,7 @@ const { channelSchema } = require('../schemas/modelSchemas')
 
 const channelModel = standardize({
   schema: channelSchema,
-  create(address, systemRole = 'UP_LINK') {
+  create(address, systemRole = 'DOWN_LINK') {
     // TODO calculate systemRole from alias
     address = addressModel.clone(address)
     const remote = remoteModel.create({ address })
@@ -127,6 +127,8 @@ const channelModel = standardize({
     }
 
     const getRemote = () => remote
+    const getOutboundPairs = () =>
+      _getSortedIndices(requests).map((i) => [requests[i], remote.replies[i]])
     return {
       rxRequest,
       rxReply,
@@ -136,6 +138,7 @@ const channelModel = standardize({
       getRemoteReplyIndices,
       isTxGreaterThan,
       getRemote,
+      getOutboundPairs,
     }
   },
 })

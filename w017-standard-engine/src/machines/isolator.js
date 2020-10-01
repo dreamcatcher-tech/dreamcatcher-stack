@@ -58,7 +58,7 @@ const definition = {
     isExhausted: {
       always: [
         { target: 'reduceActionless', cond: 'isPiercable' },
-        { target: 'unloadCovenant', cond: 'isExhausted' },
+        { target: 'unloadCovenant', cond: 'isExhausted', actions: 'openPaths' },
         { target: 'reduce' },
       ],
     },
@@ -80,6 +80,7 @@ const definition = {
         onError: 'error',
       },
     },
+    openPaths: {},
     unloadCovenant: {
       invoke: {
         src: 'unloadCovenant',

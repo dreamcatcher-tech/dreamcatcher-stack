@@ -1,4 +1,4 @@
-const debug = require('debug')('interblock:covenants:net')
+const debug = require('debug')('interblock:covenants:socket')
 const assert = require('assert')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
@@ -18,9 +18,8 @@ const config = {
   services: {
     addChainId: async (context, event) => {
       // TODO handle duplicate additions gracefully
-
-      // set sqsRx & sqsTx
-
+      debug(`addChainId %O`, event)
+      return
       assert.strictEqual(typeof socketInfo, 'object')
       assert.strictEqual(typeof chainId, 'string')
       assert.strictEqual(typeof socketInfo.url, 'string')

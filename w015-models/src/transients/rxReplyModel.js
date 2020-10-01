@@ -13,7 +13,7 @@ const rxReplyModel = standardize({
   logicize(instance) {
     const { request } = instance
     const { type, payload } = request
-    const originalAction = actionModel.create(type, payload)
+    const originalAction = actionModel.create({ type, payload })
 
     const getRequest = () => originalAction
     const isReply = () => true

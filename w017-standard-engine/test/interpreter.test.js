@@ -21,4 +21,5 @@ describe('interpreter', () => {
   test.todo('connect resolves an address without purging queued actions')
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
+  test.todo('error on reply should surface')
 })

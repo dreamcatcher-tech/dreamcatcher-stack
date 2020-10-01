@@ -21,7 +21,7 @@ const addressModel = standardize({
     } else if (typeof integrity === 'string') {
       const possibleIntegrity = integrityModel.create(integrity)
       if (possibleIntegrity.hash.length === integrity.length) {
-        // TODO use a regex tester
+        // TODO use a regex tester for chainIds
         const hash = integrity
         integrity = integrityModel.clone({
           ...possibleIntegrity,

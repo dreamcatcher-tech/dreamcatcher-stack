@@ -133,6 +133,25 @@ const interblockModel = standardize({
         return resolve.isResolve()
       }
     }
+    const isDownlinkInit = () => {
+      if (!remote) {
+        return false
+      }
+      const isFirstRequest =
+        remote.requests[0] && !Object.keys(remote.replies).length // TODO beware wrap around
+      const isNoLineageReceived = remote.heavyHeight < 0
+      return isFirstRequest && isNoLineageReceived
+    }
+    const isUplinkInit = () => {
+      // TODO cannot deduce this without access to the source block
+      // or some member of which chains have had lineage sent
+      if (!remote) {
+        return false
+      }
+      const isFirstReply =
+        remote.replies[0] && !Object.keys(remote.requests).length // TODO beware wrap around
+      return isFirstReply
+    }
     const getChainId = () => provenance.getAddress().getChainId()
     return {
       extractGenesis,
@@ -146,6 +165,8 @@ const interblockModel = standardize({
       getHeavyHeight,
       isConnectionResponse,
       isConnectionResolve,
+      isDownlinkInit,
+      isUplinkInit,
       getChainId,
     }
   },

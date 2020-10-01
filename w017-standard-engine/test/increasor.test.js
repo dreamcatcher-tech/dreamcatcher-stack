@@ -99,4 +99,5 @@ describe('increasor', () => {
   test.todo('rename alias does not cause interblock')
   test.todo('automatic promises')
   test.todo('tick with no response is an instant resolve')
+  test.todo('resolving an alias causes lineage fork')
 })

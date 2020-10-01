@@ -97,6 +97,10 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     }
 
     const getState = (path = [], height) => {
+      if (typeof path === 'number' && height === undefined) {
+        height = path
+        path = []
+      }
       // a synchronous snapshot of the current state of storage
       // TODO pull straight from blocks ?
       const { dbChains } = ramDb._getTables()
@@ -156,7 +160,8 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
         const channel = block.network[alias]
         if (channel.systemRole === './') {
           const { address } = channel
-          const childDispatchPath = alias // TODO handle more than first level children
+          const isRoot = dispatchPath === '.' // TODO remove this check by normalizing paths
+          const childDispatchPath = isRoot ? alias : dispatchPath + '/' + alias
           children[alias] = metrology(address, childDispatchPath) // TODO dispatch still goes to origin ?
         }
       })

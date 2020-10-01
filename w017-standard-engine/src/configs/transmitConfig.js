@@ -114,9 +114,14 @@ const transmitConfig = (ioConsistency) => {
     guards: {
       isBlockFetched: (context, event) => blockModel.isModel(event.data.block),
       isLineageInterblock: ({ interblock }) => !interblock.getRemote(),
-      isConnectionResponse: ({ interblock }) =>
-        interblock.isConnectionResponse(),
-      isConnectionResolve: ({ interblock }) => interblock.isConnectionResolve(),
+      isInitiatingAction: ({ interblock }) => {
+        assert(interblockModel.isModel(interblock))
+        const isResponse = interblock.isConnectionResponse()
+        const isResolve = interblock.isConnectionResolve()
+        const isDownlinkInit = interblock.isDownlinkInit()
+        const isUplinkInit = interblock.isUplinkInit()
+        return isResponse || isResolve || isDownlinkInit || isUplinkInit
+      },
       isGenesisAttempt: ({ interblock }) => interblock.isGenesisAttempt(),
       isOriginPresent: (context, event) => event.data.isOriginPresent,
     },

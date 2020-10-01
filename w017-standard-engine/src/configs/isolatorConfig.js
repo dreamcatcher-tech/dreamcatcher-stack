@@ -3,6 +3,7 @@ const debug = require('debug')('interblock:config:isolator')
 const { assign } = require('xstate')
 const { rxRequestModel, dmzModel, lockModel } = require('../../../w015-models')
 const { networkProducer } = require('../../../w016-producers')
+const { openPaths } = require('../../../w021-dmz-reducer')
 const { thread } = require('../execution/thread')
 const { interpreterConfig } = require('./interpreterConfig')
 const { machine } = require('../machines/isolator')
@@ -47,6 +48,14 @@ const isolatorMachine = machine.withConfig({
       },
     }),
     assignHasPierced: assign({ hasPierced: () => true }),
+    openPaths: assign({
+      dmz: ({ dmz }) => {
+        debug(`openPaths`)
+        assert(dmzModel.isModel(dmz))
+        const network = openPaths(dmz.network)
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
   },
   guards: {
     isDmzChangeable: ({ dmz }) => {

@@ -115,8 +115,8 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         assert(dmzModel.isModel(nextDmz))
         assert(lock.block) // increasor never makes a new chain
         const previousNetwork = lock.block.network
-        const txs = nextDmz.network.txInterblockAliases(previousNetwork)
-        const isDmzChanged = txs.length
+        const changed = nextDmz.network.txInterblockAliases(previousNetwork)
+        const isDmzChanged = changed.length
         debug(`isDmzChanged: ${isDmzChanged}`)
         return isDmzChanged
       },

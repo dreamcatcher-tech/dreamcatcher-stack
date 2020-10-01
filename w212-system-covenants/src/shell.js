@@ -36,14 +36,14 @@ const config = {
       return result
     },
     login: async (context, event) => {
-      debug(`login: %O`, event.payload.terminal)
-      const { chainId, ...rest } = event.payload
+      debug(`login: %O`, event.payload)
+      const { terminalChainId, credentials } = event.payload
       // TODO check terminal regex is a chainId
-      const connectToTerminal = connect('terminal', chainId)
+      const connectToTerminal = connect('terminal', terminalChainId)
       await invoke(connectToTerminal)
 
       // TODO import from authenticator / terminal functions
-      const loginResult = await invoke('@@INTRO', rest, 'terminal')
+      const loginResult = await invoke('@@INTRO', credentials, 'terminal')
       debug(`loginResult: %O`, loginResult)
       return { loginResult }
     },
@@ -279,9 +279,9 @@ const actions = {
     type: 'PING',
     payload: { ...payload, to },
   }),
-  login: (payload) => ({
+  login: (terminalChainId, credentials) => ({
     type: 'LOGIN',
-    payload,
+    payload: { terminalChainId, credentials },
   }),
   add: (alias, spawnOptions = {}, to = '.') => ({
     // TODO interpret datums and ask for extra data

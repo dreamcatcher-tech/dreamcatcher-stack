@@ -104,7 +104,10 @@ const actions = {
   rm: (name, force = false) => {
     // remove a socket
   },
-  ping: () => {},
+  ping: (to = '.', payload) => ({
+    type: 'PING',
+    payload: { ...payload, to },
+  }),
   pingLambda: () => {},
   version: () => {},
 }

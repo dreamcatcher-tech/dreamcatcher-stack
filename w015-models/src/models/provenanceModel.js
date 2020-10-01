@@ -6,6 +6,7 @@ const { integrityModel } = require('./integrityModel')
 const { keypairModel } = require('./keypairModel')
 const { addressModel } = require('./addressModel')
 const { provenanceSchema } = require('../schemas/modelSchemas')
+let dmzModel // avoid circular reference
 
 const ciSigner = async (integrity) => {
   const ciKeypair = await keypairModel.create('CI')
@@ -21,7 +22,11 @@ const provenanceModel = standardize({
     extraLineages = {},
     asyncSigner = ciSigner
   ) {
-    const { dmzModel } = require('./dmzModel') // avoid circular reference
+    if (!dmzModel) {
+      // avoid circular reference
+      dmzModel = require('./dmzModel').dmzModel
+      assert(dmzModel)
+    }
     dmz = dmz || dmzModel.create()
     assert(dmzModel.isModel(dmz))
     assert(!parentProvenance || provenanceModel.isModel(parentProvenance))
