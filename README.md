@@ -1,5 +1,7 @@
 # Interblock
 
+[![HitCount](http://hits.dwyl.com/dreamcatcher-tech/interblock.svg)](http://hits.dwyl.com/dreamcatcher-tech/interblock)
+
 ## License
 
     Interblock - the blockchain of the Dreamcatcher network
