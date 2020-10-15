@@ -39,6 +39,7 @@ Dmz is equivalent to CombineReducers in Redux.`,
     acl: aclModel.schema,
     network: networkModel.schema,
     state: stateModel.schema,
+    // TODO add version ?
   },
 }
 

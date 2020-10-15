@@ -204,6 +204,10 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     }
     const enableLogging = () => tap.on()
     const disableLogging = () => tap.off()
+    const pierce = (action, alias) => {
+      // pierces a chain
+      // rejects if the chain is not configured for piercings
+    }
     return {
       dispatch,
       subscribe,

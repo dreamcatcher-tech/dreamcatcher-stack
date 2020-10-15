@@ -72,6 +72,7 @@ const dispatchCovenantFactory = (wrappedReducer = unity.reducer) => {
 
   const generateDispatchPromise = (request) => {
     const promise = {}
+    // TODO remove pending promises
     const settled = new Promise((resolve, reject) => {
       promise.settled = { resolve, reject }
     })

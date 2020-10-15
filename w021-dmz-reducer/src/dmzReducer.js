@@ -209,7 +209,7 @@ const connectUplinkReducer = (network, action) => {
     const existing = network.getAlias(address)
     assert(!existing || network[existing].systemRole !== 'UP_LINK')
 
-    alias = autoAlias(network, 'uplink_')
+    alias = autoAlias(network, '.uplink_')
     assert(!network[alias])
 
     draft[alias] = channelModel.create(address)

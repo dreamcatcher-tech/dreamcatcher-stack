@@ -36,29 +36,24 @@ const assert = require('assert')
 const { metrologyFactory } = require('../../w017-standard-engine')
 const _ = require('lodash')
 const debug = require('debug')('interblock:effector')
-const covenants = require('../../w212-system-covenants')
-const { shell, net, hyper } = covenants
 const { addressModel, socketModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
+const covenants = require('../../w212-system-covenants')
+const { netFactory } = require('./netFactory')
+const { socketFactory } = require('./socketFactory')
 
 const effectorFactory = async (identifier) => {
   debug(`effectorFactory`)
-  const metrology = await metrologyFactory(identifier)
+  // start the net watcher, to reconcile hardware with chainware
+  const gateway = {}
+  const net = netFactory(gateway)
+  const socket = socketFactory(gateway)
+  const covenantOverloads = { net, socket }
+  const metrology = await metrologyFactory(identifier, covenantOverloads)
   const shell = effector(metrology)
 
   await shell.add('net', { covenantId: net.covenantId })
-
-  // start the net watcher, to reconcile hardware with chainware
-
-  const emulateAws = async (reifiedCovenantMap) => {
-    // TODO kill existing emulator ?
-    const aws = await awsFactory('aws')
-    // cross over internet
-    client.sqsTx.setProcessor(aws.sqsRx.push)
-    aws.sqsTx.setProcessor(client.sqsRx.push)
-
-    // ? make shell login to aws ?
-  }
+  connectGateway(gateway, shell.net)
 
   return shell
 }
@@ -162,5 +157,28 @@ const mapDispatchToActions = (dispatch, covenant) => {
   }
   return mappedActions
 }
+const connectGateway = (gateway, netEffector) => {
+  const { sqsRx, sqsTx } = netEffector.getEngine()
+  // address the pierce queue based on the name of the socket
+  gateway.sockets = {
+    // accessed directly by each socket chain to send to the socket
+  }
+  sqsTx.setProcessor(async (tx) => {
+    // pierce the socket chain with this transmission
+  })
+  gateway.addSocket = (url) => {
+    // split between type by url prefix
+    // where to send all the events to
+  }
+  gateway.transmit = (url, data) => {
+    // called within socket reducer
+    // if queue, push into queue
+    // if tcp, sockets are called directly
+  }
+  gateway.receive = (tx) => {
+    sqsRx.push(tx)
+  }
 
+  gateway.removeSocket = (url) => {}
+}
 module.exports = { effectorFactory }
