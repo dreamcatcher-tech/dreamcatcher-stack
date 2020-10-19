@@ -258,6 +258,7 @@ describe('translator', () => {
     // resolve remote ping
     // observe original promise resolved
   })
+  test.todo('error if functions stored in context or actions')
 })
 
 const createReply = (raw, message) => {

@@ -91,6 +91,8 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     // TODO change to be plain variables ?
     const dispatch = ({ type, payload, to = dispatchPath }) => {
       debug(`dispatch to: %o type: %O`, to, type)
+      // push into the pierce queue, and trigger increase
+      // subscribe to block updates
       const promise = injector({ type, payload, to })
       sqsIncrease.push(baseAddress)
       return promise

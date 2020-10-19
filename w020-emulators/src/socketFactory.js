@@ -18,9 +18,23 @@ const socketFactory = (gateway) => {
       addChainId: assign({
         chainIds: ({ chainIds }, event) => {
           assert(Array.isArray(chainIds))
+          const set = new Set(chainIds)
           const { chainId } = event.payload
-          assert(typeof chainId === 'string')
-          chainIds = [...chainIds, chainId]
+          assert.strictEqual(typeof chainId, 'string')
+          set.add(chainId)
+          chainIds = [...set]
+          debug(`chainIds length: %o`, chainIds)
+          return chainIds
+        },
+      }),
+      rmChainId: assign({
+        chainIds: ({ chainIds }, event) => {
+          assert(Array.isArray(chainIds))
+          const set = new Set(chainIds)
+          const { chainId } = event.payload
+          assert.strictEqual(typeof chainId, 'string')
+          set.delete(chainId)
+          chainIds = [...set]
           debug(`chainIds length: %o`, chainIds)
           return chainIds
         },
@@ -28,7 +42,7 @@ const socketFactory = (gateway) => {
     },
     guards: {},
     services: {
-      addChainId: async (context, event) => {
+      connectSocket: async (context, event) => {
         // TODO handle duplicate additions gracefully
         debug(`addChainId %O`, event)
         return
@@ -51,10 +65,6 @@ const socketFactory = (gateway) => {
         const action = { type: 'PUT_SOCKET', payload: { address, socket } }
         await ioConsistency.push(action)
         return latency
-      },
-      rmTransport: async () => {
-        // close all the websockets
-        // reset the sqs queues back to defaults
       },
       ping: async (context, event) => {
         // if ping '.' respond, else engage in remote pinging
@@ -120,48 +130,41 @@ const socketFactory = (gateway) => {
       initial: 'idle',
       context: {
         chainIds: [],
-        type: '',
-        url: '',
+        url: '', // ? how pass down ?
       },
       strict: true,
       states: {
         idle: {
           on: {
-            '@@INIT': 'idle',
             ADD: 'addChainId',
-            RM: 'rmTransport',
+            CONNECT: 'connectSocket',
+            DISCONNECT: 'disconnectSocket',
             PING: 'ping',
             PING_LAMBDA: 'pingLambda',
             VERSION: 'version',
+            RM: 'rmChainId',
+            TRANSMIT: 'transmitInterblock',
           },
         },
-        addChainId: {
-          entry: 'addChainId',
-          always: 'idle',
+        addChainId: { entry: 'addChainId', always: 'idle' },
+        connectSocket: {
+          invoke: { src: 'connectSocket', onDone: 'idle' },
         },
-        rmTransport: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
+        disconnectSocket: {
+          invoke: { src: `disconnectSocket`, onDone: 'idle' },
         },
         ping: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
+          invoke: { src: `ping`, onDone: 'idle' },
         },
         pingLambda: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
+          invoke: { src: `pingLambda`, onDone: 'idle' },
         },
         version: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
+          invoke: { src: `version`, onDone: 'idle' },
+        },
+        rm: { entry: 'rmChainId', always: 'idle' },
+        transmitInterblock: {
+          invoke: { src: 'transmitInterblock', onDone: 'idle' },
         },
         done: {
           id: 'done',
@@ -181,19 +184,16 @@ const socketFactory = (gateway) => {
       type: 'ADD',
       payload: { chainId },
     }),
-    connect: () => {},
-    disconnect: () => {},
-    ping: () => {},
-    pingLambda: () => {},
-    version: () => {},
-    rmChainId: () => {},
+    connect: () => ({ type: 'CONNECT' }),
+    disconnect: () => ({ type: 'DISCONNECT' }),
+    ping: () => ({ type: 'PING' }),
+    pingLambda: () => ({ type: 'PING_LAMBDA' }),
+    version: () => ({ type: 'VERSION' }),
+    rmChainId: (chainId) => ({ type: 'RM', payload: { chainId } }),
+    transmit: (interblock) => ({ type: 'TRANSMIT', payload: { interblock } }),
   }
 
-  const schemas = {
-    ping: {
-      description: `Ping the transport, or the function.  Pings to chain are handled by the chain directly`,
-    },
-  }
+  const schemas = {}
 
   const reducer = translator(machine)
   return { actions, schemas, reducer }

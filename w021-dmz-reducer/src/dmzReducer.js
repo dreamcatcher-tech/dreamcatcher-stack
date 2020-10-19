@@ -77,8 +77,13 @@ const reducer = async (dmz, action) => {
       break
     }
     case '@@OPEN_CHILD': {
-      const { nextNetwork, response } = openChild(dmz.network, action)
+      const { nextNetwork, response } = openChildReducer(dmz.network, action)
       network = nextNetwork
+      actions.push(response)
+      break
+    }
+    case '@@GET_GIVEN_NAME': {
+      const response = getGivenNameReducer(dmz.network)
       actions.push(response)
       break
     }
@@ -145,6 +150,7 @@ const types = {
   genesis: '@@GENESIS',
   openChild: '@@OPEN_CHILD',
   listChildren: '@@LIST_CHILDREN',
+  getGivenName: '@@GET_GIVEN_NAME',
 }
 
 dmzActions.spawn = (alias, spawnOpts = {}) => ({
@@ -224,7 +230,7 @@ dmzActions.openChild = (alias, fullPath) => ({
   type: types.openChild,
   payload: { alias, fullPath },
 })
-const openChild = (network, action) => {
+const openChildReducer = (network, action) => {
   assert(rxRequestModel.isModel(action))
   let response
 
@@ -247,6 +253,10 @@ const openChild = (network, action) => {
   })
   return { nextNetwork, response }
 }
+
+dmzActions.getGivenName = () => ({ type: types.getGivenName })
+const getGivenNameReducer = (network) => {}
+
 const isSystemRequest = (request) => {
   assert(rxRequestModel.isModel(request))
   const isSystemAction = Object.values(types).includes(request.type)

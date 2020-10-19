@@ -18,16 +18,13 @@ const netFactory = (gateway) => {
     guards: {},
     services: {
       addTransport: async (context, event) => {
-        // checkSchema( event, schema.addTransport)
-        debug(`event: %o`, event.payload)
-        const { name, type, url } = event.payload
-        // TODO check that all children have different urls by calling loopback
+        debug(`event: %o`, event)
+        const { url } = event.payload
         const covenantId = covenantIdModel.create('socket')
-        const state = { type, url }
         const config = { isPierced: true }
-        await invoke(spawn(name, { covenantId, state, config }))
+        await invoke(spawn(url, { covenantId, config }))
       },
-      rmTransport: async () => {
+      rmTransport: async (context, event) => {
         // close all the websockets
         // reset the sqs queues back to defaults
       },
@@ -42,7 +39,6 @@ const netFactory = (gateway) => {
       states: {
         idle: {
           on: {
-            '@@INIT': 'idle',
             ADD: 'addTransport',
             RM: 'rmTransport',
             PING: 'ping',
@@ -51,34 +47,10 @@ const netFactory = (gateway) => {
           },
         },
         addTransport: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
+          invoke: { src: `addTransport`, onDone: 'idle' },
         },
         rmTransport: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
-        },
-        ping: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
-        },
-        pingLambda: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
-        },
-        version: {
-          invoke: {
-            src: `addTransport`,
-            onDone: 'idle',
-          },
+          invoke: { src: `rmTransport`, onDone: 'idle' },
         },
         done: {
           id: 'done',
@@ -94,22 +66,14 @@ const netFactory = (gateway) => {
   )
 
   const actions = {
-    add: (name, url) => ({
+    add: (url) => ({
       type: `ADD`,
-      payload: {
-        name,
-        url,
-      },
+      payload: { url },
     }),
-    rm: (name, force = false) => {
-      // remove a socket
-    },
-    ping: (to = '.', payload) => ({
-      type: 'PING',
-      payload: { ...payload, to },
+    rm: (url, force = false) => ({
+      type: 'RM',
+      payload: { url, force },
     }),
-    pingLambda: () => {},
-    version: () => {},
   }
 
   const schemas = {
@@ -127,9 +91,6 @@ const netFactory = (gateway) => {
     rm: {
       description: `Removes a transport.  Gracefully attempts to close the connection.
         Force will terminate immediately by deleting the chain`,
-    },
-    ping: {
-      description: `Ping the transport, or the function.  Pings to chain are handled by the chain directly`,
     },
   }
 

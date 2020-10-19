@@ -10,16 +10,20 @@ describe('netFactory', () => {
     const client = await effectorFactory()
     client.enableLogging()
 
-    client.net.add()
+    const url = 'wss://echo.websocket.org'
+    client.net.add(url)
+    assert(client.net[url])
+    await client.net[url].connect()
+
     // add a transport to echo.websocket.org
     // perform a transport layer ping
     // close the socket
     // observe ping failure
 
-    const reply = await client.ping()
-
+    const testData = 'testData'
+    const reply = await client[url].ping(testData)
+    assert.strictEqual(reply.payload, testData)
     await client.settle()
-
     debug(`stop`)
   })
 })

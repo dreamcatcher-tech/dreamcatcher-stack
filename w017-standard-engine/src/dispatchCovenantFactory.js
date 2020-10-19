@@ -14,7 +14,7 @@ const dispatchCovenantFactory = (wrappedReducer = unity.reducer) => {
     debug(`injector: %s to: %s id: %o`, type, to, _dispatchId)
     payload = { ...payload, _dispatchId }
     const action = request(type, payload, to)
-    const promise = generateDispatchPromise(action)
+    const promise = setDispatchPromise(action)
     dispatches.push(action)
     await Promise.resolve()
     return promise
@@ -70,7 +70,7 @@ const dispatchCovenantFactory = (wrappedReducer = unity.reducer) => {
     return false
   }
 
-  const generateDispatchPromise = (request) => {
+  const setDispatchPromise = (request) => {
     const promise = {}
     // TODO remove pending promises
     const settled = new Promise((resolve, reject) => {

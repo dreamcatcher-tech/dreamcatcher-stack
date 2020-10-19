@@ -96,13 +96,14 @@ const effector = (metrology) => {
       // check children by their chainId
       // update the base obj for creates and deletes
       // children will take care of their own children, and expose their own functions
-      // if childnre have changed, reattach
+      // if children have changed, reattach
       // wrap the children in effectors, so they auto detect their functions, and update themselves
       Object.assign(base, children)
 
       // for each child, wrap in an effector wrapper
       // when running effector, determine covenant, grab the functions, wrap with dispatch
       // later, finesse the functions with what our permissions are
+      // TODO wrap linked files too, such as remote locations
     }
   }
 
@@ -160,6 +161,7 @@ const mapDispatchToActions = (dispatch, covenant) => {
 const connectGateway = (gateway, netEffector) => {
   const { sqsRx, sqsTx } = netEffector.getEngine()
   // address the pierce queue based on the name of the socket
+  // ?? just make a socket entry, which handles in and out ?
   gateway.sockets = {
     // accessed directly by each socket chain to send to the socket
   }

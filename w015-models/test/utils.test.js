@@ -143,7 +143,9 @@ describe('standard model', () => {
     const res = await madge(__dirname + '/../src/models', {
       excludeRegExp: [/\.\./],
     })
-    const path = await res.image(__dirname + '/../models.svg')
+    const path = await res.image(
+      __dirname + '/../../website/static/img/models.svg'
+    )
     console.log(`wrote image to: ${path}`)
   })
   test.todo('check the version of the message format')
