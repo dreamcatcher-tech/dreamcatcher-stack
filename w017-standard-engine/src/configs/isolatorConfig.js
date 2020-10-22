@@ -80,19 +80,19 @@ const isolatorMachine = machine.withConfig({
         assert(lock.block)
         const { block, piercings } = lock
 
-        let pierceDmz = extractPierceDmz(lock.block)
-
-        // TODO remove all tx that have been replied to
-        // TODO leave the highest tx in place, to serve as counter
-        const ioChannel = block.network['@@io']
+        let pierceDmz = _extractPierceDmz(lock.block)
 
         let txChannel = pierceDmz.network['@@PIERCE_TARGET']
         assert(txChannel.address.equals(block.provenance.getAddress()))
         assert.strictEqual(txChannel.systemRole, 'PIERCE')
+
         piercings.forEach((action) => {
           txChannel = channelProducer.txRequest(txChannel, action)
           // TODO handle replies in the pierce queue
         })
+
+        txChannel = _shiftTxRequests(block, txChannel)
+
         network = { ...pierceDmz.network, '@@PIERCE_TARGET': txChannel }
         pierceDmz = dmzModel.clone({ ...pierceDmz, network })
         return pierceDmz
@@ -158,7 +158,7 @@ const isolatorMachine = machine.withConfig({
       assert(lock.block)
       assert(dmzModel.isModel(pierceDmz))
 
-      const currentPierceDmz = extractPierceDmz(lock.block)
+      const currentPierceDmz = _extractPierceDmz(lock.block)
       const currentIo = currentPierceDmz.network['@@PIERCE_TARGET']
       const nextIo = pierceDmz.network['@@PIERCE_TARGET']
       const isPierceDmzChanged = nextIo.isTxGreaterThan(currentIo)
@@ -193,7 +193,7 @@ const isolatorMachine = machine.withConfig({
       const { block } = lock
       assert(block)
 
-      const previousProvenance = getPierceProvenance(block)
+      const previousProvenance = _getPierceProvenance(block)
       const extraLineage = undefined
       const provenance = await provenanceModel.create(
         pierceDmz,
@@ -210,7 +210,7 @@ const isolatorMachine = machine.withConfig({
     },
   },
 })
-const extractPierceDmz = (block) => {
+const _extractPierceDmz = (block) => {
   const ioChannel = block.network['@@io']
   const validators = pierceKeypair.getValidatorEntry()
   const baseDmz = dmzModel.create({ validators })
@@ -230,7 +230,7 @@ const extractPierceDmz = (block) => {
   const network = { ...baseDmz.network, '@@PIERCE_TARGET': pierceChannel }
   return dmzModel.clone({ ...baseDmz, network })
 }
-const getPierceProvenance = (block) => {
+const _getPierceProvenance = (block) => {
   const ioChannel = block.network['@@io']
   if (!ioChannel) {
     return undefined
@@ -238,6 +238,27 @@ const getPierceProvenance = (block) => {
   const { provenance } = ioChannel.heavy
   assert(provenanceModel.isModel(provenance))
   return provenance
+}
+const _shiftTxRequests = (block, txChannel) => {
+  const requests = { ...txChannel.requests }
+  const requestIndices = _getSortedIndices(requests)
+  requestIndices.pop() // leave the highest tx in place, to serve as counter
+  const ioChannel = block.network['@@io'] || channelModel.create()
+  requestIndices.forEach((requestIndex) => {
+    if (ioChannel.replies[requestIndex]) {
+      delete requests[requestIndex]
+    }
+  })
+  return channelModel.clone({ ...txChannel, requests })
+}
+const _getSortedIndices = (obj) => {
+  const indices = []
+  Object.keys(obj).forEach((key) => {
+    const number = parseInt(key)
+    indices.push(number)
+  })
+  indices.sort((first, second) => first - second)
+  return indices
 }
 
 const isolatorConfig = (ioIsolate) => {

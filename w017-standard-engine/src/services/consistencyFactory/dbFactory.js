@@ -69,6 +69,8 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
 
   const delPool = (toDelete) => _dbDel('dbPools', toDelete)
 
+  const delPierce = (toDelete) => _dbDel('dbPiercings', toDelete)
+
   const _dbQuery = async (TableName, chainId, isSingle) => {
     const params = {
       TableName,
@@ -162,6 +164,7 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
 
     putPierce,
     queryPiercings,
+    delPierce,
   }
 }
 

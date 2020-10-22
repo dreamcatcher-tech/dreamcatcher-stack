@@ -155,8 +155,9 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     // TODO assert the incomingLock is reconciled
     debug(`putUnlockChain`)
     assert(lockModel.isModel(incomingLock))
-    assert(incomingLock.block, `cannot unlock without a block`)
-    const address = incomingLock.block.provenance.getAddress()
+    const { block } = incomingLock
+    assert(block, `cannot unlock without a block`)
+    const address = block.provenance.getAddress()
     const chainId = address.getChainId()
     const isLockValid = await lock.isValid(chainId, incomingLock.uuid)
     if (!isLockValid) {
@@ -167,7 +168,6 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
       // TODO work out echoes of blocks failing provenance checks
     }
     const previousLock = locks.get(chainId)
-    const { block } = incomingLock
     const previous = previousLock.block
     // TODO check getting latest is still the correct previous ?
     if (previous && !previous.isNext(block)) {
@@ -185,8 +185,9 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     }
 
     const routePromise = _updateRouteTable(block, previous)
-    const purgePromise = _purgePool(previousLock, incomingLock)
-    await Promise.all([routePromise, purgePromise])
+    const purgePromise = _purgePool(block, previousLock.interblocks)
+    const piercePromise = _purgePiercings(block, previousLock.piercings)
+    await Promise.all([routePromise, purgePromise, piercePromise])
     locks.delete(chainId)
     await lock.release(chainId, incomingLock.uuid)
     debug(`putUnlockChain complete`)
@@ -219,14 +220,10 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     debug(`updateRouteTable complete`)
   }
 
-  const _purgePool = async (previousLock, incomingLock) => {
-    // TODO assert incoming has been reconciled
-    assert(incomingLock.block)
-    const previousIbs = previousLock.interblocks
-    const incomingIbs = incomingLock.interblocks
-    assert(previousIbs.length >= incomingIbs.length)
-    const toDelete = _.difference(previousIbs, incomingIbs)
-    const address = incomingLock.block.provenance.getAddress()
+  const _purgePool = async (block, interblocks) => {
+    // TODO merge with purging of piercings
+    const toDelete = _interblocksToDelete(block, interblocks)
+    const address = block.provenance.getAddress()
     const toDeleteMarked = toDelete
       .map(_dbPoolFromAddress(address))
       .map((item) => ({ ...item, isDeleted: true }))
@@ -255,6 +252,25 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     })
     const lightOrphans = _.compact(await Promise.all(lightAwaits))
     return [...lightOrphans, ...heavies]
+  }
+  const _purgePiercings = async (block, piercings) => {
+    let toDelete = piercings
+    const ioChannel = block.network['@@io']
+    if (ioChannel) {
+      // TODO handle replies in the pierce queue
+      const { requests } = ioChannel.getRemote()
+      const requestActions = Object.values(requests)
+      toDelete = piercings.filter((action) =>
+        requestActions.some(action.equals)
+      )
+    }
+    const chainId = block.getChainId()
+    const toDeleteItems = toDelete.map((action) => {
+      const hash = action.getHash()
+      const item = { chainId, hash }
+      return item
+    })
+    return db.delPierce(toDeleteItems)
   }
 
   const getLineage = async ({ provenance, height = 0 }) => {
@@ -412,10 +428,15 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     // TODO check chainId exists, and pierce is enabled in the latest block
     await db.putPierce(item)
   }
-  const delPierceRequests = async ({ chainId, hashes }) => {
-    assert(Array.isArray(hashes))
-    // set an expiry on the items, and set some flag so doesn't get picked up again
-    // or move the items to a dedupe table, then delete from primary
+  const _interblocksToDelete = (block, interblocks) => {
+    const toDelete = interblocks.filter((interblock) => {
+      const included = block.network.includesInterblock(interblock)
+      const isUsable = block.network.getAlias(
+        interblock.provenance.getAddress()
+      )
+      return included || !isUsable
+    })
+    return toDelete
   }
   return {
     putSocket,
