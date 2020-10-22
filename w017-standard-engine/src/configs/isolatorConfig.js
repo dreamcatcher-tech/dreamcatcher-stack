@@ -19,6 +19,8 @@ const { thread } = require('../execution/thread')
 const { interpreterConfig } = require('./interpreterConfig')
 const { machine } = require('../machines/isolator')
 const isolationProcessor = require('../services/isolateFactory')
+const crypto = require('../../../w012-crypto')
+const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
 
 const isReduceable = ({ dmz }) => {
   // TODO check the time available, probably as a parallel transition
@@ -81,6 +83,7 @@ const isolatorMachine = machine.withConfig({
         let pierceDmz = extractPierceDmz(lock.block)
 
         // TODO remove all tx that have been replied to
+        // TODO leave the highest tx in place, to serve as counter
         const ioChannel = block.network['@@io']
 
         let txChannel = pierceDmz.network['@@PIERCE_TARGET']
@@ -209,15 +212,23 @@ const isolatorMachine = machine.withConfig({
 })
 const extractPierceDmz = (block) => {
   const ioChannel = block.network['@@io']
-  if (!ioChannel) {
-    const baseDmz = dmzModel.create()
-    const address = block.provenance.getAddress()
-    const channel = channelModel.create(address, 'PIERCE')
-    const network = { ...baseDmz.network, '@@PIERCE_TARGET': channel }
-    return dmzModel.clone({ ...baseDmz, network })
+  const validators = pierceKeypair.getValidatorEntry()
+  const baseDmz = dmzModel.create({ validators })
+  const address = block.provenance.getAddress()
+  let pierceChannel = channelModel.create(address, 'PIERCE')
+  if (ioChannel) {
+    const remote = ioChannel.getRemote()
+    assert(remote)
+    assert(remote.address.equals(address))
+    const { requests, replies } = remote
+    const indices = ioChannel.getRemoteRequestIndices()
+    assert(indices.length)
+    const requestsLength = indices.pop() + 1
+    const nextChannel = { ...pierceChannel, requests, replies, requestsLength }
+    pierceChannel = channelModel.clone(nextChannel)
   }
-  // TODO handle extraction for existing
-  assert(ioChannel.heavy)
+  const network = { ...baseDmz.network, '@@PIERCE_TARGET': pierceChannel }
+  return dmzModel.clone({ ...baseDmz, network })
 }
 const getPierceProvenance = (block) => {
   const ioChannel = block.network['@@io']

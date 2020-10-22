@@ -103,7 +103,13 @@ const blockModel = standardize({
       return blockness && provenance
     }
     const getChainId = () => instance.provenance.getAddress().getChainId()
-    return { isValidated, getDmz, whoami, isNext, getChainId }
+    return {
+      isValidated,
+      getDmz,
+      whoami,
+      isNext,
+      getChainId,
+    }
   },
 })
 

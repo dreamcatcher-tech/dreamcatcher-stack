@@ -11,6 +11,9 @@ describe('pierce', () => {
     const ping = request('PING')
     const reply = await base.pierce(ping)
     assert.strictEqual(reply.type, 'PONG')
+    const second = await base.pierce(ping)
+    assert.strictEqual(second.type, 'PONG')
+
     await base.settle()
   })
   test.todo('reject for unknown chainId')
@@ -22,4 +25,5 @@ describe('pierce', () => {
   test.todo('reject attempt to make channel named @@io even if pierced')
   test.todo('unpierce during pierce execution drops all other pierces')
   test.todo('opening pierce channel alone does not cause extra lineage')
+  test.todo('always at least one tx in the channel to keep count')
 })

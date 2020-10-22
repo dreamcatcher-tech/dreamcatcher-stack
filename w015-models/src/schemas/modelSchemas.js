@@ -301,7 +301,7 @@ const channelSchema = {
   properties: {
     ...remoteSchema.properties,
     systemRole: { enum: ['..', '.', './', 'UP_LINK', 'DOWN_LINK', 'PIERCE'] },
-    requestsLength: { type: 'integer', minimum: 0 },
+    requestsLength: { type: 'integer', minimum: 0 }, // TODO remove this when interblock diffing enabled
     heavy: interblockSchema, // last heavy interblock, in full
     lineage: { type: 'array', uniqueItems: true, items: integritySchema },
     lineageTip: {
