@@ -49,6 +49,8 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
 
   const putKeypair = async (item) => _dbPut('dbCrypto', item)
 
+  const putPierce = async (item) => _dbPut('dbPiercings', item)
+
   const _dbDel = async (TableName, items) => {
     assert(Array.isArray(items))
     const awaits = items.map((Key) => {
@@ -106,6 +108,8 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
 
   const queryPool = (chainId) => _dbQuery('dbPools', chainId)
 
+  const queryPiercings = (chainId) => _dbQuery('dbPiercings', chainId)
+
   const _scanFirst = async (TableName) => {
     const params = {
       TableName,
@@ -155,6 +159,9 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
 
     scanKeypair,
     putKeypair,
+
+    putPierce,
+    queryPiercings,
   }
 }
 

@@ -5,7 +5,7 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 describe('netFactory', () => {
   require('debug').enable('*metro* *tests*')
 
-  test.only('ping single', async () => {
+  test('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
     client.enableLogging()

@@ -78,6 +78,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
             // TODO try make increasor do block creation too ?
             previousNetwork = networkModel.create()
           }
+          // TODO ignore pierce when transmitting, but do count as changed
           const txAliases = block.network.txInterblockAliases(previousNetwork)
           const interblocks = txAliases.map((alias) =>
             interblockModel.create(block, alias)
@@ -113,7 +114,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         // outgoing changes detected
         assert(lockModel.isModel(lock))
         assert(dmzModel.isModel(nextDmz))
-        assert(lock.block) // increasor never makes a new chain
+        assert(lock.block, 'increasor never makes a new chain')
         const previousNetwork = lock.block.network
         const changed = nextDmz.network.txInterblockAliases(previousNetwork)
         const isDmzChanged = changed.length
@@ -134,7 +135,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const lock = await consistency.putLockChain(address)
         return lock
       },
-      isolate: async ({ lock }) => {
+      isolatedExecution: async ({ lock }) => {
         const executeCovenant = {
           type: 'EXECUTE_COVENANT',
           payload: { lock },
@@ -145,13 +146,11 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         return dmz
       },
       signBlock: async ({ lock, nextDmz }) => {
-        // TODO only sign the block if it is different to previous ?
         assert(dmzModel.isModel(nextDmz))
         assert(lockModel.isModel(lock))
         const { block } = lock
         assert(block)
 
-        // TODO when a new channel opens, make a new provenance that shortcuts proof needed
         const nextBlock = await generateNext(nextDmz, block, crypto.sign)
 
         return nextBlock

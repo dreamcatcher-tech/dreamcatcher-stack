@@ -24,7 +24,7 @@ const keypairModel = standardize({
       },
     },
   },
-  create(name = 'CI', keypairRaw = crypto._ciKeypair) {
+  create(name = 'CI', keypairRaw = crypto.ciKeypair) {
     assert.strictEqual(typeof name, 'string')
     const publicKey = publicKeyModel.clone({
       key: keypairRaw.publicKey,

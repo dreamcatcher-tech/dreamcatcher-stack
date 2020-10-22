@@ -1,6 +1,7 @@
 const assert = require('assert')
 const _ = require('lodash')
 const {
+  actionModel,
   addressModel,
   integrityModel,
   provenanceModel,
@@ -139,7 +140,11 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     const block = await blockPromise
     debug(`block height: %O`, block && block.provenance.height)
     debug(`interblock count: %O`, interblocks.length)
-    const lockInstance = lockModel.create(block, interblocks, uuid)
+
+    const piercingsRaw = await db.queryPiercings(chainId)
+    const piercings = piercingsRaw.map(({ action }) => action)
+
+    const lockInstance = lockModel.create(block, interblocks, uuid, piercings)
     assert(!locks.has(chainId))
     locks.set(chainId, lockInstance)
     debug(`lock complete: %O`, lockInstance.uuid)
@@ -397,21 +402,21 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
 
   // make this the same as pool interblock
   // pierce channel should optionally have a schema for all actions, or a check function
-  const putPierceRequest = async (chainId, pierceAlias, action) => {
-    // check chainId exists, and pierce alias exists in the latest block
-    // check action matches size, and if alias is '@@pool' then check it is an interblock
-    // query for the highest number in the queue, try write using this number, assuming it does not exist
-    // keep trying indefinitely until write successfully
+  const putPierceRequest = async ({ address, action }) => {
+    assert(addressModel.isModel(address))
+    assert(actionModel.isModel(action))
+    const chainId = address.getChainId()
+    const hash = action.getHash()
+    debug(`putPierceRequest %o %o`, chainId, action)
+    const item = { chainId, hash, action }
+    // TODO check chainId exists, and pierce is enabled in the latest block
+    await db.putPierce(item)
   }
-  const putPierceReply = async (chainId, pierceAlias, index, reply) => {
-    // resolving should automatically remove it ?
-    // block holds the requests and replies
-    // each block, queue is trimmed by what is in the block
+  const delPierceRequests = async ({ chainId, hashes }) => {
+    assert(Array.isArray(hashes))
+    // set an expiry on the items, and set some flag so doesn't get picked up again
+    // or move the items to a dedupe table, then delete from primary
   }
-  const deletePierceRequests = async (chainId, pierceAlias, indexes) => {
-    assert(Array.isArray(indexes))
-  }
-  const getPiercings = async (chainId, pierceAlias) => {}
   return {
     putSocket,
     getSockets,
@@ -426,6 +431,8 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     getAffected,
     getIsPresent,
     getBlock,
+
+    putPierceRequest,
   }
 }
 module.exports = { consistencySourceFactory }

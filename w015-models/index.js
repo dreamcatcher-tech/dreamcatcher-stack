@@ -111,10 +111,13 @@ registry.registerModels(models)
 registry.registerModels(queues)
 registry.registerModels(transients)
 const cryptoCacher = require('./src/cryptoCacher')
+const { ciSigner, pierceSigner } = require('./src/models/provenanceModel')
 module.exports = {
   ...models,
   ...transients,
   ...queues,
   registry,
   cryptoCacher,
+  ciSigner,
+  pierceSigner,
 }

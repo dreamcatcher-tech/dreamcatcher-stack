@@ -109,12 +109,12 @@ const definition = {
     },
     isolate: {
       invoke: {
-        src: 'isolate',
+        src: 'isolatedExecution',
         onDone: {
           target: '#increasor.execute.history',
           actions: 'assignNextDmz',
         },
-        onError: 'error',
+        onError: '#error',
       },
     },
     unlockChain: {

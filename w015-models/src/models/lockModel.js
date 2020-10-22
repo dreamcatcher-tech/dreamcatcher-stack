@@ -5,12 +5,13 @@ const { standardize } = require('../utils')
 const { timestampModel } = require('./timestampModel')
 const { blockModel } = require('./blockModel')
 const { interblockModel } = require('./interblockModel')
+const { actionModel } = require('./actionModel')
 
 const schema = {
   title: 'Lock',
   description: 'Locking of the persistence layer for execution to take place.',
   type: 'object',
-  required: ['uuid', 'timestamp', 'expires', 'interblocks'],
+  required: ['uuid', 'timestamp', 'expires', 'interblocks', 'piercings'],
   additionalProperties: false,
   properties: {
     uuid: {
@@ -31,6 +32,12 @@ const schema = {
       uniqueItems: true,
       items: interblockModel.schema,
     },
+    piercings: {
+      type: 'array',
+      description: 'Side effects',
+      uniqueItems: true,
+      items: actionModel.schema,
+    },
   },
 }
 
@@ -39,21 +46,23 @@ const schema = {
 // or have a separate function on storage, to refresh the lock
 const lockModel = standardize({
   schema,
-  create: (block, interblocks = [], uuid = uuidCreator()) => {
+  create: (block, interblocks = [], uuid = uuidCreator(), piercings = []) => {
     assert(!block || blockModel.isModel(block))
     interblocks = interblocks.map(interblockModel.clone)
+    piercings = refinePiercings(block, piercings)
     const timestamp = timestampModel.create()
     const expires = 2000
-    const lock = { uuid, timestamp, expires, interblocks }
+    const lock = { uuid, timestamp, expires, interblocks, piercings }
     if (block) {
       lock.block = block
     }
-    const clone = lockModel.clone(lock)
-    return clone
+    return lockModel.clone(lock)
   },
 
   logicize: (instance) => {
-    const { timestamp, expires } = instance
+    const { block, timestamp, expires, piercings } = instance
+    const noDuplicates = refinePiercings(block, piercings)
+    assert.strictEqual(noDuplicates.length, piercings.length)
     const isLocked = () => !timestamp.isExpired(expires)
     const isMatch = (lock) => lock.uuid === instance.uuid
     return {
@@ -62,6 +71,35 @@ const lockModel = standardize({
     }
   },
 })
+
+const refinePiercings = (block, piercings) => {
+  piercings = deduplicate(piercings)
+  piercings = removeProcessedPiercings(block, piercings)
+  return piercings
+}
+
+const removeProcessedPiercings = (block, piercings) => {
+  if (!block || !block.network['@@io']) {
+    return piercings
+  }
+  const ioChannel = block.network['@@io']
+  const { requests } = ioChannel.getRemote() // TODO handle replies
+  const requestActions = Object.values(requests)
+  const unprocessed = piercings.filter(
+    (action) => !requestActions.some((compare) => compare.equals(action))
+  )
+  return unprocessed
+}
+
+const deduplicate = (piercings) => {
+  const dedupe = []
+  piercings.forEach((action) => {
+    if (dedupe.every((compare) => !compare.equals(action))) {
+      dedupe.push(action)
+    }
+  })
+  return dedupe
+}
 
 module.exports = {
   lockModel,

@@ -14,12 +14,8 @@ const reconcile = (lock, block) =>
     assert(blockModel.isModel(block))
     assert(lockModel.isModel(lock))
     draft.block = block
-    const interblocks = lock.interblocks.filter((interblock) => {
-      const included = block.network.includesInterblock(interblock)
-      const alias = block.network.getAlias(interblock.provenance.getAddress())
-      return !included && alias
-    })
-    draft.interblocks = interblocks
+    draft.piercings = []
+    draft.interblocks = []
   })
 
 module.exports = { reconcile }

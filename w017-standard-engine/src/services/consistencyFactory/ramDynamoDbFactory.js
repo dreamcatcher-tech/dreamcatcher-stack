@@ -10,6 +10,7 @@ const ramDynamoDbFactory = () => {
     dbLocks: {},
     dbSubscribers: {},
     dbSockets: {},
+    dbPiercings: {},
   }
 
   const get = ({ TableName, Key }, callback) => {
@@ -128,6 +129,7 @@ const rangeKeyMap = {
   dbLocks: 'chainId',
   dbSockets: 'socketId',
   dbSubscribers: 'targetChainId',
+  dbPiercings: 'hash',
 }
 const getRangeKey = (tableName, item) => {
   const rangeKeyName = rangeKeyMap[tableName]

@@ -29,7 +29,9 @@ const definition = {
   context: {
     lock: undefined,
     dmz: undefined,
+    containerId: undefined,
     isolation: () => 'isolation function',
+    pierceDmz: undefined,
     hasPierced: false,
   },
   strict: true,
@@ -51,36 +53,50 @@ const definition = {
     loadCovenant: {
       invoke: {
         src: 'loadCovenant',
-        onDone: { target: 'isExhausted', actions: 'assignContainerId' },
+        onDone: { target: 'isReduceable', actions: 'assignContainerId' },
         onError: 'error',
       },
     },
-    isExhausted: {
+    isReduceable: {
       always: [
-        { target: 'reduceActionless', cond: 'isPiercable' },
-        { target: 'unloadCovenant', cond: 'isExhausted', actions: 'openPaths' },
-        { target: 'reduce' },
+        { target: 'reduce', cond: 'isReduceable' },
+        { target: 'pierce', cond: 'isPiercable' },
+        { target: 'unloadCovenant', actions: 'openPaths' },
       ],
     },
     reduce: {
       // TODO run repeatedly with timer, sending updates to parent each time
       invoke: {
         src: 'reduce',
-        onDone: { target: 'isExhausted', actions: 'updateDmz' },
+        onDone: { target: 'isReduceable', actions: 'updateDmz' },
         onError: 'error',
       },
     },
-    reduceActionless: {
-      invoke: {
-        src: 'reduceActionless',
-        onDone: {
-          target: 'isExhausted',
-          actions: ['updateDmz', 'assignHasPierced'],
+    pierce: {
+      initial: 'generatePierceDmz',
+      states: {
+        generatePierceDmz: {
+          entry: ['assignHasPierced', 'generatePierceDmz'],
+          always: [
+            { target: 'signPierceDmz', cond: 'isPierceDmzChanged' },
+            { target: 'done' },
+          ],
         },
-        onError: 'error',
+        signPierceDmz: {
+          invoke: {
+            src: 'signPierceDmz',
+            onDone: {
+              target: 'done',
+              actions: ['openPierceChannel', 'ingestPierceBlock'],
+            },
+          },
+        },
+        done: {
+          type: 'final',
+        },
       },
+      onDone: 'isReduceable',
     },
-    openPaths: {},
     unloadCovenant: {
       invoke: {
         src: 'unloadCovenant',

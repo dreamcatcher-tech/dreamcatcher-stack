@@ -6,14 +6,21 @@ const {
   Ed25519SecretKey,
 } = require('sodium-plus')
 const { objectHash, generateNonce } = require('./common')
-const _ciKeypair = {
+const ciKeypair = {
   publicKey: 'I7xUkSwebpLEqGglyGfif/3FVb/71CRPF6Jqv//ull0=',
   secretKey:
     'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYjvFSRLB5uksSoaCXIZ+J//cVVv/vUJE8Xomq//+6WXQ==',
 }
-Object.freeze(_ciKeypair)
+const pierceKeypair = {
+  publicKey: '8aktZHsVyr/yy6arJiJP8F1OI4Na5eQw9pIH6f7XrV0=',
+  secretKey:
+    'r6m8nU2GqsSg38+0TXKXrIgd8WHsJfr5qlSZZDz7GN7xqS1kexXKv/LLpqsmIk/wXU4jg1rl5DD2kgfp/tetXQ==',
+}
+Object.freeze(ciKeypair)
+Object.freeze(pierceKeypair)
 const _verifiedSet = new Set([
-  `${_ciKeypair.publicKey}_${_ciKeypair.secretKey}`,
+  `${ciKeypair.publicKey}_${ciKeypair.secretKey}`,
+  `${pierceKeypair.publicKey}_${pierceKeypair.secretKey}`,
 ])
 
 let _sodiumPromise
@@ -119,7 +126,8 @@ module.exports = {
   verifyKeyPairSync,
   generateNonce,
   testMode,
-  _ciKeypair,
+  ciKeypair,
+  pierceKeypair,
   _verifiedSet,
   _getBackend,
 }

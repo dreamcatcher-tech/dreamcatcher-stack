@@ -300,7 +300,7 @@ const channelSchema = {
   additionalProperties: false,
   properties: {
     ...remoteSchema.properties,
-    systemRole: { enum: ['..', '.', './', 'UP_LINK', 'DOWN_LINK'] },
+    systemRole: { enum: ['..', '.', './', 'UP_LINK', 'DOWN_LINK', 'PIERCE'] },
     requestsLength: { type: 'integer', minimum: 0 },
     heavy: interblockSchema, // last heavy interblock, in full
     lineage: { type: 'array', uniqueItems: true, items: integritySchema },

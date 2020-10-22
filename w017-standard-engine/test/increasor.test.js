@@ -100,4 +100,5 @@ describe('increasor', () => {
   test.todo('automatic promises')
   test.todo('tick with no response is an instant resolve')
   test.todo('resolving an alias causes lineage fork')
+  test.todo('reject if piercings for unpierced reducer')
 })

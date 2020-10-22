@@ -6,12 +6,20 @@ const { integrityModel } = require('./integrityModel')
 const { keypairModel } = require('./keypairModel')
 const { addressModel } = require('./addressModel')
 const { provenanceSchema } = require('../schemas/modelSchemas')
+const crypto = require('../../../w012-crypto')
+const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair) // if they can inject blocks into our ram, we are already pwnt.
+const ciKeypair = keypairModel.create('CI', crypto.ciKeypair)
+
 let dmzModel // avoid circular reference
 
-const ciSigner = async (integrity) => {
-  const ciKeypair = await keypairModel.create('CI')
+const ciSigner = (integrity) => {
   assert(integrityModel.isModel(integrity))
   return ciKeypair.sign(integrity)
+}
+
+const pierceSigner = (integrity) => {
+  assert(integrityModel.isModel(integrity))
+  return pierceKeypair.sign(integrity)
 }
 
 const provenanceModel = standardize({
@@ -140,4 +148,4 @@ const provenanceModel = standardize({
   },
 })
 
-module.exports = { provenanceModel }
+module.exports = { provenanceModel, ciSigner, pierceSigner }

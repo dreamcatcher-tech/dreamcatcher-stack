@@ -20,7 +20,7 @@ const generateNext = async (dmz, block, asyncSigner = ciSigner) => {
   // basically all lineage rules should be checked here
   assert(dmzModel.isModel(dmz))
   assert(blockModel.isModel(block))
-  assert(!dmz.equals(block.getDmz()))
+  assert(!dmz.equals(block.getDmz()), 'block dmz has not changed')
   assert(typeof asyncSigner === 'function') // TODO move into blockModel
 
   const isNewChannels = dmz.network.isNewChannels(block.network)

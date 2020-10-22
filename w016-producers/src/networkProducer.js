@@ -15,7 +15,6 @@ const {
   configModel,
 } = require('../../w015-models')
 const channelProducer = require('./channelProducer')
-const defaultConfig = configModel.create()
 
 /**
  * Interblocks cannot:
@@ -25,7 +24,7 @@ const defaultConfig = configModel.create()
  * Note that only one interblock can be accepted by the public channel,
  * and no others, until the block has finished.
  */
-const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
+const ingestInterblocks = (network, interblocks = [], config) =>
   networkModel.clone(network, (draft) => {
     // implicit that this is called once per blockmaking, as it purges lineage
     interblocks = _cloneArray(interblocks, interblockModel.clone)
@@ -38,6 +37,7 @@ const ingestInterblocks = (network, interblocks = [], config = defaultConfig) =>
       const address = interblock.provenance.getAddress()
       // TODO handle multiple aliases having the same address ?
       const alias = network.getAlias(address)
+      // TODO split handling opening public channel into seperate function call
       const isPublic = config.isPublicChannelOpen
       if (!alias && isPublic && interblock.isConnectionAttempt()) {
         debug(`connection attempt accepted`)

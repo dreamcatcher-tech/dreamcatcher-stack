@@ -48,6 +48,8 @@ const {
   interblockModel,
   addressModel,
 } = require('../../w015-models')
+const { piercerFactory } = require('./piercerFactory')
+
 let id = 0
 const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
   // TODO use metrology in streamProcessor
@@ -88,7 +90,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
   const metrology = (address, dispatchPath = '.') => {
     assert(addressModel.isModel(address))
 
-    // TODO change to be plain variables ?
+    // TODO replace with pierce, and track dispatch path in effector instead
     const dispatch = ({ type, payload, to = dispatchPath }) => {
       debug(`dispatch to: %o type: %O`, to, type)
       // push into the pierce queue, and trigger increase
@@ -149,10 +151,6 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       subscribers.add(callback)
       return () => subscribers.delete(callback)
     }
-    const spawn = (
-      alias,
-      spawnOptions = {} // TODO replace with 'ADD' into shell covenant
-    ) => dispatch(actions.spawn(alias, spawnOptions))
     const getChildren = () => {
       // TODO make children resolve synchronously and in their own context
       const block = getState()
@@ -206,11 +204,13 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     }
     const enableLogging = () => tap.on()
     const disableLogging = () => tap.off()
-    const pierce = (action, alias) => {
-      // pierces a chain
-      // rejects if the chain is not configured for piercings
-    }
+    const pierce = piercerFactory(address, ioConsistency, sqsIncrease)
+    const spawn = (
+      alias,
+      spawnOptions = {} // TODO replace with 'ADD' into shell covenant
+    ) => dispatch(actions.spawn(alias, spawnOptions))
     return {
+      pierce,
       dispatch,
       subscribe,
       getState,

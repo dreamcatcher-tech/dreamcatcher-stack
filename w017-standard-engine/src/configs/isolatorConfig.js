@@ -1,14 +1,39 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:config:isolator')
 const { assign } = require('xstate')
-const { rxRequestModel, dmzModel, lockModel } = require('../../../w015-models')
-const { networkProducer } = require('../../../w016-producers')
+const {
+  channelModel,
+  addressModel,
+  interblockModel,
+  blockModel,
+  provenanceModel,
+  rxRequestModel,
+  dmzModel,
+  lockModel,
+  keypairModel,
+  pierceSigner,
+} = require('../../../w015-models')
+const { networkProducer, channelProducer } = require('../../../w016-producers')
 const { openPaths } = require('../../../w021-dmz-reducer')
 const { thread } = require('../execution/thread')
 const { interpreterConfig } = require('./interpreterConfig')
 const { machine } = require('../machines/isolator')
 const isolationProcessor = require('../services/isolateFactory')
 
+const isReduceable = ({ dmz }) => {
+  // TODO check the time available, probably as a parallel transition
+  assert(dmzModel.isModel(dmz))
+  const isReduceable = !!dmz.network.rx()
+  debug(`isReduceable: ${isReduceable}`)
+  return isReduceable
+}
+const isPiercable = ({ dmz, hasPierced }) => {
+  assert(dmzModel.isModel(dmz))
+  const { isPierced } = dmz.config // config might have changed during reduction
+  const isPiercable = isPierced && !hasPierced
+  debug(`isPiercable: %O`, isPiercable)
+  return isPiercable
+}
 const isolatorMachine = machine.withConfig({
   actions: {
     assignLock: assign({
@@ -47,7 +72,62 @@ const isolatorMachine = machine.withConfig({
         return nextDmz
       },
     }),
-    assignHasPierced: assign({ hasPierced: () => true }),
+    generatePierceDmz: assign({
+      pierceDmz: ({ lock }) => {
+        assert(lockModel.isModel(lock))
+        assert(lock.block)
+        const { block, piercings } = lock
+
+        let pierceDmz = extractPierceDmz(lock.block)
+
+        // TODO remove all tx that have been replied to
+        const ioChannel = block.network['@@io']
+
+        let txChannel = pierceDmz.network['@@PIERCE_TARGET']
+        assert(txChannel.address.equals(block.provenance.getAddress()))
+        assert.strictEqual(txChannel.systemRole, 'PIERCE')
+        piercings.forEach((action) => {
+          txChannel = channelProducer.txRequest(txChannel, action)
+          // TODO handle replies in the pierce queue
+        })
+        network = { ...pierceDmz.network, '@@PIERCE_TARGET': txChannel }
+        pierceDmz = dmzModel.clone({ ...pierceDmz, network })
+        return pierceDmz
+      },
+    }),
+    assignHasPierced: assign({
+      hasPierced: () => true,
+    }),
+    openPierceChannel: assign({
+      dmz: ({ dmz }, event) => {
+        debug(`openPierceChannel`)
+        const { pierceBlock } = event.data
+        assert(blockModel.isModel(pierceBlock))
+        assert(dmzModel.isModel(dmz))
+        const address = pierceBlock.provenance.getAddress()
+        const ioChannel =
+          dmz.network['@@io'] || channelModel.create(address, 'PIERCE')
+        assert(ioChannel.address.equals(address))
+        assert.strictEqual(ioChannel.systemRole, 'PIERCE')
+        const network = { ...dmz.network, '@@io': ioChannel }
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
+    ingestPierceBlock: assign({
+      dmz: ({ dmz }, event) => {
+        debug(`ingestPierceBlock`)
+        const { pierceBlock } = event.data
+        assert(blockModel.isModel(pierceBlock))
+        assert(dmzModel.isModel(dmz))
+
+        const network = networkProducer.ingestInterblocks(
+          dmz.network,
+          [interblockModel.create(pierceBlock, '@@PIERCE_TARGET')],
+          dmz.config
+        )
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
     openPaths: assign({
       dmz: ({ dmz }) => {
         debug(`openPaths`)
@@ -58,29 +138,29 @@ const isolatorMachine = machine.withConfig({
     }),
   },
   guards: {
-    isDmzChangeable: ({ dmz }) => {
+    isDmzChangeable: (context) => {
       // incoming changes detected
-      assert(dmzModel.isModel(dmz))
-      const { isPierced } = dmz.config
-      const rx = dmz.network.rx()
-      const isDmzChangeable = isPierced || rx
+      const { lock } = context
+      assert(lockModel.isModel(lock))
+      assert(lock.block)
+      const isPiercePending = isPiercable(context) && lock.piercings.length
+      const isDmzChangeable = isReduceable(context) || isPiercePending
       debug(`isDmzChangeable: ${isDmzChangeable}`)
       return isDmzChangeable
     },
-    isPiercable: ({ dmz, hasPierced }) => {
-      assert(dmzModel.isModel(dmz))
-      const isExhausted = !dmz.network.rx()
-      const { isPierced } = dmz.config
-      const isPiercable = isExhausted && isPierced && !hasPierced
-      debug(`isPiercable: %O`, isPiercable)
-      return isPiercable
-    },
-    isExhausted: ({ dmz }) => {
-      // TODO check the time available, probably as a parallel transition
-      assert(dmzModel.isModel(dmz))
-      const isExhausted = !dmz.network.rx()
-      debug(`isExhausted: ${isExhausted}`)
-      return isExhausted
+    isReduceable,
+    isPiercable,
+    isPierceDmzChanged: ({ lock, pierceDmz }) => {
+      assert(lockModel.isModel(lock))
+      assert(lock.block)
+      assert(dmzModel.isModel(pierceDmz))
+
+      const currentPierceDmz = extractPierceDmz(lock.block)
+      const currentIo = currentPierceDmz.network['@@PIERCE_TARGET']
+      const nextIo = pierceDmz.network['@@PIERCE_TARGET']
+      const isPierceDmzChanged = nextIo.isTxGreaterThan(currentIo)
+      debug(`isPierceDmzChanged: %o`, isPierceDmzChanged)
+      return isPierceDmzChanged
     },
   },
   services: {
@@ -89,17 +169,6 @@ const isolatorMachine = machine.withConfig({
       const containerId = await isolation.loadCovenant(lock.block)
       debug(`loadCovenant containerId: ${containerId.substring(0, 9)}`)
       return { containerId }
-    },
-    reduceActionless: async ({ dmz, containerId, isolation }) => {
-      debug(`reduceActionless`)
-      assert(dmzModel.isModel(dmz))
-      const address = dmz.network['.'].address
-      const anvil = createTimestampAnvil(address)
-      const tick = createTick(containerId, isolation.tick)
-      const interpreter = interpreterConfig(tick, dmz, anvil, address)
-      const nextDmz = await thread('TICK', interpreter)
-      assert(dmzModel.isModel(nextDmz))
-      return { nextDmz }
     },
     reduce: async ({ dmz, containerId, isolation }) => {
       assert(dmzModel.isModel(dmz))
@@ -115,12 +184,50 @@ const isolatorMachine = machine.withConfig({
       assert(dmzModel.isModel(nextDmz))
       return { nextDmz }
     },
+    signPierceDmz: async ({ pierceDmz, lock }) => {
+      assert(dmzModel.isModel(pierceDmz))
+      assert(lockModel.isModel(lock))
+      const { block } = lock
+      assert(block)
+
+      const previousProvenance = getPierceProvenance(block)
+      const extraLineage = undefined
+      const provenance = await provenanceModel.create(
+        pierceDmz,
+        previousProvenance,
+        extraLineage,
+        pierceSigner
+      )
+      const pierceBlock = blockModel.clone({ ...pierceDmz, provenance })
+      return { pierceBlock }
+    },
     unloadCovenant: async ({ containerId, isolation }) => {
       debug(`unloadCovenant containerId: %o`, containerId.substring(0, 9))
       await isolation.unloadCovenant(containerId)
     },
   },
 })
+const extractPierceDmz = (block) => {
+  const ioChannel = block.network['@@io']
+  if (!ioChannel) {
+    const baseDmz = dmzModel.create()
+    const address = block.provenance.getAddress()
+    const channel = channelModel.create(address, 'PIERCE')
+    const network = { ...baseDmz.network, '@@PIERCE_TARGET': channel }
+    return dmzModel.clone({ ...baseDmz, network })
+  }
+  // TODO handle extraction for existing
+  assert(ioChannel.heavy)
+}
+const getPierceProvenance = (block) => {
+  const ioChannel = block.network['@@io']
+  if (!ioChannel) {
+    return undefined
+  }
+  const { provenance } = ioChannel.heavy
+  assert(provenanceModel.isModel(provenance))
+  return provenance
+}
 
 const isolatorConfig = (ioIsolate) => {
   const isolation = isolationProcessor.toFunctions(ioIsolate)
@@ -129,7 +236,4 @@ const isolatorConfig = (ioIsolate) => {
 
 const createTick = (containerId, tick) => (state, action) =>
   tick({ containerId, state, action })
-const createTimestampAnvil = (address) =>
-  rxRequestModel.create('@@PIERCE', { timestamp: Date.now() }, address, 0)
-
 module.exports = { isolatorConfig }

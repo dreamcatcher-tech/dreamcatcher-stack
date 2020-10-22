@@ -94,7 +94,8 @@ const interblockModel = standardize({
         return false
       }
       const request = remote.requests[0]
-      if (request && request.type === '@@INTRO') {
+      const isSingleRequest = remote.requests.length === 1
+      if (request && request.type === '@@INTRO' && isSingleRequest) {
         // TODO check no replies back yet, and no lineage back yet, using heights
         return true
       }
