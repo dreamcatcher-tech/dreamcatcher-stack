@@ -27,9 +27,9 @@ describe('pool', () => {
       const block2 = metrology2.getState()
       const address1 = block1.provenance.getAddress()
       const address2 = block2.provenance.getAddress()
-      assert.notEqual(block1, block2)
-      assert.notEqual(address1, address2)
-      assert.notEqual(address1.getChainId(), address2.getChainId())
+      assert.notStrictEqual(block1, block2)
+      assert.notStrictEqual(address1, address2)
+      assert.notStrictEqual(address1.getChainId(), address2.getChainId())
     })
     test.todo('send lineage in all possible combinations and repetitions')
   })
@@ -42,28 +42,31 @@ describe('pool', () => {
         await base.spawn('child')
         const baseState = base.getState()
         assert(blockModel.isModel(baseState))
-        assert.strictEqual(baseState.provenance.height, 1)
+        assert.strictEqual(baseState.provenance.height, 2)
         const childChannel = baseState.network.child
         assert(childChannel.heavy)
-        assert.strictEqual(childChannel.lineageTip.length, 1)
+        assert.strictEqual(childChannel.lineageTip.length, 3)
         assert(!childChannel.lineageTip[0].getRemote())
-        assert.strictEqual(childChannel.lineageHeight, 0)
-        assert.strictEqual(childChannel.heavyHeight, 0)
+        assert.strictEqual(childChannel.lineageHeight, 2)
+        assert.strictEqual(childChannel.heavyHeight, 2)
         const remote = childChannel.getRemote()
-        assert.strictEqual(remote.lineageHeight, -1)
-        assert.strictEqual(remote.heavyHeight, -1)
+        assert.strictEqual(remote.lineageHeight, 1)
+        assert.strictEqual(remote.heavyHeight, 1)
 
-        const child = await base.getChildren().child
+        const { child } = base.getChildren()
         const childState = child.getState()
         assert.strictEqual(childState.provenance.height, 2)
         assert.strictEqual(Object.keys(child.getChannels()).length, 2)
-        assert.strictEqual(Object.keys(base.getChannels()).length, 3)
+        assert.strictEqual(Object.keys(base.getChannels()).length, 4)
         assert.strictEqual(baseState.network.child.systemRole, './')
         assert(childChannel.address.equals(childState.provenance.getAddress()))
         const parent = childState.network['..']
         assert(parent.address.equals(baseState.provenance.getAddress()))
-        assert.strictEqual(parent.lineageHeight, baseState.provenance.height)
-        assert.strictEqual(parent.heavyHeight, baseState.provenance.height)
+        assert.strictEqual(
+          parent.lineageHeight + 1,
+          baseState.provenance.height
+        )
+        assert.strictEqual(parent.heavyHeight + 1, baseState.provenance.height)
         const { lineage } = parent
         const isLineageMatch = lineage.every((parent, index) =>
           parent.equals(base.getState(index).provenance.reflectIntegrity())

@@ -12,23 +12,16 @@ describe('transmit', () => {
     base.spawn('child')
     await base.settle()
 
-    assert.strictEqual(base.getHeight(), 1)
-    const child = await base.getChildren().child
-    assert(!child.getPool().length)
-    const basePool = base.getPool()
-    const childChainId = child.getChainId()
-    const isChainIdMatch = basePool.every(
-      (interblock) => interblock.getChainId() === childChainId
+    assert.strictEqual(base.getHeight(), 2)
+    const { child } = base.getChildren()
+    assert.strictEqual(child.getPool().length, 1)
+    const childPool = child.getPool()
+    const isChainIdMatch = childPool.every(
+      (interblock) => interblock.getChainId() === base.getChainId()
     )
     assert(isChainIdMatch)
-    assert(basePool.every(interblockModel.isModel))
-    assert.strictEqual(basePool.length, 3)
-    const [birth, heavy, light] = basePool
-    assert(!birth.getRemote())
-    assert.strictEqual(birth.provenance.height, 1)
-    assert(heavy.getRemote())
-    assert.strictEqual(heavy.provenance.height, 2)
-    assert(!light.getRemote())
-    assert.strictEqual(light.provenance.height, 2)
+    assert(childPool.every(interblockModel.isModel))
+    assert.strictEqual(childPool.length, 1)
+    // TODO use a remote chain to avoid io causing blockmaking
   })
 })

@@ -11,8 +11,8 @@ describe('interpreter', () => {
     const ping = actions.ping()
     const base = await metrologyFactory()
     await base.spawn('pinger', { covenantId })
-    const pingerDispatch = { ...ping, to: 'pinger' }
-    const reply = await base.dispatch(pingerDispatch)
+    const pingerPierce = { ...ping, to: 'pinger' }
+    const reply = await base.pierce(pingerPierce)
     await base.settle()
     assert.strictEqual(reply.type, 'PONG')
   })

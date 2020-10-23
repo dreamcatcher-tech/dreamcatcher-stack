@@ -10,48 +10,43 @@ describe('increasor', () => {
   require('debug').enable('')
   test('no new block from lineage interblocks', async () => {
     const { covenantId } = shell // shell responds to pings
-    const base = await metrologyFactory()
+    const base = await metrologyFactory('increasor', { hyper: shell })
     await base.spawn('ping1', { covenantId })
     await base.spawn('ping2', { covenantId })
 
     await base.settle()
     const ping1 = await base.getChildren().ping1
     const ping2 = await base.getChildren().ping2
-    assert.strictEqual(base.getHeight(), 2)
+    assert.strictEqual(base.getHeight(), 4)
     assert.strictEqual(ping1.getHeight(), 2)
     assert.strictEqual(ping2.getHeight(), 2)
 
-    base.dispatch(request('PING', {}, 'ping1'))
-    require('debug').enable('*metrology* *tests:increasor')
+    require('debug').enable('*metrology* *tests:increasor *shell*')
+    base.pierce(shell.actions.ping('ping1'))
     base.enableLogging()
     await base.settle()
-    assert.strictEqual(base.getHeight(), 3)
+    assert.strictEqual(base.getHeight(), 6)
     assert.strictEqual(ping1.getHeight(), 3)
     assert.strictEqual(ping2.getHeight(), 2)
 
-    base.dispatch(request('PING', {}, 'ping2'))
+    base.pierce(shell.actions.ping('ping2'))
 
     await base.settle()
     // boot, spawn1, resolve, spawn2, resolve, ping1, resolve, ping2, resolve
-    assert.strictEqual(base.getHeight(), 4)
+    assert.strictEqual(base.getHeight(), 8)
     assert.strictEqual(ping1.getHeight(), 3)
     assert.strictEqual(ping2.getHeight(), 3)
 
     // base pool check
     const basePool = base.getPool()
-    assert.strictEqual(basePool.length, 2)
-    assert(basePool.every(({ provenance }) => provenance.height === 3))
-    assert(basePool.every((ib) => ib.getChainId() === ping2.getChainId()))
-    const [heavy, light] = basePool
-    assert(heavy.getRemote())
-    assert(!light.getRemote())
+    assert.strictEqual(basePool.length, 0)
 
     // ping2 pool check
-    assert.strictEqual(ping2.getPool().length, 0)
+    assert.strictEqual(ping2.getPool().length, 1)
 
     // ping1 pool check
     const ping1Pool = ping1.getPool()
-    assert.strictEqual(ping1Pool.length, 1)
+    assert.strictEqual(ping1Pool.length, 3)
     const [parentLight] = ping1Pool
     assert(!parentLight.getRemote())
     assert.strictEqual(parentLight.getChainId(), base.getChainId())
@@ -70,7 +65,7 @@ describe('increasor', () => {
     await base.spawn('child1')
     await base.spawn('child2')
     await base.settle()
-    assert.strictEqual(base.getHeight(), 2)
+    assert.strictEqual(base.getHeight(), 4)
     const child2BirthBlock = await base.getChildren().child2.getState(1)
     const lineageParent = child2BirthBlock.network['..']
     assert.strictEqual(lineageParent.lineage.length, 1)
@@ -85,10 +80,10 @@ describe('increasor', () => {
     await base.spawn('child2')
     const child1Fresh = base.getState().network.child1
     assert.strictEqual(child1Fresh.heavyHeight, 2)
-    assert.strictEqual(child1Fresh.lineageTip.length, 3)
-    assert.strictEqual(child1Fresh.lineage.length, 3)
+    assert.strictEqual(child1Fresh.lineageTip.length, 1)
+    assert.strictEqual(child1Fresh.lineage.length, 1)
 
-    await base.dispatch({ type: 'ping', to: 'child2' })
+    await base.pierce(shell.actions.ping('child2'))
     const { child1 } = base.getState().network
     assert.strictEqual(child1.heavyHeight, 2)
     assert.strictEqual(child1.lineageTip.length, 1)
@@ -101,4 +96,5 @@ describe('increasor', () => {
   test.todo('tick with no response is an instant resolve')
   test.todo('resolving an alias causes lineage fork')
   test.todo('reject if piercings for unpierced reducer')
+  test.todo('triangular test for large numbers of pooled lineage')
 })

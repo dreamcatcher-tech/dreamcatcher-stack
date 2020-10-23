@@ -188,8 +188,11 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     const enableLogging = () => tap.on()
     const disableLogging = () => tap.off()
     const pierce = piercerFactory(address, ioConsistency, sqsIncrease)
+    const spawn = (alias, spawnOptions = {}) =>
+      pierce(actions.spawn(alias, spawnOptions))
     return {
       pierce,
+      spawn,
       subscribe,
       getState,
       getContext,

@@ -11,13 +11,13 @@ describe('continuation', () => {
     const base = await metrologyFactory()
     base.enableLogging()
     await base.spawn('loop')
-    const causeIncrease = await base.dispatch({
+    await base.pierce({
       type: 'PING',
       to: 'loop',
     })
     await base.settle()
     const block = base.getState()
-    assert.strictEqual(block.provenance.height, 2)
+    assert.strictEqual(block.provenance.height, 3)
     const { requests, replies } = block.network['.']
     const length = (obj) => Object.keys(obj).length
     assert.strictEqual(length(requests), length(replies))

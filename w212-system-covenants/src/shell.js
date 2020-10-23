@@ -275,7 +275,7 @@ const jsonAppConfigModel = (config, manifest) => {
 }
 
 const actions = {
-  ping: (to = '.', payload) => ({
+  ping: (to = '.', payload = {}) => ({
     type: 'PING',
     payload: { ...payload, to },
   }),
