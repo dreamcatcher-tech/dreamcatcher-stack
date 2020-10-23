@@ -3,6 +3,7 @@ const debug = require('debug')('interblock:config:increasor')
 const _ = require('lodash')
 const { assign } = require('xstate')
 const {
+  channelModel,
   lockModel,
   addressModel,
   dmzModel,
@@ -78,7 +79,6 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
             // TODO try make increasor do block creation too ?
             previousNetwork = networkModel.create()
           }
-          // TODO ignore pierce when transmitting, but do count as changed
           const txAliases = block.network.txInterblockAliases(previousNetwork)
           const interblocks = txAliases.map((alias) =>
             interblockModel.create(block, alias)
@@ -114,10 +114,12 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         // outgoing changes detected
         assert(lockModel.isModel(lock))
         assert(dmzModel.isModel(nextDmz))
+        const { network } = nextDmz
         assert(lock.block, 'increasor never makes a new chain')
         const previousNetwork = lock.block.network
-        const changed = nextDmz.network.txInterblockAliases(previousNetwork)
-        const isDmzChanged = changed.length
+        const txChanged = network.txInterblockAliases(previousNetwork)
+        const pierceChanged = _isPierceChanged(network, previousNetwork)
+        const isDmzChanged = txChanged.length || pierceChanged
         debug(`isDmzChanged: ${isDmzChanged}`)
         return isDmzChanged
       },
@@ -164,6 +166,15 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       },
     },
   })
+}
+
+const _isPierceChanged = (network, previous) => {
+  if (!network['@@io']) {
+    return false
+  }
+  const ioChannel = network['@@io']
+  const previousChannel = previous['@@io'] || channelModel.create()
+  return ioChannel.isTxGreaterThan(previousChannel)
 }
 
 module.exports = { increasorConfig }

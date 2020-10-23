@@ -31,7 +31,6 @@ const assert = require('assert')
 const debugBase = require('debug')('interblock:metrology')
 const _ = require('lodash')
 const { standardEngineFactory } = require('./standardEngineFactory')
-const { dispatchCovenantFactory } = require('./dispatchCovenantFactory')
 const { isolateFactory } = require('./services/isolateFactory')
 const {
   consistencyFactory,
@@ -70,14 +69,6 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     ioIncrease,
   } = engine
 
-  let injector = () => {
-    throw new Error(`injector was not overridden`)
-  }
-  if (!reifiedCovenantMap.hyper) {
-    const hyper = dispatchCovenantFactory(shell.reducer)
-    reifiedCovenantMap = { ...reifiedCovenantMap, hyper }
-  }
-  injector = reifiedCovenantMap.hyper.injector
   ioIsolate.setProcessor(isolateFactory(reifiedCovenantMap))
   const ramDb = ramDynamoDbFactory()
   const ramS3 = ramS3Factory()
@@ -87,18 +78,8 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
 
   const baseAddress = await createBase(ioConsistency, sqsPool)
 
-  const metrology = (address, dispatchPath = '.') => {
+  const metrology = (address, absolutePath) => {
     assert(addressModel.isModel(address))
-
-    // TODO replace with pierce, and track dispatch path in effector instead
-    const dispatch = ({ type, payload, to = dispatchPath }) => {
-      debug(`dispatch to: %o type: %O`, to, type)
-      // push into the pierce queue, and trigger increase
-      // subscribe to block updates
-      const promise = injector({ type, payload, to })
-      sqsIncrease.push(baseAddress)
-      return promise
-    }
 
     const getState = (path = [], height) => {
       if (typeof path === 'number' && height === undefined) {
@@ -160,13 +141,15 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
         const channel = block.network[alias]
         if (channel.systemRole === './') {
           const { address } = channel
-          const isRoot = dispatchPath === '.' // TODO remove this check by normalizing paths
-          const childDispatchPath = isRoot ? alias : dispatchPath + '/' + alias
-          children[alias] = metrology(address, childDispatchPath) // TODO dispatch still goes to origin ?
+          const isRoot = absolutePath === '/' // TODO remove this check by normalizing paths
+          const childAbsolutePath = isRoot ? alias : absolutePath + '/' + alias
+          debug(`childDispatchPath: %o`, childAbsolutePath)
+          children[alias] = metrology(address, childAbsolutePath) // TODO dispatch still goes to origin ?
         }
       })
       return children
     }
+    const getAbsolutePath = () => absolutePath
     const getChannels = () => {
       const block = getState()
       const aliases = block.network.getAliases()
@@ -205,30 +188,25 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     const enableLogging = () => tap.on()
     const disableLogging = () => tap.off()
     const pierce = piercerFactory(address, ioConsistency, sqsIncrease)
-    const spawn = (
-      alias,
-      spawnOptions = {} // TODO replace with 'ADD' into shell covenant
-    ) => dispatch(actions.spawn(alias, spawnOptions))
     return {
       pierce,
-      dispatch,
       subscribe,
       getState,
       getContext,
       getChildren,
+      getAbsolutePath,
       getChannels,
       getEngine,
       getPersistence,
       getChainId,
       getHeight,
       getPool,
-      spawn,
       settle,
       enableLogging,
       disableLogging,
     }
   }
-  return metrology(baseAddress)
+  return metrology(baseAddress, '/')
 }
 const enableLoggingWithTap = (engine, identifier) => {
   const { sqsPool, sqsTransmit, ioConsistency } = engine

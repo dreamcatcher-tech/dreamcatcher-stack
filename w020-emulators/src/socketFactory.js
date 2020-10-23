@@ -126,7 +126,7 @@ const socketFactory = (gateway) => {
   }
   const machine = Machine(
     {
-      id: 'net',
+      id: 'socket',
       initial: 'idle',
       context: {
         chainIds: [],
@@ -162,7 +162,7 @@ const socketFactory = (gateway) => {
         version: {
           invoke: { src: `version`, onDone: 'idle' },
         },
-        rm: { entry: 'rmChainId', always: 'idle' },
+        rmChainId: { entry: 'rmChainId', always: 'idle' },
         transmitInterblock: {
           invoke: { src: 'transmitInterblock', onDone: 'idle' },
         },

@@ -4,8 +4,8 @@ const { metrologyFactory } = require('..')
 const { request } = require('../../w002-api')
 
 describe('pierce', () => {
-  test.only('basic ping', async () => {
-    require('debug').enable('*metro* *pierce* *producers:network *isolator')
+  require('debug').enable('*metro* *pierce*')
+  test('basic ping', async () => {
     jest.setTimeout(1000)
     const base = await metrologyFactory()
     const ping = request('PING')
@@ -14,12 +14,26 @@ describe('pierce', () => {
     const second = await base.pierce(ping)
     assert.strictEqual(second.type, 'PONG')
 
+    debug(`pings complete`)
     await base.settle()
     const remoteIndices = base
       .getState()
       .network['@@io'].getRemoteRequestIndices()
     assert.strictEqual(remoteIndices.length, 1)
     assert.strictEqual(remoteIndices[0], 1)
+  })
+  test('do not txInterblocks to @@io channel', async () => {
+    const base = await metrologyFactory()
+    const { ioTransmit, sqsTransmit } = base.getEngine()
+    let noIoTransmissions = true
+    sqsTransmit.subscribe((interblock) => {
+      if (interblock.network && interblock.network['@@io']) {
+        noIoTransmissions = false
+      }
+    })
+    await base.pierce(request('PING'))
+    assert(noIoTransmissions)
+    await base.settle()
   })
   test.todo('reject for unknown chainId')
   test.todo('reject for unpierced chain')

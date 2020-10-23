@@ -242,7 +242,6 @@ const _getPierceProvenance = (block) => {
 const _shiftTxRequests = (block, txChannel) => {
   const requests = { ...txChannel.requests }
   const requestIndices = _getSortedIndices(requests)
-  requestIndices.pop() // leave the highest tx in place, to serve as counter
   const ioChannel = block.network['@@io'] || channelModel.create()
   requestIndices.forEach((requestIndex) => {
     if (ioChannel.replies[requestIndex]) {

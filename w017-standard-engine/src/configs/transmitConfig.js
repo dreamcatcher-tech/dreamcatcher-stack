@@ -169,7 +169,8 @@ const transmitConfig = (ioConsistency) => {
           const { address } = network[alias]
           return consistency.getIsPresent(address)
         })
-        const isSelfListening = await Promise.race(awaits)
+        const resolves = await Promise.all(awaits)
+        const isSelfListening = resolves.some((isPresent) => isPresent)
         debug(`fetchSelfListener: ${isSelfListening}`)
         const sockets = isSelfListening ? [socketModel.create()] : []
         return { sockets }

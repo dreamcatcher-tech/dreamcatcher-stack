@@ -46,6 +46,11 @@ const ioQueueFactory = (name, model) => {
     name,
     settle: async () => {
       while (_awaiting.size || _requests.length) {
+        debug(
+          `settle _awaiting.size: %o _requests.length: %o`,
+          _awaiting.size,
+          _requests.length
+        )
         if (_awaiting.size) {
           const promises = [..._awaiting].map(({ promise }) => promise)
           await Promise.race(promises)
@@ -53,6 +58,7 @@ const ioQueueFactory = (name, model) => {
           await new Promise(setImmediate) // wait for requests to be processed
         }
       }
+      debug(`settled`)
     },
     length: () => _requests.length,
     awaitingLength: () => _awaiting.size,

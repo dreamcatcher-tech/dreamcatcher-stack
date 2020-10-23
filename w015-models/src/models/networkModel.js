@@ -77,7 +77,9 @@ const networkModel = standardize({
     const rx = () => rxReply() || rxRequest()
     const getAliases = () => aliases
     const getResolvedAliases = () =>
-      getAliases().filter((alias) => instance[alias].address.isResolved())
+      getAliases().filter(
+        (alias) => instance[alias].address.isResolved() && alias !== '@@io'
+      )
 
     // TODO try remove getAlias by returning channels with rx*()
     const getAlias = (address) => {

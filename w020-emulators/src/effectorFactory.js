@@ -48,9 +48,9 @@ const effectorFactory = async (identifier) => {
   const gateway = {}
   const net = netFactory(gateway)
   const socket = socketFactory(gateway)
-  const covenantOverloads = { net, socket }
+  const covenantOverloads = { net, socket, hyper: covenants.shell }
   const metrology = await metrologyFactory(identifier, covenantOverloads)
-  const shell = effector(metrology)
+  const shell = effector(metrology, metrology)
 
   await shell.add('net', { covenantId: net.covenantId })
   connectGateway(gateway, shell.net)
@@ -58,9 +58,15 @@ const effectorFactory = async (identifier) => {
   return shell
 }
 
-const effector = (metrology) => {
+const effector = (metrology, rootMetrology) => {
+  const absolutePath = metrology.getAbsolutePath()
+  const dispatch = ({ type, payload, to = absolutePath }) => {
+    debug(`dispatch to: %o type: %O`, to, type)
+    return rootMetrology.pierce({ type, payload }) // TODO handle to addressing somehow ?
+  }
   const base = {
     ...metrology,
+    dispatch,
     _debug: require('debug'), // used to expose debug info in the os
   }
   const children = {}
@@ -79,7 +85,7 @@ const effector = (metrology) => {
         debug(`assinging shell in special case root chain`)
         covenant = covenants.shell // TODO fix special initial case
       }
-      const mappedActions = mapDispatchToActions(metrology.dispatch, covenant)
+      const mappedActions = mapDispatchToActions(dispatch, covenant)
       stripCovenantActions(base, metrology)
       Object.assign(base, mappedActions)
     }
@@ -90,7 +96,7 @@ const effector = (metrology) => {
       stripChildren(base, children)
       for (const key in metroChildren) {
         debug(`creating child: %O`, key)
-        children[key] = effector(metroChildren[key])
+        children[key] = effector(metroChildren[key], rootMetrology)
       }
 
       // check children by their chainId

@@ -16,9 +16,10 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
       await queuePromise
       const { block } = action.payload
       if (block.getChainId() === address.getChainId()) {
-        debug(`new block`)
         const ioChannel = block.network['@@io']
-        assert(ioChannel)
+        if (!ioChannel) {
+          return
+        }
         const indices = ioChannel.getRemoteRequestIndices()
         indices.forEach((index) => {
           const request = ioChannel.getRemote().requests[index]

@@ -52,6 +52,16 @@ const netFactory = (gateway) => {
         rmTransport: {
           invoke: { src: `rmTransport`, onDone: 'idle' },
         },
+        ping: {
+          invoke: { src: `ping`, onDone: 'idle' },
+        },
+        pingLambda: {
+          invoke: { src: `pingLambda`, onDone: 'idle' },
+        },
+        version: {
+          entry: 'respondVersion',
+          always: 'idle',
+        },
         done: {
           id: 'done',
           type: 'final',
@@ -95,6 +105,7 @@ const netFactory = (gateway) => {
   }
 
   const reducer = translator(machine)
-  return { actions, schemas, reducer }
+  const covenantId = covenantIdModel.create('net')
+  return { actions, schemas, reducer, covenantId }
 }
 module.exports = { netFactory }
