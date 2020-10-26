@@ -29,7 +29,7 @@ const hyper = {
     const actions = []
     switch (action.type) {
       case 'PING':
-        const response = resolve(action, { type: 'PONG' })
+        const response = resolve({ type: 'PONG' })
         actions.push(response)
         break
     }

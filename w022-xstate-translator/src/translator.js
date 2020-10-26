@@ -207,7 +207,7 @@ const translator = (machine) => {
 
     if (!protocolActions.length && action.type !== '@@INIT') {
       // the state machine is exhausted, and so the origin action can be resolved
-      protocolActions.push(resolve(originAction))
+      protocolActions.push(resolve({}, originAction))
       originAction = null
     }
     if (isResolved(protocolActions, originAction)) {
@@ -324,7 +324,7 @@ const mapXstateToContinuation = (xstateAction, originAction) => {
       return // TODO
     case '@@RESPOND':
       // TODO use the origin action
-      const resolveAction = resolve(originAction, xstateAction.data)
+      const resolveAction = resolve(xstateAction.data, originAction)
       debug(`respond: `, resolveAction)
       return resolveAction
     default:

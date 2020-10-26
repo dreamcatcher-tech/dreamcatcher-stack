@@ -106,7 +106,7 @@ const reducer = async (dmz, action) => {
         const { genesis, alias, originAction } = request.payload
         const genesisModel = blockModel.clone(genesis)
         const payload = { alias, chainId: genesisModel.getChainId() }
-        const resolveAction = resolve(originAction, payload)
+        const resolveAction = resolve(payload, originAction)
         debug('reply received for @@GENESIS')
         actions.push(resolveAction)
         break
@@ -116,7 +116,7 @@ const reducer = async (dmz, action) => {
         debug('reply received for @@UPLINK: %o', alias)
         const chainId = network[alias].address.getChainId()
         const payload = { chainId }
-        const resolveAction = resolve(request.payload.originAction, payload)
+        const resolveAction = resolve(payload, request.payload.originAction)
         actions.push(resolveAction)
         break
       }
@@ -224,7 +224,7 @@ const connectUplinkReducer = (network, action) => {
     debug(`connectUplinkReducer ${alias} set to ${short}`)
   })
   assert(alias)
-  const response = resolve(action, { alias })
+  const response = resolve({ alias })
   return { nextNetwork, response }
 }
 dmzActions.openChild = (alias, fullPath) => ({
@@ -266,7 +266,7 @@ const getGivenNameReducer = (network) => {
   assert(parent.heavy)
   const givenName = parent.heavy.getOriginAlias()
   assert(givenName)
-  const response = resolve(undefined, { givenName })
+  const response = resolve({ givenName })
   return response
 }
 

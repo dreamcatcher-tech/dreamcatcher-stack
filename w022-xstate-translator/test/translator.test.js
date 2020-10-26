@@ -1,7 +1,7 @@
 const debug = require('debug')('interblock:tests:translator')
 const assert = require('assert')
 const { Machine } = require('xstate')
-const { respond, send, sendParent, invoke, translator } = require('..')
+const { send, sendParent, invoke, translator } = require('..')
 const { shell } = require('../../w212-system-covenants')
 const { rxReplyModel, actionModel } = require('../../w015-models')
 const testMachine = Machine(

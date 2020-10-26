@@ -64,7 +64,7 @@ const _txReply = (type = '@@RESOLVE', payload = {}, request) => {
 }
 
 const promise = () => _txReply('@@PROMISE')
-const resolve = (request, payload) => _txReply('@@RESOLVE', payload, request)
+const resolve = (payload, request) => _txReply('@@RESOLVE', payload, request)
 const reject = (error, request) => _txReply('@@RESOLVE', error, request)
 
 const isReplyFor = (reply, request) => {
