@@ -77,6 +77,13 @@ const config = {
       // refuse to delete self
       // try open path to child
     },
+    dispatch: async (context, event) => {
+      const { action, to } = event.payload
+      const { type, payload } = action
+      debug(`dispatch type: %o to: %o`, type, to)
+      const result = await invoke(type, payload, to)
+      return result
+    },
   },
 }
 const machine = Machine(
@@ -183,7 +190,9 @@ const machine = Machine(
       balance: {
         // remaining balance in Jewels and BAR of this shell, plus any other currencies held
       },
-      dispatch: {},
+      dispatch: {
+        invoke: { src: 'dispatch', onDone: 'idle' },
+      },
       install: {
         // pick default name
         // make a new root chain, using built in covenant type
@@ -306,6 +315,14 @@ const actions = {
     type: 'UP',
     payload: { path, remoteParent },
   }),
+  dispatch: (action, to) => {
+    assert.strictEqual(typeof action, 'object')
+    assert.strictEqual(typeof to, 'string')
+    return {
+      type: 'DISPATCH',
+      payload: { action, to },
+    }
+  },
   //   MV: 'moveActor',
   //   LN: 'linkActor',
   //   CAT: 'getState',

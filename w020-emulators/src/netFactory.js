@@ -76,10 +76,13 @@ const netFactory = (gateway) => {
   )
 
   const actions = {
-    add: (url) => ({
-      type: `ADD`,
-      payload: { url },
-    }),
+    add: (url) => {
+      url = url.replace(/\//g, '|')
+      return {
+        type: `ADD`,
+        payload: { url },
+      }
+    },
     rm: (url, force = false) => ({
       type: 'RM',
       payload: { url, force },

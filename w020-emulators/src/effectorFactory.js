@@ -48,9 +48,14 @@ const effectorFactory = async (identifier) => {
   const gateway = {}
   const net = netFactory(gateway)
   const socket = socketFactory(gateway)
-  const covenantOverloads = { net, socket, hyper: covenants.shell }
+  const covenantOverloads = {
+    ...covenants,
+    net,
+    socket,
+    hyper: covenants.shell,
+  }
   const metrology = await metrologyFactory(identifier, covenantOverloads)
-  const shell = effector(metrology, metrology)
+  const shell = effector(metrology, metrology.pierce)
 
   await shell.add('net', { covenantId: net.covenantId })
   connectGateway(gateway, shell.net)
@@ -58,11 +63,15 @@ const effectorFactory = async (identifier) => {
   return shell
 }
 
-const effector = (metrology, rootMetrology) => {
+const effector = (metrology, rootPierce) => {
   const absolutePath = metrology.getAbsolutePath()
-  const dispatch = ({ type, payload, to = absolutePath }) => {
+  const dispatch = ({ type, payload = {} }, to = absolutePath) => {
     debug(`dispatch to: %o type: %O`, to, type)
-    return rootMetrology.pierce({ type, payload }) // TODO handle to addressing somehow ?
+    if (absolutePath === '/') {
+      return rootPierce({ type, payload })
+    }
+    const action = covenants.shell.actions.dispatch({ type, payload }, to)
+    return rootPierce(action)
   }
   const base = {
     ...metrology,
@@ -76,13 +85,14 @@ const effector = (metrology, rootMetrology) => {
     if (!state) {
       return
     }
-    const currentCovenant = getCovenant(state, covenants)
+    const liveCovenants = metrology.getCovenants()
+    const currentCovenant = _getCovenant(state, liveCovenants)
     if (currentCovenant && !currentCovenant.covenantId.equals(covenantId)) {
       covenantId = currentCovenant.covenantId
       debug(`set covenant to: %O`, covenantId.name)
-      let covenant = covenants[covenantId.name]
+      let covenant = liveCovenants[covenantId.name]
       if (state.network['..'].address.isRoot()) {
-        debug(`assinging shell in special case root chain`)
+        debug(`assigning shell in special case root chain`)
         covenant = covenants.shell // TODO fix special initial case
       }
       const mappedActions = mapDispatchToActions(dispatch, covenant)
@@ -96,7 +106,7 @@ const effector = (metrology, rootMetrology) => {
       stripChildren(base, children)
       for (const key in metroChildren) {
         debug(`creating child: %O`, key)
-        children[key] = effector(metroChildren[key], rootMetrology)
+        children[key] = effector(metroChildren[key], rootPierce)
       }
 
       // check children by their chainId
@@ -143,7 +153,7 @@ const stripCovenantActions = (effector, metrology) => {
   }
 }
 
-const getCovenant = ({ covenantId }, covenants) => {
+const _getCovenant = ({ covenantId }, covenants) => {
   let covenant = covenants.unity
   for (const key in covenants) {
     if (covenants[key].covenantId.equals(covenantId)) {

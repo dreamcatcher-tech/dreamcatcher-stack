@@ -74,7 +74,6 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
   const tap = enableLoggingWithTap(engine, identifier)
-  tap.on()
 
   const baseAddress = await createBase(ioConsistency, sqsPool)
 
@@ -190,6 +189,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     const pierce = piercerFactory(address, ioConsistency, sqsIncrease)
     const spawn = (alias, spawnOptions = {}) =>
       pierce(actions.spawn(alias, spawnOptions))
+    const getCovenants = () => ({ ...reifiedCovenantMap })
     return {
       pierce,
       spawn,
@@ -204,6 +204,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
       getChainId,
       getHeight,
       getPool,
+      getCovenants,
       settle,
       enableLogging,
       disableLogging,

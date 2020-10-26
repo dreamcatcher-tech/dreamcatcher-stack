@@ -168,6 +168,7 @@ const spawn = async (dmz, originAction) => {
     // TODO override generate nonce to use some predictable seed, like last block
     debug(`spawn alias: ${alias}`)
     alias = !alias ? autoAlias(network) : alias
+    assert(!alias.includes('/'), `No / character allowed in "${alias}"`)
     assert(!network[alias], `childAlias exists: ${alias}`)
 
     const address = genesis.provenance.getAddress()
@@ -255,7 +256,19 @@ const openChildReducer = (network, action) => {
 }
 
 dmzActions.getGivenName = () => ({ type: types.getGivenName })
-const getGivenNameReducer = (network) => {}
+const getGivenNameReducer = (network) => {
+  debug(`getGivenNameReducer`)
+  const parent = network['..']
+  if (parent.address.isRoot()) {
+    assert(!parent.heavy)
+    return 'ROOT'
+  }
+  assert(parent.heavy)
+  const givenName = parent.heavy.getOriginAlias()
+  assert(givenName)
+  const response = resolve(undefined, { givenName })
+  return response
+}
 
 const isSystemRequest = (request) => {
   assert(rxRequestModel.isModel(request))

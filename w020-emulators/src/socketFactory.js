@@ -2,8 +2,9 @@ const debug = require('debug')('interblock:covenants:socket')
 const assert = require('assert')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
-const { spawn, connect } = dmzReducer.actions
-const { socketModel } = require('../../w015-models')
+const { spawn, connect, getGivenName } = dmzReducer.actions
+const { socketModel, covenantIdModel } = require('../../w015-models')
+const { tcpTransportFactory } = require('./tcpTransportFactory')
 const {
   respond,
   send,
@@ -44,27 +45,17 @@ const socketFactory = (gateway) => {
     services: {
       connectSocket: async (context, event) => {
         // TODO handle duplicate additions gracefully
-        debug(`addChainId %O`, event)
-        return
-        assert.strictEqual(typeof socketInfo, 'object')
-        assert.strictEqual(typeof chainId, 'string')
-        assert.strictEqual(typeof socketInfo.url, 'string')
-        const { url } = socketInfo
-        const tcpTransport = tcpTransportFactory(url)
+        debug(`connectSocket`)
+        const { givenName } = await invoke(getGivenName())
+        debug(`givenName: %O`, givenName)
+        const url = givenName.replace(/\|/g, '/')
+        debug(`url: %O`, url)
+
+        const tcpTransport = gateway[url] || tcpTransportFactory(url)
+        gateway[url] = tcpTransport
         await tcpTransport.connect()
         debug(`connected to %o`, url)
-        const latency = await tcpTransport.pingLambda() // TODO do a version check too
-        debug(`latency of %o ms to %o `, latency, url)
-
-        const address = addressModel.create(chainId)
-
-        const socket = socketModel.create({
-          type: 'awsApiGw',
-          info: socketInfo,
-        })
-        const action = { type: 'PUT_SOCKET', payload: { address, socket } }
-        await ioConsistency.push(action)
-        return latency
+        // TODO do a version check
       },
       ping: async (context, event) => {
         // if ping '.' respond, else engage in remote pinging
@@ -78,6 +69,8 @@ const socketFactory = (gateway) => {
         }
         const result = await invoke(type, {}, to)
         debug(`ping result: %O`, result)
+        const latency = await tcpTransport.pingLambda() // TODO do a version check too
+        debug(`latency of %o ms to %o `, latency, url)
         return result
       },
       login: async (context, event) => {
@@ -130,7 +123,6 @@ const socketFactory = (gateway) => {
       initial: 'idle',
       context: {
         chainIds: [],
-        url: '', // ? how pass down ?
       },
       strict: true,
       states: {
@@ -196,7 +188,8 @@ const socketFactory = (gateway) => {
   const schemas = {}
 
   const reducer = translator(machine)
-  return { actions, schemas, reducer }
+  const covenantId = covenantIdModel.create('socket')
+  return { actions, schemas, reducer, covenantId }
 }
 
 module.exports = { socketFactory }

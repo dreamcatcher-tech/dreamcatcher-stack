@@ -3,16 +3,16 @@ const { effectorFactory } = require('..')
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('netFactory', () => {
-  require('debug').enable('*metro* *tests*')
+  require('debug').enable('*metro* *tests* *effector *:net *:socket *shell')
 
   test('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
-    client.enableLogging()
 
-    const url = 'wss://echo.websocket.org'
-    client.net.add(url)
+    const url = 'wss:||echo.websocket.org'
+    await client.net.add(url)
     assert(client.net[url])
+    client.enableLogging()
     await client.net[url].connect()
 
     // add a transport to echo.websocket.org
@@ -21,7 +21,7 @@ describe('netFactory', () => {
     // observe ping failure
 
     const testData = 'testData'
-    const reply = await client[url].ping(testData)
+    const reply = await client.net[url].ping(testData)
     assert.strictEqual(reply.payload, testData)
     await client.settle()
     debug(`stop`)
