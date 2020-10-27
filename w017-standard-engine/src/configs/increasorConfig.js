@@ -38,16 +38,16 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       }),
       assignNextDmz: assign({
         nextDmz: (context, event) => {
-          const nextDmz = event.data
-          assert(dmzModel.isModel(nextDmz))
-          return nextDmz
+          const { dmz } = event.data
+          assert(dmzModel.isModel(dmz))
+          return dmz
         },
       }),
       assignBlock: assign({
         block: (context, event) => {
-          const block = event.data
-          assert(blockModel.isModel(block))
-          return block
+          const { nextBlock } = event.data
+          assert(blockModel.isModel(nextBlock))
+          return nextBlock
         },
       }),
       reconcileLock: assign({
@@ -145,7 +145,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const isolator = isolatorConfig(ioIsolate)
         const dmz = await thread(executeCovenant, isolator)
         assert(dmzModel.isModel(dmz))
-        return dmz
+        return { dmz }
       },
       signBlock: async ({ lock, nextDmz }) => {
         assert(dmzModel.isModel(nextDmz))
@@ -155,7 +155,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
 
         const nextBlock = await generateNext(nextDmz, block, crypto.sign)
 
-        return nextBlock
+        return { nextBlock }
       },
       unlockChain: async ({ nextLock }) => {
         assert(lockModel.isModel(nextLock))

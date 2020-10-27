@@ -3,7 +3,9 @@ const { effectorFactory } = require('..')
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('netFactory', () => {
-  require('debug').enable('*metro* *tests* *effector *:net *:socket *shell')
+  require('debug').enable(
+    '*metro* *tests* *effector *:net *:socket *shell *isolate *translator'
+  )
 
   test('ping single', async () => {
     debug(`start`)

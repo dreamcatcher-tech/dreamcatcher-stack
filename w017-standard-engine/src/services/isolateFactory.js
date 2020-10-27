@@ -27,8 +27,18 @@ const ramIsolate = (preloadedCovenants) => {
       debug(`tick: %o action: %o`, containerId.substring(0, 9), action.type)
       const container = containers[containerId]
       assert(container, `No tick container for: ${containerId}`)
-      const nextState = await container.covenant.reducer(state, action)
-      return nextState
+      const nextState = container.covenant.reducer(state, action)
+      const isPromise = typeof nextState.then === 'function'
+      debug(`isPromise: %o`, isPromise)
+
+      // detect if this is a hooked promise ?
+      // race against racecar
+      // if still a promise, check if is a hooked promise
+      // if chain based, move into interchain promise accounting, using the interpreter and dmz
+      // if raw promise, wrap in a cause promise
+      // if cause promise, set promise as reply to request, then insert marker in the effects queue
+
+      return await nextState
     },
     unloadCovenant: async (containerId) => {
       debug(`attempting to unload: %o`, containerId)
