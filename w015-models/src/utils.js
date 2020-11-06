@@ -55,7 +55,8 @@ const standardize = (model) => {
       getProof,
     }
     const completeModel = proxy(inflated, functions)
-    Object.freeze(completeModel) // immer skips checking frozen items
+    // TODO move back to deep freeze, to try speed up immer
+    Object.freeze(completeModel)
     modelWeakSet.add(completeModel)
     objectToModelWeakMap.set(object, completeModel)
     return completeModel
@@ -146,6 +147,10 @@ const generateHash = (schema, instance) => {
       return { hash, proof }
     }
     case 'State': {
+      return { hash: crypto.objectHash(instance) }
+    }
+    case 'SimpleArray': {
+      // TODO remove this when can handle pattern properties correctly
       return { hash: crypto.objectHash(instance) }
     }
     // TODO lock, rx* do not need true hashing - can speed up by using stringify for them ?

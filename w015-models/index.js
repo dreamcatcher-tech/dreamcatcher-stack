@@ -91,6 +91,9 @@ const modelNames = [
   'remoteModel',
   'validatorsModel',
   'proofModel',
+  'pendingModel',
+  'simpleArrayModel',
+  'reductionModel',
 ]
 
 const models = {}

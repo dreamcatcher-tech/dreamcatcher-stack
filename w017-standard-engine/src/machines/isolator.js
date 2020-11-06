@@ -61,7 +61,7 @@ const definition = {
       always: [
         { target: 'reduce', cond: 'isReduceable' },
         { target: 'pierce', cond: 'isPiercable' },
-        { target: 'unloadCovenant', actions: 'openPaths' },
+        { target: 'isCovenantUnloadable', actions: 'openPaths' },
       ],
     },
     reduce: {
@@ -96,6 +96,13 @@ const definition = {
         },
       },
       onDone: 'isReduceable',
+    },
+    isCovenantUnloadable: {
+      always: [
+        // do not unload if exec() functions will be called after blocking
+        { target: 'done', cond: 'isPierceDmzChanged' },
+        { target: 'unloadCovenant' },
+      ],
     },
     unloadCovenant: {
       invoke: {

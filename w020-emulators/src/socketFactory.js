@@ -5,6 +5,7 @@ const { Machine, assign } = require('xstate')
 const { spawn, connect, getGivenName } = dmzReducer.actions
 const { socketModel, covenantIdModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
+const { effect, interchain } = require('../../w002-api')
 const {
   respond,
   send,
@@ -53,7 +54,7 @@ const socketFactory = (gateway) => {
 
         const tcpTransport = gateway[url] || tcpTransportFactory(url)
         gateway[url] = tcpTransport
-        await tcpTransport.connect()
+        await effect('CONNECT', tcpTransport.connect)
         debug(`connected to %o`, url)
         // TODO do a version check
       },

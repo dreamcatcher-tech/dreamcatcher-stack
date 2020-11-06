@@ -10,6 +10,8 @@ const { networkModel } = require('./networkModel')
 const { stateModel } = require('./stateModel')
 const { configModel } = require('./configModel')
 const { validatorsModel } = require('./validatorsModel')
+const { pendingModel } = require('./pendingModel')
+const { rxRequestModel } = require('../transients')
 
 const schema = {
   type: 'object',
@@ -27,6 +29,7 @@ Dmz is equivalent to CombineReducers in Redux.`,
     'binaryIntegrity',
     'acl',
     'state',
+    'pending',
   ],
   additionalProperties: false,
   properties: {
@@ -39,6 +42,7 @@ Dmz is equivalent to CombineReducers in Redux.`,
     acl: aclModel.schema,
     network: networkModel.schema,
     state: stateModel.schema,
+    pending: pendingModel.schema,
     // TODO add version ?
   },
 }
@@ -57,13 +61,27 @@ const dmzModel = standardize({
       acl: aclModel.clone(opts.acl),
       network: networkModel.clone(opts.network),
       state: stateModel.clone(opts.state),
+      pending: pendingModel.create(), // cannot start a dmz as pending
     }
     return dmzModel.clone(dmz)
   },
   logicize: (instance) => {
     // TODO if isSideEffectCapable ensure the validators list is singular
-    assert(!instance.state.actions)
-    return {}
+    const { network, pending } = instance
+    // TODO verify that the buffers map to legit channels
+    assert(pending.isBufferValid(network))
+    const rx = () => {
+      const reply = network.rxReply()
+      if (reply) {
+        return reply
+      }
+      const bufferedRequest = pending.rxBufferedRequest(network)
+      if (!pending.getIsPending() && bufferedRequest) {
+        return bufferedRequest
+      }
+      return network.rxRequest()
+    }
+    return { rx }
   },
 })
 

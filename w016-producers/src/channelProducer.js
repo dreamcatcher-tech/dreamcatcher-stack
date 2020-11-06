@@ -70,14 +70,22 @@ const setAddress = (channel, address) =>
     draft.address = address
   })
 
-// TODO check no duplicate reads
 // entry point for covenant into system
 const txRequest = (channel, action) =>
   channelModel.clone(channel, (draft) => {
     debug('txRequest')
     assert(actionModel.isModel(action), `must supply request object`)
+    // TODO decide if should allow actions to initiate channels just by asking to talk to them
+    // may cause problems during promises if channel removed, then replayed
+    const requests = Object.values(channel.requests)
+    const isDuplicate = requests.some((request) => request.equals(action))
+    if (isDuplicate) {
+      debug(`txRequest duplicate found: `, action.type)
+      return
+    }
     const index = draft.requestsLength
     draft.requests[index] = action
+    // TODO remove requestsLength and simply use highest known index
     draft.requestsLength++
   })
 
@@ -86,7 +94,7 @@ const txReply = (channel, reply, replyIndex) =>
   channelModel.clone(channel, (draft) => {
     assert(continuationModel.isModel(reply), `must supply reply object`)
     const nextReplyIndex = channel.getNextReplyIndex()
-
+    // TODO replies during promises needs to be deduplicated
     replyIndex = Number.isInteger(replyIndex) ? replyIndex : nextReplyIndex
     const highestRequest = _.last(channel.getRemoteRequestIndices())
     const isInbounds = replyIndex >= 0 && replyIndex <= highestRequest

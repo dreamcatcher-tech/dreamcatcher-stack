@@ -61,6 +61,7 @@ const networkModel = standardize({
             break
         }
         if (event) {
+          // TODO find out if alias is used anywhere
           rx = { alias, event, channel }
           return true
         }
@@ -74,14 +75,12 @@ const networkModel = standardize({
       const action = self.rxReply() || self.rxRequest()
       return action
     }
-    const rx = () => rxReply() || rxRequest()
     const getAliases = () => aliases
     const getResolvedAliases = () =>
       getAliases().filter(
         (alias) => instance[alias].address.isResolved() && alias !== '@@io'
       )
 
-    // TODO try remove getAlias by returning channels with rx*()
     const getAlias = (address) => {
       // TODO return for self specially ? or is it never called ?
       assert(addressModel.isModel(address))
@@ -160,7 +159,6 @@ const networkModel = standardize({
       rxReply,
       rxRequest,
       rxSelf,
-      rx,
       getAliases,
       getResolvedAliases,
       getAlias,

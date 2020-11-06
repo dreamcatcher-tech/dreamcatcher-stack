@@ -1,2 +1,3 @@
 const api = require('./src/api')
-module.exports = { ...api }
+const promises = require('./src/promises')
+module.exports = { ...api, ...promises }

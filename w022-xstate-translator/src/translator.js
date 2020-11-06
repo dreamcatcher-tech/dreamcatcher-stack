@@ -69,13 +69,7 @@ const translator = (machine) => {
   return async (state = initialState, action) => {
     assert(!state.actions, `Actions key disallowed in state`)
     // TODO start new or upgraded covenants with @@INIT ?
-    if (action.type === '@@PIERCE') {
-      if (!state.xstate) {
-        action = '@@INIT'
-      } else {
-        return state
-      }
-    }
+
     if (typeof action === 'string') {
       action = { type: action }
     }
@@ -281,6 +275,7 @@ const exhaust = async (machine, tracker, requestId) => {
       debug(`service completed first`)
       return { ...tracker, response, done: true }
     case 'reaper':
+      debug(`reaper completed first`)
       throw new Error(`Neither service nor invoke completed in time`)
     default:
       throw new Error(`Unreachable`)

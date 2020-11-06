@@ -6,7 +6,6 @@ const {
   continuationModel,
   actionModel,
   networkModel,
-  stateModel,
   interblockModel,
   addressModel,
   rxRequestModel,
@@ -139,12 +138,12 @@ const _respond = (network, request, reply) =>
     draft[alias] = nextChannel
   })
 
-const tx = (network, state) =>
+const tx = (network, requests, replies) =>
   networkModel.clone(network, (draft) => {
     assert(networkModel.isModel(network))
-    assert(stateModel.isModel(state))
-    const requests = state.getRequests()
-    const replies = state.getReplies()
+    assert(Array.isArray(requests))
+    assert(Array.isArray(replies))
+
     debug(`tx requests: ${requests.length} replies: ${replies.length}`)
     const immerNetwork = {} // immer breaks isModel test
     requests.forEach((request) => {

@@ -17,6 +17,10 @@ const rxRequestModel = standardize({
   logicize(instance) {
     const { type, payload, sequence } = instance
     const { address, index } = splitSequence(sequence)
+    assert(address.isResolved())
+    assert(Number.isInteger(index))
+    assert(index >= 0)
+
     const request = actionModel.create(type, payload)
 
     const getAddress = () => address

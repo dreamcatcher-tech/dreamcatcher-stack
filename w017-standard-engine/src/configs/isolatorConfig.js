@@ -25,7 +25,7 @@ const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
 const isReduceable = ({ dmz }) => {
   // TODO check the time available, probably as a parallel transition
   assert(dmzModel.isModel(dmz))
-  const isReduceable = !!dmz.network.rx()
+  const isReduceable = !!dmz.rx()
   debug(`isReduceable: ${isReduceable}`)
   return isReduceable
 }
@@ -133,6 +133,7 @@ const isolatorMachine = machine.withConfig({
     }),
     openPaths: assign({
       dmz: ({ dmz }) => {
+        // TODO move this to be in the interpreter ?
         debug(`openPaths`)
         assert(dmzModel.isModel(dmz))
         const network = openPaths(dmz.network)
@@ -146,6 +147,7 @@ const isolatorMachine = machine.withConfig({
       const { lock } = context
       assert(lockModel.isModel(lock))
       assert(lock.block)
+      // TODO alter this to accomodate a pending promise
       const isPiercePending = isPiercable(context) && lock.piercings.length
       const isDmzChangeable = isReduceable(context) || isPiercePending
       debug(`isDmzChangeable: ${isDmzChangeable}`)
@@ -175,10 +177,10 @@ const isolatorMachine = machine.withConfig({
     },
     reduce: async ({ dmz, containerId, isolation }) => {
       assert(dmzModel.isModel(dmz))
-      assert(dmz.network.rx())
-      const { event: anvil, channel } = dmz.network.rx()
-      const nextReplyIndex = channel.getNextReplyIndex()
-      debug(`reduce: `, anvil.type, nextReplyIndex)
+      assert(dmz.rx())
+      // TODO rename anvil to externalAction
+      const { event: anvil, channel } = dmz.rx()
+      debug(`reduce: `, anvil.type)
       const { address } = channel
       assert(!address.isUnknown())
       const tick = createTick(containerId, isolation.tick)
@@ -265,6 +267,6 @@ const isolatorConfig = (ioIsolate) => {
   return isolatorMachine.withContext({ isolation })
 }
 
-const createTick = (containerId, tick) => (state, action) =>
-  tick({ containerId, state, action })
+const createTick = (containerId, tick) => (state, action, accumulator) =>
+  tick({ containerId, state, action, accumulator, timeout: 30000 })
 module.exports = { isolatorConfig }

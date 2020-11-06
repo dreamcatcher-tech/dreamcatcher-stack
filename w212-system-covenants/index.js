@@ -15,3 +15,5 @@ const unity = { reducer: (state = {}) => state }
 unity.covenantId = covenantIdModel.create('unity')
 
 module.exports = { shell, net, socket, unity, hyper }
+
+Object.values(module.exports).forEach(Object.freeze)

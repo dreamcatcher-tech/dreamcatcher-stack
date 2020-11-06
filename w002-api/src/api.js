@@ -71,7 +71,7 @@ const isReplyFor = (reply, request) => {
   if (request && typeof request !== 'object') {
     return false
   }
-  if (isNotReply(reply)) {
+  if (_isNotReply(reply)) {
     return false
   }
   if (!request) {
@@ -86,9 +86,9 @@ const isReplyFor = (reply, request) => {
   )
 }
 
-const replyTypes = ['@@PROMISE', '@@RESOLVE', '@@REJECT']
-const isNotReply = (reply) => {
-  return !reply || !reply.type || !replyTypes.includes(reply.type)
+const _replyTypes = ['@@PROMISE', '@@RESOLVE', '@@REJECT']
+const _isNotReply = (reply) => {
+  return !reply || !reply.type || !_replyTypes.includes(reply.type)
 }
 
 const _assertNoUndefined = (obj) => {

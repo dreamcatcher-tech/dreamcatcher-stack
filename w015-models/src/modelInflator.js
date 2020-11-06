@@ -6,6 +6,7 @@ const { registry } = require('./registry')
 
 const modelInflator = (schema, instance) => {
   if (schema.title === 'State') {
+    // TODO kill this
     const { actions } = instance
     if (actions) {
       assert(Array.isArray(actions))
@@ -18,6 +19,9 @@ const modelInflator = (schema, instance) => {
   //   assert(schema.title, `only titled schemas can be inflated`)
   if (schema.patternProperties) {
     return inflatePattern(schema, instance)
+  }
+  if (schema.type === 'array') {
+    return inflateArray(schema, instance)
   }
 
   assert(isKeysValidated(schema, instance), `Keys do not match`)
@@ -73,6 +77,10 @@ const inflateArray = (schema, instance) => {
   assert(Array.isArray(instance))
   assert(schema.type === 'array')
   assert(schema.uniqueItems, `uniqueItems not set: ${schema.title}`)
+  if (schema.items.type === 'number') {
+    // TODO do proper check for number
+    return instance
+  }
   const model = registry.get(schema.items.title)
   assert(model, `Arrays must be models`)
   // check the min and unique items props

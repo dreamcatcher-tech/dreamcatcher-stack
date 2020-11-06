@@ -5,8 +5,6 @@ const pad = require('pad/dist/pad.umd')
 const {
   actionModel,
   addressModel,
-  stateModel,
-  keypairModel,
   dmzModel,
   blockModel,
   interblockModel,
@@ -271,7 +269,9 @@ const getGivenNameReducer = (network) => {
 }
 
 const isSystemRequest = (request) => {
-  assert(rxRequestModel.isModel(request))
+  if (!rxRequestModel.isModel(request)) {
+    return false
+  }
   const isSystemAction = Object.values(types).includes(request.type)
   debug(`isSystemAction: ${isSystemAction} type: ${request.type}`)
   return isSystemAction
@@ -280,7 +280,9 @@ const isSystemRequest = (request) => {
 const systemReplyTypes = [types.genesis, types.uplink, types.openChild]
 const isSystemReply = (reply) => {
   // is this action solely originating from dmzReducer, or might it have come from user
-  assert(rxReplyModel.isModel(reply))
+  if (!rxReplyModel.isModel(reply)) {
+    return false
+  }
   const request = reply.getRequest()
   const isSystemReply = systemReplyTypes.includes(request.type)
   debug(`isSystemReply: ${isSystemReply} type: ${request.type}`)
