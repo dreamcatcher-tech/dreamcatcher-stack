@@ -160,24 +160,23 @@ const tx = (network, requests, replies) =>
         channel = channelModel.create(address, systemRole)
         debug(`channel created with systemRole: ${systemRole}`)
       }
-      immerNetwork[to] = channelProducer.txRequest(channel, request.getAction())
+      immerNetwork[to] = channelProducer.txRequest(
+        channel,
+        request.getRequest()
+      )
     })
-    replies.forEach((reply) => {
-      assert(txReplyModel.isModel(reply))
-      const address = reply.getAddress()
-      const index = reply.getIndex()
+    replies.forEach((txReply) => {
+      assert(txReplyModel.isModel(txReply))
+      const address = txReply.getAddress()
+      const index = txReply.getIndex()
       const alias = network.getAlias(address)
       if (!alias) {
-        debug(`No alias found for: %O`, reply)
+        debug(`No alias found for: %O`, txReply)
         return
       }
       const channel = immerNetwork[alias] || network[alias]
-      const continuation = reply.getContinuation()
-      immerNetwork[alias] = channelProducer.txReply(
-        channel,
-        continuation,
-        index
-      )
+      const reply = txReply.getReply()
+      immerNetwork[alias] = channelProducer.txReply(channel, reply, index)
     })
     Object.keys(immerNetwork).forEach((key) => (draft[key] = immerNetwork[key]))
   })

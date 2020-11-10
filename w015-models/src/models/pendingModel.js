@@ -12,7 +12,10 @@ const pendingModel = standardize({
     description: `Indicates chain is waiting for a promise to resolve
     Stores the address and index of the request.
     Note that only requests can be origin actions for promises
-    First request is the origin request`,
+    First request is the origin request
+    The pendingRequest is saved in its entirety so structural changes
+    can occur to networking and channels, and the request will still
+    be able to proceed.`,
     type: 'object',
     required: ['replies', 'requests'],
     additionalProperties: false,
@@ -41,7 +44,7 @@ const pendingModel = standardize({
     const { pendingRequest, replies, requests } = instance
     // TODO be able to get replies that came from requests after the trigger ?
     // but might be impossible as means order of ingestion now matters
-    if (pendingRequest) {
+    if (!pendingRequest) {
       assert(!replies.length)
     }
     const getIsPending = () => !!pendingRequest
@@ -70,7 +73,22 @@ const pendingModel = standardize({
       assert(rxRequestModel.isModel(event))
       return { alias, event, channel }
     }
-    return { getIsPending, isBufferValid, getAccumulator, rxBufferedRequest }
+    const getIsBuffered = (request) => {
+      assert(rxRequestModel.isModel(request))
+      const chainId = request.getAddress().getChainId()
+      const index = request.getIndex()
+      if (!requests[chainId]) {
+        return false
+      }
+      return requests[chainId].includes(index)
+    }
+    return {
+      getIsPending,
+      isBufferValid,
+      getAccumulator,
+      rxBufferedRequest,
+      getIsBuffered,
+    }
   },
 })
 

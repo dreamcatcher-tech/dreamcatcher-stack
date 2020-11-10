@@ -21,7 +21,7 @@ const rxRequestModel = standardize({
     assert(Number.isInteger(index))
     assert(index >= 0)
 
-    const request = actionModel.create(type, payload)
+    const request = actionModel.create({ type, payload })
 
     const getAddress = () => address
     const getIndex = () => index

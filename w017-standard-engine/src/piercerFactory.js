@@ -1,8 +1,7 @@
 const assert = require('assert')
 const { v4: uuid } = require('uuid')
 const debug = require('debug')('interblock:engine:piercerFactory')
-const { isReplyFor, request } = require('../../w002-api')
-const { actionModel } = require('../../w015-models')
+const { txRequestModel } = require('../../w015-models')
 const { toFunctions } = require('./services/consistencyFactory')
 
 const piercerFactory = (address, ioConsistency, sqsIncrease) => {
@@ -50,10 +49,11 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
     debug(`pierce: %s id: %o`, type, _dispatchId)
 
     payload = { ...payload, _dispatchId }
-    const action = actionModel.create({ type, payload })
+    const chainId = address.getChainId()
+    const txRequest = txRequestModel.create(type, payload, chainId)
     const { promise, callbacks } = generateDispatchPromise()
     promises.set(_dispatchId, callbacks)
-    await consistency.putPierceRequest({ address, action })
+    await consistency.putPierceRequest({ txRequest })
     await sqsIncrease.push(address)
 
     return promise

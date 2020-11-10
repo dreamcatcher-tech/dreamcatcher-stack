@@ -27,8 +27,7 @@ const channelModel = standardize({
   logicize(instance) {
     // TODO check no duplicate reads in requests or replies
     // TODO check the provenance chain
-    // TODO if blank address, must clear all remote requests, else promises break
-    // TODO lineageTip last must match integrity of lineage last
+    // TODO if reset address, must clear all remote requests, else promises break
     const {
       address,
       systemRole,
@@ -53,10 +52,13 @@ const channelModel = standardize({
       assert(heavy.getRemote() || heavyHeight === 0)
       assert.strictEqual(heavy.provenance.height, heavyHeight)
       assert(lineageHeight >= heavyHeight)
+    }
+    if (lineageTip.length) {
       const { provenance } = _.last(lineageTip)
       assert.strictEqual(provenance.height, lineageHeight)
       assert(_.last(lineage).equals(provenance.reflectIntegrity()))
     }
+
     assert(lineageTip.every((interblock) => !interblock.getRemote()))
     checkMonotonic(requests) // TODO check requests length matches
     checkMonotonic(replies)
@@ -91,9 +93,11 @@ const channelModel = standardize({
       return replyIndex
     }
 
-    const rxReply = () => {
-      const index = rxReplyIndex()
+    const rxReply = (index) => {
       if (!Number.isInteger(index)) {
+        index = rxReplyIndex()
+      }
+      if (!Number.isInteger(index) || index < 0) {
         return
       }
       assert(requests[index], `No request for: ${index}`)
@@ -129,6 +133,8 @@ const channelModel = standardize({
     const getRemote = () => remote
     const getOutboundPairs = () =>
       _getSortedIndices(requests).map((i) => [requests[i], remote.replies[i]])
+    const getRequestIndices = () => _getSortedIndices(requests)
+
     return {
       rxRequest,
       rxReply,
@@ -139,6 +145,7 @@ const channelModel = standardize({
       isTxGreaterThan,
       getRemote,
       getOutboundPairs,
+      getRequestIndices,
     }
   },
 })

@@ -14,7 +14,7 @@ const reconcile = (lock, block) =>
     assert(blockModel.isModel(block))
     assert(lockModel.isModel(lock))
     draft.block = block
-    draft.piercings = []
+    draft.piercings = { requests: [], replies: [] }
     draft.interblocks = []
   })
 

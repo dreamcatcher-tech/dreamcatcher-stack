@@ -22,8 +22,10 @@ const fromFunctions = (consistencySource) => async (action) => {
       return consistencySource.getIsPresent(action.payload)
     case 'GET_BLOCK':
       return consistencySource.getBlock(action.payload)
-    case 'PUT_PIERCE':
+    case 'PIERCE_REQ':
       return consistencySource.putPierceRequest(action.payload)
+    case 'PIERCE_REP':
+      return consistencySource.putPierceReply(action.payload)
     default:
       throw new Error(`Unknown action type: ${action && action.type}`)
   }
@@ -41,7 +43,8 @@ const toFunctions = (queue) => ({
   getAffected: (payload) => queue.push({ type: 'AFFECTED', payload }),
   getIsPresent: (payload) => queue.push({ type: 'IS_PRESENT', payload }),
   getBlock: (payload) => queue.push({ type: 'GET_BLOCK', payload }),
-  putPierceRequest: (payload) => queue.push({ type: 'PUT_PIERCE', payload }),
+  putPierceRequest: (payload) => queue.push({ type: 'PIERCE_REQ', payload }),
+  putPierceReply: (payload) => queue.push({ type: 'PIERCE_REP', payload }),
 })
 
 module.exports = { toFunctions, fromFunctions }

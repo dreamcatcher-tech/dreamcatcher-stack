@@ -3,11 +3,9 @@ const debug = require('debug')('interblock:config:isolator')
 const { assign } = require('xstate')
 const {
   channelModel,
-  addressModel,
   interblockModel,
   blockModel,
   provenanceModel,
-  rxRequestModel,
   dmzModel,
   lockModel,
   keypairModel,
@@ -25,9 +23,9 @@ const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
 const isReduceable = ({ dmz }) => {
   // TODO check the time available, probably as a parallel transition
   assert(dmzModel.isModel(dmz))
-  const isReduceable = !!dmz.rx()
-  debug(`isReduceable: ${isReduceable}`)
-  return isReduceable
+  const isReduceable = dmz.rx()
+  debug(`isReduceable`, isReduceable && isReduceable.event)
+  return !!isReduceable
 }
 const isPiercable = ({ dmz, hasPierced }) => {
   assert(dmzModel.isModel(dmz))
@@ -85,13 +83,18 @@ const isolatorMachine = machine.withConfig({
         let txChannel = pierceDmz.network['@@PIERCE_TARGET']
         assert(txChannel.address.equals(block.provenance.getAddress()))
         assert.strictEqual(txChannel.systemRole, 'PIERCE')
+        debug(`generatePierceDmz: `, piercings)
 
-        piercings.forEach((action) => {
-          txChannel = channelProducer.txRequest(txChannel, action)
-          // TODO handle replies in the pierce queue
+        piercings.requests.forEach((rxRequest) => {
+          const request = rxRequest.getRequest()
+          txChannel = channelProducer.txRequest(txChannel, request)
         })
-
-        txChannel = _shiftTxRequests(block, txChannel)
+        piercings.replies.forEach((rxReply) => {
+          assert(rxReply.getAddress().equals(txChannel.address))
+          const reply = rxReply.getReply()
+          const index = rxReply.getIndex()
+          txChannel = channelProducer.txReply(txChannel, reply, index)
+        })
 
         network = { ...pierceDmz.network, '@@PIERCE_TARGET': txChannel }
         pierceDmz = dmzModel.clone({ ...pierceDmz, network })
@@ -123,9 +126,10 @@ const isolatorMachine = machine.withConfig({
         assert(blockModel.isModel(pierceBlock))
         assert(dmzModel.isModel(dmz))
 
+        const ib = interblockModel.create(pierceBlock, '@@PIERCE_TARGET')
         const network = networkProducer.ingestInterblocks(
           dmz.network,
-          [interblockModel.create(pierceBlock, '@@PIERCE_TARGET')],
+          [ib],
           dmz.config
         )
         return dmzModel.clone({ ...dmz, network })
@@ -148,7 +152,7 @@ const isolatorMachine = machine.withConfig({
       assert(lockModel.isModel(lock))
       assert(lock.block)
       // TODO alter this to accomodate a pending promise
-      const isPiercePending = isPiercable(context) && lock.piercings.length
+      const isPiercePending = isPiercable(context) && lock.isPiercingsPresent()
       const isDmzChangeable = isReduceable(context) || isPiercePending
       debug(`isDmzChangeable: ${isDmzChangeable}`)
       return isDmzChangeable
@@ -194,6 +198,7 @@ const isolatorMachine = machine.withConfig({
       assert(lockModel.isModel(lock))
       const { block } = lock
       assert(block)
+      debug(`signPierceDmz`)
 
       const previousProvenance = _getPierceProvenance(block)
       const extraLineage = undefined
@@ -220,14 +225,18 @@ const _extractPierceDmz = (block) => {
   let pierceChannel = channelModel.create(address, 'PIERCE')
   if (ioChannel) {
     const remote = ioChannel.getRemote()
-    assert(remote)
-    assert(remote.address.equals(address))
+    assert(remote && remote.address.equals(address))
     const { requests, replies } = remote
     const indices = ioChannel.getRemoteRequestIndices()
     assert(indices.length)
     const requestsLength = indices.pop() + 1
     const nextChannel = { ...pierceChannel, requests, replies, requestsLength }
     pierceChannel = channelModel.clone(nextChannel)
+    const base = interblockModel.create(block, '@@io')
+    pierceChannel = channelProducer.ingestPierceInterblock(pierceChannel, base)
+    while (pierceChannel.rxReply()) {
+      pierceChannel = channelProducer.shiftTxRequest(pierceChannel)
+    }
   }
   const network = { ...baseDmz.network, '@@PIERCE_TARGET': pierceChannel }
   return dmzModel.clone({ ...baseDmz, network })
@@ -241,28 +250,9 @@ const _getPierceProvenance = (block) => {
   assert(provenanceModel.isModel(provenance))
   return provenance
 }
-const _shiftTxRequests = (block, txChannel) => {
-  const requests = { ...txChannel.requests }
-  const requestIndices = _getSortedIndices(requests)
-  const ioChannel = block.network['@@io'] || channelModel.create()
-  requestIndices.forEach((requestIndex) => {
-    if (ioChannel.replies[requestIndex]) {
-      delete requests[requestIndex]
-    }
-  })
-  return channelModel.clone({ ...txChannel, requests })
-}
-const _getSortedIndices = (obj) => {
-  const indices = []
-  Object.keys(obj).forEach((key) => {
-    const number = parseInt(key)
-    indices.push(number)
-  })
-  indices.sort((first, second) => first - second)
-  return indices
-}
 
 const isolatorConfig = (ioIsolate) => {
+  debug(`isolatorConfig`)
   const isolation = isolationProcessor.toFunctions(ioIsolate)
   return isolatorMachine.withContext({ isolation })
 }

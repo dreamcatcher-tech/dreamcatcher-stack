@@ -5,7 +5,8 @@ const { standardize } = require('../utils')
 const { timestampModel } = require('./timestampModel')
 const { blockModel } = require('./blockModel')
 const { interblockModel } = require('./interblockModel')
-const { actionModel } = require('./actionModel')
+const { txReplyModel } = require('../transients/txReplyModel')
+const { txRequestModel } = require('../transients/txRequestModel')
 
 const schema = {
   title: 'Lock',
@@ -33,10 +34,21 @@ const schema = {
       items: interblockModel.schema,
     },
     piercings: {
-      type: 'array',
+      type: 'object',
       description: 'Side effects',
-      uniqueItems: true,
-      items: actionModel.schema,
+      required: ['requests', 'replies'],
+      properties: {
+        requests: {
+          type: 'array',
+          uniqueItems: true,
+          items: txRequestModel.schema,
+        },
+        replies: {
+          type: 'array',
+          uniqueItems: true,
+          items: txReplyModel.schema,
+        },
+      },
     },
   },
 }
@@ -46,7 +58,7 @@ const schema = {
 // or have a separate function on storage, to refresh the lock
 const lockModel = standardize({
   schema,
-  create: (block, interblocks = [], uuid = uuidCreator(), piercings = []) => {
+  create: (block, interblocks = [], uuid = uuidCreator(), piercings) => {
     assert(!block || blockModel.isModel(block))
     interblocks = interblocks.map(interblockModel.clone)
     piercings = refinePiercings(block, piercings)
@@ -61,41 +73,65 @@ const lockModel = standardize({
 
   logicize: (instance) => {
     const { block, timestamp, expires, piercings } = instance
-    const noDuplicates = refinePiercings(block, piercings)
-    assert.strictEqual(noDuplicates.length, piercings.length)
+    const noDupes = refinePiercings(block, piercings)
+    const { requests, replies } = piercings
+    assert.strictEqual(noDupes.requests.length, requests.length)
+    assert.strictEqual(noDupes.replies.length, replies.length)
     const isLocked = () => !timestamp.isExpired(expires)
     const isMatch = (lock) => lock.uuid === instance.uuid
+    const isPiercingsPresent = () => requests.length || replies.length
     return {
       isLocked,
       isMatch,
+      isPiercingsPresent,
     }
   },
 })
 
 const refinePiercings = (block, piercings) => {
-  piercings = deduplicate(piercings)
-  piercings = removeProcessedPiercings(block, piercings)
-  return piercings
+  let { requests, replies } = piercings
+  requests = requests.map((request) => {
+    assert.strictEqual(typeof request, 'object')
+    request = txRequestModel.clone(request)
+    return request
+  })
+  requests = deduplicate(requests)
+  replies = replies.map((reply) => {
+    assert.strictEqual(typeof reply, 'object')
+    reply = txReplyModel.clone(reply)
+    return reply
+  })
+  replies = deduplicate(replies)
+  return removeProcessedPiercings(block, { requests, replies })
 }
 
-const removeProcessedPiercings = (block, piercings) => {
+const removeProcessedPiercings = (block, { requests, replies }) => {
   if (!block || !block.network['@@io']) {
-    return piercings
+    return { requests, replies }
   }
   const ioChannel = block.network['@@io']
-  const { requests } = ioChannel.getRemote() // TODO handle replies
-  const requestActions = Object.values(requests)
-  const unprocessed = piercings.filter(
-    (action) => !requestActions.some((compare) => compare.equals(action))
+  const {
+    requests: remoteRequests,
+    replies: remoteReplies,
+  } = ioChannel.getRemote() // TODO handle replies
+
+  const requestActions = Object.values(remoteRequests)
+  const replyActions = Object.values(remoteReplies)
+
+  requests = requests.filter(
+    (request) => !requestActions.some((compare) => compare.equals(request))
   )
-  return unprocessed
+  replies = replies.filter(
+    (reply) => !replyActions.some((compare) => compare.equals(reply))
+  )
+  return { requests, replies }
 }
 
-const deduplicate = (piercings) => {
+const deduplicate = (items) => {
   const dedupe = []
-  piercings.forEach((action) => {
-    if (dedupe.every((compare) => !compare.equals(action))) {
-      dedupe.push(action)
+  items.forEach((item) => {
+    if (dedupe.every((compare) => !item.equals(compare))) {
+      dedupe.push(item)
     }
   })
   return dedupe

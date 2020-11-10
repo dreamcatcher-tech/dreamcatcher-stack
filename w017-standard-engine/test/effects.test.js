@@ -5,7 +5,9 @@ const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('..')
 
 describe('effects', () => {
-  require('debug').enable('*metro* *tests* *:isolate *:promises *:interpreter')
+  require('debug').enable(
+    '*metro* *tests*  *:interpreter *:isolator *:increasor'
+  )
   jest.setTimeout('500')
   test('non hooked promise throws', () => {
     const reducer = async (state, action) => {
@@ -15,33 +17,24 @@ describe('effects', () => {
     }
   })
   test.only('hooked promise effect', async () => {
-    let resolve
-    const promise = new Promise((_resolve) => {
-      resolve = _resolve
-    })
-    const fn = () => {
-      debug(`fn triggered`)
-      return promise
+    const testData = { test: 'data' }
+    const externalFunction = () => {
+      debug(`externalFunction triggered`)
+      return Promise.resolve(testData)
     }
-
-    let result
     const reducer = async (state, action) => {
-      result = await effect('WAIT', fn)
+      const result = await effect('WAIT', externalFunction)
       debug(`result: %O`, result)
       return { reducerResult: result }
     }
 
     const hyper = { ...covenants.hyper, reducer }
     const base = await metrologyFactory('effect', { hyper })
-    const nonce = base.pierce({ type: 'NONCE' })
-    const testData = { test: 'data' }
-    resolve(testData)
-    await nonce
+    base.enableLogging()
+    await base.pierce({ type: 'NONCE' })
     const { state } = base.getState()
-    debug(state)
+    debug(`state:`, state)
     assert.deepStrictEqual(state.reducerResult, testData)
-    // verify that @@io queue showed it exiting correctly
-    // verify the io queue in the next block also has the reply in it
   })
   test('hooked promise to another chain', () => {
     let result
@@ -67,4 +60,10 @@ describe('effects', () => {
   test.todo('promise inducing requeust while pending is honoured after')
   test.todo('removing origin channel during promise unlocks chain')
   test.todo('reply during pending is deduplicated')
+  test.todo('covenant rejects origin request from inside covenant')
+  // if send a promise out during an await cycle, it should not be overridden at the end
+  test.todo('promise from part way thru execution is still honoured')
+  test.todo('buffered request is eventually resolved')
+  test.todo('buffered request is eventually rejected')
+  test.todo('handle promise being returned part way thru pending')
 })

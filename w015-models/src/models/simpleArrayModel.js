@@ -14,14 +14,13 @@ const simpleArrayModel = standardize({
     return simpleArrayModel.clone([])
   },
   logicize(instance) {
-    assert(
-      instance.every((value, index) => {
-        if (!index) {
-          return true
-        }
-        return value > instance[index - 1]
-      }, `Values not monotonic: ${instance}`)
-    )
+    const isMonotonic = instance.every((value, index) => {
+      if (!index) {
+        return true
+      }
+      return value > instance[index - 1]
+    })
+    assert(isMonotonic, `Values not monotonic: ${instance}`)
     return {}
   },
 })

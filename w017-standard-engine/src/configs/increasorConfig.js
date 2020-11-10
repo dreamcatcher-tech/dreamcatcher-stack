@@ -10,6 +10,8 @@ const {
   blockModel,
   interblockModel,
   networkModel,
+  rxRequestModel,
+  txReplyModel,
 } = require('../../../w015-models')
 const {
   blockProducer,
@@ -21,17 +23,19 @@ const { thread } = require('../execution/thread')
 const { machine } = require('../machines/increasor')
 const consistencyProcessor = require('../services/consistencyFactory')
 const cryptoProcessor = require('../services/cryptoFactory')
+const isolateProcessor = require('../services/isolateFactory')
 const { isolatorConfig } = require('./isolatorConfig')
 
 const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
   const crypto = cryptoProcessor.toFunctions(ioCrypto)
+  const isolate = isolateProcessor.toFunctions(ioIsolate)
   return machine.withConfig({
     actions: {
       assignLock: assign({
         lock: (context, event) => {
           debug(`assignLock`)
-          const lock = event.data
+          const { lock } = event.data
           assert(lockModel.isModel(lock))
           return lock
         },
@@ -41,6 +45,14 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           const { dmz } = event.data
           assert(dmzModel.isModel(dmz))
           return dmz
+        },
+      }),
+      assignContainerId: assign({
+        containerId: (context, event) => {
+          const { containerId } = event.data
+          assert(!containerId || typeof containerId, 'string')
+          debug(`assignContainerId: `, containerId)
+          return containerId
         },
       }),
       assignBlock: assign({
@@ -62,6 +74,17 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       }),
       repeatLock: assign({
         nextLock: ({ lock }) => lock,
+      }),
+      assignIsRedriveRequired: assign({
+        isRedriveRequired: ({ isRedriveRequired: current }, event) => {
+          assert(!current)
+          const { effectsReplyCount } = event.data
+          assert(Number.isInteger(effectsReplyCount))
+          assert(effectsReplyCount >= 0)
+          const isRedriveRequired = !!effectsReplyCount
+          debug(`isRedriveRequired`, isRedriveRequired)
+          return isRedriveRequired
+        },
       }),
       assignTxInterblocks: assign({
         txInterblocks: ({ block, lock }) => {
@@ -89,12 +112,11 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           return interblocks
         },
       }),
-      unassignTxInterblocks: assign({ txInterblocks: undefined }),
     },
     guards: {
       isLockAcquired: (context, event) => {
         let isLockAcquired = false
-        const lock = event.data
+        const { lock } = event.data
         if (lock) {
           assert(lockModel.isModel(lock))
           isLockAcquired = lock.block
@@ -135,7 +157,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         debug(`lockChain ${address.getChainId()}`)
         assert(addressModel.isModel(address))
         const lock = await consistency.putLockChain(address)
-        return lock
+        return { lock }
       },
       isolatedExecution: async ({ lock }) => {
         const executeCovenant = {
@@ -143,9 +165,9 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           payload: { lock },
         }
         const isolator = isolatorConfig(ioIsolate)
-        const dmz = await thread(executeCovenant, isolator)
+        const { dmz, containerId } = await thread(executeCovenant, isolator)
         assert(dmzModel.isModel(dmz))
-        return { dmz }
+        return { dmz, containerId }
       },
       signBlock: async ({ lock, nextDmz }) => {
         assert(dmzModel.isModel(nextDmz))
@@ -157,6 +179,57 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
 
         return { nextBlock }
       },
+      effects: async ({ containerId, nextLock, lock }) => {
+        // TODO move effects to be in transmit machine
+        assert.strictEqual(typeof containerId, 'string')
+        assert(nextLock.block)
+        assert(!nextLock.block.equals(lock.block))
+        debug(`effects`)
+        // pull out the new IO channel requests
+        const nextIo = nextLock.block.network['@@io']
+        let prevIo = channelModel.create()
+        if (lock.block && lock.block.network['@@io']) {
+          prevIo = lock.block.network['@@io']
+        }
+        const nextIoIndices = nextIo
+          .getRequestIndices()
+          .filter((index) => !prevIo.requests[index])
+        debug(`nextIoIndices: `, nextIoIndices)
+        // TODO set container permissions to allow network access
+        const timeout = 30000
+        const awaits = nextIoIndices.map(async (index) => {
+          const action = nextIo.requests[index]
+          assert(action && action.payload)
+          // TODO translate to be the indices of the @@io channel directly
+          const effectId = action.payload['__@@requestId']
+          assert.strictEqual(typeof effectId, 'string')
+          const { type, payload } = action
+          const address = nextLock.block.provenance.getAddress()
+          const request = rxRequestModel.create(type, payload, address, index)
+          const { sequence } = request
+          let txReply
+          try {
+            const payload = await isolate.executeEffect({
+              containerId,
+              effectId,
+              timeout,
+            })
+            txReply = txReplyModel.create('@@RESOLVE', payload, sequence)
+          } catch (payload) {
+            txReply = txReplyModel.create('@@REJECT', payload, sequence)
+          }
+          await consistency.putPierceReply({ txReply })
+          debug(`reply address:`, txReply.getAddress().getChainId())
+          return txReply
+        })
+        // TODO race against a timeout, then take only what was completed
+        const settlements = await Promise.all(awaits)
+        debug(`settlements: `, settlements)
+
+        await isolate.unloadCovenant(containerId)
+        return { effectsReplyCount: settlements.length }
+      },
+
       unlockChain: async ({ nextLock }) => {
         assert(lockModel.isModel(nextLock))
         debug(`unlockChain`)

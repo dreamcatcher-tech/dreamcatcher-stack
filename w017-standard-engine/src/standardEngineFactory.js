@@ -87,20 +87,22 @@ const standardEngineFactory = () => {
           redrives.delete(chainId)
           locks.set(chainId, true)
 
-          const transmissions = await ioIncrease.push(address)
-          if (transmissions) {
-            assert(Array.isArray(transmissions))
-            assert(transmissions.every(interblockModel.isModel))
-            debug(`transmission count: ${transmissions.length}`)
-            const awaits = transmissions.map((interblock) =>
-              sqsTransmit.push(interblock)
-            )
-            await Promise.all(awaits)
-            // TODO speed up by increasing next block before this completes
-          } else {
-            debug(`could not externally lock: %o`, chainId)
-          }
+          const result = await ioIncrease.push(address)
+          const { txInterblocks, isRedriveRequired } = result
+          assert(Array.isArray(txInterblocks))
+          assert(txInterblocks.every(interblockModel.isModel))
+          assert.strictEqual(typeof isRedriveRequired, 'boolean')
+          debug(`transmission count: ${txInterblocks.length}`)
+          const awaits = txInterblocks.map((interblock) =>
+            sqsTransmit.push(interblock)
+          )
+          await Promise.all(awaits)
+          // TODO speed up by increasing next block before this completes
           locks.delete(chainId)
+          // TODO if cannot get the lock, then set redrive ?
+          if (isRedriveRequired) {
+            redrives.set(chainId, true)
+          }
         } while (redrives.get(chainId))
       } else {
         redrives.set(chainId, true)

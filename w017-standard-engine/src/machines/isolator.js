@@ -114,7 +114,7 @@ const definition = {
     done: {
       // TODO tear down the isolation container, or close out promises
       // TODO stop if time has passed
-      data: ({ dmz }) => dmz,
+      data: ({ dmz, containerId }) => ({ dmz, containerId }),
       type: 'final',
     },
     error: {

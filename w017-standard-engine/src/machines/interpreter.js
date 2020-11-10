@@ -20,159 +20,213 @@ const definition = {
     covenantAction: undefined,
     reduceRejection: undefined,
     reduceResolve: undefined,
-    originalLoopback: undefined,
   },
   strict: true,
   states: {
     idle: {
       on: {
-        TICK: 'reduce',
+        TICK: 'interpret',
       },
+    },
+    repeatSelf: {
+      always: [
+        { target: 'done', cond: 'isSelfExhausted' },
+        { target: 'interpret', actions: 'loadSelfAnvil' },
+      ],
+    },
+    interpret: {
+      always: [
+        { target: 'interpretSystem', cond: 'isSystem' },
+        { target: 'interpretCovenant' },
+      ],
+    },
+    interpretSystem: {
+      initial: 'reduceSystem',
+      states: {
+        reduceSystem: {
+          invoke: {
+            src: 'reduceSystem',
+            onDone: { target: 'merge', actions: 'assignResolve' },
+            onError: { target: 'respondRejection', actions: 'assignRejection' },
+          },
+        },
+        respondRejection: {
+          // TODO what if a system reply rejects for some reason ? halt entire chain ?
+          // for now, silently fail
+          entry: 'respondRejection',
+          always: 'done',
+        },
+        merge: {
+          entry: ['transmitSystem', 'mergeSystemState'],
+          always: [
+            { target: 'done', cond: 'isChannelUnavailable' },
+            { target: 'respondReply', cond: 'isReply' },
+            { target: 'respondRequest' },
+          ],
+        },
+        respondReply: {
+          entry: 'respondReply',
+          always: 'done',
+        },
+        respondRequest: {
+          always: [
+            { target: 'done', cond: 'isSystemResponseFromActions' },
+            { target: 'done', actions: 'respondRequest' },
+          ],
+        },
+        done: { type: 'final' },
+      },
+      onDone: 'repeatSelf',
+    },
+
+    interpretCovenant: {
+      initial: 'isPending',
+      states: {
+        isPending: {
+          always: [
+            { target: 'pending', cond: 'isPending' },
+            { target: 'direct' },
+          ],
+        },
+        pending: {
+          initial: 'isReply',
+          states: {
+            isReply: {
+              always: [
+                { target: 'reducePendingReply', cond: 'isReply' },
+                { target: 'done', actions: 'bufferRequest' },
+              ],
+            },
+            reducePendingReply: {
+              entry: ['accumulateReply', 'respondReply', 'shiftCovenantAction'],
+              invoke: {
+                src: 'reduceCovenant',
+                onDone: {
+                  target: 'transmit',
+                  actions: 'assignResolve',
+                },
+                onError: {
+                  target: 'rejectPending',
+                  actions: 'assignRejection',
+                },
+              },
+            },
+            transmit: {
+              entry: 'transmit', // TODO may accumulate tx too, to dedupe independently of changing channel structure
+              always: [
+                { target: 'done', cond: 'isReductionPending' },
+                { target: 'resolvePending' },
+              ],
+            },
+            rejectPending: {
+              entry: ['rejectOriginRequest', 'settlePending'],
+              always: 'done',
+            },
+            resolvePending: {
+              entry: ['settlePending', 'mergeState'],
+              always: [
+                { target: 'done', cond: 'isResponseFromActions' },
+                { target: 'done', actions: 'resolveOriginRequest' },
+              ],
+            },
+            done: { type: 'final' },
+          },
+          onDone: 'done',
+        },
+        direct: {
+          initial: 'isReply',
+          states: {
+            isReply: {
+              entry: 'assignDirectCovenantAction',
+              always: [
+                { target: 'reply', cond: 'isReply' },
+                { target: 'request' },
+              ],
+            },
+            reply: {
+              initial: 'reduce',
+              states: {
+                reduce: {
+                  invoke: {
+                    src: 'reduceCovenant',
+                    onDone: { target: 'isPending', actions: 'assignResolve' },
+                    onError: { target: 'reject', actions: 'assignRejection' },
+                  },
+                },
+                isPending: {
+                  always: [
+                    { target: 'reject', cond: 'isReductionPending' },
+                    { target: 'transmit' },
+                  ],
+                },
+                transmit: { entry: 'transmit', type: 'final' },
+                reject: { type: 'final' }, // TODO hoist error to parent
+              },
+              onDone: 'done',
+            },
+            request: {
+              initial: 'reduce',
+              states: {
+                reduce: {
+                  invoke: {
+                    src: 'reduceCovenant',
+                    onDone: { target: 'transmit', actions: 'assignResolve' },
+                    onError: { target: 'reject', actions: 'assignRejection' },
+                  },
+                },
+                transmit: {
+                  entry: 'transmit',
+                  always: [
+                    { target: 'raisePending', cond: 'isReductionPending' },
+                    { target: 'respond' },
+                  ],
+                },
+                respond: {
+                  entry: 'mergeState',
+                  always: [
+                    { target: 'isUnbuffered', cond: 'isResponseFromActions' },
+                    { target: 'isUnbuffered', actions: 'respondRequest' },
+                  ],
+                },
+                raisePending: {
+                  entry: ['raisePending', 'promiseOriginRequest'],
+                  always: 'isUnbuffered',
+                },
+                reject: {
+                  entry: 'respondRejection',
+                  always: 'isUnbuffered',
+                },
+                isUnbuffered: {
+                  always: [
+                    { target: 'done', cond: 'isUnbuffered' },
+                    { target: 'done', actions: 'shiftBufferedRequests' },
+                  ],
+                },
+                done: { type: 'final' },
+              },
+              onDone: 'done',
+            },
+            done: { type: 'final' },
+          },
+          onDone: 'done',
+        },
+        done: { type: 'final' },
+      },
+      onDone: 'repeatSelf',
     },
     done: {
       id: 'done',
       data: ({ dmz }) => dmz,
       type: 'final',
     },
-    reduce: {
-      initial: 'isSystem',
-      states: {
-        isSystem: {
-          always: [
-            { target: 'reduceSystem', cond: 'isSystem' },
-            { target: 'isSettled' },
-          ],
-        },
-        reduceSystem: {
-          invoke: {
-            src: 'reduceSystem',
-            onDone: { target: 'done', actions: 'assignResolve' },
-            onError: 'error',
-          },
-        },
-        isSettled: {
-          always: [
-            {
-              target: 'reduceCovenant',
-              cond: 'isSettled',
-              actions: 'assignCovenantAction',
-            },
-            { target: 'done', cond: 'isRequest', actions: 'bufferRequest' },
-            {
-              target: 'reduceCovenant',
-              actions: ['accumulate', 'shiftCovenantAction'],
-            },
-          ],
-        },
-        reduceCovenant: {
-          invoke: {
-            // TODO test the actions are allowed actions using the ACL
-            src: 'reduceCovenant',
-            onDone: { target: 'done', actions: 'assignResolve' },
-            onError: 'error',
-          },
-        },
-        error: {
-          type: 'final',
-          entry: 'assignRejection',
-        },
-        done: {
-          type: 'final',
-        },
-      },
-      onDone: { target: 'merge' },
-    },
-    merge: {
-      initial: 'isRejection',
-      states: {
-        isRejection: {
-          entry: 'assignOriginalLoopback',
-          always: [
-            { target: 'done', cond: 'isRejection' },
-            { target: 'done', actions: 'mergeSystem', cond: 'isSystem' },
-            { target: 'mergeCovenant' },
-          ],
-        },
-        // TODO check tx actions are correct against ACL, else throw
-        mergeCovenant: {
-          // transmit all the requests and replies
-          //    deduplicate in case have run before
-          // if pending has toggled on:
-          //    set the anvil as the origin action in dmz.pending
-          //    promise to the origin action
-          // if still pending from previous:
-          //    deduplicate all tx as might have run before ?
-          // if pending lowered
-          //    update state
-          //    update pending & clear replies buffer
-          //    resolve the origin action
-          entry: 'transmit',
-          always: [
-            {
-              target: 'done',
-              cond: 'isPendingRaised',
-              actions: ['raisePending'],
-            },
-            {
-              target: 'done',
-              cond: 'isPendingLowered',
-              actions: ['resolveOriginPromise', 'lowerPending', 'updateState'],
-            },
-            { target: 'done' },
-          ],
-        },
-        done: { type: 'final' },
-      },
-      onDone: 'respond',
-    },
-    respond: {
-      initial: 'isReply',
-      states: {
-        isReply: {
-          always: [
-            { target: 'done', cond: 'isChannelUnavailable' },
-            { target: 'done', cond: 'isReply', actions: 'respondReply' },
-            {
-              target: 'done',
-              cond: 'isRejection',
-              actions: 'respondRejection',
-            },
-            { target: 'respondRequest' },
-          ],
-        },
-        respondRequest: {
-          always: [
-            // if we buffered the request, respond with a promise
-            {
-              target: 'done',
-              cond: 'isRequestBuffered',
-              actions: 'respondPromise', // assert no prior responses
-            },
-            { target: 'respondFromBuffer', cond: 'isRequestFromBuffer' },
-            { target: 'done', cond: 'isResponseDone' },
-            { target: 'done', cond: 'isPending', actions: 'respondPromise' },
-            { target: 'done', actions: 'respondRequest' },
-          ],
-        },
-        respondFromBuffer: {
-          // if this was pulled from the buffer, check if it responded, else default respond
-          entry: 'shiftBuffer',
-          always: [
-            { target: 'done', cond: 'isResponseFromActions' },
-            { target: 'done', cond: 'respondRequest' },
-          ],
-        },
-        done: { type: 'final' },
-      },
-      onDone: [
-        { target: 'done', cond: 'isSelfExhausted' },
-        { target: 'reduce', actions: 'loadSelfAnvil' },
-      ],
-    },
   },
 }
-
-const machine = Machine(definition)
+const dummyConfig = {
+  actions: {},
+  guards: { isSystem: () => false },
+  services: {},
+}
+const machine = Machine(definition, dummyConfig)
 
 if (typeof module === 'object') {
   module.exports = { definition, machine }

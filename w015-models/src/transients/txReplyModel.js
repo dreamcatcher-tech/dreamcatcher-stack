@@ -20,8 +20,8 @@ const txReplyModel = standardize({
     const getIndex = () => index
 
     const continuation = continuationModel.create(type, payload)
-    const getContinuation = () => continuation
-    return { getAddress, getIndex, getContinuation }
+    const getReply = () => continuation
+    return { getAddress, getIndex, getReply }
   },
 })
 

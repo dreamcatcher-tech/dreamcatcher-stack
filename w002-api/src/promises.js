@@ -1,6 +1,7 @@
 const assert = require('assert')
-const { v4: uuid } = require('uuid')
+const util = require('util')
 const debug = require('debug')('interblock:api:promises')
+const { isReplyFor } = require('./api')
 
 const _eternalPromise = new Promise(() => {})
 _eternalPromise.isEternal = true
@@ -42,7 +43,7 @@ const _promise = (request) => {
   assert(Array.isArray(accumulator))
   const { type, to, exec, inBand } = request
   assert(!exec || typeof exec === 'function')
-  const requestId = _incrementGlobalRequestId() // WRONG can have duplicates
+  const requestId = _incrementGlobalRequestId()
   payload = { ...request.payload, ['__@@requestId']: requestId }
   const requestWithId = { type, payload, to }
 
@@ -65,7 +66,7 @@ const all = async (...promiseActions) => {
   // awaits multiple requests to multiple chains and or multiple effects to complete
 }
 
-const hook = (tick, accumulator, salt) => {
+const hook = async (tick, accumulator, salt) => {
   assert.strictEqual(typeof tick, 'function')
   assert(Array.isArray(accumulator))
   debug(`hook`)
@@ -74,12 +75,25 @@ const hook = (tick, accumulator, salt) => {
   let reduction = tick()
   let pending = false
   const actions = _unhookGlobal()
-  if (reduction && typeof reduction.then === 'function') {
-    if (!actions.length) {
-      throw new Error(`Promise returned but no requests made`)
+
+  // unwrap at least one layer of promises from native async
+  assert(reduction, `Must return something from tick`)
+  await Promise.resolve('RACECAR')
+
+  if (typeof reduction.then === 'function') {
+    const isStillPending = util.inspect(reduction) === 'Promise { <pending> }'
+    if (isStillPending && !actions.length) {
+      // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
+      throw new Error(`Non standard promise returned - use "effectInBand(...)"`)
     }
-    reduction = undefined
-    pending = true
+    if (!isStillPending) {
+      // must unwrap fully from the async/await wrapper
+      reduction = await reduction
+      pending = false
+    } else {
+      reduction = undefined
+      pending = true
+    }
   }
   return { reduction, pending, actions } // rejection is handled by tick throwing ?
 }

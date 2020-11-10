@@ -45,7 +45,7 @@ const ramIsolate = (preloadedCovenants) => {
       // TODO test rejections propogate back thru queues
       const tickSync = () => container.covenant.reducer(state, action)
       const salt = action.getHash() // TODO ensure reply actions salt uniquely
-      const syncResult = globalHook(tickSync, accumulator, salt)
+      const syncResult = await globalHook(tickSync, accumulator, salt)
       debug(`syncResult`, syncResult)
 
       const { reduction, pending, actions } = syncResult
@@ -90,6 +90,15 @@ const ramIsolate = (preloadedCovenants) => {
     },
     executeEffect: async ({ containerId, effectId, timeout }) => {
       // executes and awaits the result of a previously returned promise
+      debug(`executeEffect effectId: %o`, effectId)
+      const container = containers[containerId]
+      assert(container, `No effects container for: ${containerId}`)
+      assert(container.effects[effectId], `No effect for: ${effectId}`)
+      const action = container.effects[effectId]
+      debug(`action: `, action)
+      assert.strictEqual(typeof action.exec, 'function')
+      const result = await action.exec()
+      return result
     },
   }
 }
@@ -104,6 +113,8 @@ const isolateFactory = (preloadedCovenants) => {
         return isolation.tick(action.payload)
       case 'UNLOAD_COVENANT':
         return isolation.unloadCovenant(action.payload)
+      case 'EXECUTE':
+        return isolation.executeEffect(action.payload)
       default:
         throw new Error(`Unknown isolator action type`)
     }
@@ -114,6 +125,7 @@ const toFunctions = (queue) => ({
   loadCovenant: (payload) => queue.push({ type: 'LOAD_COVENANT', payload }),
   tick: (payload) => queue.push({ type: 'TICK', payload }),
   unloadCovenant: (payload) => queue.push({ type: 'UNLOAD_COVENANT', payload }),
+  executeEffect: (payload) => queue.push({ type: 'EXECUTE', payload }),
 })
 
 module.exports = { isolateFactory, toFunctions }

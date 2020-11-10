@@ -10,9 +10,7 @@ const modelInflator = (schema, instance) => {
     const { actions } = instance
     if (actions) {
       assert(Array.isArray(actions))
-      assert(
-        actions.every((action) => action.getAction || action.getContinuation)
-      )
+      assert(actions.every((action) => action.getRequest || action.getReply))
     }
     return { ...instance }
   }

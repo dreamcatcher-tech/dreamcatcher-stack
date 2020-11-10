@@ -9,6 +9,8 @@ const {
   blockModel,
   socketModel,
   interblockModel,
+  txRequestModel,
+  txReplyModel,
 } = require('../../../../w015-models')
 const debug = require('debug')('interblock:services:consistency')
 
@@ -142,7 +144,16 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     debug(`interblock count: %O`, interblocks.length)
 
     const piercingsRaw = await db.queryPiercings(chainId)
-    const piercings = piercingsRaw.map(({ action }) => action)
+    const piercings = { requests: [], replies: [] }
+    piercingsRaw.forEach(({ txRequest, txReply }) => {
+      assert(!txRequest || !txReply)
+      if (txRequest) {
+        piercings.requests.push(txRequest)
+      }
+      if (txReply) {
+        piercings.replies.push(txReply)
+      }
+    })
 
     const lockInstance = lockModel.create(block, interblocks, uuid, piercings)
     assert(!locks.has(chainId))
@@ -254,17 +265,24 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     return [...lightOrphans, ...heavies]
   }
   const _purgePiercings = async (block, piercings) => {
-    let toDelete = piercings
+    // TODO check previous blocks up to some time limit
+    // TODO if pierce lowered, remove all piercings
     const ioChannel = block.network['@@io']
-    if (ioChannel) {
-      // TODO handle replies in the pierce queue
-      const { requests } = ioChannel.getRemote()
-      const requestActions = Object.values(requests)
-      toDelete = piercings.filter((action) =>
-        requestActions.some(action.equals)
-      )
+    if (!ioChannel) {
+      return
     }
+    const { requests, replies } = ioChannel.getRemote()
+    const requestActions = Object.values(requests)
+    const replyActions = Object.values(replies)
+
+    const requestsToDelete = piercings.requests.filter((txRequest) =>
+      requestActions.some((compare) => txRequest.getRequest().equals(compare))
+    )
+    const repliesToDelete = piercings.replies.filter((txReply) =>
+      replyActions.some((compare) => txReply.getReply().equals(compare))
+    )
     const chainId = block.getChainId()
+    const toDelete = [...requestsToDelete, ...repliesToDelete]
     const toDeleteItems = toDelete.map((action) => {
       const hash = action.getHash()
       const item = { chainId, hash }
@@ -418,13 +436,25 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
 
   // make this the same as pool interblock
   // pierce channel should optionally have a schema for all actions, or a check function
-  const putPierceRequest = async ({ address, action }) => {
-    assert(addressModel.isModel(address))
-    assert(actionModel.isModel(action))
+  const putPierceRequest = async ({ txRequest }) => {
+    assert(txRequestModel.isModel(txRequest))
+    const address = addressModel.create(txRequest.to)
+    assert(address.isResolved())
     const chainId = address.getChainId()
-    const hash = action.getHash()
-    debug(`putPierceRequest %o %o`, chainId, action)
-    const item = { chainId, hash, action }
+    const hash = txRequest.getHash()
+    debug(`putPierceRequest %o %o`, chainId, txRequest)
+    const item = { chainId, hash, txRequest }
+    // TODO check chainId exists, and pierce is enabled in the latest block
+    await db.putPierce(item)
+  }
+  const putPierceReply = async ({ txReply }) => {
+    assert(txReplyModel.isModel(txReply))
+    const address = txReply.getAddress()
+    assert(address.isResolved())
+    const chainId = address.getChainId()
+    const hash = txReply.getHash()
+    debug(`putPierceReply %o %o`, chainId, txReply)
+    const item = { chainId, hash, txReply }
     // TODO check chainId exists, and pierce is enabled in the latest block
     await db.putPierce(item)
   }
@@ -454,6 +484,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     getBlock,
 
     putPierceRequest,
+    putPierceReply,
   }
 }
 module.exports = { consistencySourceFactory }

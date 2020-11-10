@@ -23,6 +23,8 @@ const definition = {
     block: undefined,
     nextDmz: undefined,
     txInterblocks: [],
+    containerId: '',
+    isRedriveRequired: false,
   },
   strict: true,
   states: {
@@ -40,7 +42,7 @@ const definition = {
             cond: 'isLockAcquired',
             actions: 'assignLock',
           },
-          { target: 'done', actions: `unassignTxInterblocks` },
+          { target: 'done' },
         ],
         onError: 'error',
       },
@@ -71,7 +73,10 @@ const definition = {
             },
             isDmzChanged: {
               always: [
-                { target: 'signBlock', cond: 'isDmzChanged' },
+                {
+                  target: 'signBlock',
+                  cond: 'isDmzChanged',
+                },
                 { target: '#increasor.unlockChain' },
               ],
             },
@@ -112,7 +117,7 @@ const definition = {
         src: 'isolatedExecution',
         onDone: {
           target: '#increasor.execute.history',
-          actions: 'assignNextDmz',
+          actions: ['assignNextDmz', 'assignContainerId'],
         },
         onError: '#error',
       },
@@ -125,13 +130,23 @@ const definition = {
         isNewBlock: {
           always: [
             {
-              target: 'unlockChain',
+              target: 'effects', // TODO move to unlockChain when effects moved out
               cond: 'isNewBlock',
               actions: 'reconcileLock',
             },
             { target: 'unlockChain', actions: 'repeatLock' },
           ],
         },
+        effects: {
+          invoke: {
+            src: 'effects',
+            onDone: {
+              target: 'unlockChain',
+              actions: 'assignIsRedriveRequired',
+            },
+          },
+        },
+
         unlockChain: {
           invoke: {
             src: 'unlockChain',
@@ -151,9 +166,13 @@ const definition = {
         { target: 'done' },
       ],
     },
+
     done: {
       id: 'done',
-      data: ({ txInterblocks }) => txInterblocks,
+      data: ({ txInterblocks, isRedriveRequired }) => ({
+        txInterblocks,
+        isRedriveRequired,
+      }),
       type: 'final',
     },
     error: {

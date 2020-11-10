@@ -61,7 +61,25 @@ const ingestInterblock = (channel, interblock) =>
     }
     draft.lineage = immerLineage
   })
+const ingestPierceInterblock = (channel, interblock) =>
+  channelModel.clone(channel, (draft) => {
+    // special ingestion that avoids checks of previous blocks
+    // TODO try merge with existing ingestion
+    assert(interblockModel.isModel(interblock))
+    const { provenance } = interblock
+    assert(channel.address.equals(provenance.getAddress()))
+    const remote = interblock.getRemote()
+    assert(remote)
+    debug(`ingestPierceInterblock`)
 
+    draft.heavy = interblock
+    draft.heavyHeight = provenance.height
+    draft.lineageHeight = provenance.height
+    const { requests } = remote
+    const remoteRequestsKeys = Object.keys(requests)
+    const reducedReplies = _.pick(draft.replies, remoteRequestsKeys)
+    draft.replies = reducedReplies
+  })
 const setAddress = (channel, address) =>
   channelModel.clone(channel, (draft) => {
     // TODO if changing address, flush all channels
@@ -138,6 +156,7 @@ const shiftTxRequest = (channel, originalLoopback) =>
 
 module.exports = {
   ingestInterblock,
+  ingestPierceInterblock,
   setAddress,
   txRequest,
   txReply,
