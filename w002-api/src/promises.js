@@ -1,5 +1,4 @@
 const assert = require('assert')
-const util = require('util')
 const debug = require('debug')('interblock:api:promises')
 const { isReplyFor } = require('./api')
 
@@ -76,12 +75,14 @@ const hook = async (tick, accumulator, salt) => {
   let pending = false
   const actions = _unhookGlobal()
 
-  // unwrap at least one layer of promises from native async
   assert(reduction, `Must return something from tick`)
-  await Promise.resolve('RACECAR')
 
   if (typeof reduction.then === 'function') {
-    const isStillPending = util.inspect(reduction) === 'Promise { <pending> }'
+    await Promise.resolve('unwrap native async queue')
+    const racecar = Symbol('RACECAR')
+    const result = await Promise.race([reduction, Promise.resolve(racecar)])
+    const isStillPending = result === racecar
+
     if (isStillPending && !actions.length) {
       // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
       throw new Error(`Non standard promise returned - use "effectInBand(...)"`)
