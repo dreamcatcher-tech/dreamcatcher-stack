@@ -28,7 +28,7 @@
  */
 
 const assert = require('assert')
-const debugBase = require('debug')('interblock:metrology')
+const debugBase = require('debug')('ib:met')
 const _ = require('lodash')
 const { standardEngineFactory } = require('./standardEngineFactory')
 const { isolateFactory } = require('./services/isolateFactory')
@@ -214,9 +214,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
 }
 const enableLoggingWithTap = (engine, identifier) => {
   const { sqsPool, sqsTransmit, ioConsistency } = engine
-  debugPrefix = identifier
-    ? `interblock:metrology:${identifier}`
-    : `interblock:metrology`
+  debugPrefix = identifier ? `ib:met:${identifier}` : `ib:met`
   const tap = createTap(debugPrefix)
   sqsPool.subscribe(async (action, queuePromise) => {
     // await queuePromise

@@ -4,15 +4,15 @@ const { metrologyFactory } = require('../src/metrologyFactory')
 const { blockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()
 
-require('debug').enable('*metro* *interpreter* *isolator* *dmzReducer*')
+require('debug').enable('*met* ')
 
 describe('promises', () => {
   test.only('loopback cleared immediately', async () => {
     const base = await metrologyFactory()
     base.enableLogging()
     await base.spawn('loop')
-    // TODO ping does not proxy thru to other chain.
-    await base.pierce({ type: 'PING', payload: { to: 'loop' } })
+    const pong = await base.pierce('PING')
+    assert.strictEqual(pong.type, 'PONG')
     await base.settle()
     const block = base.getState()
     assert.strictEqual(block.provenance.height, 3)
