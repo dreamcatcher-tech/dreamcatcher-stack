@@ -48,16 +48,18 @@ const ramIsolate = (preloadedCovenants) => {
       const syncResult = await globalHook(tickSync, accumulator, salt)
       debug(`syncResult`, syncResult)
 
-      const { reduction, pending, actions } = syncResult
-      assert(Array.isArray(actions))
-      assert((reduction && !pending) || (!reduction && pending))
-      if (pending) {
-        assert(accumulator.length || actions.length)
+      const { reduction, isPending, requests, replies } = syncResult
+      assert((reduction && !isPending) || (!reduction && isPending))
+      assert.strictEqual(typeof isPending, 'boolean')
+      assert(Array.isArray(requests))
+      assert(Array.isArray(replies))
+      if (isPending) {
+        assert(accumulator.length || requests.length)
       }
 
       // TODO filter all inband promises, and await their results
 
-      const mappedActions = actions.map((action) => {
+      const mappedActions = requests.map((action) => {
         const { to } = action
         if (to === '@@io') {
           // TODO map effects to ids, so can be invoked by queue
@@ -72,10 +74,7 @@ const ramIsolate = (preloadedCovenants) => {
         }
         return action
       })
-
-      // if chain based, move into interchain promise accounting, using the interpreter and dmz
-
-      return { reduction, pending, actions: mappedActions }
+      return { reduction, isPending, requests: mappedActions, replies }
     },
     unloadCovenant: async (containerId) => {
       debug(`attempting to unload: %o`, containerId)

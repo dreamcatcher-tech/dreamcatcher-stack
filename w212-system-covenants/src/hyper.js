@@ -19,21 +19,19 @@
  */
 const debug = require('debug')('interblock:covenants:hyper')
 
-const { resolve, request } = require('../../w002-api')
+const { replyResolve, request } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')
 
 const initialState = {}
 const hyper = {
   reducer: async (state = initialState, action) => {
     debug(`hyper action: `, action.type)
-    const actions = []
     switch (action.type) {
       case 'PING':
-        const response = resolve({ type: 'PONG' })
-        actions.push(response)
+        replyResolve({ type: 'PONG' })
         break
     }
-    return { ...state, actions }
+    return { ...state }
   },
   actions: {},
 }

@@ -138,13 +138,26 @@ const definition = {
           ],
         },
         effects: {
-          invoke: {
-            src: 'effects',
-            onDone: {
-              target: 'unlockChain',
-              actions: 'assignIsRedriveRequired',
+          initial: 'isEffectable',
+          states: {
+            isEffectable: {
+              always: [
+                { target: 'executeEffects', cond: 'isEffectable' },
+                { target: 'done' },
+              ],
             },
+            executeEffects: {
+              invoke: {
+                src: 'effects',
+                onDone: {
+                  target: 'done',
+                  actions: 'assignIsRedriveRequired',
+                },
+              },
+            },
+            done: { type: 'final' },
           },
+          onDone: 'unlockChain',
         },
 
         unlockChain: {

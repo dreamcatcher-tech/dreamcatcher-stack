@@ -259,6 +259,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         assert(dmzModel.isModel(dmz))
         assert(lockModel.isModel(lock))
         debug(`generateBirthBlock`)
+        // TODO compress this to also include processing the first actions
         const nextBlock = await generateNext(dmz, lock.block, crypto.sign)
         return nextBlock
       },

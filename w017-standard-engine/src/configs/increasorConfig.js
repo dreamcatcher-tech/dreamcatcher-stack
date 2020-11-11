@@ -150,6 +150,14 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         debug(`isNewBlock: ${isNewBlock}`)
         return isNewBlock
       },
+      isEffectable: ({ block, containerId }) => {
+        assert(blockModel.isModel(block))
+        assert.strictEqual(typeof containerId, 'string')
+        const isEffectable = block.config.isPierced && containerId
+        // TODO check for new effect actions in io channel
+        debug(`isEffectable`, isEffectable)
+        return isEffectable
+      },
     },
     services: {
       lockChain: async (context, event) => {

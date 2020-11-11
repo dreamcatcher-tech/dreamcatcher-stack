@@ -9,7 +9,7 @@ describe('acl', () => {
     const clone = actionModel.clone()
     assert(clone)
     assert(actionModel.isModel(clone))
-    assert(action.type === 'DEFAULT_ACTION')
+    assert(action.type.startsWith('DEFAULT_ACTION_'))
   })
   test('create is same as clone', () => {
     const action = actionModel.create('test')
@@ -18,10 +18,12 @@ describe('acl', () => {
     assert(action.equals(create))
     assert(create.equals(clone))
   })
-  test('create is always the same object', () => {
+  test('create is always a different object', () => {
     const a1 = actionModel.create()
     const a2 = actionModel.create()
-    assert(a1.equals(a2))
+    assert(a1.type.startsWith('DEFAULT_ACTION_'))
+    assert(a2.type.startsWith('DEFAULT_ACTION_'))
+    assert(!a1.equals(a2))
   })
   test('no undefined in payloads', () => {
     const original = { type: 'test', payload: { missing: undefined } }

@@ -57,7 +57,7 @@ const definition = {
           always: 'done',
         },
         merge: {
-          entry: ['transmitSystem', 'mergeSystemState'],
+          entry: ['mergeSystemState', 'transmitSystem'],
           always: [
             { target: 'done', cond: 'isChannelUnavailable' },
             { target: 'respondReply', cond: 'isReply' },

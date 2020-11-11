@@ -5,7 +5,6 @@ const {
   rxReplyModel,
   rxRequestModel,
   addressModel,
-  stateModel,
   dmzModel,
   channelModel,
   reductionModel,
@@ -13,6 +12,12 @@ const {
 const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const dmzReducer = require('../../../w021-dmz-reducer')
 const { machine } = require('../machines/interpreter')
+const {
+  '@@GLOBAL_HOOK': globalHook,
+  resolve,
+  reject,
+  isReplyFor,
+} = require('../../../w002-api')
 const { assign } = require('xstate')
 
 const interpreterMachine = machine.withConfig({
@@ -32,11 +37,11 @@ const interpreterMachine = machine.withConfig({
     }),
     assignResolve: assign({
       reduceResolve: ({ anvil }, event) => {
-        const { reduceCovenant } = event.data
-        assert(reduceCovenant)
-        const { reduction, pending, actions } = reduceCovenant
-        debug(`assignResolve pending: %o`, pending)
-        return reductionModel.create(reduction, pending, actions, anvil)
+        const { reduceResolve } = event.data
+        assert(reduceResolve)
+        const { reduction, isPending, requests, replies } = reduceResolve
+        debug(`assignResolve pending: %o`, isPending)
+        return reductionModel.create(reduceResolve, anvil)
       },
     }),
     assignRejection: assign({
@@ -99,21 +104,22 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     transmitSystem: assign({
-      dmz: ({ reduceResolve }) => {
+      dmz: ({ dmz, reduceResolve }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(reductionModel.isModel(reduceResolve))
         debug('transmitSystem')
-        const requests = reduceResolve.getRequests()
-        const replies = reduceResolve.getReplies()
+        const { requests, replies } = reduceResolve
         const network = networkProducer.tx(dmz.network, requests, replies)
         // TODO check if moving channels around inside dmz can affect tx ?
         return dmzModel.clone({ ...dmz, network })
       },
     }),
     mergeSystemState: assign({
-      dmz: ({ reduceResolve }) => {
+      dmz: ({ dmz, reduceResolve }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(reductionModel.isModel(reduceResolve))
         debug('mergeSystemState')
-        // TODO remove statemodel - replace with reduction ?
-        assert(stateModel.isModel(reduceResolve))
-        return dmzModel.clone(reduceResolve.getState())
+        return dmzModel.clone(reduceResolve.reduction)
       },
     }),
     // TODO both merges do a network tx, then different merges to dmz - unify these
@@ -122,7 +128,7 @@ const interpreterMachine = machine.withConfig({
         assert(dmzModel.isModel(dmz))
         assert(reductionModel.isModel(reduceResolve))
         const { requests, replies } = reduceResolve
-        debug('transmit req: %o rep %o', requests.length, replies.length)
+        debug('transmit req: %o rep %o', requests.length, replies)
         const network = networkProducer.tx(dmz.network, requests, replies)
         return dmzModel.clone({ ...dmz, network })
       },
@@ -187,9 +193,7 @@ const interpreterMachine = machine.withConfig({
         assert(dmzModel.isModel(dmz))
         assert(reductionModel.isModel(reduceResolve))
         debug(`mergeState`)
-        // TODO make statemodel have no logic in it
-        const state = stateModel.create(reduceResolve.reduction)
-        return dmzModel.clone({ ...dmz, state })
+        return dmzModel.clone({ ...dmz, state: reduceResolve.reduction })
       },
     }),
     respondReply: assign({
@@ -320,8 +324,8 @@ const interpreterMachine = machine.withConfig({
       assert(reductionModel.isModel(reduceResolve))
       // TODO handle promise being returned part way thru pending
       const { replies } = reduceResolve
-      const isResponseFromActions = replies.some((reply) =>
-        isReplyFor(reply, covenantAction)
+      const isResponseFromActions = replies.some(
+        (reply) => reply.request.sequence === covenantAction.sequence
       )
       debug(`isResponseFromActions: `, isResponseFromActions)
       return isResponseFromActions
@@ -329,18 +333,31 @@ const interpreterMachine = machine.withConfig({
   },
   services: {
     reduceSystem: async ({ dmz, anvil }) => {
+      assert(dmzModel.isModel(dmz))
+      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
       debug(`reduceSystem anvil: %o`, anvil.type)
-      assert(anvil)
-      // TODO use hook() function
-      const result = await dmzReducer.reducer(dmz, anvil)
-      assert(result, `System returned: ${result}`)
-      const nextState = stateModel.create(result, anvil)
-      // TODO move dmz to not use actions, but use hooks instead
-      // then delete the stateModel logic
-      // TODO move to reduction model ?
-      // assert system can never raise pending
-      assert(dmzModel.clone(nextState.getState()), `Uncloneable dmz`)
-      return nextState
+      // TODO move to be same code as isolateFactory
+      const tick = () => dmzReducer.reducer(dmz, anvil)
+      const accumulator = []
+      let reduceResolve, inbandPromises
+      do {
+        reduceResolve = await globalHook(tick, accumulator)
+        inbandPromises = reduceResolve.requests.filter((req) => req.inBand)
+        const awaits = inbandPromises.map(async (action) => {
+          debug(`inband execution of: `, action.type)
+          const payload = await action.exec()
+          const reply = resolve(payload, action)
+          return reply
+        })
+        const results = await Promise.all(awaits)
+        debug(`awaits results: `, results)
+        accumulator.push(...results)
+      } while (inbandPromises.length)
+
+      debug(`result: `, reduceResolve)
+      assert(reduceResolve, `System returned: ${reduceResolve}`)
+      // TODO assert system can never raise pending
+      return { reduceResolve }
     },
     reduceCovenant: async ({ dmz, covenantAction, isolatedTick }) => {
       // TODO test the actions are allowed actions using the ACL
@@ -349,12 +366,12 @@ const interpreterMachine = machine.withConfig({
       const isRequest = rxRequestModel.isModel(covenantAction)
       assert(isReply || isRequest)
 
-      const state = dmz.state.getState()
-      const accumulator = dmz.pending.getAccumulator()
-      const result = await isolatedTick(state, covenantAction, accumulator)
-      assert(result, `Covenant returned: ${result}`)
-      debug(`reduceCovenant result pending: `, result.pending)
-      return { reduceCovenant: result }
+      const { state } = dmz
+      const acc = dmz.pending.getAccumulator()
+      const reduceResolve = await isolatedTick(state, covenantAction, acc)
+      assert(reduceResolve, `Covenant returned: ${reduceResolve}`)
+      debug(`reduceCovenant result pending: `, reduceResolve.pending)
+      return { reduceResolve }
       // TODO dedupe all requests that came back during a promise resolve
     },
   },

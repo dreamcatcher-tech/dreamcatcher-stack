@@ -15,11 +15,12 @@ const {
 } = require('../../w015-models')
 const { channelProducer } = require('../../w016-producers')
 const {
-  promise,
-  resolve,
-  request,
+  replyPromise,
+  replyResolve,
+  replyReject,
   isReplyFor,
-  reject,
+  effectInBand,
+  interchain,
 } = require('../../w002-api')
 /**
  * DmzCommander is responsible for:
@@ -50,10 +51,10 @@ const reducer = async (dmz, action) => {
   switch (action.type) {
     case '@@SPAWN': {
       const { nextNetwork, genesisRequest } = await spawn(dmz, action)
+      // TODO why not send the actions inside the dmzReducer ?
       network = nextNetwork
-      // TODO use await
-      actions.push(genesisRequest)
-      actions.push(promise())
+      interchain(genesisRequest)
+      replyPromise()
       break
     }
     case '@@CONNECT': {
@@ -104,9 +105,8 @@ const reducer = async (dmz, action) => {
         const { genesis, alias, originAction } = request.payload
         const genesisModel = blockModel.clone(genesis)
         const payload = { alias, chainId: genesisModel.getChainId() }
-        const resolveAction = resolve(payload, originAction)
+        replyResolve(payload, originAction)
         debug('reply received for @@GENESIS')
-        actions.push(resolveAction)
         break
       }
       case '@@UPLINK': {
@@ -128,7 +128,7 @@ const reducer = async (dmz, action) => {
       }
     }
   }
-  const result = { ...dmz, network, actions }
+  const result = { ...dmz, network }
   return result
 }
 
@@ -160,7 +160,7 @@ const spawn = async (dmz, originAction) => {
   let { alias, spawnOpts } = originAction.payload
   const { network, validators } = dmz
   const child = dmzModel.create({ ...spawnOpts, validators })
-  genesis = await blockModel.create(child) // TODO use chain key for signing
+  genesis = await effectInBand('SIGN_BLOCK', blockModel.create, child) // TODO use chain key for signing
 
   const nextNetwork = networkModel.clone(network, (draft) => {
     // TODO override generate nonce to use some predictable seed, like last block
@@ -177,7 +177,7 @@ const spawn = async (dmz, originAction) => {
   })
   assert(blockModel.isModel(genesis), `Genesis block creation failed`)
   const payload = { genesis, alias, originAction }
-  const genesisRequest = request('@@GENESIS', payload, alias)
+  const genesisRequest = { type: '@@GENESIS', payload, to: alias }
   return { nextNetwork, genesisRequest }
 }
 

@@ -1,9 +1,4 @@
-const assert = require('assert')
 const { standardize } = require('../utils')
-const { txRequestModel } = require('../transients/txRequestModel')
-const { txReplyModel } = require('../transients/txReplyModel')
-const { rxReplyModel } = require('../transients/rxReplyModel')
-const { rxRequestModel } = require('../transients/rxRequestModel')
 const { assertNoUndefined } = require('../assertNoUndefined')
 
 const schema = {
@@ -38,100 +33,18 @@ Therefore, we always know what the default action is, so we require it of create
 
   type: 'object',
   required: [],
-  additionalProperties: true,
-  properties: {
-    actions: {
-      type: 'array',
-      uniqueItems: false,
-      items: { oneOf: [txRequestModel.schema, txReplyModel.schema] },
-    },
-  },
 }
-
-const inflate = (action, defaultAction) => {
-  if (!action) {
-    throw new Error(`Action cannot be interpreted: ${action}`)
-  }
-  if (typeof action === 'string') {
-    action = { type: action }
-  }
-  assert(action.type, `Action must supply a type`)
-
-  if (_isReply(action.type)) {
-    const { type, payload = {} } = action
-    let { request } = action
-    let sequence
-    if (request) {
-      sequence = request.sequence
-    } else {
-      assert(rxRequestModel.isModel(defaultAction))
-      sequence = defaultAction.sequence
-    }
-    return txReplyModel.create(type, payload, sequence)
-  } else {
-    const { type, payload = {}, to = '.' } = action
-    return txRequestModel.create(type, payload, to)
-  }
-}
-
-const _isReply = (type) =>
-  txReplyModel.schema.properties.type.enum.includes(type)
 
 const stateModel = standardize({
   schema,
-  create(state = {}, defaultAction) {
-    assert.strictEqual(typeof state, 'object')
-    let { actions, ...rest } = state
-    if (defaultAction) {
-      assert(
-        rxRequestModel.isModel(defaultAction) ||
-          rxReplyModel.isModel(defaultAction),
-        `defaultAction must be either rxRequest or rxReply: ${defaultAction}`
-      )
-    }
-    if (actions) {
-      if (!Array.isArray(actions) && actions) {
-        actions = [actions]
-      }
-      const inflated = actions.map((action) => inflate(action, defaultAction))
-      actions = inflated
-      rest = { actions, ...rest }
-    }
-    // TODO reuse dmz models if this is for system state
-
-    return stateModel.clone(rest)
+  create(state = {}) {
+    assertNoUndefined(state)
+    return stateModel.clone(state)
   },
   logicize(instance) {
-    // all logic checks go here, to cover cloning
-    const { actions = [], ...state } = instance
-    assert(Array.isArray(actions), `actions must be an array: ${actions}`)
-
-    const requests = []
-    const replies = []
-
-    // check the logic of the group of actions together
-    actions.forEach((action) => {
-      if (_isReply(action.type)) {
-        const nextReply = txReplyModel.clone(action)
-        replies.forEach((reply) => {
-          if (reply.isPromise()) {
-            assert(!nextReply.isPromise(), `Duplicate promise: ${action}`)
-          }
-          const duplicateReplySequence =
-            reply.request.sequence !== nextReply.request.sequence
-          assert(duplicateReplySequence, `Duplicate reply: ${action}`)
-        })
-        replies.push(nextReply)
-      } else {
-        const nextRequest = txRequestModel.clone(action)
-        requests.push(nextRequest)
-      }
-    })
-
-    const getRequests = () => [...requests]
-    const getReplies = () => [...replies]
-    const getState = () => state
-    return { getRequests, getReplies, getState }
+    assertNoUndefined(instance)
+    // TODO ensure no functions attempted to be stored ? or just blank them between blocks ?
+    return {}
   },
 })
 

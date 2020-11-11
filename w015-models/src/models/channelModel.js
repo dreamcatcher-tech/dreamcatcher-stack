@@ -25,9 +25,9 @@ const channelModel = standardize({
     return channelModel.clone(channel)
   },
   logicize(instance) {
-    // TODO check no duplicate reads in requests or replies
     // TODO check the provenance chain
     // TODO if reset address, must clear all remote requests, else promises break
+    // TODO check no duplicate requests in channel - must be distiguishable
     const {
       address,
       systemRole,

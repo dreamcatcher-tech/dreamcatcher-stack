@@ -1,14 +1,19 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:api:promises')
-const { isReplyFor } = require('./api')
+const { request, promise, resolve, reject, isReplyFor } = require('./api')
 
-const _eternalPromise = new Promise(() => {})
+const _eternalPromise = new Promise(() => {
+  // this can never resolve, as we do not want to execute the reducer code past this point.
+})
 _eternalPromise.isEternal = true
 Object.freeze(_eternalPromise)
 
-const pushPromise = () => push()
-const pushResolve = (payload, request) => push()
-const pushReject = (error, request) => push()
+// TODO error if promise called more than once
+const replyPromise = () => _pushGlobalReply(promise())
+// TODO error if resolve against the same request more than once, which includes default action
+const replyResolve = (payload, request) =>
+  _pushGlobalReply(resolve(payload, request))
+const replyReject = (error, request) => push()
 
 const push = () => {
   // generate an action that is a reply to the current one ?
@@ -17,22 +22,24 @@ const push = () => {
 
 const interchain = async (type, payload, to) => {
   // make an async call to another chain
-  assert(to !== '@@io')
-  return _promise({ type, payload, to })
+  const standardRequest = request(type, payload, to)
+  assert(standardRequest.to !== '@@io')
+  return _promise(standardRequest)
 }
 
-const effect = async (type, exec, ...args) => {
+const effect = async (type, fn, ...args) => {
   // promise that will be placed on the @@io queue and later executed
   const payload = { args }
+  const exec = () => fn(...args)
   return _promise({ type, payload, to: '@@io', exec, inBand: false })
 }
 
-const effectInBand = async (type, exec, ...args) => {
+const effectInBand = async (type, fn, ...args) => {
   // polite way to make a promise that will be included in blocking process
   // must be repeatable or else block verification will fail
   // if not repeatable, should use an effect instead
   const payload = { args }
-
+  const exec = () => fn(...args)
   return _promise({ type, payload, exec, inBand: true })
 }
 
@@ -65,38 +72,49 @@ const all = async (...promiseActions) => {
   // awaits multiple requests to multiple chains and or multiple effects to complete
 }
 
-const hook = async (tick, accumulator, salt) => {
+const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   assert.strictEqual(typeof tick, 'function')
   assert(Array.isArray(accumulator))
+  assert.strictEqual(typeof salt, 'string')
   debug(`hook`)
 
   _hookGlobal(accumulator, salt)
   let reduction = tick()
-  let pending = false
-  const actions = _unhookGlobal()
+  let isPending = false
+  let actions
 
   assert(reduction, `Must return something from tick`)
 
   if (typeof reduction.then === 'function') {
-    await Promise.resolve('unwrap native async queue')
+    // unwrap native async queue
     const racecar = Symbol('RACECAR')
-    const result = await Promise.race([reduction, Promise.resolve(racecar)])
+    // TODO be able to have multiple concurrent hooks active, as sometimes needs to await deeper in the eventloop to run the hooks code
+    // TODO implement a wait loop, to avoid collisions
+    const racetrack = new Promise((resolve) =>
+      setImmediate(() => resolve(racecar))
+    )
+    const result = await Promise.race([reduction, racetrack])
     const isStillPending = result === racecar
+    actions = _unhookGlobal()
 
-    if (isStillPending && !actions.length) {
+    if (isStillPending && !actions.requests.length) {
       // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
       throw new Error(`Non standard promise returned - use "effectInBand(...)"`)
     }
     if (!isStillPending) {
       // must unwrap fully from the async/await wrapper
       reduction = await reduction
-      pending = false
+      isPending = false
     } else {
       reduction = undefined
-      pending = true
+      isPending = true
     }
+  } else {
+    // TODO set _unhookGlobal() in a finally block to ensure it always happens
+    actions = _unhookGlobal()
   }
-  return { reduction, pending, actions } // rejection is handled by tick throwing ?
+  const { requests, replies } = actions
+  return { reduction, isPending, requests, replies } // rejection is handled by tick throwing ?
 }
 
 const _hookGlobal = (originalAccumulator, salt) => {
@@ -104,15 +122,16 @@ const _hookGlobal = (originalAccumulator, salt) => {
   assert(!globalThis['@@interblock'].promises)
   const accumulator = [...originalAccumulator]
   Object.freeze(accumulator)
-  const promises = { accumulator, actions: [], requestId: 0, salt }
+  const requestId = 0
+  const promises = { accumulator, requests: [], replies: [], requestId, salt }
   globalThis['@@interblock'].promises = promises
 }
 
 const _unhookGlobal = () => {
   _assertGlobals()
-  const { actions } = globalThis['@@interblock'].promises
+  const { requests, replies } = globalThis['@@interblock'].promises
   delete globalThis['@@interblock'].promises
-  return actions
+  return { requests, replies }
 }
 
 const _getGlobalAccumulator = () => {
@@ -123,9 +142,15 @@ const _getGlobalAccumulator = () => {
 }
 const _pushGlobalRequest = (request) => {
   _assertGlobals()
-  const { actions } = globalThis['@@interblock'].promises
+  const { requests } = globalThis['@@interblock'].promises
   debug(`_pushGlobalRequest`, request)
-  actions.push(request)
+  requests.push(request)
+}
+const _pushGlobalReply = (reply) => {
+  _assertGlobals()
+  const { replies } = globalThis['@@interblock'].promises
+  debug(`_pushGlobalReply`, reply)
+  replies.push(reply)
 }
 
 const _incrementGlobalRequestId = () => {
@@ -137,15 +162,19 @@ const _incrementGlobalRequestId = () => {
 const _assertGlobals = () => {
   assert(globalThis['@@interblock'])
   assert(globalThis['@@interblock'].promises)
-  const { accumulator, actions, requestId } = globalThis[
+  const { accumulator, requests, replies, requestId } = globalThis[
     '@@interblock'
   ].promises
   assert(Array.isArray(accumulator))
-  assert(Array.isArray(actions))
+  assert(Array.isArray(requests))
+  assert(Array.isArray(replies))
   assert(Number.isInteger(requestId) && requestId >= 0)
 }
 
 module.exports = {
+  replyPromise,
+  replyResolve,
+  replyReject,
   interchain,
   effect,
   effectInBand,

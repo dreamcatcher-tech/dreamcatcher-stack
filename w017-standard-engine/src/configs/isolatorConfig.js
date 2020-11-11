@@ -144,6 +144,9 @@ const isolatorMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
+    unassignContainerId: assign({
+      containerId: () => '',
+    }),
   },
   guards: {
     isDmzChangeable: (context) => {
@@ -160,6 +163,10 @@ const isolatorMachine = machine.withConfig({
     isReduceable,
     isPiercable,
     isPierceDmzChanged: ({ lock, pierceDmz }) => {
+      if (!pierceDmz) {
+        debug(`isPierceDmzChanged: `, pierceDmz)
+        return false
+      }
       assert(lockModel.isModel(lock))
       assert(lock.block)
       assert(dmzModel.isModel(pierceDmz))

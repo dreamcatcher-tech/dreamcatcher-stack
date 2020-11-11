@@ -107,7 +107,7 @@ const definition = {
     unloadCovenant: {
       invoke: {
         src: 'unloadCovenant',
-        onDone: 'done',
+        onDone: { target: 'done', actions: 'unassignContainerId' },
         onError: 'error',
       },
     },

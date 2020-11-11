@@ -6,15 +6,9 @@ const { registry } = require('./registry')
 
 const modelInflator = (schema, instance) => {
   if (schema.title === 'State') {
-    // TODO kill this
-    const { actions } = instance
-    if (actions) {
-      assert(Array.isArray(actions))
-      assert(actions.every((action) => action.getRequest || action.getReply))
-    }
     return { ...instance }
   }
-  //   assert(schema.title, `only titled schemas can be inflated`)
+  assert(schema.title, `only titled schemas can be inflated`)
   if (schema.patternProperties) {
     return inflatePattern(schema, instance)
   }
@@ -22,7 +16,7 @@ const modelInflator = (schema, instance) => {
     return inflateArray(schema, instance)
   }
 
-  assert(isKeysValidated(schema, instance), `Keys do not match`)
+  assertKeysValidated(schema, instance)
   const inflated = {}
   const { properties } = schema
   Object.keys(instance).map((key) => {
@@ -85,14 +79,14 @@ const inflateArray = (schema, instance) => {
   return instance.map(model.clone)
 }
 
-const isKeysValidated = (schema, instance) => {
-  assert(!schema.additionalProperties)
+const assertKeysValidated = (schema, instance) => {
+  assert(!schema.additionalProperties, `additionalProperties: ${schema.title}`)
   const instanceKeys = Object.keys(instance)
   const propKeys = Object.keys(schema.properties)
   const isRequired = schema.required.every((key) => instanceKeys.includes(key))
   assert(isRequired)
-  assert(instanceKeys.every((key) => propKeys.includes(key)))
-  return true
+  const isProps = instanceKeys.every((key) => propKeys.includes(key))
+  assert(isProps, `fail ${schema.title}`)
 }
 
 const schemaMap = new WeakMap()

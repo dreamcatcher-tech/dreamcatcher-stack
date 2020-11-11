@@ -16,7 +16,7 @@ describe('effects', () => {
       return { wait }
     }
   })
-  test.only('hooked promise effect', async () => {
+  test('hooked promise effect', async () => {
     const testData = { test: 'data' }
     const externalFunction = () => {
       debug(`externalFunction triggered`)

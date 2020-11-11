@@ -56,9 +56,15 @@ const schema = {
 // TODO let lock have two blocks, for when child immediately has its parent address burned in
 // might use a flag to ask to refresh the lock
 // or have a separate function on storage, to refresh the lock
+const _defaultPiercings = { requests: [], replies: [] }
 const lockModel = standardize({
   schema,
-  create: (block, interblocks = [], uuid = uuidCreator(), piercings) => {
+  create: (
+    block,
+    interblocks = [],
+    uuid = uuidCreator(),
+    piercings = _defaultPiercings
+  ) => {
     assert(!block || blockModel.isModel(block))
     interblocks = interblocks.map(interblockModel.clone)
     piercings = refinePiercings(block, piercings)

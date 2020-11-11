@@ -56,20 +56,13 @@ const reductionModel = standardize({
       },
     },
   },
-  create(reduction, isPending, actions, origin) {
+  create(reduceResolve, origin) {
+    let { reduction, isPending, requests, replies } = reduceResolve
+    assert(Array.isArray(requests))
+    assert(Array.isArray(replies))
     assert(rxRequestModel.isModel(origin) || rxReplyModel.isModel(origin))
-    assert(Array.isArray(actions))
-    const requests = []
-    const replies = []
-    actions.forEach((action) => {
-      const inflated = _inflate(action, origin)
-      if (txRequestModel.isModel(inflated)) {
-        requests.push(inflated)
-      } else {
-        replies.push(inflated)
-      }
-    })
-
+    requests = requests.map((request) => _inflate(request, origin))
+    replies = replies.map((reply) => _inflate(reply, origin))
     // TODO reuse dmz models if this is for system state
     const obj = { reduction, isPending, requests, replies }
     if (!reduction) {
@@ -80,13 +73,18 @@ const reductionModel = standardize({
   logicize(instance) {
     const { reduction, isPending, requests, replies } = instance
     assert((reduction && !isPending) || (!reduction && isPending))
+    assertNoUndefined(requests, replies)
+    if (reduction) {
+      assertNoUndefined(reduction)
+    }
     let promiseCount = 0
     const sequenceSet = new Set()
-    replies.forEach((reply) => {
-      if (reply.isPromise()) {
+    replies.forEach((txReply) => {
+      // check the logic of the group of actions together
+      if (txReply.getReply().isPromise()) {
         promiseCount++
       }
-      sequenceSet.add(reply.request.sequence)
+      sequenceSet.add(txReply.request.sequence)
     })
     if (isPending) {
       assert.strictEqual(promiseCount, 0, `No promises allowed if pending`)

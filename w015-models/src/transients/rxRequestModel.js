@@ -17,7 +17,7 @@ const rxRequestModel = standardize({
   logicize(instance) {
     const { type, payload, sequence } = instance
     const { address, index } = splitSequence(sequence)
-    assert(address.isResolved())
+    assert(!address.isUnknown())
     assert(Number.isInteger(index))
     assert(index >= 0)
 

@@ -98,8 +98,8 @@ const txRequest = (channel, action) =>
     const requests = Object.values(channel.requests)
     const isDuplicate = requests.some((request) => request.equals(action))
     if (isDuplicate) {
-      debug(`txRequest duplicate found: `, action.type)
-      return
+      const msg = `Duplicate request found: ${action.type}.  All requests must be distinguishable from each other`
+      throw new Error(msg)
     }
     const index = draft.requestsLength
     draft.requests[index] = action

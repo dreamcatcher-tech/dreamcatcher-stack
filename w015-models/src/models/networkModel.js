@@ -144,6 +144,7 @@ const networkModel = standardize({
     }
 
     const isNewChannels = (previous = networkModel.create()) => {
+      // TODO ignore '@@io' ?
       assert(networkModel.isModel(previous))
       const resolvedAliases = getResolvedAliases()
       const isNewChannels = resolvedAliases.some((alias) => {
