@@ -156,7 +156,7 @@ const interpreterMachine = machine.withConfig({
         assert(dmzModel.isModel(dmz))
         assert(reductionModel.isModel(reduceResolve))
         const { requests, replies } = reduceResolve
-        debug('transmit req: %o rep %o', requests.length, replies)
+        debug('transmit req: %o rep %o', requests, replies)
         // TODO check if moving channels around inside dmz can affect tx ?
         // TODO deduplication before send, rather than relying on tx
         const network = networkProducer.tx(dmz.network, requests, replies)
@@ -204,7 +204,7 @@ const interpreterMachine = machine.withConfig({
         return isOriginPromise
       },
     }),
-    resolveOriginRequest: assign({
+    settleOrigin: assign({
       dmz: ({ dmz, covenantAction }) => {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(covenantAction))
@@ -448,8 +448,9 @@ const interpreterMachine = machine.withConfig({
     isPendingUnlowered: ({ initialPending, dmz }) => {
       assert(pendingModel.isModel(initialPending))
       assert(dmzModel.isModel(dmz))
-      const isPendingUnlowered =
+      const isPendingLowered =
         initialPending.getIsPending() && !dmz.pending.getIsPending()
+      const isPendingUnlowered = !isPendingLowered
       debug(`isPendingUnlowered`, isPendingUnlowered)
       return isPendingUnlowered
     },
@@ -515,7 +516,7 @@ const interpreterMachine = machine.withConfig({
       const acc = dmz.pending.getAccumulator()
       const reduceResolve = await isolatedTick(state, covenantAction, acc)
       assert(reduceResolve, `Covenant returned: ${reduceResolve}`)
-      debug(`reduceCovenant result pending: `, reduceResolve.pending)
+      debug(`reduceCovenant result pending: `, reduceResolve.isPending)
       return { reduceResolve }
       // TODO dedupe all requests that came back during a promise resolve
     },

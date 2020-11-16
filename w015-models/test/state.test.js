@@ -8,8 +8,7 @@ describe('state', () => {
   describe('create', () => {
     test('default', () => {
       const state = stateModel.create()
-      assert(!state.getRequests().length)
-      assert(!state.getReplies().length)
+      assert(state)
     })
     test.todo('create with actions but no defaultAction passes')
   })

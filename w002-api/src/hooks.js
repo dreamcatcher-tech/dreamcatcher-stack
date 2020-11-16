@@ -77,11 +77,11 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   assert(Array.isArray(accumulator))
   assert.strictEqual(typeof salt, 'string')
   debug(`hook salt:`, salt)
+  let actions
   try {
     await _hookGlobal(accumulator, salt)
     let reduction = tick()
     let isPending = false
-    let actions
 
     assert(reduction, `Must return something from tick`)
 
@@ -118,7 +118,7 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
     return { reduction, isPending, requests, replies } // rejection is handled by tick throwing ?
   } catch (error) {
     debug(`error: `, error)
-    _unhookGlobal()
+    !actions && _unhookGlobal()
     throw error
   }
 }

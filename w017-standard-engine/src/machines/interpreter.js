@@ -250,7 +250,7 @@ const definition = {
             { target: 'settleExternalAction', cond: 'isTxOriginPromise' },
             {
               target: 'settleExternalAction',
-              actions: 'respondOrigin',
+              actions: 'settleOrigin',
             },
           ],
         },

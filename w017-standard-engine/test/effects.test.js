@@ -5,16 +5,27 @@ const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('..')
 
 describe('effects', () => {
-  require('debug').enable(
-    '*metro* *tests*  *:interpreter *:isolator *:increasor'
-  )
-  jest.setTimeout('500')
-  test('non hooked promise throws', () => {
+  require('debug').enable('*met* *tests*  *:interpreter *:isolator *:increasor')
+  // jest.setTimeout('500')
+  test('non hooked promise throws', async () => {
     const reducer = async (state, action) => {
       const wait = 200
       await new Promise((resolve) => setTimeout(resolve, wait))
       return { wait }
     }
+    const hyper = { ...covenants.hyper, reducer }
+    const base = await metrologyFactory('effect', { hyper })
+    base.enableLogging()
+    await base.settle()
+    await assert.rejects(
+      () => base.pierce({ type: 'NONCE' }),
+      (error) => {
+        assert(error.message.startsWith('Non standard promise returned'))
+        return true
+      }
+    )
+    const { state } = base.getState()
+    debug(`state:`, state)
   })
   test('hooked promise effect', async () => {
     const testData = { test: 'data' }
@@ -24,7 +35,7 @@ describe('effects', () => {
     }
     const reducer = async (state, action) => {
       const result = await effect('WAIT', externalFunction)
-      debug(`result: %O`, result)
+      debug(`reducer result: %O`, result)
       return { reducerResult: result }
     }
 
@@ -35,16 +46,6 @@ describe('effects', () => {
     const { state } = base.getState()
     debug(`state:`, state)
     assert.deepStrictEqual(state.reducerResult, testData)
-  })
-  test('hooked promise to another chain', () => {
-    let result
-    const payload = { test: 'data' }
-    const reducer = async (state, action) => {
-      result = await interchain('PING', payload, '..')
-      return { innerResult: result }
-    }
-
-    assert.deepStrictEqual(result, payload)
   })
   test.todo('inband effect included in block')
   test.todo('effect promise rejection after timeout')

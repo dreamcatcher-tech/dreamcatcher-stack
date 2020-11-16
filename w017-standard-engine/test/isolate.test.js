@@ -37,21 +37,28 @@ describe('isolation', () => {
     const id1 = isolate.loadCovenant(block1)
     const id2 = isolate.loadCovenant(block2)
 
+    const address = block1.provenance.getAddress()
+    const payload = {}
+    const index = 0
+    const action1 = rxRequestModel.create('action12', payload, address, index)
+    const action2 = rxRequestModel.create('action2', payload, address, index)
     const tick1 = {
       containerId: await id1,
       state: {},
-      action: { type: 'action1' },
+      action: action1,
     }
     const tick2 = {
       containerId: await id2,
       state: {},
-      action: { type: 'action2' },
+      action: action2,
     }
-    const r1 = isolate.tick(tick1)
-    const r2 = isolate.tick(tick2)
+    const r1Await = isolate.tick(tick1)
+    const r2Await = isolate.tick(tick2)
+    const r1 = await r1Await
+    const r2 = await r2Await
 
-    assert.strictDeepEqual(await r1, { test: 'reducer1' })
-    assert.strictDeepEqual(await r2, { test: 'reducer2' })
+    assert.deepStrictEqual(r1.reduction, { test: 'reducer1' })
+    assert.deepStrictEqual(r2.reduction, { test: 'reducer2' })
 
     debug(`unload tests`)
     await assert.rejects(() => isolate.unloadCovenant('not valid containerId'))
@@ -60,7 +67,7 @@ describe('isolation', () => {
     debug(`attempting tick1`)
     await assert.rejects(() => isolate.tick(tick1))
 
-    assert.strictDeepEqual(await id1, block1.provenance.reflectIntegrity().hash)
+    assert.deepStrictEqual(await id1, block1.provenance.reflectIntegrity().hash)
   })
   test('reducer throw propogates back', async () => {
     const reducerThrower = () => {

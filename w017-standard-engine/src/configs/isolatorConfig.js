@@ -24,7 +24,7 @@ const isReduceable = ({ dmz }) => {
   // TODO check the time available, probably as a parallel transition
   assert(dmzModel.isModel(dmz))
   const isReduceable = dmz.rx()
-  debug(`isReduceable`, isReduceable && isReduceable.event)
+  debug(`isReduceable`, isReduceable && isReduceable.event.type)
   return !!isReduceable
 }
 const isPiercable = ({ dmz, hasPierced }) => {
@@ -83,7 +83,7 @@ const isolatorMachine = machine.withConfig({
         let txChannel = pierceDmz.network['@@PIERCE_TARGET']
         assert(txChannel.address.equals(block.provenance.getAddress()))
         assert.strictEqual(txChannel.systemRole, 'PIERCE')
-        debug(`generatePierceDmz: `, piercings)
+        debug(`generatePierceDmz piercings.length: `, piercings.length)
 
         piercings.requests.forEach((rxRequest) => {
           const request = rxRequest.getRequest()

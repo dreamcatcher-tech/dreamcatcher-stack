@@ -29,12 +29,13 @@ const ramIsolate = (preloadedCovenants) => {
     },
     // TODO unload covenant when finished
     // TODO intercept timestamp action and overwrite Date.now()
-    tick: async ({ containerId, state, action, accumulator, timeout }) => {
+    tick: async ({ containerId, state, action, accumulator = [], timeout }) => {
       debug(`tick: %o action: %o`, containerId.substring(0, 9), action.type)
       const container = containers[containerId]
       assert(container, `No tick container for: ${containerId}`)
       assert(!state || typeof state === 'object') // TODO allow anything as state
       assert(Array.isArray(accumulator))
+      timeout = timeout || 30000
       assert(Number.isInteger(timeout) && timeout >= 0)
       if (rxReplyModel.isModel(action)) {
         assert(!accumulator.length)

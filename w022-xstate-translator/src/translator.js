@@ -19,6 +19,7 @@ const respond = (payload) => {
   if (typeof payload === 'string') {
     payload = { type: payload }
   }
+  // TODO copy how actions work in xstate, so can send something back ?
   return {
     type: '@@RESPOND',
     data: payload,
@@ -44,7 +45,7 @@ const translator = (machine) => {
 
   return async (xstate, action) => {
     assert.strictEqual(typeof action, 'object')
-    if (equal(xstate, {})) {
+    if (!xstate || equal(xstate, {})) {
       xstate = initialState
     }
     assert(!xstate.actions || !xstate.actions.length, `uncleared xstate`)
