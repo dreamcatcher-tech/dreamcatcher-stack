@@ -14,6 +14,9 @@ hyper.covenantId = covenantIdModel.create('hyper')
 const unity = { reducer: (state = {}) => state }
 unity.covenantId = covenantIdModel.create('unity')
 
-module.exports = { shell, net, socket, unity, hyper }
+const probe = require('./src/probe')
+probe.covenantId = covenantIdModel.create('probe')
+
+module.exports = { shell, net, socket, unity, hyper, probe }
 
 Object.values(module.exports).forEach(Object.freeze)

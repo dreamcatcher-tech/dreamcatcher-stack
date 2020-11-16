@@ -5,6 +5,7 @@ const { standardize } = require('../utils')
 const { channelModel } = require('./channelModel')
 const { addressModel } = require('./addressModel')
 const { provenanceModel } = require('./provenanceModel')
+const { rxRequestModel } = require('../transients/rxRequestModel')
 
 const schema = {
   title: 'Network',
@@ -118,10 +119,10 @@ const networkModel = standardize({
       }
       return lineageIncludes
     }
-    const isResponseDone = (address, index) => {
-      assert(addressModel.isModel(address))
-      assert(Number.isInteger(index))
-      assert(index >= 0)
+    const getResponse = (request) => {
+      assert(rxRequestModel.isModel(request))
+      const address = request.getAddress()
+      const index = request.getIndex()
       const alias = getAlias(address)
       assert(instance[alias])
       const reply = instance[alias].replies[index]
@@ -165,7 +166,7 @@ const networkModel = standardize({
       getAlias,
       getParent,
       includesInterblock,
-      isResponseDone,
+      getResponse,
       txInterblockAliases,
       isNewChannels,
     }

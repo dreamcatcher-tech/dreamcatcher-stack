@@ -14,23 +14,31 @@ const definition = {
   id: 'interpreter',
   initial: 'idle',
   context: {
+    isolatedTick: undefined, // function provided as initial context
+    externalAction: undefined,
     anvil: undefined,
-    address: undefined,
+    address: undefined, // TODO why is this needed ?
     dmz: undefined,
+    initialPending: undefined, // used to determine if lowered during execution
     covenantAction: undefined,
     reduceRejection: undefined,
     reduceResolve: undefined,
+    isExternalPromise: undefined,
+    isOriginPromise: undefined,
   },
   strict: true,
   states: {
     idle: {
       on: {
-        TICK: 'interpret',
+        TICK: {
+          target: 'interpret',
+          actions: ['assignExternalAction', 'assignDmz', 'assignAnvil'],
+        },
       },
     },
-    repeatSelf: {
+    loopback: {
       always: [
-        { target: 'done', cond: 'isSelfExhausted' },
+        { target: 'autoResolves', cond: 'isSelfExhausted' },
         { target: 'interpret', actions: 'loadSelfAnvil' },
       ],
     },
@@ -51,13 +59,11 @@ const definition = {
           },
         },
         respondRejection: {
-          // TODO what if a system reply rejects for some reason ? halt entire chain ?
-          // for now, silently fail
           entry: 'respondRejection',
           always: 'done',
         },
         merge: {
-          entry: ['mergeSystemState', 'transmitSystem'],
+          entry: ['mergeSystemState', 'transmit'],
           always: [
             { target: 'done', cond: 'isChannelUnavailable' },
             { target: 'respondReply', cond: 'isReply' },
@@ -70,13 +76,14 @@ const definition = {
         },
         respondRequest: {
           always: [
-            { target: 'done', cond: 'isSystemResponseFromActions' },
+            { target: 'done', cond: 'isExternalAction' },
+            { target: 'done', cond: 'isLoopbackResponseDone' },
             { target: 'done', actions: 'respondRequest' },
           ],
         },
         done: { type: 'final' },
       },
-      onDone: 'repeatSelf',
+      onDone: 'loopback',
     },
 
     interpretCovenant: {
@@ -94,22 +101,23 @@ const definition = {
             isReply: {
               always: [
                 { target: 'reducePendingReply', cond: 'isReply' },
-                { target: 'done', actions: 'bufferRequest' },
+                {
+                  target: 'done',
+                  actions: ['bufferRequest', 'promiseExternalAction'],
+                },
               ],
             },
             reducePendingReply: {
-              entry: ['accumulateReply', 'respondReply', 'shiftCovenantAction'],
+              entry: ['accumulateReply', 'shiftCovenantAction'],
               invoke: {
                 src: 'reduceCovenant',
-                onDone: {
-                  target: 'transmit',
-                  actions: 'assignResolve',
-                },
+                onDone: { target: 'transmit', actions: 'assignResolve' },
                 onError: {
                   target: 'rejectPending',
                   actions: 'assignRejection',
                 },
               },
+              exit: 'respondReply',
             },
             transmit: {
               entry: 'transmit', // TODO may accumulate tx too, to dedupe independently of changing channel structure
@@ -124,10 +132,7 @@ const definition = {
             },
             resolvePending: {
               entry: ['settlePending', 'mergeState'],
-              always: [
-                { target: 'done', cond: 'isResponseFromActions' },
-                { target: 'done', actions: 'resolveOriginRequest' },
-              ],
+              always: 'done',
             },
             done: { type: 'final' },
           },
@@ -155,12 +160,17 @@ const definition = {
                 },
                 isPending: {
                   always: [
-                    { target: 'reject', cond: 'isReductionPending' },
+                    {
+                      target: 'reject',
+                      cond: 'isReductionPending',
+                      actions: 'assignRejectionFromReply',
+                    },
                     { target: 'transmit' },
                   ],
                 },
-                transmit: { entry: 'transmit', type: 'final' },
-                reject: { type: 'final' }, // TODO hoist error to parent
+                transmit: { entry: 'transmit', always: 'done' },
+                reject: { entry: 'warnReplyRejection', always: 'done' }, // TODO hoist error to parent
+                done: { entry: 'respondReply', type: 'final' },
               },
               onDone: 'done',
             },
@@ -178,13 +188,14 @@ const definition = {
                   entry: 'transmit',
                   always: [
                     { target: 'raisePending', cond: 'isReductionPending' },
-                    { target: 'respond' },
+                    { target: 'respondRequest' },
                   ],
                 },
-                respond: {
+                respondRequest: {
                   entry: 'mergeState',
                   always: [
-                    { target: 'isUnbuffered', cond: 'isResponseFromActions' },
+                    { target: 'isUnbuffered', cond: 'isExternalAction' },
+                    { target: 'isUnbuffered', cond: 'isLoopbackResponseDone' },
                     { target: 'isUnbuffered', actions: 'respondRequest' },
                   ],
                 },
@@ -212,7 +223,48 @@ const definition = {
         },
         done: { type: 'final' },
       },
-      onDone: 'repeatSelf',
+      onDone: 'loopback',
+    },
+    autoResolves: {
+      // loopback auto responses are handled at the time,
+      // but external and origin are handled after exhaustion
+      // defer auto resolve of external action until final step
+      // defer auto resolve of origin promise until final step
+      // discern when external action is promised from actions
+      // discern when origin action is promised from actions
+
+      // if no reply at all, default resolve.
+      // if it is a reply, we know it was processed earlier, as replies are processed immediately
+      // if rejection or resolve there already, do nothing
+      // if promise is there, do nothing if transmit also sent a promise
+      // if transmit did not send the promise, this must be buffered, so resolve it
+
+      initial: 'settleOrigin',
+      states: {
+        settleOrigin: {
+          // if we went from pending to settled, then origin must be resolved
+          // transmit needs to also track if origin was promised to...
+          always: [
+            { target: 'settleExternalAction', cond: 'isOriginSettled' },
+            { target: 'settleExternalAction', cond: 'isPendingUnlowered' },
+            { target: 'settleExternalAction', cond: 'isTxOriginPromise' },
+            {
+              target: 'settleExternalAction',
+              actions: 'respondOrigin',
+            },
+          ],
+        },
+        settleExternalAction: {
+          always: [
+            { target: 'done', cond: 'isExternalActionReply' },
+            { target: 'done', cond: 'isExternalActionSettled' },
+            { target: 'done', cond: 'isTxExternalActionPromise' },
+            { target: 'done', actions: 'defaultResolve' },
+          ],
+        },
+        done: { type: 'final' },
+      },
+      onDone: 'done',
     },
     done: {
       id: 'done',
@@ -221,12 +273,7 @@ const definition = {
     },
   },
 }
-const dummyConfig = {
-  actions: {},
-  guards: { isSystem: () => false },
-  services: {},
-}
-const machine = Machine(definition, dummyConfig)
+const machine = Machine(definition)
 
 if (typeof module === 'object') {
   module.exports = { definition, machine }

@@ -190,13 +190,15 @@ const isolatorMachine = machine.withConfig({
       assert(dmzModel.isModel(dmz))
       assert(dmz.rx())
       // TODO rename anvil to externalAction
-      const { event: anvil, channel } = dmz.rx()
-      debug(`reduce: `, anvil.type)
+      const { event: externalAction, channel } = dmz.rx()
+      debug(`reduce: `, externalAction.type)
       const { address } = channel
       assert(!address.isUnknown())
       const tick = createTick(containerId, isolation.tick)
-      const interpreter = interpreterConfig(tick, dmz, anvil, address)
-      const nextDmz = await thread('TICK', interpreter)
+      const interpreter = interpreterConfig(tick)
+      const payload = { dmz, externalAction, address }
+      const tickAction = { type: 'TICK', payload }
+      const nextDmz = await thread(tickAction, interpreter)
       assert(dmzModel.isModel(nextDmz))
       return { nextDmz }
     },

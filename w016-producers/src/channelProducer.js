@@ -138,14 +138,15 @@ const shiftTxRequest = (channel, originalLoopback) =>
   channelModel.clone(channel, (draft) => {
     assert(channelModel.isModel(channel))
     assert(channel.rxReply())
-
     debug(`shiftTxRequest requestsLength: ${channel.requestsLength}`)
-    const isLoopback = channel.systemRole === '.'
     let index = channel.rxReplyIndex()
-    if (isLoopback) {
+    if (channel.address.isLoopback()) {
       // loopback crossover is the only way the replies array change during execution
+      // originalLoopback is required to keep track of what things used to be
+      // BUT we might be able to handle this entirely locally ?
       assert(channelModel.isModel(originalLoopback))
       assert(originalLoopback.address.isLoopback())
+      assert(channel.address.isLoopback())
       index = originalLoopback.rxReplyIndex()
       assert(channel.replies[index], `loopback empty at ${index}`)
       delete draft.replies[index]

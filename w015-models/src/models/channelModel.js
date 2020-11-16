@@ -41,7 +41,9 @@ const channelModel = standardize({
       requestsLength,
     } = instance
     const isLoopback = systemRole === '.'
-
+    if (isLoopback) {
+      assert(address.isLoopback())
+    }
     const remote = isLoopback
       ? remoteModel.create(instance)
       : heavy && heavy.getRemote()

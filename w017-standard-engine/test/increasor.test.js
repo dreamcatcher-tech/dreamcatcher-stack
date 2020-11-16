@@ -7,10 +7,10 @@ const { request } = require('../../w002-api')
 require('../../w012-crypto').testMode()
 
 describe('increasor', () => {
-  require('debug').enable('')
+  require('debug').enable('*met* *shell *translator *hooks *interpreter')
   test('no new block from lineage interblocks', async () => {
     const { covenantId } = shell // shell responds to pings
-    const base = await metrologyFactory('increasor', { hyper: shell })
+    const base = await metrologyFactory('inc', { hyper: shell })
     await base.spawn('ping1', { covenantId })
     await base.spawn('ping2', { covenantId })
 
@@ -21,7 +21,6 @@ describe('increasor', () => {
     assert.strictEqual(ping1.getHeight(), 2)
     assert.strictEqual(ping2.getHeight(), 2)
 
-    require('debug').enable('*metrology* *tests:increasor *shell*')
     base.pierce(shell.actions.ping('ping1'))
     base.enableLogging()
     await base.settle()

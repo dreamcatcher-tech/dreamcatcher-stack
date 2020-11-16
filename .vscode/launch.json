@@ -47,7 +47,7 @@
       "port": 9229
     },
     {
-      "name": "hooks.test",
+      "name": "interpreter.test",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -55,7 +55,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/w017-standard-engine/test/hooks.test.js"
+        "${workspaceRoot}/w017-standard-engine/test/interpreter.test.js"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",

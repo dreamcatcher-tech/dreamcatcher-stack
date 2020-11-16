@@ -209,7 +209,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           const action = nextIo.requests[index]
           assert(action && action.payload)
           // TODO translate to be the indices of the @@io channel directly
-          const effectId = action.payload['__@@requestId']
+          const effectId = action.payload['@@ioRequestId']
           assert.strictEqual(typeof effectId, 'string')
           const { type, payload } = action
           const address = nextLock.block.provenance.getAddress()

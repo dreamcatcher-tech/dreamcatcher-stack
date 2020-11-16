@@ -66,4 +66,7 @@ describe('effects', () => {
   test.todo('buffered request is eventually resolved')
   test.todo('buffered request is eventually rejected')
   test.todo('handle promise being returned part way thru pending')
+  // have a state machine that invokes two different services one after the other
+  test.todo('pending returned during loopback processing works')
+  test.todo('parallel state machines awaiting responses')
 })

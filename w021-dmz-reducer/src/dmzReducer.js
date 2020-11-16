@@ -34,6 +34,8 @@ const {
  *  3. foreign chains can control the dmz logic easily
  *
  * These are all the commands that are possible to invoke remotely.
+ * Whilst transmissions could be entered directly into the dmz in this
+ * reducer, using the api methods for sending allows greater debug ability.
  *
  * @param {*} dmz
  * @param {*} action
@@ -51,7 +53,6 @@ const reducer = async (dmz, action) => {
   switch (action.type) {
     case '@@SPAWN': {
       const { nextNetwork, genesisRequest } = await spawn(dmz, action)
-      // TODO why not send the actions inside the dmzReducer ?
       network = nextNetwork
       interchain(genesisRequest)
       replyPromise()

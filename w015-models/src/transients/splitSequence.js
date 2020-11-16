@@ -1,6 +1,5 @@
 const assert = require('assert')
 const { addressModel } = require('../models/addressModel')
-const { integrityModel } = require('../models/integrityModel')
 const splitSequence = (sequence) => {
   assert(typeof sequence === 'string')
   const [hash, indexString] = sequence.split('_')
@@ -9,11 +8,9 @@ const splitSequence = (sequence) => {
   if (hash === 'LOOPBACK') {
     address = addressModel.create('LOOPBACK')
   } else {
-    const integrity = integrityModel.clone({
-      ...integrityModel.clone(),
-      hash,
-    })
-    address = addressModel.create(integrity)
+    // TODO use regex for chainId
+    address = addressModel.create(hash)
+    assert(address.isResolved())
   }
   return { address, index }
 }

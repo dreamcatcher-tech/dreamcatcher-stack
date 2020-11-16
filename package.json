@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
-    "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
+    "watch": "DEBUG_COLORS=1 DEBUG='' jest --runInBand --watch",
     "build:lambda": "cd w202-lambda-stream-processor && webpack",
     "sls:lambda": "cd w202-lambda-stream-processor && DEBUG='interblock:deploy*' sls --debug",
     "test:lambda": "DEBUG_COLORS=1 jest awsWebsocket && jest awsLogin",

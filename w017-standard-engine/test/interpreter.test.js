@@ -1,11 +1,12 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:interpreter')
 const { metrologyFactory } = require('../src/metrologyFactory')
-const { shell } = require('../../w212-system-covenants')
+const { shell, hyper, probe } = require('../../w212-system-covenants')
+const { isReplyFor } = require('../../w002-api')
 require('../../w012-crypto').testMode()
 
 describe('interpreter', () => {
-  require('debug').enable('*metrology* *tests* ')
+  require('debug').enable('*met* *tests* ')
   test('respond to ping with pong', async () => {
     const { covenantId, actions } = shell // shell responds to pings
     const ping = actions.ping()
@@ -21,5 +22,30 @@ describe('interpreter', () => {
   test.todo('connect resolves an address without purging queued actions')
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
-  test.todo('error on reply should surface')
+  test('error on reply should surface', async () => {
+    require('debug').enable('*met* *tests* *shell *interpreter')
+    const reducer = (state, action) => {
+      debug(`reducer: `, action.type)
+      if (isReplyFor(action)) {
+        debug(`reply received`, action)
+        throw new Error('testing no replies')
+      }
+      return shell.reducer(state, action)
+    }
+
+    const covenants = { hyper: { ...hyper, reducer } }
+    const base = await metrologyFactory('int', covenants)
+    base.enableLogging()
+
+    await base.spawn('pinger', { covenantId: probe.covenantId })
+    let reply
+    try {
+      reply = await base.pierce(shell.actions.ping('pinger'))
+    } catch (error) {
+      debug(error)
+    }
+    // TODO reject all self actions, then reject the external action
+    // assert(!reply)
+    await base.settle()
+  })
 })

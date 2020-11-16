@@ -3,11 +3,11 @@ const assert = require('assert')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
 const { spawn, connect } = dmzReducer.actions
+const { interchain } = require('../../w002-api')
 const {
   respond,
   send,
   sendParent,
-  invoke,
   translator,
 } = require('../../w022-xstate-translator')
 
@@ -31,7 +31,7 @@ const config = {
         debug(`ping to self`)
         return { type: 'PONG', payload: rest } // TODO move to state machine
       }
-      const result = await invoke(type, {}, to)
+      const result = await interchain(type, rest, to)
       debug(`ping result: %O`, result)
       return result
     },
@@ -52,7 +52,7 @@ const config = {
       const { alias, spawnOptions, to } = event.payload
       debug(`addActor`, alias, to)
       const { type, payload } = spawn(alias, spawnOptions)
-      const addActor = await invoke(type, payload, to)
+      const addActor = await interchain(type, payload, to)
 
       // calculate path based on working directory
 

@@ -9,6 +9,10 @@ const {
   resolve,
   reject,
   isReplyFor,
+  replyPromise,
+  replyReject,
+  replyResolve,
+  interchain,
 } = require('../../w002-api')
 
 const respond = (payload) => {
@@ -31,96 +35,32 @@ const sendParent = (action) => ({
   path: '..',
 })
 
-const invokeFactory = () => {
-  //Used to make remote requests, and await their return.
-  // TODO use UUID to know which instance is hooked ?
-  // use a UUID on each invocation of invoke ?
-  const invoke = async (type, payload, to) => {
-    const requestAction = request(type, payload, to)
-    debug(`invoke: %O`, requestAction.type)
-    assert(typeof _callback === 'function', `_callback not set`)
-    return _callback(requestAction)
-  }
-  let _callback
-  invoke._hook = (callback) => {
-    assert(!_callback, `attempt to overwrite hook`)
-    _callback = callback
-  }
-  invoke._clearHook = () => {
-    assert(_callback, `attempt to remove empty hook`)
-    _callback = undefined
-  }
-  return invoke
-}
-
-const invoke = invokeFactory()
-
 /**
  * Will do anything the user wants, but only our api actions
  * will be translated into protocol actions and sent out.
  */
 const translator = (machine) => {
-  const initialState = {
-    xstate: machine.initialState,
-    promises: [],
-    requestId: 0,
-    originAction: null,
-  }
-  return async (state = initialState, action) => {
-    assert(!state.actions, `Actions key disallowed in state`)
-    // TODO start new or upgraded covenants with @@INIT ?
+  const { initialState } = machine
 
-    if (typeof action === 'string') {
-      action = { type: action }
+  return async (xstate, action) => {
+    assert.strictEqual(typeof action, 'object')
+    if (equal(xstate, {})) {
+      xstate = initialState
     }
+    assert(!xstate.actions || !xstate.actions.length, `uncleared xstate`)
+    // TODO start new or upgraded covenants with @@INIT ?
     if (action.type.startsWith('done.invoke.')) {
+      // we clobber the data key that xstate requires
       // TODO move to unmap function
-      // we clobber the data key
       action = { ...action, data: action.payload }
       delete action.payload
     }
-
     debug('translator reducer action: %O', action)
-    state = state.xstate ? state : initialState
-    let { xstate, promises, requestId, originAction } = state
-    assert(!xstate.actions || !xstate.actions.length, `uncleared xstate`)
 
     if (isReplyFor(action)) {
-      debug(`reply received: ${action.type}`)
-      // update the accumulator, rerun the service
-      // throw if not one of our promises
-      const tracker = promises.find(
-        ({ response }) => response && isReplyFor(action, response)
-      )
-      if (!tracker) {
-        debug(`No promise found for action ${action.type}`)
-        return state
-      }
-      const accumulator = [...tracker.accumulator]
-      accumulator.push(action.payload)
-      const transientTracker = { ...tracker, accumulator }
-      const nextTracker = await exhaust(machine, transientTracker, requestId++)
-      promises = promises.filter((t) => t !== tracker)
-      if (!nextTracker.done) {
-        promises.push(nextTracker)
-        return {
-          ...state,
-          promises,
-          requestId,
-          actions: [nextTracker.response],
-        }
-      }
-      assert(!promises.length) // TODO handle dangling promises
-
-      debug(`transforming into doneInvoke: %O`, action.type)
-      // TODO create reject invoke
-      action = createDoneInvoke(nextTracker.response, nextTracker.src) // TODO use proper id
-    } else {
-      // TODO handle dangling promises resets originAction
-      if (!originAction && action.type !== '@@INIT') {
-        debug(`setting originAction: %O`, action.type)
-        originAction = action
-      }
+      debug(`ignoring reply received: `, action)
+      return xstate
+      // TODO reject external replies, ignore loopback replies
     }
 
     debug(`previous machine state: `, xstate.value)
@@ -134,47 +74,27 @@ const translator = (machine) => {
     const { actions, ...nextState } = json
     const cleanNextState = JSON.parse(JSON.stringify(nextState))
     const { context, event } = cleanNextState
-    checkActions(actions)
-
-    const protocolActions = []
-    const isRespond = actions.some(({ type }) => type === '@@RESPOND')
-    const isXstateStart = actions.some(({ type }) => type === 'xstate.start')
-    if (!isRespond && isXstateStart && originAction === action) {
-      protocolActions.push(promise())
-    }
+    checkXstateActions(actions)
+    const originAction = cleanNextState.history.event
+    debug(`originAction: `, originAction.type)
 
     const awaits = actions.map(async (xstateAction) => {
       switch (xstateAction.type) {
         case 'xstate.start':
-          debug(`invoke called`)
+          debug(`xstate.start`)
           const { activity } = xstateAction
           assert(activity && activity.type === 'xstate.invoke')
           const { src } = activity
+          const service = machine.options.services[src]
+          assert(typeof service === 'function')
+          debug(`running service: `, src)
 
-          const tracker = {
-            context,
-            event,
-            src,
-            accumulator: [],
-            done: false,
-          }
-          const nextTracker = await exhaust(machine, tracker, requestId++)
-          const nextResponse = nextTracker.response
+          const nextResponse = await service(context, event)
           debug(`invoke result: `, nextResponse && nextResponse.type)
 
-          if (nextTracker.done) {
-            const { response, src } = nextTracker
-            debug(`tracker done immediately after starting`)
-            const doneInvoke = createDoneInvoke(response, src)
-            // TODO clear promises ?
-            const mapped = mapXstateToContinuation(doneInvoke)
-            protocolActions.push(mapped)
-          } else {
-            promises = [...promises, nextTracker]
-            // TODO assert nextTracker.response is not a continuation action
-            // but rather is a send, with an address
-            protocolActions.push(nextTracker.response)
-          }
+          const { type, data } = createDoneInvoke(nextResponse, src)
+          debug(`doneInvoke`, data)
+          interchain(type, data) // send to self
           break
         case 'xstate.stop': // end of invoke
           debug(`end of invoke`)
@@ -185,9 +105,7 @@ const translator = (machine) => {
           if (xstateAction.exec) {
             const execResult = xstateAction.exec(context, event)
             debug(`execResult %O`, execResult)
-            const mapped = mapXstateToContinuation(execResult, originAction)
-            debug(`mapped %O`, mapped)
-            protocolActions.push(mapped)
+            mapXstateToContinuation(execResult, originAction)
           } else {
             debug(`standard action ? %O`, xstateAction)
             const mapped = mapXstateToContinuation(xstateAction, originAction)
@@ -196,100 +114,10 @@ const translator = (machine) => {
           break
       }
     })
-
     await Promise.all(awaits)
-
-    if (!protocolActions.length && action.type !== '@@INIT') {
-      // the state machine is exhausted, and so the origin action can be resolved
-      protocolActions.push(resolve({}, originAction))
-      originAction = null
-    }
-    if (isResolved(protocolActions, originAction)) {
-      originAction = null
-    }
-
-    debug(`shell actions length: `, protocolActions)
-    return {
-      actions: protocolActions,
-      xstate: cleanNextState,
-      promises,
-      requestId,
-      originAction,
-    }
+    return cleanNextState
   }
 }
-
-const isResolved = (protocolActions, originAction) =>
-  protocolActions.some(({ request }) => equal(request, originAction))
-
-const exhaust = async (machine, tracker, requestId) => {
-  // TODO handle torn promises - stop if state has moved on ?
-  debug(`exhaust requestId: ${requestId}`)
-  const { context, event, src, accumulator } = tracker
-  const service = machine.options.services[src]
-  assert(typeof service === 'function')
-
-  let callCount = 0
-  invoke._hook(async (rawResponse) => {
-    debug(`reExecute hook invoked`)
-    if (callCount < accumulator.length) {
-      const prior = accumulator[callCount]
-      callCount++
-      debug(`prior resolve returned`)
-      return prior
-    }
-    debug(`making new response with id: ${requestId}`)
-    assert(typeof rawResponse.payload.requestId === 'undefined')
-    const payload = { ...rawResponse.payload, requestId }
-    const response = { ...rawResponse, payload }
-    exhaustedTrigger(response)
-    const eternalPromise = new Promise(() => {})
-    return eternalPromise
-  })
-
-  let exhaustedTrigger
-  const invokeExhausted = async () => {
-    const invokeEnd = new Promise((resolve, reject) => {
-      debug(`setting exhaustedTrigger`)
-      exhaustedTrigger = (response) => {
-        debug(`exhaustedTrigger pulled: %O`, response)
-        resolve(response)
-      }
-    })
-    return invokeEnd
-  }
-
-  const invokeExhaustedPromise = raceCar('invoke', invokeExhausted())
-  const servicePromise = raceCar('service', service(context, event))
-  const reaperPromise = raceCar('reaper', new Promise(setImmediate))
-
-  const racers = [invokeExhaustedPromise, servicePromise, reaperPromise]
-  const firstToFinish = await Promise.race(racers)
-  invoke._clearHook()
-  const { name, response } = firstToFinish
-  switch (name) {
-    case 'invoke':
-      debug(`invoke completed first`)
-      return { ...tracker, response }
-    case 'service':
-      debug(`service completed first`)
-      return { ...tracker, response, done: true }
-    case 'reaper':
-      debug(`reaper completed first`)
-      throw new Error(`Neither service nor invoke completed in time`)
-    default:
-      throw new Error(`Unreachable`)
-  }
-}
-
-const raceCar = async (name, promise) => {
-  let response = await promise
-  if (typeof response === 'string') {
-    response = { type: response }
-  }
-  return { name, response }
-}
-
 const createDoneInvoke = (data, id) => {
   if (data && data.message && data.stack) {
     // xstate seems to blank error objects
@@ -300,13 +128,11 @@ const createDoneInvoke = (data, id) => {
   }
   return { type: 'done.invoke.' + id, data }
 }
-
-const checkActions = (actions) => {
+const checkXstateActions = (actions) => {
   assert(Array.isArray(actions))
   // TODO check respond overrides invoke
   // TODO check that invoke can only occur once
 }
-
 const mapXstateToContinuation = (xstateAction, originAction) => {
   switch (xstateAction.type) {
     case '@@SEND':
@@ -319,9 +145,9 @@ const mapXstateToContinuation = (xstateAction, originAction) => {
       return // TODO
     case '@@RESPOND':
       // TODO use the origin action
-      const resolveAction = resolve(xstateAction.data, originAction)
-      debug(`respond: `, resolveAction)
-      return resolveAction
+      debug(`@@RESPOND to: `, originAction.type)
+      replyResolve(xstateAction.data, originAction)
+      break
     default:
       if (xstateAction.type.startsWith('done.invoke.')) {
         // we clobber data key
@@ -341,4 +167,4 @@ const assertActionIsValid = (state, action) => {
   }
 }
 
-module.exports = { respond, send, sendParent, invoke, translator }
+module.exports = { respond, send, sendParent, translator }

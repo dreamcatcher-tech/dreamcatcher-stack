@@ -6,8 +6,8 @@ require('../../w012-crypto').testMode()
 
 require('debug').enable('*met* ')
 
-describe('promises', () => {
-  test.only('loopback cleared immediately', async () => {
+describe('hooks', () => {
+  test('loopback cleared immediately', async () => {
     const base = await metrologyFactory()
     base.enableLogging()
     await base.spawn('loop')
@@ -20,4 +20,7 @@ describe('promises', () => {
     const length = (obj) => Object.keys(obj).length
     assert.strictEqual(length(requests), length(replies))
   })
+  test.todo('throw if pending and tx a request to self')
+  // if only request from pending is a request to self, then know it will never resolve
+  // basically cannot raise pending, then request something to self
 })

@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:api:promises')
+const debug = require('debug')('interblock:api:hooks')
 const { request, promise, resolve, reject, isReplyFor } = require('./api')
 
 const _eternalPromise = new Promise(() => {
@@ -29,7 +29,9 @@ const interchain = async (type, payload, to) => {
 
 const effect = async (type, fn, ...args) => {
   // promise that will be placed on the @@io queue and later executed
-  const payload = { args }
+  const requestId = _incrementGlobalRequestId()
+
+  const payload = { args, ['@@ioRequestId']: requestId }
   const exec = () => fn(...args)
   return _promise({ type, payload, to: '@@io', exec, inBand: false })
 }
@@ -47,10 +49,8 @@ const _promise = (request) => {
   debug(`_promise request.type: %o`, request.type)
   const accumulator = _getGlobalAccumulator()
   assert(Array.isArray(accumulator))
-  const { type, to, exec, inBand } = request
+  const { type, payload, to, exec, inBand } = request
   assert(!exec || typeof exec === 'function')
-  const requestId = _incrementGlobalRequestId()
-  payload = { ...request.payload, ['__@@requestId']: requestId }
   const requestWithId = { type, payload, to }
 
   const reply = accumulator.find((reply) => isReplyFor(reply, requestWithId))
@@ -76,49 +76,60 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   assert.strictEqual(typeof tick, 'function')
   assert(Array.isArray(accumulator))
   assert.strictEqual(typeof salt, 'string')
-  debug(`hook`)
+  debug(`hook salt:`, salt)
+  try {
+    await _hookGlobal(accumulator, salt)
+    let reduction = tick()
+    let isPending = false
+    let actions
 
-  _hookGlobal(accumulator, salt)
-  let reduction = tick()
-  let isPending = false
-  let actions
+    assert(reduction, `Must return something from tick`)
 
-  assert(reduction, `Must return something from tick`)
+    if (typeof reduction.then === 'function') {
+      // unwrap native async queue
+      const racecar = Symbol('RACECAR')
+      // TODO be able to have multiple concurrent hooks active, as sometimes needs to await deeper in the eventloop to run the hooks code
+      // TODO implement a wait loop, to avoid collisions
+      const racetrack = new Promise((resolve) =>
+        setImmediate(() => resolve(racecar))
+      )
+      const result = await Promise.race([reduction, racetrack])
+      const isStillPending = result === racecar
+      actions = _unhookGlobal()
 
-  if (typeof reduction.then === 'function') {
-    // unwrap native async queue
-    const racecar = Symbol('RACECAR')
-    // TODO be able to have multiple concurrent hooks active, as sometimes needs to await deeper in the eventloop to run the hooks code
-    // TODO implement a wait loop, to avoid collisions
-    const racetrack = new Promise((resolve) =>
-      setImmediate(() => resolve(racecar))
-    )
-    const result = await Promise.race([reduction, racetrack])
-    const isStillPending = result === racecar
-    actions = _unhookGlobal()
-
-    if (isStillPending && !actions.requests.length) {
-      // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
-      throw new Error(`Non standard promise returned - use "effectInBand(...)"`)
-    }
-    if (!isStillPending) {
-      // must unwrap fully from the async/await wrapper
-      reduction = await reduction
-      isPending = false
+      if (isStillPending && !actions.requests.length) {
+        // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
+        throw new Error(
+          `Non standard promise returned - use "effectInBand(...)"`
+        )
+      }
+      if (!isStillPending) {
+        // must unwrap fully from the async/await wrapper
+        reduction = await reduction
+        isPending = false
+      } else {
+        reduction = undefined
+        isPending = true
+      }
     } else {
-      reduction = undefined
-      isPending = true
+      actions = _unhookGlobal()
     }
-  } else {
-    // TODO set _unhookGlobal() in a finally block to ensure it always happens
-    actions = _unhookGlobal()
+    const { requests, replies } = actions
+    return { reduction, isPending, requests, replies } // rejection is handled by tick throwing ?
+  } catch (error) {
+    debug(`error: `, error)
+    _unhookGlobal()
+    throw error
   }
-  const { requests, replies } = actions
-  return { reduction, isPending, requests, replies } // rejection is handled by tick throwing ?
 }
 
-const _hookGlobal = (originalAccumulator, salt) => {
+const _hookGlobal = async (originalAccumulator, salt) => {
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
+  const start = Date.now()
+  while (globalThis['@@interblock'].promises) {
+    debug(`waiting for global: ${Date.now() - start}ms`)
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  }
   assert(!globalThis['@@interblock'].promises)
   const accumulator = [...originalAccumulator]
   Object.freeze(accumulator)
@@ -143,13 +154,13 @@ const _getGlobalAccumulator = () => {
 const _pushGlobalRequest = (request) => {
   _assertGlobals()
   const { requests } = globalThis['@@interblock'].promises
-  debug(`_pushGlobalRequest`, request)
+  debug(`_pushGlobalRequest`, request.type)
   requests.push(request)
 }
 const _pushGlobalReply = (reply) => {
   _assertGlobals()
   const { replies } = globalThis['@@interblock'].promises
-  debug(`_pushGlobalReply`, reply)
+  debug(`_pushGlobalReply`, reply.type)
   replies.push(reply)
 }
 

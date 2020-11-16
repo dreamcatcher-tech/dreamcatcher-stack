@@ -5,7 +5,12 @@ const {
   isolateFactory,
   toFunctions,
 } = require('../src/services/isolateFactory')
-const { covenantIdModel, dmzModel, blockModel } = require('../../w015-models')
+const {
+  rxRequestModel,
+  covenantIdModel,
+  dmzModel,
+  blockModel,
+} = require('../../w015-models')
 require('debug').enable('*tests* *isolate*')
 describe('isolation', () => {
   test('handle two covenants', async () => {
@@ -45,8 +50,8 @@ describe('isolation', () => {
     const r1 = isolate.tick(tick1)
     const r2 = isolate.tick(tick2)
 
-    assert.deepEqual(await r1, { test: 'reducer1' })
-    assert.deepEqual(await r2, { test: 'reducer2' })
+    assert.strictDeepEqual(await r1, { test: 'reducer1' })
+    assert.strictDeepEqual(await r2, { test: 'reducer2' })
 
     debug(`unload tests`)
     await assert.rejects(() => isolate.unloadCovenant('not valid containerId'))
@@ -55,6 +60,40 @@ describe('isolation', () => {
     debug(`attempting tick1`)
     await assert.rejects(() => isolate.tick(tick1))
 
-    assert.deepEqual(await id1, block1.provenance.reflectIntegrity().hash)
+    assert.strictDeepEqual(await id1, block1.provenance.reflectIntegrity().hash)
+  })
+  test('reducer throw propogates back', async () => {
+    const reducerThrower = () => {
+      throw new Error(`reducerThrower`)
+    }
+    const covenantMap = {
+      reducer1: { reducer: reducerThrower },
+    }
+    let covenantId = covenantIdModel.create('reducer1')
+    const block1 = await blockModel.create(dmzModel.create({ covenantId }))
+
+    const isolateProcessor = isolateFactory(covenantMap)
+    const queue = ioQueueFactory('testIsolate')
+    queue.setProcessor(isolateProcessor)
+    const isolate = toFunctions(queue)
+
+    const containerId = await isolate.loadCovenant(block1)
+    const address = block1.provenance.getAddress()
+    const index = 0
+    const action = rxRequestModel.create('action1', {}, address, index)
+    const tick1 = {
+      containerId,
+      state: {},
+      action,
+      accumulator: [],
+      timeout: 30000,
+    }
+    await assert.rejects(
+      () => isolate.tick(tick1),
+      (error) => {
+        assert.strictEqual(error.message, 'reducerThrower')
+        return true
+      }
+    )
   })
 })

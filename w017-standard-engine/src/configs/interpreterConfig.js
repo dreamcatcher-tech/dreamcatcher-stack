@@ -8,6 +8,7 @@ const {
   dmzModel,
   channelModel,
   reductionModel,
+  pendingModel,
 } = require('../../../w015-models')
 const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const dmzReducer = require('../../../w021-dmz-reducer')
@@ -22,6 +23,45 @@ const { assign } = require('xstate')
 
 const interpreterMachine = machine.withConfig({
   actions: {
+    assignExternalAction: assign({
+      externalAction: (context, event) => {
+        const { externalAction } = event.payload
+        return externalAction
+      },
+    }),
+    assignDmz: assign({
+      dmz: (context, event) => {
+        const { dmz, address } = event.payload
+        assert(dmzModel.isModel(dmz))
+        assert(dmz.network.getAlias(address))
+        return dmz
+      },
+      initialPending: (context, event) => {
+        const { dmz } = event.payload
+        assert(dmzModel.isModel(dmz))
+        return dmz.pending
+      },
+    }),
+    assignAnvil: assign({
+      anvil: (context, event) => {
+        const { externalAction, address } = event.payload
+        const anvil = externalAction
+        assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+        assert(addressModel.isModel(address))
+        if (rxRequestModel.isModel(anvil)) {
+          assert(anvil.getAddress().equals(address))
+        }
+        debug(`interpreterConfig`, anvil.type, address.getChainId())
+        return anvil
+      },
+      address: (context, event) => {
+        // TODO try replace with something that gets the address dynamically
+        const { address } = event.payload
+        assert(addressModel.isModel(address))
+        assert(address.isResolved())
+        return address
+      },
+    }),
     loadSelfAnvil: assign({
       anvil: ({ dmz }) => {
         const anvil = dmz.network.rxSelf()
@@ -30,7 +70,7 @@ const interpreterMachine = machine.withConfig({
       },
       address: ({ dmz }) => {
         const selfAddress = dmz.network['.'].address
-        assert(selfAddress, `Self not found`)
+        assert(selfAddress.isLoopback())
         debug(`loadSelfAnvil selfAddress: %o`, selfAddress.getChainId())
         return selfAddress
       },
@@ -94,24 +134,13 @@ const interpreterMachine = machine.withConfig({
         // get the action that is the first buffered request
         assert(dmzModel.isModel(dmz))
         assert(rxReplyModel.isModel(anvil))
-        const { network, pending } = dmz
+        const { pending } = dmz
         assert(pending.getIsPending())
 
         const covenantAction = pending.pendingRequest
         assert(rxRequestModel.isModel(covenantAction))
         debug(`shiftCovenantAction: `, covenantAction.type)
         return covenantAction
-      },
-    }),
-    transmitSystem: assign({
-      dmz: ({ dmz, reduceResolve }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(reductionModel.isModel(reduceResolve))
-        debug('transmitSystem')
-        const { requests, replies } = reduceResolve
-        const network = networkProducer.tx(dmz.network, requests, replies)
-        // TODO check if moving channels around inside dmz can affect tx ?
-        return dmzModel.clone({ ...dmz, network })
       },
     }),
     mergeSystemState: assign({
@@ -122,14 +151,67 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone(reduceResolve.reduction)
       },
     }),
-    // TODO both merges do a network tx, then different merges to dmz - unify these
     transmit: assign({
       dmz: ({ dmz, reduceResolve }) => {
         assert(dmzModel.isModel(dmz))
         assert(reductionModel.isModel(reduceResolve))
         const { requests, replies } = reduceResolve
         debug('transmit req: %o rep %o', requests.length, replies)
+        // TODO check if moving channels around inside dmz can affect tx ?
+        // TODO deduplication before send, rather than relying on tx
         const network = networkProducer.tx(dmz.network, requests, replies)
+        return dmzModel.clone({ ...dmz, network })
+      },
+      isExternalPromise: ({
+        isExternalPromise,
+        externalAction,
+        reduceResolve,
+      }) => {
+        if (isExternalPromise) {
+          return isExternalPromise
+        }
+        assert(reductionModel.isModel(reduceResolve))
+        const { replies } = reduceResolve
+        // TODO cleanup, since sometimes externalAction is an rxReply
+        if (rxReplyModel.isModel(externalAction)) {
+          debug(`transmit isExternalPromise`, false)
+          return false
+        }
+        assert(rxRequestModel.isModel(externalAction))
+        isExternalPromise = replies.some(
+          (txReply) =>
+            txReply.getReply().isPromise() &&
+            txReply.request.sequence === externalAction.sequence
+        )
+        debug(`transmit isExternalPromise`, isExternalPromise)
+        return isExternalPromise
+      },
+      isOriginPromise: ({ isOriginPromise, initialPending, reduceResolve }) => {
+        if (isOriginPromise || !initialPending.getIsPending()) {
+          debug(`transmit isOriginPromise`, isOriginPromise)
+          return isOriginPromise
+        }
+        assert(pendingModel.isModel(initialPending))
+        assert(reductionModel.isModel(reduceResolve))
+        const { replies } = reduceResolve
+        const { pendingRequest } = pendingModel
+        isOriginPromise = replies.some(
+          (txReply) =>
+            txReply.getReply().isPromise() &&
+            txReply.request.sequence === pendingRequest.sequence
+        )
+        debug(`transmit isOriginPromise`, isOriginPromise)
+        return isOriginPromise
+      },
+    }),
+    resolveOriginRequest: assign({
+      dmz: ({ dmz, covenantAction }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(rxRequestModel.isModel(covenantAction))
+        debug(`resolveOriginRequest`)
+        const { sequence } = covenantAction
+        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
+        const network = networkProducer.tx(dmz.network, [], [reply])
         return dmzModel.clone({ ...dmz, network })
       },
     }),
@@ -146,6 +228,12 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
+    warnReplyRejection: ({ reduceRejection }) => {
+      // TODO reject all loopback actions and reject the external action
+      debug(`warnReplyRejection`)
+      console.warn(`Warning: rejection occured during reply`)
+      console.warn(reduceRejection)
+    },
     raisePending: assign({
       dmz: ({ dmz, anvil }) => {
         assert(dmzModel.isModel(dmz))
@@ -156,28 +244,28 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, pending })
       },
     }),
+    promiseExternalAction: assign({
+      dmz: ({ dmz, externalAction }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(rxRequestModel.isModel(externalAction))
+        const { sequence } = externalAction
+        const promise = txReplyModel.create('@@PROMISE', {}, sequence)
+        const network = networkProducer.tx(dmz.network, [], [promise])
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
     promiseOriginRequest: assign({
       dmz: ({ dmz, anvil, covenantAction }) => {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
-        assert(anvil.equals(covenantAction))
+        assert(!covenantAction || anvil.equals(covenantAction))
         const { sequence } = anvil
         const promise = txReplyModel.create('@@PROMISE', {}, sequence)
         const network = networkProducer.tx(dmz.network, [], [promise])
         debug(`promiseOriginRequest`, anvil.type)
         return dmzModel.clone({ ...dmz, network })
       },
-    }),
-    resolveOriginRequest: assign({
-      dmz: ({ dmz, covenantAction }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(covenantAction))
-        debug(`resolveOriginRequest`)
-        const { sequence } = covenantAction
-        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
-        const network = networkProducer.tx(dmz.network, [], [reply])
-        return dmzModel.clone({ ...dmz, network })
-      },
+      isExternalPromise: () => true,
     }),
     settlePending: assign({
       dmz: ({ dmz }) => {
@@ -211,11 +299,11 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
-
     respondPromise: assign({
       dmz: ({ dmz, anvil }) => {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
+        assert.fail('todo')
         // assert no prior promise or resolution to the request
         // do not overwrite an existing reply to the triggering action
 
@@ -223,12 +311,24 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     respondRequest: assign({
-      dmz: ({ dmz, address, anvil }) => {
+      dmz: ({ externalAction, dmz, address, anvil }) => {
         debug('respondRequest')
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
         assert(anvil.getAddress().equals(address))
+        assert(!anvil.equals(externalAction))
         const network = networkProducer.respondRequest(dmz.network, anvil)
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
+    defaultResolve: assign({
+      dmz: ({ dmz, externalAction }) => {
+        debug('defaultResolve')
+        assert(dmzModel.isModel(dmz))
+        assert(rxRequestModel.isModel(externalAction))
+        const { sequence } = externalAction
+        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
+        const network = networkProducer.tx(dmz.network, [], [reply])
         return dmzModel.clone({ ...dmz, network })
       },
     }),
@@ -241,11 +341,18 @@ const interpreterMachine = machine.withConfig({
     },
     isSystem: ({ anvil }) => {
       assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-      // TODO move to statechart conditions
       const isSystem =
         dmzReducer.isSystemReply(anvil) || dmzReducer.isSystemRequest(anvil)
       debug(`isSystem: ${isSystem}`)
       return isSystem
+    },
+    isExternalAction: ({ externalAction, anvil, address }) => {
+      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+      assert(addressModel.isModel(address))
+      const isExternalAction = !address.isLoopback()
+      assert(!isExternalAction || externalAction.equals(anvil))
+      debug(`isExternalAction`, isExternalAction)
+      return isExternalAction
     },
     isPending: ({ dmz }) => {
       const isPending = dmz.pending.getIsPending()
@@ -270,14 +377,6 @@ const interpreterMachine = machine.withConfig({
         reduceResolve.getIsPending() && !dmz.pending.getIsPending()
       debug(`isPendingRaised: `, isPendingRaised)
       return isPendingRaised
-    },
-    isPendingLowered: ({ dmz, reduceResolve }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(reductionModel.isModel(reduceResolve))
-      const isPendingLowered =
-        !reduceResolve.getIsPending() && dmz.pending.getIsPending()
-      debug(`isPendingLowered: `, isPendingLowered)
-      return isPendingLowered
     },
     isChannelUnavailable: ({ dmz, address }) => {
       assert(addressModel.isModel(address), `If Anvil, then address required`)
@@ -309,26 +408,72 @@ const interpreterMachine = machine.withConfig({
       debug(`isUnbuffered`, isUnbuffered)
       return isUnbuffered
     },
-    isSystemResponseFromActions: ({ dmz, anvil, address }) => {
+    isLoopbackResponseDone: ({ dmz, anvil, address }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(anvil))
       assert(anvil.getAddress().equals(address))
+      assert(address.isLoopback())
 
-      const index = anvil.getIndex()
-      const isResponseDone = dmz.network.isResponseDone(address, index)
-      debug(`isResponseDone: ${!!isResponseDone} anvil: %o`, anvil.type)
-      return isResponseDone
+      const isDone = !!dmz.network.getResponse(anvil)
+      debug(`isLoopbackResponseDone: %o anvil: %o`, isDone, anvil.type)
+      return isDone
     },
-    isResponseFromActions: ({ covenantAction, reduceResolve }) => {
+    isOriginSettled: ({ initialPending, dmz }) => {
+      // if rejection, or resolve, return true
+      assert(pendingModel.isModel(initialPending))
+      assert(dmzModel.isModel(dmz))
+      if (!initialPending.getIsPending()) {
+        debug(`isOriginSettled`, true)
+        return true
+      }
+      const { pendingRequest } = initialPending
+      assert(rxRequestModel.isModel(pendingRequest))
+      const reply = dmz.network.getResponse(pendingRequest)
+      const isOriginSettled = reply && !reply.isPromise()
+      debug(`isOriginSettled`, isOriginSettled)
+      return isOriginSettled
+    },
+    isOriginResponseDone: ({ covenantAction, reduceResolve }) => {
       assert(rxRequestModel.isModel(covenantAction))
       assert(reductionModel.isModel(reduceResolve))
-      // TODO handle promise being returned part way thru pending
+      // TODO handle promise to origin being returned part way thru pending
+      // presuming here that resolve to origin will be in reduceResolve
       const { replies } = reduceResolve
-      const isResponseFromActions = replies.some(
+      const isOriginResponseDone = replies.some(
         (reply) => reply.request.sequence === covenantAction.sequence
       )
-      debug(`isResponseFromActions: `, isResponseFromActions)
-      return isResponseFromActions
+      debug(`isOriginResponseDone: `, isOriginResponseDone)
+      return isOriginResponseDone
+    },
+    isPendingUnlowered: ({ initialPending, dmz }) => {
+      assert(pendingModel.isModel(initialPending))
+      assert(dmzModel.isModel(dmz))
+      const isPendingUnlowered =
+        initialPending.getIsPending() && !dmz.pending.getIsPending()
+      debug(`isPendingUnlowered`, isPendingUnlowered)
+      return isPendingUnlowered
+    },
+    isTxOriginPromise: ({ isOriginPromise }) => {
+      debug(`isTxOriginPromise`, isOriginPromise)
+      return isOriginPromise
+    },
+    isExternalActionReply: ({ externalAction }) => {
+      const isExternalActionReply = rxReplyModel.isModel(externalAction)
+      debug(`isExternalActionReply`, isExternalActionReply)
+      return isExternalActionReply
+    },
+    isExternalActionSettled: ({ dmz, externalAction }) => {
+      assert(dmzModel.isModel(dmz))
+      assert(rxRequestModel.isModel(externalAction))
+      const reply = dmz.network.getResponse(externalAction)
+      const isExternalActionSettled = reply && !reply.isPromise()
+      debug(`isExternalActionSettled`, isExternalActionSettled)
+      return isExternalActionSettled
+    },
+    isTxExternalActionPromise: ({ isExternalPromise }) => {
+      const isExternalActionPromised = !!isExternalPromise
+      debug(`isExternalActionPromised`, isExternalActionPromised)
+      return isExternalActionPromised
     },
   },
   services: {
@@ -350,11 +495,11 @@ const interpreterMachine = machine.withConfig({
           return reply
         })
         const results = await Promise.all(awaits)
-        debug(`awaits results: `, results)
+        debug(`inband awaits results: `, results.length)
         accumulator.push(...results)
       } while (inbandPromises.length)
 
-      debug(`result: `, reduceResolve)
+      debug(`result isPending: `, reduceResolve.isPending)
       assert(reduceResolve, `System returned: ${reduceResolve}`)
       // TODO assert system can never raise pending
       return { reduceResolve }
@@ -377,20 +522,9 @@ const interpreterMachine = machine.withConfig({
   },
 })
 
-const interpreterConfig = (isolatedTick, dmz, anvil, address) => {
+const interpreterConfig = (isolatedTick) => {
   assert(typeof isolatedTick === 'function')
-  assert(dmzModel.isModel(dmz))
-  assert(addressModel.isModel(address))
-  assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-  if (rxRequestModel.isModel(anvil)) {
-    assert(anvil.getAddress().equals(address))
-  }
-  debug(
-    `interpreterConfig: %o from chainId: %o`,
-    anvil.type,
-    address.getChainId()
-  )
-  return interpreterMachine.withContext({ dmz, anvil, address, isolatedTick })
+  return interpreterMachine.withContext({ isolatedTick })
 }
 
 module.exports = { interpreterConfig }
