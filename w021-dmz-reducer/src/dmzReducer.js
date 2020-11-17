@@ -23,7 +23,7 @@ const {
   interchain,
 } = require('../../w002-api')
 /**
- * DmzCommander is responsible for:
+ * DmzReducer is responsible for:
  *  1. multiplexing the covenant, if configured to do so
  *  2. altering the structure of the DMZ
  *  3. checking the ACL for all actions coming in
@@ -47,7 +47,6 @@ const reducer = async (dmz, action) => {
   debug(`reducer( ${action.type} )`)
   assert(dmzModel.isModel(dmz))
   assert(rxReplyModel.isModel(action) || rxRequestModel.isModel(action))
-  const actions = []
   let { network } = dmz
 
   switch (action.type) {
@@ -63,12 +62,9 @@ const reducer = async (dmz, action) => {
       break
     }
     case '@@UPLINK': {
-      const { nextNetwork, response } = connectUplinkReducer(
-        dmz.network,
-        action
-      )
+      const { nextNetwork, payload } = connectUplinkReducer(dmz.network, action)
+      replyResolve(payload)
       network = nextNetwork
-      actions.push(response)
       break
     }
     case '@@GENESIS': {
@@ -77,21 +73,19 @@ const reducer = async (dmz, action) => {
       break
     }
     case '@@OPEN_CHILD': {
-      const { nextNetwork, response } = openChildReducer(dmz.network, action)
-      network = nextNetwork
-      actions.push(response)
+      openChildReducer(dmz.network, action)
       break
     }
     case '@@GET_GIVEN_NAME': {
-      const response = getGivenNameReducer(dmz.network)
-      actions.push(response)
+      const payload = getGivenNameReducer(dmz.network)
+      replyResolve(payload)
       break
     }
     case '@@INTRO': {
       break
     }
     case '@@ACCEPT': {
-      // just responding is enough to trigger lineage catchup
+      // just default responding is enough to trigger lineage catchup
       break
     }
     default: {
@@ -103,6 +97,7 @@ const reducer = async (dmz, action) => {
     const request = action.getRequest()
     switch (request.type) {
       case '@@GENESIS': {
+        // TODO lighten size of actions by storing origin in state ?
         const { genesis, alias, originAction } = request.payload
         const genesisModel = blockModel.clone(genesis)
         const payload = { alias, chainId: genesisModel.getChainId() }
@@ -115,16 +110,14 @@ const reducer = async (dmz, action) => {
         debug('reply received for @@UPLINK: %o', alias)
         const chainId = network[alias].address.getChainId()
         const payload = { chainId }
-        const resolveAction = resolve(payload, request.payload.originAction)
-        actions.push(resolveAction)
+        replyResolve(payload, request.payload.originAction)
         break
       }
       case '@@OPEN_CHILD': {
         const { chainId } = action.payload
         debug(`reply received for @@OPEN_CHILD: %o`, chainId.substring(0, 9))
         const { fullPath } = request.payload
-        actions.push(dmzActions.connect(fullPath, chainId))
-        // now need to connect this alias to the newfound chainId, which is awaiting our connection
+        interchain(dmzActions.connect(fullPath, chainId))
         break
       }
     }
@@ -223,8 +216,8 @@ const connectUplinkReducer = (network, action) => {
     debug(`connectUplinkReducer ${alias} set to ${short}`)
   })
   assert(alias)
-  const response = resolve({ alias })
-  return { nextNetwork, response }
+  const payload = { alias }
+  return { nextNetwork, payload }
 }
 dmzActions.openChild = (alias, fullPath) => ({
   type: types.openChild,
@@ -232,41 +225,37 @@ dmzActions.openChild = (alias, fullPath) => ({
 })
 const openChildReducer = (network, action) => {
   assert(rxRequestModel.isModel(action))
-  let response
 
-  const nextNetwork = networkModel.clone(network, (draft) => {
-    const { alias } = action.payload
-    const channel = network[alias]
-    if (!channel) {
-      response = reject(`Alias not found: ${alias}`)
-    } else if (channel.systemRole !== './') {
-      response = reject(`Alias found, but is not child: ${alias}`)
-    } else {
-      const chainId = action.getAddress().getChainId()
-      // TODO dispatch thru actions, rather than direct insertion
-      const connect = actionModel.create(
-        dmzActions.connectUplink(chainId, action)
-      )
-      draft[alias] = channelProducer.txRequest(channel, connect)
-      response = promise() // TODO who handles ACL for opening child ?
-    }
-  })
-  return { nextNetwork, response }
+  const { alias } = action.payload
+  const channel = network[alias]
+  if (!channel) {
+    replyReject(`Alias not found: ${alias}`)
+  } else if (channel.systemRole !== './') {
+    replyReject(`Alias found, but is not child: ${alias}`)
+  } else {
+    const chainId = action.getAddress().getChainId()
+    // TODO dispatch thru actions, rather than direct insertion
+    const { type, payload } = dmzActions.connectUplink(chainId, action)
+    interchain(type, payload, alias)
+    // TODO who handles ACL for opening child ?
+    replyPromise()
+  }
 }
 
 dmzActions.getGivenName = () => ({ type: types.getGivenName })
 const getGivenNameReducer = (network) => {
   debug(`getGivenNameReducer`)
   const parent = network['..']
+  let givenName
   if (parent.address.isRoot()) {
     assert(!parent.heavy)
-    return 'ROOT'
+    givenName = '@@ROOT'
+  } else {
+    assert(parent.heavy)
+    givenName = parent.heavy.getOriginAlias()
   }
-  assert(parent.heavy)
-  const givenName = parent.heavy.getOriginAlias()
   assert(givenName)
-  const response = resolve({ givenName })
-  return response
+  return { givenName }
 }
 
 const isSystemRequest = (request) => {
@@ -305,8 +294,8 @@ const autoAlias = (network, autoPrefix = 'file_') => {
   })
   return autoPrefix + pad(5, highest + 1, '0')
 }
-
 const openPaths = (network) =>
+  // TODO move to being a loopback action at the end of interpreter
   // in dmzReducer because it needs to communicate with the dmz reducers
   networkModel.clone(network, (draft) => {
     // unresolved paths can only come from requests
@@ -316,6 +305,7 @@ const openPaths = (network) =>
       network[alias].address.isUnknown()
     )
     unresolved.forEach((alias) => {
+      assert(alias !== '@@io', `Never resolve @@io`)
       const paths = _getPathSegments(alias)
       paths.forEach((path, index) => {
         const channel = network[path]
@@ -330,6 +320,7 @@ const openPaths = (network) =>
 
         if (index === 0) {
           // TODO handle immediate child being unresolved ?
+          debug(`immediate child unresolved`)
         }
 
         const parent = paths[index - 1]
@@ -344,10 +335,6 @@ const openPaths = (network) =>
         debug(`open: `, open)
 
         draft[parent] = channelProducer.txRequest(network[parent], open)
-        // grab the parent of this path
-        // if that is unresolved, bail
-        // if that has already had @@OPEN with this alias in it, bail
-        // else send an @@OPEN request to it
       })
     })
   })

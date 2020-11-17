@@ -67,9 +67,10 @@ const dmzModel = standardize({
   },
   logicize: (instance) => {
     // TODO if isSideEffectCapable ensure the validators list is singular
-    const { network, pending } = instance
+    const { network, pending, config } = instance
     // TODO verify that the buffers map to legit channels
     assert(pending.isBufferValid(network))
+    assert(!network['@@io'] || config.isPierced)
     const rx = () => {
       const reply = network.rxReply()
       if (reply) {

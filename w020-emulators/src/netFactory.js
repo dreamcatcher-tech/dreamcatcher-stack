@@ -1,5 +1,6 @@
 const debug = require('debug')('interblock:covenants:net')
 const assert = require('assert')
+const { interchain } = require('../../w002-api')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
 const { spawn, connect } = dmzReducer.actions
@@ -8,7 +9,6 @@ const {
   respond,
   send,
   sendParent,
-  invoke,
   translator,
 } = require('../../w022-xstate-translator')
 
@@ -22,7 +22,8 @@ const netFactory = (gateway) => {
         const { url } = event.payload
         const covenantId = covenantIdModel.create('socket')
         const config = { isPierced: true }
-        await invoke(spawn(url, { covenantId, config }))
+        const result = await interchain(spawn(url, { covenantId, config }))
+        return result
       },
       rmTransport: async (context, event) => {
         // close all the websockets
@@ -77,6 +78,7 @@ const netFactory = (gateway) => {
 
   const actions = {
     add: (url) => {
+      assert.strictEqual(typeof url, 'string')
       url = url.replace(/\//g, '|')
       return {
         type: `ADD`,

@@ -2,6 +2,7 @@ const assert = require('assert')
 const debug = require('debug')('interblock:config:interpreter')
 const {
   txReplyModel,
+  txRequestModel,
   rxReplyModel,
   rxRequestModel,
   addressModel,
@@ -76,12 +77,13 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     assignResolve: assign({
-      reduceResolve: ({ anvil }, event) => {
+      reduceResolve: ({ dmz, anvil }, event) => {
+        assert(dmzModel.isModel(dmz))
         const { reduceResolve } = event.data
         assert(reduceResolve)
         const { reduction, isPending, requests, replies } = reduceResolve
         debug(`assignResolve pending: %o`, isPending)
-        return reductionModel.create(reduceResolve, anvil)
+        return reductionModel.create(reduceResolve, anvil, dmz)
       },
     }),
     assignRejection: assign({
@@ -151,6 +153,40 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone(reduceResolve.reduction)
       },
     }),
+    deduplicatePendingReplyTx: assign({
+      reduceResolve: ({ dmz, reduceResolve }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(reductionModel.isModel(reduceResolve))
+        let { requests, replies } = reduceResolve
+        requests = requests.filter((txRequest) => {
+          assert(txRequestModel.isModel(txRequest))
+          const channel = dmz.network[txRequest.to]
+          if (!channel) {
+            return true
+          }
+          const request = txRequest.getRequest()
+          return !Object.values(channel.requests).some((existing) =>
+            request.equals(existing)
+          )
+        })
+        replies = replies.filter((txReply) => {
+          assert(txReplyModel.isModel(txReply))
+          const address = txReply.getAddress()
+          const index = txReply.getIndex()
+          const alias = dmz.network.getAlias(address)
+          if (!alias) {
+            return true
+          }
+          const existing = dmz.network[alias].replies[index]
+          return !txReply.getReply().equals(existing)
+        })
+        debug(
+          `deduplicatePendingReplyTx dedupes: `,
+          reduceResolve.requests.length - requests.length
+        )
+        return reductionModel.clone({ ...reduceResolve, requests, replies })
+      },
+    }),
     transmit: assign({
       dmz: ({ dmz, reduceResolve }) => {
         assert(dmzModel.isModel(dmz))
@@ -205,11 +241,15 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     settleOrigin: assign({
-      dmz: ({ dmz, covenantAction }) => {
+      dmz: ({ initialPending, dmz }) => {
+        assert(pendingModel.isModel(initialPending))
+        assert(initialPending.getIsPending())
         assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(covenantAction))
-        debug(`resolveOriginRequest`)
-        const { sequence } = covenantAction
+        assert(!dmz.pending.getIsPending())
+        const { pendingRequest } = initialPending
+        assert(rxRequestModel.isModel(pendingRequest))
+        debug(`resolveOriginRequest`, pendingRequest)
+        const { sequence } = pendingRequest
         const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
         const network = networkProducer.tx(dmz.network, [], [reply])
         return dmzModel.clone({ ...dmz, network })
@@ -332,6 +372,14 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
+    openPaths: assign({
+      dmz: ({dmz}) => {
+        assert(dmzModel.isModel(dmz))
+        debug(`openPaths`)
+        const network = dmzReducer.openPaths(dmz.network)
+        return dmzModel.clone({...dmz, network})
+      }
+    })
   },
   guards: {
     isSelfExhausted: ({ dmz }) => {

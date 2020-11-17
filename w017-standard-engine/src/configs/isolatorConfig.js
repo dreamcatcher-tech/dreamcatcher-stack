@@ -135,15 +135,6 @@ const isolatorMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
-    openPaths: assign({
-      dmz: ({ dmz }) => {
-        // TODO move this to be in the interpreter ?
-        debug(`openPaths`)
-        assert(dmzModel.isModel(dmz))
-        const network = openPaths(dmz.network)
-        return dmzModel.clone({ ...dmz, network })
-      },
-    }),
     unassignContainerId: assign({
       containerId: () => '',
     }),
@@ -227,12 +218,12 @@ const isolatorMachine = machine.withConfig({
   },
 })
 const _extractPierceDmz = (block) => {
-  const ioChannel = block.network['@@io']
   const validators = pierceKeypair.getValidatorEntry()
   const baseDmz = dmzModel.create({ validators })
   const address = block.provenance.getAddress()
   let pierceChannel = channelModel.create(address, 'PIERCE')
-  if (ioChannel) {
+  if (block.network['@@io']) {
+    const ioChannel = block.network['@@io']
     const remote = ioChannel.getRemote()
     assert(remote && remote.address.equals(address))
     const { requests, replies } = remote

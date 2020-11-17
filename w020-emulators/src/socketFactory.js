@@ -47,7 +47,7 @@ const socketFactory = (gateway) => {
       connectSocket: async (context, event) => {
         // TODO handle duplicate additions gracefully
         debug(`connectSocket`)
-        const { givenName } = await invoke(getGivenName())
+        const { givenName } = await interchain(getGivenName())
         debug(`givenName: %O`, givenName)
         const url = givenName.replace(/\|/g, '/')
         debug(`url: %O`, url)

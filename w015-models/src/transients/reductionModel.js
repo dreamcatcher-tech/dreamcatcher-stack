@@ -1,10 +1,10 @@
 const assert = require('assert')
 const { standardize } = require('../utils')
 const { assertNoUndefined } = require('../assertNoUndefined')
-const { txRequestModel } = require('../transients/txRequestModel')
-const { txReplyModel } = require('../transients/txReplyModel')
-const { rxReplyModel } = require('../transients/rxReplyModel')
-const { rxRequestModel } = require('../transients/rxRequestModel')
+const { txRequestModel } = require('./txRequestModel')
+const { txReplyModel } = require('./txReplyModel')
+const { rxReplyModel } = require('./rxReplyModel')
+const { rxRequestModel } = require('./rxRequestModel')
 
 const _inflate = (action, defaultAction) => {
   if (!action) {
@@ -56,13 +56,22 @@ const reductionModel = standardize({
       },
     },
   },
-  create(reduceResolve, origin) {
+  create(reduceResolve, origin, dmz) {
+    // TODO resolve circular reference problem
+    const { dmzModel } = require('../models/dmzModel')
     let { reduction, isPending, requests, replies } = reduceResolve
     assert(Array.isArray(requests))
     assert(Array.isArray(replies))
     assert(rxRequestModel.isModel(origin) || rxReplyModel.isModel(origin))
+    assert(dmzModel.isModel(dmz))
     requests = requests.map((request) => _inflate(request, origin))
     replies = replies.map((reply) => _inflate(reply, origin))
+    requests.forEach((txRequest) => {
+      if (txRequest.to === '@@io') {
+        assert(dmz.config.isPierced)
+      }
+    })
+    // TODO check replies are to real actions
     // TODO reuse dmz models if this is for system state
     const obj = { reduction, isPending, requests, replies }
     if (!reduction) {
@@ -74,6 +83,8 @@ const reductionModel = standardize({
     const { reduction, isPending, requests, replies } = instance
     assert((reduction && !isPending) || (!reduction && isPending))
     assertNoUndefined(requests, replies)
+    assert(requests.every(txRequestModel.isModel))
+    assert(replies.every(txReplyModel.isModel))
     if (reduction) {
       assertNoUndefined(reduction)
     }

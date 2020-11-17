@@ -4,18 +4,18 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('netFactory', () => {
   require('debug').enable(
-    '*metro* *tests* *effector *:net *:socket *shell *isolate *translator'
+    '*met* *tests* *effector *:net *:socket *shell  *translator *interpreter *dmzReducer'
   )
 
-  test('ping single', async () => {
+  test.only('ping single', async () => {
     debug(`start`)
     const client = await effectorFactory()
-
-    const url = 'wss:||echo.websocket.org'
-    await client.net.add(url)
-    assert(client.net[url])
     client.enableLogging()
-    await client.net[url].connect()
+    const url = 'wss://echo.websocket.org'
+    const urlSafe = 'wss:||echo.websocket.org'
+    await client.net.add(url)
+    assert(client.net[urlSafe])
+    await client.net[urlSafe].connect()
 
     // add a transport to echo.websocket.org
     // perform a transport layer ping

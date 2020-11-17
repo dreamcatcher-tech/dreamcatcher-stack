@@ -111,13 +111,20 @@ const definition = {
               entry: ['accumulateReply', 'shiftCovenantAction'],
               invoke: {
                 src: 'reduceCovenant',
-                onDone: { target: 'transmit', actions: 'assignResolve' },
+                onDone: {
+                  target: 'deduplicatePendingReplyTx',
+                  actions: 'assignResolve',
+                },
                 onError: {
                   target: 'rejectPending',
                   actions: 'assignRejection',
                 },
               },
               exit: 'respondReply',
+            },
+            deduplicatePendingReplyTx: {
+              entry: 'deduplicatePendingReplyTx',
+              always: 'transmit',
             },
             transmit: {
               entry: 'transmit', // TODO may accumulate tx too, to dedupe independently of changing channel structure
@@ -267,6 +274,7 @@ const definition = {
       onDone: 'done',
     },
     done: {
+      entry: 'openPaths',
       id: 'done',
       data: ({ dmz }) => dmz,
       type: 'final',

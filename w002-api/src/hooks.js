@@ -29,6 +29,8 @@ const interchain = async (type, payload, to) => {
 
 const effect = async (type, fn, ...args) => {
   // promise that will be placed on the @@io queue and later executed
+  assert.strictEqual(typeof type, 'string')
+  assert.strictEqual(typeof fn, 'function')
   const requestId = _incrementGlobalRequestId()
 
   const payload = { args, ['@@ioRequestId']: requestId }

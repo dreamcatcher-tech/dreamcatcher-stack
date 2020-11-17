@@ -16,6 +16,7 @@
  *      9. no passthru function calls
  *      10. everything is required - no optional properties
  *      11. never attempt to make objects raw and then clone them - makes for brittle tests
+ *      12. as soon as data enters the system, make it a model so it has logic integrity asap
  *
  *
  * All model objects are:
@@ -93,7 +94,6 @@ const modelNames = [
   'proofModel',
   'pendingModel',
   'simpleArrayModel',
-  'reductionModel',
 ]
 
 const models = {}

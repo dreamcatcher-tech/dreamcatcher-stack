@@ -81,7 +81,7 @@ const config = {
       const { action, to } = event.payload
       const { type, payload } = action
       debug(`dispatch type: %o to: %o`, type, to)
-      const result = await invoke(type, payload, to)
+      const result = await interchain(type, payload, to)
       return result
     },
   },

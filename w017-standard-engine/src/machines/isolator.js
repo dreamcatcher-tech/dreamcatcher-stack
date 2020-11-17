@@ -61,7 +61,7 @@ const definition = {
       always: [
         { target: 'reduce', cond: 'isReduceable' },
         { target: 'pierce', cond: 'isPiercable' },
-        { target: 'isCovenantUnloadable', actions: 'openPaths' },
+        { target: 'isCovenantUnloadable' },
       ],
     },
     reduce: {
