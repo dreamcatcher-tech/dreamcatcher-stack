@@ -100,10 +100,11 @@ const tcpTransportFactory = (url) => {
     })
   }
 
-  const close = async () => {
+  const disconnect = async () => {
+    const start = Date.now()
     ws.close()
     return new Promise((resolve, reject) => {
-      ws.on('close', resolve)
+      ws.on('close', () => resolve({ latencyMs: Date.now() - start }))
     })
   }
 
@@ -113,7 +114,7 @@ const tcpTransportFactory = (url) => {
     ws.send(interblock.serialize())
   }
 
-  return { connect, ping, pingLambda, version, close, interblock }
+  return { connect, ping, pingLambda, version, disconnect, interblock }
 }
 
 module.exports = { tcpTransportFactory }

@@ -3,9 +3,7 @@ const { effectorFactory } = require('..')
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('netFactory', () => {
-  require('debug').enable(
-    '*met* *tests* *effector *:net *:socket *transport *dmzReducer'
-  )
+  require('debug').enable('*met* *tests* *effector *:net *:socket *transport')
 
   test('ping single', async () => {
     jest.setTimeout(20000)
@@ -15,20 +13,23 @@ describe('netFactory', () => {
     const url = 'wss://echo.websocket.org'
     const urlSafe = 'wss:||echo.websocket.org'
     await client.net.add(url)
-    assert(client.net[urlSafe])
-    const connectResult = await client.net[urlSafe].connect()
-
-    // add a transport to echo.websocket.org
-    // perform a transport layer ping
-    // close the socket
-    // observe ping failure
+    const socket = client.net[urlSafe]
+    assert(socket)
+    const connectResult = await socket.connect()
 
     const testData = 'testData'
-    const pingReply = await client.net[urlSafe].ping(testData)
+    const pingReply = await socket.ping(testData)
     assert.strictEqual(pingReply.data, testData)
+
+    const disconnectResult = await socket.disconnect()
+    await assert.rejects(socket.ping, (error) =>
+      error.message.startsWith('No socket found')
+    )
+
     await client.settle()
     debug(`pingReply latencyMs`, pingReply.latencyMs)
     debug(`connectResult latencyMs`, connectResult.latencyMs)
+    debug(`disconnectResult latencyMs`, disconnectResult.latencyMs)
     debug(`stop`)
   })
 })

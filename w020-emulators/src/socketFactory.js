@@ -75,6 +75,9 @@ const socketFactory = (gateway) => {
         assert.strictEqual(typeof givenName, 'string')
         debug(`ping: %O`, event)
         const tcpTransport = gateway[givenName]
+        if (!tcpTransport) {
+          throw new Error(`No socket found for: ${givenName}`)
+        }
         const result = await effect(
           'PING',
           tcpTransport.ping,
@@ -82,6 +85,17 @@ const socketFactory = (gateway) => {
         )
         debug(`ping result: %O`, result)
         return result
+      },
+      disconnectSocket: async ({ givenName }, event) => {
+        debug(`disconnectSocket`)
+        const tcpTransport = gateway[givenName]
+        if (!tcpTransport) {
+          throw new Error(`No socket found for: ${givenName}`)
+        }
+        const result = await effect('DISCONNECT', tcpTransport.disconnect)
+        delete gateway[givenName]
+        debug(`disconnectSocket result: `, result)
+        return { ...result }
       },
       login: async (context, event) => {
         debug(`login: %O`, event.payload.terminal)
@@ -159,7 +173,10 @@ const socketFactory = (gateway) => {
           },
         },
         disconnectSocket: {
-          invoke: { src: `disconnectSocket`, onDone: 'idle' },
+          invoke: {
+            src: `disconnectSocket`,
+            onDone: { target: 'idle', actions: 'respondOrigin' },
+          },
         },
         ping: {
           invoke: {
@@ -197,7 +214,7 @@ const socketFactory = (gateway) => {
     }),
     connect: () => ({ type: 'CONNECT' }),
     disconnect: () => ({ type: 'DISCONNECT' }),
-    ping: (data) => ({ type: 'PING', payload: { data } }),
+    ping: (data = '') => ({ type: 'PING', payload: { data } }),
     pingLambda: () => ({ type: 'PING_LAMBDA' }),
     version: () => ({ type: 'VERSION' }),
     rmChainId: (chainId) => ({ type: 'RM', payload: { chainId } }),
