@@ -10,7 +10,6 @@ const {
   respond,
   send,
   sendParent,
-  invoke,
   translator,
 } = require('../../w022-xstate-translator')
 
@@ -41,6 +40,19 @@ const socketFactory = (gateway) => {
           return chainIds
         },
       }),
+      assignGivenName: assign({
+        givenName: (context, event) => {
+          const { givenName } = event.data
+          assert.strictEqual(typeof givenName, 'string')
+          debug(`givenName`, givenName)
+          return givenName
+        },
+      }),
+      respondPing: (context, event) => {
+        debug(`respondPing`, event)
+        return respond(event.data)
+      },
+      respondOrigin: (context, event) => respond(event.data),
     },
     guards: {},
     services: {
@@ -52,26 +64,23 @@ const socketFactory = (gateway) => {
         const url = givenName.replace(/\|/g, '/')
         debug(`url: %O`, url)
 
-        const tcpTransport = gateway[url] || tcpTransportFactory(url)
-        gateway[url] = tcpTransport
-        await effect('CONNECT', tcpTransport.connect)
+        const tcpTransport = gateway[givenName] || tcpTransportFactory(url)
+        gateway[givenName] = tcpTransport
+        const result = await effect('CONNECT', tcpTransport.connect)
         debug(`connected to %o`, url)
         // TODO do a version check
+        return { givenName, ...result }
       },
-      ping: async (context, event) => {
-        // if ping '.' respond, else engage in remote pinging
+      ping: async ({ givenName }, event) => {
+        assert.strictEqual(typeof givenName, 'string')
         debug(`ping: %O`, event)
-        const { type, payload } = event
-        const { to, ...rest } = payload
-        assert(type === 'PING')
-        if (to === '.') {
-          debug(`ping to self`)
-          return { type: 'PONG', payload: rest } // TODO move to state machine
-        }
-        const result = await invoke(type, {}, to)
+        const tcpTransport = gateway[givenName]
+        const result = await effect(
+          'PING',
+          tcpTransport.ping,
+          event.payload.data
+        )
         debug(`ping result: %O`, result)
-        const latency = await tcpTransport.pingLambda() // TODO do a version check too
-        debug(`latency of %o ms to %o `, latency, url)
         return result
       },
       login: async (context, event) => {
@@ -141,13 +150,22 @@ const socketFactory = (gateway) => {
         },
         addChainId: { entry: 'addChainId', always: 'idle' },
         connectSocket: {
-          invoke: { src: 'connectSocket', onDone: 'idle' },
+          invoke: {
+            src: 'connectSocket',
+            onDone: {
+              target: 'idle',
+              actions: ['assignGivenName', 'respondOrigin'],
+            },
+          },
         },
         disconnectSocket: {
           invoke: { src: `disconnectSocket`, onDone: 'idle' },
         },
         ping: {
-          invoke: { src: `ping`, onDone: 'idle' },
+          invoke: {
+            src: `ping`,
+            onDone: { target: 'idle', actions: 'respondPing' },
+          },
         },
         pingLambda: {
           invoke: { src: `pingLambda`, onDone: 'idle' },
@@ -179,7 +197,7 @@ const socketFactory = (gateway) => {
     }),
     connect: () => ({ type: 'CONNECT' }),
     disconnect: () => ({ type: 'DISCONNECT' }),
-    ping: () => ({ type: 'PING' }),
+    ping: (data) => ({ type: 'PING', payload: { data } }),
     pingLambda: () => ({ type: 'PING_LAMBDA' }),
     version: () => ({ type: 'VERSION' }),
     rmChainId: (chainId) => ({ type: 'RM', payload: { chainId } }),

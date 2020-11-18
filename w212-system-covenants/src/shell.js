@@ -18,6 +18,7 @@ const config = {
       return respond(event.data)
     },
     respondAddActor: (context, event) => respond(event.data.addActor),
+    respondOrigin: (context, event) => respond(event.data),
   },
   guards: {},
   services: {
@@ -191,7 +192,10 @@ const machine = Machine(
         // remaining balance in Jewels and BAR of this shell, plus any other currencies held
       },
       dispatch: {
-        invoke: { src: 'dispatch', onDone: 'idle' },
+        invoke: {
+          src: 'dispatch',
+          onDone: { target: 'idle', actions: 'respondOrigin' },
+        },
       },
       install: {
         // pick default name

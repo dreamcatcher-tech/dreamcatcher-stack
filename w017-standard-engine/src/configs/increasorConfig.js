@@ -50,7 +50,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       assignContainerId: assign({
         containerId: (context, event) => {
           const { containerId } = event.data
-          assert(!containerId || typeof containerId, 'string')
+          assert(!containerId || typeof containerId === 'string')
           debug(`assignContainerId: `, containerId)
           return containerId
         },
@@ -155,7 +155,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         assert.strictEqual(typeof containerId, 'string')
         const isEffectable = block.config.isPierced && containerId
         // TODO check for new effect actions in io channel
-        debug(`isEffectable`, isEffectable)
+        debug(`isEffectable %o`, isEffectable)
         return isEffectable
       },
     },
@@ -194,11 +194,11 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         assert(!nextLock.block.equals(lock.block))
         debug(`effects`)
         // pull out the new IO channel requests
-        const nextIo = nextLock.block.network['@@io']
         let prevIo = channelModel.create()
         if (lock.block && lock.block.network['@@io']) {
           prevIo = lock.block.network['@@io']
         }
+        const nextIo = nextLock.block.network['@@io'] || prevIo
         const nextIoIndices = nextIo
           .getRequestIndices()
           .filter((index) => !prevIo.requests[index])
@@ -222,6 +222,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
               effectId,
               timeout,
             })
+            debug(`effects payload: `, payload)
             txReply = txReplyModel.create('@@RESOLVE', payload, sequence)
           } catch (payload) {
             txReply = txReplyModel.create('@@REJECT', payload, sequence)

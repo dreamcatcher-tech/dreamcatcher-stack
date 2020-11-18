@@ -27,10 +27,11 @@ const tcpTransportFactory = (url) => {
     })
     ws.on('close', (e) => debug('close', e))
     ws.on('error', (e) => debug('error %O', e))
-    ws.on('ping', (e) => debug('ping', e))
+    ws.on('ping', (e) => debug('ping', e.toString()))
     ws.on('pong', (e) => debug('pong', e.toString()))
     ws.on('upgrade', (e) => debug('upgrade'))
 
+    const start = Date.now()
     return new Promise((resolve, reject) => {
       const unexpectedResponse = async (event) => {
         debug(`unexpectedResponse`)
@@ -41,7 +42,7 @@ const tcpTransportFactory = (url) => {
       ws.on('open', function open() {
         debug(`socket open to ${url}`)
         ws.removeListener('unexpected-response', unexpectedResponse)
-        resolve()
+        resolve({ latencyMs: Date.now() - start })
       })
       ws.on('unexpected-response', unexpectedResponse)
     })
@@ -62,7 +63,8 @@ const tcpTransportFactory = (url) => {
       ws.ping(data)
       ws.on('pong', (response) => {
         assert.strictEqual(response.toString(), data)
-        resolve(Date.now() - start)
+        const latencyMs = Date.now() - start
+        resolve({ data, latencyMs })
       })
     })
   }

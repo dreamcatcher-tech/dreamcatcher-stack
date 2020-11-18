@@ -106,7 +106,9 @@ const translator = (machine) => {
           if (xstateAction.exec) {
             const execResult = xstateAction.exec(context, event)
             debug(`execResult %O`, execResult)
-            mapXstateToContinuation(execResult, originAction)
+            if (execResult) {
+              mapXstateToContinuation(execResult, originAction)
+            }
           } else {
             debug(`standard action ? %O`, xstateAction)
             const mapped = mapXstateToContinuation(xstateAction, originAction)

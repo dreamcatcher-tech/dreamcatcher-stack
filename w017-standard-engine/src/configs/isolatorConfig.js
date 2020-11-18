@@ -110,10 +110,17 @@ const isolatorMachine = machine.withConfig({
         const { pierceBlock } = event.data
         assert(blockModel.isModel(pierceBlock))
         assert(dmzModel.isModel(dmz))
-        const address = pierceBlock.provenance.getAddress()
-        const ioChannel =
-          dmz.network['@@io'] || channelModel.create(address, 'PIERCE')
-        assert(ioChannel.address.equals(address))
+        const pierceBlockAddress = pierceBlock.provenance.getAddress()
+        // TODO change this to be a loopback action processed by interpreter ?
+        // TODO why would channel be asked to open and not exist already ?
+        let ioChannel =
+          dmz.network['@@io'] ||
+          channelModel.create(pierceBlockAddress, 'PIERCE')
+        if (ioChannel.address.isUnknown()) {
+          ioChannel = channelProducer.setAddress(ioChannel, pierceBlockAddress)
+        }
+        const ioAddress = ioChannel.address
+        assert(ioAddress.equals(pierceBlockAddress))
         assert.strictEqual(ioChannel.systemRole, 'PIERCE')
         const network = { ...dmz.network, '@@io': ioChannel }
         return dmzModel.clone({ ...dmz, network })
@@ -132,6 +139,7 @@ const isolatorMachine = machine.withConfig({
           [ib],
           dmz.config
         )
+        assert(ib.equals(network['@@io'].heavy))
         return dmzModel.clone({ ...dmz, network })
       },
     }),
@@ -167,7 +175,33 @@ const isolatorMachine = machine.withConfig({
       const nextIo = pierceDmz.network['@@PIERCE_TARGET']
       const isPierceDmzChanged = nextIo.isTxGreaterThan(currentIo)
       debug(`isPierceDmzChanged: %o`, isPierceDmzChanged)
+      // TODO what about if txRequest or txReply has increased from inside ?
       return isPierceDmzChanged
+    },
+    isPierceChannelUnopened: ({ dmz }) => {
+      assert(dmzModel.isModel(dmz))
+      const ioChannel = dmz.network['@@io']
+      const isPierceChannelUnopened =
+        ioChannel && !ioChannel.address.isResolved()
+      debug(`isPierceChannelUnopened`, isPierceChannelUnopened)
+      return isPierceChannelUnopened
+    },
+    isCovenantEffectable: ({ lock, dmz }) => {
+      assert(lockModel.isModel(lock))
+      assert(dmzModel.isModel(dmz))
+      let prevIo = channelModel.create()
+      // TODO merge this into channelModel so can reuse in increasorConfig
+      if (lock.block && lock.block.network['@@io']) {
+        prevIo = lock.block.network['@@io']
+      }
+      const nextIo = dmz.network['@@io'] || prevIo
+      const nextIoIndices = nextIo
+        .getRequestIndices()
+        .filter((index) => !prevIo.requests[index])
+
+      const isCovenantEffectable = nextIoIndices.length
+      debug(`isCovenantEffectable`, isCovenantEffectable)
+      return isCovenantEffectable
     },
   },
   services: {
@@ -198,14 +232,14 @@ const isolatorMachine = machine.withConfig({
       assert(lockModel.isModel(lock))
       const { block } = lock
       assert(block)
-      debug(`signPierceDmz`)
-
       const previousProvenance = _getPierceProvenance(block)
-      const extraLineage = undefined
+      debug(`signPierceDmz with previous: %O`, !!previousProvenance)
+
+      const extraLineages = {}
       const provenance = await provenanceModel.create(
         pierceDmz,
         previousProvenance,
-        extraLineage,
+        extraLineages,
         pierceSigner
       )
       const pierceBlock = blockModel.clone({ ...pierceDmz, provenance })
@@ -222,14 +256,13 @@ const _extractPierceDmz = (block) => {
   const baseDmz = dmzModel.create({ validators })
   const address = block.provenance.getAddress()
   let pierceChannel = channelModel.create(address, 'PIERCE')
-  if (block.network['@@io']) {
+  if (block.network['@@io'] && block.network['@@io'].address.isResolved()) {
     const ioChannel = block.network['@@io']
     const remote = ioChannel.getRemote()
     assert(remote && remote.address.equals(address))
     const { requests, replies } = remote
     const indices = ioChannel.getRemoteRequestIndices()
-    assert(indices.length)
-    const requestsLength = indices.pop() + 1
+    const requestsLength = indices.length ? indices.pop() + 1 : 0
     const nextChannel = { ...pierceChannel, requests, replies, requestsLength }
     pierceChannel = channelModel.clone(nextChannel)
     const base = interblockModel.create(block, '@@io')

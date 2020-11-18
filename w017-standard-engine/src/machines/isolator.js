@@ -79,6 +79,7 @@ const definition = {
           entry: ['assignHasPierced', 'generatePierceDmz'],
           always: [
             { target: 'signPierceDmz', cond: 'isPierceDmzChanged' },
+            { target: 'signPierceDmz', cond: 'isPierceChannelUnopened' },
             { target: 'done' },
           ],
         },
@@ -100,7 +101,7 @@ const definition = {
     isCovenantUnloadable: {
       always: [
         // do not unload if exec() functions will be called after blocking
-        { target: 'done', cond: 'isPierceDmzChanged' },
+        { target: 'done', cond: 'isCovenantEffectable' },
         { target: 'unloadCovenant' },
       ],
     },

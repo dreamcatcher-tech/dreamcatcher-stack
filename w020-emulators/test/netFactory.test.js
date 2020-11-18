@@ -4,10 +4,11 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('netFactory', () => {
   require('debug').enable(
-    '*met* *tests* *effector *:net *:socket *shell  *translator *interpreter *dmzReducer'
+    '*met* *tests* *effector *:net *:socket *transport *dmzReducer'
   )
 
-  test.only('ping single', async () => {
+  test('ping single', async () => {
+    jest.setTimeout(20000)
     debug(`start`)
     const client = await effectorFactory()
     client.enableLogging()
@@ -15,7 +16,7 @@ describe('netFactory', () => {
     const urlSafe = 'wss:||echo.websocket.org'
     await client.net.add(url)
     assert(client.net[urlSafe])
-    await client.net[urlSafe].connect()
+    const connectResult = await client.net[urlSafe].connect()
 
     // add a transport to echo.websocket.org
     // perform a transport layer ping
@@ -23,9 +24,11 @@ describe('netFactory', () => {
     // observe ping failure
 
     const testData = 'testData'
-    const reply = await client.net[url].ping(testData)
-    assert.strictEqual(reply.payload, testData)
+    const pingReply = await client.net[urlSafe].ping(testData)
+    assert.strictEqual(pingReply.data, testData)
     await client.settle()
+    debug(`pingReply latencyMs`, pingReply.latencyMs)
+    debug(`connectResult latencyMs`, connectResult.latencyMs)
     debug(`stop`)
   })
 })

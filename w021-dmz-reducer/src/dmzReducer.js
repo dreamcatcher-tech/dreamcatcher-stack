@@ -305,7 +305,9 @@ const openPaths = (network) =>
       network[alias].address.isUnknown()
     )
     unresolved.forEach((alias) => {
-      assert(alias !== '@@io', `Never resolve @@io`)
+      if (alias === '@@io') {
+        return
+      }
       const paths = _getPathSegments(alias)
       paths.forEach((path, index) => {
         const channel = network[path]
