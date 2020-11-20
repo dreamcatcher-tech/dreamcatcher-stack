@@ -1,5 +1,4 @@
 {
-  "version": "0.2.0",
   "configurations": [
     {
       "name": "Debug Jest Tests",
@@ -12,6 +11,7 @@
         "--testTimeout=9999999",
         "${relativeFile}"
       ],
+      "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "port": 9229
@@ -27,6 +27,7 @@
         "--testTimeout=9999999",
         "${workspaceRoot}/w020-emulators/test/netFactory.test.js"
       ],
+      "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "port": 9229
@@ -42,6 +43,7 @@
         "--testTimeout=9999999",
         "${workspaceRoot}/w017-standard-engine/test/interpreter.test.js"
       ],
+      "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "port": 9229

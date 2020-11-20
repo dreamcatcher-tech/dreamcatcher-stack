@@ -24,7 +24,6 @@ const request = (type = 'PING', payload = {}, to = '.') => {
   if (typeof payload !== 'object') {
     throw new Error(`"payload" must be an object: ${payload}`)
   }
-  _assertNoUndefined(payload)
   const request = {
     type,
     payload,
@@ -53,7 +52,6 @@ const _txReply = (type = '@@RESOLVE', payload = {}, request) => {
   if (typeof payload !== 'object') {
     throw new Error(`payload must be object: ${payload}`)
   }
-  _assertNoUndefined(payload)
   const reply = {
     type,
     payload,

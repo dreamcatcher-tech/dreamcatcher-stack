@@ -35,10 +35,9 @@ const networkModel = standardize({
   },
   logicize(instance) {
     assert(!instance[undefined])
-    const aliases = Object.keys(instance)
-    Object.freeze(aliases)
-    assert(aliases.includes('..'))
-    assert(aliases.includes('.'))
+    const _aliases = Object.keys(instance)
+    assert(_aliases.includes('..'))
+    assert(_aliases.includes('.'))
     assert(channelModel.isModel(instance['.']), 'channel invalid')
     assert(instance['.'].systemRole === '.', `self not loopback channel`)
 
@@ -48,7 +47,7 @@ const networkModel = standardize({
 
     const _rx = (type) => {
       let rx
-      aliases.find((alias) => {
+      _aliases.find((alias) => {
         const channel = instance[alias]
         const reply = channel.rxReply()
         const request = channel.rxRequest()
@@ -76,7 +75,7 @@ const networkModel = standardize({
       const action = self.rxReply() || self.rxRequest()
       return action
     }
-    const getAliases = () => aliases
+    const getAliases = () => Object.keys(instance)
     const getResolvedAliases = () =>
       getAliases().filter(
         (alias) => instance[alias].address.isResolved() && alias !== '@@io'

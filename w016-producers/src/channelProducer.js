@@ -36,7 +36,7 @@ const ingestInterblock = (channel, interblock) =>
       if (remote) {
         const { requests } = remote
         const remoteRequestsKeys = Object.keys(requests)
-        const reducedReplies = _.pick(draft.replies, remoteRequestsKeys)
+        const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
         draft.replies = reducedReplies
         debug(`ingested heavy: ${provenance.height}`)
       }
@@ -77,7 +77,7 @@ const ingestPierceInterblock = (channel, interblock) =>
     draft.lineageHeight = provenance.height
     const { requests } = remote
     const remoteRequestsKeys = Object.keys(requests)
-    const reducedReplies = _.pick(draft.replies, remoteRequestsKeys)
+    const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
     draft.replies = reducedReplies
   })
 const setAddress = (channel, address) =>
@@ -154,7 +154,15 @@ const shiftTxRequest = (channel, originalLoopback) =>
     assert(channel.requests[index], `nothing to remove at ${index}`)
     delete draft.requests[index]
   })
-
+const _pick = (obj, keys) => {
+  const blank = {}
+  keys.forEach((key) => {
+    if (typeof obj[key] !== 'undefined') {
+      blank[key] = obj[key]
+    }
+  })
+  return blank
+}
 module.exports = {
   ingestInterblock,
   ingestPierceInterblock,

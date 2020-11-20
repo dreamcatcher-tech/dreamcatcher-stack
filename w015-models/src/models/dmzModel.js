@@ -76,9 +76,11 @@ const dmzModel = standardize({
       if (reply) {
         return reply
       }
-      const bufferedRequest = pending.rxBufferedRequest(network)
-      if (!pending.getIsPending() && bufferedRequest) {
-        return bufferedRequest
+      if (!pending.getIsPending()) {
+        const bufferedRequest = pending.rxBufferedRequest(network)
+        if (bufferedRequest) {
+          return bufferedRequest
+        }
       }
       return network.rxRequest()
     }

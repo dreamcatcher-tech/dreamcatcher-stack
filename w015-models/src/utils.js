@@ -4,15 +4,16 @@ const isCircular = require('is-circular')
 const _ = require('lodash')
 const stringify = require('fast-json-stable-stringify')
 const { produce, setAutoFreeze } = require('immer')
-setAutoFreeze(false) // attempt to speed up producers
-const { modelInflator } = require('./modelInflator')
+setAutoFreeze(false) // we already freeze everything anyway
+const { modelInflator, precompileSchema } = require('./modelInflator')
 const { registry } = require('./registry')
 const crypto = require('../../w012-crypto')
-const { assertNoUndefined } = require('./assertNoUndefined')
 const equal = require('fast-deep-equal')
 
 const standardize = (model) => {
   checkStructure(model)
+  precompileSchema(model.schema)
+  const create = memoizeCreate(model)
   let defaultInstance
   const modelWeakSet = new WeakSet()
   const objectToModelWeakMap = new WeakMap()
@@ -40,6 +41,7 @@ const standardize = (model) => {
     }
     const inflated = modelInflator(model.schema, object)
 
+    deepFreeze(inflated)
     const modelFunctions = model.logicize(inflated)
 
     const { serialize, getHash, getProof, equals } = closure(
@@ -49,21 +51,19 @@ const standardize = (model) => {
     )
     const functions = {
       ...modelFunctions,
-      equals,
       serialize,
       getHash,
       getProof,
+      equals,
     }
-    const completeModel = proxy(inflated, functions)
-    // TODO move back to deep freeze, to try speed up immer
-    Object.freeze(completeModel)
-    modelWeakSet.add(completeModel)
-    objectToModelWeakMap.set(object, completeModel)
-    return completeModel
+    const completeInstance = proxy(inflated, functions)
+    modelWeakSet.add(completeInstance)
+    objectToModelWeakMap.set(object, completeInstance)
+    return completeInstance
   }
 
   // TODO add produce function so clone isn't overloaded
-  const standardModel = Object.freeze({ ...model, clone, isModel })
+  const standardModel = Object.freeze({ ...model, create, clone, isModel })
   return standardModel
 }
 
@@ -80,9 +80,7 @@ const closure = (schema, inflated, isModel) => {
     // TODO model away serialize
     if (!jsonString) {
       // TODO ensure this check is sufficient for stringify
-      assertNoUndefined(inflated)
-      // TODO move to traverse
-      assert(!isCircular(inflated), `state must be stringifiable`)
+      // assert(!isCircular(inflated), `state must be stringifiable`)
       jsonString = stringify(inflated)
     }
     return jsonString
@@ -117,8 +115,17 @@ const generateHash = (schema, instance) => {
       return { hash: instance.hash }
     }
     case 'Block': {
-      const interblockKeys = ['provenance', 'network', 'validators']
-      const restOfBlock = _.omit(instance, interblockKeys)
+      const nonInterblockKeys = [
+        'encryption',
+        'timestamp',
+        'config',
+        'covenantId',
+        'binaryIntegrity',
+        'acl',
+        'state',
+        'pending',
+      ]
+      const restOfBlock = _pick(instance, nonInterblockKeys)
       const proof = crypto.objectHash(hashPattern(restOfBlock))
       return { hash: instance.provenance.getHash(), proof }
     }
@@ -128,20 +135,23 @@ const generateHash = (schema, instance) => {
     }
     case 'Channel': {
       const remoteModel = registry.get('Remote')
-      const remote = remoteModel.clone(
-        _.pick(instance, [
-          'address',
-          'requests',
-          'replies',
-          'heavyHeight',
-          'lineageHeight',
-        ])
-      )
-      const restOfChannel = _.omit(instance, Object.keys(remote))
-      const properties = _.omit(
-        schema.properties,
-        remoteModel.schema.properties
-      )
+      const remotePick = _pick(instance, [
+        'address',
+        'replies',
+        'requests',
+        'heavyHeight',
+        'lineageHeight',
+      ])
+      const remote = remoteModel.clone(remotePick)
+      const restOfChannelKeys = [
+        'systemRole',
+        'requestsLength',
+        'heavy',
+        'lineage',
+        'lineageTip',
+      ]
+      const restOfChannel = _pick(instance, restOfChannelKeys)
+      const properties = _pick(schema.properties, restOfChannelKeys)
       const { hash: proof } = hashFromSchema({ properties }, restOfChannel)
       const hash = crypto.objectHash({ remote: remote.getHash(), proof })
       return { hash, proof }
@@ -160,12 +170,22 @@ const generateHash = (schema, instance) => {
   }
 }
 
+const _pick = (obj, keys) => {
+  // much faster than lodash pick
+  const blank = {}
+  keys.forEach((key) => {
+    if (typeof obj[key] !== 'undefined') {
+      blank[key] = obj[key]
+    }
+  })
+  return blank
+}
+
 const hashFromSchema = (schema, instance) => {
   if (schema.patternProperties) {
     const { hash } = hashPattern(instance) // strip proof
     return { hash }
   }
-
   const hashes = {}
   const { properties } = schema
   Object.keys(instance).map((key) => {
@@ -233,6 +253,32 @@ const checkStructure = (model) => {
   if (propertiesCount !== 3) {
     throw new Error(`Model: ${title} has ${propertiesCount} properties, not 3`)
   }
+}
+const memoizeCreate = (model) => {
+  // TODO memoize but keep unique requests, like to Action
+  // if (model.schema.title === 'Action') {
+  return model.create
+  // }
+  // return _.memoize(model.create)
+}
+const deepFreeze = (o) => {
+  Object.freeze(o)
+
+  Object.getOwnPropertyNames(o).forEach((prop) => {
+    if (!o.hasOwnProperty(prop)) {
+      return
+    }
+    if (o[prop] === undefined) {
+      // undefined values have their keys removed in json
+      throw new Error(`Values cannot be undefined: ${prop}`)
+    }
+    if (typeof o[prop] === 'function') {
+      throw new Error(`No functions in deepFreeze: ${prop}`)
+    }
+    if (typeof o[prop] === 'object' && !Object.isFrozen(o[prop])) {
+      deepFreeze(o[prop])
+    }
+  })
 }
 
 module.exports = { standardize }

@@ -1,6 +1,5 @@
 const assert = require('assert')
 const { standardize } = require('../utils')
-const { assertNoUndefined } = require('../assertNoUndefined')
 const { txRequestModel } = require('./txRequestModel')
 const { txReplyModel } = require('./txReplyModel')
 const { rxReplyModel } = require('./rxReplyModel')
@@ -82,12 +81,8 @@ const reductionModel = standardize({
   logicize(instance) {
     const { reduction, isPending, requests, replies } = instance
     assert((reduction && !isPending) || (!reduction && isPending))
-    assertNoUndefined(requests, replies)
     assert(requests.every(txRequestModel.isModel))
     assert(replies.every(txReplyModel.isModel))
-    if (reduction) {
-      assertNoUndefined(reduction)
-    }
     let promiseCount = 0
     const sequenceSet = new Set()
     replies.forEach((txReply) => {
@@ -103,8 +98,6 @@ const reductionModel = standardize({
       assert(promiseCount <= 1, `Max one promise allowed: ${promiseCount}`)
     }
     assert(sequenceSet.size === replies.length, `Duplicate sequence detected`)
-    Object.freeze(requests)
-    Object.freeze(replies)
     const getIsPending = () => isPending
     return { getIsPending }
   },

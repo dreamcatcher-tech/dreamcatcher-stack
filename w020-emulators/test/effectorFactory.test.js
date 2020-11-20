@@ -4,12 +4,13 @@ const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.co
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('effector', () => {
-  require('debug').enable('*metro* *tests* *isolator')
+  require('debug').enable('*met* *tests*')
 
   test('ping single', async () => {
+    const start = Date.now()
     debug(`start`)
     const client = await effectorFactory()
-    client.enableLogging()
+    // client.enableLogging()
     debug(`effector ready`)
     const pingStart = Date.now()
     const reply = await client.ping()
@@ -17,7 +18,7 @@ describe('effector', () => {
     assert.strictEqual(reply.type, 'PONG')
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
-
+    debug(`test time: ${Date.now() - start} ms`)
     await client.settle()
 
     debug(`stop`)
@@ -40,6 +41,8 @@ describe('effector', () => {
      * 2020-09-09 1,169ms 358ms RTT - remove reference equality from models
      * 2020-09-09 1,088ms 295ms RTT - no printing
      * 2020-09-09 580ms 172ms RTT - s3 caching, machine reuse, immer correction
+     * 2020-11-19 587ms 99ms RTT - hooks, pierce, 3 root blocks, 2 net blocks
+     * 2020-11-20 478ms 77ms RTT - tuning
      */
   })
   test.skip('ping many times', async () => {

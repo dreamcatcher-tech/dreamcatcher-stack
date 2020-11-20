@@ -151,8 +151,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     const getAbsolutePath = () => absolutePath
     const getChannels = () => {
       const block = getState()
-      const aliases = block.network.getAliases()
-      return _.pick(block.network, aliases)
+      return block.network
     }
     const getEngine = () => engine
     const getPersistence = () => ioConsistency.getProcessor().persistence

@@ -134,7 +134,6 @@ const _hookGlobal = async (originalAccumulator, salt) => {
   }
   assert(!globalThis['@@interblock'].promises)
   const accumulator = [...originalAccumulator]
-  Object.freeze(accumulator)
   const requestId = 0
   const promises = { accumulator, requests: [], replies: [], requestId, salt }
   globalThis['@@interblock'].promises = promises

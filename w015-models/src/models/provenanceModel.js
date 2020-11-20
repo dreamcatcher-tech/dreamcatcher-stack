@@ -87,7 +87,9 @@ const provenanceModel = standardize({
     assert.strictEqual(instance.signatures.length, 1, `single signer only`)
 
     const selfIntegrity = () => {
-      const check = _.omit(instance, ['integrity', 'signatures'])
+      const check = {}
+      const checkKeys = ['dmzIntegrity', 'address', 'lineage', 'height']
+      checkKeys.forEach((key) => (check[key] = instance[key]))
       const integrity = integrityModel.create(check)
       const selfIntegrity = integrity.equals(instance.integrity)
       return selfIntegrity

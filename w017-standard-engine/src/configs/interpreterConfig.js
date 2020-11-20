@@ -373,13 +373,13 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     openPaths: assign({
-      dmz: ({dmz}) => {
+      dmz: ({ dmz }) => {
         assert(dmzModel.isModel(dmz))
         debug(`openPaths`)
         const network = dmzReducer.openPaths(dmz.network)
-        return dmzModel.clone({...dmz, network})
-      }
-    })
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
   },
   guards: {
     isSelfExhausted: ({ dmz }) => {
@@ -573,6 +573,7 @@ const interpreterMachine = machine.withConfig({
 
 const interpreterConfig = (isolatedTick) => {
   assert(typeof isolatedTick === 'function')
+  // TODO multiplex the function with a code, so can use the same machine repeatedly
   return interpreterMachine.withContext({ isolatedTick })
 }
 

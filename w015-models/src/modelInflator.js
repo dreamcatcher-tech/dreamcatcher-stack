@@ -89,7 +89,7 @@ const assertKeysValidated = (schema, instance) => {
   assert(isProps, `fail ${schema.title}`)
 }
 
-const schemaMap = new WeakMap()
+const schemaMap = new Map()
 const validate = (schema, instance) => {
   assert(schema, `No schema supplied`)
   let validator = schemaMap.get(schema)
@@ -108,5 +108,12 @@ const validate = (schema, instance) => {
     throw new Error(`${schema.title} failed validation: ${errors}`)
   }
 }
+const precompileSchema = (schema) => {
+  // this is not noticeably faster, but makes profiling cleaner
+  // as it does inevitable compilation before the main runs
+  assert(schema.title, `No title supplied`)
+  validator = ajv.compile(schema)
+  schemaMap.set(schema, validator)
+}
 
-module.exports = { modelInflator }
+module.exports = { modelInflator, precompileSchema }

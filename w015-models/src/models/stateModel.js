@@ -1,5 +1,4 @@
 const { standardize } = require('../utils')
-const { assertNoUndefined } = require('../assertNoUndefined')
 
 const schema = {
   title: 'State',
@@ -38,11 +37,9 @@ Therefore, we always know what the default action is, so we require it of create
 const stateModel = standardize({
   schema,
   create(state = {}) {
-    assertNoUndefined(state)
     return stateModel.clone(state)
   },
   logicize(instance) {
-    assertNoUndefined(instance)
     // TODO ensure no functions attempted to be stored ? or just blank them between blocks ?
     return {}
   },

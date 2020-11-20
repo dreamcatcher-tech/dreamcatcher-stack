@@ -97,48 +97,6 @@ const socketFactory = (gateway) => {
         debug(`disconnectSocket result: `, result)
         return { ...result }
       },
-      login: async (context, event) => {
-        debug(`login: %O`, event.payload.terminal)
-        const { chainId, ...rest } = event.payload
-        // TODO check terminal regex is a chainId
-        const connectToTerminal = connect('terminal', chainId)
-        await invoke(connectToTerminal)
-
-        // TODO import from authenticator / terminal functions
-        const loginResult = await invoke('@@INTRO', rest, 'terminal')
-        debug(`loginResult: %O`, loginResult)
-        return { loginResult }
-      },
-      addActor: async (context, event) => {
-        assert.strictEqual(typeof event.payload, 'object')
-        const { alias, spawnOptions, to } = event.payload
-        debug(`addActor`, alias, to)
-        const { type, payload } = spawn(alias, spawnOptions)
-        const addActor = await invoke(type, payload, to)
-
-        // calculate path based on working directory
-
-        // TODO if this was remote, open a path to the child ?
-        // but don't transmit anything ?
-        return { addActor }
-      },
-      listActors: async (context, event) => {},
-      changeDirectory: async (context, event) => {
-        const { path } = event.payload
-        debug(`changeDirectory`, path)
-        assert.strictEqual(typeof path, 'string')
-
-        // walk the path, checking with self if each path exists
-
-        // if path doesn't exist, need to open it
-
-        // if fail to open, reject
-      },
-      removeActor: async (context, event) => {
-        debug(`removeActor`, event)
-        // refuse to delete self
-        // try open path to child
-      },
     },
   }
   const machine = Machine(
@@ -147,6 +105,7 @@ const socketFactory = (gateway) => {
       initial: 'idle',
       context: {
         chainIds: [],
+        givenName: '',
       },
       strict: true,
       states: {

@@ -45,7 +45,7 @@
     "traverse": "^0.6.6",
     "utf-8-validate": "^5.0.2",
     "uuid": "^8.3.0",
-    "xstate": "^4.11.0"
+    "xstate": "^4.14.0"
   },
   "devDependencies": {
     "@serverless/core": "^1.1.2",

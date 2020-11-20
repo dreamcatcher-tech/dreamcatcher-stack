@@ -58,7 +58,7 @@ const effectorFactory = async (identifier) => {
   const shell = effector(metrology, metrology.pierce)
 
   await shell.add('net', { covenantId: net.covenantId })
-  connectGateway(gateway, shell.net)
+  // connectGateway(gateway, shell.net)
 
   return shell
 }
@@ -184,15 +184,6 @@ const connectGateway = (gateway, netEffector) => {
   sqsTx.setProcessor(async (tx) => {
     // pierce the socket chain with this transmission
   })
-  gateway.addSocket = (url) => {
-    // split between type by url prefix
-    // where to send all the events to
-  }
-  gateway.transmit = (url, data) => {
-    // called within socket reducer
-    // if queue, push into queue
-    // if tcp, sockets are called directly
-  }
   gateway.receive = (tx) => {
     sqsRx.push(tx)
   }

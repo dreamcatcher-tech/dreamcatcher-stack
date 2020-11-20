@@ -38,7 +38,7 @@ const pendingModel = standardize({
     },
   },
   create() {
-    return pendingModel.clone({ replies: [], requests: [] })
+    return pendingModel.clone({ replies: [], requests: {} })
   },
   logicize(instance) {
     const { pendingRequest, replies, requests } = instance
@@ -53,7 +53,6 @@ const pendingModel = standardize({
 
       return true
     }
-    Object.freeze(replies)
     const getAccumulator = () => replies
     const rxBufferedRequest = (network) => {
       assert(networkModel.isModel(network))
