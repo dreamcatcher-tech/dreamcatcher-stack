@@ -14,11 +14,13 @@ describe('network', () => {
     assert(parent)
     assert(parent.address.isUnknown())
   })
-  test('aliases are frozen', () => {
+  test('aliases cannot be tampered with', () => {
     const network = networkModel.create()
     const aliases = network.getAliases()
     assert.strictEqual(aliases.length, 2)
-    assert.throws(() => aliases.push('test'))
+    aliases.pop()
+    assert.strictEqual(aliases.length, 1)
+    assert.strictEqual(network.getAliases().length, 2)
   })
   test.todo('rxReply always selected before rxRequest')
   test.todo('rxReply( request ) throws if non existant channel in request')
