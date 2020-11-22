@@ -17,7 +17,7 @@
       "port": 9229
     },
     {
-      "name": "netFactory.test",
+      "name": "emulateAwsFactory.test",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -25,7 +25,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/w020-emulators/test/netFactory.test.js"
+        "${workspaceRoot}/w020-emulators/test/emulateAwsFactory.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",

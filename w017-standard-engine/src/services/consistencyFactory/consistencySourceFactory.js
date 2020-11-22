@@ -473,16 +473,16 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     getSockets,
     delSocket,
 
-    putPoolInterblock,
     putLockChain,
     putUnlockChain,
-
+    
     getLineage,
     getIsAnyAffected,
     getAffected,
     getIsPresent,
     getBlock,
-
+    
+    putPoolInterblock,
     putPierceRequest,
     putPierceReply,
   }

@@ -111,7 +111,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
         return ret
       }
     }
-    const getContext = () => getState(['state', 'xstate', 'context'])
+    const getContext = () => getState(['state', 'context'])
 
     const subscribers = new Set()
     const blocks = new Set()

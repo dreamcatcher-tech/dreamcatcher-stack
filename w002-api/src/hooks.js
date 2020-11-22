@@ -85,8 +85,6 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
     let reduction = tick()
     let isPending = false
 
-    assert(reduction, `Must return something from tick`)
-
     if (typeof reduction.then === 'function') {
       // unwrap native async queue
       const racecar = Symbol('RACECAR')
@@ -117,6 +115,9 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
       actions = _unhookGlobal()
     }
     const { requests, replies } = actions
+    if (typeof reduction !== 'object') {
+      throw new Error(`Must return object from tick: ${reduction}`)
+    }
     return { reduction, isPending, requests, replies } // rejection is handled by tick throwing ?
   } catch (error) {
     debug(`error: `, error)
@@ -128,9 +129,14 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
 const _hookGlobal = async (originalAccumulator, salt) => {
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
   const start = Date.now()
+  let waitCount = 0
   while (globalThis['@@interblock'].promises) {
-    debug(`waiting for global: ${Date.now() - start}ms`)
-    await new Promise((resolve) => setTimeout(resolve, 20))
+    waitCount++
+    await new Promise(setImmediate)
+    // await new Promise((resolve) => setTimeout(resolve, 20))
+  }
+  if (waitCount) {
+    debug(`waited for global: ${waitCount} times over ${Date.now() - start}ms`)
   }
   assert(!globalThis['@@interblock'].promises)
   const accumulator = [...originalAccumulator]

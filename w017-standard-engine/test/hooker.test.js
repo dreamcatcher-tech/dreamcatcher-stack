@@ -6,7 +6,7 @@ require('../../w012-crypto').testMode()
 
 require('debug').enable('*met* ')
 
-describe('hooks', () => {
+describe('hooker', () => {
   test('loopback cleared immediately', async () => {
     const base = await metrologyFactory()
     base.enableLogging()
