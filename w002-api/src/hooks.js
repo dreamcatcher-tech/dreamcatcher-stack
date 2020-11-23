@@ -83,6 +83,9 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   try {
     await _hookGlobal(accumulator, salt)
     let reduction = tick()
+    if (typeof reduction !== 'object') {
+      throw new Error(`Must return object from tick: ${reduction}`)
+    }
     let isPending = false
 
     if (typeof reduction.then === 'function') {
@@ -107,6 +110,9 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
         // must unwrap fully from the async/await wrapper
         reduction = await reduction
         isPending = false
+        if (typeof reduction !== 'object') {
+          throw new Error(`Must resolve object from tick: ${reduction}`)
+        }
       } else {
         reduction = undefined
         isPending = true
@@ -115,9 +121,6 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
       actions = _unhookGlobal()
     }
     const { requests, replies } = actions
-    if (typeof reduction !== 'object') {
-      throw new Error(`Must return object from tick: ${reduction}`)
-    }
     return { reduction, isPending, requests, replies } // rejection is handled by tick throwing ?
   } catch (error) {
     debug(`error: `, error)
@@ -128,15 +131,10 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
 
 const _hookGlobal = async (originalAccumulator, salt) => {
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
-  const start = Date.now()
-  let waitCount = 0
-  while (globalThis['@@interblock'].promises) {
-    waitCount++
+  if (globalThis['@@interblock'].promises) {
+    const start = Date.now()
     await new Promise(setImmediate)
-    // await new Promise((resolve) => setTimeout(resolve, 20))
-  }
-  if (waitCount) {
-    debug(`waited for global: ${waitCount} times over ${Date.now() - start}ms`)
+    debug(`waited for global for ${Date.now() - start}ms`)
   }
   assert(!globalThis['@@interblock'].promises)
   const accumulator = [...originalAccumulator]

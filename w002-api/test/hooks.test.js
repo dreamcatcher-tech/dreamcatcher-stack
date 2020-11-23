@@ -1,13 +1,13 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:hooks')
 const { '@@GLOBAL_HOOK': hook, interchain, effect } = require('..')
-describe.only('hooks', () => {
+describe('hooks', () => {
   //   require('debug').enable('*hooks')
   const nested = (id, depth = 0) => async () => {
-    interchain(`id: ${id} depth: ${depth}`)
     if (depth === 0) {
       return { id }
     } else {
+      interchain(`id: ${id} depth: ${depth}`)
       return nested(id, depth - 1)()
     }
   }
@@ -15,11 +15,11 @@ describe.only('hooks', () => {
   test('nested hooks awaited', async () => {
     const result = await hook(nested(57, 100))
     assert.strictEqual(result.reduction.id, 57)
-    assert.strictEqual(result.requests.length, 101)
+    assert.strictEqual(result.requests.length, 100)
   })
   test('nested parallel hooks do not collide', async () => {
     // make many simultaneous calls, and ensure none of them throw an error, and all return correct data
-    const inits = Array(100).fill(true)
+    const inits = Array(10).fill(true)
     const nestedDepth = 10
     const awaits = inits.map((_, index) => {
       return hook(nested(index, nestedDepth))
