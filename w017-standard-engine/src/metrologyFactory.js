@@ -50,9 +50,9 @@ const {
 const { piercerFactory } = require('./piercerFactory')
 
 let id = 0
-const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
+const metrologyFactory = async (identifier, covenantOverloads = {}) => {
   // TODO use metrology in streamProcessor
-  assert.strictEqual(typeof reifiedCovenantMap, 'object')
+  assert.strictEqual(typeof covenantOverloads, 'object')
   identifier = identifier || `id-${id++}`
   const debug = debugBase.extend(`${identifier}`)
   const engine = standardEngineFactory()
@@ -69,7 +69,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     ioIncrease,
   } = engine
 
-  ioIsolate.setProcessor(isolateFactory(reifiedCovenantMap))
+  ioIsolate.setProcessor(isolateFactory(covenantOverloads))
   const ramDb = ramDynamoDbFactory()
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
@@ -188,7 +188,7 @@ const metrologyFactory = async (identifier, reifiedCovenantMap = {}) => {
     const pierce = piercerFactory(address, ioConsistency, sqsIncrease)
     const spawn = (alias, spawnOptions = {}) =>
       pierce(actions.spawn(alias, spawnOptions))
-    const getCovenants = () => ({ ...reifiedCovenantMap })
+    const getCovenants = () => ({ ...covenantOverloads })
     return {
       pierce,
       spawn,

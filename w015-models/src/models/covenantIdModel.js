@@ -39,9 +39,9 @@ may be supplied`,
   },
   create(
     name = 'unity',
-    integrity = integrityModel.create(),
     version = '0.0.0',
-    language = 'javascript'
+    language = 'javascript',
+    integrity = integrityModel.create()
   ) {
     if (!integrityModel.isModel(integrity)) {
       throw new Error(`Invalid integrity for name: ${name}`)

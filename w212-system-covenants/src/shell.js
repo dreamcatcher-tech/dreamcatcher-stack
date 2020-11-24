@@ -1,6 +1,7 @@
 const debug = require('debug')('interblock:covenants:shell')
 const posix = require('path').posix
 const assert = require('assert')
+const { covenantIdModel } = require('../../w015-models')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
 const { spawn, connect, listChildren, getGivenName } = dmzReducer.actions
@@ -16,7 +17,7 @@ const config = {
   actions: {
     respondOrigin: (context, event) => {
       debug(`respondOrigin`, event.type)
-      respond(event.data)
+      return respond(event.data)
     },
     assignWd: assign({
       wd: (context, event) => {
@@ -36,8 +37,9 @@ const config = {
       const { to = '.', ...rest } = payload
       assert(type === 'PING')
       if (to === '.') {
+        // TODO move 'if' to state machine
         debug(`ping to self`)
-        return { type: 'PONG', payload: rest } // TODO move to state machine
+        return { type: 'PONG', payload: rest }
       }
       const result = await interchain(type, rest, to)
       debug(`ping result: %O`, result)
@@ -66,7 +68,7 @@ const config = {
 
       // TODO if this was remote, open a path to the child ?
       // but don't transmit anything ?
-      return { addActor }
+      return addActor
     },
     listActors: async (context, event) => {},
     changeDirectory: async (context, event) => {
@@ -266,6 +268,7 @@ const install = async (config) => {
  *      .processes/
  *          // all FSMs and their running threads
  *          // processes change data
+ *          // starts with the process of installing
  *          .network/
  *              // the externally presented FSM and types ?
  *      .devices/
@@ -308,12 +311,18 @@ const actions = {
     type: 'LOGIN',
     payload: { terminalChainId, credentials },
   }),
-  add: (alias, spawnOptions = {}, to = '.') => ({
-    // TODO interpret datums and ask for extra data
-    // TODO use path info
-    type: 'ADD',
-    payload: { alias, spawnOptions, to },
-  }),
+  add: (alias, spawnOptions = {}, to = '.') => {
+    if (typeof spawnOptions === 'string') {
+      const covenantId = covenantIdModel.create(spawnOptions)
+      spawnOptions = { covenantId }
+    }
+    return {
+      // TODO interpret datums and ask for extra data
+      // TODO use path info
+      type: 'ADD',
+      payload: { alias, spawnOptions, to },
+    }
+  },
   ls: (path) => ({
     // can only list children of the current node
     type: 'LS',

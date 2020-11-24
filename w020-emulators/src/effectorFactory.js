@@ -36,20 +36,22 @@ const assert = require('assert')
 const { metrologyFactory } = require('../../w017-standard-engine')
 const _ = require('lodash')
 const debug = require('debug')('interblock:effector')
-const { addressModel, socketModel } = require('../../w015-models')
+const { covenantIdModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
 const covenants = require('../../w212-system-covenants')
 const { netFactory } = require('./netFactory')
 const { socketFactory } = require('./socketFactory')
 
-const effectorFactory = async (identifier) => {
+const effectorFactory = async (identifier, covenantOverloads = {}) => {
+  assert(!covenantOverloads || typeof covenantOverloads === 'object')
   debug(`effectorFactory`)
+  covenantOverloads = _inflateCovenants(covenantOverloads)
   // start the net watcher, to reconcile hardware with chainware
   const gateway = {}
   const net = netFactory(gateway)
   const socket = socketFactory(gateway)
-  const covenantOverloads = {
-    ...covenants,
+  covenantOverloads = {
+    ...covenantOverloads,
     net,
     socket,
     hyper: covenants.shell,
@@ -153,19 +155,37 @@ const stripCovenantActions = (effector, metrology) => {
   }
 }
 
-const _getCovenant = ({ covenantId }, covenants) => {
+const _getCovenant = ({ covenantId }, overloads) => {
+  const merge = { ...covenants, ...overloads }
   let covenant = covenants.unity
-  for (const key in covenants) {
-    if (covenants[key].covenantId.equals(covenantId)) {
+  for (const key in merge) {
+    if (merge[key].covenantId.equals(covenantId)) {
       assert(covenant === covenants.unity)
-      covenant = covenants[key]
+      covenant = merge[key]
     }
   }
   return covenant
 }
-
+const _inflateCovenants = (overloads) => {
+  const models = {}
+  for (const key in overloads) {
+    covenant = overloads[key]
+    const { name, version, integrity, language } = covenant.covenantId
+    covenant.covenantId = covenantIdModel.create(
+      name,
+      version,
+      integrity,
+      language
+    )
+    models[key] = covenant
+  }
+  return models
+}
 const mapDispatchToActions = (dispatch, covenant) => {
   const mappedActions = {}
+  if (typeof covenant.actions !== 'object') {
+    return mappedActions
+  }
   for (const key in covenant.actions) {
     mappedActions[key] = (...args) => {
       const action = covenant.actions[key](...args)

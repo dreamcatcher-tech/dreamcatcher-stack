@@ -1,6 +1,7 @@
 module.exports = function (wallaby) {
   return {
     files: [
+      './index.js',
       'w*/**/*.js*',
       '**/sampleFile.txt',
       '!**/node_modules',
