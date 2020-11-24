@@ -86,7 +86,6 @@ const standardEngineFactory = () => {
         do {
           redrives.delete(chainId)
           locks.set(chainId, true)
-
           const result = await ioIncrease.push(address)
           const { txInterblocks, isRedriveRequired } = result
           assert(Array.isArray(txInterblocks))

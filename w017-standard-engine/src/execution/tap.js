@@ -43,8 +43,14 @@ const createTap = (prefix = 'interblock:blocktap') => {
     const formatted = interPrint(interblock, msg, forPath, 'bgYellow', 'yellow')
     return formatted
   }
+  const lockTimes = new Map()
+  const lock = (address, lockStart) => {
+    const chainId = address.getChainId()
+    const workStart = Date.now()
+    lockTimes.set(chainId, { lockStart, workStart })
+  }
 
-  const debugBloc = debugBase.extend('bloc')
+  const debugBloc = debugBase
   const block = (block) => {
     assert(blockModel.isModel(block))
     const chainIdRaw = block.provenance.getAddress().getChainId()
@@ -57,6 +63,11 @@ const createTap = (prefix = 'interblock:blocktap') => {
     }
     const path = getPath(block, cache)
     const formatted = blockPrint(block, path, isNewChain, isDuplicate)
+    const { lockStart, workStart } = lockTimes.get(block.getChainId())
+    const lockTime = Date.now() - lockStart
+    const workTime = Date.now() - workStart
+    const timeText = isDuplicate ? `NOCHANGE time` : `BLOCK time`
+    // debugBloc(timeText, `total: ${lockTime} ms work: ${workTime} ms`)
     debugBloc(formatted)
   }
 
@@ -110,6 +121,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
   return {
     on,
     off,
+    lock,
     block,
     interblockTransmit,
     interblockPool,

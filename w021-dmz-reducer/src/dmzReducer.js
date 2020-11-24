@@ -76,6 +76,11 @@ const reducer = async (dmz, action) => {
       openChildReducer(dmz.network, action)
       break
     }
+    case '@@LIST_CHILDREN': {
+      const payload = listChildrenReducer(dmz.network)
+      replyResolve(payload)
+      break
+    }
     case '@@GET_GIVEN_NAME': {
       const payload = getGivenNameReducer(dmz.network)
       replyResolve(payload)
@@ -241,6 +246,11 @@ const openChildReducer = (network, action) => {
     replyPromise()
   }
 }
+dmzActions.listChildren = () => ({ type: types.listChildren })
+const listChildrenReducer = (network) => {
+  debug(`listChildrenReducer`)
+  return { children: network.getAliases() }
+}
 
 dmzActions.getGivenName = () => ({ type: types.getGivenName })
 const getGivenNameReducer = (network) => {
@@ -249,7 +259,7 @@ const getGivenNameReducer = (network) => {
   let givenName
   if (parent.address.isRoot()) {
     assert(!parent.heavy)
-    givenName = '@@ROOT'
+    givenName = '/'
   } else {
     assert(parent.heavy)
     givenName = parent.heavy.getOriginAlias()

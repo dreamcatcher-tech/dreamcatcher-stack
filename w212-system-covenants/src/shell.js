@@ -1,8 +1,9 @@
 const debug = require('debug')('interblock:covenants:shell')
+const posix = require('path').posix
 const assert = require('assert')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
-const { spawn, connect } = dmzReducer.actions
+const { spawn, connect, listChildren, getGivenName } = dmzReducer.actions
 const { interchain } = require('../../w002-api')
 const {
   respond,
@@ -13,12 +14,18 @@ const {
 
 const config = {
   actions: {
-    respondPing: (context, event) => {
-      debug(`respondPing event: %O`, event)
-      return respond(event.data)
+    respondOrigin: (context, event) => {
+      debug(`respondOrigin`, event.type)
+      respond(event.data)
     },
-    respondAddActor: (context, event) => respond(event.data.addActor),
-    respondOrigin: (context, event) => respond(event.data),
+    assignWd: assign({
+      wd: (context, event) => {
+        const { absolutePath } = event.data
+        assert.strictEqual(typeof absolutePath, 'string')
+        debug(`assignWd`, absolutePath)
+        return absolutePath
+      },
+    }),
   },
   guards: {},
   services: {
@@ -64,14 +71,22 @@ const config = {
     listActors: async (context, event) => {},
     changeDirectory: async (context, event) => {
       const { path } = event.payload
-      debug(`changeDirectory`, path)
       assert.strictEqual(typeof path, 'string')
+      const normalizedPath = posix.normalize(path)
+      debug(`changeDirectory`, normalizedPath)
+      const { givenName } = await interchain(getGivenName())
+      debug(`givenName: `, givenName)
+      let absolutePath = givenName + normalizedPath
+      if (absolutePath.endsWith('/.')) {
+        absolutePath = absolutePath.substring(0, absolutePath.length - 1)
+      }
+      debug(`absolutePath`, absolutePath)
 
-      // walk the path, checking with self if each path exists
-
-      // if path doesn't exist, need to open it
-
-      // if fail to open, reject
+      const { type, payload } = listChildren()
+      const result = await interchain(type, payload, path)
+      assert(Array.isArray(result.children))
+      debug(`changeDirectory result: `, result)
+      return { ...result, absolutePath }
     },
     removeActor: async (context, event) => {
       debug(`removeActor`, event)
@@ -93,7 +108,7 @@ const machine = Machine(
     initial: 'idle',
     context: {
       root: '/',
-      wd: '~',
+      wd: '/',
     },
     strict: true,
     states: {
@@ -102,7 +117,6 @@ const machine = Machine(
        */
       idle: {
         on: {
-          '@@INIT': 'idle',
           PING: 'ping',
           LOGIN: 'login',
           ADD: 'addActor',
@@ -121,7 +135,7 @@ const machine = Machine(
       },
       ping: {
         invoke: { src: 'ping', onDone: 'idle' },
-        exit: 'respondPing',
+        exit: 'respondOrigin',
       },
       login: {
         invoke: { src: 'login', onDone: 'idle' },
@@ -143,7 +157,7 @@ const machine = Machine(
         // we could wait until it responds with its first live action ?
         // invoke send to self causing DMZ to spawn ?
         invoke: { src: 'addActor', onError: 'idle', onDone: 'idle' },
-        exit: 'respondAddActor',
+        exit: 'respondOrigin',
       },
       listActors: {
         // list the current children of the given node
@@ -155,14 +169,12 @@ const machine = Machine(
       },
       changeDirectory: {
         // change directory to the given path
-        // close the current directory
-        // telescope down the path and get it to open up to our chainId
         // connect to it and subscribe to future changes
         // probably should subscribe to all parts of the path
         // if error, show the deepest path we got to
         invoke: {
           src: 'changeDirectory',
-          onDone: 'idle',
+          onDone: { target: 'idle', actions: ['assignWd', 'respondOrigin'] },
           onError: 'idle',
         },
       },

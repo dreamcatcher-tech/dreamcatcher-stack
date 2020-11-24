@@ -225,6 +225,13 @@ const enableLoggingWithTap = (engine, identifier) => {
   })
 
   ioConsistency.subscribe(async (action, queuePromise) => {
+    if (action.type === 'LOCK') {
+      const lockStart = Date.now()
+      const lock = await queuePromise
+      if (lock) {
+        tap.lock(action.payload, lockStart)
+      }
+    }
     if (action.type === 'UNLOCK') {
       await queuePromise
       // TODO check if the children need resyncing ?
