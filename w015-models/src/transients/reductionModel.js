@@ -66,7 +66,7 @@ const reductionModel = standardize({
     requests = requests.map((request) => _inflate(request, origin))
     replies = replies.map((reply) => _inflate(reply, origin))
     requests.forEach((txRequest) => {
-      if (txRequest.to === '@@io') {
+      if (txRequest.to === '.@@io') {
         assert(dmz.config.isPierced)
       }
     })

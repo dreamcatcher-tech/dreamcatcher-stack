@@ -62,10 +62,10 @@ const ramIsolate = (preloadedCovenants) => {
 
       const mappedActions = requests.map((action) => {
         const { to } = action
-        if (to === '@@io') {
+        if (to === '.@@io') {
           // TODO map effects to ids, so can be invoked by queue
           assert.strictEqual(typeof action.exec, 'function')
-          const requestId = action.payload['@@ioRequestId']
+          const requestId = action.payload['.@@ioRequestId']
           assert.strictEqual(typeof requestId, 'string')
           assert(requestId.length > salt.length + 1)
           assert(!container.effects[requestId])

@@ -18,16 +18,16 @@ describe('pierce', () => {
     await base.settle()
     const remoteIndices = base
       .getState()
-      .network['@@io'].getRemoteRequestIndices()
+      .network['.@@io'].getRemoteRequestIndices()
     assert.strictEqual(remoteIndices.length, 1)
     assert.strictEqual(remoteIndices[0], 1)
   })
-  test('do not txInterblocks to @@io channel', async () => {
+  test('do not txInterblocks to .@@io channel', async () => {
     const base = await metrologyFactory()
     const { ioTransmit, sqsTransmit } = base.getEngine()
     let noIoTransmissions = true
     sqsTransmit.subscribe((interblock) => {
-      if (interblock.network && interblock.network['@@io']) {
+      if (interblock.network && interblock.network['.@@io']) {
         noIoTransmissions = false
       }
     })
@@ -41,10 +41,10 @@ describe('pierce', () => {
   test.todo('piercings already in current block excluded')
   test.todo('acl blocked system action is rejected')
   test.todo('unpierced chain rejects attempted outbound pierce')
-  test.todo('reject attempt to make channel named @@io even if pierced')
+  test.todo('reject attempt to make channel named .@@io even if pierced')
   test.todo('unpierce during pierce execution drops all other pierces')
   test.todo('opening pierce channel alone does not cause extra lineage')
   test.todo('always at least one tx in the channel to keep count')
-  test.todo('change to unpierced removes @@io channel')
+  test.todo('change to unpierced removes .@@io channel')
   test.todo('if not in block piercing is not purged from db')
 })

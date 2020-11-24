@@ -23,19 +23,19 @@ const push = () => {
 const interchain = async (type, payload, to) => {
   // make an async call to another chain
   const standardRequest = request(type, payload, to)
-  assert(standardRequest.to !== '@@io')
+  assert(standardRequest.to !== '.@@io')
   return _promise(standardRequest)
 }
 
 const effect = async (type, fn, ...args) => {
-  // promise that will be placed on the @@io queue and later executed
+  // promise that will be placed on the .@@io queue and later executed
   assert.strictEqual(typeof type, 'string')
   assert.strictEqual(typeof fn, 'function')
   const requestId = _incrementGlobalRequestId()
 
-  const payload = { args, ['@@ioRequestId']: requestId }
+  const payload = { args, ['.@@ioRequestId']: requestId }
   const exec = () => fn(...args)
-  return _promise({ type, payload, to: '@@io', exec, inBand: false })
+  return _promise({ type, payload, to: '.@@io', exec, inBand: false })
 }
 
 const effectInBand = async (type, fn, ...args) => {

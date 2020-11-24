@@ -315,7 +315,7 @@ const openPaths = (network) =>
       network[alias].address.isUnknown()
     )
     unresolved.forEach((alias) => {
-      if (alias === '@@io') {
+      if (alias === '.@@io') {
         return
       }
       const paths = _getPathSegments(alias)

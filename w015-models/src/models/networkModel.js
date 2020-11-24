@@ -78,7 +78,7 @@ const networkModel = standardize({
     const getAliases = () => Object.keys(instance)
     const getResolvedAliases = () =>
       getAliases().filter(
-        (alias) => instance[alias].address.isResolved() && alias !== '@@io'
+        (alias) => instance[alias].address.isResolved() && alias !== '.@@io'
       )
 
     const getAlias = (address) => {
@@ -144,7 +144,7 @@ const networkModel = standardize({
     }
 
     const isNewChannels = (previous = networkModel.create()) => {
-      // TODO ignore '@@io' ?
+      // TODO ignore '.@@io' ?
       assert(networkModel.isModel(previous))
       const resolvedAliases = getResolvedAliases()
       const isNewChannels = resolvedAliases.some((alias) => {

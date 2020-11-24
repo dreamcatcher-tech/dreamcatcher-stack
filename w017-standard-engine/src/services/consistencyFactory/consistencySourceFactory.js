@@ -267,7 +267,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
   const _purgePiercings = async (block, piercings) => {
     // TODO check previous blocks up to some time limit
     // TODO if pierce lowered, remove all piercings
-    const ioChannel = block.network['@@io']
+    const ioChannel = block.network['.@@io']
     if (!ioChannel) {
       return
     }
@@ -475,13 +475,13 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
 
     putLockChain,
     putUnlockChain,
-    
+
     getLineage,
     getIsAnyAffected,
     getAffected,
     getIsPresent,
     getBlock,
-    
+
     putPoolInterblock,
     putPierceRequest,
     putPierceReply,

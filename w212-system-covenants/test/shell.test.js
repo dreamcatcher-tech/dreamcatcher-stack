@@ -14,7 +14,7 @@ describe('machine validation', () => {
   test.todo('rejects invalid path files')
   describe('cd', () => {
     require('debug').enable('*met:* *shell')
-    test.only('cd opens up path', async () => {
+    test('cd opens up path', async () => {
       const base = await metrologyFactory('e', { hyper: shell })
       await base.spawn('child1')
       base.enableLogging()

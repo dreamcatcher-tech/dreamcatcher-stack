@@ -195,10 +195,10 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         debug(`effects`)
         // pull out the new IO channel requests
         let prevIo = channelModel.create()
-        if (lock.block && lock.block.network['@@io']) {
-          prevIo = lock.block.network['@@io']
+        if (lock.block && lock.block.network['.@@io']) {
+          prevIo = lock.block.network['.@@io']
         }
-        const nextIo = nextLock.block.network['@@io'] || prevIo
+        const nextIo = nextLock.block.network['.@@io'] || prevIo
         const nextIoIndices = nextIo
           .getRequestIndices()
           .filter((index) => !prevIo.requests[index])
@@ -208,8 +208,8 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const awaits = nextIoIndices.map(async (index) => {
           const action = nextIo.requests[index]
           assert(action && action.payload)
-          // TODO translate to be the indices of the @@io channel directly
-          const effectId = action.payload['@@ioRequestId']
+          // TODO translate to be the indices of the .@@io channel directly
+          const effectId = action.payload['.@@ioRequestId']
           assert.strictEqual(typeof effectId, 'string')
           const { type, payload } = action
           const address = nextLock.block.provenance.getAddress()
@@ -251,11 +251,11 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
 }
 
 const _isPierceChanged = (network, previous) => {
-  if (!network['@@io']) {
+  if (!network['.@@io']) {
     return false
   }
-  const ioChannel = network['@@io']
-  const previousChannel = previous['@@io'] || channelModel.create()
+  const ioChannel = network['.@@io']
+  const previousChannel = previous['.@@io'] || channelModel.create()
   return ioChannel.isTxGreaterThan(previousChannel)
 }
 

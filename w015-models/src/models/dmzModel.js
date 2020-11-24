@@ -70,7 +70,7 @@ const dmzModel = standardize({
     const { network, pending, config } = instance
     // TODO verify that the buffers map to legit channels
     assert(pending.isBufferValid(network))
-    assert(!network['@@io'] || config.isPierced)
+    assert(!network['.@@io'] || config.isPierced)
     const rx = () => {
       const reply = network.rxReply()
       if (reply) {

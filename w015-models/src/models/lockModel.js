@@ -112,10 +112,10 @@ const refinePiercings = (block, piercings) => {
 }
 
 const removeProcessedPiercings = (block, { requests, replies }) => {
-  if (!block || !block.network['@@io']) {
+  if (!block || !block.network['.@@io']) {
     return { requests, replies }
   }
-  const ioChannel = block.network['@@io']
+  const ioChannel = block.network['.@@io']
   const {
     requests: remoteRequests,
     replies: remoteReplies,

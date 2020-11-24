@@ -155,7 +155,7 @@ const tx = (network, requests, replies) =>
       if (!channel) {
         // TODO handle children ?  if no pathing or starts with ./ ?
         // TODO maybe do path opening here, working backwards
-        const systemRole = to === '@@io' ? 'PIERCE' : 'DOWN_LINK'
+        const systemRole = to === '.@@io' ? 'PIERCE' : 'DOWN_LINK'
         const address = addressModel.create()
         channel = channelModel.create(address, systemRole)
         debug(`channel created with systemRole: ${systemRole}`)
