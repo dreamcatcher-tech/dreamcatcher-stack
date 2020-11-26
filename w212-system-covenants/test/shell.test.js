@@ -26,16 +26,12 @@ describe('machine validation', () => {
       debug(`context:`, context)
       assert.strictEqual(context.wd, '/child1')
 
-      await base.pierce(shell.actions.add('nested1', {}, 'child1'))
+      await base.pierce(shell.actions.add('child1/nested1'))
       const cdNested = shell.actions.cd('child1/nested1')
       const nestedResult = await base.pierce(cdNested)
       debug(`nestedResult`, nestedResult)
       assert.strictEqual(base.getContext().wd, '/child1/nested1')
-
-      const remoteResult = await base.pierce(
-        shell.actions.add('child1/nested2')
-      )
-
+      await base.pierce(shell.actions.add('child1/nested2'))
       await base.settle()
     })
     test('. is resolved', async () => {

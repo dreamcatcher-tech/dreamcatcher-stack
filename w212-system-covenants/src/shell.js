@@ -59,10 +59,12 @@ const config = {
     },
     addActor: async (context, event) => {
       assert.strictEqual(typeof event.payload, 'object')
-      const { alias, spawnOptions, to } = event.payload
-      debug(`addActor`, alias, to)
-      const { type, payload } = spawn(alias, spawnOptions)
-      const addActor = await interchain(type, payload, to)
+      const { alias, spawnOptions } = event.payload
+      const to = posix.dirname(alias)
+      const name = posix.basename(alias)
+      debug(`addActor`, name, to)
+      const spawnAction = spawn(name, spawnOptions)
+      const addActor = await interchain(spawnAction, to)
 
       // calculate path based on working directory
 
@@ -150,13 +152,12 @@ const machine = Machine(
 
       addActor: {
         // TODO handle 'to' field specifying a path
-        // makes a new blank child at the given path - may pass covenant and initial state ?
+        // makes a new blank child at the given path
         // if path not exist, error at deepest path
         // can attempt to make all parents too, as part of the options
         // if offline, makes the child locally, then attempts to sync with root
 
         // respond with the childs alias and address
-        // we could wait until it responds with its first live action ?
         // invoke send to self causing DMZ to spawn ?
         invoke: { src: 'addActor', onError: 'idle', onDone: 'idle' },
         exit: 'respondOrigin',
@@ -311,7 +312,7 @@ const actions = {
     type: 'LOGIN',
     payload: { terminalChainId, credentials },
   }),
-  add: (alias, spawnOptions = {}, to = '.') => {
+  add: (alias, spawnOptions = {}) => {
     if (typeof spawnOptions === 'string') {
       const covenantId = covenantIdModel.create(spawnOptions)
       spawnOptions = { covenantId }
@@ -320,7 +321,7 @@ const actions = {
       // TODO interpret datums and ask for extra data
       // TODO use path info
       type: 'ADD',
-      payload: { alias, spawnOptions, to },
+      payload: { alias, spawnOptions },
     }
   },
   ls: (path) => ({

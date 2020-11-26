@@ -142,7 +142,6 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
           const { address } = channel
           const isRoot = absolutePath === '/' // TODO remove this check by normalizing paths
           const childAbsolutePath = isRoot ? alias : absolutePath + '/' + alias
-          debug(`childDispatchPath: %o`, childAbsolutePath)
           children[alias] = metrology(address, childAbsolutePath) // TODO dispatch still goes to origin ?
         }
       })

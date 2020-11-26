@@ -10,10 +10,11 @@ const {
   interblockModel,
   channelModel,
   networkModel,
+  txRequestModel,
   rxRequestModel,
   rxReplyModel,
 } = require('../../w015-models')
-const { channelProducer } = require('../../w016-producers')
+const { networkProducer, channelProducer } = require('../../w016-producers')
 const {
   replyPromise,
   replyResolve,
@@ -51,9 +52,8 @@ const reducer = async (dmz, action) => {
 
   switch (action.type) {
     case '@@SPAWN': {
-      const { nextNetwork, genesisRequest } = await spawn(dmz, action)
+      const nextNetwork = await spawn(dmz, action)
       network = nextNetwork
-      interchain(genesisRequest)
       replyPromise()
       break
     }
@@ -150,34 +150,54 @@ const types = {
   getGivenName: '@@GET_GIVEN_NAME',
 }
 
-dmzActions.spawn = (alias, spawnOpts = {}) => ({
-  type: types.spawn,
-  payload: { alias, spawnOpts },
-})
-const spawn = async (dmz, originAction) => {
-  let genesis
-  let { alias, spawnOpts } = originAction.payload
-  const { network, validators } = dmz
-  const child = dmzModel.create({ ...spawnOpts, validators })
-  genesis = await effectInBand('SIGN_BLOCK', blockModel.create, child) // TODO use chain key for signing
+dmzActions.spawn = (alias, spawnOpts = {}, initialActions = []) => {
+  return {
+    type: types.spawn,
+    payload: { alias, spawnOpts, initialActions },
+  }
+}
+const spawn = async (dmz, spawnRequest) => {
+  let { alias, spawnOpts, initialActions } = spawnRequest.payload
+  if (!Array.isArray(initialActions)) {
+    initialActions = [initialActions]
+  }
+  initialActions = initialActions.map(({ type, payload, to }) =>
+    txRequestModel.create(type, payload, to)
+  )
+  const { network, validators, covenantId } = dmz
+  const cnet = networkProducer.tx(networkModel.create(), initialActions, [])
+  let child = dmzModel.create({
+    network: cnet,
+    covenantId,
+    ...spawnOpts,
+    validators,
+  })
+  debug(`spawn alias: ${alias}`)
+  alias = !alias ? autoAlias(network) : alias
+  assert(!alias.includes('/'), `No / character allowed in "${alias}"`)
+  const channelUnused = !network[alias] || network[alias].address.isUnknown()
+  assert(channelUnused, `childAlias exists: ${alias}`)
+  const genesis = await effectInBand('SIGN_BLOCK', blockModel.create, child) // TODO use chain key for signing
+  assert(blockModel.isModel(genesis), `Genesis block creation failed`)
+  const payload = { genesis, alias, originAction: spawnRequest }
+  const genesisRequest = actionModel.create('@@GENESIS', payload)
+  const address = genesis.provenance.getAddress()
 
   const nextNetwork = networkModel.clone(network, (draft) => {
     // TODO override generate nonce to use some predictable seed, like last block
-    debug(`spawn alias: ${alias}`)
-    alias = !alias ? autoAlias(network) : alias
-    assert(!alias.includes('/'), `No / character allowed in "${alias}"`)
-    assert(!network[alias], `childAlias exists: ${alias}`)
-
-    const address = genesis.provenance.getAddress()
     let channel = channelModel.create(address, './')
     const childOriginProvenance = interblockModel.create(genesis)
     channel = channelProducer.ingestInterblock(channel, childOriginProvenance)
+    channel = channelProducer.txRequest(channel, genesisRequest)
+    if (network[alias]) {
+      network[alias].getRequestIndices().forEach((index) => {
+        const action = network[alias].requests[index]
+        channel = channelProducer.txRequest(channel, action)
+      })
+    }
     draft[alias] = channel
   })
-  assert(blockModel.isModel(genesis), `Genesis block creation failed`)
-  const payload = { genesis, alias, originAction }
-  const genesisRequest = { type: '@@GENESIS', payload, to: alias }
-  return { nextNetwork, genesisRequest }
+  return nextNetwork
 }
 
 dmzActions.connect = (alias, chainId) => ({

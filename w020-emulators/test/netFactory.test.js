@@ -12,6 +12,7 @@ describe('netFactory', () => {
     client.enableLogging()
     const url = 'wss://echo.websocket.org'
     const urlSafe = 'wss:||echo.websocket.org'
+    await client.startNetworking()
     await client.net.add(url)
     const socket = client.net[urlSafe]
     assert(socket)

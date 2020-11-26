@@ -44,6 +44,9 @@ const channelModel = standardize({
     if (isLoopback) {
       assert(address.isLoopback())
     }
+    if (address.isUnknown()){
+      assert.strictEqual(Object.keys(replies).length, 0)
+    }
     // TODO if this is pierce channel, ensure only requests are OOB effects ?
     const remote = isLoopback
       ? remoteModel.create(instance)

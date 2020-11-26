@@ -1,7 +1,7 @@
 const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 
-describe('crm', () => {
+describe.skip('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
       // lay out basic app, with restrictions on data types

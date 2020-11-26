@@ -18,6 +18,14 @@ describe('api', () => {
       assert(isReplyFor(reply))
     })
   })
+  describe('request', () => {
+    test('action with "to" added', () => {
+      const action = { type: 'PLAIN', payload: { test: 'data' } }
+      const to = 'farAway'
+      const addressed = request(action, to)
+      assert.deepStrictEqual(addressed, { ...action, to })
+    })
+  })
   describe('model compatibility', () => {
     test.todo('request => txRequestModel')
     test.todo('promise => txReplyModel')

@@ -58,7 +58,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     const isDuplicate =
       cache[chainIdRaw] && cache[chainIdRaw].some((b) => b.equals(block))
     insertBlock(block, cache)
-    if (!isOn) {
+    if (!isOn || isDuplicate) {
       return
     }
     const path = getPath(block, cache)

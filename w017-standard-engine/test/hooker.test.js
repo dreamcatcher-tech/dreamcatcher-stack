@@ -1,10 +1,12 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:tests:continuation')
+const debug = require('debug')('interblock:tests:hooker')
+const { interchain } = require('../../w002-api')
+const { actions } = require('../../w021-dmz-reducer')
 const { metrologyFactory } = require('../src/metrologyFactory')
-const { blockModel } = require('../../w015-models')
+const { covenantIdModel, blockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()
 
-require('debug').enable('*met* ')
+require('debug').enable('*met* *tests* *hooks*')
 
 describe('hooker', () => {
   test('loopback cleared immediately', async () => {
@@ -23,4 +25,5 @@ describe('hooker', () => {
   test.todo('throw if pending and tx a request to self')
   // if only request from pending is a request to self, then know it will never resolve
   // basically cannot raise pending, then request something to self
+  test.todo('wait for all promises')
 })

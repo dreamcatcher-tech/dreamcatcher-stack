@@ -4,7 +4,7 @@ const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.co
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('effector', () => {
-  require('debug').enable('*met* *tests*')
+  require('debug').enable('*tests*')
 
   test('ping single', async () => {
     const start = Date.now()
@@ -43,6 +43,7 @@ describe('effector', () => {
      * 2020-09-09 580ms 172ms RTT - s3 caching, machine reuse, immer correction
      * 2020-11-19 587ms 99ms RTT - hooks, pierce, 3 root blocks, 2 net blocks
      * 2020-11-20 478ms 77ms RTT - tuning
+     * 2020-11-26 188ms 85ms RTT - turned of net creation
      */
   })
   test.skip('ping many times', async () => {

@@ -10,8 +10,12 @@ const equal = require('fast-deep-equal')
 
 const request = (type = 'PING', payload = {}, to = '.') => {
   if (typeof type === 'object') {
+    if (typeof payload === 'string') {
+      to = payload
+    } else {
+      to = type.to || '.'
+    }
     payload = type.payload || {}
-    to = type.to || '.'
     type = type.type
   }
   if (typeof type !== 'string') {

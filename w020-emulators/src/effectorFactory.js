@@ -58,10 +58,9 @@ const effectorFactory = async (identifier, covenantOverloads = {}) => {
   }
   const metrology = await metrologyFactory(identifier, covenantOverloads)
   const shell = effector(metrology, metrology.pierce)
-
-  await shell.add('net', { covenantId: net.covenantId })
-  // connectGateway(gateway, shell.net)
-
+  shell.startNetworking = async () =>
+    await shell.add('net', { covenantId: net.covenantId })
+  // TODO only have base metro functions, like getEngine, on root
   return shell
 }
 
@@ -88,15 +87,10 @@ const effector = (metrology, rootPierce) => {
       return
     }
     const liveCovenants = metrology.getCovenants()
-    const currentCovenant = _getCovenant(state, liveCovenants)
-    if (currentCovenant && !currentCovenant.covenantId.equals(covenantId)) {
-      covenantId = currentCovenant.covenantId
+    let covenant = _getCovenant(state, liveCovenants)
+    if (covenant && !covenant.covenantId.equals(covenantId)) {
+      covenantId = covenant.covenantId
       debug(`set covenant to: %O`, covenantId.name)
-      let covenant = liveCovenants[covenantId.name]
-      if (state.network['..'].address.isRoot()) {
-        debug(`assigning shell in special case root chain`)
-        covenant = covenants.shell // TODO fix special initial case
-      }
       const mappedActions = mapDispatchToActions(dispatch, covenant)
       stripCovenantActions(base, metrology)
       Object.assign(base, mappedActions)
@@ -158,6 +152,9 @@ const stripCovenantActions = (effector, metrology) => {
 const _getCovenant = ({ covenantId }, overloads) => {
   const merge = { ...covenants, ...overloads }
   let covenant = covenants.unity
+  if (covenantId.name === 'hyper') {
+    return overloads.hyper //hyper always overridden
+  }
   for (const key in merge) {
     if (merge[key].covenantId.equals(covenantId)) {
       assert(covenant === covenants.unity)
@@ -170,12 +167,12 @@ const _inflateCovenants = (overloads) => {
   const models = {}
   for (const key in overloads) {
     covenant = overloads[key]
-    const { name, version, integrity, language } = covenant.covenantId
+    const { name, version, language, integrity } = covenant.covenantId
     covenant.covenantId = covenantIdModel.create(
       name,
       version,
-      integrity,
-      language
+      language,
+      integrity
     )
     models[key] = covenant
   }

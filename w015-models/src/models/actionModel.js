@@ -6,9 +6,9 @@ const defaultAction = () => `DEFAULT_ACTION_${counter++}`
 
 const actionModel = standardize({
   schema: actionSchema,
-  create(action = defaultAction()) {
+  create(action = defaultAction(), payload = {}) {
     if (typeof action === 'string') {
-      action = { type: action }
+      action = { type: action, payload }
     }
     if (!action.payload) {
       action = { ...action, payload: {} }
