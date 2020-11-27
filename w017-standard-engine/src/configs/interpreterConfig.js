@@ -353,17 +353,6 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
-    respondPromise: assign({
-      dmz: ({ dmz, anvil }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
-        assert.fail('todo')
-        // assert no prior promise or resolution to the request
-        // do not overwrite an existing reply to the triggering action
-
-        return dmz
-      },
-    }),
     respondRequest: assign({
       dmz: ({ externalAction, dmz, address, anvil }) => {
         debug('respondRequest')
@@ -435,19 +424,6 @@ const interpreterMachine = machine.withConfig({
       debug(`isReductionPending`, isReductionPending)
       return isReductionPending
     },
-    isRequest: ({ anvil }) => {
-      const isRequest = rxRequestModel.isModel(anvil)
-      debug(`isRequest`, isRequest)
-      return isRequest
-    },
-    isPendingRaised: ({ dmz, reduceResolve }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(reductionModel.isModel(reduceResolve))
-      const isPendingRaised =
-        reduceResolve.getIsPending() && !dmz.pending.getIsPending()
-      debug(`isPendingRaised: `, isPendingRaised)
-      return isPendingRaised
-    },
     isChannelUnavailable: ({ dmz, address }) => {
       assert(addressModel.isModel(address), `If Anvil, then address required`)
       assert(!address.isUnknown(), `Address unknown`)
@@ -470,13 +446,6 @@ const interpreterMachine = machine.withConfig({
       const isAnvilPromised = response && response.isPromise()
       debug(`isAnvilPromised`, isAnvilPromised)
       return isAnvilPromised
-    },
-    isRejection: ({ reduceRejection }) => {
-      debug(`isRejection ${!!reduceRejection}`)
-      if (reduceRejection) {
-        debug(reduceRejection.message)
-      }
-      return reduceRejection
     },
     isUnbuffered: ({ dmz, covenantAction }) => {
       assert(dmzModel.isModel(dmz))
@@ -510,18 +479,6 @@ const interpreterMachine = machine.withConfig({
       const isOriginSettled = reply && !reply.isPromise()
       debug(`isOriginSettled`, isOriginSettled)
       return isOriginSettled
-    },
-    isOriginResponseDone: ({ covenantAction, reduceResolve }) => {
-      assert(rxRequestModel.isModel(covenantAction))
-      assert(reductionModel.isModel(reduceResolve))
-      // TODO handle promise to origin being returned part way thru pending
-      // presuming here that resolve to origin will be in reduceResolve
-      const { replies } = reduceResolve
-      const isOriginResponseDone = replies.some(
-        (reply) => reply.request.sequence === covenantAction.sequence
-      )
-      debug(`isOriginResponseDone: `, isOriginResponseDone)
-      return isOriginResponseDone
     },
     isPendingUnlowered: ({ initialPending, dmz }) => {
       assert(pendingModel.isModel(initialPending))
@@ -596,7 +553,6 @@ const interpreterMachine = machine.withConfig({
       assert(reduceResolve, `Covenant returned: ${reduceResolve}`)
       debug(`reduceCovenant result pending: `, reduceResolve.isPending)
       return { reduceResolve }
-      // TODO dedupe all requests that came back during a promise resolve
     },
   },
 })
