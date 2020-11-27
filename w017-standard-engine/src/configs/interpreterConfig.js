@@ -537,7 +537,7 @@ const interpreterMachine = machine.withConfig({
 
       debug(`result isPending: `, reduceResolve.isPending)
       assert(reduceResolve, `System returned: ${reduceResolve}`)
-      // TODO assert system can never raise pending
+      assert(!reduceResolve.isPending, `System can never raise pending`)
       return { reduceResolve }
     },
     reduceCovenant: async ({ dmz, covenantAction, isolatedTick }) => {
