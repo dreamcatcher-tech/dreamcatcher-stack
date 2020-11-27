@@ -101,10 +101,14 @@ const definition = {
             isReply: {
               always: [
                 { target: 'reducePendingReply', cond: 'isReply' },
-                {
-                  target: 'done',
-                  actions: ['bufferRequest', 'promiseExternalAction'],
-                },
+                { target: 'bufferRequest' },
+              ],
+            },
+            bufferRequest: {
+              entry: 'bufferRequest',
+              always: [
+                { target: 'done', cond: 'isAnvilPromised' },
+                { target: 'done', actions: 'promiseAnvil' },
               ],
             },
             reducePendingReply: {
@@ -207,7 +211,11 @@ const definition = {
                   ],
                 },
                 raisePending: {
-                  entry: ['raisePending', 'promiseOriginRequest'],
+                  entry: [
+                    'raisePending',
+                    'promiseOriginRequest',
+                    'assignInitialPending',
+                  ],
                   always: 'isUnbuffered',
                 },
                 reject: {

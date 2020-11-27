@@ -110,7 +110,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
       }
     }
     if (loopCount >= 10) {
-      debug('Path over loopCount')
+      debugBase('Path over loopCount')
     }
     const concat = path.join('/')
     if (!concat) {

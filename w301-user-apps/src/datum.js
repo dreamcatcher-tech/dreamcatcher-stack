@@ -59,6 +59,7 @@ const stateKeys = [
 const reducer = async (state, action) => {
   // TODO run assertions on state shape
   const { type, payload } = action
+  const { isTestData } = payload
   const nextState = {}
   switch (type) {
     case '@@INIT': {
@@ -76,7 +77,6 @@ const reducer = async (state, action) => {
           if (!children[child]) {
             // make a new dmz for it, with data preloaded
             debug(`creating new child: `, child)
-            const { isTestData } = payload
             const setChild = actions.set({
               ...payload.children[child],
               isTestData,
@@ -95,7 +95,7 @@ const reducer = async (state, action) => {
           nextState[key] = value
         }
       })
-      if (payload.isTestData) {
+      if (isTestData) {
         const hash = action.getHash()
         const seed = parseInt(Number('0x' + hash.substring(0, 14)))
         faker.seed(seed)
@@ -135,7 +135,9 @@ const _checkProposedSchemas = ({ schema, formData, children }) => {
 }
 const schemaMap = new WeakMap()
 const _validate = (schema, instance) => {
-  assert(schema, `No schema supplied`)
+  if (!schema) {
+    throw new Error(`No schema supplied`)
+  }
   let validator = schemaMap.get(schema)
   if (!validator) {
     try {

@@ -151,10 +151,14 @@ const types = {
 }
 
 dmzActions.spawn = (alias, spawnOpts = {}, initialActions = []) => {
-  return {
+  const action = {
     type: types.spawn,
     payload: { alias, spawnOpts, initialActions },
   }
+  if (!alias) {
+    delete action.payload.alias
+  }
+  return action
 }
 const spawn = async (dmz, spawnRequest) => {
   let { alias, spawnOpts, initialActions } = spawnRequest.payload

@@ -8,7 +8,10 @@ const equal = require('fast-deep-equal')
  * put into the array named "actions" on the returned state.
  */
 
-const request = (type = 'PING', payload = {}, to = '.') => {
+const request = (type, payload = {}, to = '.') => {
+  if (!type) {
+    throw new Error('Must supply at least one arg')
+  }
   if (typeof type === 'object') {
     if (typeof payload === 'string') {
       to = payload

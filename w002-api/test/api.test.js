@@ -3,7 +3,7 @@ const { isReplyFor, request, promise, resolve, reject } = require('..')
 describe('api', () => {
   describe('isReplyFor', () => {
     test('no request check if is reply', () => {
-      const mockRequest = request()
+      const mockRequest = request('mock')
       const mockReply = resolve()
       const isReply = isReplyFor(mockReply)
       assert(isReply)

@@ -52,14 +52,15 @@ const interpreterMachine = machine.withConfig({
         if (rxRequestModel.isModel(anvil)) {
           assert(anvil.getAddress().equals(address))
         }
-        debug(`interpreterConfig`, anvil.type, address.getChainId())
+        const chainId = address.getChainId()
+        debug(`interpreterConfig type: %o chainId: %o`, anvil.type, chainId)
         return anvil
       },
       address: (context, event) => {
         // TODO try replace with something that gets the address dynamically
         const { address } = event.payload
         assert(addressModel.isModel(address))
-        assert(address.isResolved())
+        assert(address.isResolved() || address.isLoopback())
         return address
       },
     }),
@@ -230,7 +231,7 @@ const interpreterMachine = machine.withConfig({
         assert(pendingModel.isModel(initialPending))
         assert(reductionModel.isModel(reduceResolve))
         const { replies } = reduceResolve
-        const { pendingRequest } = pendingModel
+        const { pendingRequest } = initialPending
         isOriginPromise = replies.some(
           (txReply) =>
             txReply.getReply().isPromise() &&
@@ -248,7 +249,7 @@ const interpreterMachine = machine.withConfig({
         assert(!dmz.pending.getIsPending())
         const { pendingRequest } = initialPending
         assert(rxRequestModel.isModel(pendingRequest))
-        debug(`resolveOriginRequest`, pendingRequest)
+        debug(`settleOrigin`, pendingRequest)
         const { sequence } = pendingRequest
         const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
         const network = networkProducer.tx(dmz.network, [], [reply])
@@ -284,11 +285,24 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, pending })
       },
     }),
-    promiseExternalAction: assign({
-      dmz: ({ dmz, externalAction }) => {
+    assignInitialPending: assign({
+      initialPending: ({ dmz }) => {
+        // TODO this probably breaks other things in weird undiscovered ways
+        // as it isn't supposed to change during execution
+        // but this handles if a promise raises and lowers in a single interpreter cycle
         assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(externalAction))
-        const { sequence } = externalAction
+        assert(dmz.pending.getIsPending())
+        debug(`assignInitialPending`)
+        return dmz.pending
+      },
+    }),
+    promiseAnvil: assign({
+      dmz: ({ dmz, anvil }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(rxRequestModel.isModel(anvil))
+        debug(`promiseanvil`, anvil.type)
+        const { sequence } = anvil
+
         const promise = txReplyModel.create('@@PROMISE', {}, sequence)
         const network = networkProducer.tx(dmz.network, [], [promise])
         return dmzModel.clone({ ...dmz, network })
@@ -359,6 +373,14 @@ const interpreterMachine = machine.withConfig({
         assert(!anvil.equals(externalAction))
         const network = networkProducer.respondRequest(dmz.network, anvil)
         return dmzModel.clone({ ...dmz, network })
+      },
+    }),
+    shiftBufferedRequests: assign({
+      dmz: ({ dmz }) => {
+        assert(dmzModel.isModel(dmz))
+        debug(`shiftBufferedRequests`)
+        const pending = pendingProducer.shiftRequests(dmz.pending, dmz.network)
+        return dmzModel.clone({ ...dmz, pending })
       },
     }),
     defaultResolve: assign({
@@ -441,6 +463,14 @@ const interpreterMachine = machine.withConfig({
       debug(`isReply: %o`, isReply)
       return isReply
     },
+    isAnvilPromised: ({ dmz, anvil }) => {
+      assert(dmzModel.isModel(dmz))
+      assert(rxRequestModel.isModel(anvil))
+      const response = dmz.network.getResponse(anvil)
+      const isAnvilPromised = response && response.isPromise()
+      debug(`isAnvilPromised`, isAnvilPromised)
+      return isAnvilPromised
+    },
     isRejection: ({ reduceRejection }) => {
       debug(`isRejection ${!!reduceRejection}`)
       if (reduceRejection) {
@@ -520,9 +550,9 @@ const interpreterMachine = machine.withConfig({
       return isExternalActionSettled
     },
     isTxExternalActionPromise: ({ isExternalPromise }) => {
-      const isExternalActionPromised = !!isExternalPromise
-      debug(`isExternalActionPromised`, isExternalActionPromised)
-      return isExternalActionPromised
+      const isTxExternalActionPromise = !!isExternalPromise
+      debug(`isTxExternalActionPromise`, isTxExternalActionPromise)
+      return isTxExternalActionPromise
     },
   },
   services: {

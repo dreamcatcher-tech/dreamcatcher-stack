@@ -33,17 +33,21 @@ const settle = (pending) =>
     delete draft.pendingRequest
     draft.replies = []
   })
-const shiftRequest = (pending) =>
+const shiftRequests = (pending, network) =>
   pendingModel.clone(pending, (draft) => {
     assert(!pending.getIsPending())
     assert(!pending.replies.length)
-    const { event } = pending.rxBufferedRequest()
+    const { event } = pending.rxBufferedRequest(network)
     assert(rxRequestModel.isModel(event))
     const chainId = event.getAddress().getChainId()
     const index = event.getIndex()
     const [first, ...rest] = pending.requests[chainId]
     assert.strictEqual(first, index)
-    draft.requests[chainId] = rest
+    if (!rest.length) {
+      delete draft.requests[chainId]
+    } else {
+      draft.requests[chainId] = rest
+    }
   })
 
 module.exports = {
@@ -51,5 +55,5 @@ module.exports = {
   bufferRequest,
   pushReply,
   settle,
-  shiftRequest,
+  shiftRequests,
 }

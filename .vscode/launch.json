@@ -33,7 +33,7 @@
       "port": 9229
     },
     {
-      "name": "interpreter.test",
+      "name": "collection.test",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -41,7 +41,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/w017-standard-engine/test/interpreter.test.js"
+        "${workspaceRoot}/w301-user-apps/test/collection.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",

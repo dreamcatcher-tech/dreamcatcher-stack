@@ -12,7 +12,7 @@ describe.skip('crm', () => {
   })
   describe('data import', () => {
     test('loads data', async () => {
-      const client = await effectorFactory('eff')
+      const client = await effectorFactory('imp')
       const app = require('../src/crm.config')
       client.emulateAws(app.covenants)
 
