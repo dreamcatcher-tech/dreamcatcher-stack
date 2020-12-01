@@ -19,48 +19,52 @@ const { interchain } = require('../../w002-api')
  *  10. a tree of datums should update atomically from parent - all or none
  */
 
-const initialState = {
-  namePath: 'id', // array of keys, or single key
-  formData: {},
-  schema: {},
-  uiSchema: {
-    // how to display this datum
-  },
-  subscribers: [
-    // list of paths that need to be notified when changes occur
-    // error responses are ignored
+const datumSchema = {
+  type: 'object',
+  title: 'Datum',
+  required: [
+    'type',
+    'namePath',
+    'schema',
+    'uiSchema',
+    'subscribers',
+    'children',
   ],
-  children: {
-    child1: {
-      namePath: 'id', // array of keys, or single key - optional
-      formData: {},
-      schema: {},
-      children: {
-        child2: {},
-      },
-      uiSchema: {
-        // how to display this datum
-      },
-      subscribers: [
-        // list of paths that need to be notified when changes occur
-        // error responses are ignored
-      ],
+  additionalProperties: false,
+  properties: {
+    type: { enum: ['COLLECTION', 'XSTATE', 'ARRAY', 'DATA'] },
+    isEditable: { type: 'boolean' },
+    namePath: { type: 'array', items: { type: 'string' } },
+    formData: { type: 'object' },
+    schema: { type: 'object' },
+    uiSchema: { type: 'object' },
+    subscribers: {
+      type: 'array',
+      description: 'list of paths that need to be notified when changes occur',
+      // TODO use regex for subscriber path format
+      items: { type: 'string' },
     },
+    // does not include formData
+    children: { type: 'object', patternProperties: { '(.*?)': { $ref: '#' } } },
   },
 }
-const stateKeys = [
-  'namePath',
-  'formData',
-  'schema',
-  'uiSchema',
-  'subscribers',
-  'children',
-]
+
+const initialState = {
+  type: 'DATA',
+  isEditable: true,
+  namePath: [], // array of keys into formData
+  formData: {},
+  schema: {},
+  uiSchema: {},
+  subscribers: [],
+  children: {},
+}
 const reducer = async (state, action) => {
   // TODO run assertions on state shape
+  if (!Object.keys(state).length) {
+    state = initialState
+  }
   const { type, payload } = action
-  const { isTestData } = payload
-  const nextState = {}
   switch (type) {
     case '@@INIT': {
       // if made from scratch, check state and make new children
@@ -68,115 +72,160 @@ const reducer = async (state, action) => {
       break
     }
     case 'SET': {
-      _checkProposedSchemas(payload)
-      if (payload.children) {
-        // TODO ensure even formData updates are atomic accross children
-        // create any children we don't have yet with present state
-        const { children } = await interchain(dmzReducer.actions.listChildren())
-        for (const child in payload.children) {
-          if (!children[child]) {
-            // make a new dmz for it, with data preloaded
-            debug(`creating new child: `, child)
-            const setChild = actions.set({
-              ...payload.children[child],
-              isTestData,
-            })
-            const spawn = dmzReducer.actions.spawn(child)
-            interchain(spawn)
-            await interchain(setChild, child)
-          }
-        }
-
-        // send down updates to all existing children
+      if (_isTemplateIncluded(payload)) {
+        state = convertToTemplate(payload)
       }
-      stateKeys.forEach((key) => {
-        const value = payload[key] || state[key]
-        if (value) {
-          nextState[key] = value
-        }
-      })
-      if (isTestData) {
+      if (payload.isTestData) {
         const hash = action.getHash()
         const seed = parseInt(Number('0x' + hash.substring(0, 14)))
         faker.seed(seed)
-        let { formData } = payload
-        formData = formData || nextState.formData || {}
-        Object.keys(nextState.schema.properties).forEach((key) => {
-          if (formData[key]) {
-            return
-          }
-          switch (key) {
-            // TODO if no faker key, switch to random strings
-            case 'firstName':
-              formData[key] = faker.name.firstName()
-              break
-            case 'address':
-              formData[key] = faker.address.streetAddress()
-              break
-          }
-        })
-        nextState.formData = formData
       }
-      break
+      const demuxed = demuxFormData(state, payload)
+      state.formData = demuxed.formData
+      if (Object.keys(state.children).length) {
+        const { children } = await interchain(dmzReducer.actions.listChildren())
+        for (const name in state.children) {
+          if (!children[name]) {
+            debug(`creating new child: `, name)
+            const setChild = actions.set({
+              ...demuxed.children[name],
+              ...state.children[name],
+            })
+            const spawn = dmzReducer.actions.spawn(name)
+            interchain(spawn)
+            await interchain(setChild, name)
+          }
+        }
+      }
+      return state
     }
     default:
       throw new Error(`Unknown action: ${type}`)
   }
-  const { schema, formData } = nextState
-  _validate(schema, formData)
-
-  // create any children that were specified but uncreated yet
-
-  return nextState
-  // check schema and data match, throw if not
 }
-const _checkProposedSchemas = ({ schema, formData, children }) => {
-  // check the provided data is legal for all children
-}
-const schemaMap = new WeakMap()
-const _validate = (schema, instance) => {
-  if (!schema) {
-    throw new Error(`No schema supplied`)
+const _isTemplateIncluded = (payload) => {
+  if (payload.schema && Object.keys(payload.schema).length) {
+    return true
   }
-  let validator = schemaMap.get(schema)
-  if (!validator) {
-    try {
-      validator = ajv.compile(schema)
-      schemaMap.set(schema, validator)
-    } catch (e) {
-      const msg = `Compilation failed: ${schema && schema.title} ${e.message}`
-      throw new Error(msg)
+  const { children = {} } = payload
+  return Object.values(children).some(_isTemplateIncluded)
+}
+
+const demuxFormData = (template, payload) => {
+  _validateDatumTemplate(template)
+
+  const { isTestData, ...rest } = payload
+  let unmixed = _separateFormData(rest)
+  if (isTestData) {
+    // make fakes for current and all children
+    unmixed = _generateFakeData(template, unmixed)
+  }
+  _validateFormData(template, unmixed)
+  return unmixed
+}
+const _separateFormData = (payload) => {
+  if (!payload || typeof payload.formData === undefined) {
+    return {}
+  }
+  const { formData } = payload
+  const result = { formData }
+  if (payload.children && Object.keys(payload.children).length) {
+    result.children = {}
+    for (const name in payload.children) {
+      result.children[name] = _separateFormData(payload.children[name])
     }
   }
-  const isValid = validator(instance)
-  const errors = ajv.errorsText(validator.errors)
+  return result
+}
+
+const _validateFormData = (template, payload) => {
+  const isValid = ajv.validate(template.schema, payload.formData)
   if (!isValid) {
-    throw new Error(`${schema.title} failed validation: ${errors}`)
+    const errors = ajv.errorsText(ajv.errors)
+    throw new Error(`${template.schema.title} failed validation: ${errors}`)
   }
+  for (const name in template.children) {
+    _validateFormData(template.children[name], payload.children[name])
+  }
+}
+const _generateFakeData = (template, payload = {}) => {
+  // TODO existing data overrides fake, provided data overrides existing
+  const { formData = {}, children: payloadChildren = {} } = payload
+  Object.keys(template.schema.properties).forEach((key) => {
+    if (formData[key]) {
+      return
+    }
+    switch (key) {
+      // TODO if no faker key, switch to random strings
+      case 'firstName':
+        formData[key] = faker.name.firstName()
+        break
+      case 'address':
+        formData[key] = faker.address.streetAddress()
+        break
+    }
+  })
+  const result = { ...payload, formData }
+  if (Object.keys(template.children).length) {
+    const children = {}
+    for (const name in template.children) {
+      children[name] = _generateFakeData(
+        template.children[name],
+        payloadChildren[name]
+      )
+    }
+    result.children = children
+  }
+  return result
+}
+
+const convertToTemplate = (datum) => {
+  // TODO use existing template for things like uiSchema
+  const { isTestData, ...rest } = datum
+  let template = _withDefaults(rest)
+  template = _withoutFormData(template)
+  _validateDatumTemplate(template)
+  _validateChildSchemas(template)
+  return template
+}
+const _validateDatumTemplate = (datum) => {
+  const isValid = ajv.validate(datumSchema, datum)
+  if (!isValid) {
+    const errors = ajv.errorsText(ajv.errors)
+    throw new Error(`Datum failed validation: ${errors}`)
+  }
+}
+const _withDefaults = (datum) => {
+  const inflated = { ...initialState, ...datum }
+  const { children: currentChildren } = inflated
+  const children = {}
+  for (const name in currentChildren) {
+    children[name] = _withDefaults(currentChildren[name])
+  }
+  return { ...inflated, children }
+}
+const _withoutFormData = (datum) => {
+  const { formData, children: currentChildren = {}, ...rest } = datum
+  const children = {}
+  for (const name in currentChildren) {
+    children[name] = _withoutFormData(currentChildren[name])
+  }
+  return { ...rest, children }
+}
+const _validateChildSchemas = (datum) => {
+  // compilation will throw if schemas invalid
+  const schemaCompiled = ajv.compile(datum.schema)
+  const uiSchemaCompiled = ajv.compile(datum.uiSchema)
+  Object.values(datum.children).every(_validateChildSchemas)
 }
 
 const actions = {
   // create is handled by init ?
-  set: (rawPayload) => {
-    const payload = { ...rawPayload }
-
-    stateKeys.forEach((key) => {
-      if (!payload[key]) {
-        delete payload[key]
-      }
-    })
-    return {
-      type: 'SET',
-      payload,
-    }
-  },
+  set: (payload) => ({ type: 'SET', payload }),
   subscribe: (...paths) => ({ type: 'SUBSCRIBE', payload: paths }),
   unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
-}
-
-const datumFactory = (schema, ui, isDirectEdit) => {
-  // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
+  setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
 }
 
 const datum = { actions, reducer, covenantId: { name: 'datum' } }
-module.exports = { datum }
+module.exports = { datum, convertToTemplate, unmixFormData: demuxFormData }

@@ -31,7 +31,7 @@ describe('collection', () => {
     const root = await effectorFactory('col', { datum, collection })
     await root.add('collection1', 'collection')
     root.enableLogging()
-    await root.collection1.setSchema(schema, children)
+    await root.collection1.setDatumTemplate(schema, children)
     await root.collection1.add({ isTestData: true })
 
     const { state } = root.collection1.getState()

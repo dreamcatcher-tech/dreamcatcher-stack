@@ -66,7 +66,7 @@ const blockPrint = (block, path, isNewChain, isDuplicate) => {
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
   const size = getSize(block)
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
-  const header = { msg, height, path, chainId, hash, size }
+  const header = { msg, height, path, chainId, hash }
   if (isNewChain) {
     header.msg = chalk.red('NEW_CHAIN')
   }
@@ -104,7 +104,7 @@ const blockPrint = (block, path, isNewChain, isDuplicate) => {
         path: chalk.gray(alias),
         chainId,
         hash,
-        size,
+        // size,
       }
       messages.push(channelHeader)
 
@@ -118,8 +118,8 @@ const blockPrint = (block, path, isNewChain, isDuplicate) => {
         const hash = chalk.gray(reply ? reply.type : grayUndefined)
         const height = chalk.cyan(index)
         const path = '' //chalk.dim('since: -4')
-        const size = request ? getSize(request) : grayUndefined
-        const action = { msg, height, path, chainId, hash, size }
+        // const size = request ? getSize(request) : grayUndefined
+        const action = { msg, height, path, chainId, hash }
         messages.push(action)
       })
       const rx = getIndexSpan(remote.requests, channel.replies)
@@ -131,9 +131,9 @@ const blockPrint = (block, path, isNewChain, isDuplicate) => {
         const path = ''
         const chainId = chalk.gray(request ? request.type : grayUndefined)
         const hash = reply ? reply.type : grayUndefined
-        const size = reply ? getSize(reply) : grayUndefined // TODO sum size of req & rep
+        // const size = reply ? getSize(reply) : grayUndefined // TODO sum size of req & rep
 
-        const action = { msg, height, path, chainId, hash, size }
+        const action = { msg, height, path, chainId, hash }
         messages.push(action)
       })
       // use previous blocks to know when the counters in remotes altered
