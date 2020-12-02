@@ -2,23 +2,31 @@ const assert = require('assert')
 const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
 const debug = require('debug')('interblock:apps:collection')
-const { datum, validateDatumTemplate, validateFormData } = require('./datum')
+const {
+  datum,
+  convertToTemplate,
+  demuxFormData,
+  validateDatumTemplate,
+  muxTemplateWithFormData,
+} = require('./datum')
 const { interchain } = require('../../w002-api')
 const {
   actions: { spawn },
 } = require('../../w021-dmz-reducer')
 
 const reducer = async (state, action) => {
-  const { datumTemplate } = state
-  let nextState = { ...state }
   const { type, payload } = action
   switch (type) {
-    case 'ADD':
+    case 'ADD': {
       // can only contain formData keys, or be testData
-      _checkNoSchema(payload)
-      _validate(payload, datumTemplate)
-
-      let name = _getChildName(payload, datumTemplate)
+      const { datumTemplate } = state
+      validateDatumTemplate(datumTemplate)
+      // TODO make single method in datum to check incoming
+      if (!payload.isTestData) {
+        _checkOnlyFormData(payload)
+      }
+      const formData = demuxFormData(datumTemplate, action)
+      let name = _getChildName(datumTemplate, formData)
       const { covenantId } = datum
       const spawnAction = spawn(name, { covenantId })
       if (name) {
@@ -27,40 +35,51 @@ const reducer = async (state, action) => {
         const { alias } = await interchain(spawnAction)
         name = alias
       }
-      const set = datum.actions.set()
+      const muxed = muxTemplateWithFormData(datumTemplate, formData)
+      const set = datum.actions.set(muxed)
+      debug(`set`, set)
       await interchain(set, name)
-
-      break
-    case 'SET_DATUM_TEMPLATE':
-      _validateTemplate(payload)
-      nextState.datumTemplate = payload
-      break
+      return state
+    }
+    case 'SET_TEMPLATE': {
+      _checkNoFormData(payload)
+      const datumTemplate = convertToTemplate(payload)
+      return { ...state, datumTemplate }
+    }
     default:
       debug(action)
       throw new Error(`Unknown action type: ${action.type}`)
   }
-  return nextState
 }
-const _validateTemplate = (datumTemplate) => {
-  if (_isNoFormData(datumTemplate)) {
+const _checkOnlyFormData = (payload) => {
+  const { formData, children, ...rest } = payload
+  if (typeof formData === 'undefined') {
+    throw new Error(`Must provide formData key`)
+  }
+  if (rest) {
+    throw new Error(`Only allowed keys are formData and children`)
+  }
+  if (!children) {
+    return
+  }
+  if (typeof children !== 'object') {
+    throw new Error(`children must be object`)
+  }
+  const childValues = Object.values(children)
+  return childValues.every(_checkOnlyFormData)
+}
+const _checkNoFormData = (datum) => {
+  if (datum.formData) {
     throw new Error(`No formData allowed on datum template`)
   }
-  if (!isValidDatum(datumTemplate)) {
-    throw new Error(`Not a valid datum template`)
+  if (!datum.children) {
+    return
   }
+  const childValues = Object.values(datum.children)
+  return childValues.every(_checkNoFormData)
 }
 
-const _isNoFormData = (datum) => {
-  if (datum.formData) {
-    return false
-  }
-  return Object.values(datum.children).every(_isNoFormData)
-}
-
-const _validate = (payload, datumTemplate) => {
-  debug(`_checkSchema`)
-}
-const _getChildName = (payload, datumTemplate) => {
+const _getChildName = (datumTemplate, payload) => {
   if (!datumTemplate.namePath.length) {
     debug(`_getChildName is blank`)
     return
@@ -76,9 +95,9 @@ const _getChildName = (payload, datumTemplate) => {
 
 const actions = {
   add: (payload) => ({ type: 'ADD', payload }),
-  setDatumTemplate: (schema, children) => ({
-    type: 'SET_DATUM_TEMPLATE',
-    payload: { schema, children },
+  setDatumTemplate: (datumTemplate) => ({
+    type: 'SET_TEMPLATE',
+    payload: datumTemplate,
   }),
   search: () => ({ type: 'SEARCH' }),
   lock: () => ({ type: 'LOCK' }), // block changes to the schema

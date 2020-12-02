@@ -1,7 +1,7 @@
 const assert = require('assert')
 const { effectorFactory } = require('../..')
 const debug = require('debug')('crm:tests:datum')
-const { datum, convertToTemplate, unmixFormData } = require('../src/datum')
+const { datum, convertToTemplate, demuxFormData } = require('../src/datum')
 
 require('debug').enable('*met* *tests* *datum')
 
@@ -15,10 +15,14 @@ const schema = {
 }
 describe('datum helper functions', () => {
   describe('convertToTemplate', () => {
+    const action = {
+      type: 'FAKE',
+      payload: { isTestData: true },
+      getHash: () => '',
+    }
     test('basic', () => {
       const template = convertToTemplate({ schema })
-      const barePayload = { isTestData: true }
-      const payload = unmixFormData(template, barePayload)
+      const payload = demuxFormData(template, action)
       assert.strictEqual(typeof payload.formData.firstName, 'string')
       assert(!payload.isTestData)
     })
@@ -33,15 +37,14 @@ describe('datum helper functions', () => {
       const children = { address }
       const template = convertToTemplate({ schema, children })
       assert(template.children.address)
-      const barePayload = { isTestData: true }
-      const payload = unmixFormData(template, barePayload)
+      const payload = demuxFormData(template, action)
       assert(payload.formData.firstName)
       assert(payload.children.address.formData)
       assert(!payload.children.address.children)
     })
     test.todo('nested formData')
   })
-  describe('unmixFormData', () => {})
+  describe('demuxFormData', () => {})
 })
 
 describe('datum', () => {

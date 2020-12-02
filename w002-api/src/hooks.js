@@ -73,7 +73,6 @@ const _promise = (request) => {
 const all = async (...promiseActions) => {
   // awaits multiple requests to multiple chains and or multiple effects to complete
 }
-
 const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   assert.strictEqual(typeof tick, 'function')
   assert(Array.isArray(accumulator))

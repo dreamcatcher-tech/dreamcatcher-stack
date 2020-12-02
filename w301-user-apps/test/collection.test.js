@@ -9,13 +9,11 @@ require('debug').enable('*met* *tests* *datum *collection')
 describe('collection', () => {
   test('add with test data', async () => {
     const schema = {
-      customer: {
-        title: 'Customer',
-        type: 'object',
-        required: ['firstName'],
-        properties: {
-          firstName: { type: 'string' },
-        },
+      title: 'Customer',
+      type: 'object',
+      required: ['firstName'],
+      properties: {
+        firstName: { type: 'string' },
       },
     }
     const children = {
@@ -29,19 +27,23 @@ describe('collection', () => {
     }
 
     const root = await effectorFactory('col', { datum, collection })
-    await root.add('collection1', 'collection')
+    await root.add('col1', 'collection')
     root.enableLogging()
-    await root.collection1.setDatumTemplate(schema, children)
-    await root.collection1.add({ isTestData: true })
+    await root.col1.setDatumTemplate({ schema, children })
+    const { state: col1 } = root.col1.getState()
+    assert(!col1.datumTemplate.formData)
+    assert(!col1.datumTemplate.children.address.formData)
 
-    const { state } = root.collection1.getState()
-    debug(`state: `, state)
-    assert.deepStrictEqual(
-      Object.keys(state.formData),
-      Object.keys(schema.properties)
-    )
-    assert.deepStrictEqual(state.schema, schema)
+    await root.col1.add({ isTestData: true })
+    const { state } = root.col1.getState()
+    assert.deepStrictEqual(state, col1)
+    const { state: customer } = root.col1.file_00001.getState()
+    assert(customer.formData.firstName)
+    assert(!customer.children.address.formData)
+    const { state: address } = root.col1.file_00001.address.getState()
+    assert(address.formData.address)
     await root.settle()
   })
   test.todo('reject add with key already assigned')
+  test.todo('collection of collections')
 })

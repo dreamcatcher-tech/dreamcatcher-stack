@@ -155,6 +155,8 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     deduplicatePendingReplyTx: assign({
+      // TODO warn if during re-execution, new requests are made
+      // this could be apparent by not finding requests in channels ?
       reduceResolve: ({ dmz, reduceResolve }) => {
         assert(dmzModel.isModel(dmz))
         assert(reductionModel.isModel(reduceResolve))

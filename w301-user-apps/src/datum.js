@@ -72,15 +72,12 @@ const reducer = async (state, action) => {
       break
     }
     case 'SET': {
+      // TODO trouble is that if change schema, need to add data at the same time
+      // so makes it hard to have separate ops for schema and data changes
       if (_isTemplateIncluded(payload)) {
         state = convertToTemplate(payload)
       }
-      if (payload.isTestData) {
-        const hash = action.getHash()
-        const seed = parseInt(Number('0x' + hash.substring(0, 14)))
-        faker.seed(seed)
-      }
-      const demuxed = demuxFormData(state, payload)
+      const demuxed = demuxFormData(state, action)
       state.formData = demuxed.formData
       if (Object.keys(state.children).length) {
         const { children } = await interchain(dmzReducer.actions.listChildren())
@@ -111,8 +108,14 @@ const _isTemplateIncluded = (payload) => {
   return Object.values(children).some(_isTemplateIncluded)
 }
 
-const demuxFormData = (template, payload) => {
-  _validateDatumTemplate(template)
+const demuxFormData = (template, action) => {
+  const { payload } = action
+  if (payload.isTestData) {
+    const hash = action.getHash()
+    const seed = parseInt(Number('0x' + hash.substring(0, 14)))
+    faker.seed(seed)
+  }
+  validateDatumTemplate(template)
 
   const { isTestData, ...rest } = payload
   let unmixed = _separateFormData(rest)
@@ -124,11 +127,14 @@ const demuxFormData = (template, payload) => {
   return unmixed
 }
 const _separateFormData = (payload) => {
-  if (!payload || typeof payload.formData === undefined) {
+  if (!payload || typeof payload.formData === 'undefined') {
     return {}
   }
   const { formData } = payload
-  const result = { formData }
+  const result = {}
+  if (typeof formData !== 'undefined') {
+    result.formData = formData
+  }
   if (payload.children && Object.keys(payload.children).length) {
     result.children = {}
     for (const name in payload.children) {
@@ -184,11 +190,11 @@ const convertToTemplate = (datum) => {
   const { isTestData, ...rest } = datum
   let template = _withDefaults(rest)
   template = _withoutFormData(template)
-  _validateDatumTemplate(template)
+  validateDatumTemplate(template)
   _validateChildSchemas(template)
   return template
 }
-const _validateDatumTemplate = (datum) => {
+const validateDatumTemplate = (datum) => {
   const isValid = ajv.validate(datumSchema, datum)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
@@ -218,7 +224,17 @@ const _validateChildSchemas = (datum) => {
   const uiSchemaCompiled = ajv.compile(datum.uiSchema)
   Object.values(datum.children).every(_validateChildSchemas)
 }
-
+const muxTemplateWithFormData = (template, payload) => {
+  const result = { ...template, children: {} }
+  result.formData = payload.formData
+  for (const name in template.children) {
+    result.children[name] = muxTemplateWithFormData(
+      template.children[name],
+      payload.children[name]
+    )
+  }
+  return result
+}
 const actions = {
   // create is handled by init ?
   set: (payload) => ({ type: 'SET', payload }),
@@ -228,4 +244,10 @@ const actions = {
 }
 
 const datum = { actions, reducer, covenantId: { name: 'datum' } }
-module.exports = { datum, convertToTemplate, unmixFormData: demuxFormData }
+module.exports = {
+  datum,
+  convertToTemplate,
+  demuxFormData,
+  validateDatumTemplate,
+  muxTemplateWithFormData,
+}
