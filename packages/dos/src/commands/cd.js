@@ -2,8 +2,8 @@ const assert = require('assert')
 const Path = require('path').posix || require('path')
 const debug = require('debug')('dos:commands:cd')
 
-const cd = async ({ spinner, blockchain }, path = '~') => {
-  assert.equal(typeof path, 'string')
+const cd = async ({ spinner, blockchain }, path = '.') => {
+  assert.strictEqual(typeof path, 'string')
   debug(`cd: ${path}`)
   spinner.text = `Resolving ${path}`
 

@@ -25,7 +25,12 @@ module.exports = async function repl(opts) {
   // await opts.evaluate(ctx, 'login', [])
 
   return loop(async function rep() {
-    const input = await opts.read(ctx)
+    let input = 'exit'
+    try {
+      input = await opts.read(ctx)
+    } catch (e) {
+      debug(`treating error as request to exit: `, e)
+    }
     let [cmd, ...cmdArgs] = input.split(' ').filter(Boolean)
     debug(`command: `, cmd, cmdArgs)
 
@@ -46,7 +51,8 @@ module.exports = async function repl(opts) {
 async function getInitialCtx({ blockchain, evaluate }) {
   // TODO move this to the reboot command
   // TODO get environment printout
-  const spinner = ora({ spinner: 'arrow3' }).start()
+  const spinner = ora({ spinner: 'clock' }).start()
+  spinner.info(`System font check: 🦄🦄🦄🌈🌈🌈`)
   spinner.info(
     `begining boot sequence Ctrl+C to cancel and drop to local shell`
   )
