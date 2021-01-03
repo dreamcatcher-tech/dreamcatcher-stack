@@ -51,8 +51,8 @@ module.exports = async function repl(opts) {
 async function getInitialCtx({ blockchain, evaluate }) {
   // TODO move this to the reboot command
   // TODO get environment printout
-  const spinner = ora({ spinner: 'clock' }).start()
-  spinner.info(`System font check: 🦄🦄🦄🌈🌈🌈`)
+  const spinner = ora({ spinner: 'aesthetic' }).start()
+  spinner.info(`System font check: 🚦🚦🚦🌈🌈🌈✖✖✖`)
   spinner.info(
     `begining boot sequence Ctrl+C to cancel and drop to local shell`
   )
