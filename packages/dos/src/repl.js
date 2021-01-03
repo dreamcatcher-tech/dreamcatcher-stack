@@ -29,6 +29,9 @@ module.exports = async function repl(opts) {
     try {
       input = await opts.read(ctx)
     } catch (e) {
+      if (e.message) {
+        throw e
+      }
       debug(`treating error as request to exit: `, e)
     }
     let [cmd, ...cmdArgs] = input.split(' ').filter(Boolean)
@@ -52,7 +55,7 @@ async function getInitialCtx({ blockchain, evaluate }) {
   // TODO move this to the reboot command
   // TODO get environment printout
   const spinner = ora({ spinner: 'aesthetic' }).start()
-  spinner.info(`System font check: 🚦🚦🚦🌈🌈🌈✖✖✖`)
+  spinner.info(`System font check: 🚦🚦🚦🌈🌈🌈❌️❌️❌️`)
   spinner.info(
     `begining boot sequence Ctrl+C to cancel and drop to local shell`
   )
@@ -71,12 +74,12 @@ async function getInitialCtx({ blockchain, evaluate }) {
   const chainId = blockchain.getState().getChainId()
   spinner.info(`Blockchain initialized with chainId: ${chainId}`).start()
   spinner.text = `connecting to mainnet...`
-  await new Promise((resolve) => setTimeout(resolve, 700))
+  await new Promise((resolve) => setTimeout(resolve, 100))
   spinner.info(`connection to mainnet established`).start()
   spinner.info(`mainnet latency: 543 ms`)
   spinner.info(`peer connection count: 1`).start()
   spinner.text = `benchmarking local system` // TODO move to dedicated command with params
-  await new Promise((resolve) => setTimeout(resolve, 700))
+  await new Promise((resolve) => setTimeout(resolve, 100))
   spinner.info(`local blockrate 23 blocks per second / 53 ms per block`)
   spinner.stop()
   await print(`Welcome to the HyperNet

@@ -4,13 +4,15 @@ const chalk = require('ansi-colors')
 
 exports.read = async ({ autoComplete, user, machineId, blockchain }) => {
   const { wd } = blockchain.getContext()
-  const message = `${chalk.green(`${user}@${machineId}`)}:${chalk.blue(wd)}$`
-  debug(`reading: ${message}`)
+  const identity = `${chalk.green(`${user}@${machineId}`)}`
+  const message = `${identity}:${chalk.blue(wd)}${chalk.reset('$')}`
 
   const question = {
     type: 'input',
     name: 'result',
     message,
+    symbols: { prefix: '', separator: '' },
+    styles: { success: chalk.noop },
   }
   if (autoComplete) {
     // question.choices = autoComplete.getList()
