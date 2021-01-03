@@ -18,6 +18,7 @@ exports.read = async ({ autoComplete, user, machineId, blockchain }) => {
     // question.choices = autoComplete.getList()
   }
   const prompt = new Input(question)
+  prompt.blink = { off: true }
   const result = await prompt.run()
   debug(`prompt result: `, result)
   return result
