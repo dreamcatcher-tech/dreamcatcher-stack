@@ -14,6 +14,7 @@ const {
   actions: { spawn },
 } = require('../../w021-dmz-reducer')
 
+// TODO allow collection to also store formData as tho it was a datum, without children spec
 const reducer = async (state, action) => {
   const { type, payload } = action
   switch (type) {
@@ -104,6 +105,4 @@ const actions = {
   delete: () => ({ type: 'DELETE' }), // or can delete the child directly ?
 }
 
-const collection = { reducer, actions, covenantId: { name: 'collection' } }
-
-module.exports = { collection }
+module.exports = { reducer, actions }

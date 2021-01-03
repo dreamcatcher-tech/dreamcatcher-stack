@@ -1,11 +1,18 @@
 const debug = require('debug')('interblock:covenants:shell')
-const posix = require('path').posix
+const normalize = require('normalize-path')
 const assert = require('assert')
 const { covenantIdModel } = require('../../w015-models')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
-const { spawn, connect, listChildren, getGivenName } = dmzReducer.actions
+const {
+  spawn,
+  connect,
+  listChildren,
+  getGivenName,
+  deploy,
+} = dmzReducer.actions
 const { interchain } = require('../../w002-api')
+const dpkg = require('./dpkg')
 const {
   respond,
   send,
@@ -59,10 +66,15 @@ const config = {
     },
     addActor: async (context, event) => {
       assert.strictEqual(typeof event.payload, 'object')
-      const { alias, spawnOptions } = event.payload
-      const to = posix.dirname(alias)
-      const name = posix.basename(alias)
+      let { alias, spawnOptions } = event.payload
+      const to = dirname(alias)
+      const name = basename(alias)
       debug(`addActor`, name, to)
+      if (typeof spawnOptions === 'string') {
+        // TODO unify how covenants are referred to
+        const covenantId = covenantIdModel.create(spawnOptions)
+        spawnOptions = { covenantId }
+      }
       const spawnAction = spawn(name, spawnOptions)
       const addActor = await interchain(spawnAction, to)
 
@@ -76,7 +88,8 @@ const config = {
     changeDirectory: async (context, event) => {
       const { path } = event.payload
       assert.strictEqual(typeof path, 'string')
-      const normalizedPath = posix.normalize(path)
+      // TODO handle normalizng / resolving the paths
+      const normalizedPath = normalize(path)
       debug(`changeDirectory`, normalizedPath)
       const { givenName } = await interchain(getGivenName())
       debug(`givenName: `, givenName)
@@ -103,6 +116,35 @@ const config = {
       debug(`dispatch type: %o to: %o`, type, to)
       const result = await interchain(type, payload, to)
       return result
+    },
+    publish: async (context, event) => {
+      // TODO make covenant resolution use dpkg system
+      // TODO support external registries
+      // TODO support building images, and displaying progress
+      const { name, installer, registry } = event.payload
+      debug(`publish: `, name)
+      const covenantId = covenantIdModel.create('dpkg')
+      const state = { installer }
+      await interchain(spawn(name, { covenantId, state }))
+      return { dpkgPath: name }
+    },
+    install: async (context, event) => {
+      const { dpkgPath, installPath } = event.payload
+      const installer = await interchain(dpkg.actions.getInstaller(), dpkgPath)
+      // TODO check installPath exists and is legal, and is direct child of something
+      // TODO check schema matches installer schema, including not null for covenant
+      // TODO pull out everything that is part of DMZ except children
+      let { children, covenant, ...spawnOptions } = installer
+      covenant = covenant || 'unity'
+      // TODO unify how covenants are referred to
+      const covenantId = covenantIdModel.create(covenant)
+      spawnOptions = { ...spawnOptions, covenantId }
+      const spawnAction = spawn(installPath, spawnOptions)
+      interchain(spawnAction)
+
+      const deployAction = deploy(installer)
+      const deployResult = await interchain(deployAction, installPath)
+      debug(deployResult)
     },
   },
 }
@@ -132,6 +174,7 @@ const machine = Machine(
           UP: 'uplinkActor',
           CAT: 'getState',
           DISPATCH: 'dispatch',
+          PUBLISH: 'publish',
           INSTALL: 'install',
           LOGOUT: 'logout',
           BAL: 'balance',
@@ -212,14 +255,17 @@ const machine = Machine(
           onDone: { target: 'idle', actions: 'respondOrigin' },
         },
       },
+      publish: {
+        invoke: {
+          src: 'publish',
+          onDone: { target: 'idle', actions: 'respondOrigin' },
+        },
+      },
       install: {
-        // pick default name
-        // make a new root chain, using built in covenant type
-        // insert the config into it
-        // watch it flick its status to 'installing....'
-        // when it has everything it needs, it makes all required children
-        // pushes the config down in to each direct child, so they unfurl their children
-        // opens up the symlinks between all the children
+        invoke: {
+          src: 'install',
+          onDone: { target: 'idle', actions: 'respondOrigin' },
+        },
       },
       done: {
         id: 'done',
@@ -236,36 +282,9 @@ const machine = Machine(
 )
 
 /**
- * Executes in client side to prepare the application for interblocking.
- * Checks the config, resolves everything it needs, possibly using a manifest to help.
- * Dispatches into the shell chain once ready.
- * Uploads the binary covenants as needed.
- * Interblock handles install from there on in.
- *
- * Example of a client side augmentation to action creators.
- *
- * @param {*} config path to a file, object, or JSON describing
- * the application
- */
-const install = async (config) => {
-  const appConfig = jsonAppConfigModel(config)
-  const installAction = shell.actions.install(appConfig)
-  await dispatch(installAction, '/apps')
-}
-
-/**
  * Basic app structure is:
  * /root
- *      .config/  (config is stored in this item ?)
- *          // these items only change on installation events
- *          covenants/
- *              // non system covenants stored here as packages, possibly with source
- *              pingpong
- *                  (with binary)
- *          installs/
- *              // non system covenant installation images
- *              pingpong
- *                  (with binary)
+ *      // internally has reference to the dpkg, which holds the covenants and install images
  *      .processes/
  *          // all FSMs and their running threads
  *          // processes change data
@@ -299,9 +318,6 @@ const install = async (config) => {
  *
  * @param {*} config path to a file, object, or JSON describing the application
  */
-const jsonAppConfigModel = (config, manifest) => {
-  return config
-}
 
 const actions = {
   ping: (to = '.', payload = {}) => ({
@@ -313,10 +329,7 @@ const actions = {
     payload: { terminalChainId, credentials },
   }),
   add: (alias, spawnOptions = {}) => {
-    if (typeof spawnOptions === 'string') {
-      const covenantId = covenantIdModel.create(spawnOptions)
-      spawnOptions = { covenantId }
-    }
+    // TODO unify how covenants are referred to
     return {
       // TODO interpret datums and ask for extra data
       // TODO use path info
@@ -349,6 +362,16 @@ const actions = {
       payload: { action, to },
     }
   },
+  install: (dpkgPath, installPath) => ({
+    type: 'INSTALL',
+    payload: { dpkgPath, installPath },
+  }),
+  publish: (name, installer = {}, registry = '.') => ({
+    // TODO move to using a hardware path for covenant
+    // TODO remove install file, instead generate from loading covenant in isolation
+    type: 'PUBLISH',
+    payload: { name, installer, registry },
+  }),
   //   MV: 'moveActor',
   //   LN: 'linkActor',
   //   CAT: 'getState',
@@ -363,3 +386,13 @@ const actions = {
 }
 const reducer = translator(machine)
 module.exports = { actions, reducer }
+
+const basename = (path) =>
+  /^(?:\/?|)(?:[\s\S]*?)((?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/.exec(
+    path
+  )[1]
+
+const dirname = (path) =>
+  /^((?:\.(?![^\/]))|(?:(?:\/?|)(?:[\s\S]*?)))(?:\/+?|)(?:(?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/.exec(
+    path
+  )[1] || '.'

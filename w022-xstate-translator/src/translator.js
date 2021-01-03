@@ -144,10 +144,12 @@ const mapXstateToContinuation = (xstateAction, originAction) => {
     case '@@SEND':
       // TODO break out the paths, send as specified
       debug(`send: %O`, xstateAction)
+      throw new Error('not implemented')
       return // TODO
     case '@@SEND_PARENT':
       // TODO handle parent being the alias
       debug(`sendParent: %O`, xstateAction)
+      throw new Error('not implemented')
       return // TODO
     case '@@RESPOND':
       // TODO use the origin action

@@ -34,6 +34,7 @@
     "localforage": "^1.9.0",
     "lodash": "^4.17.20",
     "node-object-hash": "^2.0.0",
+    "normalize-path": "^3.0.0",
     "object-hash": "^2.0.3",
     "pad": "^3.2.0",
     "pretty-bytes": "^5.4.1",

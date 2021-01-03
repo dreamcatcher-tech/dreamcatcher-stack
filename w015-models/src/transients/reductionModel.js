@@ -4,6 +4,7 @@ const { txRequestModel } = require('./txRequestModel')
 const { txReplyModel } = require('./txReplyModel')
 const { rxReplyModel } = require('./rxReplyModel')
 const { rxRequestModel } = require('./rxRequestModel')
+const { registry } = require('../registry')
 
 const _inflate = (action, defaultAction) => {
   if (!action) {
@@ -57,12 +58,11 @@ const reductionModel = standardize({
   },
   create(reduceResolve, origin, dmz) {
     // TODO resolve circular reference problem
-    const { dmzModel } = require('../models/dmzModel')
     let { reduction, isPending, requests, replies } = reduceResolve
     assert(Array.isArray(requests))
     assert(Array.isArray(replies))
     assert(rxRequestModel.isModel(origin) || rxReplyModel.isModel(origin))
-    assert(dmzModel.isModel(dmz))
+    assert(registry.get('Dmz').isModel(dmz))
     requests = requests.map((request) => _inflate(request, origin))
     replies = replies.map((reply) => _inflate(reply, origin))
     requests.forEach((txRequest) => {

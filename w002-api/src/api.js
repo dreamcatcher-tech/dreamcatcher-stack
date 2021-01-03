@@ -76,7 +76,7 @@ const isReplyFor = (reply, request) => {
   if (request && typeof request !== 'object') {
     return false
   }
-  if (_isNotReply(reply)) {
+  if (_isNotReplyFormat(reply)) {
     return false
   }
   if (!request) {
@@ -92,16 +92,8 @@ const isReplyFor = (reply, request) => {
 }
 
 const _replyTypes = ['@@PROMISE', '@@RESOLVE', '@@REJECT']
-const _isNotReply = (reply) => {
+const _isNotReplyFormat = (reply) => {
   return !reply || !reply.type || !_replyTypes.includes(reply.type)
-}
-
-const _assertNoUndefined = (obj) => {
-  traverse(obj).forEach(function (val) {
-    if (typeof val === 'undefined') {
-      throw new Error(`Values cannot be undefined: ${this.path}`)
-    }
-  })
 }
 
 module.exports = { request, promise, resolve, reject, isReplyFor }

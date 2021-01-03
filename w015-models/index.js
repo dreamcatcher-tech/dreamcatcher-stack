@@ -106,10 +106,10 @@ modelNames.forEach((name) => {
     throw e
   }
 })
-
-const { registry } = require('./src/registry')
 const queues = require('./src/queues')
 const transients = require('./src/transients')
+
+const { registry } = require('./src/registry')
 registry.registerModels(models)
 registry.registerModels(queues)
 registry.registerModels(transients)

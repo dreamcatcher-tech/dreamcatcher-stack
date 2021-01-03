@@ -5,6 +5,7 @@ const pad = require('pad/dist/pad.umd')
 const {
   actionModel,
   addressModel,
+  covenantIdModel,
   dmzModel,
   blockModel,
   interblockModel,
@@ -52,7 +53,7 @@ const reducer = async (dmz, action) => {
 
   switch (action.type) {
     case '@@SPAWN': {
-      const nextNetwork = await spawn(dmz, action)
+      const nextNetwork = await spawnReducer(dmz, action)
       network = nextNetwork
       replyPromise()
       break
@@ -93,6 +94,11 @@ const reducer = async (dmz, action) => {
       // just default responding is enough to trigger lineage catchup
       break
     }
+    case '@@DEPLOY': {
+      // TODO clean up failed partial deployments ?
+      network = await deployReducer(dmz, action)
+      break
+    }
     default: {
       break
     }
@@ -106,7 +112,9 @@ const reducer = async (dmz, action) => {
         const { genesis, alias, originAction } = request.payload
         const genesisModel = blockModel.clone(genesis)
         const payload = { alias, chainId: genesisModel.getChainId() }
-        replyResolve(payload, originAction)
+        if (originAction.sequence) {
+          replyResolve(payload, originAction)
+        }
         debug('reply received for @@GENESIS')
         break
       }
@@ -123,6 +131,11 @@ const reducer = async (dmz, action) => {
         debug(`reply received for @@OPEN_CHILD: %o`, chainId.substring(0, 9))
         const { fullPath } = request.payload
         interchain(dmzActions.connect(fullPath, chainId))
+        break
+      }
+      case '@@DEPLOY': {
+        debug(`reply received for deploy`, action)
+        deployReply(dmz, action)
         break
       }
     }
@@ -148,6 +161,7 @@ const types = {
   openChild: '@@OPEN_CHILD',
   listChildren: '@@LIST_CHILDREN',
   getGivenName: '@@GET_GIVEN_NAME',
+  deploy: '@@DEPLOY',
 }
 
 dmzActions.spawn = (alias, spawnOpts = {}, initialActions = []) => {
@@ -160,7 +174,9 @@ dmzActions.spawn = (alias, spawnOpts = {}, initialActions = []) => {
   }
   return action
 }
-const spawn = async (dmz, spawnRequest) => {
+const spawnReducer = async (dmz, spawnRequest) => {
+  // TODO reject if spawn requested while deploy is unresolved
+  // may reject any actions other than cancel deploy while deploying ?
   let { alias, spawnOpts, initialActions } = spawnRequest.payload
   if (!Array.isArray(initialActions)) {
     initialActions = [initialActions]
@@ -292,6 +308,61 @@ const getGivenNameReducer = (network) => {
   return { givenName }
 }
 
+dmzActions.deploy = (installer) => ({
+  type: '@@DEPLOY',
+  payload: { installer },
+})
+const deployReducer = async (dmz, action) => {
+  const { installer } = action.payload
+  // TODO assert there is only one deployment action, from parent, and after genesis
+  // TODO check format of payload against schema
+  // TODO check top level matches this current state
+  const { children: topChildren = {} } = installer
+  // TODO try make promises that work on a specific action, so can run in parallel
+  for (const installPath in topChildren) {
+    let { children, covenant, ...spawnOptions } = topChildren[installPath]
+    covenant = covenant || 'unity'
+    const covenantId = covenantIdModel.create(covenant)
+    spawnOptions = { ...spawnOptions, covenantId }
+    const spawnRequest = dmzActions.spawn(installPath, spawnOptions)
+    const network = await spawnReducer(dmz, spawnRequest)
+    // TODO make spawn not require dmz to be cloned like this
+    dmz = dmzModel.clone({ ...dmz, network })
+    const deployAction = dmzActions.deploy(topChildren[installPath])
+    interchain(deployAction, installPath)
+  }
+  if (Object.keys(topChildren).length) {
+    replyPromise() // else, default resolve will end the deploy
+  }
+  return dmz.network
+}
+const deployReply = (dmz, action) => {
+  // if this is the last child deployment, resolve origin
+
+  // run thru the installer, check all the children are alive
+  // check the heavy height of each child is above 2
+  // check either index 2 is undefined, or resolved
+
+
+  const aliases = dmz.network.getResolvedAliases()
+  for (const alias of aliases) {
+    const channel = dmz.network[alias]
+    const deployRequest = channel.requests[1]
+    if (channel.systemRole === './') {
+      if (channel.requests[1].type === '@@DEPLOY' && !channel.rxReplyIndex(1)) {
+        return
+      }
+    }
+  }
+  const parent = dmz.network['..']
+  for (const index of parent.getRemoteRequestIndices()) {
+    const request = parent.rxRequest(index)
+    if (request.type === '@@DEPLOY') {
+      replyResolve({}, request)
+    }
+  }
+}
+
 const isSystemRequest = (request) => {
   if (!rxRequestModel.isModel(request)) {
     return false
@@ -301,7 +372,12 @@ const isSystemRequest = (request) => {
   return isSystemAction
 }
 
-const systemReplyTypes = [types.genesis, types.uplink, types.openChild]
+const systemReplyTypes = [
+  types.genesis,
+  types.uplink,
+  types.openChild,
+  '@@DEPLOY',
+]
 const isSystemReply = (reply) => {
   // is this action solely originating from dmzReducer, or might it have come from user
   if (!rxReplyModel.isModel(reply)) {

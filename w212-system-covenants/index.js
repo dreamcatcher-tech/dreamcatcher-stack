@@ -1,4 +1,14 @@
 const { covenantIdModel } = require('../w015-models')
+
+const collection = require('./src/collection')
+collection.covenantId = covenantIdModel.create('collection')
+
+const datum = require('./src/datum')
+datum.covenantId = covenantIdModel.create('datum')
+
+const dpkg = require('./src/dpkg')
+dpkg.covenantId = covenantIdModel.create('dpkg')
+
 const shell = require('./src/shell')
 shell.covenantId = covenantIdModel.create('shell')
 
@@ -17,6 +27,16 @@ unity.covenantId = covenantIdModel.create('unity')
 const probe = require('./src/probe')
 probe.covenantId = covenantIdModel.create('probe')
 
-module.exports = { shell, net, socket, unity, hyper, probe }
+module.exports = {
+  collection,
+  datum,
+  dpkg,
+  hyper,
+  net,
+  probe,
+  shell,
+  socket,
+  unity,
+}
 
 Object.values(module.exports).forEach(Object.freeze)

@@ -524,6 +524,7 @@ const interpreterMachine = machine.withConfig({
       const accumulator = []
       let reduceResolve, inbandPromises
       do {
+        // TODO move inband exhaustion to hook.js
         reduceResolve = await globalHook(tick, accumulator)
         inbandPromises = reduceResolve.requests.filter((req) => req.inBand)
         const awaits = inbandPromises.map(async (action) => {
