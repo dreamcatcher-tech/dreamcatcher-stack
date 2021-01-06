@@ -1,5 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:api:hooks')
+const equal = require('fast-deep-equal')
 const { request, promise, resolve, reject, isReplyFor } = require('./api')
 
 const _eternalPromise = new Promise(() => {
@@ -13,12 +14,8 @@ const replyPromise = () => _pushGlobalReply(promise())
 // TODO error if resolve against the same request more than once, which includes default action
 const replyResolve = (payload, request) =>
   _pushGlobalReply(resolve(payload, request))
-const replyReject = (error, request) => push()
-
-const push = () => {
-  // generate an action that is a reply to the current one ?
-  // probably promise, resolve, reject are allowed actions
-}
+const replyReject = (error, request) =>
+  _pushGlobalReply(resolve(error, request))
 
 const interchain = async (type, payload, to) => {
   // make an async call to another chain
@@ -44,7 +41,7 @@ const effectInBand = async (type, fn, ...args) => {
   // if not repeatable, should use an effect instead
   const payload = { args }
   const exec = () => fn(...args)
-  return _promise({ type, payload, exec, inBand: true })
+  return _promise({ type, payload, exec, inBand: true, to: 'EFFECT_IN_BAND' })
 }
 
 const _promise = (request) => {
@@ -53,15 +50,18 @@ const _promise = (request) => {
   assert(Array.isArray(accumulator))
   const { type, payload, to, exec, inBand } = request
   assert(!exec || typeof exec === 'function')
-  const requestWithId = { type, payload, to }
+  // within inserted uniqueness, we cannot know if this action has a reply or not
+  // TODO use order of invocation to match with replies, to avoid __nonce injection
+  const __nonce = _incrementGlobalRequestId()
+  const bareRequest = { type, payload: { ...payload, __nonce }, to }
 
-  const reply = accumulator.find((reply) => isReplyFor(reply, requestWithId))
+  const reply = accumulator.find((reply) => isReplyFor(reply, bareRequest))
   if (!reply) {
     if (exec) {
-      requestWithId.exec = exec
-      requestWithId.inBand = inBand
+      bareRequest.exec = exec
+      bareRequest.inBand = inBand
     }
-    _pushGlobalRequest(requestWithId)
+    _pushGlobalRequest(bareRequest)
     return _eternalPromise
   }
   if (reply.type === '@@RESOLVE') {
@@ -75,7 +75,8 @@ const all = async (...promiseActions) => {
 }
 const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   assert.strictEqual(typeof tick, 'function')
-  assert(Array.isArray(accumulator))
+  assert(Array.isArray(accumulator)) // TODO assert all are rxRequest models
+
   assert.strictEqual(typeof salt, 'string')
   debug(`hook salt:`, salt)
   let actions
@@ -158,6 +159,12 @@ const _getGlobalAccumulator = () => {
 const _pushGlobalRequest = (request) => {
   _assertGlobals()
   const { requests } = globalThis['@@interblock'].promises
+  const { type, payload, to } = request
+  const bareRequest = { type, payload, to }
+  const isDuplicate = requests.some((prior) => equal(bareRequest, prior))
+  if (isDuplicate) {
+    throw new Error(`Duplicate request made: ${type}`)
+  }
   debug(`_pushGlobalRequest`, request.type)
   requests.push(request)
 }

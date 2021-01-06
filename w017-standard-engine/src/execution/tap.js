@@ -3,8 +3,15 @@ const _ = require('lodash')
 const truncate = require('cli-truncate')
 const pad = require('pad/dist/pad.umd')
 const chalk = require('ansi-colors')
-const { blockPrint, interPrint } = require('./printer')
+const {
+  blockPrint,
+  interPrint,
+  headerPrint,
+  networkPrint,
+  print,
+} = require('./printer')
 const { blockModel, interblockModel } = require('../../../w015-models')
+const needle = require('../../../w004-needle')
 
 const createTap = (prefix = 'interblock:blocktap') => {
   let isOn = false
@@ -14,7 +21,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
   const cache = {}
   const grayUndefined = chalk.gray('undefined')
 
-  const debugTran = debugBase.extend('tran')
+  const debugTran = debugBase.extend('t')
   const interblockTransmit = (interblock) => {
     if (!isOn) {
       return
@@ -23,7 +30,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     debugTran(formatted)
   }
 
-  const debugPool = debugBase.extend('pool')
+  const debugPool = debugBase.extend('p')
   const interblockPool = (interblock) => {
     if (!isOn) {
       return
@@ -34,11 +41,11 @@ const createTap = (prefix = 'interblock:blocktap') => {
 
   const interblockPrint = (interblock) => {
     assert(interblockModel.isModel(interblock))
-    let msg = chalk.yellow('INTER_LIGHT')
+    let msg = chalk.yellow('LIGHT')
     let forPath = chalk.gray(getPath(interblock, cache))
     const remote = interblock.getRemote()
     if (remote) {
-      msg = chalk.yellow('INTER_HEAVY')
+      msg = chalk.yellow('HEAVY')
     }
     const formatted = interPrint(interblock, msg, forPath, 'bgYellow', 'yellow')
     return formatted
@@ -50,7 +57,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     lockTimes.set(chainId, { lockStart, workStart })
   }
 
-  const debugBloc = debugBase
+  const debugBloc = debugBase.extend('b')
   const block = (block) => {
     assert(blockModel.isModel(block))
     const chainIdRaw = block.provenance.getAddress().getChainId()
@@ -58,7 +65,10 @@ const createTap = (prefix = 'interblock:blocktap') => {
     const isDuplicate =
       cache[chainIdRaw] && cache[chainIdRaw].some((b) => b.equals(block))
     insertBlock(block, cache)
-    if (!isOn || isDuplicate) {
+    if (!isOn) {
+      return
+    }
+    if (isDuplicate) {
       return
     }
     const path = getPath(block, cache)
@@ -118,13 +128,50 @@ const createTap = (prefix = 'interblock:blocktap') => {
     }
     return concat
   }
-  return {
+  const getLatest = (alias) => {
+    // TODO deal with a absolute path alias being provided
+    let latest
+    Object.values(cache).some((chainArray) => {
+      const block = _.last(chainArray)
+      const parentChannel = block.network['..']
+      if (parentChannel.address.isRoot() && alias === '/') {
+        assert(!latest)
+        latest = block
+        return true
+      }
+      const { heavy } = parentChannel
+      if (heavy && heavy.getOriginAlias() === alias) {
+        assert(!latest)
+        latest = block
+        return true
+      }
+    })
+    return latest
+  }
+  const printNetwork = (network, msg = 'NEEDLEBLOCK') => {
+    let alias = 'UNKNOWN'
+    if (network['..'].address.isRoot()) {
+      alias = '/'
+    } else if (network['..'].heavy) {
+      alias = network['..'].heavy.getOriginAlias()
+    }
+    const block = getLatest(alias)
+    const messages = [headerPrint(block, alias)]
+    messages[0].msg = chalk.green(msg)
+    messages.push(...networkPrint(network))
+    return print(messages)
+  }
+  const tap = {
     on,
     off,
     lock,
     block,
     interblockTransmit,
     interblockPool,
+    getLatest,
+    printNetwork,
   }
+  needle.setTap(tap) // TODO handle multiple taps
+  return tap
 }
 module.exports = { createTap }

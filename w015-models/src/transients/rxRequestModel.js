@@ -10,6 +10,7 @@ const rxRequestModel = standardize({
   create(type, payload, address, index) {
     assert(Number.isInteger(index))
     assert(addressModel.isModel(address))
+    assert(!address.isUnknown())
     const sequence = `${address.getChainId()}_${index}`
     const rxRequest = { type, payload, sequence }
     return rxRequestModel.clone(rxRequest)

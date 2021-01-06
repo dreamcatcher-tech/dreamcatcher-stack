@@ -94,6 +94,7 @@ const reducer = async (dmz, action) => {
       // just default responding is enough to trigger lineage catchup
       break
     }
+    case '@@INSTALL':
     case '@@DEPLOY': {
       // TODO clean up failed partial deployments ?
       network = await deployReducer(dmz, action)
@@ -153,21 +154,22 @@ const mv = () => {}
 const dmzActions = {}
 const types = {
   spawn: '@@SPAWN',
+  genesis: '@@GENESIS',
   connect: '@@CONNECT',
   uplink: '@@UPLINK',
   intro: '@@INTRO',
   accept: '@@ACCEPT',
-  genesis: '@@GENESIS',
   openChild: '@@OPEN_CHILD',
   listChildren: '@@LIST_CHILDREN',
   getGivenName: '@@GET_GIVEN_NAME',
   deploy: '@@DEPLOY',
+  install: '@@INSTALL',
 }
 
-dmzActions.spawn = (alias, spawnOpts = {}, initialActions = []) => {
+dmzActions.spawn = (alias, spawnOpts = {}, actions = []) => {
   const action = {
     type: types.spawn,
-    payload: { alias, spawnOpts, initialActions },
+    payload: { alias, spawnOpts, actions },
   }
   if (!alias) {
     delete action.payload.alias
@@ -177,17 +179,17 @@ dmzActions.spawn = (alias, spawnOpts = {}, initialActions = []) => {
 const spawnReducer = async (dmz, spawnRequest) => {
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
-  let { alias, spawnOpts, initialActions } = spawnRequest.payload
-  if (!Array.isArray(initialActions)) {
-    initialActions = [initialActions]
+  let { alias, spawnOpts, actions } = spawnRequest.payload
+  if (!Array.isArray(actions)) {
+    actions = [actions]
   }
-  initialActions = initialActions.map(({ type, payload, to }) =>
+  actions = actions.map(({ type, payload, to }) =>
     txRequestModel.create(type, payload, to)
   )
   const { network, validators, covenantId } = dmz
-  const cnet = networkProducer.tx(networkModel.create(), initialActions, [])
+  const childNet = networkProducer.tx(networkModel.create(), actions, [])
   let child = dmzModel.create({
-    network: cnet,
+    network: childNet,
     covenantId,
     ...spawnOpts,
     validators,
@@ -197,7 +199,9 @@ const spawnReducer = async (dmz, spawnRequest) => {
   assert(!alias.includes('/'), `No / character allowed in "${alias}"`)
   const channelUnused = !network[alias] || network[alias].address.isUnknown()
   assert(channelUnused, `childAlias exists: ${alias}`)
-  const genesis = await effectInBand('SIGN_BLOCK', blockModel.create, child) // TODO use chain key for signing
+  // TODO insert dmz.getHash() into create() to generate repeatable randomness
+  // TODO use chain key for signing
+  const genesis = await effectInBand('SIGN_BLOCK', blockModel.create, child)
   assert(blockModel.isModel(genesis), `Genesis block creation failed`)
   const payload = { genesis, alias, originAction: spawnRequest }
   const genesisRequest = actionModel.create('@@GENESIS', payload)
@@ -308,8 +312,12 @@ const getGivenNameReducer = (network) => {
   return { givenName }
 }
 
+dmzActions.install = (installer) => ({
+  type: types.install,
+  payload: { installer },
+})
 dmzActions.deploy = (installer) => ({
-  type: '@@DEPLOY',
+  type: types.deploy,
   payload: { installer },
 })
 const deployReducer = async (dmz, action) => {
@@ -324,7 +332,9 @@ const deployReducer = async (dmz, action) => {
     covenant = covenant || 'unity'
     const covenantId = covenantIdModel.create(covenant)
     spawnOptions = { ...spawnOptions, covenantId }
-    const spawnRequest = dmzActions.spawn(installPath, spawnOptions)
+    const genesisSeed = 'seed_' + installPath
+    const { spawn } = dmzActions
+    const spawnRequest = spawn(installPath, spawnOptions, [], genesisSeed)
     const network = await spawnReducer(dmz, spawnRequest)
     // TODO make spawn not require dmz to be cloned like this
     dmz = dmzModel.clone({ ...dmz, network })
@@ -337,27 +347,37 @@ const deployReducer = async (dmz, action) => {
   return dmz.network
 }
 const deployReply = (dmz, action) => {
-  // if this is the last child deployment, resolve origin
-
-  // run thru the installer, check all the children are alive
-  // check the heavy height of each child is above 2
-  // check either index 2 is undefined, or resolved
-
+  // TODO handle rejection of deployment
+  assert(rxReplyModel.isModel(action))
+  let isReplyValid = false
 
   const aliases = dmz.network.getResolvedAliases()
   for (const alias of aliases) {
     const channel = dmz.network[alias]
-    const deployRequest = channel.requests[1]
-    if (channel.systemRole === './') {
-      if (channel.requests[1].type === '@@DEPLOY' && !channel.rxReplyIndex(1)) {
-        return
-      }
+    if (channel.systemRole !== './') {
+      continue // TODO block all activity until deploy completes
     }
+    const deployRequest = channel.requests[1]
+    if (!deployRequest || deployRequest.type !== types.deploy) {
+      continue // deployment must have completed
+    }
+    if (isReplyFor(action, deployRequest)) {
+      isReplyValid = true
+      continue // this could be the very last reply
+    }
+    return // deploy is still in progress for at least one child
   }
+  assert(isReplyValid, `action was not round among any deploy replies`)
+
   const parent = dmz.network['..']
+  // TODO compare against installer
+  // TODO assert only one deploy in the queue
   for (const index of parent.getRemoteRequestIndices()) {
     const request = parent.rxRequest(index)
-    if (request.type === '@@DEPLOY') {
+    if (request.type === types.deploy) {
+      replyResolve({}, request)
+    }
+    if (request.type === types.install) {
       replyResolve({}, request)
     }
   }
@@ -376,7 +396,7 @@ const systemReplyTypes = [
   types.genesis,
   types.uplink,
   types.openChild,
-  '@@DEPLOY',
+  types.deploy,
 ]
 const isSystemReply = (reply) => {
   // is this action solely originating from dmzReducer, or might it have come from user

@@ -44,6 +44,7 @@ const pendingModel = standardize({
     const { pendingRequest, replies, requests } = instance
     // TODO be able to get replies that came from requests after the trigger ?
     // but might be impossible as means order of ingestion now matters
+    // TODO assert accumulator has no duplicate request items inside the replies
     if (!pendingRequest) {
       assert(!replies.length)
     }

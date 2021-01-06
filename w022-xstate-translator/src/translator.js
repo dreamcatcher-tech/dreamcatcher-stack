@@ -79,6 +79,7 @@ const translator = (machine) => {
     const cleanNextState = JSON.parse(JSON.stringify(nextState))
     const { context, event } = cleanNextState
     checkXstateActions(actions)
+    // TODO this seems wrong as gets stuck on last event, even if the machine has moved on ?
     const originAction = cleanNextState.history.event
     debug(`originAction: `, originAction.type)
 

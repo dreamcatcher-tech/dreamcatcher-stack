@@ -2,6 +2,7 @@ const nodeObjectHash = require('node-object-hash')({ coerce: false })
 const secureRandom = require('secure-random')
 const pad = require('pad/dist/pad.umd')
 const browserHash = require('object-hash')
+const { v4 } = require('uuid')
 
 // TODO see if sodium hashing performs better
 // use stable stringify for equality, and serialize, then compute hash if requested
@@ -16,22 +17,31 @@ const objectHash = (obj) => {
 }
 
 let counter = 0
-const generateNonce = (testMode) => {
+let seed = ''
+const generateNonce = () => {
   // TODO provide a seed when in test mode, for determinism
   // TODO move to tweetnacl random implementation
-  if (testMode) {
-    const prefix = pad(9, counter, '0')
+  let bytes
+  if (seed) {
+    bytes = Buffer.from(seed)
+    // TODO increment the seed using the counter
     counter++
-    const nonce = `0x${prefix}c6ee4f60107cc496d1dcacd642be4011c3b4fe09668f08f01f41cc9`
-    return nonce
+    return seed
   }
-  const bytes = secureRandom(32, { type: 'Array' })
-  const hex = bytes
-    .map((byte) => {
-      return ('0' + (byte & 0xff).toString(16)).slice(-2)
-    })
-    .join('')
-  return '0x' + hex
+  // TODO test with actual randomness
+  // TODO make the seed be uniform
+  return v4()
+}
+const injectSeed = (_seed) => {
+  counter = 0
+  if (!_seed) {
+    seed = _seed
+    return
+  }
+  while (_seed.length < 32) {
+    _seed += '0'
+  }
+  seed = _seed.substring(0, 32)
 }
 
-module.exports = { objectHash, generateNonce }
+module.exports = { injectSeed, objectHash, generateNonce }

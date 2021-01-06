@@ -117,14 +117,12 @@ const _getBackend = async () => {
 }
 
 module.exports = {
-  objectHash,
   signHash,
   verifyHash,
   verifyHashSync,
   generateKeyPair,
   verifyKeyPair,
   verifyKeyPairSync,
-  generateNonce,
   testMode,
   ciKeypair,
   pierceKeypair,

@@ -40,12 +40,15 @@ describe('block', () => {
     })
     test.todo('changed validators uses previous validators for current block')
     test('generate unique genesis by default', async () => {
-      const block = await blockModel.create()
+      const dmz = dmzModel.create()
+      const block = await blockModel.create(dmz)
       const clone = blockModel.clone(block)
       assert(clone.equals(block))
       assert(blockModel.isModel(clone))
-      const second = await blockModel.create()
+      const second = await blockModel.create(dmz)
       assert(!second.equals(block))
+      assert(block.getHash() !== second.getHash())
+      assert(block.getChainId() !== second.getChainId())
     })
 
     test('check of provenance passes', async () => {

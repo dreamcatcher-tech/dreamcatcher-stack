@@ -58,8 +58,32 @@ const interPrint = (interblock, msg, path, bg, fg) => {
   }
   return format(messages)
 }
-
 const blockPrint = (block, path, isNewChain, isDuplicate) => {
+  const header = headerPrint(block, path, isNewChain, isDuplicate)
+  const messages = [header]
+
+  if (!isDuplicate) {
+    const networkLines = networkPrint(block.network)
+    messages.push(...networkLines)
+  }
+  const text = print(messages)
+  return text
+}
+const print = (messages) => {
+  const options = {
+    truncate: true,
+    showHeaders: false,
+    minWidth: 3,
+    config: {
+      msg: { minWidth: 15, maxWidth: 15 },
+      height: { minWidth: 8, maxWidth: 8 },
+      path: { minWidth: 18, maxWidth: 18 },
+    },
+  }
+  const formatted = columnify(messages, options)
+  return formatted
+}
+const headerPrint = (block, path, isNewChain, isDuplicate) => {
   const chainId = shrink(block.provenance.getAddress().getChainId())
   const height = chalk.green(block.provenance.height)
   const rawHash = block.provenance.reflectIntegrity().hash
@@ -70,90 +94,75 @@ const blockPrint = (block, path, isNewChain, isDuplicate) => {
   if (isNewChain) {
     header.msg = chalk.red('NEW_CHAIN')
   }
-  const messages = [header]
-
-  // show network activity
-  const aliases = block.network.getAliases()
-  !isDuplicate &&
-    aliases.forEach((alias) => {
-      const channel = block.network[alias]
-      const { address } = channel
-      let height = '-'
-      let chainId = grayUndefined
-      let hash = grayUndefined
-      const size = pad(prettyBytes(channel.serialize().length * 2), 12)
-      if (address.isResolved()) {
-        chainId = shrink(address.getChainId(), 'bgMagenta', 'gray')
-      }
-      if (address.isRoot() || address.isLoopback()) {
-        chainId = shrink(address.getChainId(), 'bgBlack', 'gray')
-        hash = ''
-      }
-      const remote = channel.getRemote()
-      if (channel.heavy) {
-        const { provenance } = channel.heavy
-        const rawHash = provenance.reflectIntegrity().hash
-        hash = chalk.dim(shrink(rawHash, 'bgWhite', 'magenta'))
-        const { lineageHeight, heavyHeight } = channel
-        height = chalk.magenta(heavyHeight + '.' + lineageHeight)
-      }
-      const msg = chalk.magenta('  └── channel')
-      const channelHeader = {
-        msg,
-        height,
-        path: chalk.gray(alias),
-        chainId,
-        hash,
-        // size,
-      }
-      messages.push(channelHeader)
-
-      // get the tx and remote.replies span, then order them
-      const tx = getIndexSpan(channel.requests, remote.replies)
-      tx.forEach((index) => {
-        const request = channel.requests[index]
-        const reply = remote.replies[index]
-        const msg = chalk.cyan('      └── tx:')
-        const chainId = request ? request.type : grayUndefined
-        const hash = chalk.gray(reply ? reply.type : grayUndefined)
-        const height = chalk.cyan(index)
-        const path = '' //chalk.dim('since: -4')
-        // const size = request ? getSize(request) : grayUndefined
-        const action = { msg, height, path, chainId, hash }
-        messages.push(action)
-      })
-      const rx = getIndexSpan(remote.requests, channel.replies)
-      rx.forEach((index) => {
-        const request = remote.requests[index]
-        const reply = channel.replies[index]
-        const msg = chalk.yellow('      └── rx:')
-        const height = chalk.yellow(index)
-        const path = ''
-        const chainId = chalk.gray(request ? request.type : grayUndefined)
-        const hash = reply ? reply.type : grayUndefined
-        // const size = reply ? getSize(reply) : grayUndefined // TODO sum size of req & rep
-
-        const action = { msg, height, path, chainId, hash }
-        messages.push(action)
-      })
-      // use previous blocks to know when the counters in remotes altered
-    })
-  const print = (messages) => {
-    const options = {
-      truncate: true,
-      showHeaders: false,
-      minWidth: 3,
-      config: {
-        msg: { minWidth: 15, maxWidth: 15 },
-        height: { minWidth: 8, maxWidth: 8 },
-        path: { minWidth: 18, maxWidth: 18 },
-      },
+  return header
+}
+const networkPrint = (network) => {
+  const messages = []
+  const aliases = network.getAliases()
+  aliases.forEach((alias) => {
+    const channel = network[alias]
+    const { address } = channel
+    let height = '-'
+    let chainId = grayUndefined
+    let hash = grayUndefined
+    // const size = pad(prettyBytes(channel.serialize().length * 2), 12)
+    if (address.isResolved()) {
+      chainId = shrink(address.getChainId(), 'bgMagenta', 'gray')
     }
-    const formatted = columnify(messages, options)
-    return formatted
-  }
-  const text = print(messages)
-  return text
+    if (address.isRoot() || address.isLoopback()) {
+      chainId = shrink(address.getChainId(), 'bgBlack', 'gray')
+      hash = ''
+    }
+    const remote = channel.getRemote()
+    if (channel.heavy) {
+      const { provenance } = channel.heavy
+      const rawHash = provenance.reflectIntegrity().hash
+      hash = chalk.dim(shrink(rawHash, 'bgWhite', 'magenta'))
+      const { lineageHeight, heavyHeight } = channel
+      height = chalk.magenta(heavyHeight + '.' + lineageHeight)
+    }
+    const msg = chalk.magenta('  └── channel')
+    const channelHeader = {
+      msg,
+      height,
+      path: chalk.gray(alias),
+      chainId,
+      hash,
+      // size,
+    }
+    messages.push(channelHeader)
+
+    // get the tx and remote.replies span, then order them
+    const tx = getIndexSpan(channel.requests, remote.replies)
+    tx.forEach((index) => {
+      const request = channel.requests[index]
+      const reply = remote.replies[index]
+      const msg = chalk.cyan('      └── tx:')
+      const chainId = request ? request.type : grayUndefined
+      const hash = chalk.gray(reply ? reply.type : grayUndefined)
+      const height = chalk.cyan(index)
+      const path = '' //chalk.dim('since: -4')
+      // const size = request ? getSize(request) : grayUndefined
+      const action = { msg, height, path, chainId, hash }
+      messages.push(action)
+    })
+    const rx = getIndexSpan(remote.requests, channel.replies)
+    rx.forEach((index) => {
+      const request = remote.requests[index]
+      const reply = channel.replies[index]
+      const msg = chalk.yellow('      └── rx:')
+      const height = chalk.yellow(index)
+      const path = ''
+      const chainId = chalk.gray(request ? request.type : grayUndefined)
+      const hash = reply ? reply.type : grayUndefined
+      // const size = reply ? getSize(reply) : grayUndefined // TODO sum size of req & rep
+
+      const action = { msg, height, path, chainId, hash }
+      messages.push(action)
+    })
+    // use previous blocks to know when the counters in remotes altered
+  })
+  return messages
 }
 
 const sizeCache = new WeakMap()
@@ -204,4 +213,4 @@ const _getSortedIndices = (obj) => {
   indices.sort((first, second) => first - second)
   return indices
 }
-module.exports = { blockPrint, interPrint }
+module.exports = { blockPrint, interPrint, headerPrint, networkPrint, print }

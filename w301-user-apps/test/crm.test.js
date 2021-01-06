@@ -2,12 +2,13 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('crm:tests:installer')
-require('debug').enable('*met* *shell *dmzReducer')
+require('debug').enable('*met* *needle')
 
 describe('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
-      const shell = await effectorFactory('app', { crm })
+      jest.setTimeout(10000)
+      const shell = await effectorFactory('crm', { crm })
       shell.enableLogging()
 
       // set up dpkg by publishing the current code to the local registry

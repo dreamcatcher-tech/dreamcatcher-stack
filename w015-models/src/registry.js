@@ -1,7 +1,6 @@
 const container = {}
 const registry = {
   registerModels(models) {
-    // console.log(`Model count: ${Object.keys(models).length}`)
     Object.keys(models).forEach((key) => {
       const model = models[key]
       if (!key || !models[key]) {

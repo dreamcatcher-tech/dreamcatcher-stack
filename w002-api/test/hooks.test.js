@@ -32,4 +32,12 @@ describe('hooks', () => {
     await assert.rejects(hook(() => true))
     await assert.rejects(hook(() => 'string'))
   })
+  test('duplicate requests rejected in same call', async () => {
+    const double = async () => {
+      interchain('twin')
+      await interchain('twin')
+    }
+    await assert.rejects(() => hook(double))
+  })
+  test.todo('duplicate requests rejected in different calls')
 })

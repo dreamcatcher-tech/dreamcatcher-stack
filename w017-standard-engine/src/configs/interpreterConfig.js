@@ -88,7 +88,10 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     assignRejection: assign({
-      reduceRejection: (context, event) => event.data,
+      reduceRejection: (context, event) => {
+        console.error(event.data)
+        return event.data
+      },
     }),
     respondRejection: assign({
       // one of lifes great challenges
@@ -525,7 +528,8 @@ const interpreterMachine = machine.withConfig({
       let reduceResolve, inbandPromises
       do {
         // TODO move inband exhaustion to hook.js
-        reduceResolve = await globalHook(tick, accumulator)
+        // TODO might be faster to only wait for the first promise to finish before rerunning
+        reduceResolve = await globalHook(tick, accumulator, anvil.getHash())
         inbandPromises = reduceResolve.requests.filter((req) => req.inBand)
         const awaits = inbandPromises.map(async (action) => {
           debug(`inband execution of: `, action.type)

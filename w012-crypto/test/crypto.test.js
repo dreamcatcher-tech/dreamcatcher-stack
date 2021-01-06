@@ -1,25 +1,25 @@
 const assert = require('assert')
-const sodium = require('../src/sodium')
+const crypto = require('..')
 const Benchmark = require('benchmark')
 const debug = require('debug')('interblock:tests:crypto')
 
-const testHash = sodium.objectHash('testHash')
+const testHash = crypto.objectHash('testHash')
 describe('crypto', () => {
   let keypair
   beforeAll(async () => {
-    keypair = await sodium.generateKeyPair()
+    keypair = await crypto.generateKeyPair()
   })
 
   const hashString = () => {
     const testString = 'test'
-    const hash = sodium.objectHash(testString)
+    const hash = crypto.objectHash(testString)
     const previous =
       'a46092d2aaf8df017b1ede7ef3a2d2a427eb23cc240bbf3687d69a1ba17f4a27'
     assert.strictEqual(hash, previous)
   }
   const hashObject = () => {
     const testObject = { some: 'test', obj: 'etc' }
-    const hash = sodium.objectHash(testObject)
+    const hash = crypto.objectHash(testObject)
     assert.strictEqual(
       hash,
       '70b467b32a6ea695555039bc52eba599305f2cbeaa7e4b59ced78aed3a07aebb',
@@ -27,12 +27,12 @@ describe('crypto', () => {
     )
   }
   const generateKeyPair = async () => {
-    const keyPair = await sodium.generateKeyPair()
+    const keyPair = await crypto.generateKeyPair()
     assert(keyPair)
   }
   const verifyKeyPair = async () => {
     const { publicKey, secretKey } = keypair
-    const verified = await sodium.verifyKeyPair({
+    const verified = await crypto.verifyKeyPair({
       publicKey,
       secretKey,
     })
@@ -40,13 +40,13 @@ describe('crypto', () => {
   }
   const signHash = async () => {
     const { secretKey } = keypair
-    const signature = await sodium.signHash(testHash, secretKey)
+    const signature = await crypto.signHash(testHash, secretKey)
     assert(signature)
     return signature
   }
   const verifySignature = (signature) => async () => {
     const { publicKey } = keypair
-    const verified = await sodium.verifyHash(testHash, signature, publicKey)
+    const verified = await crypto.verifyHash(testHash, signature, publicKey)
     assert(verified)
   }
 
@@ -75,7 +75,7 @@ describe('crypto', () => {
         })
         .run()
     })
-    console.log(log.trim())
+    debug(log.trim())
 
     /**
     2020-02-01 tweetnacl default(fast) & slow
@@ -98,20 +98,20 @@ describe('crypto', () => {
   describe('hash function', () => {
     test('should hash a string', () => {
       const testString = 'test'
-      const hash = sodium.objectHash(testString)
+      const hash = crypto.objectHash(testString)
       const previous =
         'a46092d2aaf8df017b1ede7ef3a2d2a427eb23cc240bbf3687d69a1ba17f4a27'
       assert.strictEqual(hash, previous)
-      const different = sodium.objectHash('different string')
-      assert.notEqual(hash, different)
+      const different = crypto.objectHash('different string')
+      assert.notStrictEqual(hash, different)
     })
     test('should hash an object', () => {
       const testObject = { some: 'test', obj: 'etc' }
-      const hash = sodium.objectHash(testObject)
+      const hash = crypto.objectHash(testObject)
       const previous =
         '70b467b32a6ea695555039bc52eba599305f2cbeaa7e4b59ced78aed3a07aebb'
       assert.strictEqual(hash, previous, 'hash does not match')
-      const different = sodium.objectHash({
+      const different = crypto.objectHash({
         ...testObject,
         obj: 'etd',
       })
@@ -129,17 +129,17 @@ describe('crypto', () => {
         attr1: 'val1',
       }
       assert.strictEqual(
-        sodium.objectHash(testObject),
-        sodium.objectHash(testObjectReOrder),
+        crypto.objectHash(testObject),
+        crypto.objectHash(testObjectReOrder),
         'same object hashed to different values'
       )
     })
     test('undefined values for different keys result in different hashes', () => {
-      const m = sodium.objectHash({ m: undefined })
-      const n = sodium.objectHash({ n: undefined })
+      const m = crypto.objectHash({ m: undefined })
+      const n = crypto.objectHash({ n: undefined })
       assert(m !== n)
-      const o = sodium.objectHash({ o: null })
-      const p = sodium.objectHash({ p: null })
+      const o = crypto.objectHash({ o: null })
+      const p = crypto.objectHash({ p: null })
       assert(o !== p)
     })
   })
@@ -148,11 +148,11 @@ describe('crypto', () => {
     test('same pair from same seed', async () => {
       const seed = '0123456789abcdef0123456789abcdef'
       const other = '70b467b32a6ea695555039bc52eba591'
-      const kp1 = await sodium.generateKeyPair(seed)
-      const kp2 = await sodium.generateKeyPair(seed)
-      const kp3 = await sodium.generateKeyPair(other)
-      const noSeed1 = await sodium.generateKeyPair()
-      const noSeed2 = await sodium.generateKeyPair()
+      const kp1 = await crypto.generateKeyPair(seed)
+      const kp2 = await crypto.generateKeyPair(seed)
+      const kp3 = await crypto.generateKeyPair(other)
+      const noSeed1 = await crypto.generateKeyPair()
+      const noSeed2 = await crypto.generateKeyPair()
 
       assert.deepStrictEqual(kp1, kp2)
       assert.notStrictEqual(kp2, kp3)
@@ -162,34 +162,34 @@ describe('crypto', () => {
   })
   describe('sign|verify', () => {
     test('verifies signatures for previous signed objects', async () => {
-      const hash = sodium.objectHash('test hash')
+      const hash = crypto.objectHash('test hash')
       const { publicKey, secretKey } = keypair
-      const { signature } = await sodium.signHash(hash, secretKey)
-      assert(await sodium.verifyHash(hash, signature, publicKey))
+      const { signature } = await crypto.signHash(hash, secretKey)
+      assert(await crypto.verifyHash(hash, signature, publicKey))
       const tamp = 'a different hash'
-      const isNotOk = await sodium.verifyHash(tamp, signature, publicKey)
+      const isNotOk = await crypto.verifyHash(tamp, signature, publicKey)
       assert(!isNotOk)
-      const isNotOkSync = sodium.verifyHashSync(tamp, signature, publicKey)
+      const isNotOkSync = crypto.verifyHashSync(tamp, signature, publicKey)
       assert(!isNotOkSync)
     })
     test('throws if hash not a secure hash', async () => {
       const notSecure = 'random'
-      const secure = sodium.objectHash(notSecure)
+      const secure = crypto.objectHash(notSecure)
       const { secretKey } = keypair
 
-      await assert.rejects(sodium.signHash(notSecure, secretKey))
-      assert.ok(await sodium.signHash(secure, secretKey))
+      await assert.rejects(crypto.signHash(notSecure, secretKey))
+      assert.ok(await crypto.signHash(secure, secretKey))
     })
     test('caches already verified signatures', async () => {
-      const { publicKey, secretKey } = await sodium.generateKeyPair()
-      const { size } = sodium._verifiedSet
-      const { signature } = await sodium.signHash(testHash, secretKey)
-      assert.strictEqual(sodium._verifiedSet.size, size)
-      assert(!sodium.verifyHashSync(testHash, signature, publicKey))
-      const verified = await sodium.verifyHash(testHash, signature, publicKey)
+      const { publicKey, secretKey } = await crypto.generateKeyPair()
+      const { size } = crypto._verifiedSet
+      const { signature } = await crypto.signHash(testHash, secretKey)
+      assert.strictEqual(crypto._verifiedSet.size, size)
+      assert(!crypto.verifyHashSync(testHash, signature, publicKey))
+      const verified = await crypto.verifyHash(testHash, signature, publicKey)
       assert(verified)
-      assert.strictEqual(sodium._verifiedSet.size, size + 1)
-      assert(sodium.verifyHashSync(testHash, signature, publicKey))
+      assert.strictEqual(crypto._verifiedSet.size, size + 1)
+      assert(crypto.verifyHashSync(testHash, signature, publicKey))
     })
     test.todo('caches created signatures for instant verify')
     test.todo('alerts if asked to sign the same thing twice')
@@ -198,40 +198,54 @@ describe('crypto', () => {
   describe('verifyKeyPair()', () => {
     test('verifies a known good keypair', async () => {
       const { publicKey, secretKey } = keypair
-      const isVerified = await sodium.verifyKeyPair({
+      const isVerified = await crypto.verifyKeyPair({
         publicKey,
         secretKey,
       })
       assert.strictEqual(isVerified, true)
     })
     test('returns false for a known bad keyPair', async () => {
-      const isVerifiedKeyPair = await sodium.verifyKeyPair({
+      const isVerifiedKeyPair = await crypto.verifyKeyPair({
         publicKey: 'random public key',
         secretKey: 'random secret key',
       })
       assert.strictEqual(isVerifiedKeyPair, false)
-      const { secretKey } = await sodium.generateKeyPair()
-      const { publicKey } = await sodium.generateKeyPair()
-      const swapped = await sodium.verifyKeyPair({
+      const { secretKey } = await crypto.generateKeyPair()
+      const { publicKey } = await crypto.generateKeyPair()
+      const swapped = await crypto.verifyKeyPair({
         publicKey,
         secretKey,
       })
       assert(!swapped)
-      assert(!sodium.verifyKeyPairSync(swapped))
+      assert(!crypto.verifyKeyPairSync(swapped))
     })
     test('caches already verified keypairs', async () => {
-      const { size } = sodium._verifiedSet
-      const keypair = await sodium.generateKeyPair()
-      assert.strictEqual(sodium._verifiedSet.size, size + 1)
-      assert(sodium.verifyKeyPairSync(keypair))
+      const { size } = crypto._verifiedSet
+      const keypair = await crypto.generateKeyPair()
+      assert.strictEqual(crypto._verifiedSet.size, size + 1)
+      assert(crypto.verifyKeyPairSync(keypair))
     })
     test.todo('caches created keypairs for instant verify')
   })
 
   describe('nonce', () => {
-    test('generate nonce', () => {
-      const nonce = sodium.generateNonce()
-      assert(nonce.length === 64 + 2)
+    test('short seed', () => {
+      crypto.injectSeed('short seed')
+      let nonce = crypto.generateNonce()
+      assert.strictEqual(typeof nonce, 'string')
+      assert.strictEqual(nonce.length, 32)
+    })
+    test('long seed', () => {
+      crypto.injectSeed('so many Qs: QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ')
+      nonce = crypto.generateNonce()
+      assert.strictEqual(typeof nonce, 'string')
+      assert.strictEqual(nonce.length, 32)
+    })
+    test('random seed', () => {
+      crypto.injectSeed('')
+      nonce = crypto.generateNonce()
+      assert.strictEqual(typeof nonce, 'string')
+      assert.strictEqual(nonce.length, 36)
     })
   })
 })

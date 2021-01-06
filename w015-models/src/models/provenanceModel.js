@@ -48,7 +48,7 @@ const provenanceModel = standardize({
       hash: dmz.getHash(),
     })
 
-    let address = addressModel.create('GENESIS')
+    let address
     let height = 0
     const parentIntegrities = { ...extraLineages }
     if (parentProvenance) {
@@ -64,7 +64,7 @@ const provenanceModel = standardize({
     }
     const provenance = {
       dmzIntegrity,
-      address,
+      address: address || addressModel.create('GENESIS'),
       lineage: parentIntegrities,
       height,
     }

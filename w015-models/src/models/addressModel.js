@@ -56,6 +56,7 @@ const addressModel = standardize({
       }
       return chainId.hash
     }
+    // TODO broaden isResolved to cover root and loopback cases
     const isRoot = () => status === 'ROOT'
     const isLoopback = () => status === 'LOOPBACK'
     const isGenesis = () => status.startsWith('GENESIS_')

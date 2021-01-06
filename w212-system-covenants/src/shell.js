@@ -9,7 +9,7 @@ const {
   connect,
   listChildren,
   getGivenName,
-  deploy,
+  install,
 } = dmzReducer.actions
 const { interchain } = require('../../w002-api')
 const dpkg = require('./dpkg')
@@ -142,9 +142,10 @@ const config = {
       const spawnAction = spawn(installPath, spawnOptions)
       interchain(spawnAction)
 
-      const deployAction = deploy(installer)
-      const deployResult = await interchain(deployAction, installPath)
-      debug(deployResult)
+      debug(`begining install`)
+      const installAction = install(installer)
+      const installResult = await interchain(installAction, installPath)
+      debug(`installResult: `, installResult)
     },
   },
 }

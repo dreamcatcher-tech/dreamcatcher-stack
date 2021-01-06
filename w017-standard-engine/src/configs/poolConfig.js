@@ -242,7 +242,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         const address = interblock.extractGenesis().provenance.getAddress()
         // TODO split out to allow lockChain to be reused for init
         const lock = await consistency.putLockChain(address)
-        debug(`lockChildChain: ${!!lock}`)
+        debug(`lockChildChain for ${interblock.getOriginAlias()}: ${!!lock}`)
         return lock
       },
       fetchParentLineage: async ({ interblock }) => {

@@ -102,7 +102,7 @@ modelNames.forEach((name) => {
     const modelModule = require(`./src/models/${name}`)
     models[name] = modelModule[name]
   } catch (e) {
-    console.log(`error loading: ${name}`)
+    console.error(`error loading: ${name}`)
     throw e
   }
 })
