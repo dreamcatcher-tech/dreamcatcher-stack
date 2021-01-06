@@ -131,6 +131,7 @@ describe('translator', () => {
       )
       assert.strictEqual(state.requests.length, 1)
       const [doneInvoke] = state.requests
+      delete doneInvoke.payload.__nonce // TODO remove need for nonce
 
       state = await hook(() => shell.reducer(state.reduction, doneInvoke))
       assert.strictEqual(state.reduction.value, 'idle')
@@ -183,6 +184,7 @@ describe('translator', () => {
 
     assert.strictEqual(result.requests.length, 1)
     const [doneInvoke] = result.requests
+    delete doneInvoke.payload.__nonce // TODO remove need for nonce
     assert.strictEqual(doneInvoke.type, 'done.invoke.invoker')
     assert.strictEqual(result.reduction.value, 'testInvoke')
     assert(!result.isPending)
@@ -192,7 +194,6 @@ describe('translator', () => {
     // assert the original promise was resolved
     assert.strictEqual(result.replies.length, 1)
     const [resolve] = result.replies
-    debug(resolve)
     assert.strictEqual(resolve.type, '@@RESOLVE')
     assert.deepStrictEqual(resolve.request, { type: 'INVOKE' })
     assert.deepStrictEqual(resolve.payload, reply2.payload)
@@ -205,6 +206,7 @@ describe('translator', () => {
     let nextState = await hook(() => reducer(undefined, request))
     assert.strictEqual(nextState.requests.length, 1)
     const [doneInvoke] = nextState.requests
+    delete doneInvoke.payload.__nonce // TODO remove need for nonce
     assert.strictEqual(doneInvoke.type, 'done.invoke.instantInvoker')
 
     nextState = await hook(() => reducer(nextState.reduction, doneInvoke))
@@ -223,6 +225,7 @@ describe('translator', () => {
     debug(nextState)
     assert.strictEqual(nextState.requests.length, 1)
     const [doneInvoke] = nextState.requests
+    delete doneInvoke.payload.__nonce // TODO remove need for nonce
     assert.strictEqual(doneInvoke.type, 'done.invoke.testInvokeUndefinedResult')
     assert.deepStrictEqual(doneInvoke.payload, {})
   })

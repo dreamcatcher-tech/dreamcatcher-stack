@@ -6,7 +6,7 @@ require('debug').enable('*met* *needle')
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test('deploys app', async () => {
+    test.only('deploys app', async () => {
       jest.setTimeout(10000)
       const shell = await effectorFactory('crm', { crm })
       shell.enableLogging()

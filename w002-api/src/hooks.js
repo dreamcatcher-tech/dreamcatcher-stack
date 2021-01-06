@@ -17,14 +17,14 @@ const replyResolve = (payload, request) =>
 const replyReject = (error, request) =>
   _pushGlobalReply(resolve(error, request))
 
-const interchain = async (type, payload, to) => {
+const interchain = (type, payload, to) => {
   // make an async call to another chain
   const standardRequest = request(type, payload, to)
   assert(standardRequest.to !== '.@@io')
   return _promise(standardRequest)
 }
 
-const effect = async (type, fn, ...args) => {
+const effect = (type, fn, ...args) => {
   // promise that will be placed on the .@@io queue and later executed
   assert.strictEqual(typeof type, 'string')
   assert.strictEqual(typeof fn, 'function')
@@ -35,13 +35,13 @@ const effect = async (type, fn, ...args) => {
   return _promise({ type, payload, to: '.@@io', exec, inBand: false })
 }
 
-const effectInBand = async (type, fn, ...args) => {
+const effectInBand = (type, fn, ...args) => {
   // polite way to make a promise that will be included in blocking process
   // must be repeatable or else block verification will fail
   // if not repeatable, should use an effect instead
   const payload = { args }
   const exec = () => fn(...args)
-  return _promise({ type, payload, exec, inBand: true, to: 'EFFECT_IN_BAND' })
+  return _promise({ type, payload, exec, inBand: true, to: undefined })
 }
 
 const _promise = (request) => {
@@ -50,8 +50,10 @@ const _promise = (request) => {
   assert(Array.isArray(accumulator))
   const { type, payload, to, exec, inBand } = request
   assert(!exec || typeof exec === 'function')
-  // within inserted uniqueness, we cannot know if this action has a reply or not
-  // TODO use order of invocation to match with replies, to avoid __nonce injection
+  if (payload.__nonce !== undefined) {
+    throw new Error(`__nonce key in payload is reserved`)
+  }
+  // nonce required for accurate matching of replies to requests
   const __nonce = _incrementGlobalRequestId()
   const bareRequest = { type, payload: { ...payload, __nonce }, to }
 
@@ -63,14 +65,19 @@ const _promise = (request) => {
     }
     _pushGlobalRequest(bareRequest)
     return _eternalPromise
+  } else {
+    // clean but excessive since nonce handles matching
+    const index = accumulator.indexOf(reply)
+    accumulator.splice(index, 1)
   }
   if (reply.type === '@@RESOLVE') {
     return reply.payload
   }
+  assert.strictEqual(reply.type, '@@REJECT')
   throw reply.payload
 }
 
-const all = async (...promiseActions) => {
+const all = (...promiseActions) => {
   // awaits multiple requests to multiple chains and or multiple effects to complete
 }
 const hook = async (tick, accumulator = [], salt = 'unsalted') => {
