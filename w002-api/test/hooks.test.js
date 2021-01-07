@@ -32,21 +32,14 @@ describe('hooks', () => {
     await assert.rejects(hook(() => true))
     await assert.rejects(hook(() => 'string'))
   })
-  test('duplicate requests permitted in same call', async () => {
+  test('duplicate requests rejected in same call', async () => {
     const double = async () => {
       interchain('twin')
-      await interchain('twin')
+      interchain('twin')
       // TODO supply a response, and verify the second request gets a different response
-    }
-    await hook(double)
-  })
-  test.todo('duplicate requests permitted in different calls')
-  test.todo('__nonce is not present in reply payloads')
-  test('__nonce is disallowed from user requests', async () => {
-    const badRequest = () => {
-      interchain({ type: 'bad', payload: { __nonce: 'not allowed' } })
       return {}
     }
-    await assert.rejects(() => hook(badRequest))
+    await assert.rejects(() => hook(double))
   })
+  test.todo('duplicate requests permitted in different calls')
 })

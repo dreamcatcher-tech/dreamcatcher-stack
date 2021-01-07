@@ -50,12 +50,7 @@ const _promise = (request) => {
   assert(Array.isArray(accumulator))
   const { type, payload, to, exec, inBand } = request
   assert(!exec || typeof exec === 'function')
-  if (payload.__nonce !== undefined) {
-    throw new Error(`__nonce key in payload is reserved`)
-  }
-  // nonce required for accurate matching of replies to requests
-  const __nonce = _incrementGlobalRequestId()
-  const bareRequest = { type, payload: { ...payload, __nonce }, to }
+  const bareRequest = { type, payload, to }
 
   const reply = accumulator.find((reply) => isReplyFor(reply, bareRequest))
   if (!reply) {

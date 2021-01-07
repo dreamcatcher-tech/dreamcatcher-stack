@@ -346,12 +346,12 @@ const deployReducer = async (dmz, action) => {
   }
   return dmz.network
 }
-const deployReply = (dmz, action) => {
+const deployReply = (dmz, reply) => {
   // TODO handle rejection of deployment
-  assert(rxReplyModel.isModel(action))
-  let isReplyValid = false
+  assert(rxReplyModel.isModel(reply))
 
   const aliases = dmz.network.getResolvedAliases()
+  let outstandingDeploy
   for (const alias of aliases) {
     const channel = dmz.network[alias]
     if (channel.systemRole !== './') {
@@ -361,12 +361,12 @@ const deployReply = (dmz, action) => {
     if (!deployRequest || deployRequest.type !== types.deploy) {
       continue // deployment must have completed
     }
-    if (isReplyFor(action, deployRequest)) {
-      isReplyValid = true
-      continue // this could be the very last reply
+    if (outstandingDeploy) {
+      return
     }
-    return // deploy is still in progress for at least one child
+    outstandingDeploy = deployRequest
   }
+  const isReplyValid = isReplyFor(reply, outstandingDeploy)
   assert(isReplyValid, `action was not round among any deploy replies`)
 
   const parent = dmz.network['..']
