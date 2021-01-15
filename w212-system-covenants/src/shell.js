@@ -1,16 +1,10 @@
 const debug = require('debug')('interblock:covenants:shell')
-const normalize = require('normalize-path')
+const posix = require('path')
 const assert = require('assert')
 const { covenantIdModel } = require('../../w015-models')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
-const {
-  spawn,
-  connect,
-  listChildren,
-  getGivenName,
-  install,
-} = dmzReducer.actions
+const { spawn, connect, listChildren, install, getChannel } = dmzReducer.actions
 const { interchain } = require('../../w002-api')
 const dpkg = require('./dpkg')
 const {
@@ -30,6 +24,8 @@ const config = {
       wd: (context, event) => {
         const { absolutePath } = event.data
         assert.strictEqual(typeof absolutePath, 'string')
+        const normalized = posix.normalize(absolutePath)
+        assert.strictEqual(normalized, absolutePath)
         debug(`assignWd`, absolutePath)
         return absolutePath
       },
@@ -64,46 +60,42 @@ const config = {
       debug(`loginResult: %O`, loginResult)
       return { loginResult }
     },
-    addActor: async (context, event) => {
-      assert.strictEqual(typeof event.payload, 'object')
+    addActor: async ({ wd }, event) => {
       let { alias, spawnOptions } = event.payload
-      const to = dirname(alias)
-      const name = basename(alias)
-      debug(`addActor`, name, to)
+      assert.strictEqual(typeof alias, 'string')
+      const absolutePath = posix.resolve(wd, alias)
+
+      const to = posix.dirname(absolutePath)
+      const name = posix.basename(absolutePath)
+      debug(`addActor: %O to: %O`, name, to)
       if (typeof spawnOptions === 'string') {
         // TODO unify how covenants are referred to
         const covenantId = covenantIdModel.create(spawnOptions)
         spawnOptions = { covenantId }
       }
+      assert.strictEqual(typeof spawnOptions, 'object')
       const spawnAction = spawn(name, spawnOptions)
+
       const addActor = await interchain(spawnAction, to)
 
-      // calculate path based on working directory
-
-      // TODO if this was remote, open a path to the child ?
-      // but don't transmit anything ?
       return addActor
     },
-    listActors: async (context, event) => {},
-    changeDirectory: async (context, event) => {
+    listActors: async ({ wd }, event) => {
       const { path } = event.payload
+      const absolutePath = posix.resolve(wd, path)
+      debug(`listActors`, absolutePath)
+      const lsAction = listChildren(path)
+      const { children } = await interchain(lsAction, absolutePath)
+      const self = await interchain(getChannel(absolutePath))
+      return { children: { ...children, '.': self } }
+    },
+    changeDirectory: async ({ wd }, event) => {
+      let { path } = event.payload
       assert.strictEqual(typeof path, 'string')
-      // TODO handle normalizng / resolving the paths
-      const normalizedPath = normalize(path)
-      debug(`changeDirectory`, normalizedPath)
-      const { givenName } = await interchain(getGivenName())
-      debug(`givenName: `, givenName)
-      let absolutePath = givenName + normalizedPath
-      if (absolutePath.endsWith('/.')) {
-        absolutePath = absolutePath.substring(0, absolutePath.length - 1)
-      }
-      debug(`absolutePath`, absolutePath)
-
-      const { type, payload } = listChildren()
-      const result = await interchain(type, payload, path)
-      assert(Array.isArray(result.children))
-      debug(`changeDirectory result: `, result)
-      return { ...result, absolutePath }
+      assert(posix.isAbsolute(wd))
+      const absolutePath = posix.resolve(wd, path)
+      debug(`changeDirectory`, absolutePath)
+      return { absolutePath }
     },
     removeActor: async (context, event) => {
       debug(`removeActor`, event)
@@ -207,12 +199,9 @@ const machine = Machine(
         exit: 'respondOrigin',
       },
       listActors: {
-        // list the current children of the given node
-
-        // resolve the path into absolute path
-        // send system action to the absolute path
         // color coded display shows which chains are out of date with root, or if whole system is lagging
         invoke: { src: 'listActors', onDone: 'idle', onError: 'idle' },
+        exit: 'respondOrigin',
       },
       changeDirectory: {
         // change directory to the given path
@@ -338,7 +327,7 @@ const actions = {
       payload: { alias, spawnOptions },
     }
   },
-  ls: (path) => ({
+  ls: (path = '.') => ({
     // can only list children of the current node
     type: 'LS',
     payload: { path },

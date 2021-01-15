@@ -42,5 +42,9 @@ describe('dmzReducer', () => {
     test.todo('cannot be more than one outstanding @@OPEN request in a channel')
     test.todo('3 levels deep')
     test.todo('random path opening and closing and reopening')
+    test.todo('simultaneous requests with common parent')
+  })
+  describe('uplink', () => {
+    test.todo('multiple requests from same chain result in single uplink')
   })
 })

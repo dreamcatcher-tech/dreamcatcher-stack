@@ -163,6 +163,10 @@ const _pick = (obj, keys) => {
   })
   return blank
 }
+const invalidate = (channel) => {
+  const invalid = addressModel.create('INVALID')
+  return setAddress(channel, invalid)
+}
 module.exports = {
   ingestInterblock,
   ingestPierceInterblock,
@@ -170,4 +174,5 @@ module.exports = {
   txRequest,
   txReply,
   shiftTxRequest,
+  invalidate,
 }

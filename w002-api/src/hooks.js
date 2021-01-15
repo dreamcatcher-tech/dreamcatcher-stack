@@ -14,8 +14,7 @@ const replyPromise = () => _pushGlobalReply(promise())
 // TODO error if resolve against the same request more than once, which includes default action
 const replyResolve = (payload, request) =>
   _pushGlobalReply(resolve(payload, request))
-const replyReject = (error, request) =>
-  _pushGlobalReply(resolve(error, request))
+const replyReject = (error, request) => _pushGlobalReply(reject(error, request))
 
 const interchain = (type, payload, to) => {
   // make an async call to another chain
@@ -159,6 +158,7 @@ const _getGlobalAccumulator = () => {
   return accumulator
 }
 const _pushGlobalRequest = (request) => {
+  // TODO detect change in request order somehow
   _assertGlobals()
   const { requests } = globalThis['@@interblock'].promises
   const { type, payload, to } = request

@@ -12,7 +12,6 @@ const {
   pierceSigner,
 } = require('../../../w015-models')
 const { networkProducer, channelProducer } = require('../../../w016-producers')
-const { openPaths } = require('../../../w021-dmz-reducer')
 const { thread } = require('../execution/thread')
 const { interpreterConfig } = require('./interpreterConfig')
 const { machine } = require('../machines/isolator')

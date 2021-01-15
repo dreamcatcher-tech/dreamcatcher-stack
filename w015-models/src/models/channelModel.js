@@ -8,6 +8,7 @@ const { actionModel } = require('./actionModel')
 const { continuationModel } = require('./continuationModel')
 const { remoteModel } = require('./remoteModel')
 const { channelSchema } = require('../schemas/modelSchemas')
+const { reject } = require('../../../w002-api')
 
 const channelModel = standardize({
   schema: channelSchema,
@@ -41,10 +42,8 @@ const channelModel = standardize({
       requestsLength,
     } = instance
     const isLoopback = systemRole === '.'
-    if (isLoopback) {
-      assert(address.isLoopback())
-    }
-    if (address.isUnknown()){
+
+    if (address.isUnknown()) {
       assert.strictEqual(Object.keys(replies).length, 0)
     }
     // TODO if this is pierce channel, ensure only requests are OOB effects ?
@@ -54,6 +53,14 @@ const channelModel = standardize({
       ? heavy.getRemote()
       : remoteModel.create()
     assert(remote)
+    if (isLoopback) {
+      assert(address.isLoopback())
+      const banned = ['@@OPEN_CHILD']
+      const outs = Object.values(requests)
+      const ins = Object.values(remote.requests)
+      assert(outs.every(({ type }) => !banned.includes(type)))
+      assert(ins.every(({ type }) => !banned.includes(type)))
+    }
     if (heavy) {
       assert(heavy.getRemote() || heavyHeight === 0)
       assert.strictEqual(heavy.provenance.height, heavyHeight)
@@ -74,6 +81,9 @@ const channelModel = standardize({
       if (address.isUnknown() && !isLoopback) {
         return
       }
+      if (address.isInvalid()) {
+        return
+      }
       if (!Number.isInteger(index)) {
         index = getNextReplyIndex()
       }
@@ -92,29 +102,43 @@ const channelModel = standardize({
         return
       }
       const replyIndices = _getSortedIndices(remote.replies)
-      const replyIndex = replyIndices.find((index) => {
+      let replyIndex = replyIndices.find((index) => {
         const reply = remote.replies[index]
         return !reply.isPromise() && requests[index]
       })
+      if (!Number.isInteger(replyIndex) && address.isInvalid()) {
+        // next reply is the same index as the next request
+        const requestIndices = getRequestIndices()
+        for (const index of requestIndices) {
+          const reply = remote.replies[index]
+          if (!reply || reply.isPromise()) {
+            replyIndex = index
+            break
+          }
+        }
+      }
       return replyIndex
     }
 
-    const rxReply = (index) => {
+    const rxReply = () => {
+      const index = rxReplyIndex()
       if (!Number.isInteger(index)) {
-        index = rxReplyIndex()
-      }
-      if (!Number.isInteger(index) || index < 0) {
         return
       }
+      assert(index >= 0, `index must be whole number`)
       assert(requests[index], `No request for: ${index}`)
-      assert(remote.replies[index], `No reply for: ${index}`)
-
-      const { type, payload } = remote.replies[index]
+      let replyRaw
+      if (address.isInvalid()) {
+        replyRaw = reject(new Error(`Channel invalid`))
+      } else {
+        assert(remote.replies[index], `No reply for: ${index}`)
+        replyRaw = remote.replies[index]
+      }
       const origin = requests[index]
+      const { type, payload } = replyRaw
       const reply = rxReplyModel.create(type, payload, origin)
       return reply
     }
-
     const getNextReplyIndex = () => {
       // get lowest remote request index that is higher than reply index
       const remoteRequestIndices = _getSortedIndices(remote.requests)

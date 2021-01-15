@@ -1,4 +1,5 @@
 const assert = require('assert')
+const posix = require('path')
 const debug = require('debug')('interblock:producers:network')
 const _ = require('lodash')
 const {
@@ -148,8 +149,12 @@ const tx = (network, requests, replies) =>
     const immerNetwork = {} // immer breaks isModel test
     requests.forEach((request) => {
       assert(txRequestModel.isModel(request))
-      const { to } = request
-      // TODO resolve the "to" alias name to rationalize it
+      let { to } = request
+      to = posix.normalize(to)
+      if (network['..'].address.isRoot() && to.startsWith('/')) {
+        to = to.substring(1)
+        to = to || '.'
+      }
       // TODO detect child construction by the path, so ensure role is correct
       let channel = immerNetwork[to] || network[to]
       if (!channel) {
@@ -187,11 +192,36 @@ const _cloneArray = (toBeArray, cloneFunction) => {
   }
   return toBeArray.map(cloneFunction)
 }
-
+const invalidateLocal = (network) =>
+  networkModel.clone(network, (draft) => {
+    const aliases = network.getAliases()
+    for (const alias of aliases) {
+      const isLocal = !alias.includes('/')
+      if (isLocal && network[alias].address.isUnknown()) {
+        draft[alias] = channelProducer.invalidate(network[alias])
+      }
+    }
+  })
+const reaper = (network) =>
+  networkModel.clone(network, (draft) => {
+    // TODO also handle timed out channels here - idle clogs system
+    const aliases = network.getAliases()
+    for (const alias of aliases) {
+      const channel = network[alias]
+      if (channel.address.isInvalid()) {
+        assert(!channel.rxRequest())
+        if (!channel.rxReply()) {
+          delete draft[alias]
+        }
+      }
+    }
+  })
 module.exports = {
   ingestInterblocks,
   respondRejection,
   respondRequest,
   respondReply,
   tx,
+  invalidateLocal,
+  reaper,
 }

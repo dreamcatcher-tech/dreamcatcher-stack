@@ -41,6 +41,5 @@ const {
   awsFactory,
 } = require('./w020-emulators')
 const engine = require('./w017-standard-engine')
-const models = require('./w015-models')
-
-module.exports = { browserFactory, effectorFactory, awsFactory, engine, models }
+const apps = require('./w301-user-apps')
+module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }

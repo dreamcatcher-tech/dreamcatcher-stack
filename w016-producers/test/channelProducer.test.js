@@ -128,6 +128,7 @@ describe('channelProducer', () => {
     test.todo('remote follows from current remote with no changes')
     test.todo('detect corrupted validators')
     test.todo('negotiate channel reset ?')
+    test.todo('reject if channel invalid')
   })
 
   describe('txReply', () => {

@@ -8,9 +8,8 @@ describe('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
       jest.setTimeout(10000)
-      const shell = await effectorFactory('crm', { crm })
+      const shell = await effectorFactory('crm')
       shell.enableLogging()
-
       // set up dpkg by publishing the current code to the local registry
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
       assert.strictEqual(dpkgPath, 'dpkgCrm')

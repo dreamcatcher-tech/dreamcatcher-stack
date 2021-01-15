@@ -1,7 +1,11 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:dmzReducer')
+const debug = require('debug')('interblock:dmz')
 const _ = require('lodash')
-const pad = require('pad/dist/pad.umd')
+const posix = require('path')
+const { openChildReducer, openChildReply, openPaths } = require('./openChild')
+const { uplinkReducer, uplinkReply } = require('./uplink')
+const { connect, connectReducer } = require('./connect')
+const { autoAlias } = require('./utils.js')
 const {
   actionModel,
   addressModel,
@@ -63,9 +67,7 @@ const reducer = async (dmz, action) => {
       break
     }
     case '@@UPLINK': {
-      const { nextNetwork, payload } = connectUplinkReducer(dmz.network, action)
-      replyResolve(payload)
-      network = nextNetwork
+      network = uplinkReducer(dmz.network, action)
       break
     }
     case '@@GENESIS': {
@@ -73,17 +75,12 @@ const reducer = async (dmz, action) => {
       // auto respond will resolve this action
       break
     }
-    case '@@OPEN_CHILD': {
+    case types.openChild: {
       openChildReducer(dmz.network, action)
       break
     }
     case '@@LIST_CHILDREN': {
       const payload = listChildrenReducer(dmz.network)
-      replyResolve(payload)
-      break
-    }
-    case '@@GET_GIVEN_NAME': {
-      const payload = getGivenNameReducer(dmz.network)
       replyResolve(payload)
       break
     }
@@ -98,6 +95,10 @@ const reducer = async (dmz, action) => {
     case '@@DEPLOY': {
       // TODO clean up failed partial deployments ?
       network = await deployReducer(dmz, action)
+      break
+    }
+    case types.getChannel: {
+      getChannelReducer(dmz.network, action)
       break
     }
     default: {
@@ -120,18 +121,11 @@ const reducer = async (dmz, action) => {
         break
       }
       case '@@UPLINK': {
-        const { alias } = request.payload.originAction.payload
-        debug('reply received for @@UPLINK: %o', alias)
-        const chainId = network[alias].address.getChainId()
-        const payload = { chainId }
-        replyResolve(payload, request.payload.originAction)
+        uplinkReply(dmz.network, action)
         break
       }
-      case '@@OPEN_CHILD': {
-        const { chainId } = action.payload
-        debug(`reply received for @@OPEN_CHILD: %o`, chainId.substring(0, 9))
-        const { fullPath } = request.payload
-        interchain(dmzActions.connect(fullPath, chainId))
+      case types.openChild: {
+        network = openChildReply(dmz.network, action)
         break
       }
       case '@@DEPLOY': {
@@ -151,7 +145,7 @@ const rm = (id) => {
 }
 const mv = () => {}
 
-const dmzActions = {}
+const dmzActions = { connect }
 const types = {
   spawn: '@@SPAWN',
   genesis: '@@GENESIS',
@@ -164,6 +158,7 @@ const types = {
   getGivenName: '@@GET_GIVEN_NAME',
   deploy: '@@DEPLOY',
   install: '@@INSTALL',
+  getChannel: '@@GET_CHAN',
 }
 
 dmzActions.spawn = (alias, spawnOpts = {}, actions = []) => {
@@ -224,92 +219,49 @@ const spawnReducer = async (dmz, spawnRequest) => {
   return nextNetwork
 }
 
-dmzActions.connect = (alias, chainId) => ({
-  type: types.connect,
-  payload: { alias, chainId },
-})
-const connectReducer = (network, action) =>
-  networkModel.clone(network, (draft) => {
-    assert(networkModel.isModel(network))
-    const address = addressModel.create(action.payload.chainId)
-    assert(address.isResolved())
-    assert.strictEqual(address.getChainId(), action.payload.chainId)
-    const { alias } = action.payload
-    assert(alias && typeof alias === 'string')
-    const channel = network[alias] || channelModel.create(address)
-    // TODO blank the queues if changing address for existing alias ?
-    // TODO beware unresolving an already resolved address
-    draft[alias] = channelProducer.setAddress(channel, address)
-  })
-
-dmzActions.connectUplink = (chainId, originAction) => ({
-  type: types.uplink,
-  payload: { chainId, originAction }, // TODO replace with generic promise hook
-})
-const connectUplinkReducer = (network, action) => {
-  let alias
-  const nextNetwork = networkModel.clone(network, (draft) => {
-    assert(networkModel.isModel(network))
-    const address = addressModel.create(action.payload.chainId)
-    assert.strictEqual(address.getChainId(), action.payload.chainId)
-    assert(address.isResolved())
-
-    const existing = network.getAlias(address)
-    assert(!existing || network[existing].systemRole !== 'UP_LINK')
-
-    alias = autoAlias(network, '.uplink_')
-    assert(!network[alias])
-
-    draft[alias] = channelModel.create(address)
-    const short = action.payload.chainId.substring(0, 9)
-    debug(`connectUplinkReducer ${alias} set to ${short}`)
-  })
-  assert(alias)
-  const payload = { alias }
-  return { nextNetwork, payload }
-}
-dmzActions.openChild = (alias, fullPath) => ({
-  type: types.openChild,
-  payload: { alias, fullPath },
-})
-const openChildReducer = (network, action) => {
-  assert(rxRequestModel.isModel(action))
-
-  const { alias } = action.payload
-  const channel = network[alias]
-  if (!channel) {
-    replyReject(`Alias not found: ${alias}`)
-  } else if (channel.systemRole !== './') {
-    replyReject(`Alias found, but is not child: ${alias}`)
-  } else {
-    const chainId = action.getAddress().getChainId()
-    // TODO dispatch thru actions, rather than direct insertion
-    const { type, payload } = dmzActions.connectUplink(chainId, action)
-    interchain(type, payload, alias)
-    // TODO who handles ACL for opening child ?
-    replyPromise()
-  }
-}
 dmzActions.listChildren = () => ({ type: types.listChildren })
 const listChildrenReducer = (network) => {
   debug(`listChildrenReducer`)
-  return { children: network.getAliases() }
+  const children = {}
+  const aliases = network.getAliases().filter((alias) => alias !== '.')
+  aliases.forEach((alias) => {
+    children[alias] = _getChannelParams(network, alias)
+  })
+  return { children }
+}
+const _getChannelParams = (network, alias) => {
+  const channel = network[alias]
+  assert(channelModel.isModel(channel))
+  const { address, systemRole, lineageHeight, heavyHeight, heavy } = channel
+  let chainId = address.isResolved() ? address.getChainId() : 'UNRESOLVED'
+  chainId = address.isRoot() ? 'ROOT' : chainId
+  const hash = heavy ? heavy.provenance.reflectIntegrity().hash : ''
+  return {
+    systemRole,
+    chainId,
+    lineageHeight,
+    heavyHeight,
+    hash,
+  }
 }
 
-dmzActions.getGivenName = () => ({ type: types.getGivenName })
-const getGivenNameReducer = (network) => {
-  debug(`getGivenNameReducer`)
-  const parent = network['..']
-  let givenName
-  if (parent.address.isRoot()) {
-    assert(!parent.heavy)
-    givenName = '/'
-  } else {
-    assert(parent.heavy)
-    givenName = parent.heavy.getOriginAlias()
+dmzActions.getChannel = (alias) => ({
+  type: types.getChannel,
+  payload: { alias },
+})
+const getChannelReducer = (network, action) => {
+  let { alias } = action.payload
+  assert.strictEqual(typeof alias, 'string')
+  alias = posix.normalize(alias)
+  debug(`getChannelReducer`, alias)
+  if (network['..'].address.isRoot() && alias.startsWith('/')) {
+    alias = alias.substring(1)
+    alias = alias || '.'
   }
-  assert(givenName)
-  return { givenName }
+  if (!network[alias]) {
+    throw new Error(`Unknown channel: ${alias}`)
+  }
+  replyResolve(_getChannelParams(network, alias))
 }
 
 dmzActions.install = (installer) => ({
@@ -407,85 +359,6 @@ const isSystemReply = (reply) => {
   const isSystemReply = systemReplyTypes.includes(request.type)
   debug(`isSystemReply: ${isSystemReply} type: ${request.type}`)
   return isSystemReply
-}
-
-const autoAlias = (network, autoPrefix = 'file_') => {
-  // TODO get highest current auto, and always return higher
-  let highest = 0
-  network.getAliases().forEach((alias) => {
-    if (alias.startsWith(autoPrefix)) {
-      try {
-        const count = parseInt(alias.substring(autoPrefix.length))
-        highest = count > highest ? count : highest
-      } catch (e) {
-        debug(`autoAlias error: `, e)
-      }
-    }
-  })
-  return autoPrefix + pad(5, highest + 1, '0')
-}
-const openPaths = (network) =>
-  // TODO move to being a loopback action at the end of interpreter
-  // in dmzReducer because it needs to communicate with the dmz reducers
-  networkModel.clone(network, (draft) => {
-    // unresolved paths can only come from requests
-    assert(networkModel.isModel(network))
-    const aliases = network.getAliases()
-    const unresolved = aliases.filter((alias) =>
-      network[alias].address.isUnknown()
-    )
-    unresolved.forEach((alias) => {
-      if (alias === '.@@io') {
-        return
-      }
-      const paths = _getPathSegments(alias)
-      paths.forEach((path, index) => {
-        const channel = network[path]
-        if (channel && !channel.address.isUnknown()) {
-          return
-        }
-        if (!channel) {
-          // TODO if we have a subpath, but no parents - we should shortcut that
-          // if the parent is awaiting open, then bail
-        }
-        debug(`unresolved path: `, path)
-
-        if (index === 0) {
-          // TODO handle immediate child being unresolved ?
-          debug(`immediate child unresolved`)
-        }
-
-        const parent = paths[index - 1]
-        debug('parent: ', parent)
-        const child = path.substring(parent.length + 1)
-        debug('child: ', child)
-        if (_isAwaitingOpen(network[parent])) {
-          debug(`parent: %o was already asked to open child: %o`, parent, child)
-          return
-        }
-        const open = actionModel.create(dmzActions.openChild(child, path))
-        debug(`open: `, open)
-
-        draft[parent] = channelProducer.txRequest(network[parent], open)
-      })
-    })
-  })
-const _isAwaitingOpen = (channel) => {
-  const pairs = channel.getOutboundPairs()
-  return pairs.some(([req, rep]) => {
-    const isUnresolved = !rep || rep.isPromise()
-    return req.type === '@@OPEN_CHILD' && isUnresolved
-  })
-}
-const _getPathSegments = (path) => {
-  // TODO handle escaped backsmash
-  let prefix = ''
-  const paths = path.split('/').map((segment) => {
-    prefix && (prefix += '/') // TODO make child naming convention avoid this check ?
-    prefix += segment
-    return prefix
-  })
-  return paths
 }
 
 module.exports = {

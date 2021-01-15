@@ -5,26 +5,16 @@
   "main": "index.js",
   "scripts": {
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
-    "watch": "DEBUG_COLORS=1 DEBUG='' jest --runInBand --watch",
-    "build:lambda": "cd w202-lambda-stream-processor && webpack",
-    "sls:lambda": "cd w202-lambda-stream-processor && DEBUG='interblock:deploy*' sls --debug",
-    "test:lambda": "DEBUG_COLORS=1 jest awsWebsocket && jest awsLogin",
-    "deploy:lambda": "yarn run build:lambda && yarn run sls:lambda && yarn run test:lambda",
-    "dev": "nodemon --exec 'yarn run deploy:lambda'",
-    "troll": "nodemon ./w204-lambda-deployment/src/troller"
+    "watch": "DEBUG_COLORS=1 DEBUG='' jest --runInBand --watch"
   },
   "author": "",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "ajv": "^6.12.4",
     "ansi-colors": "^4.1.1",
-    "aws-xray-sdk": "^3.1.0",
-    "bufferutil": "^4.0.1",
-    "clear": "^0.1.0",
     "cli-truncate": "^2.1.0",
     "columnify": "^1.5.4",
     "debug": "^4.1.1",
-    "dotenv": "^8.2.0",
     "dynamodb-lock-client": "^0.7.2",
     "faker": "^5.1.0",
     "fast-deep-equal": "^3.1.3",
@@ -34,53 +24,29 @@
     "localforage": "^1.9.0",
     "lodash": "^4.17.20",
     "node-object-hash": "^2.0.0",
-    "normalize-path": "^3.0.0",
     "object-hash": "^2.0.3",
     "pad": "^3.2.0",
     "pretty-bytes": "^5.4.1",
     "rimraf": "^3.0.0",
     "secure-random": "^1.1.2",
+    "serialize-error": "^8.0.0",
     "sodium-native": "^3.2.0",
     "sodium-plus": "^0.9.0",
     "supports-color": "^7.2.0",
     "tar": "^6.0.5",
     "traverse": "^0.6.6",
-    "utf-8-validate": "^5.0.2",
     "uuid": "^8.3.0",
     "xstate": "^4.14.0"
   },
   "devDependencies": {
-    "@serverless/core": "^1.1.2",
-    "aws-sdk": "^2.749.0",
     "benchmark": "^2.1.4",
-    "clean-webpack-plugin": "^3.0.0",
-    "commander": "^6.1.0",
-    "inquirer": "^7.0.0",
-    "inquirer-command-prompt": "0.0.29",
     "jest": "^26.4.2",
     "madge": "^3.6.0",
-    "nodemon": "^2.0.4",
-    "prettier": "^2.1.1",
-    "webpack": "^4.43.0",
-    "webpack-bundle-analyzer": "^3.8.0",
-    "webpack-cli": "^3.3.11",
-    "webpack-node-externals": "^2.5.2",
-    "ws": "^7.1.2"
+    "prettier": "^2.1.1"
   },
   "jest": {
     "testEnvironment": "node",
     "transform": {}
-  },
-  "nodemonConfig": {
-    "verbose": true,
-    "ignore": [
-      "**/.serverless",
-      "**/dist"
-    ],
-    "watch": [
-      "./"
-    ],
-    "ext": "js,json,yml"
   },
   "prettier": {
     "trailingComma": "es5",

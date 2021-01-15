@@ -56,6 +56,7 @@ describe('channel', () => {
     test.todo('clone throws if no address but some remote slice')
     test.todo('clone throws if replies but no address')
     test.todo('clone throws if replies do not match remote requests')
+    test.todo('throw if loopback and contains banned actions')
     test('throws on remote replies ahead of requests', () => {
       const resolvedAddress = addressModel.create('test')
       const channelBase = channelModel.create(resolvedAddress)
@@ -77,5 +78,6 @@ describe('channel', () => {
     test.todo('return remote reply promise if request was supplied')
     test.todo('no remote reply promise if no request param')
     test.todo('invalid request param throws')
+    test.todo('invalid channel outstanding promises reject')
   })
 })

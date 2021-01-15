@@ -38,7 +38,7 @@ const definition = {
     },
     loopback: {
       always: [
-        { target: 'autoResolves', cond: 'isSelfExhausted' },
+        { target: 'openPaths', cond: 'isSelfExhausted' },
         { target: 'interpret', actions: 'loadSelfAnvil' },
       ],
     },
@@ -240,6 +240,14 @@ const definition = {
       },
       onDone: 'loopback',
     },
+    openPaths: {
+      entry: [
+        'openPaths',
+        'invalidateLocalPaths',
+        'removeEmptyInvalidChannels',
+      ],
+      always: 'autoResolves',
+    },
     autoResolves: {
       // loopback auto responses are handled at the time,
       // but external and origin are handled after exhaustion
@@ -282,7 +290,7 @@ const definition = {
       onDone: 'done',
     },
     done: {
-      entry: 'openPaths',
+      entry: 'assertLoopbackEmpty',
       id: 'done',
       data: ({ dmz }) => dmz,
       type: 'final',

@@ -1,6 +1,5 @@
-const traverse = require('traverse')
 const equal = require('fast-deep-equal')
-
+const { serializeError } = require('serialize-error')
 /**
  * ACTION CREATORS FOR USE INSIDE COVENANTS
  *
@@ -52,12 +51,14 @@ const _txReply = (type = '@@RESOLVE', payload = {}, request) => {
     case '@@RESOLVE':
       break
     case '@@REJECT':
+      payload = typeof payload === 'string' ? new Error(payload) : payload
+      payload = serializeError(payload)
       break
     default:
       throw new Error(`Disallowed type: ${type}`)
   }
   if (typeof payload !== 'object') {
-    throw new Error(`payload must be object: ${payload}`)
+    throw new Error(`payload must be object: ${typeof payload}`)
   }
   const reply = {
     type,
@@ -70,7 +71,7 @@ const _txReply = (type = '@@RESOLVE', payload = {}, request) => {
 
 const promise = () => _txReply('@@PROMISE')
 const resolve = (payload, request) => _txReply('@@RESOLVE', payload, request)
-const reject = (error, request) => _txReply('@@RESOLVE', error, request)
+const reject = (error, request) => _txReply('@@REJECT', error, request)
 
 const isReplyFor = (reply, request) => {
   if (request && typeof request !== 'object') {
@@ -78,6 +79,9 @@ const isReplyFor = (reply, request) => {
   }
   if (_isNotReplyFormat(reply)) {
     return false
+  }
+  if (reply.type === '@@PROMISE') {
+    return false // user should never see a promise
   }
   if (!request) {
     return true

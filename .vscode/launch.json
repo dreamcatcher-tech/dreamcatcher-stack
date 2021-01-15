@@ -5,7 +5,7 @@
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
-        "--inspect-brk",
+        "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
@@ -13,15 +13,14 @@
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "port": 9229
+      "internalConsoleOptions": "neverOpen"
     },
     {
       "name": "emulateAwsFactory.test",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
-        "--inspect-brk",
+        "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
@@ -29,15 +28,14 @@
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "port": 9229
+      "internalConsoleOptions": "neverOpen"
     },
     {
       "name": "collection.test",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
-        "--inspect-brk",
+        "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
@@ -45,8 +43,22 @@
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "port": 9229
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "shell.test",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect=9229",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "--testTimeout=9999999",
+        "${workspaceRoot}/w212-system-covenants/test/shell.test.js"
+      ],
+      "skipFiles": ["<node_internals>/**/*.js"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

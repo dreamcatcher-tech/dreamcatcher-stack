@@ -1,9 +1,8 @@
 const { v4: uuidv4 } = require('uuid')
-const pad = require('pad/dist/pad.umd')
 const debugFactory = require('debug')
 const machineLogger = (type, machine) => {
   const invocation = uuidv4()
-  const debug = debugFactory(`interblock:machines:${pad(machine, 11)}`)
+  const debug = debugFactory(`interblock:machines:${machine}`)
   debug(`INVOCATION: ${machine} -> ${type}`)
   const history = []
   let initialized = false
@@ -29,7 +28,7 @@ const machineLogger = (type, machine) => {
 
   const logTransition = (item) => {
     transitionCount++
-    debug(`TRANSITION: ${pad(3, transitionCount)} %O`, item)
+    debug(`TRANSITION: %O`, item)
   }
   const logTermination = (item) => {
     debug(

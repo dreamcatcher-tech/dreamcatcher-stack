@@ -1,4 +1,5 @@
 const assert = require('assert')
+const { deserializeError } = require('serialize-error')
 const { isReplyFor, request, promise, resolve, reject } = require('..')
 describe('api', () => {
   describe('isReplyFor', () => {
@@ -24,6 +25,27 @@ describe('api', () => {
       const to = 'farAway'
       const addressed = request(action, to)
       assert.deepStrictEqual(addressed, { ...action, to })
+    })
+  })
+  describe('reject', () => {
+    test('plain objects passed thru', async () => {
+      const payload = { plain: 'object' }
+      const rejection = reject(payload)
+      assert.deepStrictEqual(rejection.payload, payload)
+    })
+    test('errors can be reinflated', async () => {
+      const payload = new Error(`test error`)
+      const rejection = reject(payload)
+      assert.strictEqual(typeof rejection.payload, 'object')
+      const inflated = deserializeError(rejection.payload)
+      assert.deepStrictEqual(inflated, payload)
+    })
+    test('string payloads convert to errors', () => {
+      const payload = `test error`
+      const rejection = reject(payload)
+      assert.strictEqual(typeof rejection.payload, 'object')
+      const inflated = deserializeError(rejection.payload)
+      assert.deepStrictEqual(inflated, new Error(payload))
     })
   })
   describe('model compatibility', () => {

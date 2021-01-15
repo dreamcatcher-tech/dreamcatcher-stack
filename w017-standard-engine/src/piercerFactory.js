@@ -1,4 +1,5 @@
 const assert = require('assert')
+const { deserializeError } = require('serialize-error')
 const { v4: uuid } = require('uuid')
 const debug = require('debug')('interblock:engine:piercerFactory')
 const { request } = require('../../w002-api')
@@ -37,8 +38,11 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
             return
           }
           const { resolve, reject } = callbacks.settled
-          const settler = reply.isResolve() ? resolve : reject
-          setImmediate(() => settler(reply.payload))
+          if (reply.isResolve()) {
+            setImmediate(() => resolve(reply.payload))
+          } else {
+            setImmediate(() => reject(deserializeError(reply.payload)))
+          }
           promises.delete(_dispatchId)
         })
       }

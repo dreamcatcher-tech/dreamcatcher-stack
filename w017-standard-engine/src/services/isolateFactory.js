@@ -6,13 +6,18 @@ const {
   rxRequestModel,
 } = require('../../../w015-models')
 const systemCovenants = require('../../../w212-system-covenants')
+const appCovenants = require('../../../w301-user-apps')
 const debug = require('debug')('interblock:isolate')
 // TODO move to making own containers, so can keep promises alive
 // TODO set timestamp in container by overriding Date.now()
 
 const ramIsolate = (preloadedCovenants) => {
   const containers = {}
-  const covenants = { ...systemCovenants, ...preloadedCovenants }
+  const covenants = {
+    ...systemCovenants,
+    ...appCovenants,
+    ...preloadedCovenants,
+  }
   return {
     loadCovenant: async (block) => {
       assert(blockModel.isModel(block))

@@ -6,6 +6,8 @@ const { channelModel } = require('./channelModel')
 const { addressModel } = require('./addressModel')
 const { provenanceModel } = require('./provenanceModel')
 const { rxRequestModel } = require('../transients/rxRequestModel')
+const { rxReplyModel } = require('../transients/rxReplyModel')
+const { reject } = require('../../../w002-api')
 
 const schema = {
   title: 'Network',
@@ -20,12 +22,10 @@ const schema = {
 const networkModel = standardize({
   schema,
   create(channels = {}) {
-    const parent = channels['..']
-      ? channels['..']
-      : channelModel.create(addressModel.create(), '..')
-    const self = channels['.']
-      ? channels['.']
-      : channelModel.create(addressModel.create('LOOPBACK'), '.')
+    const parent =
+      channels['..'] || channelModel.create(addressModel.create(), '..')
+    const loopbackAddress = addressModel.create('LOOPBACK')
+    const self = channels['.'] || channelModel.create(loopbackAddress, '.')
     assert(self.address.isLoopback())
     return networkModel.clone({
       ...channels,
@@ -42,31 +42,34 @@ const networkModel = standardize({
     assert(instance['.'].systemRole === '.', `self not loopback channel`)
 
     // TODO make this a completely fair scheduler using pseudo randomization
-    const rxReply = () => _rx('reply')
-    const rxRequest = () => _rx('request')
-
-    const _rx = (type) => {
-      let rx
-      _aliases.find((alias) => {
+    const rxReply = () => {
+      for (const alias of _aliases) {
         const channel = instance[alias]
-        const reply = channel.rxReply()
+        let reply = channel.rxReply()
+        if (!reply) {
+          continue
+        }
+        if (channel.address.isInvalid()) {
+          assert.strictEqual(reply.type, '@@REJECT')
+          const error = new Error(`Path invalid: ${alias}`)
+          const rejection = reject(error, reply.request)
+          reply = rxReplyModel.clone(rejection)
+        }
+        // TODO find out if alias is used anywhere
+        return { alias, event: reply, channel }
+      }
+    }
+    const rxRequest = () => {
+      for (const alias of _aliases) {
+        const channel = instance[alias]
         const request = channel.rxRequest()
-        let event
-        switch (type) {
-          case 'reply':
-            event = reply
-            break
-          case 'request':
-            event = request
-            break
+        if (!request) {
+          continue
         }
-        if (event) {
-          // TODO find out if alias is used anywhere
-          rx = { alias, event, channel }
-          return true
-        }
-      })
-      return rx
+        assert(channel.address.isResolved() || channel.address.isLoopback())
+        // TODO find out if alias is used anywhere
+        return { alias, event: request, channel }
+      }
     }
 
     const rxSelf = () => {

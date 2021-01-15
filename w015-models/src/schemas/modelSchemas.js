@@ -66,7 +66,9 @@ const addressSchema = {
   required: ['chainId', 'status'],
   properties: {
     chainId: integritySchema,
-    status: { pattern: '^UNKNOWN$|^GENESIS_|^LOOPBACK$|^ROOT$|^RESOLVED$' },
+    status: {
+      pattern: '^UNKNOWN$|^GENESIS_|^LOOPBACK$|^ROOT$|^RESOLVED$|^INVALID$',
+    },
   },
 }
 

@@ -52,7 +52,7 @@ const interpreterMachine = machine.withConfig({
         if (rxRequestModel.isModel(anvil)) {
           assert(anvil.getAddress().equals(address))
         }
-        const chainId = address.getChainId()
+        const chainId = address.isInvalid() ? 'INVALID' : address.getChainId()
         debug(`interpreterConfig type: %o chainId: %o`, anvil.type, chainId)
         return anvil
       },
@@ -60,7 +60,8 @@ const interpreterMachine = machine.withConfig({
         // TODO try replace with something that gets the address dynamically
         const { address } = event.payload
         assert(addressModel.isModel(address))
-        assert(address.isResolved() || address.isLoopback())
+        const isInvalid = address.isInvalid()
+        assert(address.isResolved() || address.isLoopback() || isInvalid)
         return address
       },
     }),
@@ -88,8 +89,11 @@ const interpreterMachine = machine.withConfig({
       },
     }),
     assignRejection: assign({
-      reduceRejection: (context, event) => {
-        console.error(event.data)
+      reduceRejection: ({ anvil }, event) => {
+        if (rxReplyModel.isModel(anvil)) {
+          // TODO do something with replies that cause rejections
+          console.error(event.data)
+        }
         return event.data
       },
     }),
@@ -164,9 +168,11 @@ const interpreterMachine = machine.withConfig({
         assert(dmzModel.isModel(dmz))
         assert(reductionModel.isModel(reduceResolve))
         let { requests, replies } = reduceResolve
+        const isRoot = dmz.network['..'].address.isRoot()
         requests = requests.filter((txRequest) => {
           assert(txRequestModel.isModel(txRequest))
-          const channel = dmz.network[txRequest.to]
+          const to = isRoot ? _dereference(txRequest.to) : txRequest.to
+          const channel = dmz.network[to]
           if (!channel) {
             return true
           }
@@ -254,6 +260,7 @@ const interpreterMachine = machine.withConfig({
         assert(!dmz.pending.getIsPending())
         const { pendingRequest } = initialPending
         assert(rxRequestModel.isModel(pendingRequest))
+        assert(dmz.network.getAlias(pendingRequest.getAddress()))
         debug(`settleOrigin`, pendingRequest)
         const { sequence } = pendingRequest
         const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
@@ -382,6 +389,7 @@ const interpreterMachine = machine.withConfig({
         debug('defaultResolve')
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(externalAction))
+        assert(dmz.network.getAlias(externalAction.getAddress()))
         const { sequence } = externalAction
         const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
         const network = networkProducer.tx(dmz.network, [], [reply])
@@ -396,6 +404,31 @@ const interpreterMachine = machine.withConfig({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
+    invalidateLocalPaths: assign({
+      dmz: ({ dmz }) => {
+        assert(dmzModel.isModel(dmz))
+        debug('invalidateLocalPaths')
+        const network = networkProducer.invalidateLocal(dmz.network)
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
+    removeEmptyInvalidChannels: assign({
+      dmz: ({ dmz }) => {
+        assert(dmzModel.isModel(dmz))
+        const network = networkProducer.reaper(dmz.network)
+        const startCount = Object.keys(dmz.network).length
+        const endCount = Object.keys(network).length
+        debug(`removeEmptyInvalidChannels removed: ${startCount - endCount}`)
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
+    assertLoopbackEmpty: ({ dmz }) => {
+      // TODO move to being a test, not a live assertion
+      debug(`assertLoopbackEmpty`)
+      const loopback = dmz.network['.']
+      assert(!loopback.rxRequest())
+      assert(!loopback.rxReply())
+    },
   },
   guards: {
     isSelfExhausted: ({ dmz }) => {
@@ -563,6 +596,14 @@ const interpreterMachine = machine.withConfig({
     },
   },
 })
+
+const _dereference = (path) => {
+  if (path.startsWith('/')) {
+    assert.notStrictEqual(path, '/')
+    return path.substring(1)
+  }
+  return path
+}
 
 const interpreterConfig = (isolatedTick) => {
   assert(typeof isolatedTick === 'function')

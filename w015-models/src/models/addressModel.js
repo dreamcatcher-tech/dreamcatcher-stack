@@ -8,16 +8,20 @@ const addressModel = standardize({
   schema: addressSchema,
   create: (integrity = integrityModel.create()) => {
     let status = `UNKNOWN`
+    // TODO do not use integrityModel if one of the predetermined types
     if (integrity === `GENESIS`) {
       // the source of randomness in genesis block creation
       status = `GENESIS_${crypto.generateNonce()}`
-      integrity = integrityModel.create('UNKNOWN')
+      integrity = integrityModel.create('GENESIS')
     } else if (integrity === 'LOOPBACK') {
       status = 'LOOPBACK'
-      integrity = integrityModel.create('UNKNOWN')
+      integrity = integrityModel.create('LOOPBACK')
     } else if (integrity === 'ROOT') {
       status = 'ROOT'
-      integrity = integrityModel.create('UNKNOWN')
+      integrity = integrityModel.create('ROOT')
+    } else if (integrity === 'INVALID') {
+      status = 'INVALID'
+      integrity = integrityModel.create('INVALID')
     } else if (typeof integrity === 'string') {
       const possibleIntegrity = integrityModel.create(integrity)
       if (possibleIntegrity.hash.length === integrity.length) {
@@ -27,17 +31,14 @@ const addressModel = standardize({
           ...possibleIntegrity,
           hash,
         })
+        status = 'RESOLVED'
       } else {
         integrity = possibleIntegrity
       }
-    }
-    if (!integrityModel.isModel(integrity)) {
-      debug(`integrity not model: `, integrity)
-    }
-    assert(integrityModel.isModel(integrity))
-    if (!integrity.isUnknown()) {
+    } else if (!integrity.isUnknown()) {
       status = `RESOLVED`
     }
+    assert(integrityModel.isModel(integrity))
     return addressModel.clone({ chainId: integrity, status })
   },
   logicize: (instance) => {
@@ -62,6 +63,8 @@ const addressModel = standardize({
     const isGenesis = () => status.startsWith('GENESIS_')
     const isUnknown = () => status === 'UNKNOWN'
     const isResolved = () => status === 'RESOLVED'
+    const isInvalid = () => status === 'INVALID'
+
     return {
       getChainId,
       isRoot,
@@ -69,6 +72,7 @@ const addressModel = standardize({
       isGenesis,
       isUnknown,
       isResolved,
+      isInvalid,
     }
   },
 })
