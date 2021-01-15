@@ -74,8 +74,8 @@ const networkModel = standardize({
 
     const rxSelf = () => {
       // not included in rx() since it is always exhausted each run
-      const self = instance['.']
-      const action = self.rxReply() || self.rxRequest()
+      const loopback = instance['.']
+      const action = loopback.rxReply() || loopback.rxRequest()
       return action
     }
     const getAliases = () => Object.keys(instance)

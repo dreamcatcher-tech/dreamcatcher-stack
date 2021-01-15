@@ -38,7 +38,7 @@ const definition = {
     },
     loopback: {
       always: [
-        { target: 'openPaths', cond: 'isSelfExhausted' },
+        { target: 'autoResolves', cond: 'isSelfExhausted' },
         { target: 'interpret', actions: 'loadSelfAnvil' },
       ],
     },
@@ -240,14 +240,6 @@ const definition = {
       },
       onDone: 'loopback',
     },
-    openPaths: {
-      entry: [
-        'openPaths',
-        'invalidateLocalPaths',
-        'removeEmptyInvalidChannels',
-      ],
-      always: 'autoResolves',
-    },
     autoResolves: {
       // loopback auto responses are handled at the time,
       // but external and origin are handled after exhaustion
@@ -280,6 +272,7 @@ const definition = {
         settleExternalAction: {
           always: [
             { target: 'done', cond: 'isExternalActionReply' },
+            { target: 'done', cond: 'isExternalActionPresent' },
             { target: 'done', cond: 'isExternalActionSettled' },
             { target: 'done', cond: 'isTxExternalActionPromise' },
             { target: 'done', actions: 'defaultResolve' },
@@ -287,7 +280,15 @@ const definition = {
         },
         done: { type: 'final' },
       },
-      onDone: 'done',
+      onDone: 'openPaths',
+    },
+    openPaths: {
+      entry: [
+        'openPaths',
+        'invalidateLocalPaths',
+        'removeEmptyInvalidChannels',
+      ],
+      always: 'done',
     },
     done: {
       entry: 'assertLoopbackEmpty',

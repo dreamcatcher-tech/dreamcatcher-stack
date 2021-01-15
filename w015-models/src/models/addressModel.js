@@ -23,6 +23,9 @@ const addressModel = standardize({
       status = 'INVALID'
       integrity = integrityModel.create('INVALID')
     } else if (typeof integrity === 'string') {
+      if (integrity.startsWith('TEST')) {
+        integrity = integrityModel.create('TEST').hash
+      }
       const possibleIntegrity = integrityModel.create(integrity)
       if (possibleIntegrity.hash.length === integrity.length) {
         // TODO use a regex tester for chainIds

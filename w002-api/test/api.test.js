@@ -15,8 +15,12 @@ describe('api', () => {
     })
     test('return false if undefined', () => assert(!isReplyFor()))
     test('reply detected correctly', () => {
-      const reply = promise()
+      const reply = resolve()
       assert(isReplyFor(reply))
+    })
+    test('promises are not a valid reply', () => {
+      const reply = promise()
+      assert(!isReplyFor(reply))
     })
   })
   describe('request', () => {

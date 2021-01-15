@@ -17,13 +17,13 @@ describe('awsConsistency', () => {
   })
   describe('lockChain', () => {
     test('lock for undefined block', async () => {
-      const address = addressModel.create('lock for undefined')
+      const address = addressModel.create('TEST')
       const lock = await consistencySource.putLockChain(address, lockExpiresMs)
       assert(lock)
     })
     test.todo('failed lock can be claimed after expiry')
     test('lock cached', async () => {
-      const address = addressModel.create('lock cached')
+      const address = addressModel.create('TEST')
       const lock = await consistencySource.putLockChain(address, lockExpiresMs)
       assert(lock)
       const start = Date.now()
@@ -35,7 +35,7 @@ describe('awsConsistency', () => {
       assert(delay < ramDelayMs)
     })
     test('lock is exclusive between consistency sources', async () => {
-      const address = addressModel.create('exclusive')
+      const address = addressModel.create('TEST')
       const db = ramDynamoDbFactory()
       delete db._getTables // skip the ram db optimization
       const source1 = consistencySourceFactory(db)
@@ -64,7 +64,7 @@ describe('awsConsistency', () => {
   describe('unlockChain', () => {})
   describe('isPresent', () => {
     test('non existent chainId', async () => {
-      const address = addressModel.create('non existent')
+      const address = addressModel.create('TEST')
       const isPresent = await consistencySource.getIsPresent(address)
       assert(!isPresent)
     })

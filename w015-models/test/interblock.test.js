@@ -15,7 +15,7 @@ const {
 require('../../w012-crypto').testMode()
 
 const createBlockWithEffects = async () => {
-  const address = addressModel.create('test address')
+  const address = addressModel.create('TEST')
   const channel = channelModel.create(address)
   const network = networkModel.create({ effects: channel })
   const opts = { network }

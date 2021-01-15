@@ -76,7 +76,7 @@ describe('channelProducer', () => {
     assert.strictEqual(many.requestsLength, 10)
   })
   test('resolve can update previous promises', async () => {
-    let remote = channelModel.create(addressModel.create('test'))
+    let remote = channelModel.create(addressModel.create('TEST'))
     remote = txRequest(remote, actionModel.create())
     remote = txRequest(remote, actionModel.create())
     remote = txRequest(remote, actionModel.create())

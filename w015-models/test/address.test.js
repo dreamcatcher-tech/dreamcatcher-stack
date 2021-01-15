@@ -21,10 +21,13 @@ describe('address', () => {
     assert.throws(() => addressModel.create({ some: 'random thing' }))
   })
   test('test addresses from strings', () => {
-    const address = addressModel.create('test address')
+    const { hash } = integrityModel.create('test address')
+    assert.strictEqual(typeof hash, 'string')
+    assert.strictEqual(hash.length, 64)
+    const address = addressModel.create(hash)
     assert(!address.isUnknown())
     assert(!address.isGenesis())
-    const clone = addressModel.create('test address')
+    const clone = addressModel.create(hash)
     assert(clone.equals(address))
   })
   test('clone equivalence', () => {

@@ -536,6 +536,18 @@ const interpreterMachine = machine.withConfig({
       debug(`isExternalActionReply`, isExternalActionReply)
       return isExternalActionReply
     },
+    isExternalActionPresent: ({ dmz, externalAction }) => {
+      assert(dmzModel.isModel(dmz))
+      assert(rxRequestModel.isModel(externalAction))
+      // loopback would have removed it, or dmz changes might have removed it
+      const address = externalAction.getAddress()
+      const index = externalAction.getIndex()
+      const alias = dmz.network.getAlias(address)
+      const channel = dmz.network[alias]
+      const isPresent = channel && channel.requests[index]
+      debug(`isExternalActionPresent: `, !!isPresent)
+      return isPresent
+    },
     isExternalActionSettled: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(externalAction))
