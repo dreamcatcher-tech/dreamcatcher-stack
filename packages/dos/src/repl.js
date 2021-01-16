@@ -1,6 +1,6 @@
 const debug = require('debug')('dos:repl')
 const ora = require('ora')
-const { effectorFactory } = require('@dreamcatcher-tech/interblock')
+const { effectorFactory, apps } = require('@dreamcatcher-tech/interblock')
 const { read } = require('./read')
 const { evaluate } = require('./eval')
 const { withAutoComplete } = require('./auto-complete')
@@ -11,6 +11,7 @@ const commands = require('./commands')
 const wrap = require('wordwrap')(0, 80)
 
 module.exports = async function repl(opts) {
+  require('debug').enable('*:repl *:ls *:cd *:blocks *:error')
   debug(`repl`)
   opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
@@ -66,22 +67,29 @@ async function getInitialCtx({ blockchain, evaluate }) {
   spinner.info(`no previous chains found`).start()
   if (!blockchain) {
     spinner.text = `Initializing blockchain...`
-    blockchain = effectorFactory('console')
-  }
-  if (blockchain.then) {
-    blockchain = await blockchain
+    blockchain = await effectorFactory('console')
   }
   const chainId = blockchain.getState().getChainId()
   spinner.info(`Blockchain initialized with chainId: ${chainId}`).start()
   spinner.text = `connecting to mainnet...`
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  // await new Promise((resolve) => setTimeout(resolve, 100))
   spinner.info(`connection to mainnet established`).start()
   spinner.info(`mainnet latency: 543 ms`)
   spinner.info(`peer connection count: 1`).start()
   spinner.text = `benchmarking local system` // TODO move to dedicated command with params
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  // await new Promise((resolve) => setTimeout(resolve, 100))
   spinner.info(`local blockrate 23 blocks per second / 53 ms per block`)
+
+  spinner.text = `Provisioning app store`
+  spinner.start()
+  const { dpkgPath } = await blockchain.publish('crmApp', apps.crm.install)
+  spinner.info(`app store set up at: /${dpkgPath}`)
+  spinner.text = `installing crm app at /crm`
+  spinner.start()
+  await blockchain.install(dpkgPath, 'crm')
+  spinner.info(`crm app installed at /crm`)
   spinner.stop()
+
   await print(`Welcome to the HyperNet
   Blockchain core: v0.0.5
   Terminal:        v0.0.12
@@ -89,6 +97,7 @@ async function getInitialCtx({ blockchain, evaluate }) {
   const user = 'root'
   const machineId = 'local'
   spinner.stop()
+
   return { user, machineId, blockchain }
 }
 

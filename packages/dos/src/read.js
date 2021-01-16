@@ -1,6 +1,7 @@
 const { Input } = require('enquirer')
 const debug = require('debug')('dos:read')
 const chalk = require('ansi-colors')
+const isNode = require('detect-node')
 
 exports.read = async ({ autoComplete, user, machineId, blockchain }) => {
   const { wd } = blockchain.getContext()
@@ -18,7 +19,9 @@ exports.read = async ({ autoComplete, user, machineId, blockchain }) => {
     // question.choices = autoComplete.getList()
   }
   const prompt = new Input(question)
-  prompt.blink = { off: true }
+  if (!isNode) {
+    prompt.blink = { off: true }
+  }
   const result = await prompt.run()
   debug(`prompt result: `, result)
   return result

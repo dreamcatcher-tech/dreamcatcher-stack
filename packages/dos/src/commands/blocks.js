@@ -9,15 +9,27 @@ module.exports = async ({ blockchain }, ...args) => {
   const path = args[0] || wd
   debug(`using path: %o`, path)
 
-  // set payload layer tasks in parallel to fetch all required
+  // TODO set payload layer tasks in parallel to fetch all required
+  const segments = path.split('/')
+  debug(`path segment count: `, segments.length)
+  while (segments.length) {
+    // pop, shift, check if root
+    const segment = segments.shift()
+    if (!segment) {
+      continue
+    }
+    if (!blockchain[segment]) {
+      throw new Error(`invalid path: ${path} stopped on: ${segment}`)
+    }
+    debug('segment: ', segment)
+    blockchain = blockchain[segment]
+  }
   let block
-  let chain = path === wd ? blockchain : blockchain[path]
-  const topHeight = chain.getState().provenance.height
+  const topHeight = blockchain.getState().provenance.height
   let nextHeight = 0
   let out = ''
   while (nextHeight <= topHeight) {
-    const statePath = []
-    block = chain.getState(statePath, nextHeight)
+    block = blockchain.getState(nextHeight)
     out += blockPrint(block, path) + `\n`
     nextHeight++
     debug(`next height: `, nextHeight)

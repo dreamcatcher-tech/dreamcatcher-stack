@@ -1,35 +1,82 @@
-const Path = require('path').posix || require('path')
+const assert = require('assert')
 const debug = require('debug')('dos:commands:ls')
+const posix = require('path')
 const cliui = require('cliui')
 const chalk = require('ansi-colors')
 const pad = require('pad/dist/pad.umd')
-module.exports = async function ls({ spinner, blockchain }, path) {
-  const { network } = blockchain.getState()
+module.exports = async function ls({ wd, spinner, blockchain }, path = '.') {
   spinner.text = `Resolving ${path}`
 
-  // TODO allow any path by calling into shell directly ?
+  debug(`ls`, path)
+  const { children } = await blockchain.ls(path)
+  path = path.startsWith('/') ? path.substring(1) : path
   const ui = cliui()
-  Object.keys(network).forEach((key) => {
-    debug(`child: ${key}`)
-    const channel = network[key]
-    let chainId = channel.address.getChainId().substring(0, 8)
-    debug(`chainId: ${chainId}`)
+  const aliases = Object.keys(children)
+    .sort((a, b) => {
+      if (a === '..') {
+        return -1
+      }
+      if (b === '..') {
+        return 1
+      }
+      if (a === '.') {
+        return -1
+      }
+      if (b === '.') {
+        return 1
+      }
+      if (a === '.@@io') {
+        return -1
+      }
+      if (b === '.@@io') {
+        return 1
+      }
+
+      const nameA = a.toUpperCase()
+      const nameB = b.toUpperCase()
+      if (nameA < nameB) {
+        return -1
+      }
+      if (nameA > nameB) {
+        return 1
+      }
+      return 0
+    })
+    .filter((alias) => !alias.includes('/'))
+  debug(`aliases: `, aliases)
+  aliases.forEach((alias) => {
+    debug(`child: ${alias}`)
+    let { systemRole, chainId, lineageHeight, heavyHeight, hash } = children[
+      alias
+    ]
+
+    chainId = chainId.length === 64 ? chainId.substring(0, 8) : chainId
     let filename
-    let { lineageHeight, heavyHeight } = channel
-    lineageHeight === -1 && (lineageHeight = '-')
-    heavyHeight === -1 && (heavyHeight = '-')
-    if (key === '.') {
-      const selfHeight = blockchain.getState().provenance.height
-      lineageHeight = heavyHeight = selfHeight
-      chainId = blockchain.getState().getChainId().substring(0, 8)
+    const { network } = blockchain.getState()
+    const isRoot = children['..'].chainId === 'ROOT'
+    if (alias === '.') {
+      if (!isRoot) {
+        // TODO make a standard way of getting posix paths into our paths
+        const absolutePath = posix.normalize(wd, path).substring(1)
+        const self = network[absolutePath] // TODO WRONG needs to get actual path of child
+        assert(self, `No self channel found for: ${absolutePath}`)
+        heavyHeight = self.heavyHeight
+        lineageHeight = self.lineageHeight
+        chainId = self.address.getChainId().substring(0, 8)
+      } else {
+        chainId = blockchain.getChainId().substring(0, 8)
+      }
     }
 
+    lineageHeight === -1 && (lineageHeight = '-')
+    heavyHeight === -1 && (heavyHeight = '-')
     const height = heavyHeight + '.' + lineageHeight
-    if (channel.systemRole !== 'SYMLINK') {
-      filename = chalk.red(key)
+    if (systemRole !== 'UP_LINK') {
+      filename = chalk.red(alias)
     } else {
-      filename = chalk.magenta(key)
+      filename = chalk.green(alias)
     }
+    // TODO use the same tools as networkPrint
     ui.div(
       { text: filename, width: 20 },
       { text: height, width: 10 },

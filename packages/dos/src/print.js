@@ -23,6 +23,6 @@ module.exports = async function print(func) {
     }
   } catch (err) {
     debug(err)
-    process.stderr.writeln(`❌️ ${err}`)
+    process.stderr.write(`❌️ ${err}\r\n`)
   }
 }

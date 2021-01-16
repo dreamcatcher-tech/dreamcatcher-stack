@@ -1,16 +1,39 @@
 const debug = require('debug')('dos:commands:pkg')
 
-module.exports = async ({ spinner }, subcmd, ...args) => {
+/**
+ * Commands
+ *
+ * install - install an app by package name
+ * list - list all packages, possibly with a search field
+ * apps - list all packages which are apps
+ */
+
+module.exports = async ({ spinner, blockchain }, subcmd, ...args) => {
   debug(subcmd, args)
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-  spinner.text = 'now with text'
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-  spinner.succeed('stage 1 complete').start()
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-  spinner.fail(`stage 2 failed`).start()
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-  spinner.info('please try again later').start()
-  await new Promise((resolve) => setTimeout(resolve, 2000))
+  switch (subcmd) {
+    case '':
+    case 'help':
+      debug('help command')
+      break
+    case 'install':
+      const dpkgPath = args[0]
+      const installPath = args[1]
+      if (typeof dpkgPath !== 'string') {
+        throw new Error(`Invalid dpkg path: ${dpkgPath}`)
+      }
+      if (typeof installPath !== 'string') {
+        throw new Error(`Invalid install path: ${installPath}`)
+      }
+
+      spinner.text = `Installing from path: ${dpkgPath} to: ${installPath}`
+      spinner.start()
+      await new Promise((r) => setTimeout(r, 1000))
+      debugger
+      await blockchain.install(dpkgPath, installPath)
+      debugger
+      spinner.info(`Install complete`)
+      break
+  }
 }
 
 module.exports.help = `

@@ -1,5 +1,16 @@
+const debug = require('debug')('dos:commands:error')
 let count = 0
-module.exports = (ctx, msg = 'Test Error') => {
+module.exports = async (ctx, useAwait) => {
+  const msg = 'Test Error'
+  if (useAwait) {
+    debug(`async error test`)
+    const bomb = async () => {
+      await Promise.resolve()
+      throw new Error('async: ' + msg + ' ' + count++)
+    }
+    return await bomb()
+  }
+  debug(`sync error test`)
   throw new Error(msg + ' ' + count++)
 }
 

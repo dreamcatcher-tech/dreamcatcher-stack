@@ -5,6 +5,9 @@ const { prompt } = require('enquirer')
 module.exports = async ({ spinner, blockchain }, ...paths) => {
   // TODO handle nested and remote paths
   debug(`add: %O`, paths)
+  if (!paths.length) {
+    paths = [undefined]
+  }
   let out = ``
   for (const path of paths) {
     // TODO handle partial failure

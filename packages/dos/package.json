@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "DEBUG='*dos*' node src/bin",
-    "dev": "DEBUG='*nodemon*' nodemon src/bin"
+    "dev": "nodemon src/bin"
   },
   "author": "",
   "license": "AGPL-3.0-or-later",
