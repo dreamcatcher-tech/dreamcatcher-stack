@@ -66,9 +66,12 @@ const config = {
       let { alias, spawnOptions } = event.payload
       assert.strictEqual(typeof alias, 'string')
       const absolutePath = posix.resolve(wd, alias)
-
       const to = posix.dirname(absolutePath)
-      const name = posix.basename(absolutePath)
+      let name = posix.basename(absolutePath)
+      if (!name && alias) {
+        name = alias
+        debug(`resetting name to ${name}`)
+      }
       debug(`addActor: %O to: %O`, name, to)
       if (typeof spawnOptions === 'string') {
         // TODO unify how covenants are referred to
@@ -190,14 +193,10 @@ const machine = Machine(
       },
 
       addActor: {
-        // TODO handle 'to' field specifying a path
-        // makes a new blank child at the given path
         // if path not exist, error at deepest path
         // can attempt to make all parents too, as part of the options
         // if offline, makes the child locally, then attempts to sync with root
 
-        // respond with the childs alias and address
-        // invoke send to self causing DMZ to spawn ?
         invoke: { src: 'addActor', onError: 'idle', onDone: 'idle' },
         exit: 'respondOrigin',
       },

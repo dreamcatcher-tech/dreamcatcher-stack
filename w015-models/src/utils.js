@@ -115,6 +115,7 @@ const generateHash = (schema, instance) => {
       return { hash: instance.hash }
     }
     case 'Block': {
+      // TODO do not generate proof unless explicitly asked for it
       const nonInterblockKeys = [
         'encryption',
         'timestamp',

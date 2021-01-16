@@ -60,7 +60,7 @@ const types = {
   intro: '@@INTRO',
   accept: '@@ACCEPT',
   openChild: '@@OPEN_CHILD',
-  listChildren: '@@LIST_CHILDREN',
+  listChildren: '@@LS',
   getGivenName: '@@GET_GIVEN_NAME',
   deploy: '@@DEPLOY',
   install: '@@INSTALL',
@@ -100,7 +100,7 @@ const reducer = async (dmz, action) => {
       openChildReducer(dmz.network, action)
       break
     }
-    case '@@LIST_CHILDREN': {
+    case '@@LS': {
       const payload = listChildrenReducer(dmz.network)
       replyResolve(payload)
       break
@@ -197,8 +197,13 @@ const spawnReducer = async (dmz, spawnRequest) => {
   debug(`spawn alias: ${alias}`)
   alias = !alias ? autoAlias(network) : alias
   assert(!alias.includes('/'), `No / character allowed in "${alias}"`)
+  if (alias === '.' || alias === '..') {
+    throw new Error(`Alias uses reserved name: ${alias}`)
+  }
   const channelUnused = !network[alias] || network[alias].address.isUnknown()
-  assert(channelUnused, `childAlias exists: ${alias}`)
+  if (!channelUnused) {
+    throw new Error(`childAlias exists: ${alias}`)
+  }
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
   // TODO use chain key for signing
   const genesis = await effectInBand('SIGN_BLOCK', blockModel.create, child)
