@@ -2,7 +2,7 @@ const debug = require('debug')('interblock:covenants:socket')
 const assert = require('assert')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
-const { spawn, connect, getGivenName } = dmzReducer.actions
+const { spawn, connect, getChannel } = dmzReducer.actions
 const { socketModel, covenantIdModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
 const { effect, interchain } = require('../../w002-api')
@@ -40,12 +40,12 @@ const socketFactory = (gateway) => {
           return chainIds
         },
       }),
-      assignGivenName: assign({
-        givenName: (context, event) => {
-          const { givenName } = event.data
-          assert.strictEqual(typeof givenName, 'string')
-          debug(`givenName`, givenName)
-          return givenName
+      assignRemoteName: assign({
+        remoteName: (context, event) => {
+          const { remoteName } = event.data
+          assert.strictEqual(typeof remoteName, 'string')
+          debug(`remoteName`, remoteName)
+          return remoteName
         },
       }),
       respondPing: (context, event) => {
@@ -59,24 +59,24 @@ const socketFactory = (gateway) => {
       connectSocket: async (context, event) => {
         // TODO handle duplicate additions gracefully
         debug(`connectSocket`)
-        const { givenName } = await interchain(getGivenName())
-        debug(`givenName: %O`, givenName)
-        const url = givenName.replace(/\|/g, '/')
+        const { remoteName } = await interchain(getChannel('..'))
+        debug(`remoteName: %O`, remoteName)
+        const url = remoteName.replace(/\|/g, '/')
         debug(`url: %O`, url)
 
-        const tcpTransport = gateway[givenName] || tcpTransportFactory(url)
-        gateway[givenName] = tcpTransport
+        const tcpTransport = gateway[remoteName] || tcpTransportFactory(url)
+        gateway[remoteName] = tcpTransport
         const result = await effect('CONNECT', tcpTransport.connect)
         debug(`connected to %o`, url)
         // TODO do a version check
-        return { givenName, ...result }
+        return { remoteName, ...result }
       },
-      ping: async ({ givenName }, event) => {
-        assert.strictEqual(typeof givenName, 'string')
+      ping: async ({ remoteName }, event) => {
+        assert.strictEqual(typeof remoteName, 'string')
         debug(`ping: %O`, event)
-        const tcpTransport = gateway[givenName]
+        const tcpTransport = gateway[remoteName]
         if (!tcpTransport) {
-          throw new Error(`No socket found for: ${givenName}`)
+          throw new Error(`No socket found for: ${remoteName}`)
         }
         const result = await effect(
           'PING',
@@ -86,14 +86,14 @@ const socketFactory = (gateway) => {
         debug(`ping result: %O`, result)
         return result
       },
-      disconnectSocket: async ({ givenName }, event) => {
+      disconnectSocket: async ({ remoteName }, event) => {
         debug(`disconnectSocket`)
-        const tcpTransport = gateway[givenName]
+        const tcpTransport = gateway[remoteName]
         if (!tcpTransport) {
-          throw new Error(`No socket found for: ${givenName}`)
+          throw new Error(`No socket found for: ${remoteName}`)
         }
         const result = await effect('DISCONNECT', tcpTransport.disconnect)
-        delete gateway[givenName]
+        delete gateway[remoteName]
         debug(`disconnectSocket result: `, result)
         return { ...result }
       },
@@ -105,7 +105,7 @@ const socketFactory = (gateway) => {
       initial: 'idle',
       context: {
         chainIds: [],
-        givenName: '',
+        remoteName: '',
       },
       strict: true,
       states: {
@@ -127,7 +127,7 @@ const socketFactory = (gateway) => {
             src: 'connectSocket',
             onDone: {
               target: 'idle',
-              actions: ['assignGivenName', 'respondOrigin'],
+              actions: ['assignRemoteName', 'respondOrigin'],
             },
           },
         },

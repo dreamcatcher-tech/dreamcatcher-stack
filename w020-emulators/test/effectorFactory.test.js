@@ -13,9 +13,10 @@ describe('effector', () => {
     // client.enableLogging()
     debug(`effector ready`)
     const pingStart = Date.now()
-    const reply = await client.ping()
+    const payload = { test: 'ping' }
+    const reply = await client.ping('.', payload)
     debug(`reply: `, reply)
-    assert.strictEqual(reply.type, 'PONG')
+    assert.deepStrictEqual(reply, payload)
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
     debug(`test time: ${Date.now() - start} ms`)

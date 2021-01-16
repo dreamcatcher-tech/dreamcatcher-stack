@@ -39,7 +39,9 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
           }
           const { resolve, reject } = callbacks.settled
           if (reply.isResolve()) {
-            setImmediate(() => resolve(reply.payload))
+            const { _dispatchId, ...payload } = reply.payload
+            assert.strictEqual(typeof payload, 'object')
+            setImmediate(() => resolve(payload))
           } else {
             setImmediate(() => reject(deserializeError(reply.payload)))
           }
@@ -51,6 +53,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
 
   return async (rawType, rawPayload) => {
     let { type, payload = {} } = request(rawType, rawPayload)
+    assert(!payload._dispatchId)
     const _dispatchId = `${dispatchCounter++} ${id}`
     debug(`pierce: %s id: %o`, type, _dispatchId)
 

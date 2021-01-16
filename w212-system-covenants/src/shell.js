@@ -4,7 +4,14 @@ const assert = require('assert')
 const { covenantIdModel } = require('../../w015-models')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
-const { spawn, connect, listChildren, install, getChannel } = dmzReducer.actions
+const {
+  ping,
+  spawn,
+  connect,
+  listChildren,
+  install,
+  getChannel,
+} = dmzReducer.actions
 const { interchain } = require('../../w002-api')
 const dpkg = require('./dpkg')
 const {
@@ -34,17 +41,12 @@ const config = {
   guards: {},
   services: {
     ping: async (context, event) => {
-      // if ping '.' respond, else engage in remote pinging
       debug(`ping: %O`, event)
       const { type, payload } = event
       const { to = '.', ...rest } = payload
-      assert(type === 'PING')
-      if (to === '.') {
-        // TODO move 'if' to state machine
-        debug(`ping to self`)
-        return { type: 'PONG', payload: rest }
-      }
-      const result = await interchain(type, rest, to)
+      assert.strictEqual(type, 'PING')
+
+      const result = await interchain(ping(rest), to)
       debug(`ping result: %O`, result)
       return result
     },
@@ -95,6 +97,7 @@ const config = {
       assert(posix.isAbsolute(wd))
       const absolutePath = posix.resolve(wd, path)
       debug(`changeDirectory`, absolutePath)
+      await interchain(ping(), absolutePath)
       return { absolutePath }
     },
     removeActor: async (context, event) => {
@@ -376,13 +379,3 @@ const actions = {
 }
 const reducer = translator(machine)
 module.exports = { actions, reducer }
-
-const basename = (path) =>
-  /^(?:\/?|)(?:[\s\S]*?)((?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/.exec(
-    path
-  )[1]
-
-const dirname = (path) =>
-  /^((?:\.(?![^\/]))|(?:(?:\/?|)(?:[\s\S]*?)))(?:\/+?|)(?:(?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/.exec(
-    path
-  )[1] || '.'

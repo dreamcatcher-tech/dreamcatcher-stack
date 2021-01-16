@@ -196,6 +196,9 @@ const invalidateLocal = (network) =>
   networkModel.clone(network, (draft) => {
     const aliases = network.getAliases()
     for (const alias of aliases) {
+      if (alias === '.@@io') {
+        continue
+      }
       const isLocal = !alias.includes('/')
       if (isLocal && network[alias].address.isUnknown()) {
         draft[alias] = channelProducer.invalidate(network[alias])

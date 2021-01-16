@@ -5,6 +5,7 @@ const posix = require('path')
 const { openChildReducer, openChildReply, openPaths } = require('./openChild')
 const { uplinkReducer, uplinkReply } = require('./uplink')
 const { connect, connectReducer } = require('./connect')
+const { ping, pingReducer } = require('./ping')
 const { autoAlias } = require('./utils.js')
 const {
   actionModel,
@@ -49,6 +50,22 @@ const {
 
 // TODO check the ACL each time ?
 
+const dmzActions = { ping, connect }
+const types = {
+  ping: '@@PING',
+  spawn: '@@SPAWN',
+  genesis: '@@GENESIS',
+  connect: '@@CONNECT',
+  uplink: '@@UPLINK',
+  intro: '@@INTRO',
+  accept: '@@ACCEPT',
+  openChild: '@@OPEN_CHILD',
+  listChildren: '@@LIST_CHILDREN',
+  getGivenName: '@@GET_GIVEN_NAME',
+  deploy: '@@DEPLOY',
+  install: '@@INSTALL',
+  getChannel: '@@GET_CHAN',
+}
 const reducer = async (dmz, action) => {
   debug(`reducer( ${action.type} )`)
   assert(dmzModel.isModel(dmz))
@@ -56,6 +73,10 @@ const reducer = async (dmz, action) => {
   let { network } = dmz
 
   switch (action.type) {
+    case '@@PING': {
+      pingReducer(action)
+      break
+    }
     case '@@SPAWN': {
       const nextNetwork = await spawnReducer(dmz, action)
       network = nextNetwork
@@ -145,22 +166,6 @@ const rm = (id) => {
 }
 const mv = () => {}
 
-const dmzActions = { connect }
-const types = {
-  spawn: '@@SPAWN',
-  genesis: '@@GENESIS',
-  connect: '@@CONNECT',
-  uplink: '@@UPLINK',
-  intro: '@@INTRO',
-  accept: '@@ACCEPT',
-  openChild: '@@OPEN_CHILD',
-  listChildren: '@@LIST_CHILDREN',
-  getGivenName: '@@GET_GIVEN_NAME',
-  deploy: '@@DEPLOY',
-  install: '@@INSTALL',
-  getChannel: '@@GET_CHAN',
-}
-
 dmzActions.spawn = (alias, spawnOpts = {}, actions = []) => {
   const action = {
     type: types.spawn,
@@ -235,17 +240,21 @@ const _getChannelParams = (network, alias) => {
   const { address, systemRole, lineageHeight, heavyHeight, heavy } = channel
   let chainId = address.isResolved() ? address.getChainId() : 'UNRESOLVED'
   chainId = address.isRoot() ? 'ROOT' : chainId
-  const hash = heavy ? heavy.provenance.reflectIntegrity().hash : ''
-  return {
+  const params = {
     systemRole,
     chainId,
     lineageHeight,
     heavyHeight,
-    hash,
   }
+  if (heavy) {
+    params.hash = heavy.provenance.reflectIntegrity().hash
+    remoteName = heavy.getOriginAlias()
+    remoteName && (params.remoteName = remoteName)
+  }
+  return params
 }
 
-dmzActions.getChannel = (alias) => ({
+dmzActions.getChannel = (alias = '.') => ({
   type: types.getChannel,
   payload: { alias },
 })

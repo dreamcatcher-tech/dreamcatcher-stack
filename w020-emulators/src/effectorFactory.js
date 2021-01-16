@@ -97,7 +97,6 @@ const effector = (metrology, rootPierce) => {
     }
 
     const metroChildren = metrology.getChildren()
-    debug(`currentChildren`, Object.keys(metroChildren))
     if (!isChildrenEqual(metroChildren, children)) {
       stripChildren(base, children)
       for (const key in metroChildren) {

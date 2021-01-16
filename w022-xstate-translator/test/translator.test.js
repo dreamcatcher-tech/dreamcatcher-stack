@@ -76,7 +76,6 @@ const testMachine = Machine(
 describe('translator', () => {
   describe('transitions', () => {
     test('illegal transitions reject', async () => {
-      require('debug').enable('*translator ')
       const reducer = translator(testMachine)
       let state = await hook(() =>
         reducer(undefined, { type: 'TRANSITION_HOLD' })
@@ -91,25 +90,33 @@ describe('translator', () => {
       debug(state)
     })
   })
-  require('debug').enable('*')
 
   describe('ping', () => {
     test('self ping', async () => {
       const ping = shell.actions.ping()
       let state
       state = await hook(() => shell.reducer(undefined, ping))
-      assert.strictEqual(state.reduction.value, 'ping')
+      assert(state.isPending)
       assert.strictEqual(state.requests.length, 1)
-      const [a1Done] = state.requests
-      assert.strictEqual(a1Done.type, 'done.invoke.ping')
+      const [selfPing] = state.requests
+      assert.strictEqual(selfPing.type, '@@PING')
+      const request = actionModel.create(selfPing.type, selfPing.payload)
+      const reply = rxReplyModel.create('@@RESOLVE', {}, request)
 
-      state = await hook(() => shell.reducer(state.reduction, a1Done))
+      state = await hook(() => shell.reducer(undefined, ping), [reply])
+      assert(!state.isPending)
+      assert.strictEqual(state.requests.length, 1)
+      const [donePing] = state.requests
+      assert.strictEqual(donePing.type, 'done.invoke.ping')
+
+      state = await hook(() => shell.reducer(state.reduction, donePing))
       assert.strictEqual(state.reduction.value, 'idle')
       assert.strictEqual(state.replies.length, 1)
-      const [a2Resolve] = state.replies
-      assert.strictEqual(a2Resolve.type, '@@RESOLVE')
-      assert.strictEqual(a2Resolve.payload.type, 'PONG')
-      assert.deepStrictEqual(a2Resolve.request, ping)
+      assert.strictEqual(state.requests.length, 0)
+      const [pingResolve] = state.replies
+      assert.strictEqual(pingResolve.type, '@@RESOLVE')
+      assert.deepStrictEqual(pingResolve.payload, {})
+      assert.deepStrictEqual(pingResolve.request, ping)
     })
     test('remote ping', async () => {
       let state
@@ -117,7 +124,7 @@ describe('translator', () => {
       state = await hook(() => shell.reducer(undefined, pingRemote))
       assert.strictEqual(state.requests.length, 1)
       const [remote] = state.requests
-      assert.strictEqual(remote.type, 'PING')
+      assert.strictEqual(remote.type, '@@PING')
       assert.strictEqual(remote.to, 'remote')
 
       const { type, payload } = remote
@@ -131,6 +138,7 @@ describe('translator', () => {
       )
       assert.strictEqual(state.requests.length, 1)
       const [doneInvoke] = state.requests
+      assert.strictEqual(doneInvoke.type, 'done.invoke.ping')
 
       state = await hook(() => shell.reducer(state.reduction, doneInvoke))
       assert.strictEqual(state.reduction.value, 'idle')
@@ -197,7 +205,6 @@ describe('translator', () => {
     assert.deepStrictEqual(resolve.payload, reply2.payload)
   })
   test('instant services return', async () => {
-    require('debug').enable('*')
     const reducer = translator(testMachine)
     const request = { type: 'INVOKE_INSTANT' }
 
@@ -215,7 +222,6 @@ describe('translator', () => {
     assert.deepStrictEqual(resolve.payload, { result: 'instantResponse' })
   })
   test('undefined response from service', async () => {
-    require('debug').enable('*')
     const reducer = translator(testMachine)
     const request = { type: 'INVOKE_UNDEFINED' }
     const nextState = await hook(() => reducer(undefined, request))

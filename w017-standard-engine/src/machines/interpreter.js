@@ -174,7 +174,7 @@ const definition = {
                     {
                       target: 'reject',
                       cond: 'isReductionPending',
-                      actions: 'assignRejectionFromReply',
+                      actions: 'assignRejection', // TODO not sure this gets called in tests
                     },
                     { target: 'transmit' },
                   ],
