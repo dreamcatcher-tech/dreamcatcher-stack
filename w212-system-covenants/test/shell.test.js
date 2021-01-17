@@ -36,6 +36,23 @@ describe('machine validation', () => {
 
       await base.settle()
     })
+    test('cd errors on garbage path', async () => {
+      const base = await metrologyFactory('e', { hyper: shell })
+      const cd = shell.actions.cd('garbagePath')
+      await assert.rejects(() => base.pierce(cd))
+      await base.settle()
+    })
+    test('cd errors on nested garbage path', async () => {
+      const base = await metrologyFactory('e', { hyper: shell })
+      await base.spawn('child1')
+      const cd = shell.actions.cd('child1/garbagePath')
+      await assert.rejects(() => base.pierce(cd))
+      const cdTrailing = shell.actions.cd('child1/garbagePath/')
+      await assert.rejects(() => base.pierce(cdTrailing))
+      const cdLong = shell.actions.cd('child1/garbagePath/asdf/asdf/')
+      await assert.rejects(() => base.pierce(cdLong))
+      await base.settle()
+    })
     test('. is resolved', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
       base.enableLogging()
@@ -152,15 +169,15 @@ describe('machine validation', () => {
     })
     test('throws on deep invalid nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
+      await base.spawn('c1')
+      await base.pierce(shell.actions.add('c1/nested1'))
       base.enableLogging()
-      await base.spawn('child1')
-      await base.pierce(shell.actions.add('child1/nested1'))
 
-      const ls = shell.actions.ls('child1/nested1/invalid')
+      const ls = shell.actions.ls('c1/nested1/invalid')
       await assert.rejects(
         () => base.pierce(ls),
         (error) => {
-          const msg = 'Path invalid: child1/nested1/invalid'
+          const msg = 'Path invalid: c1/nested1/invalid'
           assert.strictEqual(error.message, msg)
           return true
         }

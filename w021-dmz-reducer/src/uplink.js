@@ -35,9 +35,9 @@ const uplinkReply = (network, reply) => {
   const { originAction } = reply.getRequest().payload
   switch (reply.type) {
     case '@@RESOLVE':
-      const { alias } = originAction.payload
-      debug('reply: ', alias)
-      const chainId = network[alias].address.getChainId()
+      const { child } = originAction.payload
+      debug('reply: ', child)
+      const chainId = network[child].address.getChainId()
       const payload = { chainId }
       replyResolve(payload, originAction)
       break

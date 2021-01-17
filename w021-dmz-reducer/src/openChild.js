@@ -19,27 +19,29 @@ const {
 const { uplink } = require('./uplink')
 const { connect } = require('./connect')
 
-const openChild = (alias, fullPath) => ({
+const openChild = (child, parent, fullPath) => ({
+  // parent and fullPath are required for continuation,
+  // because we do not have dmz promises yet
   type: '@@OPEN_CHILD',
-  payload: { alias, fullPath },
+  payload: { child, parent, fullPath },
 })
 const openChildReducer = (network, request) => {
   assert(rxRequestModel.isModel(request))
 
-  const { alias } = request.payload
-  assert.strictEqual(typeof alias, 'string')
-  debug(`openChildReducer`, alias)
-  const channel = network[alias]
+  const { child, parent, fullPath } = request.payload
+  assert.strictEqual(typeof child, 'string')
+  debug(`reducer child: %o parent: %o fullPath: %o`, child, parent, fullPath)
+  const channel = network[child]
   if (!channel) {
-    replyReject(new Error(`Alias not found: ${alias}`))
+    replyReject(new Error(`Alias not found: ${child}`))
   } else if (channel.address.isUnknown()) {
-    replyReject(new Error(`Alias unresolved: ${alias}`))
+    replyReject(new Error(`Alias unresolved: ${child}`))
   } else if (channel.systemRole !== './') {
-    replyReject(new Error(`Alias found, but is not child: ${alias}`))
+    replyReject(new Error(`Alias found, but is not child: ${child}`))
   } else {
     const chainId = request.getAddress().getChainId()
     const connect = uplink(chainId, request)
-    interchain(connect, alias)
+    interchain(connect, child)
     // TODO who handles ACL for opening child ?
     replyPromise()
   }
@@ -47,18 +49,21 @@ const openChildReducer = (network, request) => {
 const openChildReply = (network, reply) => {
   assert(networkModel.isModel(network))
   assert(rxReplyModel.isModel(reply))
-  const { fullPath } = reply.request.payload
+  const { child, parent, fullPath } = reply.request.payload
+  assert.strictEqual(typeof fullPath, 'string')
   switch (reply.type) {
     case '@@RESOLVE':
       const { chainId } = reply.payload
       debug(`reply received for @@OPEN_CHILD: %o`, chainId.substring(0, 9))
       // TODO move to using network and action sequence to discover fullPath
-      interchain(connect(fullPath, chainId))
+      const alias = parent + '/' + child
+      debug(`connecting to: `, alias)
+      interchain(connect(alias, chainId))
       break
     case '@@REJECT':
-      debug(`rejection received`, fullPath)
-      const respondent = posix.parse(fullPath).dir
-      assert(network[respondent])
+      debug(`reject child: %o parent: %o fullPath: %o`, child, parent, fullPath)
+      const normalized = posix.normalize(fullPath)
+      assert.strictEqual(normalized, fullPath)
       const channel = channelProducer.invalidate(network[fullPath])
       network = networkModel.clone({ ...network, [fullPath]: channel })
       break
@@ -76,39 +81,41 @@ const openPaths = (network) =>
     const unresolved = aliases.filter((alias) =>
       network[alias].address.isUnknown()
     )
-    unresolved.forEach((alias) => {
-      if (alias === '.@@io') {
+    unresolved.forEach((fullPath) => {
+      if (fullPath === '.@@io') {
         return
       }
-      if (!alias.includes('/')) {
+      if (!fullPath.includes('/')) {
         return // local paths are invalidated separately
       }
 
-      const paths = _getPathSegments(alias)
-      assert(paths.length > 1)
+      const segmentPaths = _getPathSegments(fullPath)
+      assert(segmentPaths.length > 1)
 
-      paths.some((fullPath, index) => {
-        const channel = network[fullPath]
+      segmentPaths.some((segmentPath, index) => {
+        const channel = network[segmentPath]
         if (channel && !channel.address.isUnknown()) {
           return
         }
-        debug(`unresolved path: `, fullPath)
+        debug(`unresolved path: `, segmentPath)
         if (index === 0) {
-          if (!network[fullPath]) {
-            draft[alias] = channelProducer.invalidate(network[alias])
+          if (!network[segmentPath]) {
+            draft[fullPath] = channelProducer.invalidate(network[fullPath])
             return true
           }
         }
 
-        const parent = index === 0 ? '.' : paths[index - 1]
+        const parent = index === 0 ? '.' : segmentPaths[index - 1]
         debug('parent: ', parent)
-        const child = fullPath.split('/').pop()
+        const child = segmentPath.split('/').pop()
         debug('child: ', child)
         if (_isAwaitingOpen(network[parent])) {
           debug(`parent: %o was already asked to open child: %o`, parent, child)
         } else {
+          const isUnresolvedParent = network[parent].address.isResolved()
+          assert(isUnresolvedParent, `unresolved parent attempted: ${parent}`)
           debug('sending open action from parent: %o to %o', parent, child)
-          const open = actionModel.create(openChild(child, fullPath))
+          const open = actionModel.create(openChild(child, parent, fullPath))
           draft[parent] = channelProducer.txRequest(network[parent], open)
         }
         return true

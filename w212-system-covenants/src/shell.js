@@ -89,7 +89,7 @@ const config = {
       const { path } = event.payload
       const absolutePath = posix.resolve(wd, path)
       debug(`listActors`, absolutePath)
-      const lsAction = listChildren(path)
+      const lsAction = listChildren(absolutePath)
       const { children } = await interchain(lsAction, absolutePath)
       const self = await interchain(getChannel(absolutePath))
       return { children: { ...children, '.': self } }
