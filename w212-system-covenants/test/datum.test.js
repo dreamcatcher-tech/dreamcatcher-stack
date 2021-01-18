@@ -1,7 +1,7 @@
 const assert = require('assert')
 const { effectorFactory } = require('../..')
 const debug = require('debug')('crm:tests:datum')
-const { datum, convertToTemplate, demuxFormData } = require('../src/datum')
+const { convertToTemplate, demuxFormData } = require('../src/datum')
 
 require('debug').enable('*met* *tests* *datum')
 
@@ -49,9 +49,10 @@ describe('datum helper functions', () => {
 
 describe('datum', () => {
   test('simple datum with test data', async () => {
-    const root = await effectorFactory('datum', { datum })
+    const root = await effectorFactory('datum')
     await root.add('datum1', 'datum')
     root.enableLogging()
+    assert.strictEqual(root.datum1.getState().covenantId.name, 'datum')
     await root.datum1.set({ schema, isTestData: true })
 
     const { state } = root.datum1.getState()
@@ -62,9 +63,9 @@ describe('datum', () => {
     assert.deepStrictEqual(state.schema, schema)
     await root.settle()
   })
-  test('nested datums with test data', async () => {
+  test.only('nested datums with test data', async () => {
     // make a customer, and show the data being broken up automatically to childrenconst root = await effectorFactory('datum', { datum })
-    const root = await effectorFactory('nested', { datum })
+    const root = await effectorFactory('nested')
     await root.add('datum1', 'datum')
     root.enableLogging()
     const address = {

@@ -56,7 +56,6 @@
   },
   "wallaby": {
     "autoDetect": true,
-    "trace": true,
     "env": {
       "type": "node",
       "runner": "node"
