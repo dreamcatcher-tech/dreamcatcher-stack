@@ -62,12 +62,20 @@ describe('standard model', () => {
     const s2 = i2.serialize()
     const s1next = i1.serialize()
     assert.strictEqual(s1, s1next)
-    assert.notEqual(s1, s2)
+    assert.notStrictEqual(s1, s2)
   })
   test('objects are immutable', () => {
     const integrity = integrityModel.create({ test: 'test' })
     assert(integrity.hash)
-    assert.throws(() => delete integrity.hash)
+    delete integrity.hash
+    assert(integrity.hash)
+
+  })
+  test('functions are immutable', () => {
+    const integrity = integrityModel.create({ test: 'test' })
+    assert(integrity.isUnknown)
+    delete integrity.isUnknown
+    assert(integrity.isUnknown)
   })
   test('nested objects are inflated from clones', () => {
     const covenantId = covenantIdModel.create()

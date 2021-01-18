@@ -44,7 +44,7 @@ describe('datum helper functions', () => {
     })
     test.todo('nested formData')
   })
-  describe('demuxFormData', () => {})
+  describe('demuxFormData', () => { })
 })
 
 describe('datum', () => {
@@ -63,7 +63,7 @@ describe('datum', () => {
     assert.deepStrictEqual(state.schema, schema)
     await root.settle()
   })
-  test.only('nested datums with test data', async () => {
+  test('nested datums with test data', async () => {
     // make a customer, and show the data being broken up automatically to childrenconst root = await effectorFactory('datum', { datum })
     const root = await effectorFactory('nested')
     await root.add('datum1', 'datum')
@@ -90,11 +90,11 @@ describe('datum', () => {
 
     await root.settle()
   })
-  test('updates data', () => {})
+  test('updates data', () => { })
   test.todo('create a datum with genesis state and schema')
-  test('invalid data throws', () => {})
-  test('invalid initial state throws', () => {})
-  test('missing required fields throws', () => {})
+  test('invalid data throws', () => { })
+  test('invalid initial state throws', () => { })
+  test('missing required fields throws', () => { })
   test.todo('child throws during creation')
   test.todo('nested child throws if schema cannot compile')
   test.todo('invalid formdata of children detected before creating child')

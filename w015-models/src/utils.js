@@ -41,7 +41,7 @@ const standardize = (model) => {
     }
     const inflated = modelInflator(model.schema, object)
 
-    deepFreeze(inflated)
+    // deepFreeze(inflated)
     const modelFunctions = model.logicize(inflated)
 
     const { serialize, getHash, getProof, equals } = closure(
@@ -223,23 +223,38 @@ const hashPattern = (instance) => {
 }
 
 const proxy = (target, functions) => {
-  const handler = {
-    get(target, prop, receiver) {
-      if (functions[prop]) {
-        return functions[prop]
-      }
-      // return Reflect.get(...arguments)
-      return target[prop]
-    },
-    set(target, prop, value, receiver) {
-      throw new Error(`Model properties cannot be altered: ${prop}`)
-    },
-    deleteProperty(target, prop) {
-      throw new Error(`Model properties cannot be deleted: ${prop}`)
-    },
+  // TODO check no collisions between function names and target
+  for (const prop in target) {
+    assert(!functions[prop], `function collision: ${prop}`)
   }
-  const proxy = new Proxy(target, handler)
-  return proxy
+
+  for (const functionName in functions) {
+    Object.defineProperty(target, functionName, {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+      value: functions[functionName]
+    });
+  }
+
+  deepFreeze(target)
+
+  // const handler = {
+  //   get(target, prop, receiver) {
+  //     if (functions[prop]) {
+  //       return functions[prop]
+  //     }
+  //     return target[prop]
+  //   },
+  //   set(target, prop, value, receiver) {
+  //     throw new Error(`Model properties cannot be altered: ${prop}`)
+  //   },
+  //   deleteProperty(target, prop) {
+  //     throw new Error(`Model properties cannot be deleted: ${prop}`)
+  //   },
+  // }
+  // const proxy = new Proxy(target, handler)
+  return target
 }
 
 const checkStructure = (model) => {
@@ -264,11 +279,7 @@ const memoizeCreate = (model) => {
 }
 const deepFreeze = (o) => {
   Object.freeze(o)
-
-  Object.getOwnPropertyNames(o).forEach((prop) => {
-    if (!o.hasOwnProperty(prop)) {
-      return
-    }
+  for (const prop in o) {
     if (o[prop] === undefined) {
       // undefined values have their keys removed in json
       throw new Error(`Values cannot be undefined: ${prop}`)
@@ -279,7 +290,7 @@ const deepFreeze = (o) => {
     if (typeof o[prop] === 'object' && !Object.isFrozen(o[prop])) {
       deepFreeze(o[prop])
     }
-  })
+  }
 }
 
 module.exports = { standardize }
