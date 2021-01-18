@@ -89,6 +89,7 @@ describe('baseline', () => {
 
 const pure = async (event, definition, config = {}) => {
   // exhaust the machine, return the end result
+  // make a recursive call to handle nested states
   let context = config.context || {}
   // keep looping until no more actions left ?
 }

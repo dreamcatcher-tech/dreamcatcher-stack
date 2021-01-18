@@ -30,10 +30,12 @@ const ioQueueFactory = (name, model) => {
     assert(resolve && reject)
     try {
       const result = await _processor(action)
-      setImmediate(resolve, result)
+      Promise.resolve().then(() => resolve(result))
+      // setImmediate(resolve, result)
     } catch (e) {
       debug(`${name} rejected: %O %O`, envelope, e)
-      setImmediate(reject, e)
+      Promise.resolve().then(() => reject(e))
+      // setImmediate(reject, e)
     }
     loop()
     assert(_awaiting.has(envelope))

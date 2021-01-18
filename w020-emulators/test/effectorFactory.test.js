@@ -6,7 +6,7 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 describe('effector', () => {
   require('debug').enable('*tests*')
 
-  test.only('ping single', async () => {
+  test('ping single', async () => {
     const start = Date.now()
     debug(`start`)
     const client = await effectorFactory()
@@ -31,7 +31,7 @@ describe('effector', () => {
      *    100ms from using proxy to strip functions automatically
      *    0ms from moving to hash based caching
      *    0ms from fast stringify
-     *    200ms logging off
+     *    200ms turned logging off
      * 2020-05-30 592ms (validate off, logging off properly, no deep freeze)
      * 2020-06-02 415ms (custom validator, model based hashing)
      *    336ms eager isDmzChangeable
@@ -46,7 +46,7 @@ describe('effector', () => {
      * 2020-11-19 587ms 99ms RTT - hooks, pierce, 3 root blocks, 2 net blocks
      * 2020-11-20 478ms 77ms RTT - tuning
      * 2020-11-26 188ms 85ms RTT - turned off net creation
-     * 2021-01-18 199ms total, 118ms RTT, blockcount 2 - removed proxy objects, add pending interpreter
+     * 2021-01-18 199ms total, 118ms RTT, blockcount 2 - removed proxy objects, add pending interpreter, ping reply goes via loopback
      */
   })
   test.skip('ping many times', async () => {
