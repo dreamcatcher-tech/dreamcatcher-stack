@@ -6,7 +6,7 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 describe('effector', () => {
   require('debug').enable('*tests*')
 
-  test('ping single', async () => {
+  test.only('ping single', async () => {
     const start = Date.now()
     debug(`start`)
     const client = await effectorFactory()
@@ -19,6 +19,7 @@ describe('effector', () => {
     assert.deepStrictEqual(reply, payload)
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
+    debug(`blockcount: ${client.getBlockCount()}`)
     debug(`test time: ${Date.now() - start} ms`)
     await client.settle()
 
@@ -45,6 +46,7 @@ describe('effector', () => {
      * 2020-11-19 587ms 99ms RTT - hooks, pierce, 3 root blocks, 2 net blocks
      * 2020-11-20 478ms 77ms RTT - tuning
      * 2020-11-26 188ms 85ms RTT - turned off net creation
+     * 2021-01-18 199ms total, 118ms RTT, blockcount 2 - removed proxy objects, add pending interpreter
      */
   })
   test.skip('ping many times', async () => {

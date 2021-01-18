@@ -80,7 +80,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     // debugBloc(timeText, `total: ${lockTime} ms work: ${workTime} ms`)
     debugBloc(formatted)
   }
-
+  let blockCount = 0
   const insertBlock = (block, cache) => {
     const chainId = block.provenance.getAddress().getChainId()
     if (!cache[chainId]) {
@@ -88,6 +88,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     }
     if (!cache[chainId].some((b) => b.equals(block))) {
       cache[chainId].push(block)
+      blockCount++
     }
   }
 
@@ -161,6 +162,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     messages.push(...networkPrint(network))
     return print(messages)
   }
+  const getBlockCount = () => blockCount
   const tap = {
     on,
     off,
@@ -170,6 +172,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     interblockPool,
     getLatest,
     printNetwork,
+    getBlockCount,
   }
   needle.setTap(tap) // TODO handle multiple taps
   return tap

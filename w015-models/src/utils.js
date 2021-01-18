@@ -41,7 +41,6 @@ const standardize = (model) => {
     }
     const inflated = modelInflator(model.schema, object)
 
-    // deepFreeze(inflated)
     const modelFunctions = model.logicize(inflated)
 
     const { serialize, getHash, getProof, equals } = closure(
@@ -56,10 +55,10 @@ const standardize = (model) => {
       getProof,
       equals,
     }
-    const completeInstance = proxy(inflated, functions)
-    modelWeakSet.add(completeInstance)
-    objectToModelWeakMap.set(object, completeInstance)
-    return completeInstance
+    const frozenInstance = defineFunctions(inflated, functions)
+    modelWeakSet.add(frozenInstance)
+    objectToModelWeakMap.set(object, frozenInstance)
+    return frozenInstance
   }
 
   // TODO add produce function so clone isn't overloaded
@@ -222,38 +221,20 @@ const hashPattern = (instance) => {
   return { hash, proof }
 }
 
-const proxy = (target, functions) => {
-  // TODO check no collisions between function names and target
+const defineFunctions = (target, functions) => {
   for (const prop in target) {
     assert(!functions[prop], `function collision: ${prop}`)
   }
-
   for (const functionName in functions) {
     Object.defineProperty(target, functionName, {
       enumerable: false,
       configurable: false,
       writable: false,
-      value: functions[functionName]
-    });
+      value: functions[functionName],
+    })
   }
 
   deepFreeze(target)
-
-  // const handler = {
-  //   get(target, prop, receiver) {
-  //     if (functions[prop]) {
-  //       return functions[prop]
-  //     }
-  //     return target[prop]
-  //   },
-  //   set(target, prop, value, receiver) {
-  //     throw new Error(`Model properties cannot be altered: ${prop}`)
-  //   },
-  //   deleteProperty(target, prop) {
-  //     throw new Error(`Model properties cannot be deleted: ${prop}`)
-  //   },
-  // }
-  // const proxy = new Proxy(target, handler)
   return target
 }
 
@@ -285,7 +266,7 @@ const deepFreeze = (o) => {
       throw new Error(`Values cannot be undefined: ${prop}`)
     }
     if (typeof o[prop] === 'function') {
-      throw new Error(`No functions in deepFreeze: ${prop}`)
+      throw new Error(`No functions allowed in deepFreeze: ${prop}`)
     }
     if (typeof o[prop] === 'object' && !Object.isFrozen(o[prop])) {
       deepFreeze(o[prop])
