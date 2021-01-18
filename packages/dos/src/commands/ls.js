@@ -4,12 +4,11 @@ const posix = require('path')
 const cliui = require('cliui')
 const chalk = require('ansi-colors')
 const pad = require('pad/dist/pad.umd')
-module.exports = async function ls({ wd, spinner, blockchain }, path = '.') {
+module.exports = async function ls({ spinner, blockchain }, path = '.') {
   spinner.text = `Resolving ${path}`
 
   debug(`ls`, path)
   const { children } = await blockchain.ls(path)
-  path = path.startsWith('/') ? path.substring(1) : path
   const ui = cliui()
   const aliases = Object.keys(children)
     .sort((a, b) => {
@@ -56,15 +55,18 @@ module.exports = async function ls({ wd, spinner, blockchain }, path = '.') {
     const isRoot = children['..'].chainId === 'ROOT'
     if (alias === '.') {
       if (!isRoot) {
-        // TODO make a standard way of getting posix paths into our paths
-        const absolutePath = posix.normalize(wd, path).substring(1)
-        const self = network[absolutePath] // TODO WRONG needs to get actual path of child
+        // TODO make a standard way of getting posix paths into our paths, shared across components
+        const { wd } = blockchain.getContext()
+
+        const absolutePath = posix.resolve(wd, path).substring(1)
+        const self = network[absolutePath]
         assert(self, `No self channel found for: ${absolutePath}`)
         heavyHeight = self.heavyHeight
         lineageHeight = self.lineageHeight
         chainId = self.address.getChainId().substring(0, 8)
       } else {
         chainId = blockchain.getChainId().substring(0, 8)
+        heavyHeight = lineageHeight = blockchain.getHeight()
       }
     }
 
