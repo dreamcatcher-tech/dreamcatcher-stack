@@ -127,7 +127,6 @@ const translator = (machine) => {
 }
 const createDoneInvoke = (data, id) => {
   if (data && data.message && data.stack) {
-    // xstate seems to blank error objects
     // TODO never include error objects in done - make a special done object
     debug(`error detected %O`, data)
     const { message, stack } = data

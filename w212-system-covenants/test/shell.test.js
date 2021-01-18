@@ -183,6 +183,16 @@ describe('machine validation', () => {
         }
       )
     })
+    test('root path when cd is child', async () => {
+      const base = await metrologyFactory('effect', { hyper: shell })
+      await base.spawn('child')
+      await base.pierce(shell.actions.cd('child'))
+      assert.strictEqual(base.getContext().wd, '/child')
+
+      const ls = shell.actions.ls('/child')
+      const result = await base.pierce(ls)
+      debug(result)
+    })
     test.todo('simultaneous requests')
   })
   describe('normalize', () => {

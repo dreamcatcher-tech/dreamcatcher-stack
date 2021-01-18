@@ -128,6 +128,7 @@ const config = {
     },
     install: async (context, event) => {
       const { dpkgPath, installPath } = event.payload
+      debug(`install from: %o to: %o`, dpkgPath, installPath)
       const installer = await interchain(dpkg.actions.getInstaller(), dpkgPath)
       // TODO check installPath exists and is legal, and is direct child of something
       // TODO check schema matches installer schema, including not null for covenant

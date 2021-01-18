@@ -5,7 +5,7 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 describe('netFactory', () => {
   require('debug').enable('*met* *tests* *effector *:net *:socket *transport')
 
-  test('ping single', async () => {
+  test.skip('ping single', async () => {
     jest.setTimeout(20000)
     debug(`start`)
     const client = await effectorFactory()
