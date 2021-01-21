@@ -36,6 +36,7 @@ Benefits are:
 1. All the tools of XState can be brought to bear on the XState project itself
 1. writing the core and using XState become close to the same thing, meaning core developer time is spent more on the usage of XState, making them heavy power users, rather than two separate software disciplines taking place, with core more focused on conventional development, and users more focused on XState language
 1. In the visual debugger, can present the underlying state machines, so users can understand what is happening under the hood, and can express bugs easier
+1. The mere fact that it runs proves the utility of XState and the correctness of the implementation
 
 ## Features provided by a higher order state chart
 

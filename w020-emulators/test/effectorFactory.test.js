@@ -6,7 +6,7 @@ const debug = require('debug')('interblock:tests:effectorFactory')
 describe('effector', () => {
   require('debug').enable('*tests*')
 
-  test.only('ping single', async () => {
+  test('ping single', async () => {
     const start = Date.now()
     debug(`start`)
     const client = await effectorFactory()
@@ -47,7 +47,7 @@ describe('effector', () => {
      * 2020-11-20 478ms 77ms RTT - tuning
      * 2020-11-26 188ms 85ms RTT - turned off net creation
      * 2021-01-18 199ms total, 118ms RTT, blockcount 2 - removed proxy objects, add pending interpreter, ping reply goes via loopback
-     * 2021-01-21 146ms total, 62ms RTT - fast-xstate interpreter
+     * 2021-01-21 111ms total, 63ms RTT - fast-xstate interpreter
      */
   })
   test.skip('ping many times', async () => {

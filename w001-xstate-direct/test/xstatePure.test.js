@@ -19,8 +19,8 @@ const definition = {
     },
     errorAsyncCall: {
       invoke: {
-        src: 'asyncCall',
-        onDone: 'process',
+        src: 'asyncError',
+        onDone: { target: 'process', actions: 'bomb' },
         onError: { target: 'process', actions: 'logError' },
       },
     },
@@ -70,6 +70,12 @@ const config = {
       answer: () => 7,
     }),
     nestedEntry: () => debug(`nestedEntry`),
+    bomb: () => {
+      throw new Error(`bomb`)
+    },
+    logError: (context, event) => {
+      debug(`logError: %o`, event.data.message)
+    },
   },
   guards: {
     isAnswerCorrect: ({ answer }, event) => {
@@ -80,6 +86,9 @@ const config = {
     asyncCall: async (context, event) => {
       debug(`asyncCall: `, context, event)
       return await Promise.resolve(42)
+    },
+    asyncError: async () => {
+      throw new Error(`asyncError`)
     },
   },
 }
@@ -98,16 +107,6 @@ describe('baseline', () => {
     const result = await done
     debug(result)
     assert.strictEqual(result.data, 7)
-
-    // make a machine that does an async operation, then does an if statement
-    // run the direct comparison as raw action
-    // run these thru benchmark to get idea for speed
-    // view results in profiler
-
-    // start building a bare xstate that aims to be pure state interpretation
-    // build upon this to make more advanced xstate, as a machine, to capture all the checks and nuances
-
-    // insert the advanced logging functions, and stepping functions
   })
   test('pure xstate', async () => {
     debug('')
@@ -117,5 +116,14 @@ describe('baseline', () => {
     const result = await pure('TICK', definition, config)
     debug(`test result: `, result)
     assert.strictEqual(result, 7)
+  })
+  test('pure xstate with error', async () => {
+    debug('')
+    debug('')
+    debug('')
+    debug('')
+    const result = await pure('ERROR', definition, config)
+    debug(`test result: `, result)
+    assert.strictEqual(result.message, 'asyncError')
   })
 })

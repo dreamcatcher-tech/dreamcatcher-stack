@@ -47,6 +47,7 @@ const pure = async (event, definition, config = {}) => {
     debug(`execActions: `, actionNames)
     for (const actionName of actionNames) {
       const fn = config.actions[actionName]
+      assert(fn, `No action found for: ${actionName}`)
       if (fn.type === 'xstate.assign') {
         const context = { ...state.context }
         for (const key of Object.keys(fn.assignment)) {
@@ -77,7 +78,7 @@ const pure = async (event, definition, config = {}) => {
         state = resolveTransition(state, event)
         return { state, event }
       } catch (data) {
-        debug(`invoke error: `, data)
+        debug(`invoke error: %o`, data.message)
         event = { type: `error.invoke.${invoke.src}`, data }
         state = resolveTransition(state, event)
         return { state, event }
@@ -99,7 +100,7 @@ const pure = async (event, definition, config = {}) => {
       if (event.type.startsWith('done.invoke')) {
         transitions = node.invoke.onDone
       } else {
-        transitions = node.onError
+        transitions = node.invoke.onError
       }
     } else if (node.always) {
       transitions = node.always
