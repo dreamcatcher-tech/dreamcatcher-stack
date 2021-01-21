@@ -119,7 +119,7 @@ const definition = {
           target: '#increasor.execute.history',
           actions: ['assignNextDmz', 'assignContainerId'],
         },
-        onError: '#error',
+        onError: 'error',
       },
     },
     unlockChain: {

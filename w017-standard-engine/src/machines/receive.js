@@ -86,7 +86,6 @@ const definition = {
       type: 'final',
     },
     error: {
-      id: 'error',
       type: 'final',
     },
   },

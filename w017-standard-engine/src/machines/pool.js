@@ -48,7 +48,6 @@ const definition = {
       },
     },
     done: {
-      id: 'done',
       data: ({ affectedAddresses }) => affectedAddresses,
       type: 'final',
     },
@@ -269,7 +268,6 @@ const definition = {
     },
 
     error: {
-      id: 'error',
       type: 'final',
     },
   },

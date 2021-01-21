@@ -1,6 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:config:isolator')
 const { assign } = require('xstate')
+const { pure } = require('../../../w001-xstate-direct')
 const {
   channelModel,
   interblockModel,
@@ -14,6 +15,7 @@ const {
 const { networkProducer, channelProducer } = require('../../../w016-producers')
 const { thread } = require('../execution/thread')
 const { interpreterConfig } = require('./interpreterConfig')
+const { definition } = require('../machines/interpreter')
 const { machine } = require('../machines/isolator')
 const isolationProcessor = require('../services/isolateFactory')
 const crypto = require('../../../w012-crypto')
@@ -222,7 +224,11 @@ const isolatorMachine = machine.withConfig({
       const interpreter = interpreterConfig(tick)
       const payload = { dmz, externalAction, address }
       const tickAction = { type: 'TICK', payload }
-      const nextDmz = await thread(tickAction, interpreter)
+
+      const config = interpreter.options
+      const machine = { ...definition, context: interpreter.context }
+      const nextDmz = await pure(tickAction, machine, config)
+      // const nextDmz = await thread(tickAction, interpreter)
       assert(dmzModel.isModel(nextDmz))
       return { nextDmz }
     },

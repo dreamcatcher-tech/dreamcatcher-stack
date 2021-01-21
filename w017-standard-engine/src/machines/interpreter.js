@@ -292,7 +292,6 @@ const definition = {
     },
     done: {
       entry: 'assertLoopbackEmpty',
-      id: 'done',
       data: ({ dmz }) => dmz,
       type: 'final',
     },
