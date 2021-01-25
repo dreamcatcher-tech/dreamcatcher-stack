@@ -69,7 +69,6 @@ describe('standard model', () => {
     assert(integrity.hash)
     delete integrity.hash
     assert(integrity.hash)
-
   })
   test('functions are immutable', () => {
     const integrity = integrityModel.create({ test: 'test' })

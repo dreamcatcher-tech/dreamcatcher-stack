@@ -159,10 +159,7 @@ const definition = {
               },
             },
             storeInPools: {
-              invoke: {
-                src: 'storeInPools',
-                onDone: { target: 'done' },
-              },
+              invoke: { src: 'storeInPools', onDone: { target: 'done' } },
             },
             done: { type: 'final' },
           },
@@ -176,10 +173,7 @@ const definition = {
               invoke: {
                 src: 'checkIsOriginPresent',
                 onDone: [
-                  {
-                    target: 'lockChildChain',
-                    cond: 'isOriginPresent',
-                  },
+                  { target: 'lockChildChain', cond: 'isOriginPresent' },
                   { target: 'done' },
                 ],
               },

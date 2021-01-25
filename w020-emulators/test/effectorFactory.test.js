@@ -52,7 +52,7 @@ describe('effector', () => {
      * 2021-01-25 93ms total, 46ms RTT - xstate removed
      */
   })
-  test('ping many times', async () => {
+  test.skip('ping many times', async () => {
     jest.setTimeout(10000)
     debug(`start`)
     const client = await effectorFactory()

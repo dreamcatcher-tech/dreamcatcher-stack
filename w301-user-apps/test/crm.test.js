@@ -2,14 +2,16 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-require('debug').enable('*met* *needle *tests*')
+require('debug').enable(
+  '*met* *needle *tests* *engine:increasor:* *engine:pooler'
+)
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test.only('deploys app', async () => {
+    test('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
-      // shell.enableLogging()
+      shell.enableLogging()
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
