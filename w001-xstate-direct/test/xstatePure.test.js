@@ -44,6 +44,40 @@ const definition = {
         },
         final: { type: 'final' },
       },
+      onDone: 'parallel',
+    },
+    parallel: {
+      type: 'parallel',
+      states: {
+        p1: {
+          initial: 'start',
+          states: {
+            start: {
+              invoke: {
+                src: 'asyncCall',
+                onDone: 'stop',
+              },
+            },
+            stop: {
+              type: 'final',
+            },
+          },
+        },
+        p2: {
+          initial: 'start',
+          states: {
+            start: {
+              invoke: {
+                src: 'asyncCall',
+                onDone: 'stop',
+              },
+            },
+            stop: {
+              type: 'final',
+            },
+          },
+        },
+      },
       onDone: 'done',
     },
     done: {
@@ -94,7 +128,7 @@ const config = {
 }
 
 describe('baseline', () => {
-  test('loop with awaits comparison', async () => {
+  test('original xstate loop with awaits comparison', async () => {
     const machine = Machine(definition, config)
     const service = interpret(machine)
     service.start()
@@ -107,6 +141,20 @@ describe('baseline', () => {
     const result = await done
     debug(result)
     assert.strictEqual(result.data, 7)
+  })
+  test('original xstate error', async () => {
+    const machine = Machine(definition, config)
+    const service = interpret(machine)
+    service.start()
+    const done = new Promise((resolve) => {
+      service.onDone((result) => {
+        resolve(result)
+      })
+    })
+    service.send('ERROR')
+    const result = await done
+    debug(result)
+    assert.strictEqual(result.data.message, 'asyncError')
   })
   test('pure xstate', async () => {
     debug('')

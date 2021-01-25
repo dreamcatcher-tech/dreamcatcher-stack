@@ -47,7 +47,7 @@ describe('effector', () => {
      * 2020-11-20 478ms 77ms RTT - tuning
      * 2020-11-26 188ms 85ms RTT - turned off net creation
      * 2021-01-18 199ms total, 118ms RTT, blockcount 2 - removed proxy objects, add pending interpreter, ping reply goes via loopback
-     * 2021-01-21 111ms total, 63ms RTT - fast-xstate interpreter
+     * 2021-01-21 111ms total, 63ms RTT - fast-xstate interpreter only swapped out
      */
   })
   test.skip('ping many times', async () => {
@@ -80,7 +80,9 @@ describe('effector', () => {
      *
      */
   })
-  test('create child', async () => {
+  test.only('create child', async () => {
+    require('debug').enable('*tests* *parallel *transmit*')
+
     const client = await effectorFactory()
     client.enableLogging()
     reply = await client.add('child1')

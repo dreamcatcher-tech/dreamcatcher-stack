@@ -43,7 +43,7 @@ const transmitConfig = (ioConsistency) => {
       }),
       extendTargetTxs: assign({
         targetTxs: ({ interblock, targetTxs }, event) => {
-          debug(`assignTargetTxs`)
+          debug(`extendTargetTxs`)
           const sockets = event.data
           assert(sockets.every(socketModel.isModel))
           const ext = sockets.map((socket) =>

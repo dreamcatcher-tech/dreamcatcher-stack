@@ -24,6 +24,7 @@ describe('crm', () => {
       await shell.settle()
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
+       * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
        */
     })
     test.todo('can only add customer if provide valid data')

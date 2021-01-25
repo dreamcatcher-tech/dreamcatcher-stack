@@ -9,24 +9,27 @@ const pure = async (event, definition, config = {}) => {
   // TODO validate machine against xstate, then cache the result
   // TODO verify all references in machine are present in config
   // TODO check format of all nodes to be valid
+  let context = definition.context || {} // shared context for parallel states
 
+  const resolveGrandparent = (state) => resolvePath(state).grandparent
   const resolveParent = (state) => resolvePath(state).parent
   const resolveNode = (state) => resolvePath(state).node
   const resolvePath = (state) => {
     const path = state.value.split('.')
     let node = definition
+    let parent, grandparent
     do {
+      grandparent = parent
       parent = node
       const { states } = node
       const value = path.shift()
       node = states[value]
     } while (path.length)
     // debug(`resolveNode: `, state.value, node)
-    return { parent, node }
+    return { grandparent, parent, node }
   }
   const entry = (state, event) => actions(state, event, 'entry')
   const exit = (state, event) => actions(state, event, 'exit')
-  const transitions = (state, event) => actions(state, event, 'transitions')
   const actions = (state, event, property) => {
     const node = resolveNode(state)
     const actions = node[property]
@@ -108,6 +111,10 @@ const pure = async (event, definition, config = {}) => {
       assert(state.value.includes('.'))
       const parent = resolveParent(state)
       transitions = parent.onDone
+    } else if (isParallel(state)) {
+      // TODO assert all child states are in final state ?
+      assert(node.onDone)
+      transitions = node.onDone
     } else {
       if (!node.on) {
         return state
@@ -128,27 +135,9 @@ const pure = async (event, definition, config = {}) => {
     if (!Array.isArray(transitions)) {
       transitions = [transitions]
     }
-    transitions = transitions.map((transition) => {
-      if (typeof transition === 'string') {
-        transition = { target: transition }
-      }
-      let { target } = transition
-      if (!target.startsWith('.') && state.value.includes('.')) {
-        const path = state.value.split('.')
-        path.pop()
-        if (isFinal(state)) {
-          path.pop()
-        }
-        path.push(target)
-        target = path.join('.')
-        transition = { ...transition, target }
-      }
-      if (target.startsWith('.')) {
-        target = state.value + target
-        transition = { ...transition, target }
-      }
-      return transition
-    })
+    transitions = transitions.map((transition) =>
+      absoluteTransition(state, transition)
+    )
     debug(`resolveTransition`, transitions)
     for (const transition of transitions) {
       const { cond } = transition
@@ -164,12 +153,33 @@ const pure = async (event, definition, config = {}) => {
     }
     throw new Error(`No transition possible - event swallowed`)
   }
+  const absoluteTransition = (state, transition) => {
+    if (typeof transition === 'string') {
+      transition = { target: transition }
+    }
+    let { target } = transition
+    if (!target.startsWith('.') && state.value.includes('.')) {
+      const path = state.value.split('.')
+      path.pop()
+      if (isFinal(state)) {
+        path.pop()
+      }
+      path.push(target)
+      target = path.join('.')
+      transition = { ...transition, target }
+    }
+    if (target.startsWith('.')) {
+      target = state.value + target
+      transition = { ...transition, target }
+    }
+    return transition
+  }
   const isPending = (state) => {
     return !!state.transition
   }
   const isFinal = (state) => {
     const node = resolveNode(state)
-    return node.type === 'final' || state.watchdog > 100
+    return node.type === 'final'
   }
   const isParallel = (state) => {
     const node = resolveNode(state)
@@ -180,18 +190,70 @@ const pure = async (event, definition, config = {}) => {
     return node.initial
   }
   const isDone = (state) => isFinal(state) && !state.value.includes('.')
+  const isGrandparentParallel = (state) => {
+    const grandparent = resolveGrandparent(state)
+    return grandparent && grandparent.type === 'parallel'
+  }
   const doneData = (state, event) => {
     const node = resolveNode(state)
     const dataFn = node.data || (() => undefined)
     assert.strictEqual(typeof dataFn, 'function')
     return dataFn(state.context, event)
   }
-  const parallel = (state, event) => {
+  /**
+   * All states share the same live context.
+   * State.value becomes an array ?
+   * Get to the state where all substates are finalized
+   */
+  const pdbg = debug.extend('parallel')
+  const parallel = async (state, event) => {
     // fire off concurrent settleState events
+    pdbg(`parallel start`, state.value)
+    const node = resolveNode(state)
+    assert.strictEqual(typeof node.states, 'object')
+    pdbg(`node: `, node)
+
+    const updateContext = ({ context }) => (state = { ...state, context })
+
+    const awaits = []
+    for (const subnodeKey in node.states) {
+      const process = async () => {
+        const transition = resolveParallelTransition(state, subnodeKey)
+        pdbg(`transition: `, transition)
+        let substate = { ...state, transition }
+        substate = makeTransition(substate, event)
+        pdbg(`substate prior: `, substate.value)
+        substate = await settleState(substate, event)
+        pdbg(`substate settled: `, substate.value)
+        assert(isFinal(substate))
+        updateContext(substate)
+      }
+      awaits.push(process())
+    }
+
+    await Promise.all(awaits)
+    event = { type: `done.parallel.(${state.value})` }
+    state = resolveTransition(state, event)
+    // then take the onDone transition
+    pdbg(`parallel complete: `, state.value)
+    return { state, event }
+  }
+  resolveParallelTransition = (state, transition) => {
+    // drilldown to transitions
+    if (typeof transition === 'string') {
+      transition = { target: transition }
+    }
+    const { target } = transition
+    assert(isParallel(state))
+    transition = { ...transition, target: state.value + '.' + target }
+    return transition
   }
   const settleState = async (state, event) => {
     const { value } = state
     let { watchdog } = state
+    if (watchdog > 100) {
+      throw new Error(`endless loop: ${watchdog}`)
+    }
     debug(`loop ${++watchdog} stateValue: %o`, value)
     state = { ...state, watchdog }
 
@@ -200,8 +262,9 @@ const pure = async (event, definition, config = {}) => {
       state = invokeResult.state
       event = invokeResult.event
     } else if (isParallel(state)) {
-      // handle always transition ?
-      state = await parallel(state)
+      result = await parallel(state, event)
+      state = result.state
+      event = result.event
     } else if (isParent(state)) {
       // find the next state, and make the transition down to it
       state = resolveNestedState(state)
@@ -219,6 +282,10 @@ const pure = async (event, definition, config = {}) => {
       debug(`isDone`, state)
       return doneData(state, event)
     }
+    if (isGrandparentParallel(state)) {
+      return state
+    }
+
     throw new Error(`Settled on not final state`)
   }
   const makeTransition = (state, event) => {
@@ -235,9 +302,9 @@ const pure = async (event, definition, config = {}) => {
     debug(`transition complete to: %o`, state.value)
     return state
   }
+
   let state = {
     value: undefined,
-    context: definition.context || {},
     transition: { target: definition.initial },
     watchdog: 0,
   }

@@ -13,18 +13,16 @@ const {
   rxRequestModel,
   txReplyModel,
 } = require('../../../w015-models')
-const {
-  blockProducer,
-  lockProducer,
-  networkProducer,
-} = require('../../../w016-producers')
+const { blockProducer, lockProducer } = require('../../../w016-producers')
 const { generateNext } = blockProducer
 const { thread } = require('../execution/thread')
 const { machine } = require('../machines/increasor')
+const { definition: isolatorDefinition } = require('../machines/isolator')
 const consistencyProcessor = require('../services/consistencyFactory')
 const cryptoProcessor = require('../services/cryptoFactory')
 const isolateProcessor = require('../services/isolateFactory')
 const { isolatorConfig } = require('./isolatorConfig')
+const { pure } = require('../../../w001-xstate-direct')
 
 const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
@@ -168,12 +166,17 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         return { lock }
       },
       isolatedExecution: async ({ lock }) => {
-        const executeCovenant = {
+        const execute = {
           type: 'EXECUTE_COVENANT',
           payload: { lock },
         }
         const isolator = isolatorConfig(ioIsolate)
-        const { dmz, containerId } = await thread(executeCovenant, isolator)
+        const config = isolator.options
+        const context = isolator.context
+        const definition = { ...isolatorDefinition, context }
+        const { dmz, containerId } = await pure(execute, definition, config)
+
+        // const { dmz, containerId } = await thread(executeCovenant, isolator)
         assert(dmzModel.isModel(dmz))
         return { dmz, containerId }
       },

@@ -65,3 +65,18 @@ This statechart calls the HOSC to do pure transition functions, then it takes th
 Transition to next node, resolve current node, then lob up an action to self to cause the processing of each step ?
 
 In effect, there would be no single program that could execute the core statechart, just something to start the operation, ways to process each node, then actions send to self to move the system forwards.
+
+## Minimum subset of features required to implement all other features
+
+1. receieve action
+1. always transition
+1. conditional transition
+1. transition actions
+1. single dimensional transitions
+   With these features, can write a statechart that when executed
+
+## Debugging features
+
+1. Each transition, along with exec() to call all functions, should contain a list of function names in the order they will be called in, so users can see what order their code will be called in each transition
+1. Debugging for each piece of user code, where the call params and output result can be traced
+1. each subsequent call to exec actually takes place within the last one, so debugger can walk the stack to see values of execution
