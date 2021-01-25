@@ -224,17 +224,7 @@ const pure = async (event, definition, config = {}) => {
 
     const awaits = []
     for (const subnodeKey in node.states) {
-      const process = async () => {
-        const transition = resolveParallelTransition(state, subnodeKey)
-        pdbg(`transition: `, transition)
-        let substate = { ...state, transition }
-        substate = makeTransition(substate, event)
-        pdbg(`substate prior: `, substate.value)
-        substate = await settleState(substate, event)
-        pdbg(`substate settled: `, substate.value)
-        assert(isFinal(substate))
-      }
-      awaits.push(process())
+      awaits.push(processInParallel(state, subnodeKey))
     }
 
     await Promise.all(awaits)
@@ -244,7 +234,17 @@ const pure = async (event, definition, config = {}) => {
     pdbg(`parallel complete: `, state.value)
     return { state, event }
   }
-  resolveParallelTransition = (state, transition) => {
+  const processInParallel = async (state, subnodeKey) => {
+    const transition = resolveParallelTransition(state, subnodeKey)
+    pdbg(`transition: `, transition)
+    let substate = { ...state, transition }
+    substate = makeTransition(substate, event)
+    pdbg(`substate prior: `, substate.value)
+    substate = await settleState(substate, event)
+    pdbg(`substate settled: `, substate.value)
+    assert(isFinal(substate))
+  }
+  const resolveParallelTransition = (state, transition) => {
     // drilldown to transitions
     if (typeof transition === 'string') {
       transition = { target: transition }

@@ -45,7 +45,6 @@
     "prettier": "^2.1.1"
   },
   "jest": {
-    "bail": true,
     "testEnvironment": "node"
   },
   "prettier": {
