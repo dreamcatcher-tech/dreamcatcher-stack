@@ -46,8 +46,8 @@ const fsmFactory = () => {
     assert(addressModel.isModel(payload))
     const action = { type: 'INCREASE_CHAIN', payload }
     const config = increasorMachine.options
-    // const result = await pure(action, increasorDefinition, config)
-    const result = await thread(action, increasorMachine)
+    const result = await pure(action, increasorDefinition, config)
+    // const result = await thread(action, increasorMachine)
     return result
   })
   const receiverMachine = receiveConfig(ioConsistency)

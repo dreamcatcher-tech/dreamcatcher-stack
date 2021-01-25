@@ -44,83 +44,63 @@ const definition = {
           },
           { target: 'done' },
         ],
-        onError: 'error',
       },
     },
     execute: {
       // TODO move to 'onDone' style
-      initial: 'branch',
+      initial: 'isProposer',
       states: {
-        branch: {
+        isProposer: {
           always: [
             { target: 'proposeNext', cond: 'isProposer' },
             { target: 'validateNext', cond: 'isValidator' },
-            { target: '#done' },
+            { target: 'done' },
           ],
         },
         proposeNext: {
-          initial: 'branch',
+          initial: 'isIsolationComplete',
           states: {
-            branch: {
+            isIsolationComplete: {
               always: [
-                // TODO check if dmz has increased after applying interblocks or not
-                {
-                  target: 'isDmzChanged',
-                  cond: 'isIsolationComplete',
-                },
-                { target: '#increasor.isolate' },
+                { target: 'isDmzChanged', cond: 'isIsolationComplete' },
+                { target: 'isolate' },
               ],
+            },
+            isolate: {
+              invoke: {
+                src: 'isolatedExecution',
+                onDone: {
+                  target: 'isIsolationComplete',
+                  actions: ['assignNextDmz', 'assignContainerId'],
+                },
+              },
             },
             isDmzChanged: {
               always: [
-                {
-                  target: 'signBlock',
-                  cond: 'isDmzChanged',
-                },
-                { target: '#increasor.unlockChain' },
+                { target: 'signBlock', cond: 'isDmzChanged' },
+                { target: 'done' },
               ],
             },
             signBlock: {
               invoke: {
                 src: 'signBlock', // TODO check if the signature is valid
                 onDone: {
-                  target: '#increasor.unlockChain',
+                  target: 'done',
                   actions: 'assignBlock',
                 },
-                onError: '#error',
               },
             },
+            done: { type: 'final' },
           },
+          onDone: 'done',
         },
         validateNext: {
           // if pass, sign the authenticity, then store the block & transmit the authenticity
           // else antisign the authenticity, then store & transmit the authenticity
-          always: [
-            { target: '.signBlock', cond: 'isIsolationComplete' },
-            {
-              target: '#increasor.isolate',
-              cond: 'isIsolationRequired',
-            },
-          ],
-          initial: 'signBlock',
-          states: {
-            signBlock: {},
-          },
         },
-        history: {
-          type: 'history',
-        },
+        done: { type: 'final' },
       },
-    },
-    isolate: {
-      invoke: {
-        src: 'isolatedExecution',
-        onDone: {
-          target: '#increasor.execute.history',
-          actions: ['assignNextDmz', 'assignContainerId'],
-        },
-        onError: 'error',
-      },
+      onDone: 'unlockChain',
     },
     unlockChain: {
       // make the next lock, which might be the same if no block provided
@@ -159,7 +139,6 @@ const definition = {
           },
           onDone: 'unlockChain',
         },
-
         unlockChain: {
           invoke: {
             src: 'unlockChain',
@@ -181,15 +160,10 @@ const definition = {
     },
 
     done: {
-      id: 'done',
       data: ({ txInterblocks, isRedriveRequired }) => ({
         txInterblocks,
         isRedriveRequired,
       }),
-      type: 'final',
-    },
-    error: {
-      id: 'error',
       type: 'final',
     },
   },

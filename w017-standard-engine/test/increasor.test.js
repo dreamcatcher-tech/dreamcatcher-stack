@@ -7,7 +7,7 @@ const { request } = require('../../w002-api')
 require('../../w012-crypto').testMode()
 
 describe('increasor', () => {
-  require('debug').enable('*met* *shell *translator *hooks *interpreter')
+  require('debug').enable('*met* ')
   test('no new block from lineage interblocks', async () => {
     const { covenantId } = shell // shell responds to pings
     const base = await metrologyFactory('inc', { hyper: shell })
