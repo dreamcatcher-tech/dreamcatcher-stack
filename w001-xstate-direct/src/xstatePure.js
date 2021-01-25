@@ -1,5 +1,14 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:xstate:pure')
+const createContext = (initial) => {
+  let context = initial || {}
+  return {
+    getContext: () => context,
+    setContext: (nextContext) => {
+      context = nextContext
+    },
+  }
+}
 
 const pure = async (event, definition, config = {}) => {
   assert.strictEqual(typeof config, 'object')
@@ -9,7 +18,7 @@ const pure = async (event, definition, config = {}) => {
   // TODO validate machine against xstate, then cache the result
   // TODO verify all references in machine are present in config
   // TODO check format of all nodes to be valid
-  let context = definition.context || {} // shared context for parallel states
+  const contextMgr = createContext(definition.context) // shared context for parallel states
 
   const resolveGrandparent = (state) => resolvePath(state).grandparent
   const resolveParent = (state) => resolvePath(state).parent
@@ -52,14 +61,14 @@ const pure = async (event, definition, config = {}) => {
       const fn = config.actions[actionName]
       assert(fn, `No action found for: ${actionName}`)
       if (fn.type === 'xstate.assign') {
-        const context = { ...state.context }
+        const context = { ...contextMgr.getContext() }
         for (const key of Object.keys(fn.assignment)) {
           context[key] = fn.assignment[key](context, event)
         }
-        state = { ...state, context }
+        contextMgr.setContext(context)
       } else {
         assert.strictEqual(typeof fn, 'function')
-        fn(state.context, event)
+        fn(contextMgr.getContext(), event)
       }
     }
     return state
@@ -76,7 +85,7 @@ const pure = async (event, definition, config = {}) => {
       const asyncFunction = config.services[invoke.src]
       assert.strictEqual(typeof asyncFunction, 'function')
       try {
-        const data = await asyncFunction(state.context, event)
+        const data = await asyncFunction(contextMgr.getContext(), event)
         event = { type: `done.invoke.${invoke.src}`, data }
         state = resolveTransition(state, event)
         return { state, event }
@@ -144,7 +153,7 @@ const pure = async (event, definition, config = {}) => {
       if (cond) {
         const condFn = config.guards[cond]
         assert.strictEqual(typeof condFn, 'function')
-        if (condFn(state.context, event)) {
+        if (condFn(contextMgr.getContext(), event)) {
           return { ...state, transition }
         }
       } else {
@@ -198,7 +207,7 @@ const pure = async (event, definition, config = {}) => {
     const node = resolveNode(state)
     const dataFn = node.data || (() => undefined)
     assert.strictEqual(typeof dataFn, 'function')
-    return dataFn(state.context, event)
+    return dataFn(contextMgr.getContext(), event)
   }
   /**
    * All states share the same live context.
@@ -213,8 +222,6 @@ const pure = async (event, definition, config = {}) => {
     assert.strictEqual(typeof node.states, 'object')
     pdbg(`node: `, node)
 
-    const updateContext = ({ context }) => (state = { ...state, context })
-
     const awaits = []
     for (const subnodeKey in node.states) {
       const process = async () => {
@@ -226,7 +233,6 @@ const pure = async (event, definition, config = {}) => {
         substate = await settleState(substate, event)
         pdbg(`substate settled: `, substate.value)
         assert(isFinal(substate))
-        updateContext(substate)
       }
       awaits.push(process())
     }

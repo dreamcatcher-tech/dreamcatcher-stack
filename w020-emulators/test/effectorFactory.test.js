@@ -80,9 +80,7 @@ describe('effector', () => {
      *
      */
   })
-  test.only('create child', async () => {
-    require('debug').enable('*tests* *parallel *transmit*')
-
+  test('create child', async () => {
     const client = await effectorFactory()
     client.enableLogging()
     reply = await client.add('child1')
