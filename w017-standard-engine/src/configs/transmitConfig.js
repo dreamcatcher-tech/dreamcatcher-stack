@@ -9,12 +9,12 @@ const {
   txModel,
   addressModel,
 } = require('../../../w015-models')
-const { machine } = require('../machines/transmit')
+const { definition } = require('../machines/transmit')
 const consistencyProcessor = require('../services/consistencyFactory')
 
 const transmitConfig = (ioConsistency) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
-  return machine.withConfig({
+  const config = {
     actions: {
       assignInterblock: assign({
         interblock: (context, event) => {
@@ -211,7 +211,8 @@ const transmitConfig = (ioConsistency) => {
         return { isOriginPresent }
       },
     },
-  })
+  }
+  return { machine: definition, config }
 }
 
 module.exports = { transmitConfig }

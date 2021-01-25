@@ -90,7 +90,8 @@ const definition = {
     },
   },
 }
-const machine = Machine(definition)
 if (typeof module === 'object') {
-  module.exports = { definition, machine }
+  module.exports = { definition }
+} else {
+  Machine(definition)
 }

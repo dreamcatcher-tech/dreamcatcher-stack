@@ -15,9 +15,7 @@ const {
 } = require('../../../w015-models')
 const { blockProducer, lockProducer } = require('../../../w016-producers')
 const { generateNext } = blockProducer
-const { thread } = require('../execution/thread')
-const { machine } = require('../machines/increasor')
-const { definition: isolatorDefinition } = require('../machines/isolator')
+const { definition } = require('../machines/increasor')
 const consistencyProcessor = require('../services/consistencyFactory')
 const cryptoProcessor = require('../services/cryptoFactory')
 const isolateProcessor = require('../services/isolateFactory')
@@ -28,7 +26,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
   const crypto = cryptoProcessor.toFunctions(ioCrypto)
   const isolate = isolateProcessor.toFunctions(ioIsolate)
-  return machine.withConfig({
+  const config = {
     actions: {
       assignLock: assign({
         lock: (context, event) => {
@@ -170,11 +168,8 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           type: 'EXECUTE_COVENANT',
           payload: { lock },
         }
-        const isolator = isolatorConfig(ioIsolate)
-        const config = isolator.options
-        const context = isolator.context
-        const definition = { ...isolatorDefinition, context }
-        const { dmz, containerId } = await pure(execute, definition, config)
+        const { machine, config } = isolatorConfig(ioIsolate)
+        const { dmz, containerId } = await pure(execute, machine, config)
 
         // const { dmz, containerId } = await thread(executeCovenant, isolator)
         assert(dmzModel.isModel(dmz))
@@ -250,7 +245,8 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         return
       },
     },
-  })
+  }
+  return { machine: definition, config }
 }
 
 const _isPierceChanged = (network, previous) => {

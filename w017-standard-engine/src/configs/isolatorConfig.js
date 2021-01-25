@@ -13,10 +13,8 @@ const {
   pierceSigner,
 } = require('../../../w015-models')
 const { networkProducer, channelProducer } = require('../../../w016-producers')
-const { thread } = require('../execution/thread')
 const { interpreterConfig } = require('./interpreterConfig')
-const { definition } = require('../machines/interpreter')
-const { machine } = require('../machines/isolator')
+const { definition } = require('../machines/isolator')
 const isolationProcessor = require('../services/isolateFactory')
 const crypto = require('../../../w012-crypto')
 const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
@@ -35,7 +33,7 @@ const isPiercable = ({ dmz, hasPierced }) => {
   debug(`isPiercable: %O`, isPiercable)
   return isPiercable
 }
-const isolatorMachine = machine.withConfig({
+const config = {
   actions: {
     assignLock: assign({
       lock: (context, event) => {
@@ -221,12 +219,10 @@ const isolatorMachine = machine.withConfig({
       const { address } = channel
       assert(!address.isUnknown())
       const tick = createTick(containerId, isolation.tick)
-      const interpreter = interpreterConfig(tick)
+      const { machine, config } = interpreterConfig(tick)
       const payload = { dmz, externalAction, address }
       const tickAction = { type: 'TICK', payload }
 
-      const config = interpreter.options
-      const machine = { ...definition, context: interpreter.context }
       const nextDmz = await pure(tickAction, machine, config)
       // const nextDmz = await thread(tickAction, interpreter)
       assert(dmzModel.isModel(nextDmz))
@@ -255,7 +251,7 @@ const isolatorMachine = machine.withConfig({
       await isolation.unloadCovenant(containerId)
     },
   },
-})
+}
 const _extractPierceDmz = (block) => {
   const validators = pierceKeypair.getValidatorEntry()
   const baseDmz = dmzModel.create({ validators })
@@ -292,7 +288,8 @@ const _getPierceProvenance = (block) => {
 const isolatorConfig = (ioIsolate) => {
   debug(`isolatorConfig`)
   const isolation = isolationProcessor.toFunctions(ioIsolate)
-  return isolatorMachine.withContext({ isolation })
+  const machine = { ...definition, context: { isolation } }
+  return { machine, config }
 }
 
 const createTick = (containerId, tick) => (state, action, accumulator) =>

@@ -6,7 +6,7 @@ require('debug').enable('*met* *needle *tests*')
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test('deploys app', async () => {
+    test.only('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       // shell.enableLogging()
@@ -25,6 +25,7 @@ describe('crm', () => {
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
        * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
+       * 2021-01-25 151ms publish, 371ms removed xstate
        */
     })
     test.todo('can only add customer if provide valid data')

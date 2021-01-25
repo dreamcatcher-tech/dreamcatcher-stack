@@ -1,10 +1,6 @@
-const { Machine, assign } = require('xstate')
-global.Machine = Machine // allow copy paste of machines into visualizer
-global.assign = assign
 const assert = require('assert')
 const { ioQueueFactory } = require('../../w003-queue')
 const { interblockModel, addressModel, txModel } = require('../../w015-models')
-const { thread } = require('./execution/thread')
 const { isolateFactory } = require('./services/isolateFactory')
 const { cryptoFactory } = require('./services/cryptoFactory')
 const { consistencyFactory } = require('./services/consistencyFactory')
@@ -13,10 +9,6 @@ const { poolConfig } = require('./configs/poolConfig')
 const { receiveConfig } = require('./configs/receiveConfig')
 const { transmitConfig } = require('./configs/transmitConfig')
 
-const { definition: increasorDefinition } = require('./machines/increasor')
-const { definition: poolDefinition } = require('./machines/pool')
-const { definition: receiveDefinition } = require('./machines/receive')
-const { definition: transmitDefinition } = require('./machines/transmit')
 const { pure } = require('../../w001-xstate-direct')
 
 const fsmFactory = () => {
@@ -32,39 +24,39 @@ const fsmFactory = () => {
   ioCrypto.setProcessor(cryptoFactory())
   ioConsistency.setProcessor(consistencyFactory())
 
-  const poolMachine = poolConfig(ioCrypto, ioConsistency)
+  const pool = poolConfig(ioCrypto, ioConsistency)
   ioPool.setProcessor(async (payload) => {
     assert(interblockModel.isModel(payload))
     const action = { type: 'POOL_INTERBLOCK', payload }
-    const config = poolMachine.options
-    const result = await pure(action, poolDefinition, config)
+    const { machine, config } = pool
+    const result = await pure(action, machine, config)
     // const result = await thread(action, poolMachine)
     return result
   })
-  const increasorMachine = increasorConfig(ioCrypto, ioConsistency, ioIsolate)
+  const increasor = increasorConfig(ioCrypto, ioConsistency, ioIsolate)
   ioIncrease.setProcessor(async (payload) => {
     assert(addressModel.isModel(payload))
     const action = { type: 'INCREASE_CHAIN', payload }
-    const config = increasorMachine.options
-    const result = await pure(action, increasorDefinition, config)
+    const { machine, config } = increasor
+    const result = await pure(action, machine, config)
     // const result = await thread(action, increasorMachine)
     return result
   })
-  const receiverMachine = receiveConfig(ioConsistency)
+  const receiver = receiveConfig(ioConsistency)
   ioReceive.setProcessor(async (payload) => {
     assert(txModel.isModel(payload))
     const action = { type: 'RECEIVE_INTERBLOCK', payload }
-    const config = receiverMachine.options
-    const result = await pure(action, receiveDefinition, config)
+    const { machine, config } = receiver
+    const result = await pure(action, machine, config)
     // const result = await thread(action, receiverMachine)
     return result
   })
-  const transmitterMachine = transmitConfig(ioConsistency)
+  const transmitter = transmitConfig(ioConsistency)
   ioTransmit.setProcessor(async (payload) => {
     assert(interblockModel.isModel(payload))
     const action = { type: 'TRANSMIT_INTERBLOCK', payload }
-    const config = transmitterMachine.options
-    const result = await pure(action, transmitDefinition, config)
+    const { machine, config } = transmitter
+    const result = await pure(action, machine, config)
     // const result = await thread(action, transmitterMachine)
     return result
   })

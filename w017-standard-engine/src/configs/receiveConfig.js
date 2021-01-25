@@ -14,12 +14,12 @@ const {
   lockProducer,
   networkProducer,
 } = require('../../../w016-producers')
-const { machine } = require('../machines/receive')
+const { definition } = require('../machines/receive')
 const consistencyProcessor = require('../services/consistencyFactory')
 
 const receiveConfig = (ioConsistency) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
-  return machine.withConfig({
+  const config = {
     actions: {
       assignInterblock: assign({
         interblock: (context, event) => {
@@ -88,7 +88,8 @@ const receiveConfig = (ioConsistency) => {
         await consistency.putSocket({ address, socket })
       },
     },
-  })
+  }
+  return { machine: definition, config }
 }
 
 module.exports = { receiveConfig }

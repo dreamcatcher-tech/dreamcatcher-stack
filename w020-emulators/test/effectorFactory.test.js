@@ -48,9 +48,11 @@ describe('effector', () => {
      * 2020-11-26 188ms 85ms RTT - turned off net creation
      * 2021-01-18 199ms total, 118ms RTT, blockcount 2 - removed proxy objects, add pending interpreter, ping reply goes via loopback
      * 2021-01-21 111ms total, 63ms RTT - fast-xstate interpreter only swapped out
+     * 2021-01-25 108ms total, 49ms RTT - all machines using fast-xstate but still loading old machines
+     * 2021-01-25 93ms total, 46ms RTT - xstate removed
      */
   })
-  test.skip('ping many times', async () => {
+  test('ping many times', async () => {
     jest.setTimeout(10000)
     debug(`start`)
     const client = await effectorFactory()
@@ -66,9 +68,10 @@ describe('effector', () => {
       }
     }
     const results = await Promise.all(promises)
-    await client.metrology.settle()
-    assert(results.every((reply) => reply && reply.type === 'PONG'))
-    assert(results.every((reply, index) => reply.payload.count === index))
+    await client.settle()
+    assert(results.every((reply) => reply && Number.isInteger(reply.count)))
+    assert(results.every((reply, index) => reply.count === index))
+    debug(`blockcount: `, client.getBlockCount())
     debug(`stop`)
     /**
      * 2020-05-11 7,209ms 100 pings, batchsize 10, 68 blocks in total
@@ -77,7 +80,7 @@ describe('effector', () => {
      * 2020-06-24 2,908ms 100 pings, batchsize 10, 23 blocks in total
      * 2020-09-05 5,496ms 100 pings, batchsize 10, 23 blocks in total move to whonix vm
      * 2020-09-09 4,211ms 100 pings, batchsize 10, 23 blocks in total tuning
-     *
+     * 2021-01-25 2,116ms 100 pings, batchsize 10, 11 blocks in total - removed xstate
      */
   })
   test('create child', async () => {

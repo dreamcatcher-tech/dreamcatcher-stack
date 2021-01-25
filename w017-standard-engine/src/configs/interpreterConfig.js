@@ -13,7 +13,7 @@ const {
 } = require('../../../w015-models')
 const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const dmzReducer = require('../../../w021-dmz-reducer')
-const { machine } = require('../machines/interpreter')
+const { definition } = require('../machines/interpreter')
 const {
   '@@GLOBAL_HOOK': globalHook,
   resolve,
@@ -22,7 +22,7 @@ const {
 } = require('../../../w002-api')
 const { assign } = require('xstate')
 
-const interpreterMachine = machine.withConfig({
+const config = {
   actions: {
     assignExternalAction: assign({
       externalAction: (context, event) => {
@@ -608,7 +608,7 @@ const interpreterMachine = machine.withConfig({
       return { reduceResolve }
     },
   },
-})
+}
 
 const _dereference = (path) => {
   if (path.startsWith('/')) {
@@ -619,9 +619,10 @@ const _dereference = (path) => {
 }
 
 const interpreterConfig = (isolatedTick) => {
-  assert(typeof isolatedTick === 'function')
+  assert.strictEqual(typeof isolatedTick, 'function')
   // TODO multiplex the function with a code, so can use the same machine repeatedly
-  return interpreterMachine.withContext({ isolatedTick })
+  const machine = { ...definition, context: { isolatedTick } }
+  return { machine, config }
 }
 
 module.exports = { interpreterConfig }

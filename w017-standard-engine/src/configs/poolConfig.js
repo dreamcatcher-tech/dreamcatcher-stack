@@ -2,7 +2,7 @@ const assert = require('assert')
 const debug = require('debug')('interblock:config:pool')
 const _ = require('lodash')
 const { assign } = require('xstate')
-const { machine } = require('../machines/pool')
+const { definition } = require('../machines/pool')
 const {
   channelModel,
   networkModel,
@@ -13,7 +13,6 @@ const {
   dmzModel,
   covenantIdModel,
   publicKeyModel,
-  provenanceModel,
 } = require('../../../w015-models')
 const {
   blockProducer,
@@ -28,7 +27,7 @@ const cryptoProcessor = require('../services/cryptoFactory')
 const poolConfig = (ioCrypto, ioConsistency) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
   const crypto = cryptoProcessor.toFunctions(ioCrypto)
-  return machine.withConfig({
+  const config = {
     actions: {
       assignInterblock: assign({
         interblock: (context, event) => {
@@ -327,7 +326,8 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         debug(`storeInPools completed on ${affectedAddresses.length} items`)
       },
     },
-  })
+  }
+  return { machine: definition, config }
 }
 
 module.exports = { poolConfig }
