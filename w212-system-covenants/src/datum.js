@@ -1,5 +1,5 @@
 const assert = require('assert')
-const faker = require('faker')
+const faker = require('faker/locale/en')
 const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
 const debug = require('debug')('interblock:apps:datum')

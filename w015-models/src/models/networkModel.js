@@ -1,7 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:network')
 const _ = require('lodash')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { channelModel } = require('./channelModel')
 const { addressModel } = require('./addressModel')
 const { provenanceModel } = require('./provenanceModel')

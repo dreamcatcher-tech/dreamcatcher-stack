@@ -1,4 +1,4 @@
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 
 const timestampModel = standardize({
   schema: {

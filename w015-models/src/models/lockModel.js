@@ -1,7 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:lock')
 const { v4: uuidCreator } = require('uuid')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { timestampModel } = require('./timestampModel')
 const { blockModel } = require('./blockModel')
 const { interblockModel } = require('./interblockModel')

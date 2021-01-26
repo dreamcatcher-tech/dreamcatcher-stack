@@ -1,4 +1,4 @@
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { actionSchema } = require('../schemas/modelSchemas')
 
 let counter = 0

@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { interblockModel } = require('../models/interblockModel')
 const { socketModel } = require('./socketModel')
 

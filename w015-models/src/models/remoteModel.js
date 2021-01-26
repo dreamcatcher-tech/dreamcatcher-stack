@@ -1,6 +1,6 @@
 const assert = require('assert')
 const _ = require('lodash')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { remoteSchema } = require('../schemas/modelSchemas')
 const { addressModel } = require('./addressModel')
 const remoteModel = standardize({

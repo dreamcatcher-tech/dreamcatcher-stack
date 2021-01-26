@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { actionModel } = require('../models/actionModel')
 const { txRequestSchema } = require('../schemas/transientSchemas')
 

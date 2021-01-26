@@ -1,6 +1,6 @@
 const assert = require('assert')
 const { v4: uuid } = require('uuid')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 
 const selfSocket = {
   id: 'fd9e9077-cda5-4b1d-afbf-c8a7cf648ded',

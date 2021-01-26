@@ -1,7 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:integrity')
 const crypto = require('../../../w012-crypto')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { integritySchema } = require('../schemas/modelSchemas')
 
 const integrityModel = standardize({

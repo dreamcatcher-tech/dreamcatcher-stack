@@ -1,4 +1,4 @@
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { validatorsSchema } = require('../schemas/modelSchemas')
 const { publicKeyModel } = require('./publicKeyModel')
 const { keypairModel, ciKeypair } = require('./keypairModel')

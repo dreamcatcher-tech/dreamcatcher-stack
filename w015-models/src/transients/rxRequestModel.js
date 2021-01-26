@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const splitSequence = require('./splitSequence')
 const { actionModel } = require('../models/actionModel')
 const { addressModel } = require('../models/addressModel')

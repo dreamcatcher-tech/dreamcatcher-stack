@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { proofSchema } = require('../schemas/modelSchemas')
 const { blockModel } = require('./blockModel')
 

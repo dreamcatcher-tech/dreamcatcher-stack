@@ -1,5 +1,5 @@
 const crypto = require('../../../w012-crypto')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { publicKeyModel } = require('./publicKeyModel')
 const { integrityModel } = require('./integrityModel')
 const { signatureSchema } = require('../schemas/modelSchemas')

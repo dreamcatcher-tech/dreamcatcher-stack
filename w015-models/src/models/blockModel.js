@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:block')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { provenanceModel } = require('./provenanceModel')
 const { keypairModel } = require('./keypairModel')
 const { dmzModel } = require('./dmzModel')

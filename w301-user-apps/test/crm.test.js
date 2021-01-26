@@ -43,7 +43,7 @@ describe('crm', () => {
   })
   describe('general use', () => {
     test.todo('cannot alter the structure of the application in any way')
-    test('basic activities', async () => {
+    test.skip('basic activities', async () => {
       const shell = await effectorFactory('crm')
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
       await shell.install(dpkgPath, 'crm')

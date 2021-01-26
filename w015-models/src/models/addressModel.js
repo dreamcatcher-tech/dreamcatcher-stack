@@ -1,6 +1,6 @@
 const assert = require('assert')
 const crypto = require('../../../w012-crypto')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { integrityModel } = require('./integrityModel')
 const { addressSchema } = require('../schemas/modelSchemas')
 

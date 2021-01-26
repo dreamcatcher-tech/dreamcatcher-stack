@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { standardize } = require('../utils')
+const { standardize } = require('../modelUtils')
 const { covenantIdModel } = require('./covenantIdModel')
 const { timestampModel } = require('./timestampModel')
 const { keypairModel } = require('./keypairModel')
