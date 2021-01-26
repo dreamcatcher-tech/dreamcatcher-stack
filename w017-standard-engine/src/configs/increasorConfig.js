@@ -25,7 +25,7 @@ const { pure } = require('../../../w001-xstate-direct')
 const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
   const crypto = cryptoProcessor.toFunctions(ioCrypto)
-  const isolate = isolateProcessor.toFunctions(ioIsolate)
+  const isolation = isolateProcessor.toFunctions(ioIsolate)
   const config = {
     actions: {
       assignLock: assign({
@@ -168,7 +168,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           type: 'EXECUTE_COVENANT',
           payload: { lock },
         }
-        const { machine, config } = isolatorConfig(ioIsolate)
+        const { machine, config } = isolatorConfig(isolation, consistency)
         const { dmz, containerId } = await pure(execute, machine, config)
 
         // const { dmz, containerId } = await thread(executeCovenant, isolator)
@@ -215,7 +215,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           const { sequence } = request
           let txReply
           try {
-            const payload = await isolate.executeEffect({
+            const payload = await isolation.executeEffect({
               containerId,
               effectId,
               timeout,
@@ -233,7 +233,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const settlements = await Promise.all(awaits)
         debug(`settlements: `, settlements)
 
-        await isolate.unloadCovenant(containerId)
+        await isolation.unloadCovenant(containerId)
         return { effectsReplyCount: settlements.length }
       },
 

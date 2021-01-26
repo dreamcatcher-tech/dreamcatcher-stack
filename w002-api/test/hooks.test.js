@@ -13,14 +13,14 @@ describe('hooks', () => {
   }
 
   test('nested hooks awaited', async () => {
-    const result = await hook(nested(57, 100))
+    const result = await hook(nested(57, 10))
     assert.strictEqual(result.reduction.id, 57)
-    assert.strictEqual(result.requests.length, 100)
+    assert.strictEqual(result.requests.length, 10)
   })
   test('nested parallel hooks do not collide', async () => {
     // make many simultaneous calls, and ensure none of them throw an error, and all return correct data
-    const inits = Array(10).fill(true)
-    const nestedDepth = 10
+    const inits = Array(4).fill(true)
+    const nestedDepth = 4
     const awaits = inits.map((_, index) => {
       return hook(nested(index, nestedDepth))
     })

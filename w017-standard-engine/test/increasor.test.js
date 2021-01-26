@@ -18,23 +18,22 @@ describe('increasor', () => {
     const ping1 = await base.getChildren().ping1
     const ping2 = await base.getChildren().ping2
     assert.strictEqual(base.getHeight(), 4)
-    assert.strictEqual(ping1.getHeight(), 2)
-    assert.strictEqual(ping2.getHeight(), 2)
+    assert.strictEqual(ping1.getHeight(), 1)
+    assert.strictEqual(ping2.getHeight(), 1)
 
     base.pierce(shell.actions.ping('ping1'))
-    base.enableLogging()
     await base.settle()
     assert.strictEqual(base.getHeight(), 6)
-    assert.strictEqual(ping1.getHeight(), 3)
-    assert.strictEqual(ping2.getHeight(), 2)
+    assert.strictEqual(ping1.getHeight(), 2)
+    assert.strictEqual(ping2.getHeight(), 1)
 
     base.pierce(shell.actions.ping('ping2'))
 
     await base.settle()
     // boot, spawn1, resolve, spawn2, resolve, ping1, resolve, ping2, resolve
     assert.strictEqual(base.getHeight(), 8)
-    assert.strictEqual(ping1.getHeight(), 3)
-    assert.strictEqual(ping2.getHeight(), 3)
+    assert.strictEqual(ping1.getHeight(), 2)
+    assert.strictEqual(ping2.getHeight(), 2)
 
     // base pool check
     const basePool = base.getPool()
@@ -65,26 +64,22 @@ describe('increasor', () => {
     await base.spawn('child2')
     await base.settle()
     assert.strictEqual(base.getHeight(), 4)
-    const child2BirthBlock = await base.getChildren().child2.getState(1)
-    const lineageParent = child2BirthBlock.network['..']
-    assert.strictEqual(lineageParent.lineage.length, 1)
-
-    const child2OperatingBlock = await base.getChildren().child2.getState(2)
-    const fullParent = child2OperatingBlock.network['..']
-    assert.strictEqual(fullParent.lineage.length, 2)
+    const child2OperatingBlock = await base.getChildren().child2.getState(1)
+    const lineageParent = child2OperatingBlock.network['..']
+    assert.strictEqual(lineageParent.lineage.length, 2)
   })
   test('lineage and lineageTip is purged each new block', async () => {
     const base = await metrologyFactory()
     await base.spawn('child1')
     await base.spawn('child2')
     const child1Fresh = base.getState().network.child1
-    assert.strictEqual(child1Fresh.heavyHeight, 2)
+    assert.strictEqual(child1Fresh.heavyHeight, 1)
     assert.strictEqual(child1Fresh.lineageTip.length, 1)
     assert.strictEqual(child1Fresh.lineage.length, 1)
 
     await base.pierce(shell.actions.ping('child2'))
     const { child1 } = base.getState().network
-    assert.strictEqual(child1.heavyHeight, 2)
+    assert.strictEqual(child1.heavyHeight, 1)
     assert.strictEqual(child1.lineageTip.length, 1)
     assert.strictEqual(child1.lineage.length, 1)
     await base.settle()

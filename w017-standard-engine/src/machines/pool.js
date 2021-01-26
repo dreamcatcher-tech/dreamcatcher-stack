@@ -192,16 +192,9 @@ const definition = {
               },
             },
             increaseChain: {
-              entry: ['assignLock', 'assignDmz', 'assignNextBlock'],
+              entry: 'assignLock',
               always: [
-                {
-                  target: 'unlockChain',
-                  cond: 'isBirthingCompleted',
-                },
-                {
-                  target: 'fetchParentLineage',
-                  cond: 'isLockForGenesis',
-                },
+                { target: 'unlockChain', cond: 'isBirthingCompleted' },
                 { target: 'mergeGenesis' },
               ],
             },
@@ -209,48 +202,11 @@ const definition = {
               entry: 'mergeGenesis',
               always: 'unlockChain',
             },
-            fetchParentLineage: {
-              entry: 'connectToParent',
-              invoke: {
-                src: 'fetchParentLineage',
-                // TODO handle lineage check fail ? or just throw
-                onDone: {
-                  target: 'generateBirthBlock',
-                  cond: 'verifyLineage',
-                },
-              },
-              exit: 'ingestParentLineage',
-            },
-            generateBirthBlock: {
-              invoke: {
-                src: 'generateBirthBlock',
-                onDone: {
-                  target: 'unlockChain',
-                  actions: 'assignGeneratedBlock',
-                },
-              },
-            },
             unlockChain: {
               // TODO use a renewable lock
               entry: 'mergeBlockToLock',
               invoke: {
                 src: 'unlockChain',
-                onDone: [
-                  {
-                    target: 'lockChildChain',
-                    cond: 'isLockForGenesis',
-                  },
-                  {
-                    target: 'poolBirthBlock',
-                    cond: 'isLockForBirthBlock',
-                  },
-                  { target: 'done' },
-                ],
-              },
-            },
-            poolBirthBlock: {
-              invoke: {
-                src: 'poolBirthBlock',
                 onDone: 'done',
               },
             },

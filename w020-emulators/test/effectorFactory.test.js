@@ -50,6 +50,7 @@ describe('effector', () => {
      * 2021-01-21 111ms total, 63ms RTT - fast-xstate interpreter only swapped out
      * 2021-01-25 108ms total, 49ms RTT - all machines using fast-xstate but still loading old machines
      * 2021-01-25 93ms total, 46ms RTT - xstate removed
+     * 2021-01-26 88ms total, 46ms RTT - birthblocks removed
      */
   })
   test.skip('ping many times', async () => {
@@ -81,6 +82,7 @@ describe('effector', () => {
      * 2020-09-05 5,496ms 100 pings, batchsize 10, 23 blocks in total move to whonix vm
      * 2020-09-09 4,211ms 100 pings, batchsize 10, 23 blocks in total tuning
      * 2021-01-25 2,116ms 100 pings, batchsize 10, 11 blocks in total - removed xstate
+     * 2021-01-26 1,931ms 100 pings, batchsize 10, 11 blocks in total - removed birthblocks
      */
   })
   test('create child', async () => {

@@ -29,6 +29,7 @@ const definition = {
   context: {
     lock: undefined,
     dmz: undefined,
+    interblock: undefined,
     containerId: undefined,
     isolation: () => 'isolation function',
     pierceDmz: undefined,
@@ -39,12 +40,28 @@ const definition = {
     idle: {
       on: {
         EXECUTE_COVENANT: {
-          target: 'isDmzChangeable',
-          actions: ['assignLock', 'primeDmz'],
+          target: 'isGenesis',
+          actions: ['assignLock', 'assignDmz'],
         },
       },
     },
+    isGenesis: {
+      always: [
+        { target: 'attachParentLineage', cond: 'isGenesis' },
+        { target: 'isDmzChangeable' },
+      ],
+    },
+    attachParentLineage: {
+      entry: ['assignGenesisInterblock', 'connectToParent'],
+      invoke: {
+        src: 'fetchParentLineage',
+        // TODO handle lineage check fail ? or just throw
+        onDone: { target: 'isDmzChangeable', cond: 'verifyLineage' },
+      },
+      exit: 'ingestParentLineage',
+    },
     isDmzChangeable: {
+      entry: 'ingestInterblocks',
       always: [
         { target: 'loadCovenant', cond: 'isDmzChangeable' },
         { target: 'done' },

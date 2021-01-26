@@ -113,6 +113,8 @@ const pure = async (event, definition, config = {}) => {
         transitions = node.invoke.onDone
       } else {
         transitions = node.invoke.onError
+        console.error(event.data)
+        assert(transitions, `No onError for ${state.value}`)
       }
     } else if (node.always) {
       transitions = node.always
@@ -291,8 +293,9 @@ const pure = async (event, definition, config = {}) => {
     if (isGrandparentParallel(state)) {
       return state
     }
-
-    throw new Error(`Settled on not final state`)
+    debug(`Error state: `, state)
+    debug(`Error event: `, event)
+    throw new Error(`Settled on not final state: ${state.value}`)
   }
   const makeTransition = (state, event) => {
     assert(state.transition)

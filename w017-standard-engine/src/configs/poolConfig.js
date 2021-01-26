@@ -14,13 +14,7 @@ const {
   covenantIdModel,
   publicKeyModel,
 } = require('../../../w015-models')
-const {
-  blockProducer,
-  lockProducer,
-  channelProducer,
-  networkProducer,
-} = require('../../../w016-producers')
-const { generateNext } = blockProducer
+const { lockProducer } = require('../../../w016-producers')
 const consistencyProcessor = require('../services/consistencyFactory')
 const cryptoProcessor = require('../services/cryptoFactory')
 
@@ -42,51 +36,12 @@ const poolConfig = (ioCrypto, ioConsistency) => {
           return event.data
         },
       }),
-      assignDmz: assign({
-        dmz: ({ lock }) => {
-          assert(lockModel.isModel(lock))
-          const dmz = lock.block && lock.block.getDmz()
-          return dmz
-        },
-      }),
-      assignNextBlock: assign({
-        nextBlock: ({ lock }) => {
-          assert(lockModel.isModel(lock))
-          return lock.block // may be undefined
-        },
-      }),
       mergeGenesis: assign({
-        nextBlock: ({ lock, interblock }) => {
+        nextBlock: ({ interblock }) => {
           debug(`mergeGenesis`)
-          assert(lockModel.isModel(lock))
           assert(interblockModel.isModel(interblock))
           const nextBlock = interblock.extractGenesis()
           return nextBlock
-        },
-      }),
-      connectToParent: assign({
-        dmz: ({ interblock, dmz }) => {
-          debug(`connectToParent`)
-          const address = interblock.provenance.getAddress()
-          let parent = dmz.network['..']
-          parent = channelProducer.setAddress(parent, address)
-          const network = { ...dmz.network, '..': parent }
-          return dmzModel.clone({ ...dmz, network })
-        },
-      }),
-      ingestParentLineage: assign({
-        dmz: ({ dmz }, event) => {
-          const lineage = event.data
-          assert(Array.isArray(lineage))
-          assert(lineage.every(interblockModel.isModel))
-          debug(`ingestParentLineage length: ${lineage.length}`)
-          const network = networkProducer.ingestInterblocks(
-            dmz.network,
-            lineage,
-            dmz.config
-          )
-          dmz = dmzModel.clone({ ...dmz, network })
-          return dmz
         },
       }),
       mergeBlockToLock: assign({
@@ -114,8 +69,8 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       createBaseDmz: assign({
         baseDmz: ({ validators }) => {
           const covenantId = covenantIdModel.create('hyper')
-          const hyper = addressModel.create('ROOT')
-          const sealedRoot = channelModel.create(hyper)
+          const root = addressModel.create('ROOT')
+          const sealedRoot = channelModel.create(root)
           const sealedParent = {
             ...networkModel.create(),
             '..': sealedRoot,
@@ -187,34 +142,9 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
       isBirthingCompleted: ({ lock }) => {
         assert(lockModel.isModel(lock))
-        const otherBlocks = lock.block && lock.block.provenance.height >= 1
-        debug(`isBirthingCompleted: ${otherBlocks}`)
-        return otherBlocks
-      },
-      verifyLineage: ({ interblock }, event) => {
-        const lineage = event.data
-        assert(lineage.length)
-        assert.strictEqual(interblock.getChainId(), lineage[0].getChainId())
-        assert(!lineage[0].provenance.height)
-        debug(`verifyLineage`)
-        // TODO check lineage is complete in the dmz, but does not include the interblock
-        // check the chain of lineage goes back to genesis
-
-        return true
-      },
-      isLockForGenesis: ({ lock }) => {
-        assert(lockModel.isModel(lock))
-        const { block } = lock
-        const isLockForGenesis = block && block.provenance.address.isGenesis()
-        debug(`isLockForGenesis: ${isLockForGenesis}`)
-        return isLockForGenesis
-      },
-      isLockForBirthBlock: ({ lock }) => {
-        assert(lockModel.isModel(lock))
-        const { block } = lock
-        const isLockForBirthBlock = block && block.provenance.height === 1
-        debug(`isLockForBirthBlock: ${isLockForBirthBlock}`)
-        return isLockForBirthBlock
+        const isBirthingCompleted = !!lock.block
+        debug(`isBirthingCompleted: ${isBirthingCompleted}`)
+        return isBirthingCompleted
       },
       isConnectionAttempt: ({ interblock }) => interblock.isConnectionAttempt(),
       isConnectable: (context, event) => event.data,
@@ -244,43 +174,11 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         debug(`lockChildChain for ${interblock.getOriginAlias()}: ${!!lock}`)
         return lock
       },
-      fetchParentLineage: async ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
-        const { provenance } = interblock
-        const lineage = await consistency.getLineage({ provenance })
-        assert(Array.isArray(lineage))
-        assert(lineage.every(interblockModel.isModel))
-        assert.strictEqual(lineage[0].provenance.height, 0)
-        debug(`fetchParentLineage length: ${lineage.length}`)
-        return lineage
-      },
-      generateBirthBlock: async ({ dmz, lock }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(lockModel.isModel(lock))
-        debug(`generateBirthBlock`)
-        // TODO compress this to also include processing the first actions
-        const nextBlock = await generateNext(dmz, lock.block, crypto.sign)
-        return nextBlock
-      },
       unlockChain: async ({ lock }) => {
         assert(lockModel.isModel(lock))
         debug(`unlockChain`)
         await consistency.putUnlockChain(lock)
         return
-      },
-      poolBirthBlock: async ({ lock }) => {
-        assert(lockModel.isModel(lock))
-        const { block } = lock
-        assert(block)
-        assert(block.provenance.height === 1)
-        const { address } = block.network['..']
-        assert(address.isResolved())
-        const interblock = interblockModel.create(block)
-        const affectedAddresses = [address]
-        await consistency.putPoolInterblock({
-          affectedAddresses,
-          interblock,
-        })
       },
       fetchValidatorKey: async () => {
         debug(`fetchValidatorKey`)
@@ -300,6 +198,13 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
       fetchAffectedAddresses: async ({ interblock }) => {
         const affected = await consistency.getAffected(interblock)
+        if (interblock.isGenesisAttempt()) {
+          const genesis = interblock.extractGenesis()
+          assert(blockModel.isModel(genesis))
+          const genesisAddress = genesis.provenance.getAddress()
+          assert(affected.every((address) => !address.equals(genesisAddress)))
+          affected.push(genesisAddress)
+        }
         debug(`fetchAffectedAddresses: ${affected.length}`)
         return affected
       },

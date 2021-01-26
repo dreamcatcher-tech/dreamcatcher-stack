@@ -24,6 +24,7 @@ describe('standardEngine', () => {
     await base.settle()
     assert.strictEqual(lockCount, unlockCount)
     assert.strictEqual(lockCount, 2)
+    // TODO make compatible with runInBand
     assert.strictEqual(base.getHeight(), 0)
   })
 

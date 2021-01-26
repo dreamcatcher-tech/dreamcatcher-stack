@@ -15,7 +15,6 @@ const {
 const { networkProducer, channelProducer } = require('../../../w016-producers')
 const { interpreterConfig } = require('./interpreterConfig')
 const { definition } = require('../machines/isolator')
-const isolationProcessor = require('../services/isolateFactory')
 const crypto = require('../../../w012-crypto')
 const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
 
@@ -33,7 +32,7 @@ const isPiercable = ({ dmz, hasPierced }) => {
   debug(`isPiercable: %O`, isPiercable)
   return isPiercable
 }
-const config = {
+const createConfig = (isolation, consistency) => ({
   actions: {
     assignLock: assign({
       lock: (context, event) => {
@@ -43,17 +42,64 @@ const config = {
         return lock
       },
     }),
-    primeDmz: assign({
+    assignDmz: assign({
       dmz: ({ lock }) => {
         assert(lockModel.isModel(lock))
-        const { block, interblocks } = lock
+        const { block } = lock
+        assert(block)
         const dmz = block.getDmz()
+        return dmz
+      },
+    }),
+    ingestInterblocks: assign({
+      dmz: ({ lock, dmz }) => {
+        assert(lockModel.isModel(lock))
+        assert(dmzModel.isModel(dmz))
+        const { interblocks } = lock
         const network = networkProducer.ingestInterblocks(
           dmz.network,
           interblocks,
           dmz.config
         )
         return dmzModel.clone({ ...dmz, network })
+      },
+    }),
+    assignGenesisInterblock: assign({
+      interblock: ({ lock }) => {
+        assert(lockModel.isModel(lock))
+        const { interblocks } = lock
+        const interblock = interblocks[0]
+        assert(interblock.isGenesisAttempt(), `Not genesis attempt`)
+        debug(`assignGenesisInterblock`)
+        return interblock
+      },
+    }),
+    connectToParent: assign({
+      dmz: ({ dmz, interblock }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(dmz.network['..'].address.isUnknown(), `Target connected`)
+        debug(`connectToParent`)
+
+        const address = interblock.provenance.getAddress()
+        let parent = dmz.network['..']
+        parent = channelProducer.setAddress(parent, address)
+        const network = { ...dmz.network, '..': parent }
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
+    ingestParentLineage: assign({
+      dmz: ({ dmz }, event) => {
+        const lineage = event.data
+        assert(Array.isArray(lineage))
+        assert(lineage.every(interblockModel.isModel))
+        debug(`ingestParentLineage length: ${lineage.length}`)
+        const network = networkProducer.ingestInterblocks(
+          dmz.network,
+          lineage,
+          dmz.config
+        )
+        dmz = dmzModel.clone({ ...dmz, network })
+        return dmz
       },
     }),
     assignContainerId: assign({
@@ -147,6 +193,26 @@ const config = {
     }),
   },
   guards: {
+    isGenesis: ({ lock }) => {
+      assert(lockModel.isModel(lock))
+      assert(lock.block)
+      const { block } = lock
+      const isNotRoot = !block.network['..'].address.isRoot()
+      const isGenesis = block.provenance.address.isGenesis() && isNotRoot
+      debug(`isGenesis: `, isGenesis)
+      return isGenesis
+    },
+    verifyLineage: ({ interblock }, event) => {
+      const lineage = event.data
+      assert(lineage.length)
+      assert.strictEqual(interblock.getChainId(), lineage[0].getChainId())
+      assert(!lineage[0].provenance.height)
+      debug(`verifyLineage`)
+      // TODO check lineage is complete in the dmz, but does not include the interblock
+      // check the chain of lineage goes back to genesis
+
+      return true
+    },
     isDmzChangeable: (context) => {
       // incoming changes detected
       const { lock } = context
@@ -204,13 +270,23 @@ const config = {
     },
   },
   services: {
-    loadCovenant: async ({ lock, isolation }) => {
+    fetchParentLineage: async ({ interblock }) => {
+      assert(interblockModel.isModel(interblock))
+      const { provenance } = interblock
+      const lineage = await consistency.getLineage({ provenance })
+      assert(Array.isArray(lineage))
+      assert(lineage.every(interblockModel.isModel))
+      assert.strictEqual(lineage[0].provenance.height, 0)
+      debug(`fetchParentLineage length: ${lineage.length}`)
+      return lineage
+    },
+    loadCovenant: async ({ lock }) => {
       assert(lockModel.isModel(lock))
       const containerId = await isolation.loadCovenant(lock.block)
       debug(`loadCovenant containerId: ${containerId.substring(0, 9)}`)
       return { containerId }
     },
-    reduce: async ({ dmz, containerId, isolation }) => {
+    reduce: async ({ dmz, containerId }) => {
       assert(dmzModel.isModel(dmz))
       assert(dmz.rx())
       // TODO rename anvil to externalAction
@@ -246,12 +322,12 @@ const config = {
       const pierceBlock = blockModel.clone({ ...pierceDmz, provenance })
       return { pierceBlock }
     },
-    unloadCovenant: async ({ containerId, isolation }) => {
+    unloadCovenant: async ({ containerId }) => {
       debug(`unloadCovenant containerId: %o`, containerId.substring(0, 9))
       await isolation.unloadCovenant(containerId)
     },
   },
-}
+})
 const _extractPierceDmz = (block) => {
   const validators = pierceKeypair.getValidatorEntry()
   const baseDmz = dmzModel.create({ validators })
@@ -285,11 +361,10 @@ const _getPierceProvenance = (block) => {
   return provenance
 }
 
-const isolatorConfig = (ioIsolate) => {
+const isolatorConfig = (isolation, consistency) => {
   debug(`isolatorConfig`)
-  const isolation = isolationProcessor.toFunctions(ioIsolate)
-  const machine = { ...definition, context: { isolation } }
-  return { machine, config }
+  const config = createConfig(isolation, consistency)
+  return { machine: definition, config }
 }
 
 const createTick = (containerId, tick) => (state, action, accumulator) =>
