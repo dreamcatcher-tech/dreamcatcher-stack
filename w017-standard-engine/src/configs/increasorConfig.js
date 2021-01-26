@@ -169,7 +169,8 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           payload: { lock },
         }
         const { machine, config } = isolatorConfig(isolation, consistency)
-        const { dmz, containerId } = await pure(execute, machine, config)
+        const isolatedExecution = () => pure(execute, machine, config)
+        const { dmz, containerId } = await isolatedExecution()
 
         // const { dmz, containerId } = await thread(executeCovenant, isolator)
         assert(dmzModel.isModel(dmz))

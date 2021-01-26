@@ -25,41 +25,48 @@ const fsmFactory = () => {
   ioConsistency.setProcessor(consistencyFactory())
 
   const pool = poolConfig(ioCrypto, ioConsistency)
-  ioPool.setProcessor(async (payload) => {
+  const poolProcessor = async (payload) => {
     assert(interblockModel.isModel(payload))
     const action = { type: 'POOL_INTERBLOCK', payload }
     const { machine, config } = pool
     const result = await pure(action, machine, config)
     // const result = await thread(action, poolMachine)
     return result
-  })
+  }
+  ioPool.setProcessor(poolProcessor)
+
   const increasor = increasorConfig(ioCrypto, ioConsistency, ioIsolate)
-  ioIncrease.setProcessor(async (payload) => {
+  const ioIncreaseProcessor = async (payload) => {
     assert(addressModel.isModel(payload))
     const action = { type: 'INCREASE_CHAIN', payload }
     const { machine, config } = increasor
     const result = await pure(action, machine, config)
     // const result = await thread(action, increasorMachine)
     return result
-  })
+  }
+  ioIncrease.setProcessor(ioIncreaseProcessor)
+
   const receiver = receiveConfig(ioConsistency)
-  ioReceive.setProcessor(async (payload) => {
+  const ioReceiveProcessor = async (payload) => {
     assert(txModel.isModel(payload))
     const action = { type: 'RECEIVE_INTERBLOCK', payload }
     const { machine, config } = receiver
     const result = await pure(action, machine, config)
     // const result = await thread(action, receiverMachine)
     return result
-  })
+  }
+  ioReceive.setProcessor(ioReceiveProcessor)
+
   const transmitter = transmitConfig(ioConsistency)
-  ioTransmit.setProcessor(async (payload) => {
+  const ioTransmitProcessor = async (payload) => {
     assert(interblockModel.isModel(payload))
     const action = { type: 'TRANSMIT_INTERBLOCK', payload }
     const { machine, config } = transmitter
     const result = await pure(action, machine, config)
     // const result = await thread(action, transmitterMachine)
     return result
-  })
+  }
+  ioTransmit.setProcessor(ioTransmitProcessor)
 
   return {
     ioIsolate,

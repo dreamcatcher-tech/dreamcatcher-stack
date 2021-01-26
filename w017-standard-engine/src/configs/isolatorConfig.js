@@ -298,8 +298,8 @@ const createConfig = (isolation, consistency) => ({
       const { machine, config } = interpreterConfig(tick)
       const payload = { dmz, externalAction, address }
       const tickAction = { type: 'TICK', payload }
-
-      const nextDmz = await pure(tickAction, machine, config)
+      const interpreterTick = () => pure(tickAction, machine, config)
+      const nextDmz = await interpreterTick()
       // const nextDmz = await thread(tickAction, interpreter)
       assert(dmzModel.isModel(nextDmz))
       return { nextDmz }
