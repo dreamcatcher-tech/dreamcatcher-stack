@@ -1,7 +1,12 @@
 const assert = require('assert')
 const { rxReplyModel, dmzModel, covenantIdModel } = require('../../w015-models')
-const { spawn, spawnReducer } = require('./spawn')
-const { interchain, isReplyFor, replyResolve } = require('../../w002-api')
+const { spawn, spawnReducerWithoutPromise } = require('./spawn')
+const {
+  interchain,
+  isReplyFor,
+  replyResolve,
+  replyPromise,
+} = require('../../w002-api')
 
 const install = (installer) => ({
   type: '@@INSTALL',
@@ -27,13 +32,16 @@ const deployReducer = async (dmz, action) => {
     spawnOptions = { ...spawnOptions, covenantId }
     const genesisSeed = 'seed_' + installPath
     const spawnRequest = spawn(installPath, spawnOptions, [], genesisSeed)
-    const network = await spawnReducer(dmz, spawnRequest)
+    // promise is made within spawnReducer
+    const network = await spawnReducerWithoutPromise(dmz, spawnRequest)
     // TODO make spawn not require dmz to be cloned like this
     dmz = dmzModel.clone({ ...dmz, network })
     const deployAction = deploy(topChildren[installPath])
     interchain(deployAction, installPath)
   }
-  // promise is made within spawnReducer
+  if (Object.keys(topChildren).length) {
+    replyPromise()
+  }
   return dmz.network
 }
 

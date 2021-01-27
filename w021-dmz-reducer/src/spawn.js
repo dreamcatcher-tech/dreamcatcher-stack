@@ -8,6 +8,7 @@ const {
   txRequestModel,
   networkModel,
   dmzModel,
+  rxRequestModel,
 } = require('../../w015-models')
 const { channelProducer, networkProducer } = require('../../w016-producers')
 const { autoAlias } = require('./utils')
@@ -23,7 +24,15 @@ const spawn = (alias, spawnOpts = {}, actions = []) => {
   }
   return action
 }
+
 const spawnReducer = async (dmz, originAction) => {
+  const network = await spawnReducerWithoutPromise(dmz, originAction)
+  replyPromise() // allows spawnReducer to be reused by deploy
+  return network
+}
+const spawnReducerWithoutPromise = async (dmz, originAction) => {
+  assert(dmzModel.isModel(dmz))
+  assert(rxRequestModel.isModel(originAction))
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
   let { alias, spawnOpts, actions } = originAction.payload
@@ -73,8 +82,7 @@ const spawnReducer = async (dmz, originAction) => {
     }
     draft[alias] = channel
   })
-  replyPromise()
   return nextNetwork
 }
 
-module.exports = { spawn, spawnReducer }
+module.exports = { spawn, spawnReducer, spawnReducerWithoutPromise }

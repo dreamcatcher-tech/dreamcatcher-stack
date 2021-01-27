@@ -92,12 +92,13 @@ const reductionModel = standardize({
       }
       sequenceSet.add(txReply.request.sequence)
     })
+
+    assert(sequenceSet.size === replies.length, `Duplicate sequence detected`)
     if (isPending) {
       assert.strictEqual(promiseCount, 0, `No promises allowed if pending`)
     } else {
       assert(promiseCount <= 1, `Max one promise allowed: ${promiseCount}`)
     }
-    assert(sequenceSet.size === replies.length, `Duplicate sequence detected`)
     const getIsPending = () => isPending
     return { getIsPending }
   },

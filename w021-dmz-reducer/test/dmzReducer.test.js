@@ -1,8 +1,9 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:dmzReducer')
-const { interchain } = require('../../w002-api')
+const { interchain, '@@GLOBAL_HOOK_INBAND': hook } = require('../../w002-api')
 const {
   dmzModel,
+  rxRequestModel,
   actionModel,
   addressModel,
   stateModel,
@@ -11,31 +12,51 @@ const {
 const { networkProducer } = require('../../w016-producers')
 const { actions } = require('..')
 const { metrologyFactory } = require('../../w017-standard-engine')
-require('debug').enable('*met* *tests*')
+const { spawnReducer, spawn } = require('../src/spawn')
+require('debug').enable('*met* *tests* *dmz:spawn')
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')
   test.todo('connect resolves an address without purging queued actions')
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
-  test('spawn is implicitly awaited', async () => {
-    const reducer = async (state, action) => {
-      debug(`reducer`, action)
-      if (action.type === 'SPAWN') {
-        interchain(actions.spawn('child1'))
-        await interchain('PING', {}, 'child1')
+  describe('spawn', () => {
+    test('spawn is implicitly awaited', async () => {
+      const reducer = async (state, action) => {
+        debug(`reducer`, action)
+        if (action.type === 'SPAWN') {
+          interchain(actions.spawn('child1'))
+          await interchain('PING', {}, 'child1')
+        }
+        return {}
       }
-      return {}
-    }
-    const covenantId = covenantIdModel.create('hyper')
-    const hyper = { reducer, covenantId }
-    const base = await metrologyFactory('multi', { hyper })
-    base.enableLogging()
-    await base.pierce({ type: 'SPAWN' })
-    await base.settle()
-    const state = base.getState(1)
-    const requests = state.network.child1.getRequestIndices()
-    assert.strictEqual(requests.length, 2)
+      const covenantId = covenantIdModel.create('hyper')
+      const hyper = { reducer, covenantId }
+      const base = await metrologyFactory('multi', { hyper })
+      base.enableLogging()
+      await base.pierce({ type: 'SPAWN' })
+      await base.settle()
+      const state = base.getState(1)
+      const requests = state.network.child1.getRequestIndices()
+      assert.strictEqual(requests.length, 2)
+    })
+    test.only('spawn uses hash inside action', async () => {
+      debugger
+      const dmz = dmzModel.create()
+      const { type, payload } = spawn('hashTest')
+      const address = addressModel.create('LOOPBACK')
+      const request = rxRequestModel.create(type, payload, address, 0)
+      const start = Date.now()
+      const nextNetwork = await hook(() => spawnReducer(dmz, request))
+      const action = nextNetwork.reduction.hashTest.requests[0]
+      debug(action)
+      const hash = action.getHash()
+      debug(hash)
+      const elapsed = Date.now() - start
+      debug('elapsed time', elapsed)
+      debugger
+      assert(elapsed < 20)
+    })
   })
   describe('openPaths', () => {
     test.todo('missing parents with open children skips straight to children')

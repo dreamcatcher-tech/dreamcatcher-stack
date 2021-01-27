@@ -110,6 +110,11 @@ const closure = (schema, inflated, isModel) => {
 
 const generateHash = (schema, instance) => {
   switch (schema.title) {
+    case 'Action': {
+      if (instance.type === '@@GENESIS' && instance.payload.genesis) {
+      }
+      return hashFromSchema(schema, instance)
+    }
     case 'Integrity': {
       return { hash: instance.hash }
     }
@@ -126,6 +131,7 @@ const generateHash = (schema, instance) => {
         'pending',
       ]
       const restOfBlock = _pick(instance, nonInterblockKeys)
+      // TODO use schema hashing on all keys, for sped
       const proof = crypto.objectHash(hashPattern(restOfBlock))
       return { hash: instance.provenance.getHash(), proof }
     }
@@ -214,6 +220,7 @@ const hashArray = (instance) =>
 
 const hashPattern = (instance) => {
   const proof = Object.keys(instance).map((key) =>
+    // TODO use hashFromSchema here
     crypto.objectHash({ [key]: instance[key].getHash() })
   )
   proof.sort()

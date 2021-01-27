@@ -15,7 +15,7 @@ const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const dmzReducer = require('../../../w021-dmz-reducer')
 const { definition } = require('../machines/interpreter')
 const {
-  '@@GLOBAL_HOOK': globalHook,
+  '@@GLOBAL_HOOK_INBAND': globalHookInband,
   resolve,
   reject,
   isReplyFor,
@@ -571,22 +571,8 @@ const config = {
       // TODO move to be same code as isolateFactory
       const tick = () => dmzReducer.reducer(dmz, anvil)
       const accumulator = []
-      let reduceResolve, inbandPromises
-      do {
-        // TODO move inband exhaustion to hook.js
-        // TODO might be faster to only wait for the first promise to finish before rerunning
-        reduceResolve = await globalHook(tick, accumulator, anvil.getHash())
-        inbandPromises = reduceResolve.requests.filter((req) => req.inBand)
-        const awaits = inbandPromises.map(async (action) => {
-          debug(`inband execution of: `, action.type)
-          const payload = await action.exec()
-          const reply = resolve(payload, action)
-          return reply
-        })
-        const results = await Promise.all(awaits)
-        debug(`inband awaits results: `, results.length)
-        accumulator.push(...results)
-      } while (inbandPromises.length)
+      const salt = anvil.getHash()
+      const reduceResolve = await globalHookInband(tick, accumulator, salt)
 
       debug(`result isPending: `, reduceResolve.isPending)
       assert(reduceResolve, `System returned: ${reduceResolve}`)

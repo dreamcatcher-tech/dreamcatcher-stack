@@ -194,6 +194,25 @@ const _assertGlobals = () => {
   assert(Array.isArray(replies))
   assert(Number.isInteger(requestId) && requestId >= 0)
 }
+const exhaustInBand = async (tick, accumulator = [], salt) => {
+  let reduceResolve, inbandPromises
+  accumulator = [...accumulator]
+  do {
+    // TODO might be faster to only wait for the first promise to finish before rerunning
+    reduceResolve = await hook(tick, accumulator, salt)
+    inbandPromises = reduceResolve.requests.filter((req) => req.inBand)
+    const awaits = inbandPromises.map(async (action) => {
+      debug(`inband execution of: `, action.type)
+      const payload = await action.exec()
+      const reply = resolve(payload, action)
+      return reply
+    })
+    const results = await Promise.all(awaits)
+    debug(`inband awaits results: `, results.length)
+    accumulator.push(...results)
+  } while (inbandPromises.length)
+  return reduceResolve
+}
 
 module.exports = {
   replyPromise,
@@ -204,4 +223,5 @@ module.exports = {
   effectInBand,
   all,
   '@@GLOBAL_HOOK': hook, // system use only
+  '@@GLOBAL_HOOK_INBAND': exhaustInBand,
 }

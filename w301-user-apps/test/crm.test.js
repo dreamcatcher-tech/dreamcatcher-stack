@@ -2,14 +2,14 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-require('debug').enable('*met* *needle *tests* ')
+require('debug').enable('*met* *needle *tests* *engine:increasor*')
 
 describe('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
-      // shell.enableLogging()
+      shell.enableLogging()
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
@@ -25,8 +25,8 @@ describe('crm', () => {
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
        * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
-       * 2021-01-25 151ms publish, 371ms removed xstate
-       * 2021-01-26 153ms publish, 356ms removed birthblocks
+       * 2021-01-25 151ms publish, 371ms install - removed xstate
+       * 2021-01-26 153ms publish, 356ms install - removed birthblocks
        */
     })
     test.todo('can only add customer if provide valid data')

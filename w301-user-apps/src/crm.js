@@ -19,17 +19,17 @@ const install = {
         },
       },
     },
-    // services: { covenant: 'datum' },
-    // customers: {
-    //   covenant: 'collection',
-    //   state: {
-    //     datumTemplate: {},
-    //   },
-    // },
-    // banking: { covenant: 'datum' },
-    // settings: { covenant: 'datum' },
-    // about: { covenant: 'datum' },
-    // logout: { covenant: 'datum' },
+    services: { covenant: 'datum' },
+    customers: {
+      covenant: 'collection',
+      state: {
+        datumTemplate: {},
+      },
+    },
+    banking: { covenant: 'datum' },
+    settings: { covenant: 'datum' },
+    about: { covenant: 'datum' },
+    logout: { covenant: 'datum' },
   },
 }
 
