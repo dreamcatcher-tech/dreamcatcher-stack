@@ -21,7 +21,6 @@ const pierceSigner = (integrity) => {
   assert(integrityModel.isModel(integrity))
   return pierceKeypair.sign(integrity)
 }
-
 const provenanceModel = standardize({
   schema: provenanceSchema,
   async create(
@@ -30,8 +29,6 @@ const provenanceModel = standardize({
     extraLineages = {},
     asyncSigner = ciSigner
   ) {
-    const start = Date.now()
-
     if (!dmzModel) {
       // avoid circular reference
       dmzModel = require('./dmzModel').dmzModel
@@ -75,7 +72,6 @@ const provenanceModel = standardize({
       integrity,
       signatures,
     })
-    debug('elapsed time', Date.now() - start)
     return result
   },
   logicize(instance) {

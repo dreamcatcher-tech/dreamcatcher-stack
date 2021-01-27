@@ -5,6 +5,7 @@ const {
   dmzModel,
   rxRequestModel,
   actionModel,
+  blockModel,
   addressModel,
   stateModel,
   covenantIdModel,
@@ -40,8 +41,7 @@ describe('dmzReducer', () => {
       const requests = state.network.child1.getRequestIndices()
       assert.strictEqual(requests.length, 2)
     })
-    test.only('spawn uses hash inside action', async () => {
-      debugger
+    test('spawn uses hash inside action', async () => {
       const dmz = dmzModel.create()
       const { type, payload } = spawn('hashTest')
       const address = addressModel.create('LOOPBACK')
@@ -50,16 +50,11 @@ describe('dmzReducer', () => {
         const result = spawnReducer(dmz, request)
         return result
       }
-      const start = Date.now()
       const nextNetwork = await hook(tick)
-      debug('elapsed time', Date.now() - start)
 
       const action = nextNetwork.reduction.hashTest.requests[0]
-      debug(action)
       const hash = action.getHash()
-      debug(hash)
-      debugger
-      // assert(elapsed < 20)
+      // hard to test if the actual path used genesis other than stepping
     })
   })
   describe('openPaths', () => {

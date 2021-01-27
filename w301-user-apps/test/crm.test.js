@@ -10,6 +10,7 @@ describe('crm', () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       shell.enableLogging()
+      debugger
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
@@ -21,6 +22,8 @@ describe('crm', () => {
       debug(`install time: ${Date.now() - installStart} ms`)
       debug(`blockcount: ${shell.getBlockCount()}`)
       debug(`test time: ${Date.now() - publishStart} ms`)
+      debugger
+
       await shell.settle()
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21

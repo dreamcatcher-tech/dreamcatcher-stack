@@ -112,7 +112,12 @@ const generateHash = (schema, instance) => {
   switch (schema.title) {
     case 'Action': {
       if (instance.type === '@@GENESIS' && instance.payload.genesis) {
-        // does not actually cost much time
+        const { genesis } = instance.payload
+        const blockModel = registry.get('Block')
+        assert(blockModel.isModel(genesis))
+        const modified = { ...instance, payload: { ...instance.payload } }
+        modified.payload.genesis = genesis.getHash()
+        return hashFromSchema(schema, modified)
       }
       return hashFromSchema(schema, instance)
     }
@@ -132,24 +137,15 @@ const generateHash = (schema, instance) => {
         'pending',
       ]
       const restOfBlock = _pick(instance, nonInterblockKeys)
-      // TODO use schema hashing on all keys, for sped
       const proof = crypto.objectHash(hashPattern(restOfBlock))
       return { hash: instance.provenance.getHash(), proof }
     }
     case 'Network': {
       const { hash, proof: networkChannels } = hashPattern(instance)
-      return { hash, proof: { networkChannels } } // returns proof
+      return { hash, proof: { networkChannels } }
     }
     case 'Channel': {
-      const remoteModel = registry.get('Remote')
-      const remotePick = _pick(instance, [
-        'address',
-        'replies',
-        'requests',
-        'heavyHeight',
-        'lineageHeight',
-      ])
-      const remote = remoteModel.clone(remotePick)
+      const remote = _pickRemote(instance)
       const restOfChannelKeys = [
         'systemRole',
         'requestsLength',
@@ -176,7 +172,19 @@ const generateHash = (schema, instance) => {
     }
   }
 }
-
+const _pickRemoteRaw = (instance) => {
+  const remoteModel = registry.get('Remote')
+  const remotePick = _pick(instance, [
+    'address',
+    'replies',
+    'requests',
+    'heavyHeight',
+    'lineageHeight',
+  ])
+  const remote = remoteModel.clone(remotePick)
+  return remote
+}
+const _pickRemote = _.memoize(_pickRemoteRaw)
 const _pick = (obj, keys) => {
   // much faster than lodash pick
   const blank = {}
@@ -211,7 +219,7 @@ const hashFromSchema = (schema, instance) => {
       hashes[key] = hash
       return
     }
-    hashes[key] = crypto.objectHash(slice)
+    hashes[key] = slice
   })
   return { hash: crypto.objectHash(hashes) }
 }
@@ -221,7 +229,6 @@ const hashArray = (instance) =>
 
 const hashPattern = (instance) => {
   const proof = Object.keys(instance).map((key) =>
-    // TODO use hashFromSchema here
     crypto.objectHash({ [key]: instance[key].getHash() })
   )
   proof.sort()
@@ -233,15 +240,16 @@ const defineFunctions = (target, functions) => {
   for (const prop in target) {
     assert(!functions[prop], `function collision: ${prop}`)
   }
+  const properties = {}
   for (const functionName in functions) {
-    Object.defineProperty(target, functionName, {
+    properties[functionName] = {
       enumerable: false,
       configurable: false,
       writable: false,
       value: functions[functionName],
-    })
+    }
   }
-
+  Object.defineProperties(target, properties)
   deepFreeze(target)
   return target
 }

@@ -31,6 +31,7 @@ const sodiumLoader = () => {
   }
   return _sodiumPromise
 }
+sodiumLoader()
 
 const _hashTemplate = objectHash('template')
 

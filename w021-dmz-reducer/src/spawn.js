@@ -26,13 +26,13 @@ const spawn = (alias, spawnOpts = {}, actions = []) => {
 }
 
 const spawnReducer = async (dmz, originAction) => {
+  assert(rxRequestModel.isModel(originAction))
   const network = await spawnReducerWithoutPromise(dmz, originAction)
   replyPromise() // allows spawnReducer to be reused by deploy
   return network
 }
 const spawnReducerWithoutPromise = async (dmz, originAction) => {
   assert(dmzModel.isModel(dmz))
-  assert(rxRequestModel.isModel(originAction))
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
   let { alias, spawnOpts, actions } = originAction.payload
