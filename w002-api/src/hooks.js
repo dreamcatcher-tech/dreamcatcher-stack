@@ -180,6 +180,7 @@ const _pushGlobalReply = (reply) => {
 const _incrementGlobalRequestId = () => {
   const { salt } = globalThis['@@interblock'].promises
   const requestId = globalThis['@@interblock'].promises.requestId++
+  // TODO avoid needing a salt, or read it from the chain, or something not needing hash
   return `${requestId}_${salt}`
 }
 

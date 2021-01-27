@@ -571,7 +571,7 @@ const config = {
       // TODO move to be same code as isolateFactory
       const tick = () => dmzReducer.reducer(dmz, anvil)
       const accumulator = []
-      const salt = anvil.getHash()
+      const salt = `TODO` // TODO make salt depend on something else, like the io channel index
       const reduceResolve = await globalHookInband(tick, accumulator, salt)
 
       debug(`result isPending: `, reduceResolve.isPending)

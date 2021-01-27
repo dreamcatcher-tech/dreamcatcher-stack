@@ -9,58 +9,69 @@ const {
   continuationModel,
 } = require('../../w015-models')
 
-const ingestInterblock = (channel, interblock) =>
+const ingestInterblock = (channel, interblock) => {
   // TODO do some logic on the channel counts, and if they match ours ?
   // check this transmission naturally extends the remote transmission ?
   // handle validator change in lineage
-  channelModel.clone(channel, (draft) => {
-    debug('ingestInterblock')
-    // TODO if genesis or config change, set the validators
-    assert(interblockModel.isModel(interblock))
-    assert(channel.address.equals(interblock.provenance.getAddress()))
-    const { provenance } = interblock
-    const integrity = provenance.reflectIntegrity()
-    const remote = interblock.getRemote()
-    const light = interblock.getWithoutRemote()
-    const immerLineage = [...channel.lineage]
-    const pushLight = () => {
-      immerLineage.push(integrity)
-      draft.lineageTip.push(light)
-      draft.lineageHeight = provenance.height
-      debug(`ingested lineage: ${provenance.height}`)
+  debug('ingestInterblock')
+  // TODO if genesis or config change, set the validators
+  assert(interblockModel.isModel(interblock))
+  assert(channel.address.equals(interblock.provenance.getAddress()))
+  const { provenance } = interblock
+  const integrity = provenance.reflectIntegrity()
+  const remote = interblock.getRemote()
+  const light = interblock.getWithoutRemote()
+
+  const lineage = [...channel.lineage]
+  const lineageTip = [...channel.lineageTip]
+  let { lineageHeight, heavy, heavyHeight, replies } = channel
+
+  const pushLight = () => {
+    lineage.push(integrity)
+    lineageTip.push(light)
+    lineageHeight = provenance.height
+    debug(`ingested lineage: ${provenance.height}`)
+  }
+  const pushHeavy = () => {
+    heavy = interblock
+    heavyHeight = provenance.height
+    assert(remote || provenance.address.isGenesis())
+    if (remote) {
+      const { requests } = remote
+      const remoteRequestsKeys = Object.keys(requests)
+      const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
+      replies = reducedReplies
+      debug(`ingested heavy: ${provenance.height}`)
     }
-    const pushHeavy = () => {
-      draft.heavy = interblock
-      draft.heavyHeight = provenance.height
-      assert(remote || provenance.address.isGenesis())
-      if (remote) {
-        const { requests } = remote
-        const remoteRequestsKeys = Object.keys(requests)
-        const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
-        draft.replies = reducedReplies
-        debug(`ingested heavy: ${provenance.height}`)
-      }
+  }
+  const last = _.last(channel.lineageTip)
+  if (!last) {
+    if (provenance.address.isGenesis()) {
+      debug(`ingesting genesis`)
+      pushLight()
+      pushHeavy()
     }
-    const last = _.last(channel.lineageTip)
-    if (!last) {
-      if (provenance.address.isGenesis()) {
-        debug(`ingesting genesis`)
-        pushLight()
+  } else if (last.provenance.isNext(provenance)) {
+    pushLight()
+  }
+  if (remote && heavy) {
+    if (provenance.height > heavy.provenance.height) {
+      if (lineage.some((parent) => parent.equals(integrity))) {
+        // if can access prior blocks easily, can avoid the 'lineage' key
         pushHeavy()
       }
-    } else if (last.provenance.isNext(provenance)) {
-      pushLight()
     }
-    if (remote && draft.heavy) {
-      if (provenance.height > draft.heavy.provenance.height) {
-        if (immerLineage.some((parent) => parent.equals(integrity))) {
-          // if can access prior blocks easily, can avoid the 'lineage' key
-          pushHeavy()
-        }
-      }
-    }
-    draft.lineage = immerLineage
+  }
+  return channelModel.clone({
+    ...channel,
+    lineage,
+    lineageTip,
+    lineageHeight,
+    heavy,
+    heavyHeight,
+    replies,
   })
+}
 const ingestPierceInterblock = (channel, interblock) =>
   channelModel.clone(channel, (draft) => {
     // special ingestion that avoids checks of previous blocks
@@ -134,26 +145,29 @@ const txReply = (channel, reply, replyIndex) =>
     draft.replies[replyIndex] = reply
   })
 
-const shiftTxRequest = (channel, originalLoopback) =>
-  channelModel.clone(channel, (draft) => {
-    assert(channelModel.isModel(channel))
-    assert(channel.rxReply())
-    debug(`shiftTxRequest requestsLength: ${channel.requestsLength}`)
-    let index = channel.rxReplyIndex()
-    if (channel.address.isLoopback()) {
-      // loopback crossover is the only way the replies array change during execution
-      // originalLoopback is required to keep track of what things used to be
-      // BUT we might be able to handle this entirely locally ?
-      assert(channelModel.isModel(originalLoopback))
-      assert(originalLoopback.address.isLoopback())
-      assert(channel.address.isLoopback())
-      index = originalLoopback.rxReplyIndex()
-      assert(channel.replies[index], `loopback empty at ${index}`)
-      delete draft.replies[index]
-    }
-    assert(channel.requests[index], `nothing to remove at ${index}`)
-    delete draft.requests[index]
-  })
+const shiftTxRequest = (channel, originalLoopback) => {
+  assert(channelModel.isModel(channel))
+  assert(channel.rxReply())
+  debug(`shiftTxRequest requestsLength: ${channel.requestsLength}`)
+  let index = channel.rxReplyIndex()
+  let { replies, requests } = channel
+  if (channel.address.isLoopback()) {
+    // loopback crossover is the only way the replies array change during execution
+    // originalLoopback is required to keep track of what things used to be
+    // BUT we might be able to handle this entirely locally ?
+    assert(channelModel.isModel(originalLoopback))
+    assert(originalLoopback.address.isLoopback())
+    assert(channel.address.isLoopback())
+    index = originalLoopback.rxReplyIndex()
+    assert(channel.replies[index], `loopback empty at ${index}`)
+    replies = { ...replies }
+    delete replies[index]
+  }
+  assert(channel.requests[index], `nothing to remove at ${index}`)
+  requests = { ...requests }
+  delete requests[index]
+  return channelModel.clone({ ...channel, replies, requests })
+}
 const _pick = (obj, keys) => {
   const blank = {}
   keys.forEach((key) => {
