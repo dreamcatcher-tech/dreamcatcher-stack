@@ -30,6 +30,8 @@ const provenanceModel = standardize({
     extraLineages = {},
     asyncSigner = ciSigner
   ) {
+    const start = Date.now()
+
     if (!dmzModel) {
       // avoid circular reference
       dmzModel = require('./dmzModel').dmzModel
@@ -42,11 +44,7 @@ const provenanceModel = standardize({
     assert(Object.values(extraLineages).every(integrityModel.isModel))
     assert(!Object.keys(extraLineages).length || parentProvenance)
 
-    const template = integrityModel.create()
-    dmzIntegrity = integrityModel.clone({
-      ...template,
-      hash: dmz.getHash(),
-    })
+    dmzIntegrity = integrityModel.create(dmz.getHash())
 
     let address
     let height = 0
@@ -68,10 +66,17 @@ const provenanceModel = standardize({
       lineage: parentIntegrities,
       height,
     }
+
     const integrity = integrityModel.create(provenance)
     const signature = await asyncSigner(integrity)
     const signatures = [signature]
-    return provenanceModel.clone({ ...provenance, integrity, signatures })
+    const result = provenanceModel.clone({
+      ...provenance,
+      integrity,
+      signatures,
+    })
+    debug('elapsed time', Date.now() - start)
+    return result
   },
   logicize(instance) {
     if (instance.dmzIntegrity.isUnknown()) {

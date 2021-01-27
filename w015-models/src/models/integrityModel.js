@@ -14,6 +14,10 @@ const integrityModel = standardize({
         algorithm: 'sha256',
       })
     }
+    if (typeof content === 'string' && content.length === 64){
+      // TODO do regex to test hashlikeness
+      return integrityModel.clone({hash: content, algorithm: 'sha256'})
+    }
     if (typeof content === 'string') {
       content = { string: content }
     }

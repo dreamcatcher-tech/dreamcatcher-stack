@@ -112,6 +112,7 @@ const generateHash = (schema, instance) => {
   switch (schema.title) {
     case 'Action': {
       if (instance.type === '@@GENESIS' && instance.payload.genesis) {
+        // does not actually cost much time
       }
       return hashFromSchema(schema, instance)
     }

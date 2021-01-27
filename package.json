@@ -39,7 +39,6 @@
     "xstate": "^4.14.0"
   },
   "jest": {
-    "transform": {},
     "testEnvironment": "node"
   },
   "devDependencies": {

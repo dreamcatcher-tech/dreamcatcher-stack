@@ -83,9 +83,9 @@ const assertKeysValidated = (schema, instance) => {
   assert(!schema.additionalProperties, `additionalProperties: ${schema.title}`)
   const instanceKeys = Object.keys(instance)
   const propKeys = Object.keys(schema.properties)
-  const isRequired = schema.required.every((key) => instanceKeys.includes(key))
+  const isRequired = schema.required.every((key) => typeof instance[key] !== 'undefined')
   assert(isRequired)
-  const isProps = instanceKeys.every((key) => propKeys.includes(key))
+  const isProps = instanceKeys.every((key) => schema.properties[key])
   assert(isProps, `fail ${schema.title}`)
 }
 
