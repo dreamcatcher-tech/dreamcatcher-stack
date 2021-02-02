@@ -80,4 +80,8 @@ describe('channel', () => {
     test.todo('invalid request param throws')
     test.todo('invalid channel outstanding promises reject')
   })
+  describe('isTxGreaterThan', () => {
+    test.todo('ignore shiftTx')
+    test.todo('ignore promise only replies')
+  })
 })

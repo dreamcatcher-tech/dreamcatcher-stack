@@ -23,6 +23,16 @@ const poolConfig = (ioCrypto, ioConsistency) => {
   const crypto = cryptoProcessor.toFunctions(ioCrypto)
   const config = {
     actions: {
+      dumpAffected: assign({
+        affectedAddresses: ({ affectedAddresses, interblock }) => {
+          assert(Array.isArray(affectedAddresses))
+          assert(interblockModel.isModel(interblock))
+          if (!interblock.getOriginAlias()) {
+            return []
+          }
+          return affectedAddresses
+        },
+      }),
       assignInterblock: assign({
         interblock: (context, event) => {
           const interblock = event.payload

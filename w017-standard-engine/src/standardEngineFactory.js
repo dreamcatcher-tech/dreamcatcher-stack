@@ -71,32 +71,28 @@ const standardEngineFactory = () => {
   }
 
   // TODO test behaviour independently, concurrent - maybe with dirty queues ?
-  // TODO generalize the throttling function
   const increasor = (ioIncrease, sqsTransmit) => {
     const redrives = new Map()
     const locks = new Map()
+    const debugIncreasor = debugBase.extend('increasor')
     const throttler = async (address) => {
       assert(addressModel.isModel(address))
       await runInBand(async () => {
         const chainId = address.getChainId()
-        const debug = debugBase
-          .extend('increasor')
-          .extend(chainId.substring(0, 6))
+        const debug = debugIncreasor.extend(chainId.substring(0, 6))
 
         if (!locks.get(chainId)) {
           do {
             redrives.delete(chainId)
+            assert(!locks.get(chainId))
             locks.set(chainId, true)
-            debug(`start`)
             const start = Date.now()
             const result = await ioIncrease.push(address)
             const txStart = Date.now()
-            debug(`ioIncrease complete: %i ms`, txStart - start)
             const { txInterblocks, isRedriveRequired } = result
             assert(Array.isArray(txInterblocks))
             assert(txInterblocks.every(interblockModel.isModel))
             assert.strictEqual(typeof isRedriveRequired, 'boolean')
-            debug(`transmission count: ${txInterblocks.length}`)
             const awaits = txInterblocks.map((interblock) =>
               sqsTransmit.push(interblock)
             )
@@ -107,8 +103,14 @@ const standardEngineFactory = () => {
             if (isRedriveRequired) {
               redrives.set(chainId, true)
             }
-            debug(`txInterblocks complete: %i ms`, Date.now() - txStart)
-            debug(`ioIncrease total: %i ms`, Date.now() - start)
+            if (!txInterblocks.length) {
+              debug(`WASTED ioIncrease total: %i ms`, Date.now() - start)
+            } else {
+              debug(
+                `tx: ${txInterblocks.length} ioIncrease total: %i ms`,
+                Date.now() - start
+              )
+            }
           } while (redrives.get(chainId))
         } else {
           redrives.set(chainId, true)
@@ -119,7 +121,7 @@ const standardEngineFactory = () => {
   }
   let isRunning = false
   const pending = []
-  const isRunInBand = true
+  const isRunInBand = false
   const runInBand = async (fn) => {
     if (!isRunInBand) {
       return fn()

@@ -18,6 +18,7 @@ const definition = {
   id: 'increasor',
   initial: 'idle',
   context: {
+    cache: new Map(),
     lock: undefined,
     nextLock: undefined,
     block: undefined,
@@ -25,6 +26,7 @@ const definition = {
     txInterblocks: [],
     containerId: '',
     isRedriveRequired: false,
+    cachedDmz: undefined,
   },
   strict: true,
   states: {
@@ -47,7 +49,6 @@ const definition = {
       },
     },
     execute: {
-      // TODO move to 'onDone' style
       initial: 'isProposer',
       states: {
         isProposer: {
@@ -58,15 +59,28 @@ const definition = {
           ],
         },
         proposeNext: {
-          initial: 'isIsolationComplete',
+          initial: 'isIncreasable',
           states: {
+            isIncreasable: {
+              always: [
+                { target: 'reviveCache', cond: 'isIncreasable' },
+                { target: 'done' },
+              ],
+            },
+            reviveCache: {
+              always: [
+                { target: 'isIsolationComplete', cond: 'isCacheEmpty' },
+                { target: 'isIsolationComplete', actions: 'reviveCache' },
+              ],
+            },
             isIsolationComplete: {
               always: [
-                { target: 'isDmzChanged', cond: 'isIsolationComplete' },
+                { target: 'isDmzTransmitting', cond: 'isIsolationComplete' },
                 { target: 'isolate' },
               ],
             },
             isolate: {
+              // TODO bypass covenant loading when system actions only
               invoke: {
                 src: 'isolatedExecution',
                 onDone: {
@@ -75,9 +89,9 @@ const definition = {
                 },
               },
             },
-            isDmzChanged: {
+            isDmzTransmitting: {
               always: [
-                { target: 'signBlock', cond: 'isDmzChanged' },
+                { target: 'signBlock', cond: 'isDmzTransmitting' },
                 { target: 'done' },
               ],
             },
@@ -103,18 +117,22 @@ const definition = {
       onDone: 'unlockChain',
     },
     unlockChain: {
-      // make the next lock, which might be the same if no block provided
-      // if no block, just plain unlock
       initial: 'isNewBlock',
       states: {
         isNewBlock: {
           always: [
             {
-              target: 'effects', // TODO move to unlockChain when effects moved out
+              target: 'effects', // TODO transition to unlockChain when effects moved out
               cond: 'isNewBlock',
-              actions: 'reconcileLock',
+              actions: ['reconcileLock', 'clearCache'],
             },
-            { target: 'unlockChain', actions: 'repeatLock' },
+            { target: 'isNextDmz', actions: 'repeatLock' },
+          ],
+        },
+        isNextDmz: {
+          always: [
+            { target: 'unlockChain', cond: 'isNoNextDmz' },
+            { target: 'unlockChain', actions: 'cachePartial' },
           ],
         },
         effects: {

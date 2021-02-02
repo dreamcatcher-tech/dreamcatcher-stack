@@ -35,17 +35,10 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   assert(dmzModel.isModel(dmz))
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
-  let { alias, spawnOpts, actions } = originAction.payload
-  if (!Array.isArray(actions)) {
-    actions = [actions]
-  }
-  actions = actions.map(({ type, payload, to }) =>
-    txRequestModel.create(type, payload, to)
-  )
+  let { alias, spawnOpts } = originAction.payload
   const { network, validators, covenantId } = dmz
-  const childNet = networkProducer.tx(networkModel.create(), actions, [])
   let child = dmzModel.create({
-    network: childNet,
+    network: networkModel.create(),
     covenantId,
     ...spawnOpts,
     validators,

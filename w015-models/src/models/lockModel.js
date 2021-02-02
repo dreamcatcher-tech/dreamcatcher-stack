@@ -78,11 +78,13 @@ const lockModel = standardize({
   },
 
   logicize: (instance) => {
-    const { block, timestamp, expires, piercings } = instance
+    const { block, timestamp, expires, piercings, interblocks } = instance
     const noDupes = refinePiercings(block, piercings)
     const { requests, replies } = piercings
     assert.strictEqual(noDupes.requests.length, requests.length)
     assert.strictEqual(noDupes.replies.length, replies.length)
+    // TODO remove light blocks from lock - will be superseded when modelchains is implemented
+    // assertUniqueHeights(interblocks)
     const isLocked = () => !timestamp.isExpired(expires)
     const isMatch = (lock) => lock.uuid === instance.uuid
     const isPiercingsPresent = () => requests.length || replies.length
@@ -93,7 +95,16 @@ const lockModel = standardize({
     }
   },
 })
-
+const assertUniqueHeights = (interblocks) => {
+  const identifiers = new Set()
+  for (const interblock of interblocks) {
+    const height = interblock.provenance.height
+    const chainId = interblock.getChainId()
+    const id = `${height}_${chainId}`
+    assert(!identifiers.has(id), `Duplicate block: ${id}`)
+    identifiers.add(id)
+  }
+}
 const refinePiercings = (block, piercings) => {
   let { requests, replies } = piercings
   requests = requests.map((request) => {

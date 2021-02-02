@@ -138,6 +138,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     })
     const resolved = await Promise.all(interblockAwaits)
     const interblocks = _.compact(resolved)
+    // TODO remove light blocks from lock - will be superseded when modelchains is implemented
     debug(`interblocks fetched: ${interblocks.length}`)
     const block = await blockPromise
     debug(`block height: %O`, block && block.provenance.height)
@@ -185,7 +186,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
       debug(`block is not next %O`, block.provenance.height)
       debug(`no change: `, previous.equals(block))
     } else if (!previous && !block.provenance.address.isGenesis()) {
-      debug(`next was not genesis: %O`, block.height)
+      throw new Error(`next was not genesis: ${block.height}`)
     } else {
       // TODO deal with conflicts detected between blocks being added, and report them
       const s3Key = s3Keys.fromBlock(block)
@@ -193,12 +194,12 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
       const dbChainsItem = _dbChainsItemFromBlock(block)
       await db.putBlock(dbChainsItem)
       debug(`block added`)
-    }
 
-    const routePromise = _updateRouteTable(block, previous)
-    const purgePromise = _purgePool(block, previousLock.interblocks)
-    const piercePromise = _purgePiercings(block, previousLock.piercings)
-    await Promise.all([routePromise, purgePromise, piercePromise])
+      const routePromise = _updateRouteTable(block, previous)
+      const purgePromise = _purgePool(block, previousLock.interblocks)
+      const piercePromise = _purgePiercings(block, previousLock.piercings)
+      await Promise.all([routePromise, purgePromise, piercePromise])
+    }
     locks.delete(chainId)
     await lock.release(chainId, incomingLock.uuid)
     debug(`putUnlockChain complete`)

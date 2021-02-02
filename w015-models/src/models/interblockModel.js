@@ -56,6 +56,8 @@ const interblockModel = standardize({
         'interblock transmission address must be known'
         // TODO this is an excessive requirement
       )
+    } else {
+      assert(!network)
     }
 
     let extractedGenesis

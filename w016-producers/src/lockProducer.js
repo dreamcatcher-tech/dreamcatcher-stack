@@ -9,13 +9,12 @@ const { lockModel, blockModel } = require('../../w015-models')
  * Simplifies the code paths if generation isn't concerned
  * with this book keeping.
  */
-const reconcile = (lock, block) =>
-  lockModel.clone(lock, (draft) => {
-    assert(blockModel.isModel(block))
-    assert(lockModel.isModel(lock))
-    draft.block = block
-    draft.piercings = { requests: [], replies: [] }
-    draft.interblocks = []
-  })
+const reconcile = (lock, block) => {
+  assert(lockModel.isModel(lock))
+  assert(blockModel.isModel(block))
+  const piercings = { requests: [], replies: [] }
+  const interblocks = []
+  return lockModel.clone({ ...lock, block, piercings, interblocks })
+}
 
 module.exports = { reconcile }

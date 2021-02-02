@@ -8,8 +8,21 @@ const {
   actionModel,
   continuationModel,
 } = require('../../w015-models')
+const ingestInterblocks = (channel, interblocks) => {
+  assert(channelModel.isModel(channel))
+  assert(Array.isArray(interblocks))
+  assert(interblocks.every(interblockModel.isModel))
+  interblocks = [...interblocks]
+  interblocks.sort((a, b) => a.provenance.height - b.provenance.height)
 
-const ingestInterblock = (channel, interblock) => {
+  interblocks.forEach((interblock) => {
+    channel = ingestInterblock(channel, interblock)
+  })
+  return channelModel.clone(channel)
+}
+const ingestInterblock = (channel, interblock) =>
+  channelModel.clone(ingestInterblockRaw(channel, interblock))
+const ingestInterblockRaw = (channel, interblock) => {
   // TODO do some logic on the channel counts, and if they match ours ?
   // check this transmission naturally extends the remote transmission ?
   // handle validator change in lineage
@@ -62,7 +75,7 @@ const ingestInterblock = (channel, interblock) => {
       }
     }
   }
-  return channelModel.clone({
+  return {
     ...channel,
     lineage,
     lineageTip,
@@ -70,7 +83,7 @@ const ingestInterblock = (channel, interblock) => {
     heavy,
     heavyHeight,
     replies,
-  })
+  }
 }
 const ingestPierceInterblock = (channel, interblock) =>
   channelModel.clone(channel, (draft) => {
@@ -182,6 +195,7 @@ const invalidate = (channel) => {
   return setAddress(channel, invalid)
 }
 module.exports = {
+  ingestInterblocks,
   ingestInterblock,
   ingestPierceInterblock,
   setAddress,

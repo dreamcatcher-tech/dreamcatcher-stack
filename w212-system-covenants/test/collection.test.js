@@ -7,7 +7,7 @@ const { collection } = require('../src/collection')
 require('debug').enable('*met* *tests* *datum *collection')
 
 describe('collection', () => {
-  test('add with test data', async () => {
+  test.skip('add with test data', async () => {
     const schema = {
       title: 'Customer',
       type: 'object',

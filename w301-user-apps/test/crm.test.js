@@ -2,7 +2,7 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-require('debug').enable('*met* *needle *tests*')
+require('debug').enable('*met* *needle *tests* *engine:increasor* ')
 
 describe('crm', () => {
   describe('app deploy', () => {
@@ -10,7 +10,6 @@ describe('crm', () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       // shell.enableLogging()
-      debugger
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
@@ -21,8 +20,10 @@ describe('crm', () => {
       debug(`publish time: ${installStart - publishStart} ms`)
       debug(`install time: ${Date.now() - installStart} ms`)
       debug(`blockcount: ${shell.getBlockCount()}`)
-      debug(`test time: ${Date.now() - publishStart} ms`)
-      debugger
+      const testTime = Date.now() - publishStart
+      debug(`test time: ${testTime} ms`)
+      const blockRate = Math.floor(testTime / shell.getBlockCount())
+      debug(`blockrate: ${blockRate}ms per block`)
 
       await shell.settle()
       /**
@@ -30,6 +31,8 @@ describe('crm', () => {
        * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
        * 2021-01-25 151ms publish, 371ms install - removed xstate
        * 2021-01-26 153ms publish, 356ms install - removed birthblocks
+       * 2021-01-28 187ms publish, 670ms install, blockcount 29 - deploy larger app with higher blockcound
+       * 2021-01-28 183ms publish, 545ms install, blockcount 29 - cache partial dmz executions
        */
     })
     test.todo('can only add customer if provide valid data')

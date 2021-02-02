@@ -70,14 +70,19 @@ const deployReply = (network, reply) => {
 
   const parent = network['..']
   // TODO compare against installer
-  // TODO assert only one deploy in the queue
+  // TODO move checks to be part of the model
+  let resolvedDeploy, resolvedInstall
   for (const index of parent.getRemoteRequestIndices()) {
     const request = parent.rxRequest(index)
     if (request.type === '@@DEPLOY') {
+      assert(!resolvedInstall && !resolvedDeploy)
       replyResolve({}, request)
+      resolvedDeploy = true
     }
     if (request.type === '@@INSTALL') {
+      assert(!resolvedInstall && !resolvedDeploy)
       replyResolve({}, request)
+      resolvedInstall = true
     }
   }
 }

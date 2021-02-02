@@ -48,6 +48,7 @@ const definition = {
       },
     },
     done: {
+      entry: 'dumpAffected',
       data: ({ affectedAddresses }) => affectedAddresses,
       type: 'final',
     },
@@ -117,6 +118,7 @@ const definition = {
     poolInterblock: {
       initial: 'isGenesis',
       states: {
+        done: { type: 'final' },
         isGenesis: {
           always: [
             { target: 'birthChild', cond: 'isGenesis' },
@@ -165,7 +167,6 @@ const definition = {
           },
           onDone: 'done',
         },
-        done: { type: 'final' },
         birthChild: {
           initial: 'checkIsOriginPresent',
           states: {
@@ -187,11 +188,11 @@ const definition = {
                 src: 'lockChildChain', // TODO move to unified services ?
                 onDone: [
                   { target: 'done', cond: 'isLockFailed' },
-                  { target: 'increaseChain' },
+                  { target: 'increaseGenesisChain' },
                 ],
               },
             },
-            increaseChain: {
+            increaseGenesisChain: {
               entry: 'assignLock',
               always: [
                 { target: 'unlockChain', cond: 'isBirthingCompleted' },
@@ -215,10 +216,6 @@ const definition = {
         },
       },
       onDone: 'done',
-    },
-
-    error: {
-      type: 'final',
     },
   },
 }

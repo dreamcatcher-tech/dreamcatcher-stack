@@ -31,7 +31,7 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
-      "name": "collection.test",
+      "name": "crm.test",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -39,7 +39,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/w301-user-apps/test/collection.test.js"
+        "${workspaceRoot}/w301-user-apps/test/crm.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",

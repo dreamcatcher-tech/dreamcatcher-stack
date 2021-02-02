@@ -154,10 +154,10 @@ const channelModel = standardize({
     const isTxGreaterThan = (previous) => {
       assert(channelModel.isModel(previous))
       const isAddressChanged = !previous.address.equals(address)
-      const isNewReplies = isNewActions(replies, previous.replies)
-      const isNewRequests = isNewActions(requests, previous.requests)
-      const isNewPromises = isNewPromiseSettled(replies, previous.replies)
-      return isAddressChanged || isNewReplies || isNewRequests || isNewPromises
+      const isReplies = isNewReplies(replies, previous.replies)
+      const isRequests = isNewActions(requests, previous.requests)
+      const isPromises = isNewPromiseSettled(replies, previous.replies)
+      return isAddressChanged || isReplies || isRequests || isPromises
     }
 
     const getRemote = () => remote
@@ -194,6 +194,25 @@ const isNewPromiseSettled = (current, previous) => {
   })
   return isPromiseSettled
 }
+const isNewReplies = (currentReplies, previousReplies) => {
+  const currentIndices = _getSortedIndices(currentReplies)
+  while (isTipPromise(currentIndices, currentReplies)) {
+    currentIndices.pop()
+  }
+  if (!currentIndices.length) {
+    return false
+  }
+  const previousIndices = _getSortedIndices(previousReplies)
+  const isNewActions = isHigherThan(currentIndices, previousIndices)
+  return isNewActions
+}
+const isTipPromise = (indicies, replies) => {
+  if (!indicies.length) {
+    return false
+  }
+  const index = _.last(indicies)
+  return replies[index].isPromise()
+}
 const isNewActions = (current, previous) => {
   const currentIndices = _getSortedIndices(current)
   const previousIndices = _getSortedIndices(previous)
@@ -220,7 +239,6 @@ const checkMonotonic = (obj) => {
   })
   assert(isMonotonic)
 }
-
 const isHigherThan = (current, previous) => {
   if (!previous.length && !current.length) {
     return false
@@ -231,8 +249,8 @@ const isHigherThan = (current, previous) => {
   if (previous.length && !current.length) {
     return false
   }
-  const baseHighest = _.last(previous)
-  const checkHighest = _.last(current)
-  return baseHighest < checkHighest
+  const previousHighest = _.last(previous)
+  const currentHighest = _.last(current)
+  return currentHighest > previousHighest
 }
 module.exports = { channelModel }

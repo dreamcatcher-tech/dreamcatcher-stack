@@ -1,4 +1,5 @@
 const assert = require('assert')
+const _ = require('lodash')
 const debug = require('debug')('interblock:config:isolator')
 const { assign } = require('xstate')
 const { pure } = require('../../../w001-xstate-direct')
@@ -43,11 +44,17 @@ const createConfig = (isolation, consistency) => ({
       },
     }),
     assignDmz: assign({
-      dmz: ({ lock }) => {
+      dmz: ({ lock }, event) => {
         assert(lockModel.isModel(lock))
-        const { block } = lock
-        assert(block)
-        const dmz = block.getDmz()
+        assert(lock.block)
+        const { cachedDmz } = event.payload
+        if (cachedDmz) {
+          assert(dmzModel.isModel(cachedDmz))
+          debug(`assignDmz using cache`)
+          return cachedDmz
+        }
+        debug(`assignDmz using lock`)
+        const dmz = lock.block.getDmz()
         return dmz
       },
     }),
@@ -56,10 +63,11 @@ const createConfig = (isolation, consistency) => ({
         assert(lockModel.isModel(lock))
         assert(dmzModel.isModel(dmz))
         const { interblocks } = lock
+        const { config } = lock.block // do not use cachedDmz
         const network = networkProducer.ingestInterblocks(
           dmz.network,
           interblocks,
-          dmz.config
+          config
         )
         return dmzModel.clone({ ...dmz, network })
       },
@@ -89,7 +97,7 @@ const createConfig = (isolation, consistency) => ({
     }),
     ingestParentLineage: assign({
       dmz: ({ dmz }, event) => {
-        const lineage = event.data
+        const { lineage } = event.data
         assert(Array.isArray(lineage))
         assert(lineage.every(interblockModel.isModel))
         debug(`ingestParentLineage length: ${lineage.length}`)
@@ -123,6 +131,7 @@ const createConfig = (isolation, consistency) => ({
         assert(lock.block)
         const { block, piercings } = lock
 
+        // TODO does this work with cachedDmz ?
         let pierceDmz = _extractPierceDmz(lock.block)
 
         let txChannel = pierceDmz.network['@@PIERCE_TARGET']
@@ -203,7 +212,7 @@ const createConfig = (isolation, consistency) => ({
       return isGenesis
     },
     verifyLineage: ({ interblock }, event) => {
-      const lineage = event.data
+      const { lineage } = event.data
       assert(lineage.length)
       assert.strictEqual(interblock.getChainId(), lineage[0].getChainId())
       assert(!lineage[0].provenance.height)
@@ -278,7 +287,7 @@ const createConfig = (isolation, consistency) => ({
       assert(lineage.every(interblockModel.isModel))
       assert.strictEqual(lineage[0].provenance.height, 0)
       debug(`fetchParentLineage length: ${lineage.length}`)
-      return lineage
+      return { lineage }
     },
     loadCovenant: async ({ lock }) => {
       assert(lockModel.isModel(lock))
@@ -328,7 +337,7 @@ const createConfig = (isolation, consistency) => ({
     },
   },
 })
-const _extractPierceDmz = (block) => {
+const _extractPierceDmzRaw = (block) => {
   const validators = pierceKeypair.getValidatorEntry()
   const baseDmz = dmzModel.create({ validators })
   const address = block.provenance.getAddress()
@@ -351,6 +360,7 @@ const _extractPierceDmz = (block) => {
   const network = { ...baseDmz.network, '@@PIERCE_TARGET': pierceChannel }
   return dmzModel.clone({ ...baseDmz, network })
 }
+const _extractPierceDmz = _.memoize(_extractPierceDmzRaw)
 const _getPierceProvenance = (block) => {
   const ioChannel = block.network['.@@io']
   if (!ioChannel) {

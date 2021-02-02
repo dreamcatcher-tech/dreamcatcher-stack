@@ -14,10 +14,6 @@ describe('pool', () => {
       assert.strictEqual(block.provenance.height, 0)
       assert.strictEqual(block.network.getAliases().length, 2)
       assert(block.network['..'].address.isRoot())
-
-      const { sqsIncrease } = metrology.getEngine()
-      const address = await sqsIncrease.awaitNextPush()
-      assert(address.equals(block.provenance.getAddress()))
       await metrology.settle()
     })
     test('two metrology bases have different addresses', async () => {

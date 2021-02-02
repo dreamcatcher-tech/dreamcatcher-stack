@@ -23,77 +23,80 @@ const channelProducer = require('./channelProducer')
  *
  * Note that only one interblock can be accepted by the public channel,
  * and no others, until the block has finished.
+ * Requisite that this funcion is called once per blockmaking, as it purges lineage
  */
-const ingestInterblocks = (network, interblocks = [], config) =>
-  networkModel.clone(network, (draft) => {
-    // implicit that this is called once per blockmaking, as it purges lineage
-    interblocks = _cloneArray(interblocks, interblockModel.clone)
-    assert(configModel.isModel(config))
-    debug(`ingestInterblocks count: ${interblocks.length}`)
-    interblocks.sort((a, b) => a.provenance.height - b.provenance.height)
+const ingestInterblocks = (network, interblocks = [], config) => {
+  interblocks = _cloneArray(interblocks, interblockModel.clone) // TODO remove ?
+  assert(configModel.isModel(config))
 
-    const immerNetwork = {} // draft causes failure to model check
-    interblocks.forEach((interblock) => {
-      const address = interblock.provenance.getAddress()
-      // TODO handle multiple aliases having the same address ?
-      const alias = network.getAlias(address)
-      // TODO split handling opening public channel into seperate function call
-      const isPublic = config.isPublicChannelOpen
-      if (!alias && isPublic && interblock.isConnectionAttempt()) {
-        debug(`connection attempt accepted`)
-        const name = `@@PUBLIC_${address.getChainId()}`
-        const blankChannel = channelModel.create(address)
-        const accept = actionModel.create({ type: '@@ACCEPT' })
-        const acceptChannel = channelModel.clone({
-          ...blankChannel,
-          requests: { 0: accept },
-        })
-        draft[name] = acceptChannel
+  const perChain = displaceLightWithHeavy(interblocks)
+  const nextNetwork = {} // draft causes failure to model check
+  for (const address of perChain.keys()) {
+    const alias = network.getAlias(address)
+    // TODO split handling opening public channel into seperate function call
+    const isPublic = config.isPublicChannelOpen
+    const interblocks = [...perChain.get(address).values()]
+    const firstInterblock = interblocks[0]
+    if (!alias && isPublic && firstInterblock.isConnectionAttempt()) {
+      debug(`connection attempt accepted`)
+      const name = `@@PUBLIC_${address.getChainId()}`
+      const blankChannel = channelModel.create(address)
+      const accept = actionModel.create({ type: '@@ACCEPT' })
+      const acceptChannel = channelModel.clone({
+        ...blankChannel,
+        requests: { 0: accept },
+      })
+      nextNetwork[name] = acceptChannel
+    }
+    if (alias) {
+      let channel = nextNetwork[alias] || network[alias]
+      assert(channelModel.isModel(channel))
+      channel = channelProducer.ingestInterblocks(channel, interblocks)
+      if (firstInterblock.isConnectionResponse()) {
+        // TODO assertion tests on state of channel - can be any of the interblocks in the array ?
       }
-      if (alias) {
-        let channel = immerNetwork[alias] || network[alias]
-        assert(channelModel.isModel(channel))
-        channel = channelProducer.ingestInterblock(channel, interblock)
-        if (interblock.isConnectionResponse()) {
-          // TODO assertion tests on state of channel
-        }
-        if (!channel.heavy || channel.equals(network[alias])) {
-          return
-        }
-        immerNetwork[alias] = channel
+      if (!channel.heavy || channel.equals(network[alias])) {
+        continue
       }
-    })
-    network.getAliases().forEach((alias) => {
-      // trim lineageTip to only the last one from the previous block
-      const original = network[alias]
-      if (!original || !original.address.isResolved() || !original.heavy) {
-        return
-      }
-      let channel = immerNetwork[alias] || original
+      nextNetwork[alias] = channel
+    }
+  }
 
-      const purgeableTips = original.lineageTip.slice(0, -1)
-      const lineageTip = _.without(channel.lineageTip, ...purgeableTips)
+  network.getAliases().forEach((alias) => {
+    // trim lineageTip to only the last one from the previous block
+    const original = network[alias]
+    if (!original || !original.address.isResolved() || !original.heavy) {
+      return
+    }
+    let channel = nextNetwork[alias] || original
 
-      // trim lineage to start with heavy, or lineageTip
-      const heavyIndex = channel.lineage.findIndex((integrity) =>
-        integrity.equals(channel.heavy.provenance.reflectIntegrity())
-      )
-      const lineageTipIndex = channel.lineage.findIndex((integrity) =>
-        integrity.equals(lineageTip[0].provenance.reflectIntegrity())
-      )
-      const minIndex =
-        heavyIndex < lineageTipIndex ? heavyIndex : lineageTipIndex
-      assert(minIndex >= 0, `minIndex out of bounds`)
-      const lineage = channel.lineage.slice(minIndex)
-      channel = channelModel.clone({ ...channel, lineage, lineageTip })
-      if (!channel.equals(original)) {
-        immerNetwork[alias] = channel
-      }
-    })
-    Object.keys(immerNetwork).forEach((key) => (draft[key] = immerNetwork[key]))
+    const purgeableTips = original.lineageTip.slice(0, -1)
+    const lineageTip = _.without(channel.lineageTip, ...purgeableTips)
 
-    // TODO close all timed out connection attempts
+    // trim lineage to start with heavy, or lineageTip
+    const heavyIndex = channel.lineage.findIndex((integrity) =>
+      integrity.equals(channel.heavy.provenance.reflectIntegrity())
+    )
+    const lineageTipIndex = channel.lineage.findIndex((integrity) =>
+      integrity.equals(lineageTip[0].provenance.reflectIntegrity())
+    )
+    const minIndex = heavyIndex < lineageTipIndex ? heavyIndex : lineageTipIndex
+    assert(minIndex >= 0, `minIndex out of bounds`)
+    const lineage = channel.lineage.slice(minIndex)
+    // TODO try avoid clone and do purge at same time as ingest
+    channel = channelModel.clone({ ...channel, lineage, lineageTip })
+    if (!channel.equals(original)) {
+      nextNetwork[alias] = channel
+    }
   })
+  if (!Object.keys(nextNetwork).length) {
+    return network
+  } else {
+    return networkModel.clone({ ...network, ...nextNetwork })
+  }
+  // TODO close all timed out connection attempts
+}
+
 const respondReply = (network, address, originalLoopback) =>
   networkModel.clone(network, (draft) => {
     assert(addressModel.isModel(address))
@@ -139,52 +142,52 @@ const _respond = (network, request, reply) =>
     draft[alias] = nextChannel
   })
 
-const tx = (network, requests, replies) =>
-  networkModel.clone(network, (draft) => {
-    assert(networkModel.isModel(network))
-    assert(Array.isArray(requests))
-    assert(Array.isArray(replies))
+const tx = (network, requests, replies) => {
+  assert(networkModel.isModel(network))
+  assert(Array.isArray(requests))
+  assert(Array.isArray(replies))
 
-    debug(`tx requests: ${requests.length} replies: ${replies.length}`)
-    const immerNetwork = {} // immer breaks isModel test
-    requests.forEach((request) => {
-      assert(txRequestModel.isModel(request))
-      let { to } = request
-      to = posix.normalize(to)
-      if (network['..'].address.isRoot() && to.startsWith('/')) {
-        to = to.substring(1)
-        to = to || '.'
-      }
-      // TODO detect child construction by the path, so ensure role is correct
-      let channel = immerNetwork[to] || network[to]
-      if (!channel) {
-        // TODO handle children ?  if no pathing or starts with ./ ?
-        // TODO maybe do path opening here, working backwards
-        const systemRole = to === '.@@io' ? 'PIERCE' : 'DOWN_LINK'
-        const address = addressModel.create()
-        channel = channelModel.create(address, systemRole)
-        debug(`channel created with systemRole: ${systemRole}`)
-      }
-      immerNetwork[to] = channelProducer.txRequest(
-        channel,
-        request.getRequest()
-      )
-    })
-    replies.forEach((txReply) => {
-      assert(txReplyModel.isModel(txReply))
-      const address = txReply.getAddress()
-      const index = txReply.getIndex()
-      const alias = network.getAlias(address)
-      if (!alias) {
-        debug(`No alias found for: %O`, txReply)
-        return
-      }
-      const channel = immerNetwork[alias] || network[alias]
-      const reply = txReply.getReply()
-      immerNetwork[alias] = channelProducer.txReply(channel, reply, index)
-    })
-    Object.keys(immerNetwork).forEach((key) => (draft[key] = immerNetwork[key]))
+  debug(`tx requests: ${requests.length} replies: ${replies.length}`)
+  const nextNetwork = {} // immer breaks isModel test
+  requests.forEach((request) => {
+    assert(txRequestModel.isModel(request))
+    let { to } = request
+    to = posix.normalize(to)
+    if (network['..'].address.isRoot() && to.startsWith('/')) {
+      to = to.substring(1)
+      to = to || '.'
+    }
+    // TODO detect child construction by the path, so ensure role is correct
+    let channel = nextNetwork[to] || network[to]
+    if (!channel) {
+      // TODO handle children ?  if no pathing or starts with ./ ?
+      // TODO maybe do path opening here, working backwards
+      const systemRole = to === '.@@io' ? 'PIERCE' : 'DOWN_LINK'
+      const address = addressModel.create()
+      channel = channelModel.create(address, systemRole)
+      debug(`channel created with systemRole: ${systemRole}`)
+    }
+    nextNetwork[to] = channelProducer.txRequest(channel, request.getRequest())
   })
+  replies.forEach((txReply) => {
+    assert(txReplyModel.isModel(txReply))
+    const address = txReply.getAddress()
+    const index = txReply.getIndex()
+    const alias = network.getAlias(address)
+    if (!alias) {
+      debug(`No alias found for: %O`, txReply)
+      return
+    }
+    const channel = nextNetwork[alias] || network[alias]
+    const reply = txReply.getReply()
+    nextNetwork[alias] = channelProducer.txReply(channel, reply, index)
+  })
+  if (!Object.keys(nextNetwork).length) {
+    return network
+  } else {
+    return networkModel.clone({ ...network, ...nextNetwork })
+  }
+}
 
 const _cloneArray = (toBeArray, cloneFunction) => {
   if (!Array.isArray(toBeArray)) {
@@ -219,6 +222,26 @@ const reaper = (network) =>
       }
     }
   })
+const displaceLightWithHeavy = (interblocks) => {
+  // TODO remove this function when remotechains is implemented
+  const perChain = new Map()
+  interblocks.forEach((interblock) => {
+    const address = interblock.provenance.getAddress()
+    if (!perChain.get(address)) {
+      perChain.set(address, new Map())
+    }
+    const displaced = perChain.get(address)
+    const height = interblock.provenance.height
+    if (displaced.has(height)) {
+      if (interblock.getOriginAlias()) {
+        displaced.set(height, interblock)
+      }
+    } else {
+      displaced.set(height, interblock)
+    }
+  })
+  return perChain
+}
 module.exports = {
   ingestInterblocks,
   respondRejection,
