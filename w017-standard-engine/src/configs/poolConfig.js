@@ -28,9 +28,10 @@ const poolConfig = (ioCrypto, ioConsistency) => {
           assert(Array.isArray(affectedAddresses))
           assert(interblockModel.isModel(interblock))
           if (!interblock.getOriginAlias()) {
+            // TODO move to state machine
             return []
           }
-          return affectedAddresses
+          return [interblock.getTargetAddress()]
         },
       }),
       assignInterblock: assign({
@@ -62,9 +63,6 @@ const poolConfig = (ioCrypto, ioConsistency) => {
           const nextLock = lockProducer.reconcile(lock, nextBlock)
           return nextLock
         },
-      }),
-      assignInitializedAddress: assign({
-        affectedAddresses: ({ lock }) => [lock.block.provenance.getAddress()],
       }),
       assignGeneratedBlock: assign({
         nextBlock: (context, event) => {

@@ -77,15 +77,14 @@ const standardEngineFactory = () => {
     const debugIncreasor = debugBase.extend('increasor')
     const throttler = async (address) => {
       assert(addressModel.isModel(address))
-      await runInBand(async () => {
-        const chainId = address.getChainId()
+      const chainId = address.getChainId()
+      if (!locks.has(chainId)) {
+        locks.set(chainId, true)
         const debug = debugIncreasor.extend(chainId.substring(0, 6))
 
-        if (!locks.get(chainId)) {
+        await runInBand(async () => {
           do {
             redrives.delete(chainId)
-            assert(!locks.get(chainId))
-            locks.set(chainId, true)
             const start = Date.now()
             const result = await ioIncrease.push(address)
             const txStart = Date.now()
@@ -98,30 +97,38 @@ const standardEngineFactory = () => {
             )
             await Promise.all(awaits)
             // TODO speed up by increasing next block before this completes
-            locks.delete(chainId)
             // TODO if cannot get the lock, then set redrive ?
             if (isRedriveRequired) {
               redrives.set(chainId, true)
             }
+
+            let hx = 0
+            let lx = 0
+            for (const ib of txInterblocks) {
+              if (ib.getOriginAlias()) {
+                hx++
+              } else {
+                lx++
+              }
+            }
+            const ibs = `tx: ${txInterblocks.length} hx:${hx} lx:${lx}`
             if (!txInterblocks.length) {
               debug(`WASTED ioIncrease total: %i ms`, Date.now() - start)
             } else {
-              debug(
-                `tx: ${txInterblocks.length} ioIncrease total: %i ms`,
-                Date.now() - start
-              )
+              debug(`ioIncrease ${ibs} %i ms`, Date.now() - start)
             }
           } while (redrives.get(chainId))
-        } else {
-          redrives.set(chainId, true)
-        }
-      })
+        })
+        locks.delete(chainId)
+      } else {
+        redrives.set(chainId, true)
+      }
     }
     return throttler
   }
   let isRunning = false
   const pending = []
-  const isRunInBand = false
+  const isRunInBand = true
   const runInBand = async (fn) => {
     if (!isRunInBand) {
       return fn()

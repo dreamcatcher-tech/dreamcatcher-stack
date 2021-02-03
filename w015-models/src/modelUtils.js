@@ -18,6 +18,15 @@ const standardize = (model) => {
   const modelWeakSet = new WeakSet()
   const objectToModelWeakMap = new WeakMap()
   const isModel = (test) => modelWeakSet.has(test)
+  const merge = (model, merge) => {
+    assert(isModel(model))
+    assert.strictEqual(typeof merge, 'object')
+    if (!Object.keys(merge).length) {
+      return model
+    } else {
+      return clone({ ...model, ...merge })
+    }
+  }
   const clone = (object, reducer) => {
     if (!object) {
       if (!defaultInstance) {
@@ -62,7 +71,13 @@ const standardize = (model) => {
   }
 
   // TODO add produce function so clone isn't overloaded
-  const standardModel = Object.freeze({ ...model, create, clone, isModel })
+  const standardModel = Object.freeze({
+    ...model,
+    create,
+    merge,
+    clone,
+    isModel,
+  })
   return standardModel
 }
 

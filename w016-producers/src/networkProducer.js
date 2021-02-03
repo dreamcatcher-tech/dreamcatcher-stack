@@ -89,28 +89,20 @@ const ingestInterblocks = (network, interblocks = [], config) => {
       nextNetwork[alias] = channel
     }
   })
-  if (!Object.keys(nextNetwork).length) {
-    return network
-  } else {
-    return networkModel.clone({ ...network, ...nextNetwork })
-  }
+  return networkModel.merge(network, nextNetwork)
   // TODO close all timed out connection attempts
 }
 
-const respondReply = (network, address, originalLoopback) =>
-  networkModel.clone(network, (draft) => {
-    assert(addressModel.isModel(address))
-    assert(channelModel.isModel(originalLoopback))
-    const alias = network.getAlias(address)
-    debug(`respondReply alias: ${alias}`)
+const respondReply = (network, address, originalLoopback) => {
+  assert(addressModel.isModel(address))
+  assert(channelModel.isModel(originalLoopback))
+  const alias = network.getAlias(address)
+  debug(`respondReply alias: ${alias}`)
 
-    const channel = network[alias]
-    const nextChannel = channelProducer.shiftTxRequest(
-      channel,
-      originalLoopback
-    )
-    draft[alias] = nextChannel
-  })
+  const channel = network[alias]
+  const nextChannel = channelProducer.shiftTxRequest(channel, originalLoopback)
+  return networkModel.merge(network, { [alias]: nextChannel })
+}
 
 const respondRejection = (network, request, reduceRejection) => {
   debug('respondRejection %O', reduceRejection)
@@ -125,22 +117,21 @@ const respondRequest = (network, request) => {
   return _respond(network, request, reply)
 }
 
-const _respond = (network, request, reply) =>
-  networkModel.clone(network, (draft) => {
-    assert(rxRequestModel.isModel(request))
-    assert(continuationModel.isModel(reply))
-    const address = request.getAddress()
-    const alias = network.getAlias(address)
-    const channel = network[alias]
-    assert(channelModel.isModel(channel))
-    assert(channel.address.equals(address))
-    assert(channel.rxRequest().equals(request))
-    const index = request.getIndex()
-    assert(!channel.replies[index])
-    let nextChannel = channelProducer.txReply(channel, reply)
-    assert(nextChannel.replies[index])
-    draft[alias] = nextChannel
-  })
+const _respond = (network, request, reply) => {
+  assert(rxRequestModel.isModel(request))
+  assert(continuationModel.isModel(reply))
+  const address = request.getAddress()
+  const alias = network.getAlias(address)
+  const channel = network[alias]
+  assert(channelModel.isModel(channel))
+  assert(channel.address.equals(address))
+  assert(channel.rxRequest().equals(request))
+  const index = request.getIndex()
+  assert(!channel.replies[index])
+  let nextChannel = channelProducer.txReply(channel, reply)
+  assert(nextChannel.replies[index])
+  return networkModel.merge(network, { [alias]: nextChannel })
+}
 
 const tx = (network, requests, replies) => {
   assert(networkModel.isModel(network))
@@ -182,11 +173,7 @@ const tx = (network, requests, replies) => {
     const reply = txReply.getReply()
     nextNetwork[alias] = channelProducer.txReply(channel, reply, index)
   })
-  if (!Object.keys(nextNetwork).length) {
-    return network
-  } else {
-    return networkModel.clone({ ...network, ...nextNetwork })
-  }
+  return networkModel.merge(network, nextNetwork)
 }
 
 const _cloneArray = (toBeArray, cloneFunction) => {
@@ -195,32 +182,43 @@ const _cloneArray = (toBeArray, cloneFunction) => {
   }
   return toBeArray.map(cloneFunction)
 }
-const invalidateLocal = (network) =>
-  networkModel.clone(network, (draft) => {
-    const aliases = network.getAliases()
-    for (const alias of aliases) {
-      if (alias === '.@@io') {
-        continue
-      }
-      const isLocal = !alias.includes('/')
-      if (isLocal && network[alias].address.isUnknown()) {
-        draft[alias] = channelProducer.invalidate(network[alias])
-      }
+const invalidateLocal = (network) => {
+  const nextNetwork = {}
+  const aliases = network.getAliases()
+  for (const alias of aliases) {
+    if (alias === '.@@io') {
+      continue
     }
-  })
+    const isLocal = !alias.includes('/')
+    if (isLocal && network[alias].address.isUnknown()) {
+      nextNetwork[alias] = channelProducer.invalidate(network[alias])
+    }
+  }
+  return networkModel.merge(network, nextNetwork)
+}
 const reaper = (network) =>
   networkModel.clone(network, (draft) => {
     // TODO also handle timed out channels here - idle clogs system
     const aliases = network.getAliases()
+    let nextNetwork
+    let isDeleted = false
     for (const alias of aliases) {
       const channel = network[alias]
       if (channel.address.isInvalid()) {
         assert(!channel.rxRequest())
         if (!channel.rxReply()) {
-          delete draft[alias]
+          isDeleted = true
+          if (!nextNetwork) {
+            nextNetwork = { ...network }
+          }
+          delete nextNetwork[alias]
         }
       }
     }
+    if (isDeleted) {
+      return networkModel.clone(nextNetwork)
+    }
+    return network
   })
 const displaceLightWithHeavy = (interblocks) => {
   // TODO remove this function when remotechains is implemented

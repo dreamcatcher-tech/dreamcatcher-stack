@@ -85,25 +85,31 @@ const ingestInterblockRaw = (channel, interblock) => {
     replies,
   }
 }
-const ingestPierceInterblock = (channel, interblock) =>
-  channelModel.clone(channel, (draft) => {
-    // special ingestion that avoids checks of previous blocks
-    // TODO try merge with existing ingestion
-    assert(interblockModel.isModel(interblock))
-    const { provenance } = interblock
-    assert(channel.address.equals(provenance.getAddress()))
-    const remote = interblock.getRemote()
-    assert(remote)
-    debug(`ingestPierceInterblock`)
+const ingestPierceInterblock = (channel, interblock) => {
+  // special ingestion that avoids checks of previous blocks
+  // TODO try merge with existing ingestion
+  assert(interblockModel.isModel(interblock))
+  const { provenance } = interblock
+  assert(channel.address.equals(provenance.getAddress()))
+  const remote = interblock.getRemote()
+  assert(remote)
+  debug(`ingestPierceInterblock`)
 
-    draft.heavy = interblock
-    draft.heavyHeight = provenance.height
-    draft.lineageHeight = provenance.height
-    const { requests } = remote
-    const remoteRequestsKeys = Object.keys(requests)
-    const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
-    draft.replies = reducedReplies
+  const heavy = interblock
+  const heavyHeight = provenance.height
+  const lineageHeight = provenance.height
+  const { requests } = remote
+  const remoteRequestsKeys = Object.keys(requests)
+  const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
+  const replies = reducedReplies
+  return channelModel.clone({
+    ...channel,
+    heavy,
+    heavyHeight,
+    lineageHeight,
+    replies,
   })
+}
 const setAddress = (channel, address) =>
   channelModel.clone(channel, (draft) => {
     // TODO if changing address, flush all channels
@@ -113,23 +119,24 @@ const setAddress = (channel, address) =>
   })
 
 // entry point for covenant into system
-const txRequest = (channel, action) =>
-  channelModel.clone(channel, (draft) => {
-    debug('txRequest')
-    assert(actionModel.isModel(action), `must supply request object`)
-    // TODO decide if should allow actions to initiate channels just by asking to talk to them
-    // may cause problems during promises if channel removed, then replayed
-    const requests = Object.values(channel.requests)
-    const isDuplicate = requests.some((request) => request.equals(action))
-    if (isDuplicate) {
-      const msg = `Duplicate request found: ${action.type}.  All requests must be distinguishable from each other`
-      throw new Error(msg)
-    }
-    const index = draft.requestsLength
-    draft.requests[index] = action
-    // TODO remove requestsLength and simply use highest known index
-    draft.requestsLength++
-  })
+const txRequest = (channel, action) => {
+  debug('txRequest')
+  assert(actionModel.isModel(action), `must supply request object`)
+  // TODO decide if should allow actions to initiate channels just by asking to talk to them
+  // may cause problems during promises if channel removed, then replayed
+  const requestActions = Object.values(channel.requests)
+  const isDuplicate = requestActions.some((request) => request.equals(action))
+  if (isDuplicate) {
+    // TODO copy this logic in the model
+    const msg = `Duplicate request found: ${action.type}.  All requests must be distinguishable from each other`
+    throw new Error(msg)
+  }
+  let { requestsLength, requests } = channel
+  requests = { ...requests, [requestsLength]: action }
+  // TODO remove requestsLength and simply use highest known index
+  requestsLength++
+  return channelModel.clone({ ...channel, requests, requestsLength })
+}
 
 // entry point for covenant into system
 const txReply = (channel, reply, replyIndex) =>

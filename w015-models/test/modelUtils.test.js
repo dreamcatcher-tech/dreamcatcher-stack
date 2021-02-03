@@ -1,4 +1,5 @@
 const assert = require('assert')
+const fastJson = require('fast-json-stringify')
 const {
   channelModel,
   networkModel,
@@ -159,4 +160,30 @@ describe('standard model', () => {
   test.todo('can always create default with no arguments')
   test.todo('clone handles dmz.state with loops')
   test.todo('optional properties which are missing are not inflated')
+  describe('fast-schema', () => {
+    const stringify = fastJson({
+      type: 'object',
+      required: ['lastName'],
+      properties: {
+        lastName: {
+          type: 'string',
+        },
+        firstName: {
+          type: 'string',
+        },
+      },
+    })
+    test('is ordered', () => {
+      const string = stringify({
+        lastName: 'Collina',
+        age: 32,
+        reg: /"([^"]|\\")*"/,
+        firstName: 'Matteo',
+      })
+      const revived = JSON.parse(string)
+      assert.strictEqual(Object.keys(revived)[0], 'lastName')
+    })
+    test('throws if missing', () =>
+      assert.throws(() => stringify({ firstName: 'Matteo' })))
+  })
 })

@@ -1,4 +1,5 @@
 const assert = require('assert')
+const _ = require('lodash')
 const debug = require('debug')('interblock:xstate:pure')
 const createContext = (initial) => {
   let context = initial || {}
@@ -24,7 +25,7 @@ const pure = async (event, definition, config = {}) => {
   const resolveParent = (state) => resolvePath(state).parent
   const resolveNode = (state) => resolvePath(state).node
   const resolvePath = (state) => {
-    const path = state.value.split('.')
+    const path = [...splitPathSpeedup(state.value)]
     let node = definition
     let parent, grandparent
     do {
@@ -170,7 +171,7 @@ const pure = async (event, definition, config = {}) => {
     }
     let { target } = transition
     if (!target.startsWith('.') && state.value.includes('.')) {
-      const path = state.value.split('.')
+      const path = [...splitPathSpeedup(state.value)]
       path.pop()
       if (isFinal(state)) {
         path.pop()
@@ -323,5 +324,6 @@ const pure = async (event, definition, config = {}) => {
   state = await settleState(state, event)
   return state
 }
+const splitPathSpeedup = _.memoize((path) => path.split('.'))
 
 module.exports = { pure }

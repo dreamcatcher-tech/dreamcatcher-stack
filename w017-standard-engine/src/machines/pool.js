@@ -102,10 +102,7 @@ const definition = {
           entry: 'mergeBlockToLock',
           invoke: {
             src: 'unlockChain',
-            onDone: {
-              target: 'done',
-              actions: 'assignInitializedAddress',
-            },
+            onDone: 'done',
           },
         },
         done: { type: 'final' },
