@@ -128,7 +128,7 @@ const standardEngineFactory = () => {
   }
   let isRunning = false
   const pending = []
-  const isRunInBand = true
+  const isRunInBand = false
   const runInBand = async (fn) => {
     if (!isRunInBand) {
       return fn()

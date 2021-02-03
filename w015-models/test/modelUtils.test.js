@@ -97,8 +97,9 @@ describe('standard model', () => {
   test('pattern at top level', () => {
     const tx = channelModel.create()
     let network = networkModel.create()
-    network = networkModel.clone(network, (draft) => {
-      draft.testPattern = channelModel.create()
+    network = networkModel.clone({
+      ...network,
+      testPattern: channelModel.create(),
     })
     assert(network.testPattern.equals(tx))
     const clone = networkModel.clone(network.serialize())
@@ -117,8 +118,9 @@ describe('standard model', () => {
     // TODO move to channelModel test, as need a nested pattern property
     const tx = channelModel.create()
     let network = networkModel.create()
-    network = networkModel.clone(network, (draft) => {
-      draft.testPattern = channelModel.create()
+    network = networkModel.clone({
+      ...network,
+      testPattern: channelModel.create(),
     })
     assert(network.testPattern.equals(tx))
     const clone = networkModel.clone(network.serialize())

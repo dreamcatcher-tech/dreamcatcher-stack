@@ -3,8 +3,6 @@ const debug = require('debug')('interblock:models:utils')
 const isCircular = require('is-circular')
 const _ = require('lodash')
 const stringify = require('fast-json-stable-stringify')
-const { produce, setAutoFreeze } = require('immer')
-setAutoFreeze(false) // we already freeze everything anyway
 const { modelInflator, precompileSchema } = require('./modelInflator')
 const { registry } = require('./registry')
 const crypto = require('../../w012-crypto')
@@ -27,7 +25,7 @@ const standardize = (model) => {
       return clone({ ...model, ...merge })
     }
   }
-  const clone = (object, reducer) => {
+  const clone = (object) => {
     if (!object) {
       if (!defaultInstance) {
         defaultInstance = standardModel.create()
@@ -35,12 +33,8 @@ const standardize = (model) => {
       }
       return defaultInstance
     }
-    if (isModel(object) && !reducer) {
+    if (isModel(object)) {
       return object
-    }
-    if (object && typeof reducer === 'function') {
-      assert(isModel(object), `instance must be ${model.schema.title}`)
-      object = produce(object, reducer)
     }
     if (typeof object === 'string') {
       object = JSON.parse(object)

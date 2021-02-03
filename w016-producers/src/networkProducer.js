@@ -30,7 +30,7 @@ const ingestInterblocks = (network, interblocks = [], config) => {
   assert(configModel.isModel(config))
 
   const perChain = displaceLightWithHeavy(interblocks)
-  const nextNetwork = {} // draft causes failure to model check
+  const nextNetwork = {}
   for (const address of perChain.keys()) {
     const alias = network.getAlias(address)
     // TODO split handling opening public channel into seperate function call
@@ -139,7 +139,7 @@ const tx = (network, requests, replies) => {
   assert(Array.isArray(replies))
 
   debug(`tx requests: ${requests.length} replies: ${replies.length}`)
-  const nextNetwork = {} // immer breaks isModel test
+  const nextNetwork = {}
   requests.forEach((request) => {
     assert(txRequestModel.isModel(request))
     let { to } = request
@@ -196,30 +196,29 @@ const invalidateLocal = (network) => {
   }
   return networkModel.merge(network, nextNetwork)
 }
-const reaper = (network) =>
-  networkModel.clone(network, (draft) => {
-    // TODO also handle timed out channels here - idle clogs system
-    const aliases = network.getAliases()
-    let nextNetwork
-    let isDeleted = false
-    for (const alias of aliases) {
-      const channel = network[alias]
-      if (channel.address.isInvalid()) {
-        assert(!channel.rxRequest())
-        if (!channel.rxReply()) {
-          isDeleted = true
-          if (!nextNetwork) {
-            nextNetwork = { ...network }
-          }
-          delete nextNetwork[alias]
+const reaper = (network) => {
+  // TODO also handle timed out channels here - idle clogs system
+  const aliases = network.getAliases()
+  let nextNetwork
+  let isDeleted = false
+  for (const alias of aliases) {
+    const channel = network[alias]
+    if (channel.address.isInvalid()) {
+      assert(!channel.rxRequest())
+      if (!channel.rxReply()) {
+        isDeleted = true
+        if (!nextNetwork) {
+          nextNetwork = { ...network }
         }
+        delete nextNetwork[alias]
       }
     }
-    if (isDeleted) {
-      return networkModel.clone(nextNetwork)
-    }
-    return network
-  })
+  }
+  if (isDeleted) {
+    return networkModel.clone(nextNetwork)
+  }
+  return network
+}
 const displaceLightWithHeavy = (interblocks) => {
   // TODO remove this function when remotechains is implemented
   const perChain = new Map()

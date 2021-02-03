@@ -61,21 +61,20 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   const genesisRequest = actionModel.create('@@GENESIS', payload)
   const address = genesis.provenance.getAddress()
 
-  const nextNetwork = networkModel.clone(network, (draft) => {
-    // TODO override generate nonce to use some predictable seed, like last block
-    let channel = channelModel.create(address, './')
-    const childOriginProvenance = interblockModel.create(genesis)
-    channel = channelProducer.ingestInterblock(channel, childOriginProvenance)
-    channel = channelProducer.txRequest(channel, genesisRequest)
-    if (network[alias]) {
-      network[alias].getRequestIndices().forEach((index) => {
-        const action = network[alias].requests[index]
-        channel = channelProducer.txRequest(channel, action)
-      })
-    }
-    draft[alias] = channel
-  })
-  return nextNetwork
+  const nextNetwork = {}
+  // TODO override generate nonce to use some predictable seed, like last block
+  let channel = channelModel.create(address, './')
+  const childOriginProvenance = interblockModel.create(genesis)
+  channel = channelProducer.ingestInterblock(channel, childOriginProvenance)
+  channel = channelProducer.txRequest(channel, genesisRequest)
+  if (network[alias]) {
+    network[alias].getRequestIndices().forEach((index) => {
+      const action = network[alias].requests[index]
+      channel = channelProducer.txRequest(channel, action)
+    })
+  }
+  nextNetwork[alias] = channel
+  return networkModel.merge(network, nextNetwork)
 }
 
 module.exports = { spawn, spawnReducer, spawnReducerWithoutPromise }

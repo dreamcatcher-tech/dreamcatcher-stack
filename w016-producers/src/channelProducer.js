@@ -110,13 +110,15 @@ const ingestPierceInterblock = (channel, interblock) => {
     replies,
   })
 }
-const setAddress = (channel, address) =>
-  channelModel.clone(channel, (draft) => {
-    // TODO if changing address, flush all channels
-    assert(addressModel.isModel(address))
-    assert(!address.isGenesis())
-    draft.address = address
-  })
+const setAddress = (channel, address) => {
+  assert(addressModel.isModel(address))
+  assert(!address.isGenesis())
+  if (channel.address.equals(address)) {
+    return channel
+  }
+  // TODO if changing address, flush all channels
+  return channelModel.clone({ ...channel, address })
+}
 
 // entry point for covenant into system
 const txRequest = (channel, action) => {
@@ -139,31 +141,31 @@ const txRequest = (channel, action) => {
 }
 
 // entry point for covenant into system
-const txReply = (channel, reply, replyIndex) =>
-  channelModel.clone(channel, (draft) => {
-    assert(continuationModel.isModel(reply), `must supply reply object`)
-    const nextReplyIndex = channel.getNextReplyIndex()
-    // TODO replies during promises needs to be deduplicated
-    replyIndex = Number.isInteger(replyIndex) ? replyIndex : nextReplyIndex
-    const highestRequest = _.last(channel.getRemoteRequestIndices())
-    const isInbounds = replyIndex >= 0 && replyIndex <= highestRequest
-    assert(isInbounds, `replyIndex out of bounds: ${replyIndex}`)
-    assert(channel.getRemote().requests[replyIndex])
+const txReply = (channel, reply, replyIndex) => {
+  assert(continuationModel.isModel(reply), `must supply reply object`)
+  const nextReplyIndex = channel.getNextReplyIndex()
+  // TODO replies during promises needs to be deduplicated
+  replyIndex = Number.isInteger(replyIndex) ? replyIndex : nextReplyIndex
+  const highestRequest = _.last(channel.getRemoteRequestIndices())
+  const isInbounds = replyIndex >= 0 && replyIndex <= highestRequest
+  assert(isInbounds, `replyIndex out of bounds: ${replyIndex}`)
+  assert(channel.getRemote().requests[replyIndex])
 
-    const { replies } = channel
-    const existingReply = replies[replyIndex]
-    const isTip = nextReplyIndex === replyIndex
-    if (existingReply && !existingReply.isPromise()) {
-      throw new Error(`Can only settle previous promises: ${replyIndex}`)
-    }
-    if (reply.isPromise() && !isTip) {
-      throw new Error(`Can only promise for current action: ${replyIndex}`)
-    }
-    if (!existingReply && !isTip) {
-      throw new Error(`Can only settle directly with tip: ${reply}`)
-    }
-    draft.replies[replyIndex] = reply
-  })
+  let { replies } = channel
+  const existingReply = replies[replyIndex]
+  const isTip = nextReplyIndex === replyIndex
+  if (existingReply && !existingReply.isPromise()) {
+    throw new Error(`Can only settle previous promises: ${replyIndex}`)
+  }
+  if (reply.isPromise() && !isTip) {
+    throw new Error(`Can only promise for current action: ${replyIndex}`)
+  }
+  if (!existingReply && !isTip) {
+    throw new Error(`Can only settle directly with tip: ${reply}`)
+  }
+  replies = { ...replies, [replyIndex]: reply }
+  return channelModel.clone({ ...channel, replies })
+}
 
 const shiftTxRequest = (channel, originalLoopback) => {
   assert(channelModel.isModel(channel))

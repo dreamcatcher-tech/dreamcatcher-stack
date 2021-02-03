@@ -72,56 +72,54 @@ const openChildReply = (network, reply) => {
   }
   return network
 }
-const openPaths = (network) =>
-  networkModel.clone(network, (draft) => {
-    // TODO if we have a subpath, should jump ahead to that
-    // eg: for /a/b/c/d we might have /a/b already, so should use that first
-    assert(networkModel.isModel(network))
-    const aliases = network.getAliases()
-    const unresolved = aliases.filter((alias) =>
-      network[alias].address.isUnknown()
-    )
-    unresolved.forEach((fullPath) => {
-      if (fullPath === '.@@io') {
+const openPaths = (network) => {
+  // TODO if we have a subpath, should jump ahead to that
+  // eg: for /a/b/c/d we might have /a/b already, so should use that first
+  assert(networkModel.isModel(network))
+  const nextNetwork = {}
+  const aliases = network.getAliases()
+  const unresolved = aliases.filter((alias) =>
+    network[alias].address.isUnknown()
+  )
+  unresolved.forEach((fullPath) => {
+    if (fullPath === '.@@io' || !fullPath.includes('/')) {
+      return // local paths are invalidated separately
+    }
+
+    const segmentPaths = _getPathSegments(fullPath)
+    assert(segmentPaths.length > 1)
+
+    segmentPaths.some((segmentPath, index) => {
+      const channel = network[segmentPath]
+      if (channel && !channel.address.isUnknown()) {
         return
       }
-      if (!fullPath.includes('/')) {
-        return // local paths are invalidated separately
+      debug(`unresolved path: `, segmentPath)
+      if (index === 0) {
+        if (!network[segmentPath]) {
+          nextNetwork[fullPath] = channelProducer.invalidate(network[fullPath])
+          return true
+        }
       }
 
-      const segmentPaths = _getPathSegments(fullPath)
-      assert(segmentPaths.length > 1)
-
-      segmentPaths.some((segmentPath, index) => {
-        const channel = network[segmentPath]
-        if (channel && !channel.address.isUnknown()) {
-          return
-        }
-        debug(`unresolved path: `, segmentPath)
-        if (index === 0) {
-          if (!network[segmentPath]) {
-            draft[fullPath] = channelProducer.invalidate(network[fullPath])
-            return true
-          }
-        }
-
-        const parent = index === 0 ? '.' : segmentPaths[index - 1]
-        debug('parent: ', parent)
-        const child = segmentPath.split('/').pop()
-        debug('child: ', child)
-        if (_isAwaitingOpen(network[parent])) {
-          debug(`parent: %o was already asked to open child: %o`, parent, child)
-        } else {
-          const isUnresolvedParent = network[parent].address.isResolved()
-          assert(isUnresolvedParent, `unresolved parent attempted: ${parent}`)
-          debug('sending open action from parent: %o to %o', parent, child)
-          const open = actionModel.create(openChild(child, parent, fullPath))
-          draft[parent] = channelProducer.txRequest(network[parent], open)
-        }
-        return true
-      })
+      const parent = index === 0 ? '.' : segmentPaths[index - 1]
+      debug('parent: ', parent)
+      const child = segmentPath.split('/').pop()
+      debug('child: ', child)
+      if (_isAwaitingOpen(network[parent])) {
+        debug(`parent: %o was already asked to open child: %o`, parent, child)
+      } else {
+        const isUnresolvedParent = network[parent].address.isResolved()
+        assert(isUnresolvedParent, `unresolved parent attempted: ${parent}`)
+        debug('sending open action from parent: %o to %o', parent, child)
+        const open = actionModel.create(openChild(child, parent, fullPath))
+        nextNetwork[parent] = channelProducer.txRequest(network[parent], open)
+      }
+      return true
     })
   })
+  return networkModel.merge(network, nextNetwork)
+}
 const _isAwaitingOpen = (channel, fullPath) => {
   // TODO WARNING must consider all paths that are its parent too
   // WARNING consider rejected path as awaiting also ?
