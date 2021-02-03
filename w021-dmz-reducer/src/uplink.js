@@ -21,15 +21,15 @@ const uplinkReducer = (network, action) => {
   assert(address.isResolved())
 
   let alias = network.getAlias(address)
-  const shortChainId = chainId.substring(0, 9)
-  debug(`uplinkReducer ${alias} set to ${shortChainId}`)
-  replyResolve({ alias })
   const nextNetwork = {}
   if (!alias || network[alias].systemRole !== 'UP_LINK') {
     alias = autoAlias(network, '.uplink_')
     assert(!network[alias])
     nextNetwork[alias] = channelModel.create(address, 'UP_LINK')
   }
+  const shortChainId = chainId.substring(0, 9)
+  debug(`uplinkReducer ${alias} set to ${shortChainId}`)
+  replyResolve({ alias })
   return networkModel.merge(network, nextNetwork)
 }
 const uplinkReply = (network, reply) => {
