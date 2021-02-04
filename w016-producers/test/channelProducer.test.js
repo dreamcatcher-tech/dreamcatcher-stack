@@ -63,23 +63,24 @@ describe('channelProducer', () => {
   })
   test('multiple actions requested', () => {
     let twoActions = channelModel.create()
-    twoActions = txRequest(twoActions, actionModel.create())
-    twoActions = txRequest(twoActions, actionModel.create())
+    twoActions = txRequest(twoActions, actionModel.create('action1'))
+    twoActions = txRequest(twoActions, actionModel.create('action2'))
     assert.strictEqual(Object.keys(twoActions.requests).length, 2)
     assert.strictEqual(twoActions.requestsLength, 2)
 
     let many = channelModel.create()
+    let count = 0
     Array(10)
       .fill(true)
-      .forEach(() => (many = txRequest(many, actionModel.create())))
+      .forEach(() => (many = txRequest(many, actionModel.create(`${++count}`))))
     assert.strictEqual(Object.keys(many.requests).length, 10)
     assert.strictEqual(many.requestsLength, 10)
   })
   test('resolve can update previous promises', async () => {
     let remote = channelModel.create(addressModel.create('TEST'))
-    remote = txRequest(remote, actionModel.create())
-    remote = txRequest(remote, actionModel.create())
-    remote = txRequest(remote, actionModel.create())
+    remote = txRequest(remote, actionModel.create('action1'))
+    remote = txRequest(remote, actionModel.create('action2'))
+    remote = txRequest(remote, actionModel.create('action3'))
 
     const resolveAction = continuationModel.create('@@RESOLVE')
     const promiseAction = continuationModel.create('@@PROMISE')

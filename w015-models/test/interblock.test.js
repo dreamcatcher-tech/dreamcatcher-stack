@@ -25,54 +25,56 @@ const createBlockWithEffects = async () => {
 }
 
 describe('interblock', () => {
-  test('create', async () => {
-    const validatedBlock = await createBlockWithEffects()
-    const interblock = interblockModel.create(validatedBlock, 'effects')
-    assert(interblock)
-    const clone = interblockModel.clone(interblock)
-    assert(clone.equals(interblock))
-    assert.throws(interblockModel.clone)
-  })
-  test('interblock must have validated block', async () => {
-    const validatedBlock = await blockModel.create()
-    assert.throws(() => interblockModel.create())
-    assert(interblockModel.create(validatedBlock))
-  })
-  test('targetAlias may be empty', async () => {
-    const validatedBlock = await blockModel.create()
-    const provenanceOnly = interblockModel.create(validatedBlock)
-    assert(provenanceOnly)
-    assert(!provenanceOnly.network)
-  })
-  test('lineage only is same whether derived or direct', async () => {
-    const block = await createBlockWithEffects()
-    const lineage = interblockModel.create(block)
-    const heavy = interblockModel.create(block, 'effects')
-    assert(heavy.network.effects)
-    const derived = heavy.getWithoutRemote()
-    const relineage = lineage.getWithoutRemote()
-    assert(!lineage.equals(heavy))
-    assert(!heavy.equals(derived))
-    assert(lineage.equals(derived))
-    assert(derived.equals(relineage))
-    assert(lineage.equals(relineage))
-  })
-  test('throws if no valid address to send to', () => {
-    // no point making an interblock of the target alias does not have an address
-  })
-  test('two interblocks from one block', () => {
-    // show interblock creation for two different tx chains,
-    // from the same original block
-    // show the integrity create and check functions are modular
-    // check no name leakage inside network key
-  })
-  test('targetAlias may be empty if network is not', async () => {
-    let dmz = dmzModel.create()
-    const validatedBlock = await blockModel.create(dmz)
-    const provenanceOnly = interblockModel.create(validatedBlock)
-    assert(provenanceOnly)
-    assert(Object.keys(validatedBlock.network).length)
-    assert(!provenanceOnly.network)
+  describe('create', () => {
+    test('create', async () => {
+      const validatedBlock = await createBlockWithEffects()
+      const interblock = interblockModel.create(validatedBlock, 'effects')
+      assert(interblock)
+      const clone = interblockModel.clone(interblock)
+      assert(clone.equals(interblock))
+      assert.throws(interblockModel.clone)
+    })
+    test('interblock must have validated block', async () => {
+      const validatedBlock = await blockModel.create()
+      assert.throws(() => interblockModel.create())
+      assert(interblockModel.create(validatedBlock))
+    })
+    test('targetAlias may be empty', async () => {
+      const validatedBlock = await blockModel.create()
+      const provenanceOnly = interblockModel.create(validatedBlock)
+      assert(provenanceOnly)
+      assert(!provenanceOnly.network)
+    })
+    test('lineage only is same whether derived or direct', async () => {
+      const block = await createBlockWithEffects()
+      const lineage = interblockModel.create(block)
+      const heavy = interblockModel.create(block, 'effects')
+      assert(heavy.network.effects)
+      const derived = heavy.getWithoutRemote()
+      const relineage = lineage.getWithoutRemote()
+      assert(!lineage.equals(heavy))
+      assert(!heavy.equals(derived))
+      assert(lineage.equals(derived))
+      assert(derived.equals(relineage))
+      assert(lineage.equals(relineage))
+    })
+    test('throws if no valid address to send to', () => {
+      // no point making an interblock of the target alias does not have an address
+    })
+    test('two interblocks from one block', () => {
+      // show interblock creation for two different tx chains,
+      // from the same original block
+      // show the integrity create and check functions are modular
+      // check no name leakage inside network key
+    })
+    test('targetAlias may be empty if network is not', async () => {
+      let dmz = dmzModel.create()
+      const validatedBlock = await blockModel.create(dmz)
+      const provenanceOnly = interblockModel.create(validatedBlock)
+      assert(provenanceOnly)
+      assert(Object.keys(validatedBlock.network).length)
+      assert(!provenanceOnly.network)
+    })
   })
   test.todo('proof only has block proof if no network alias')
   test.todo('getTargetAddress handles undefined address in provenance only')
@@ -96,4 +98,24 @@ describe('interblock', () => {
   })
   test.todo('includes')
   test.todo('reject if replies not monotonic ? or promises ?')
+  describe('getWithoutRemote', () => {
+    test('speed', async () => {
+      const validatedBlock = await createBlockWithEffects()
+      const interblock = interblockModel.create(validatedBlock, 'effects')
+      assert(interblock.network.effects)
+      const start = Date.now()
+      interblock.getWithoutRemote()
+      const elapsed = Date.now() - start
+      assert(elapsed <= 1)
+    })
+    test('speed when already without remote', async () => {
+      const validatedBlock = await createBlockWithEffects()
+      const interblock = interblockModel.create(validatedBlock)
+      assert(!interblock.network)
+      const start = Date.now()
+      interblock.getWithoutRemote()
+      const elapsed = Date.now() - start
+      assert(elapsed <= 1)
+    })
+  })
 })

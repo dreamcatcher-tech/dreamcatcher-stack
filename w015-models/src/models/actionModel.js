@@ -1,12 +1,12 @@
 const { standardize } = require('../modelUtils')
 const { actionSchema } = require('../schemas/modelSchemas')
 
-let counter = 0
-const defaultAction = () => `DEFAULT_ACTION_${counter++}`
-
 const actionModel = standardize({
   schema: actionSchema,
-  create(action = defaultAction(), payload = {}) {
+  create(action, payload = {}) {
+    if (typeof action === 'undefined') {
+      throw new Error(`Actions cannot be undefined`)
+    }
     if (typeof action === 'string') {
       action = { type: action, payload }
     }

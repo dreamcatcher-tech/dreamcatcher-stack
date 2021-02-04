@@ -2,14 +2,12 @@ const assert = require('assert')
 const { actionModel } = require('..')
 
 describe('acl', () => {
+  test('throws on blank creation', () => assert.throws(actionModel.create))
+  test('throws on blank clone', () => assert.throws(actionModel.clone))
   test('creates default', () => {
-    const action = actionModel.create()
+    const action = actionModel.create('action1')
     assert(action)
     assert(actionModel.isModel(action))
-    const clone = actionModel.clone()
-    assert(clone)
-    assert(actionModel.isModel(clone))
-    assert(action.type.startsWith('DEFAULT_ACTION_'))
   })
   test('create is same as clone', () => {
     const action = actionModel.create('test')
@@ -17,13 +15,6 @@ describe('acl', () => {
     const clone = actionModel.clone(create)
     assert(action.equals(create))
     assert(create.equals(clone))
-  })
-  test('create is always a different object', () => {
-    const a1 = actionModel.create()
-    const a2 = actionModel.create()
-    assert(a1.type.startsWith('DEFAULT_ACTION_'))
-    assert(a2.type.startsWith('DEFAULT_ACTION_'))
-    assert(!a1.equals(a2))
   })
   test('no undefined in payloads', () => {
     const original = { type: 'test', payload: { missing: undefined } }

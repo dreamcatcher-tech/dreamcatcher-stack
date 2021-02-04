@@ -11,6 +11,13 @@ require('../../w012-crypto').testMode()
 
 describe('channel', () => {
   describe('create', () => {
+    test('create speed', () => {
+      const precompileFlush = channelModel.create()
+      const start = Date.now()
+      channelModel.create()
+      const elapsed = Date.now() - start
+      assert(elapsed < 3, elapsed)
+    })
     test('create', () => {
       const channel = channelModel.create()
       assert(channel.address.isUnknown())
@@ -24,7 +31,7 @@ describe('channel', () => {
     })
     test('disordered entries in requests array', () => {
       const tx = channelModel.create()
-      const action = actionModel.create()
+      const action = actionModel.create('action1')
       const withJumble = channelModel.clone({
         ...tx,
         requests: { 0: action, 3: action, 2: action },

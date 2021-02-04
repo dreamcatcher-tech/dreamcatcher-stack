@@ -128,6 +128,7 @@ const standardEngineFactory = () => {
   }
   let isRunning = false
   const pending = []
+  // when engine is optimal, isRunInBand makes no difference to performance
   const isRunInBand = false
   const runInBand = async (fn) => {
     if (!isRunInBand) {

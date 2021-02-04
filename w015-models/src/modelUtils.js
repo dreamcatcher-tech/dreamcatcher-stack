@@ -278,10 +278,13 @@ const checkStructure = (model) => {
 }
 const memoizeCreate = (model) => {
   // TODO memoize but keep unique requests, like to Action
-  // if (model.schema.title === 'Action') {
-  return model.create
-  // }
-  // return _.memoize(model.create)
+  const memoized = _.memoize(model.create)
+  return (...args) => {
+    if (!args.length) {
+      return memoized(...args)
+    }
+    return model.create(...args)
+  }
 }
 const deepFreeze = (o) => {
   Object.freeze(o)
