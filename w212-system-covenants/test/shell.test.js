@@ -6,9 +6,22 @@ const { shell } = require('..')
 const { effect, interchain } = require('../../w002-api')
 const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('../../w017-standard-engine')
-require('debug').enable('*met* *shell *dmz* *piercer*')
+require('debug').enable('*met* *shell *dmz* *piercer* *config:interpreter')
 
 describe('machine validation', () => {
+  describe('state machine', () => {
+    test.only('rejects if state not at idle', async () => {
+      const base = await metrologyFactory('s', { hyper: shell })
+      await base.spawn('child1')
+      base.enableLogging()
+      const cd = shell.actions.cd('child1')
+      const cdPromise = base.pierce(cd)
+      const ls = shell.actions.ls('/')
+      const lsPromise = base.pierce(ls)
+      const [cdResult, lsResult] = await Promise.all([cdPromise, lsPromise])
+      await base.settle()
+    })
+  })
   test.todo('opens up a path')
   test.todo('coordinates with simultaneous path openings')
   test.todo('detects changes in filesystem')

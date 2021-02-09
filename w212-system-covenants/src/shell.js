@@ -95,6 +95,7 @@ const config = {
       return { children: { ...children, '.': self } }
     },
     changeDirectory: async ({ wd }, event) => {
+      // TODO ignore if same as working directory
       let { path } = event.payload
       assert.strictEqual(typeof path, 'string')
       assert(posix.isAbsolute(wd))

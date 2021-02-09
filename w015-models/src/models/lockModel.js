@@ -85,6 +85,7 @@ const lockModel = standardize({
     assert.strictEqual(noDupes.replies.length, replies.length)
     // TODO remove light blocks from lock - will be superseded when modelchains is implemented
     // assertUniqueHeights(interblocks)
+    // TODO check piercings are sorted correctly
     const isLocked = () => !timestamp.isExpired(expires)
     const isMatch = (lock) => lock.uuid === instance.uuid
     const isPiercingsPresent = () => requests.length || replies.length
@@ -112,13 +113,13 @@ const refinePiercings = (block, piercings) => {
     request = txRequestModel.clone(request)
     return request
   })
-  requests = deduplicate(requests)
+  requests = sort(deduplicate(requests))
   replies = replies.map((reply) => {
     assert.strictEqual(typeof reply, 'object')
     reply = txReplyModel.clone(reply)
     return reply
   })
-  replies = deduplicate(replies)
+  replies = sort(deduplicate(replies))
   return removeProcessedPiercings(block, { requests, replies })
 }
 
@@ -151,7 +152,15 @@ const deduplicate = (items) => {
       dedupe.push(item)
     }
   })
+  assert(dedupe.every((i) => typeof i.payload['__@@ioSequence'] === 'string'))
   return dedupe
+}
+const sort = (items) => {
+  return items.sort((a, b) => {
+    const aSeq = a.payload['__@@ioSequence']
+    const bSeq = b.payload['__@@ioSequence']
+    return aSeq.localeCompare(bSeq)
+  })
 }
 
 module.exports = {

@@ -48,7 +48,7 @@ describe('channelProducer', () => {
   })
   test('request', () => {
     let tx = channelModel.create()
-    const action = actionModel.create()
+    const action = actionModel.create('action1')
     tx = txRequest(tx, action)
     assert(channelModel.isModel(tx))
     assert(action.equals(tx.requests[0]))
@@ -57,7 +57,7 @@ describe('channelProducer', () => {
   })
   test('duplicate actions throws', () => {
     let channel = channelModel.create()
-    const action = actionModel.create()
+    const action = actionModel.create('action1')
     channel = txRequest(channel, action)
     assert.throws(() => txRequest(channel, action))
   })

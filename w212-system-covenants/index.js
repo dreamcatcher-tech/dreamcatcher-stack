@@ -4,7 +4,6 @@ const collection = require('./src/collection')
 collection.covenantId = covenantIdModel.create('collection')
 
 const datum = require('./src/datum')
-datum.covenantId = covenantIdModel.create('datum')
 
 const dpkg = require('./src/dpkg')
 dpkg.covenantId = covenantIdModel.create('dpkg')

@@ -2,11 +2,11 @@ const assert = require('assert')
 const debug = require('debug')('interblock:tests:pierce')
 const { metrologyFactory } = require('..')
 const { request } = require('../../w002-api')
+const { actions } = require('../../w021-dmz-reducer')
 
 describe('pierce', () => {
-  require('debug').enable('*metro* *pierce*')
+  require('debug').enable('*met* *pierce*')
   test('basic ping', async () => {
-    jest.setTimeout(1000)
     const base = await metrologyFactory()
     const ping = request('PING')
     const reply = await base.pierce(ping)
@@ -33,6 +33,22 @@ describe('pierce', () => {
     })
     await base.pierce(request('PING'))
     assert(noIoTransmissions)
+    await base.settle()
+  })
+  test('multiple simultaneous pings maintain order', async () => {
+    const base = await metrologyFactory()
+    // base.enableLogging()
+    const ping1 = actions.ping('p1')
+    const ping2 = actions.ping('p2')
+    const p1Promise = base.pierce(ping1)
+    const p2Promise = base.pierce(ping2)
+    await Promise.all([p1Promise, p2Promise])
+    const state = base.getState()
+    const io = state.network['.@@io']
+    assert.strictEqual(Object.keys(io.replies).length, 2)
+
+    assert.strictEqual(io.replies[0].payload.string, 'p1')
+    assert.strictEqual(io.replies[1].payload.string, 'p2')
     await base.settle()
   })
   test.todo('reject for unknown chainId')

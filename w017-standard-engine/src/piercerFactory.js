@@ -25,12 +25,12 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
         indices.forEach((index) => {
           const request = ioChannel.getRemote().requests[index]
           assert(request)
-          const { _dispatchId } = request.payload
-          assert(_dispatchId.endsWith(id))
-          if (!promises.has(_dispatchId)) {
+          const { '__@@ioSequence': sequence } = request.payload
+          assert(sequence.endsWith(id))
+          if (!promises.has(sequence)) {
             return
           }
-          const callbacks = promises.get(_dispatchId)
+          const callbacks = promises.get(sequence)
           callbacks.pending.resolve()
 
           const reply = ioChannel.replies[index]
@@ -39,13 +39,13 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
           }
           const { resolve, reject } = callbacks.settled
           if (reply.isResolve()) {
-            const { _dispatchId, ...payload } = reply.payload
+            const { '__@@ioSequence': discard, ...payload } = reply.payload
             assert.strictEqual(typeof payload, 'object')
             setImmediate(() => resolve(payload))
           } else {
             setImmediate(() => reject(deserializeError(reply.payload)))
           }
-          promises.delete(_dispatchId)
+          promises.delete(sequence)
         })
       }
     }
@@ -53,15 +53,15 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
 
   return async (rawType, rawPayload) => {
     let { type, payload = {} } = request(rawType, rawPayload)
-    assert(!payload._dispatchId)
-    const _dispatchId = `${dispatchCounter++} ${id}`
-    debug(`pierce: %s id: %o`, type, _dispatchId)
+    assert(!payload['__@@ioSequence'])
+    const sequence = `${dispatchCounter++} ${id}`
+    debug(`pierce: %s id: %o`, type, sequence)
 
-    payload = { ...payload, _dispatchId }
+    payload = { ...payload, '__@@ioSequence': sequence }
     const chainId = address.getChainId()
     const txRequest = txRequestModel.create(type, payload, chainId)
     const { promise, callbacks } = generateDispatchPromise()
-    promises.set(_dispatchId, callbacks)
+    promises.set(sequence, callbacks)
     await consistency.putPierceRequest({ txRequest })
     await sqsIncrease.push(address)
 

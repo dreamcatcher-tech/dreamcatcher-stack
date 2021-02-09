@@ -33,7 +33,7 @@ describe('crm', () => {
        * 2021-01-26 153ms publish, 356ms install - removed birthblocks
        * 2021-01-28 187ms publish, 670ms install, blockcount 29 - deploy larger app with higher blockcound
        * 2021-01-28 183ms publish, 545ms install, blockcount 29 - cache partial dmz executions
-       * 2021-02-04 166ms publish, 422ms install, blockcount 29, blockrate 20ms - remove immer, cache blank creates
+       * 2021-02-04 176ms publish, 382ms install, blockcount 29, blockrate 19ms - remove immer, cache blank creates, reuse hashes for block and interblock
        */
     })
     test.todo('can only add customer if provide valid data')

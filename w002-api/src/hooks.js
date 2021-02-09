@@ -92,12 +92,18 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
     if (typeof reduction.then === 'function') {
       // unwrap native async queue
       const racecar = Symbol('RACECAR')
+      // TODO concurrent hooks where each has a uuid
       // TODO be able to have multiple concurrent hooks active, as sometimes needs to await deeper in the eventloop to run the hooks code
       // TODO implement a wait loop, to avoid collisions
-      const racetrack = new Promise((resolve) =>
-        setImmediate(() => resolve(racecar))
-      )
-      const result = await Promise.race([reduction, racetrack])
+
+      const racetrackShort = Promise.resolve(racecar)
+      let result = await Promise.race([reduction, racetrackShort])
+      if (result === racecar) {
+        const racetrackLong = new Promise((resolve) =>
+          setImmediate(() => resolve(racecar))
+        )
+        result = await Promise.race([reduction, racetrackLong])
+      }
       const isStillPending = result === racecar
       actions = _unhookGlobal()
 

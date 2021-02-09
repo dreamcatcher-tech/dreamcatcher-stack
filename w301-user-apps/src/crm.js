@@ -23,7 +23,25 @@ const install = {
     customers: {
       covenant: 'collection',
       state: {
-        datumTemplate: {},
+        datumTemplate: {
+          schema: {
+            title: 'Customer',
+            type: 'object',
+            required: ['firstName'],
+            properties: {
+              firstName: { type: 'string' },
+            },
+          },
+          children: {
+            address: {
+              schema: {
+                title: 'Address',
+                type: 'object',
+                properties: { address: { type: 'string' } },
+              },
+            },
+          },
+        },
       },
     },
     banking: { covenant: 'datum' },

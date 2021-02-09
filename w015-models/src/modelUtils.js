@@ -133,21 +133,9 @@ const generateHash = (schema, instance) => {
     case 'Integrity': {
       return { hash: instance.hash }
     }
+    case 'Interblock':
     case 'Block': {
-      // TODO do not generate proof unless explicitly asked for it
-      const nonInterblockKeys = [
-        'encryption',
-        'timestamp',
-        'config',
-        'covenantId',
-        'binaryIntegrity',
-        'acl',
-        'state',
-        'pending',
-      ]
-      const restOfBlock = _pick(instance, nonInterblockKeys)
-      const proof = crypto.objectHash(hashPattern(restOfBlock))
-      return { hash: instance.provenance.getHash(), proof }
+      return { hash: instance.provenance.getHash(), proof: 'no proof needed' }
     }
     case 'Network': {
       const { hash, proof: networkChannels } = hashPattern(instance)
@@ -277,7 +265,6 @@ const checkStructure = (model) => {
   }
 }
 const memoizeCreate = (model) => {
-  // TODO memoize but keep unique requests, like to Action
   const memoized = _.memoize(model.create)
   return (...args) => {
     if (!args.length) {

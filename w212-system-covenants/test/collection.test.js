@@ -1,13 +1,11 @@
 const assert = require('assert')
 const { effectorFactory } = require('../..')
 const debug = require('debug')('crm:tests:datum')
-const { datum } = require('../src/datum')
-const { collection } = require('../src/collection')
 
 require('debug').enable('*met* *tests* *datum *collection')
 
 describe('collection', () => {
-  test.skip('add with test data', async () => {
+  test('add with test data', async () => {
     const schema = {
       title: 'Customer',
       type: 'object',
@@ -26,7 +24,7 @@ describe('collection', () => {
       },
     }
 
-    const root = await effectorFactory('col', { datum, collection })
+    const root = await effectorFactory('col')
     await root.add('col1', 'collection')
     root.enableLogging()
     await root.col1.setDatumTemplate({ schema, children })

@@ -1,14 +1,12 @@
 const assert = require('assert')
-const Ajv = require('ajv')
-const ajv = new Ajv({ allErrors: true, verbose: true })
 const debug = require('debug')('interblock:apps:collection')
+const datum = require('./datum')
 const {
-  datum,
   convertToTemplate,
   demuxFormData,
   validateDatumTemplate,
   muxTemplateWithFormData,
-} = require('./datum')
+} = datum
 const { interchain } = require('../../w002-api')
 const {
   actions: { spawn },

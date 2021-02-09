@@ -4,6 +4,7 @@ const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
 const debug = require('debug')('interblock:apps:datum')
 const dmzReducer = require('../../w021-dmz-reducer')
+const { covenantIdModel } = require('../../w015-models')
 const { interchain } = require('../../w002-api')
 /**
  * Requirements:
@@ -242,6 +243,7 @@ const actions = {
   unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
   setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
 }
+const covenantId = covenantIdModel.create('datum')
 
 module.exports = {
   actions,
@@ -250,4 +252,5 @@ module.exports = {
   demuxFormData,
   validateDatumTemplate,
   muxTemplateWithFormData,
+  covenantId,
 }
