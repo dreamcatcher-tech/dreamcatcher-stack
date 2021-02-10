@@ -10,16 +10,19 @@ const {
   channelModel,
   reductionModel,
   pendingModel,
-} = require('../../../w015-models')
-const { networkProducer, pendingProducer } = require('../../../w016-producers')
-const dmzReducer = require('../../../w021-dmz-reducer')
-const { definition } = require('../machines/interpreter')
+} = require('../../../../w015-models')
+const {
+  networkProducer,
+  pendingProducer,
+} = require('../../../../w016-producers')
+const dmzReducer = require('../../../../w021-dmz-reducer')
+const { definition } = require('./interpreter')
 const {
   '@@GLOBAL_HOOK_INBAND': globalHookInband,
   resolve,
   reject,
   isReplyFor,
-} = require('../../../w002-api')
+} = require('../../../../w002-api')
 const { assign } = require('xstate')
 
 const config = {
