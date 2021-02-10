@@ -30,7 +30,6 @@ const fsmFactory = () => {
     const action = { type: 'POOL_INTERBLOCK', payload }
     const { machine, config } = pool
     const result = await pure(action, machine, config)
-    // const result = await thread(action, poolMachine)
     return result
   }
   ioPool.setProcessor(poolProcessor)
@@ -41,7 +40,6 @@ const fsmFactory = () => {
     const action = { type: 'INCREASE_CHAIN', payload }
     const { machine, config } = increasor
     const result = await pure(action, machine, config)
-    // const result = await thread(action, increasorMachine)
     return result
   }
   ioIncrease.setProcessor(ioIncreaseProcessor)
@@ -52,7 +50,6 @@ const fsmFactory = () => {
     const action = { type: 'RECEIVE_INTERBLOCK', payload }
     const { machine, config } = receiver
     const result = await pure(action, machine, config)
-    // const result = await thread(action, receiverMachine)
     return result
   }
   ioReceive.setProcessor(ioReceiveProcessor)
@@ -63,7 +60,6 @@ const fsmFactory = () => {
     const action = { type: 'TRANSMIT_INTERBLOCK', payload }
     const { machine, config } = transmitter
     const result = await pure(action, machine, config)
-    // const result = await thread(action, transmitterMachine)
     return result
   }
   ioTransmit.setProcessor(ioTransmitProcessor)

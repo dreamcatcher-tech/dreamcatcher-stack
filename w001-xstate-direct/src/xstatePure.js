@@ -114,8 +114,9 @@ const pure = async (event, definition, config = {}) => {
         transitions = node.invoke.onDone
       } else {
         transitions = node.invoke.onError
-        console.error(event.data)
-        assert(transitions, `No onError for ${state.value}`)
+        if (!transitions) {
+          throw event.data
+        }
       }
     } else if (node.always) {
       transitions = node.always
@@ -260,7 +261,7 @@ const pure = async (event, definition, config = {}) => {
   const settleState = async (state, event) => {
     const { value } = state
     let { watchdog } = state
-    if (watchdog > 100) {
+    if (watchdog > 50) {
       throw new Error(`endless loop: ${watchdog}`)
     }
     debug(`loop ${++watchdog} stateValue: %o`, value)
@@ -287,6 +288,9 @@ const pure = async (event, definition, config = {}) => {
       return await settleState(state, event) // means prior states are available on the stack for debugging
     }
     if (isDone(state)) {
+      if (state.value === 'error') {
+        throw event.data
+      }
       // if this is the top level state, and is final, return doneData
       debug(`isDone`, state)
       return doneData(state, event)

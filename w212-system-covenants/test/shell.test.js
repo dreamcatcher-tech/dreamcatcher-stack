@@ -6,11 +6,11 @@ const { shell } = require('..')
 const { effect, interchain } = require('../../w002-api')
 const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('../../w017-standard-engine')
-require('debug').enable('*met* *shell *dmz* *piercer* *config:interpreter')
+require('debug').enable('*met* *shell *dmz* *piercer*')
 
 describe('machine validation', () => {
   describe('state machine', () => {
-    test.only('rejects if state not at idle', async () => {
+    test.only('buffered request is processed', async () => {
       const base = await metrologyFactory('s', { hyper: shell })
       await base.spawn('child1')
       base.enableLogging()
@@ -19,6 +19,8 @@ describe('machine validation', () => {
       const ls = shell.actions.ls('/')
       const lsPromise = base.pierce(ls)
       const [cdResult, lsResult] = await Promise.all([cdPromise, lsPromise])
+      assert.strictEqual(cdResult.absolutePath, '/child1')
+      assert.strictEqual(Object.keys(lsResult.children).length, 4)
       await base.settle()
     })
   })

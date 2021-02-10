@@ -219,6 +219,20 @@ const reaper = (network) => {
   }
   return network
 }
+const removeBufferPromise = (network, request) => {
+  assert(networkModel.isModel(network))
+  assert(rxRequestModel.isModel(request))
+  const index = request.getIndex()
+  const address = request.getAddress()
+  const alias = network.getAlias(address)
+  const channel = network[alias]
+  const replies = { ...channel.replies }
+  assert(replies[index].isPromise())
+  delete replies[index]
+  const nextChannel = channelModel.clone({ ...channel, replies })
+  const nextNetwork = networkModel.clone({ ...network, [alias]: nextChannel })
+  return nextNetwork
+}
 const displaceLightWithHeavy = (interblocks) => {
   // TODO remove this function when remotechains is implemented
   const perChain = new Map()
@@ -247,4 +261,5 @@ module.exports = {
   tx,
   invalidateLocal,
   reaper,
+  removeBufferPromise,
 }

@@ -113,13 +113,13 @@ const refinePiercings = (block, piercings) => {
     request = txRequestModel.clone(request)
     return request
   })
-  requests = sort(deduplicate(requests))
+  requests = sort(deduplicatePiercings(requests))
   replies = replies.map((reply) => {
     assert.strictEqual(typeof reply, 'object')
     reply = txReplyModel.clone(reply)
     return reply
   })
-  replies = sort(deduplicate(replies))
+  replies = sort(deduplicatePiercings(replies))
   return removeProcessedPiercings(block, { requests, replies })
 }
 
@@ -145,14 +145,22 @@ const removeProcessedPiercings = (block, { requests, replies }) => {
   return { requests, replies }
 }
 
-const deduplicate = (items) => {
+const deduplicatePiercings = (items) => {
   const dedupe = []
   items.forEach((item) => {
     if (dedupe.every((compare) => !item.equals(compare))) {
       dedupe.push(item)
     }
   })
-  assert(dedupe.every((i) => typeof i.payload['__@@ioSequence'] === 'string'))
+  const isRequestsSequenced = dedupe.every((action) => {
+    if (txRequestModel.isModel(action)) {
+      return typeof action.payload['__@@ioSequence'] === 'string'
+    } else {
+      // TODO require some sequencing on piercing replies too
+      return txReplyModel.isModel(action)
+    }
+  })
+  assert(isRequestsSequenced)
   return dedupe
 }
 const sort = (items) => {
