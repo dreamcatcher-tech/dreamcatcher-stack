@@ -3,10 +3,8 @@ const debug = require('debug')('interblock:tests:hooker')
 const { interchain } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')
 const { metrologyFactory } = require('../src/metrologyFactory')
-const { covenantIdModel, blockModel } = require('../../w015-models')
-const covenants = require('../../w212-system-covenants')
 
-require('debug').enable('*met* *tests* *hooks')
+require('debug').enable('*met* *tests* *hooks *interpreter')
 
 describe('hooker', () => {
   test('loopback cleared immediately', async () => {
@@ -26,11 +24,11 @@ describe('hooker', () => {
   // if only request from pending is a request to self, then know it will never resolve
   // basically cannot raise pending, then request something to self
   test.todo('wait for all promises')
-  test('self requests during pending can buffer', async () => {
+  test.only('self requests during pending can buffer', async () => {
     const reducer = async (state, action) => {
       debug(`reducer`, action)
       if (action.type === 'NONCE') {
-        const pongPromise = interchain('PING')
+        const pingPromise = interchain('PING')
         const children = await interchain(actions.listChildren())
         debug(`children: `, children)
       }

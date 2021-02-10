@@ -5,7 +5,7 @@ const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('..')
 
 describe('effects', () => {
-  require('debug').enable('*met* *tests*  *:interpreter *:isolator *:increasor')
+  require('debug').enable('*met* *tests*  ')
   // jest.setTimeout('500')
   test('non hooked promise throws', async () => {
     const reducer = async (state, action) => {

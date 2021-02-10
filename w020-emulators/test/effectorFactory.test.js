@@ -4,7 +4,7 @@ const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.co
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('effector', () => {
-  require('debug').enable('*tests*')
+  require('debug').enable('*tests* *interpreter')
 
   test('ping single', async () => {
     const start = Date.now()
@@ -85,7 +85,7 @@ describe('effector', () => {
      * 2021-01-26 1,931ms 100 pings, batchsize 10, 11 blocks in total - removed birthblocks
      */
   })
-  test('create child', async () => {
+  test.only('create child', async () => {
     const client = await effectorFactory()
     client.enableLogging()
     reply = await client.add('child1')

@@ -367,30 +367,51 @@ const config = {
       },
     }),
     respondRequest: assign({
-      dmz: ({ externalAction, dmz, address, anvil }) => {
+      dmz: ({ initialPending, externalAction, dmz, address, anvil }) => {
         debug('respondRequest')
+        assert(pendingModel.isModel(initialPending))
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
         assert(anvil.getAddress().equals(address))
-        assert(!anvil.equals(externalAction))
+        const isFromBuffer = initialPending.getIsBuffered(anvil)
+        const msg = `externalAction can only be responded to by auto resolvers`
+        assert(!anvil.equals(externalAction) || isFromBuffer, msg)
         const network = networkProducer.respondRequest(dmz.network, anvil)
         return dmzModel.clone({ ...dmz, network })
       },
     }),
-    shiftBufferedRequests: assign({
-      dmz: ({ dmz }) => {
+    shiftBufferedRequest: assign({
+      dmz: ({ dmz, covenantAction }) => {
+        debug(`shiftBufferedRequest`)
         assert(dmzModel.isModel(dmz))
-        debug(`shiftBufferedRequests`)
+        assert(rxRequestModel.isModel(covenantAction))
+        assert(dmz.pending.getIsBuffered(covenantAction))
+        const { alias, event, channel } = dmz.pending.rxBufferedRequest(
+          dmz.network
+        )
+        assert(dmz.network[alias].equals(channel))
+        assert(event.equals(covenantAction))
+        const index = covenantAction.getIndex()
+        if (!channel.replies[index].isPromise()) {
+          debugger
+        }
+        assert(channel.replies[index].isPromise())
+        const network = networkProducer.removeBufferPromise(
+          dmz.network,
+          covenantAction
+        )
         const pending = pendingProducer.shiftRequests(dmz.pending, dmz.network)
-        return dmzModel.clone({ ...dmz, pending })
+        return dmzModel.clone({ ...dmz, pending, network })
       },
     }),
-    defaultResolve: assign({
+    settleExternalAction: assign({
       dmz: ({ dmz, externalAction }) => {
-        debug('defaultResolve')
+        debug('settleExternalAction')
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(externalAction))
         assert(dmz.network.getAlias(externalAction.getAddress()))
+        const response = dmz.network.getResponse(externalAction)
+        assert(!response, `existing response: ${response && response.type}`)
         const { sequence } = externalAction
         const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
         const network = networkProducer.tx(dmz.network, [], [reply])
@@ -445,6 +466,7 @@ const config = {
       return isSystem
     },
     isExternalAction: ({ externalAction, anvil, address }) => {
+      // a non loopback external action will be responded to by autoresolvers
       assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
       assert(addressModel.isModel(address))
       const isExternalAction = !address.isLoopback()
@@ -464,7 +486,7 @@ const config = {
       return isReductionPending
     },
     isChannelUnavailable: ({ dmz, address }) => {
-      assert(addressModel.isModel(address), `If Anvil, then address required`)
+      assert(addressModel.isModel(address))
       assert(!address.isUnknown(), `Address unknown`)
       const alias = dmz.network.getAlias(address)
       debug(`isChannelUnavailable: `, !alias)
@@ -489,6 +511,7 @@ const config = {
     isUnbuffered: ({ dmz, covenantAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(covenantAction))
+      assert(dmzModel.isModel(dmz))
       const { pending } = dmz
       const isUnbuffered = !pending.getIsBuffered(covenantAction)
       debug(`isUnbuffered`, isUnbuffered)
@@ -509,7 +532,7 @@ const config = {
       assert(pendingModel.isModel(initialPending))
       assert(dmzModel.isModel(dmz))
       if (!initialPending.getIsPending()) {
-        debug(`isOriginSettled`, true)
+        debug(`isOriginSettled !initialPending.getIsPending()`, true)
         return true
       }
       const { pendingRequest } = initialPending
@@ -537,17 +560,15 @@ const config = {
       debug(`isExternalActionReply`, isExternalActionReply)
       return isExternalActionReply
     },
-    isExternalActionPresent: ({ dmz, externalAction }) => {
+    isExternalActionAbsent: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(externalAction))
       // loopback would have removed it, or dmz changes might have removed it
       const address = externalAction.getAddress()
-      const index = externalAction.getIndex()
       const alias = dmz.network.getAlias(address)
-      const channel = dmz.network[alias]
-      const isPresent = channel && channel.requests[index]
-      debug(`isExternalActionPresent: `, !!isPresent)
-      return isPresent
+      const isExternalActionAbsent = !alias
+      debug(`isExternalActionAbsent: `, isExternalActionAbsent)
+      return isExternalActionAbsent
     },
     isExternalActionSettled: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
@@ -561,6 +582,13 @@ const config = {
       const isTxExternalActionPromise = !!isExternalPromise
       debug(`isTxExternalActionPromise`, isTxExternalActionPromise)
       return isTxExternalActionPromise
+    },
+    isExternalActionBuffered: ({ dmz, externalAction }) => {
+      assert(dmzModel.isModel(dmz))
+      assert(rxRequestModel.isModel(externalAction))
+      const isExternalActionBuffered = dmz.pending.getIsBuffered(externalAction)
+      debug(`isExternalActionBuffered`, isExternalActionBuffered)
+      return isExternalActionBuffered
     },
   },
   services: {

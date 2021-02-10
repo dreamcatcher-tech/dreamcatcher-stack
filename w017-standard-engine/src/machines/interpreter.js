@@ -19,7 +19,7 @@ const definition = {
     anvil: undefined,
     address: undefined, // TODO why is this needed ?
     dmz: undefined,
-    initialPending: undefined, // used to determine if lowered during execution
+    initialPending: undefined, // used to determine if lowered during execution, and if loopback requests came from buffer
     covenantAction: undefined,
     reduceRejection: undefined,
     reduceResolve: undefined,
@@ -186,8 +186,17 @@ const definition = {
               onDone: 'done',
             },
             request: {
-              initial: 'reduce',
+              initial: 'isUnbuffered',
               states: {
+                isUnbuffered: {
+                  always: [
+                    { target: 'reduce', cond: 'isUnbuffered' },
+                    {
+                      target: 'reduce',
+                      actions: 'shiftBufferedRequest',
+                    },
+                  ],
+                },
                 reduce: {
                   invoke: {
                     src: 'reduceCovenant',
@@ -205,9 +214,9 @@ const definition = {
                 respondRequest: {
                   entry: 'mergeState',
                   always: [
-                    { target: 'isUnbuffered', cond: 'isExternalAction' },
-                    { target: 'isUnbuffered', cond: 'isLoopbackResponseDone' },
-                    { target: 'isUnbuffered', actions: 'respondRequest' },
+                    { target: 'done', cond: 'isExternalAction' },
+                    { target: 'done', cond: 'isLoopbackResponseDone' },
+                    { target: 'done', actions: 'respondRequest' },
                   ],
                 },
                 raisePending: {
@@ -216,17 +225,11 @@ const definition = {
                     'promiseOriginRequest',
                     'assignInitialPending',
                   ],
-                  always: 'isUnbuffered',
+                  always: 'done',
                 },
                 reject: {
                   entry: 'respondRejection',
-                  always: 'isUnbuffered',
-                },
-                isUnbuffered: {
-                  always: [
-                    { target: 'done', cond: 'isUnbuffered' },
-                    { target: 'done', actions: 'shiftBufferedRequests' },
-                  ],
+                  always: 'done',
                 },
                 done: { type: 'final' },
               },
@@ -262,6 +265,7 @@ const definition = {
           always: [
             { target: 'settleExternalAction', cond: 'isOriginSettled' },
             { target: 'settleExternalAction', cond: 'isPendingUnlowered' },
+            // TODO remove isTxOriginPromise as shiftBuffer removes this
             { target: 'settleExternalAction', cond: 'isTxOriginPromise' },
             {
               target: 'settleExternalAction',
@@ -272,10 +276,11 @@ const definition = {
         settleExternalAction: {
           always: [
             { target: 'done', cond: 'isExternalActionReply' },
-            { target: 'done', cond: 'isExternalActionPresent' },
+            { target: 'done', cond: 'isExternalActionAbsent' },
             { target: 'done', cond: 'isExternalActionSettled' },
             { target: 'done', cond: 'isTxExternalActionPromise' },
-            { target: 'done', actions: 'defaultResolve' },
+            { target: 'done', cond: 'isExternalActionBuffered' },
+            { target: 'done', actions: 'settleExternalAction' },
           ],
         },
         done: { type: 'final' },
