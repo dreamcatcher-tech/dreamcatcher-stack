@@ -150,8 +150,10 @@ const definition = {
           onDone: 'done',
         },
         direct: {
-          entry: 'directMachineAssignment',
-          always: 'done',
+          invoke: {
+            src: 'direct',
+            onDone: { target: 'done', actions: 'assignDirectMachine' },
+          },
         },
         done: { type: 'final' },
       },

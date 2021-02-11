@@ -55,15 +55,6 @@ const transmitConfig = (ioConsistency) => {
       assignLineage: assign({
         lineage: (context, event) => event.data,
       }),
-      assignSelfTarget: assign({
-        targetTxs: ({ targetTxs, interblock }) => {
-          const selfSocket = socketModel.create()
-          const tx = txModel.create(selfSocket, interblock)
-          const nextTargetTxs = [...targetTxs, tx]
-          debug(`assignSelfTarget targetTxs length: ${nextTargetTxs.length}`)
-          return nextTargetTxs
-        },
-      }),
       extendLineageTxs: assign({
         lineageTxs: ({ targetTxs, lineage }) => {
           debug(`extendLineageTxs`)

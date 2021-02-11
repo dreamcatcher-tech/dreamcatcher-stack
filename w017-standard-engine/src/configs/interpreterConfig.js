@@ -1,6 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:config:interpreter')
 const detailedDiff = require('deep-object-diff').detailedDiff
+const { pure } = require('../../../w001-xstate-direct')
 const {
   txReplyModel,
   txRequestModel,
@@ -15,7 +16,7 @@ const {
 const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const dmzReducer = require('../../../w021-dmz-reducer')
 const { definition } = require('../machines/interpreter')
-const {directConfig} = require('./interpreter.directConfig')
+const { directConfig } = require('./directConfig')
 const {
   '@@GLOBAL_HOOK_INBAND': globalHookInband,
   resolve,
@@ -88,37 +89,6 @@ const config = {
         const { reduction, isPending, requests, replies } = reduceResolve
         debug(`assignResolve pending: %o`, isPending)
         return reductionModel.create(reduceResolve, anvil, dmz)
-      },
-    }),
-    assignRejection: assign({
-      reduceRejection: ({ anvil }, event) => {
-        if (rxReplyModel.isModel(anvil)) {
-          // TODO do something with replies that cause rejections
-          // console.error(anvil)
-          // console.error(event.data)
-        }
-        return event.data
-      },
-    }),
-    respondRejection: assign({
-      // one of lifes great challenges
-      dmz: ({ dmz, anvil, reduceRejection }) => {
-        assert(dmzModel.isModel(dmz))
-        const network = networkProducer.respondRejection(
-          dmz.network,
-          anvil,
-          reduceRejection
-        )
-        return dmzModel.clone({ ...dmz, network })
-      },
-    }),
-    assignDirectCovenantAction: assign({
-      covenantAction: ({ dmz, anvil }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-        assert(!dmz.pending.getIsPending())
-        assert(!dmz.pending.getAccumulator().length)
-        return anvil
       },
     }),
     bufferRequest: assign({
@@ -284,33 +254,6 @@ const config = {
         return dmzModel.clone({ ...dmz, network })
       },
     }),
-    warnReplyRejection: ({ reduceRejection }) => {
-      // TODO reject all loopback actions and reject the external action
-      debug(`warnReplyRejection`)
-      console.warn(`Warning: rejection occured during reply`)
-      console.warn(reduceRejection)
-    },
-    raisePending: assign({
-      dmz: ({ dmz, anvil }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
-        assert(!dmz.pending.getIsPending())
-        debug(`raisePending`, anvil.type)
-        const pending = pendingProducer.raisePending(dmz.pending, anvil)
-        return dmzModel.clone({ ...dmz, pending })
-      },
-    }),
-    assignInitialPending: assign({
-      initialPending: ({ dmz }) => {
-        // TODO this probably breaks other things in weird undiscovered ways
-        // as it isn't supposed to change during execution
-        // but this handles if a promise raises and lowers in a single interpreter cycle
-        assert(dmzModel.isModel(dmz))
-        assert(dmz.pending.getIsPending())
-        debug(`assignInitialPending`)
-        return dmz.pending
-      },
-    }),
     promiseAnvil: assign({
       dmz: ({ dmz, anvil }) => {
         assert(dmzModel.isModel(dmz))
@@ -322,19 +265,6 @@ const config = {
         const network = networkProducer.tx(dmz.network, [], [promise])
         return dmzModel.clone({ ...dmz, network })
       },
-    }),
-    promiseOriginRequest: assign({
-      dmz: ({ dmz, anvil, covenantAction }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
-        assert(!covenantAction || anvil.equals(covenantAction))
-        const { sequence } = anvil
-        const promise = txReplyModel.create('@@PROMISE', {}, sequence)
-        const network = networkProducer.tx(dmz.network, [], [promise])
-        debug(`promiseOriginRequest`, anvil.type)
-        return dmzModel.clone({ ...dmz, network })
-      },
-      isExternalPromise: () => true,
     }),
     settlePending: assign({
       dmz: ({ dmz }) => {
@@ -380,30 +310,6 @@ const config = {
         assert(!anvil.equals(externalAction) || isFromBuffer, msg)
         const network = networkProducer.respondRequest(dmz.network, anvil)
         return dmzModel.clone({ ...dmz, network })
-      },
-    }),
-    shiftBufferedRequest: assign({
-      dmz: ({ dmz, covenantAction }) => {
-        debug(`shiftBufferedRequest`)
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(covenantAction))
-        assert(dmz.pending.getIsBuffered(covenantAction))
-        const { alias, event, channel } = dmz.pending.rxBufferedRequest(
-          dmz.network
-        )
-        assert(dmz.network[alias].equals(channel))
-        assert(event.equals(covenantAction))
-        const index = covenantAction.getIndex()
-        if (!channel.replies[index].isPromise()) {
-          debugger
-        }
-        assert(channel.replies[index].isPromise())
-        const network = networkProducer.removeBufferPromise(
-          dmz.network,
-          covenantAction
-        )
-        const pending = pendingProducer.shiftRequests(dmz.pending, dmz.network)
-        return dmzModel.clone({ ...dmz, pending, network })
       },
     }),
     settleExternalAction: assign({
@@ -453,12 +359,10 @@ const config = {
       assert(!loopback.rxRequest())
       assert(!loopback.rxReply())
     },
-    directMachineAssignment: assign((context) => {
-      debug(`directMachineAssignment`)
-      const { machine, config } = directConfig(context)
-      const nextContext = pure('EXEC', machine, config)
-      debug(`directMachineAssignment`, detailedDiff(context, merged))
-      return merged
+    assignDirectMachine: assign((context, event) => {
+      const nextContext = { ...context, ...event.data }
+      debug(`assignDirectMachine`, detailedDiff(context, nextContext))
+      return nextContext
     }),
   },
   guards: {
@@ -516,15 +420,6 @@ const config = {
       const isAnvilPromised = response && response.isPromise()
       debug(`isAnvilPromised`, isAnvilPromised)
       return isAnvilPromised
-    },
-    isUnbuffered: ({ dmz, covenantAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(covenantAction))
-      assert(dmzModel.isModel(dmz))
-      const { pending } = dmz
-      const isUnbuffered = !pending.getIsBuffered(covenantAction)
-      debug(`isUnbuffered`, isUnbuffered)
-      return isUnbuffered
     },
     isLoopbackResponseDone: ({ dmz, anvil, address }) => {
       assert(dmzModel.isModel(dmz))
@@ -629,6 +524,12 @@ const config = {
       assert(reduceResolve, `Covenant returned: ${reduceResolve}`)
       debug(`reduceCovenant result pending: `, reduceResolve.isPending)
       return { reduceResolve }
+    },
+    direct: async (context) => {
+      debug(`direct`)
+      const { machine, config } = directConfig(context)
+      const nextContext = await pure('EXEC', machine, config)
+      return nextContext
     },
   },
 }

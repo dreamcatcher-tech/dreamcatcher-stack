@@ -62,9 +62,14 @@ const pure = async (event, definition, config = {}) => {
       const fn = config.actions[actionName]
       assert(fn, `No action found for: ${actionName}`)
       if (fn.type === 'xstate.assign') {
-        const context = { ...contextMgr.getContext() }
-        for (const key of Object.keys(fn.assignment)) {
-          context[key] = fn.assignment[key](context, event)
+        let context = { ...contextMgr.getContext() }
+        if (typeof fn.assignment === 'function') {
+          context = fn.assignment(context, event)
+        } else {
+          assert(typeof fn.assignment === 'object')
+          for (const key of Object.keys(fn.assignment)) {
+            context[key] = fn.assignment[key](context, event)
+          }
         }
         contextMgr.setContext(context)
       } else {
