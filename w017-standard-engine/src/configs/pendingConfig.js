@@ -19,6 +19,7 @@ const {
   assignResolve,
   respondReply,
   reduceCovenant,
+  assignRejection,
 } = require('./interpreterCommonConfigs')
 const config = {
   actions: {
@@ -140,6 +141,7 @@ const config = {
     respondReply,
     assignResolve,
     transmit,
+    assignRejection,
   },
   guards: {
     isReply: ({ anvil }) => {

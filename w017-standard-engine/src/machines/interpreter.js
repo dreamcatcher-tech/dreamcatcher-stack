@@ -44,48 +44,16 @@ const definition = {
     },
     interpret: {
       always: [
-        { target: 'interpretSystem', cond: 'isSystem' },
+        { target: 'interpretDmz', cond: 'isSystem' },
         { target: 'interpretCovenant' },
       ],
     },
-    interpretSystem: {
-      initial: 'reduceSystem',
-      states: {
-        reduceSystem: {
-          invoke: {
-            src: 'reduceSystem',
-            onDone: { target: 'merge', actions: 'assignResolve' },
-            onError: { target: 'respondRejection', actions: 'assignRejection' },
-          },
-        },
-        respondRejection: {
-          entry: 'respondRejection',
-          always: 'done',
-        },
-        merge: {
-          entry: ['mergeSystemState', 'transmit'],
-          always: [
-            { target: 'done', cond: 'isChannelUnavailable' },
-            { target: 'respondReply', cond: 'isReply' },
-            { target: 'respondRequest' },
-          ],
-        },
-        respondReply: {
-          entry: 'respondReply',
-          always: 'done',
-        },
-        respondRequest: {
-          always: [
-            { target: 'done', cond: 'isExternalAction' },
-            { target: 'done', cond: 'isLoopbackResponseDone' },
-            { target: 'done', actions: 'respondRequest' },
-          ],
-        },
-        done: { type: 'final' },
+    interpretDmz: {
+      invoke: {
+        src: 'dmz',
+        onDone: { target: 'loopback', actions: 'assignDirectMachine' },
       },
-      onDone: 'loopback',
     },
-
     interpretCovenant: {
       initial: 'isPending',
       states: {

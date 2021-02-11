@@ -102,5 +102,42 @@ const transmit = assign({
     return isOriginPromise
   },
 })
-
-module.exports = { transmit, respondReply, assignResolve, reduceCovenant }
+const isReply = ({ anvil }) => {
+  const isReply = rxReplyModel.isModel(anvil)
+  if (!isReply) {
+    assert(rxRequestModel.isModel(anvil))
+  }
+  debug(`isReply: %o`, isReply)
+  return isReply
+}
+const assignRejection = assign({
+  reduceRejection: ({ anvil }, event) => {
+    if (rxReplyModel.isModel(anvil)) {
+      // TODO do something with replies that cause rejections
+      // console.error(anvil)
+      // console.error(event.data)
+    }
+    return event.data
+  },
+})
+const respondRejection = assign({
+  // one of lifes great challenges
+  dmz: ({ dmz, anvil, reduceRejection }) => {
+    assert(dmzModel.isModel(dmz))
+    const network = networkProducer.respondRejection(
+      dmz.network,
+      anvil,
+      reduceRejection
+    )
+    return dmzModel.clone({ ...dmz, network })
+  },
+})
+module.exports = {
+  respondRejection,
+  assignRejection,
+  isReply,
+  transmit,
+  respondReply,
+  assignResolve,
+  reduceCovenant,
+}

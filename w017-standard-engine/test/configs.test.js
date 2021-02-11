@@ -2,7 +2,9 @@ const assert = require('assert')
 describe('configs', () => {
   test('all config function names are present in the machines', () => {
     const machines = {
+      autoResolves: [{}],
       direct: [{}],
+      dmz: [{}],
       increasor: [],
       interpreter: [() => true],
       isolator: [],

@@ -88,6 +88,7 @@ const config = {
       return isExternalActionBuffered
     },
   },
+  services: {},
 }
 
 const autoResolvesConfig = (context) => {

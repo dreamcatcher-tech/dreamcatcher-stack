@@ -1,5 +1,5 @@
 const definition = {
-  id: 'interpreter.pending',
+  id: 'interpreter.autoResolves',
   initial: 'isReply',
   context: {
     // TODO populate with all modified context variables

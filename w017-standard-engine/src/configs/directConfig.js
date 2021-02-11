@@ -18,31 +18,11 @@ const {
   respondReply,
   assignResolve,
   reduceCovenant,
+  respondRejection,
+  assignRejection,
 } = require('./interpreterCommonConfigs')
 const config = {
   actions: {
-    assignRejection: assign({
-      reduceRejection: ({ anvil }, event) => {
-        if (rxReplyModel.isModel(anvil)) {
-          // TODO do something with replies that cause rejections
-          // console.error(anvil)
-          // console.error(event.data)
-        }
-        return event.data
-      },
-    }),
-    respondRejection: assign({
-      // one of lifes great challenges
-      dmz: ({ dmz, anvil, reduceRejection }) => {
-        assert(dmzModel.isModel(dmz))
-        const network = networkProducer.respondRejection(
-          dmz.network,
-          anvil,
-          reduceRejection
-        )
-        return dmzModel.clone({ ...dmz, network })
-      },
-    }),
     assignDirectCovenantAction: assign({
       covenantAction: ({ dmz, anvil }) => {
         assert(dmzModel.isModel(dmz))
@@ -141,6 +121,8 @@ const config = {
     assignResolve,
     transmit,
     respondReply,
+    assignRejection,
+    respondRejection,
   },
   guards: {
     isExternalAction: ({ externalAction, anvil, address }) => {
