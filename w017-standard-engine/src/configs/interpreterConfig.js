@@ -3,8 +3,6 @@ const debug = require('debug')('interblock:config:interpreter')
 const detailedDiff = require('deep-object-diff').detailedDiff
 const { pure } = require('../../../w001-xstate-direct')
 const {
-  txReplyModel,
-  txRequestModel,
   rxReplyModel,
   rxRequestModel,
   addressModel,
@@ -13,11 +11,12 @@ const {
   reductionModel,
   pendingModel,
 } = require('../../../w015-models')
-const { networkProducer, pendingProducer } = require('../../../w016-producers')
+const { networkProducer } = require('../../../w016-producers')
 const dmzReducer = require('../../../w021-dmz-reducer')
 const { definition } = require('../machines/interpreter')
 const { directConfig } = require('./directConfig')
 const { pendingConfig } = require('./pendingConfig')
+const { autoResolvesConfig } = require('./autoResolvesConfig')
 const {
   '@@GLOBAL_HOOK_INBAND': globalHookInband,
   resolve,
@@ -155,23 +154,6 @@ const config = {
         return isOriginPromise
       },
     }),
-    settleOrigin: assign({
-      dmz: ({ initialPending, dmz }) => {
-        assert(pendingModel.isModel(initialPending))
-        assert(initialPending.getIsPending())
-        assert(dmzModel.isModel(dmz))
-        assert(!dmz.pending.getIsPending())
-        const { pendingRequest } = initialPending
-        assert(rxRequestModel.isModel(pendingRequest))
-        assert(dmz.network.getAlias(pendingRequest.getAddress()))
-        debug(`settleOrigin`, pendingRequest)
-        const { sequence } = pendingRequest
-        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
-        const network = networkProducer.tx(dmz.network, [], [reply])
-        return dmzModel.clone({ ...dmz, network })
-      },
-    }),
-
     respondReply: assign({
       dmz: ({ dmz, address }) => {
         assert(dmzModel.isModel(dmz))
@@ -198,20 +180,6 @@ const config = {
         const msg = `externalAction can only be responded to by auto resolvers`
         assert(!anvil.equals(externalAction) || isFromBuffer, msg)
         const network = networkProducer.respondRequest(dmz.network, anvil)
-        return dmzModel.clone({ ...dmz, network })
-      },
-    }),
-    settleExternalAction: assign({
-      dmz: ({ dmz, externalAction }) => {
-        debug('settleExternalAction')
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(externalAction))
-        assert(dmz.network.getAlias(externalAction.getAddress()))
-        const response = dmz.network.getResponse(externalAction)
-        assert(!response, `existing response: ${response && response.type}`)
-        const { sequence } = externalAction
-        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
-        const network = networkProducer.tx(dmz.network, [], [reply])
         return dmzModel.clone({ ...dmz, network })
       },
     }),
@@ -248,6 +216,7 @@ const config = {
       assert(!loopback.rxRequest())
       assert(!loopback.rxReply())
     },
+
     assignDirectMachine: assign((context, event) => {
       const nextContext = { ...context, ...event.data }
       debug(`assignDirectMachine`, detailedDiff(context, nextContext))
@@ -297,7 +266,6 @@ const config = {
       debug(`isReply: %o`, isReply)
       return isReply
     },
-
     isLoopbackResponseDone: ({ dmz, anvil, address }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(anvil))
@@ -307,69 +275,6 @@ const config = {
       const isDone = !!dmz.network.getResponse(anvil)
       debug(`isLoopbackResponseDone: %o anvil: %o`, isDone, anvil.type)
       return isDone
-    },
-    isOriginSettled: ({ initialPending, dmz }) => {
-      // if rejection, or resolve, return true
-      assert(pendingModel.isModel(initialPending))
-      assert(dmzModel.isModel(dmz))
-      if (!initialPending.getIsPending()) {
-        debug(`isOriginSettled !initialPending.getIsPending()`, true)
-        return true
-      }
-      const { pendingRequest } = initialPending
-      assert(rxRequestModel.isModel(pendingRequest))
-      const reply = dmz.network.getResponse(pendingRequest)
-      const isOriginSettled = reply && !reply.isPromise()
-      debug(`isOriginSettled`, isOriginSettled)
-      return isOriginSettled
-    },
-    isPendingUnlowered: ({ initialPending, dmz }) => {
-      assert(pendingModel.isModel(initialPending))
-      assert(dmzModel.isModel(dmz))
-      const isPendingLowered =
-        initialPending.getIsPending() && !dmz.pending.getIsPending()
-      const isPendingUnlowered = !isPendingLowered
-      debug(`isPendingUnlowered`, isPendingUnlowered)
-      return isPendingUnlowered
-    },
-    isTxOriginPromise: ({ isOriginPromise }) => {
-      debug(`isTxOriginPromise`, isOriginPromise)
-      return isOriginPromise
-    },
-    isExternalActionReply: ({ externalAction }) => {
-      const isExternalActionReply = rxReplyModel.isModel(externalAction)
-      debug(`isExternalActionReply`, isExternalActionReply)
-      return isExternalActionReply
-    },
-    isExternalActionAbsent: ({ dmz, externalAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(externalAction))
-      // loopback would have removed it, or dmz changes might have removed it
-      const address = externalAction.getAddress()
-      const alias = dmz.network.getAlias(address)
-      const isExternalActionAbsent = !alias
-      debug(`isExternalActionAbsent: `, isExternalActionAbsent)
-      return isExternalActionAbsent
-    },
-    isExternalActionSettled: ({ dmz, externalAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(externalAction))
-      const reply = dmz.network.getResponse(externalAction)
-      const isExternalActionSettled = reply && !reply.isPromise()
-      debug(`isExternalActionSettled`, isExternalActionSettled)
-      return isExternalActionSettled
-    },
-    isTxExternalActionPromise: ({ isExternalPromise }) => {
-      const isTxExternalActionPromise = !!isExternalPromise
-      debug(`isTxExternalActionPromise`, isTxExternalActionPromise)
-      return isTxExternalActionPromise
-    },
-    isExternalActionBuffered: ({ dmz, externalAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(externalAction))
-      const isExternalActionBuffered = dmz.pending.getIsBuffered(externalAction)
-      debug(`isExternalActionBuffered`, isExternalActionBuffered)
-      return isExternalActionBuffered
     },
   },
   services: {
@@ -398,6 +303,13 @@ const config = {
       debug(`pending`)
       const { machine, config } = pendingConfig(context)
       const nextContext = await pure('EXEC', machine, config)
+      return nextContext
+    },
+    autoResolves: async (context) => {
+      debug(`autoResolves`)
+      const { machine, config } = autoResolvesConfig(context)
+      const nextContext = pure('EXEC', machine, config)
+      debug(`autoResolves`, detailedDiff(context, nextContext))
       return nextContext
     },
   },

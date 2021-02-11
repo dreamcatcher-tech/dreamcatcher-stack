@@ -1,15 +1,3 @@
-/**
- * Interpreter is responsible for:
- *  1. running the covenants
- *  2. managing their filesystem requests
- *  3. responding to requests
- *  4. marshalling all the DMZ interactions
- *
- * The context of the interpreter === Dmz
- * Interpreter has no side effects - it only modifies context.
- *
- */
-
 const definition = {
   id: 'interpreter.pending',
   initial: 'isReply',
@@ -71,7 +59,6 @@ const definition = {
     },
   },
 }
-
 if (typeof module === 'object') {
   module.exports = { definition }
 } else {

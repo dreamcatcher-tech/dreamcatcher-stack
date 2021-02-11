@@ -213,6 +213,7 @@ const pure = async (event, definition, config = {}) => {
     return grandparent && grandparent.type === 'parallel'
   }
   const doneData = (state, event) => {
+    debug(`doneData`)
     const node = resolveNode(state)
     const dataFn = node.data || (() => undefined)
     assert.strictEqual(typeof dataFn, 'function')
@@ -290,7 +291,7 @@ const pure = async (event, definition, config = {}) => {
     if (isPending(state)) {
       state = exit(state, event)
       state = makeTransition(state, event)
-      return await settleState(state, event) // means prior states are available on the stack for debugging
+      return settleState(state, event) // means prior states are available on the stack for debugging
     }
     if (isDone(state)) {
       if (state.value === 'error') {
@@ -330,8 +331,7 @@ const pure = async (event, definition, config = {}) => {
   const init = { type: 'xstate.init' }
   state = makeTransition(state, init)
 
-  state = await settleState(state, event)
-  return state
+  return settleState(state, event)
 }
 const splitPathSpeedup = _.memoize((path) => path.split('.'))
 

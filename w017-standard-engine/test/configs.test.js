@@ -29,5 +29,7 @@ describe('configs', () => {
       assert.deepStrictEqual(missingKeys(config.guards, json), [], name)
       assert.deepStrictEqual(missingKeys(config.services, json), [], name)
     }
+
+    // TODO test for names that are same across configs, but not included in common
   })
 })

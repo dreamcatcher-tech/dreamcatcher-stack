@@ -4,7 +4,7 @@ const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.co
 const debug = require('debug')('interblock:tests:effectorFactory')
 
 describe('effector', () => {
-  require('debug').enable('*tests* *interpreter*')
+  require('debug').enable('*tests* *interpreter* ')
 
   test('ping single', async () => {
     const start = Date.now()
