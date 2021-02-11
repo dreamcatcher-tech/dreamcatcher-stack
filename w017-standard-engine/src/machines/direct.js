@@ -1,6 +1,10 @@
 const definition = {
   id: 'interpreter.direct',
   initial: 'isReply',
+  context: {
+    // TODO populate with all modified context variables
+  },
+  strict: true,
   states: {
     isReply: {
       entry: 'assignDirectCovenantAction',

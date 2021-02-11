@@ -2,10 +2,11 @@ const assert = require('assert')
 describe('configs', () => {
   test('all config function names are present in the machines', () => {
     const machines = {
-      increasor: [],
       direct: [{}],
+      increasor: [],
       interpreter: [() => true],
       isolator: [],
+      pending: [{}],
       pool: [],
       receive: [],
       transmit: [],
