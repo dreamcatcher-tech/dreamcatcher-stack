@@ -10,19 +10,16 @@ const {
   channelModel,
   reductionModel,
   pendingModel,
-} = require('../../../../w015-models')
-const {
-  networkProducer,
-  pendingProducer,
-} = require('../../../../w016-producers')
-const dmzReducer = require('../../../../w021-dmz-reducer')
-const { definition } = require('./interpreter')
+} = require('../../../w015-models')
+const { networkProducer, pendingProducer } = require('../../../w016-producers')
+const dmzReducer = require('../../../w021-dmz-reducer')
+const { definition } = require('../machines/interpreter.direct')
 const {
   '@@GLOBAL_HOOK_INBAND': globalHookInband,
   resolve,
   reject,
   isReplyFor,
-} = require('../../../../w002-api')
+} = require('../../../w002-api')
 const { assign } = require('xstate')
 
 const config = {
@@ -595,21 +592,6 @@ const config = {
     },
   },
   services: {
-    reduceSystem: async ({ dmz, anvil }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-      debug(`reduceSystem anvil: %o`, anvil.type)
-      // TODO move to be same code as isolateFactory
-      const tick = () => dmzReducer.reducer(dmz, anvil)
-      const accumulator = []
-      const salt = `TODO` // TODO make salt depend on something else, like the io channel index
-      const reduceResolve = await globalHookInband(tick, accumulator, salt)
-
-      debug(`result isPending: `, reduceResolve.isPending)
-      assert(reduceResolve, `System returned: ${reduceResolve}`)
-      assert(!reduceResolve.isPending, `System can never raise pending`)
-      return { reduceResolve }
-    },
     reduceCovenant: async ({ dmz, covenantAction, isolatedTick }) => {
       // TODO test the actions are allowed actions using the ACL
       debug(`reduceCovenant: %o`, covenantAction.type)
@@ -635,11 +617,10 @@ const _dereference = (path) => {
   return path
 }
 
-const interpreterConfig = (isolatedTick) => {
-  assert.strictEqual(typeof isolatedTick, 'function')
-  // TODO multiplex the function with a code, so can use the same machine repeatedly
-  const machine = { ...definition, context: { isolatedTick } }
+const directConfig = (context) => {
+  assert.strictEqual(typeof context, 'object')
+  const machine = { ...definition, context }
   return { machine, config }
 }
 
-module.exports = { interpreterConfig }
+module.exports = { directConfig }
