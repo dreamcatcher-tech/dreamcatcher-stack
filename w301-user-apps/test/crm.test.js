@@ -50,23 +50,6 @@ describe('crm', () => {
   })
   describe('general use', () => {
     test.todo('cannot alter the structure of the application in any way')
-    test.skip('basic activities', async () => {
-      const shell = await effectorFactory('crm')
-      const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
-      await shell.install(dpkgPath, 'crm')
-      // await shell
-      //   .cd('/crm')
-      //   .cd('customers')
-      //   .dispatch('addTestCustomer')
-      //   .ls()
-      //   .cd(0)
-      //   .ls()
-      //   .cd('serviceAddress')
-      //   .ls()
-      //   .cd('../..')
-      //   .rm(0)
-      //   .exit()
-    })
   })
   describe('stress test', () => {
     test.todo('20,000 test customers added')

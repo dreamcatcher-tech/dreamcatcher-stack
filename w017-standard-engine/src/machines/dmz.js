@@ -31,7 +31,7 @@ const definition = {
     },
     respondLoopbackRequest: {
       always: [
-        { target: 'done', cond: 'isExternalRequestAnvil' },
+        { target: 'done', cond: 'isAnvilNotLoopback' },
         { target: 'done', cond: 'isLoopbackResponseDone' },
         { target: 'done', actions: 'respondLoopbackRequest' },
       ],

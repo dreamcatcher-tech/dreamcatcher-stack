@@ -10,7 +10,7 @@ require('debug').enable('*met* *shell *dmz* *piercer*')
 
 describe('machine validation', () => {
   describe('state machine', () => {
-    test.only('buffered request is processed', async () => {
+    test('buffered request is processed', async () => {
       const base = await metrologyFactory('s', { hyper: shell })
       await base.spawn('child1')
       base.enableLogging()

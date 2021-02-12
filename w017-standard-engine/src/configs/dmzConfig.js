@@ -21,8 +21,8 @@ const {
   assignRejection,
   respondRejection,
   respondLoopbackRequest,
-  isExternalRequestAnvil,
   isLoopbackResponseDone,
+  isAnvilNotLoopback,
 } = common(debug)
 const { assign } = require('xstate')
 
@@ -54,9 +54,9 @@ const config = {
       debug(`isChannelUnavailable: `, !alias)
       return !alias
     },
-    isExternalRequestAnvil,
     isReply,
     isLoopbackResponseDone,
+    isAnvilNotLoopback,
   },
   services: {
     // TODO move this to synchronous as soon as genesis is synchronous

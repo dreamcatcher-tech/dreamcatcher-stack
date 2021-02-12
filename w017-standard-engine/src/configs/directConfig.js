@@ -21,10 +21,10 @@ const {
   reduceCovenant,
   respondRejection,
   assignRejection,
-  isExternalRequestAnvil,
   isLoopbackResponseDone,
   respondLoopbackRequest,
   mergeState,
+  isAnvilNotLoopback,
 } = common(debug)
 const config = {
   actions: {
@@ -136,14 +136,8 @@ const config = {
       debug(`isUnbufferedRequest`, isUnbufferedRequest)
       return isUnbufferedRequest
     },
-    isAnvilNotLoopback: ({ anvil }) => {
-      assert(rxRequestModel.isModel(anvil))
-      const isAnvilNotLoopback = !anvil.getAddress().isLoopback()
-      debug(`isAnvilNotLoopback`, isAnvilNotLoopback)
-      return isAnvilNotLoopback
-    },
+    isAnvilNotLoopback,
     isLoopbackResponseDone,
-    isExternalRequestAnvil,
   },
   services: {
     reduceCovenant,

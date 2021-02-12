@@ -151,14 +151,6 @@ const common = (debug) => {
       return dmzModel.clone({ ...dmz, network })
     },
   })
-  const isExternalRequestAnvil = ({ externalAction, anvil }) => {
-    // the external action will be responded to by autoresolvers
-    assert(rxRequestModel.isModel(anvil))
-    const isExternalRequestAnvil = anvil.equals(externalAction)
-    const { type } = externalAction
-    debug(`isExternalRequestAnvil: %o external: %o`, anvil.type, type)
-    return isExternalRequestAnvil
-  }
   const isLoopbackResponseDone = ({ dmz, anvil }) => {
     assert(dmzModel.isModel(dmz))
     assert(rxRequestModel.isModel(anvil))
@@ -176,6 +168,13 @@ const common = (debug) => {
       return dmzModel.clone({ ...dmz, state: reduceResolve.reduction })
     },
   })
+  const isAnvilNotLoopback = ({ anvil }) => {
+    // non loopback anvil is the external action, and will be autoResolve'd
+    assert(rxRequestModel.isModel(anvil))
+    const isAnvilNotLoopback = !anvil.getAddress().isLoopback()
+    debug(`isAnvilNotLoopback`, isAnvilNotLoopback)
+    return isAnvilNotLoopback
+  }
   return {
     respondRejection,
     assignRejection,
@@ -184,10 +183,10 @@ const common = (debug) => {
     respondReply,
     assignResolve,
     reduceCovenant,
-    isExternalRequestAnvil,
     isLoopbackResponseDone,
     respondLoopbackRequest,
     mergeState,
+    isAnvilNotLoopback,
   }
 }
 module.exports = { common }

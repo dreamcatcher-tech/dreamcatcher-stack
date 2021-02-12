@@ -151,14 +151,6 @@ const config = {
       debug(`isReductionPending`, isReductionPending)
       return isReductionPending
     },
-    isAnvilPromised: ({ dmz, anvil }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil))
-      const response = dmz.network.getResponse(anvil)
-      const isAnvilPromised = response && response.isPromise()
-      debug(`isAnvilPromised`, isAnvilPromised)
-      return isAnvilPromised
-    },
   },
   services: {
     reduceCovenant,

@@ -85,7 +85,7 @@ describe('effector', () => {
      * 2021-01-26 1,931ms 100 pings, batchsize 10, 11 blocks in total - removed birthblocks
      */
   })
-  test.only('create child', async () => {
+  test('create child', async () => {
     const client = await effectorFactory()
     client.enableLogging()
     reply = await client.add('child1')
@@ -104,7 +104,7 @@ describe('effector', () => {
     assert(reply)
     await client.settle()
   })
-  test.skip('cannot create same child twice', async () => {
+  test('cannot create same child twice', async () => {
     // TODO handle errors in the translator
     require('debug').enable('*metro* *shell* *tests* *translator')
 
@@ -117,63 +117,3 @@ describe('effector', () => {
 describe('client connected to dev AWS', () => {})
 
 describe('two clients connected to amazon communicating', () => {})
-
-describe.skip('client fluent interface', () => {
-  test('client ingests effects and generates pure blocks', async () => {
-    const client = effectorFactory()
-    await client.ls()
-    await client.ls('/')
-    client.mk('testChain')
-    client.cd('testChain') // tests chaining promises, but only if affect the same path ?
-    client.mk('toDelete')
-    client.rm('toDelete')
-    client.mv('testChain', 'movedTestChain')
-  })
-
-  test.todo('all commands await the ones before')
-  test('parallel clients', () => {
-    const client = boot()
-    const forked = client.fork()
-  })
-  test('ping pong runs through one loop', async () => {
-    /**
-     * This test acts like the front end of the application, which interacts with the client.
-     *
-     * Given a covenant, a config, and the client, run the system in dev mode so that it:
-     * 1. Instantiates two stores
-     * 2. Resolves each ones relative aliases
-     * 3. Dispatches actions into either
-     * 4. Resolves a 2 stage promise: user > chain1 > chain2
-     * 5. Allows state to be treated as one large filesystem state
-     */
-    const client = boot()
-    await client.install(pingpongConfig, 'pingpong')
-    client.cd('/apps/pingpong')
-    const ping = actions.ping()
-    const resultPromise = client.dispatch(ping, './ping') // make this default action of the app ?
-    const state = client.cat('./ping') // recursive cat ?
-    assert.strictEqual(state.ping.pingCount, 0)
-    assert.strictEqual(state.pong.pongCount, 0)
-
-    await resultPromise
-    const stateAfter = client.getState()
-    assert.strictEqual(stateAfter.ping.pingCount, 1)
-    assert.strictEqual(stateAfter.pong.pongCount, 1)
-    assert.strictEqual(result, 'ponged the ping')
-  })
-  test.todo('defaults to cwd if no address on action')
-  test.todo('can connect two clients to the same dev instance')
-  test('connects to testnet and mainnet', async () => {
-    const client = connect() // could specify what network in DOS you want ?
-    if (client.isDevNet()) {
-      // check can load from file paths
-    } else if (client.isTestNet()) {
-      // permanent network, but testing only - free, but deletes often
-      // check cannot load from file paths.
-      // check manifest
-    } else if (client.isMainNet()) {
-      // this is the real blockchain network - be careful
-    }
-  })
-  test.todo('subscribers only triggered once per block, and always in order')
-})

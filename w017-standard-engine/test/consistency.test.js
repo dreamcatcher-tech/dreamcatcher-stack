@@ -5,7 +5,9 @@ const {
   consistencySourceFactory,
 } = require('../src/services/consistencyFactory')
 const { addressModel, blockModel, lockModel } = require('../../w015-models')
-
+const { v4 } = require('uuid')
+const { integrityModel } = require('../../w015-models')
+require('debug').enable('')
 require('../../w012-crypto').testMode()
 
 describe('awsConsistency', () => {
@@ -23,15 +25,16 @@ describe('awsConsistency', () => {
     })
     test.todo('failed lock can be claimed after expiry')
     test('lock cached', async () => {
-      const address = addressModel.create('TEST')
+      const integrity = integrityModel.create(v4())
+      const address = addressModel.create(integrity)
       const lock = await consistencySource.putLockChain(address, lockExpiresMs)
       assert(lock)
       const start = Date.now()
-      const ramDelayMs = 10
       const lockFailed = await consistencySource.putLockChain(address)
       assert(!lockFailed)
       const delay = Date.now() - start
       debug(`delay: %O`, delay)
+      const ramDelayMs = 10
       assert(delay < ramDelayMs)
     })
     test('lock is exclusive between consistency sources', async () => {
