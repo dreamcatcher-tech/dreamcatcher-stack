@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:tests:interpreter')
+const debug = require('debug')('interblock:tests:heart')
 const { metrologyFactory } = require('../src/metrologyFactory')
 const { shell, hyper, probe } = require('../../w212-system-covenants')
 const { isReplyFor } = require('../../w002-api')

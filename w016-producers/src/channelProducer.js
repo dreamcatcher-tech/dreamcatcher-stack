@@ -174,12 +174,12 @@ const shiftTxRequest = (channel, originalLoopback) => {
   let index = channel.rxReplyIndex()
   let { replies, requests } = channel
   if (channel.address.isLoopback()) {
-    // loopback crossover is the only way the replies array change during execution
+    // loopback crossover is the only possible way the replies array may
+    // change during execution.
     // originalLoopback is required to keep track of what things used to be
-    // BUT we might be able to handle this entirely locally ?
+    // TODO change to get original loopback out of the channel itself
     assert(channelModel.isModel(originalLoopback))
     assert(originalLoopback.address.isLoopback())
-    assert(channel.address.isLoopback())
     index = originalLoopback.rxReplyIndex()
     assert(channel.replies[index], `loopback empty at ${index}`)
     replies = { ...replies }

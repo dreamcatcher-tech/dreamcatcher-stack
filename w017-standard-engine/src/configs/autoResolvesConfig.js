@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:config:interpreter.autoResolves')
+const debug = require('debug')('interblock:cfg:heart.autoResolves')
 const {
   txReplyModel,
   rxReplyModel,
@@ -12,9 +12,9 @@ const { definition } = require('../machines/autoResolves')
 const { assign } = require('xstate')
 const config = {
   actions: {
-    settleExternalAction: assign({
+    resolveExternalAction: assign({
       dmz: ({ dmz, externalAction }) => {
-        debug('settleExternalAction')
+        debug('resolveExternalAction')
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(externalAction))
         assert(dmz.network.getAlias(externalAction.getAddress()))
@@ -26,16 +26,34 @@ const config = {
         return dmzModel.clone({ ...dmz, network })
       },
     }),
+    settleOrigin: assign({
+      dmz: ({ initialPending, dmz }) => {
+        assert(pendingModel.isModel(initialPending))
+        assert(initialPending.getIsPending())
+        assert(dmzModel.isModel(dmz))
+        assert(!dmz.pending.getIsPending())
+        const { pendingRequest } = initialPending
+        assert(rxRequestModel.isModel(pendingRequest))
+        assert(dmz.network.getAlias(pendingRequest.getAddress()))
+        debug(`settleOrigin`, pendingRequest)
+        const { sequence } = pendingRequest
+        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
+        const network = networkProducer.tx(dmz.network, [], [reply])
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
   },
   guards: {
+    isNotPending: ({ initialPending }) => {
+      assert(pendingModel.isModel(initialPending))
+      const isNotPending = !initialPending.getIsPending()
+      debug(`isNotPending`, isNotPending)
+      return isNotPending
+    },
     isOriginSettled: ({ initialPending, dmz }) => {
       // if rejection, or resolve, return true
       assert(pendingModel.isModel(initialPending))
       assert(dmzModel.isModel(dmz))
-      if (!initialPending.getIsPending()) {
-        debug(`isOriginSettled !initialPending.getIsPending()`, true)
-        return true
-      }
       const { pendingRequest } = initialPending
       assert(rxRequestModel.isModel(pendingRequest))
       const reply = dmz.network.getResponse(pendingRequest)
@@ -43,49 +61,64 @@ const config = {
       debug(`isOriginSettled`, isOriginSettled)
       return isOriginSettled
     },
-    isPendingUnlowered: ({ initialPending, dmz }) => {
+    isStillPending: ({ initialPending, dmz }) => {
       assert(pendingModel.isModel(initialPending))
       assert(dmzModel.isModel(dmz))
-      const isPendingLowered =
-        initialPending.getIsPending() && !dmz.pending.getIsPending()
-      const isPendingUnlowered = !isPendingLowered
-      debug(`isPendingUnlowered`, isPendingUnlowered)
-      return isPendingUnlowered
+      const isStillPending =
+        initialPending.getIsPending() && dmz.pending.getIsPending()
+      debug(`isStillPending`, isStillPending)
+      return isStillPending
     },
-    isExternalActionReply: ({ externalAction }) => {
-      const isExternalActionReply = rxReplyModel.isModel(externalAction)
-      debug(`isExternalActionReply`, isExternalActionReply)
-      return isExternalActionReply
+    isExternalActionTypeReply: ({ externalAction }) => {
+      const isExternalActionTypeReply = rxReplyModel.isModel(externalAction)
+      debug(`isExternalActionTypeReply`, isExternalActionTypeReply)
+      return isExternalActionTypeReply
     },
-    isExternalActionAbsent: ({ dmz, externalAction }) => {
+    isChannelRemoved: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(externalAction))
+      const address = externalAction.getAddress()
+      const isChannelRemoved = !dmz.network.getAlias(address)
+      debug(`isChannelRemoved`, isChannelRemoved)
+      return isChannelRemoved
+    },
+    isRequestRemoved: ({ dmz, externalAction }) => {
       // loopback would have removed it, or dmz changes might have removed it
+      // dmz may have changed the channel address, then opened a new channel
+      // while weird, this is still legal.
+      assert(dmzModel.isModel(dmz))
+      assert(rxRequestModel.isModel(externalAction))
       const address = externalAction.getAddress()
       const alias = dmz.network.getAlias(address)
-      const isExternalActionAbsent = !alias
-      debug(`isExternalActionAbsent: `, isExternalActionAbsent)
-      return isExternalActionAbsent
+      const remote = dmz.network[alias].getRemote()
+      const index = externalAction.getIndex()
+      const isRequestRemoved = !remote.requests[index]
+      debug(`isRequestRemoved: `, isRequestRemoved)
+      return isRequestRemoved
     },
-    isExternalActionSettled: ({ dmz, externalAction }) => {
+    isExternalRequestSettled: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(externalAction))
       const reply = dmz.network.getResponse(externalAction)
-      const isExternalActionSettled = reply && !reply.isPromise()
-      debug(`isExternalActionSettled`, isExternalActionSettled)
-      return isExternalActionSettled
+      const isExternalRequestSettled = reply && !reply.isPromise()
+      const { type } = externalAction
+      debug(`isExternalRequestSettled`, isExternalRequestSettled, type)
+      return isExternalRequestSettled
     },
     isTxExternalActionPromise: ({ isExternalPromise }) => {
+      // TODO try replace by removing the pending promise each run
       const isTxExternalActionPromise = !!isExternalPromise
       debug(`isTxExternalActionPromise`, isTxExternalActionPromise)
       return isTxExternalActionPromise
     },
-    isExternalActionBuffered: ({ dmz, externalAction }) => {
+    isExternalRequestBuffered: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(externalAction))
-      const isExternalActionBuffered = dmz.pending.getIsBuffered(externalAction)
-      debug(`isExternalActionBuffered`, isExternalActionBuffered)
-      return isExternalActionBuffered
+      const isExternalRequestBuffered = dmz.pending.getIsBuffered(
+        externalAction
+      )
+      debug(`isExternalRequestBuffered`, isExternalRequestBuffered)
+      return isExternalRequestBuffered
     },
   },
   services: {},

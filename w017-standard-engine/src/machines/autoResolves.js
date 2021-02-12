@@ -1,6 +1,5 @@
 const definition = {
   id: 'interpreter.autoResolves',
-  initial: 'isReply',
   context: {
     // TODO populate with all modified context variables
   },
@@ -25,24 +24,21 @@ const definition = {
       // if we went from pending to settled, then origin must be resolved
       // transmit needs to also track if origin was promised to...
       always: [
-        { target: 'settleExternalAction', cond: 'isOriginSettled' },
-        { target: 'settleExternalAction', cond: 'isPendingUnlowered' },
-        // TODO remove isTxOriginPromise as shiftBuffer removes this
-        { target: 'settleExternalAction', cond: 'isTxOriginPromise' },
-        {
-          target: 'settleExternalAction',
-          actions: 'settleOrigin',
-        },
+        { target: 'resolveExternalAction', cond: 'isNotPending' },
+        { target: 'resolveExternalAction', cond: 'isStillPending' },
+        { target: 'resolveExternalAction', cond: 'isOriginSettled' },
+        { target: 'resolveExternalAction', actions: 'settleOrigin' },
       ],
     },
-    settleExternalAction: {
+    resolveExternalAction: {
       always: [
-        { target: 'done', cond: 'isExternalActionReply' },
-        { target: 'done', cond: 'isExternalActionAbsent' },
-        { target: 'done', cond: 'isExternalActionSettled' },
+        { target: 'done', cond: 'isExternalActionTypeReply' },
+        { target: 'done', cond: 'isChannelRemoved' },
+        { target: 'done', cond: 'isRequestRemoved' },
+        { target: 'done', cond: 'isExternalRequestSettled' },
         { target: 'done', cond: 'isTxExternalActionPromise' },
-        { target: 'done', cond: 'isExternalActionBuffered' },
-        { target: 'done', actions: 'settleExternalAction' },
+        { target: 'done', cond: 'isExternalRequestBuffered' },
+        { target: 'done', actions: 'resolveExternalAction' },
       ],
     },
     done: {

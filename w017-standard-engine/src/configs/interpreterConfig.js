@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:config:interpreter')
+const debug = require('debug')('interblock:cfg:heart')
 const detailedDiff = require('deep-object-diff').detailedDiff
 const { pure } = require('../../../w001-xstate-direct')
 const {
@@ -109,7 +109,7 @@ const config = {
     assignDirectMachine: assign((context, event) => {
       assert(!event.data.then)
       const nextContext = { ...context, ...event.data }
-      debug(`assignDirectMachine`, detailedDiff(context, nextContext))
+      debug(`assignDirectMachine`)
       return nextContext
     }),
   },
@@ -134,29 +134,27 @@ const config = {
   },
   services: {
     direct: async (context) => {
-      debug(`direct`)
+      debug(`direct machine`)
       const { machine, config } = directConfig(context)
       const nextContext = await pure('EXEC', machine, config)
       return nextContext
     },
     pending: async (context) => {
-      debug(`pending`)
+      debug(`pending machine`)
       const { machine, config } = pendingConfig(context)
       const nextContext = await pure('EXEC', machine, config)
       return nextContext
     },
     autoResolves: async (context) => {
-      debug(`autoResolves`)
+      debug(`autoResolves machine`)
       const { machine, config } = autoResolvesConfig(context)
       const nextContext = await pure('EXEC', machine, config)
-      debug(`autoResolves`, detailedDiff(context, nextContext))
       return nextContext
     },
     dmz: async (context) => {
-      debug(`dmz`)
+      debug(`dmz machine`)
       const { machine, config } = dmzConfig(context)
       const nextContext = await pure('EXEC', machine, config)
-      debug(`dmz`, detailedDiff(context, nextContext))
       return nextContext
     },
   },

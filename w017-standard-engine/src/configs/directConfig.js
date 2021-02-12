@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:config:interpreter.direct')
+const debug = require('debug')('interblock:cfg:heart.direct')
 const {
   txReplyModel,
   rxReplyModel,
@@ -13,6 +13,7 @@ const {
 const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const { definition } = require('../machines/direct')
 const { assign } = require('xstate')
+const { common } = require('./common')
 const {
   transmit,
   respondReply,
@@ -20,7 +21,11 @@ const {
   reduceCovenant,
   respondRejection,
   assignRejection,
-} = require('./interpreterCommonConfigs')
+  isExternalRequestAnvil,
+  isLoopbackResponseDone,
+  respondLoopbackRequest,
+  mergeState,
+} = common(debug)
 const config = {
   actions: {
     assignDirectCovenantAction: assign({
@@ -29,6 +34,7 @@ const config = {
         assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
         assert(!dmz.pending.getIsPending())
         assert(!dmz.pending.getAccumulator().length)
+        debug(`assignDirectCovenantAction`, anvil.type)
         return anvil
       },
     }),
@@ -72,31 +78,9 @@ const config = {
       },
       isExternalPromise: () => true,
     }),
-    mergeState: assign({
-      dmz: ({ dmz, reduceResolve }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(reductionModel.isModel(reduceResolve))
-        debug(`mergeState`)
-        return dmzModel.clone({ ...dmz, state: reduceResolve.reduction })
-      },
-    }),
-    respondRequest: assign({
-      dmz: ({ initialPending, externalAction, dmz, address, anvil }) => {
-        debug('respondRequest')
-        assert(pendingModel.isModel(initialPending))
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
-        assert(anvil.getAddress().equals(address))
-        const isFromBuffer = initialPending.getIsBuffered(anvil)
-        const msg = `externalAction can only be responded to by auto resolvers`
-        assert(!anvil.equals(externalAction) || isFromBuffer, msg)
-        const network = networkProducer.respondRequest(dmz.network, anvil)
-        return dmzModel.clone({ ...dmz, network })
-      },
-    }),
     shiftBufferedRequest: assign({
       dmz: ({ dmz, covenantAction }) => {
-        debug(`shiftBufferedRequest`)
+        debug(`shiftBufferedRequest`, covenantAction.type)
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(covenantAction))
         assert(dmz.pending.getIsBuffered(covenantAction))
@@ -106,9 +90,6 @@ const config = {
         assert(dmz.network[alias].equals(channel))
         assert(event.equals(covenantAction))
         const index = covenantAction.getIndex()
-        if (!channel.replies[index].isPromise()) {
-          debugger
-        }
         assert(channel.replies[index].isPromise())
         const network = networkProducer.removeBufferPromise(
           dmz.network,
@@ -120,20 +101,13 @@ const config = {
     }),
     assignResolve,
     transmit,
+    mergeState,
     respondReply,
     assignRejection,
     respondRejection,
+    respondLoopbackRequest,
   },
   guards: {
-    isExternalAction: ({ externalAction, anvil, address }) => {
-      // a non loopback external action will be responded to by autoresolvers
-      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-      assert(addressModel.isModel(address))
-      const isExternalAction = !address.isLoopback()
-      assert(!isExternalAction || externalAction.equals(anvil))
-      debug(`isExternalAction`, isExternalAction)
-      return isExternalAction
-    },
     isPending: ({ dmz }) => {
       const isPending = dmz.pending.getIsPending()
       debug(`isPending`, isPending)
@@ -153,25 +127,17 @@ const config = {
       debug(`isReply: %o`, isReply)
       return isReply
     },
-    isUnbuffered: ({ dmz, covenantAction }) => {
+    isUnbufferedRequest: ({ dmz, covenantAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(covenantAction))
       assert(dmzModel.isModel(dmz))
       const { pending } = dmz
-      const isUnbuffered = !pending.getIsBuffered(covenantAction)
-      debug(`isUnbuffered`, isUnbuffered)
-      return isUnbuffered
+      const isUnbufferedRequest = !pending.getIsBuffered(covenantAction)
+      debug(`isUnbufferedRequest`, isUnbufferedRequest)
+      return isUnbufferedRequest
     },
-    isLoopbackResponseDone: ({ dmz, anvil, address }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil))
-      assert(anvil.getAddress().equals(address))
-      assert(address.isLoopback())
-
-      const isDone = !!dmz.network.getResponse(anvil)
-      debug(`isLoopbackResponseDone: %o anvil: %o`, isDone, anvil.type)
-      return isDone
-    },
+    isLoopbackResponseDone,
+    isExternalRequestAnvil,
   },
   services: {
     reduceCovenant,

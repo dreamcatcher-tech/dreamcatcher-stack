@@ -37,11 +37,11 @@ const definition = {
       onDone: 'done',
     },
     request: {
-      initial: 'isUnbuffered',
+      initial: 'isUnbufferedRequest',
       states: {
-        isUnbuffered: {
+        isUnbufferedRequest: {
           always: [
-            { target: 'reduce', cond: 'isUnbuffered' },
+            { target: 'reduce', cond: 'isUnbufferedRequest' },
             {
               target: 'reduce',
               actions: 'shiftBufferedRequest',
@@ -59,15 +59,14 @@ const definition = {
           entry: 'transmit',
           always: [
             { target: 'raisePending', cond: 'isReductionPending' },
-            { target: 'respondRequest' },
+            { target: 'respondLoopbackRequest' },
           ],
         },
-        respondRequest: {
+        respondLoopbackRequest: {
           entry: 'mergeState',
           always: [
-            { target: 'done', cond: 'isExternalAction' },
             { target: 'done', cond: 'isLoopbackResponseDone' },
-            { target: 'done', actions: 'respondRequest' },
+            { target: 'done', actions: 'respondLoopbackRequest' },
           ],
         },
         raisePending: {

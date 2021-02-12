@@ -313,7 +313,7 @@ const pure = async (event, definition, config = {}) => {
     debug(`makeTransition event: %o trans: %o`, event.type, state.transition)
 
     state = { ...state, value: state.transition.target }
-    assert(resolveNode(state))
+    assert(resolveNode(state), `missing state node: ${state.value}`)
     const { actions } = state.transition
     delete state.transition
 

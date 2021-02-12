@@ -1,6 +1,6 @@
 const assert = require('assert')
 const _ = require('lodash')
-const debug = require('debug')('interblock:config:isolator')
+const debug = require('debug')('interblock:cfg:isolator')
 const { assign } = require('xstate')
 const { pure } = require('../../../w001-xstate-direct')
 const {

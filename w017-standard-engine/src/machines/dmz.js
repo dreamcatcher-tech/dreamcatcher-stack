@@ -22,18 +22,18 @@ const definition = {
       always: [
         { target: 'done', cond: 'isChannelUnavailable' },
         { target: 'respondReply', cond: 'isReply' },
-        { target: 'respondRequest' },
+        { target: 'respondLoopbackRequest' },
       ],
     },
     respondReply: {
       entry: 'respondReply',
       always: 'done',
     },
-    respondRequest: {
+    respondLoopbackRequest: {
       always: [
-        { target: 'done', cond: 'isExternalAction' },
+        { target: 'done', cond: 'isExternalRequestAnvil' },
         { target: 'done', cond: 'isLoopbackResponseDone' },
-        { target: 'done', actions: 'respondRequest' },
+        { target: 'done', actions: 'respondLoopbackRequest' },
       ],
     },
     done: {

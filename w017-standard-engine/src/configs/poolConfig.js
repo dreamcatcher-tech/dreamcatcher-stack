@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:config:pool')
+const debug = require('debug')('interblock:cfg:pool')
 const _ = require('lodash')
 const { assign } = require('xstate')
 const { definition } = require('../machines/pool')

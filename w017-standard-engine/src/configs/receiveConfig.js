@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:config:receive')
+const debug = require('debug')('interblock:cfg:receive')
 const _ = require('lodash')
 const { assign } = require('xstate')
 const {

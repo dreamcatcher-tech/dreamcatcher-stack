@@ -17,8 +17,8 @@ const bufferRequest = (pending, request) => {
   assert(pending.getIsPending())
   const chainId = request.getAddress().getChainId()
   const index = request.getIndex()
-  const indices = pending.requests[chainId] || []
   const requests = { ...pending.requests }
+  const indices = pending.requests[chainId] || []
   requests[chainId] = [...indices, index]
   return pendingModel.clone({ ...pending, requests })
 }

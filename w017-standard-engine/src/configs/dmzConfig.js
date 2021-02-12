@@ -1,10 +1,9 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:config:interpreter.dmzConfig')
+const debug = require('debug')('interblock:cfg:heart:dmz')
 const {
   rxReplyModel,
   rxRequestModel,
   dmzModel,
-  pendingModel,
   reductionModel,
   addressModel,
 } = require('../../../w015-models')
@@ -12,8 +11,8 @@ const dmzReducer = require('../../../w021-dmz-reducer')
 const {
   '@@GLOBAL_HOOK_INBAND': globalHookInband,
 } = require('../../../w002-api')
-const { networkProducer } = require('../../../w016-producers')
 const { definition } = require('../machines/dmz')
+const { common } = require('./common')
 const {
   transmit,
   respondReply,
@@ -21,7 +20,10 @@ const {
   isReply,
   assignRejection,
   respondRejection,
-} = require('./interpreterCommonConfigs')
+  respondLoopbackRequest,
+  isExternalRequestAnvil,
+  isLoopbackResponseDone,
+} = common(debug)
 const { assign } = require('xstate')
 
 const config = {
@@ -34,20 +36,7 @@ const config = {
         return dmzModel.clone(reduceResolve.reduction)
       },
     }),
-    respondRequest: assign({
-      dmz: ({ initialPending, externalAction, dmz, address, anvil }) => {
-        debug('respondRequest')
-        assert(pendingModel.isModel(initialPending))
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
-        assert(anvil.getAddress().equals(address))
-        const isFromBuffer = initialPending.getIsBuffered(anvil)
-        const msg = `externalAction can only be responded to by auto resolvers`
-        assert(!anvil.equals(externalAction) || isFromBuffer, msg)
-        const network = networkProducer.respondRequest(dmz.network, anvil)
-        return dmzModel.clone({ ...dmz, network })
-      },
-    }),
+    respondLoopbackRequest,
     assignResolve,
     transmit,
     respondReply,
@@ -55,34 +44,19 @@ const config = {
     respondRejection,
   },
   guards: {
-    isExternalAction: ({ externalAction, anvil, address }) => {
-      // a non loopback external action will be responded to by autoresolvers
-      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-      assert(addressModel.isModel(address))
-      const isExternalAction = !address.isLoopback()
-      assert(!isExternalAction || externalAction.equals(anvil))
-      debug(`isExternalAction`, isExternalAction)
-      return isExternalAction
-    },
     isChannelUnavailable: ({ dmz, address }) => {
       // TODO may merge with the autoResolve test if action is present ?
+      // TODO remove address once have address is replies
+      assert(dmzModel.isModel(dmz))
       assert(addressModel.isModel(address))
       assert(!address.isUnknown(), `Address unknown`)
       const alias = dmz.network.getAlias(address)
       debug(`isChannelUnavailable: `, !alias)
       return !alias
     },
-    isLoopbackResponseDone: ({ dmz, anvil, address }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil))
-      assert(anvil.getAddress().equals(address))
-      assert(address.isLoopback())
-
-      const isDone = !!dmz.network.getResponse(anvil)
-      debug(`isLoopbackResponseDone: %o anvil: %o`, isDone, anvil.type)
-      return isDone
-    },
+    isExternalRequestAnvil,
     isReply,
+    isLoopbackResponseDone,
   },
   services: {
     // TODO move this to synchronous as soon as genesis is synchronous
@@ -96,9 +70,10 @@ const config = {
       const salt = `TODO` // TODO make salt depend on something else, like the io channel index
       const reduceResolve = await globalHookInband(tick, accumulator, salt)
 
-      debug(`result isPending: `, reduceResolve.isPending)
       assert(reduceResolve, `System returned: ${reduceResolve}`)
       assert(!reduceResolve.isPending, `System can never raise pending`)
+      const { requests, replies } = reduceResolve
+      debug(`reduceSystem tx: ${requests.length} rx: ${replies.length}`)
       return { reduceResolve }
     },
   },

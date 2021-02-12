@@ -1,5 +1,5 @@
 const assert = require('assert')
-const debug = require('debug')('interblock:config:interpreter.pending')
+const debug = require('debug')('interblock:cfg:heart:pending')
 const {
   txReplyModel,
   rxReplyModel,
@@ -14,13 +14,15 @@ const {
 const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const { definition } = require('../machines/pending')
 const { assign } = require('xstate')
+const { common } = require('./common')
 const {
   transmit,
   assignResolve,
   respondReply,
   reduceCovenant,
   assignRejection,
-} = require('./interpreterCommonConfigs')
+  mergeState,
+} = common(debug)
 const config = {
   actions: {
     bufferRequest: assign({
@@ -29,7 +31,6 @@ const config = {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
         debug(`bufferRequest: `, anvil.type)
-
         const pending = pendingProducer.bufferRequest(dmz.pending, anvil)
         return dmzModel.clone({ ...dmz, pending })
       },
@@ -39,23 +40,23 @@ const config = {
         // add reply into the accumulator
         assert(dmzModel.isModel(dmz))
         assert(rxReplyModel.isModel(anvil))
-        debug(`accumulateReply: `, anvil.type)
+        const { type } = anvil.getRequest()
+        debug(`accumulateReply reply: %o request: %o`, anvil.type, type)
         const pending = pendingProducer.pushReply(dmz.pending, anvil)
         return dmzModel.clone({ ...dmz, pending })
       },
     }),
     shiftCovenantAction: assign({
       covenantAction: ({ dmz, anvil }) => {
-        // get the action that is the first buffered request
         assert(dmzModel.isModel(dmz))
         assert(rxReplyModel.isModel(anvil))
         const { pending } = dmz
         assert(pending.getIsPending())
 
-        const covenantAction = pending.pendingRequest
-        assert(rxRequestModel.isModel(covenantAction))
-        debug(`shiftCovenantAction: `, covenantAction.type)
-        return covenantAction
+        const originRequest = pending.pendingRequest
+        assert(rxRequestModel.isModel(originRequest))
+        debug(`shiftCovenantAction: %o`, originRequest.type)
+        return originRequest
       },
     }),
     deduplicatePendingReplyTx: assign({
@@ -115,7 +116,6 @@ const config = {
         assert(rxRequestModel.isModel(anvil))
         debug(`promiseanvil`, anvil.type)
         const { sequence } = anvil
-
         const promise = txReplyModel.create('@@PROMISE', {}, sequence)
         const network = networkProducer.tx(dmz.network, [], [promise])
         return dmzModel.clone({ ...dmz, network })
@@ -130,14 +130,7 @@ const config = {
         return dmzModel.clone({ ...dmz, pending })
       },
     }),
-    mergeState: assign({
-      dmz: ({ dmz, reduceResolve }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(reductionModel.isModel(reduceResolve))
-        debug(`mergeState`)
-        return dmzModel.clone({ ...dmz, state: reduceResolve.reduction })
-      },
-    }),
+    mergeState,
     respondReply,
     assignResolve,
     transmit,

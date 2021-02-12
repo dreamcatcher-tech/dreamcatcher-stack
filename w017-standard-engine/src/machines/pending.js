@@ -13,11 +13,8 @@ const definition = {
       ],
     },
     bufferRequest: {
-      entry: 'bufferRequest',
-      always: [
-        { target: 'done', cond: 'isAnvilPromised' },
-        { target: 'done', actions: 'promiseAnvil' },
-      ],
+      entry: ['bufferRequest', 'promiseAnvil'],
+      always: 'done',
     },
     reducePendingReply: {
       entry: ['accumulateReply', 'shiftCovenantAction'],
@@ -42,14 +39,14 @@ const definition = {
       entry: 'transmit', // TODO may accumulate tx too, to dedupe independently of changing channel structure
       always: [
         { target: 'done', cond: 'isReductionPending' },
-        { target: 'resolvePending' },
+        { target: 'settlePending' },
       ],
     },
     rejectPending: {
       entry: ['rejectOriginRequest', 'settlePending'],
       always: 'done',
     },
-    resolvePending: {
+    settlePending: {
       entry: ['settlePending', 'mergeState'],
       always: 'done',
     },
