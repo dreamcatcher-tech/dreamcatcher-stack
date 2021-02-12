@@ -7,7 +7,7 @@ const {
 const { addressModel, blockModel, lockModel } = require('../../w015-models')
 const { v4 } = require('uuid')
 const { integrityModel } = require('../../w015-models')
-require('debug').enable('')
+require('debug').enable()
 require('../../w012-crypto').testMode()
 
 describe('awsConsistency', () => {

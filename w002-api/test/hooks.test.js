@@ -1,8 +1,8 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:hooks')
 const { '@@GLOBAL_HOOK': hook, interchain, effect } = require('..')
+require('debug').enable()
 describe('hooks', () => {
-  //   require('debug').enable('*hooks')
   const nested = (id, depth = 0) => async () => {
     if (depth === 0) {
       return { id }

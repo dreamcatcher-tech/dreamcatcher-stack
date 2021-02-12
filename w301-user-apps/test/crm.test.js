@@ -2,7 +2,7 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-require('debug').enable('*met* *needle *tests* ')
+require('debug').enable()
 
 describe('crm', () => {
   describe('app deploy', () => {

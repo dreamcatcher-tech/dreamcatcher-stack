@@ -1,7 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:xstatePure')
 const { interpret, Machine, assign } = require('xstate')
-require('debug').enable('')
+require('debug').enable()
 const { pure } = require('..')
 const definition = {
   initial: 'idle',
@@ -68,7 +68,7 @@ const definition = {
           states: {
             start: {
               invoke: {
-                src: 'asyncCall',
+                src: 'asyncCall2',
                 onDone: 'stop',
               },
             },
@@ -121,6 +121,10 @@ const config = {
       debug(`asyncCall: `, context, event)
       return await Promise.resolve(42)
     },
+    asyncCall2: async (context, event) => {
+      debug(`asyncCall: `, context, event)
+      return await Promise.resolve(42)
+    },
     asyncError: async () => {
       throw new Error(`asyncError`)
     },
@@ -139,7 +143,7 @@ describe('baseline', () => {
     })
     service.send('TICK')
     const result = await done
-    debug(result)
+    debug(`result`, result)
     assert.strictEqual(result.data, 7)
   })
   test('original xstate error', async () => {

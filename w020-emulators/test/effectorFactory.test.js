@@ -2,10 +2,9 @@ const assert = require('assert')
 const { effectorFactory } = require('..')
 const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.config')
 const debug = require('debug')('interblock:tests:effectorFactory')
+require('debug').enable()
 
 describe('effector', () => {
-  require('debug').enable('*tests* *interpreter* ')
-
   test('ping single', async () => {
     const start = Date.now()
     debug(`start`)
@@ -106,8 +105,6 @@ describe('effector', () => {
   })
   test('cannot create same child twice', async () => {
     // TODO handle errors in the translator
-    require('debug').enable('*metro* *shell* *tests* *translator')
-
     const client = await effectorFactory()
     await client.add('testChild')
     await assert.rejects(() => client.add('testChild'))

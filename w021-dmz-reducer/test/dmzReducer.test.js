@@ -14,7 +14,7 @@ const { networkProducer } = require('../../w016-producers')
 const { actions } = require('..')
 const { metrologyFactory } = require('../../w017-standard-engine')
 const { spawnReducer, spawn } = require('../src/spawn')
-require('debug').enable('*met* *tests* *dmz:spawn *provenance')
+require('debug').enable()
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')

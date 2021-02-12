@@ -5,7 +5,7 @@ const {
 } = require('../src/services/consistencyFactory/lockFactory')
 
 describe('lockFactory', () => {
-  require('debug').enable('*:lock* *ramDyn*')
+  require('debug').enable()
   test('cannot acquire lock twice in order', async () => {
     const chainId = 'testChainId'
     const awsRequestId = 'testAwsRequestId'

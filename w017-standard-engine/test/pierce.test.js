@@ -5,7 +5,7 @@ const { request } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')
 
 describe('pierce', () => {
-  require('debug').enable('*met* *pierce*')
+  require('debug').enable()
   test('basic ping', async () => {
     const base = await metrologyFactory()
     const ping = request('PING')

@@ -56,8 +56,6 @@ const common = (debug) => {
     reduceRejection: ({ anvil }, event) => {
       if (rxReplyModel.isModel(anvil)) {
         // TODO do something with replies that cause rejections
-        // console.error(anvil)
-        // console.error(event.data)
       }
       return event.data
     },

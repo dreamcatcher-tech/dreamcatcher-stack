@@ -4,7 +4,7 @@ const { interchain } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')
 const { metrologyFactory } = require('../src/metrologyFactory')
 
-require('debug').enable('*met* *tests* *heart*')
+require('debug').enable()
 
 describe('hooker', () => {
   test('loopback cleared immediately', async () => {

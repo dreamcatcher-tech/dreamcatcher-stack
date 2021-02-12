@@ -1,6 +1,6 @@
 const assert = require('assert')
 const { metrologyFactory } = require('../src/metrologyFactory')
-require('debug').enable('*metro* *engine:increasor*  *:lock*')
+require('debug').enable()
 describe('standardEngine', () => {
   test('multiple increase requests successfully lock chain twice', async () => {
     const base = await metrologyFactory()

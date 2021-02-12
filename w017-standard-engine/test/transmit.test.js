@@ -5,7 +5,7 @@ const { interblockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()
 
 describe('transmit', () => {
-  require('debug').enable('*metrology* *tests:pool')
+  require('debug').enable()
   test('base has pooled lineage except genesis', async () => {
     const base = await metrologyFactory()
 

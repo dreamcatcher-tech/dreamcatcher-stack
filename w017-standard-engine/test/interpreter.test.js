@@ -4,9 +4,9 @@ const { metrologyFactory } = require('../src/metrologyFactory')
 const { shell, hyper, probe } = require('../../w212-system-covenants')
 const { isReplyFor } = require('../../w002-api')
 require('../../w012-crypto').testMode()
+require('debug').enable()
 
 describe('interpreter', () => {
-  require('debug').enable('*met* *tests* ')
   test('respond to ping with pong', async () => {
     const { covenantId, actions } = shell // shell responds to pings
     const ping = actions.ping()
@@ -23,7 +23,6 @@ describe('interpreter', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   test('error on reply should surface', async () => {
-    require('debug').enable('*met* *tests* *shell *interpreter')
     const reducer = (state, action) => {
       debug(`reducer: `, action.type)
       if (isReplyFor(action)) {

@@ -4,11 +4,9 @@ const {
   txReplyModel,
   rxReplyModel,
   rxRequestModel,
-  addressModel,
   dmzModel,
   channelModel,
   reductionModel,
-  pendingModel,
 } = require('../../../w015-models')
 const { networkProducer, pendingProducer } = require('../../../w016-producers')
 const { definition } = require('../machines/direct')
@@ -41,8 +39,6 @@ const config = {
     warnReplyRejection: ({ reduceRejection }) => {
       // TODO reject all loopback actions and reject the external action
       debug(`warnReplyRejection`)
-      console.warn(`Warning: rejection occured during reply`)
-      console.warn(reduceRejection)
     },
     raisePending: assign({
       dmz: ({ dmz, anvil }) => {

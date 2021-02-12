@@ -2,7 +2,7 @@ const assert = require('assert')
 const { effectorFactory } = require('../..')
 const debug = require('debug')('crm:tests:datum')
 
-require('debug').enable('*met* *tests* *datum *collection')
+require('debug').enable()
 
 describe('collection', () => {
   test('add with test data', async () => {

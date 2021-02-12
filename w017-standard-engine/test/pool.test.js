@@ -3,9 +3,9 @@ const debug = require('debug')('interblock:tests:pool')
 const { metrologyFactory } = require('../src/metrologyFactory')
 const { blockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()
+require('debug').enable()
 
 describe('pool', () => {
-  require('debug').enable('*metro* *crypto *lock')
   describe('initializeStorage', () => {
     test('initial conditions creates new baseChain', async () => {
       const metrology = await metrologyFactory('A')
@@ -33,7 +33,6 @@ describe('pool', () => {
   describe('poolInterblock', () => {
     describe('birthChild', () => {
       test('new child created from genesis', async () => {
-        require('debug').enable('*metro*')
         const base = await metrologyFactory('birthChild')
         await base.spawn('child')
         const baseState = base.getState()

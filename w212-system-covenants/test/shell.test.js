@@ -6,7 +6,7 @@ const { shell } = require('..')
 const { effect, interchain } = require('../../w002-api')
 const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('../../w017-standard-engine')
-require('debug').enable('*met* *shell *dmz* *piercer*')
+require('debug').enable()
 
 describe('machine validation', () => {
   describe('state machine', () => {

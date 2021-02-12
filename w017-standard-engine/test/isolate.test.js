@@ -11,7 +11,7 @@ const {
   dmzModel,
   blockModel,
 } = require('../../w015-models')
-require('debug').enable('*tests* *isolate*')
+require('debug').enable()
 describe('isolation', () => {
   test('handle two covenants', async () => {
     const reducer1 = () => ({

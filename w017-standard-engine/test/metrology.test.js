@@ -6,7 +6,7 @@ describe('metrology', () => {
   describe('spawn', () => {
     test.skip('spawn many times', async () => {
       jest.setTimeout(100000)
-      require('debug').enable('*metrology* *tests:effector* *shell *translator')
+      require('debug').enable('interblock:tests:metrology')
       const client = await metrologyFactory()
       client.enableLogging()
       let count = 0
@@ -31,13 +31,12 @@ describe('metrology', () => {
     })
   })
   describe('actions', () => {
-    test('benchmark max tx thruput', async () => {
-      /**
-       * Try different action sizes and see which gives the highest tx rate.
-       * Try different sizes of the actions.
-       * Try different amounts of computation per action.
-       * Generate all interblocks first, using pause, before executing
-       */
-    })
+    /**
+     * Try different action sizes and see which gives the highest tx rate.
+     * Try different sizes of the actions.
+     * Try different amounts of computation per action.
+     * Generate all interblocks first, using pause, before executing
+     */
+    test.todo('benchmark max tx thruput')
   })
 })
