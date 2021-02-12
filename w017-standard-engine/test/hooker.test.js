@@ -4,7 +4,7 @@ const { interchain } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')
 const { metrologyFactory } = require('../src/metrologyFactory')
 
-require('debug').enable('*met* *tests* *hooks *heart*')
+require('debug').enable('*met* *tests* *heart*')
 
 describe('hooker', () => {
   test('loopback cleared immediately', async () => {
@@ -19,12 +19,13 @@ describe('hooker', () => {
     const { requests, replies } = block.network['.']
     const length = (obj) => Object.keys(obj).length
     assert.strictEqual(length(requests), length(replies))
+    assert.strictEqual(length(requests), 0)
   })
   test.todo('throw if pending and tx a request to self')
   // if only request from pending is a request to self, then know it will never resolve
   // basically cannot raise pending, then request something to self
   test.todo('wait for all promises')
-  test.only('self requests during pending can buffer', async () => {
+  test('self requests during pending can buffer', async () => {
     const reducer = async (state, action) => {
       debug(`reducer`, action)
       if (action.type === 'NONCE') {

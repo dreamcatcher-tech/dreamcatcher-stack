@@ -136,6 +136,12 @@ const config = {
       debug(`isUnbufferedRequest`, isUnbufferedRequest)
       return isUnbufferedRequest
     },
+    isAnvilNotLoopback: ({ anvil }) => {
+      assert(rxRequestModel.isModel(anvil))
+      const isAnvilNotLoopback = !anvil.getAddress().isLoopback()
+      debug(`isAnvilNotLoopback`, isAnvilNotLoopback)
+      return isAnvilNotLoopback
+    },
     isLoopbackResponseDone,
     isExternalRequestAnvil,
   },

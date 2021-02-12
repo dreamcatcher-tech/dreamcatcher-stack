@@ -65,6 +65,7 @@ const definition = {
         respondLoopbackRequest: {
           entry: 'mergeState',
           always: [
+            { target: 'done', cond: 'isAnvilNotLoopback' },
             { target: 'done', cond: 'isLoopbackResponseDone' },
             { target: 'done', actions: 'respondLoopbackRequest' },
           ],
