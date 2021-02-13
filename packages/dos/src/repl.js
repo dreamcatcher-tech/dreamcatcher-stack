@@ -22,7 +22,8 @@ module.exports = async function repl(opts) {
   const ctx = await getInitialCtx(opts)
 
   debug(`changing to home directory`)
-  await opts.evaluate(ctx, 'cd', [])
+  await opts.evaluate(ctx, 'cd', ['/crm/schedule/exceptions'])
+  // await opts.evaluate(ctx, 'ls')
   // await opts.evaluate(ctx, 'login', [])
 
   return loop(async function rep() {

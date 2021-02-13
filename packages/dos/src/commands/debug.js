@@ -10,6 +10,9 @@ module.exports = async ({ blockchain }, ...args) => {
   out += `\nsetting flags to: ` + argsString
   blockchain._debug.enable(argsString)
   debug.enable(argsString)
+  // if (localStorage) {
+  //   localStorage.debug = argsString
+  // }
   return { out }
 }
 

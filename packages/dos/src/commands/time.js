@@ -13,7 +13,8 @@ module.exports = async (ctx, ...args) => {
   const start = Date.now()
   const res = (await evaluate(ctx, command, rest)) || {}
   res.out = res.out || ''
-  res.out = res.out + `\nTime: ${pretty(Date.now() - start)}`
+  const options = { compact: false, separateMilliseconds: true }
+  res.out = res.out + `\nTime: ${pretty(Date.now() - start, options)}`
   return res
 }
 
