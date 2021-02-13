@@ -11,6 +11,7 @@ const {
   listChildren,
   install,
   getChannel,
+  getState: dmzGetState,
 } = dmzReducer.actions
 const { interchain } = require('../../w002-api')
 const dpkg = require('./dpkg')
@@ -147,6 +148,18 @@ const config = {
       const installResult = await interchain(installAction, installPath)
       debug(`installResult: `, installResult)
     },
+    getState: async (context, event) => {
+      // dump the contents of the chain at the given path
+      // if offline, can use the most recent data, but color code that it is stale
+      // TODO use payload layer to fetch blocks directly
+      // TODO allow auto updating subscriptions, possibly with broadcast for state
+      const { path } = event.payload
+      debug(`getState: `, path)
+      const action = dmzGetState()
+      const state = await interchain(action, path)
+      debug(`getState result: `, state)
+      return { state }
+    },
   },
 }
 const machine = Machine(
@@ -234,8 +247,10 @@ const machine = Machine(
         // move to another parent, but keep a link to the chain here
       },
       getState: {
-        // dump the contents of the chain at the given path
-        // if offline, can use the most recent data, but color code that it is stale
+        invoke: {
+          src: 'getState',
+          onDone: { target: 'idle', actions: 'respondOrigin' },
+        },
       },
       logout: {
         // kill the session chain so needs to be reconnected to AWS
@@ -366,9 +381,12 @@ const actions = {
     type: 'PUBLISH',
     payload: { name, installer, registry },
   }),
+  cat: (path = '.') => ({
+    type: 'CAT',
+    payload: { path },
+  }),
   //   MV: 'moveActor',
   //   LN: 'linkActor',
-  //   CAT: 'getState',
   //   LOGOUT: 'logout',
   //   EXEC: 'execute',
   //   BAL: 'balance',

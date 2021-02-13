@@ -10,6 +10,7 @@ const { listChildren, listChildrenReducer } = require('./listChildren')
 const { install, deploy, deployReducer, deployReply } = require('./deploy')
 const { getChannel, getChannelReducer } = require('./getChannel')
 const { genesisReducer, genesisReply } = require('./genesis')
+const { getStateReducer, getState } = require('./getState')
 const { dmzModel, rxRequestModel, rxReplyModel } = require('../../w015-models')
 /**
  * DmzReducer is responsible for:
@@ -37,6 +38,7 @@ const actions = {
   install,
   deploy,
   getChannel,
+  getState,
 }
 
 const reducer = async (dmz, action) => {
@@ -79,6 +81,9 @@ const reducer = async (dmz, action) => {
       break
     case '@@GET_CHAN':
       getChannelReducer(network, action)
+      break
+    case '@@CAT':
+      getStateReducer(dmz)
       break
     case '@@RESOLVE':
     case '@@REJECT':
@@ -126,6 +131,7 @@ const systemTypes = [
   '@@DEPLOY',
   '@@INSTALL',
   '@@GET_CHAN',
+  '@@CAT',
 ]
 const isSystemRequest = (request) => {
   if (!rxRequestModel.isModel(request)) {

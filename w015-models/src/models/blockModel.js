@@ -104,12 +104,14 @@ const blockModel = standardize({
       return isBlock && isValidated && provenance
     }
     const getChainId = () => instance.provenance.getAddress().getChainId()
+    const getHeight = () => instance.provenance.height
     return {
       isValidated,
       getDmz,
       whoami,
       isNext,
       getChainId,
+      getHeight,
     }
   },
 })

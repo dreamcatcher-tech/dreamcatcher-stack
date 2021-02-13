@@ -210,6 +210,14 @@ describe('machine validation', () => {
     })
     test.todo('simultaneous requests')
   })
+  describe('getState', () => {
+    test('basic', async () => {
+      const base = await metrologyFactory('effect', { hyper: shell })
+      await base.spawn('child')
+      const state = await base.pierce(shell.actions.cat('child'))
+      debug(state)
+    })
+  })
   describe('normalize', () => {
     test('normalize tests', () => {
       assert.strictEqual(resolve('/something', '/other/path/.'), '/other/path')
