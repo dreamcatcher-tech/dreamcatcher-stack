@@ -10,6 +10,7 @@ const debug = require('debug')('dos:commands:pkg')
 
 module.exports = async ({ spinner, blockchain }, subcmd, ...args) => {
   debug(subcmd, args)
+  // TODO move to commander for parsing, and shell commands for action
   switch (subcmd) {
     case '':
     case 'help':
@@ -27,7 +28,6 @@ module.exports = async ({ spinner, blockchain }, subcmd, ...args) => {
 
       spinner.text = `Installing from path: ${dpkgPath} to: ${installPath}`
       spinner.start()
-      await new Promise((r) => setTimeout(r, 1000))
       debugger
       await blockchain.install(dpkgPath, installPath)
       debugger

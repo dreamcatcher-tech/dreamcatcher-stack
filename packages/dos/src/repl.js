@@ -11,7 +11,7 @@ const commands = require('./commands')
 const wrap = require('wordwrap')(0, 80)
 
 module.exports = async function repl(opts) {
-  require('debug').enable('*:repl *:ls *:cd *:blocks *:error')
+  require('debug').enable('*:repl *:ls *:cd *:blocks *:error *commands*')
   debug(`repl`)
   opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
@@ -22,8 +22,8 @@ module.exports = async function repl(opts) {
   const ctx = await getInitialCtx(opts)
 
   debug(`changing to home directory`)
-  await opts.evaluate(ctx, 'cd', ['/crm/schedule/exceptions'])
-  // await opts.evaluate(ctx, 'ls')
+  await opts.evaluate(ctx, 'cd', ['/crm/customers'])
+  await opts.evaluate(ctx, './add', ['--isTestData'])
   // await opts.evaluate(ctx, 'login', [])
 
   return loop(async function rep() {
@@ -83,12 +83,18 @@ async function getInitialCtx({ blockchain, evaluate }) {
 
   spinner.text = `Provisioning app store`
   spinner.start()
+  const publishStart = Date.now()
   const { dpkgPath } = await blockchain.publish('crmApp', apps.crm.install)
-  spinner.info(`app store set up at: /${dpkgPath}`)
+  const installStart = Date.now()
+  const publishMs = installStart - publishStart
+  spinner.info(`app store set up at: /${dpkgPath} in ${publishMs}ms`)
   spinner.text = `installing crm app at /crm`
   spinner.start()
   await blockchain.install(dpkgPath, 'crm')
-  spinner.info(`crm app installed at /crm`)
+  const installMs = Date.now() - installStart
+  const totalMs = Date.now() - publishStart
+  spinner.info(`crm app installed at /crm in ${installMs}ms`)
+  spinner.info(`total deployment time: ${totalMs}ms`)
   spinner.stop()
 
   await print(`Welcome to the HyperNet
