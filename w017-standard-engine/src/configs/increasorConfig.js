@@ -333,7 +333,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
 const _purgePiercings = (lock, previousLock) => {
   // leverage that piercings are always fully processed each cycle
   const { requests: origReqs, replies: origReps } = lock.piercings
-  const { prevReqs, prevReps } = previousLock.piercings
+  const { requests: prevReqs, replies: prevReps } = previousLock.piercings
   const requests = origReqs.filter(
     (txRequest) => !prevReqs.some((pr) => pr.equals(txRequest))
   )

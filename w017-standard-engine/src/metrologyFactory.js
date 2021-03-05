@@ -41,7 +41,7 @@ const {
 const { createBase } = require('./execution/createBase')
 const { createTap } = require('./execution/tap')
 const { actions } = require('../../w021-dmz-reducer')
-const { shell } = require('../../w212-system-covenants')
+const covenants = require('../../w212-system-covenants')
 const {
   blockModel,
   interblockModel,
@@ -112,16 +112,49 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       }
     }
     const getContext = () => getState(['state', 'context'])
+    const getLatest = (chainId) => {
+      return new Promise((resolve, reject) => {
+        const unsubscribe = subscribeBlockstream(chainId, async (block) => {
+          resolve(block)
+          await Promise.resolve()
+          unsubscribe()
+          // TODO handle rejection if we can never resolve the block
+        })
+      })
+    }
+    const blockstreamSubscribers = new Map()
+    const subscribeBlockstream = (chainId, callback) => {
+      const subscribers = blockstreamSubscribers.get(chainId)
+      subscribers.subs.add(callback)
+      callback(subscribers.latest)
+      return () => {
+        subscribers.subs.delete(callback)
+        // TODO cleanup by fully removing latest when no subscribers
+      }
+    }
 
     const subscribers = new Set()
-    const blocks = new Set()
+    const blocks = new Set() // TODO move to using the tap cache
     ioConsistency.subscribe(async (action, queuePromise) => {
       if (action.type === 'UNLOCK') {
-        await queuePromise
+        await queuePromise // TODO see if faster without waiting for the promise ?
         const { block } = action.payload
-        if (!blocks.has(block) && block.getChainId() === address.getChainId()) {
+        const chainId = block.getChainId()
+        if (!blocks.has(block) && chainId === address.getChainId()) {
           blocks.add(block)
           subscribers.forEach((callback) => callback())
+        }
+        if (!blockstreamSubscribers.has(chainId)) {
+          // TODO reuse tap cache or something else lighter than this duplicate
+          blockstreamSubscribers.set(chainId, {
+            subs: new Set(),
+            latest: block,
+          })
+        }
+        const streamSubs = blockstreamSubscribers.get(chainId)
+        if (streamSubs.latest.isNext(block)) {
+          streamSubs.latest = block
+          streamSubs.subs.forEach((callback) => callback(block))
         }
       }
     })
@@ -188,12 +221,40 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     // TODO remove this function as does not operate on children
     const spawn = (alias, spawnOptions = {}) =>
       pierce(actions.spawn(alias, spawnOptions))
-    const getCovenants = () => ({ ...covenantOverloads })
     const getBlockCount = () => tap.getBlockCount()
+    const getCovenants = () => ({ ...covenants, ...covenantOverloads })
+    const getActionCreators = async (path) => {
+      const latest = await getLatestFromPath(path)
+      const covenant = _getCovenant(latest, getCovenants())
+      // TODO create the functions from the schema, not raw action creators
+      if (covenant) {
+        return covenant.actions
+      }
+    }
+    const getLatestFromPath = async (path) => {
+      // walk the tree to get the latest block
+      // throw if invalid path
+      const segments = _getPathSegments(path)
+      let partialPath = segments.shift()
+      let chainId = baseAddress.getChainId()
+      let nextBlock = await getLatest(chainId)
+      while (partialPath !== path) {
+        partialPath = segments.shift()
+        const alias = partialPath.split('/').pop()
+        assert(nextBlock.network[alias].address.isResolved())
+        chainId = nextBlock.network[alias].address.getChainId()
+        nextBlock = await getLatest(chainId)
+      }
+      return nextBlock
+    }
+
     return {
       pierce,
       spawn,
       subscribe,
+      subscribeBlockstream,
+      getLatest,
+      getLatestFromPath,
       getState,
       getContext,
       getChildren,
@@ -209,6 +270,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       enableLogging,
       disableLogging,
       getBlockCount,
+      getActionCreators,
     }
   }
   return metrology(baseAddress, '/')
@@ -242,5 +304,32 @@ const enableLoggingWithTap = (engine, identifier) => {
   })
   return tap
 }
-
+const _getCovenant = ({ covenantId }, mergedCovenants) => {
+  let covenant = covenants.unity
+  if (covenantId.name === 'hyper') {
+    return mergedCovenants.hyper //hyper always overridden
+  }
+  for (const key in mergedCovenants) {
+    if (mergedCovenants[key].covenantId.equals(covenantId)) {
+      assert(covenant === covenants.unity)
+      covenant = mergedCovenants[key]
+    }
+  }
+  return covenant
+}
+const _getPathSegments = (alias) => {
+  // TODO merge with Terminal.utils function
+  if (alias === '/') {
+    return ['/']
+  }
+  let prefix = ''
+  const splits = alias.split('/').filter((seg) => !!seg)
+  splits.unshift('/')
+  const paths = splits.map((segment) => {
+    prefix && prefix !== '/' && (prefix += '/') // TODO make child naming convention avoid this check ?
+    prefix += segment
+    return prefix
+  })
+  return paths
+}
 module.exports = { metrologyFactory }

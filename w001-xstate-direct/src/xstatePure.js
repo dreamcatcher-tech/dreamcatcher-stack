@@ -267,7 +267,7 @@ const pure = async (event, definition, config = {}) => {
   const settleState = async (state, event) => {
     const { value } = state
     let { watchdog } = state
-    if (watchdog > 50) {
+    if (watchdog > 500) {
       throw new Error(`endless loop: ${watchdog}`)
     }
     debug(`loop ${++watchdog} stateValue: %o`, value)

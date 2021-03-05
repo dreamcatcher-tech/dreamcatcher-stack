@@ -1,6 +1,6 @@
 const assert = require('assert')
 const { effectorFactory } = require('../..')
-const debug = require('debug')('crm:tests:datum')
+const debug = require('debug')('crm:tests:collection')
 
 require('debug').enable()
 
@@ -25,8 +25,8 @@ describe('collection', () => {
     }
 
     const root = await effectorFactory('col')
-    await root.add('col1', 'collection')
     root.enableLogging()
+    await root.add('col1', 'collection')
     await root.col1.setDatumTemplate({ schema, children })
     const { state: col1 } = root.col1.getState()
     assert(!col1.datumTemplate.formData)
@@ -42,6 +42,7 @@ describe('collection', () => {
     assert(address.formData.address)
     await root.settle()
   })
+  test.todo('collection with initial state already set')
   test.todo('reject add with key already assigned')
   test.todo('collection of collections')
 })

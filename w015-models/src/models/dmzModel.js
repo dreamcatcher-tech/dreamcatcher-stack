@@ -5,13 +5,11 @@ const { timestampModel } = require('./timestampModel')
 const { keypairModel } = require('./keypairModel')
 const { aclModel } = require('./aclModel')
 const { binaryModel } = require('./binaryModel')
-const { integrityModel } = require('./integrityModel')
 const { networkModel } = require('./networkModel')
 const { stateModel } = require('./stateModel')
 const { configModel } = require('./configModel')
 const { validatorsModel } = require('./validatorsModel')
 const { pendingModel } = require('./pendingModel')
-const { rxRequestModel } = require('../transients')
 
 const schema = {
   type: 'object',

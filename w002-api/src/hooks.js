@@ -81,8 +81,8 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   assert.strictEqual(typeof salt, 'string')
   debug(`hook salt:`, salt)
   let actions
+  await _hookGlobal(accumulator, salt)
   try {
-    await _hookGlobal(accumulator, salt)
     let reduction = tick()
     if (typeof reduction !== 'object') {
       throw new Error(`Must return object from tick: ${reduction}`)
@@ -92,10 +92,11 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
     if (typeof reduction.then === 'function') {
       // unwrap native async queue
       const racecar = Symbol('RACECAR')
-      // TODO concurrent hooks where each has a uuid
       // TODO be able to have multiple concurrent hooks active, as sometimes needs to await deeper in the eventloop to run the hooks code
-      // TODO implement a wait loop, to avoid collisions
-
+      // maybe have to walk the callstack to know which hookId a function came from in user code
+      // can set the calling function name to be a uuid, then do new Error().stack to get our execution context
+      // can run the isolators in a vm, and attach some ids here - so this problem is pointless when isolation is done correctly
+      // use console.trace() to lookup a custom function name
       const racetrackShort = Promise.resolve(racecar)
       let result = await Promise.race([reduction, racetrackShort])
       if (result === racecar) {
@@ -138,12 +139,14 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
 
 const _hookGlobal = async (originalAccumulator, salt) => {
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
-  if (globalThis['@@interblock'].promises) {
-    const start = Date.now()
+  const start = Date.now()
+  while (globalThis['@@interblock'].promises) {
     await new Promise(setImmediate)
-    debug(`waited for global for ${Date.now() - start}ms`)
+    // TODO ensure we never have to wait more than one setImmediate loop ?
   }
-  assert(!globalThis['@@interblock'].promises)
+  const msg = `waited for global for ${Date.now() - start}ms`
+  debug(msg)
+  assert(!globalThis['@@interblock'].promises, msg)
   const accumulator = [...originalAccumulator]
   const requestId = 0
   const promises = { accumulator, requests: [], replies: [], requestId, salt }

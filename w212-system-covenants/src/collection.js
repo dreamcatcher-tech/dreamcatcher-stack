@@ -16,6 +16,11 @@ const {
 const reducer = async (state, action) => {
   const { type, payload } = action
   switch (type) {
+    case '@@INIT':
+      debug('init')
+      const datumTemplate = convertToTemplate(state.datumTemplate || {})
+      debug(`datumTemplate`, datumTemplate)
+      return { ...state, datumTemplate }
     case 'ADD': {
       // can only contain formData keys, or be testData
       const { datumTemplate } = state
@@ -36,7 +41,7 @@ const reducer = async (state, action) => {
       }
       const muxed = muxTemplateWithFormData(datumTemplate, formData)
       const set = datum.actions.set(muxed)
-      debug(`set`, set)
+      debug(`datum set action`, set)
       await interchain(set, name)
       return state
     }

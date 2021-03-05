@@ -5,6 +5,7 @@ const { send, sendParent, respond, translator } = require('..')
 const { shell } = require('../../w212-system-covenants')
 const { rxReplyModel, actionModel } = require('../../w015-models')
 const { '@@GLOBAL_HOOK': hook, interchain } = require('../../w002-api')
+require('debug').enable()
 const testMachine = Machine(
   {
     id: 'testMachine',

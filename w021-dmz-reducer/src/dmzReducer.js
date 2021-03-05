@@ -142,7 +142,13 @@ const isSystemRequest = (request) => {
   return isSystemAction
 }
 
-const systemReplyTypes = ['@@GENESIS', '@@UPLINK', '@@OPEN_CHILD', '@@DEPLOY']
+const systemReplyTypes = [
+  '@@INIT',
+  '@@GENESIS',
+  '@@UPLINK',
+  '@@OPEN_CHILD',
+  '@@DEPLOY',
+]
 const isSystemReply = (reply) => {
   if (!rxReplyModel.isModel(reply)) {
     return false

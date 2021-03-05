@@ -9,7 +9,7 @@ describe('crm', () => {
     test('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
-      // shell.enableLogging()
+      shell.enableLogging()
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)

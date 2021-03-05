@@ -1,13 +1,10 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:increasor')
 const { metrologyFactory } = require('../src/metrologyFactory')
-const { blockModel } = require('../../w015-models')
 const { shell } = require('../../w212-system-covenants')
-const { request } = require('../../w002-api')
-require('../../w012-crypto').testMode()
+require('debug').enable()
 
 describe('increasor', () => {
-  require('debug').enable()
   test('no new block from lineage interblocks', async () => {
     const { covenantId } = shell // shell responds to pings
     const base = await metrologyFactory('inc', { hyper: shell })

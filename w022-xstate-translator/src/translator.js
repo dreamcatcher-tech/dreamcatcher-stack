@@ -45,14 +45,13 @@ const translator = (machine) => {
 
   return async (xstate, action) => {
     assert.strictEqual(typeof action, 'object')
+    if (action.type === '@@INIT') {
+      return xstate
+    }
     if (!xstate || equal(xstate, {})) {
       xstate = initialState
     }
     assert(!xstate.actions || !xstate.actions.length, `uncleared xstate`)
-    // TODO start new or upgraded covenants with @@INIT ?
-    if (action.type === '@@INIT') {
-      return xstate
-    }
     if (action.type.startsWith('done.invoke.')) {
       // we clobber the data key that xstate requires
       // TODO move to unmap function

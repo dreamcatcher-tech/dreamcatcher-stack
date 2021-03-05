@@ -1,3 +1,21 @@
+/*
+Name:        Wishbone
+
+Acronym:     WBN
+
+Purpose:     To represent all knowledge as a single hash
+
+Description:
+
+
+Provenance:
+
+Git path diagram showing where inspiration, contribution, conflict has occured
+
+Show where merge conflicts still exist
+
+*/
+
 const install = {
   children: {
     schedule: {
@@ -42,23 +60,6 @@ const install = {
             },
           },
         },
-      },
-      children: {
-        bob: {},
-        charlie: {},
-        marg: {},
-        // joshua: {},
-        // mckenzie: {},
-        // atlas: {},
-        // bartholemew: {},
-        // wesley: {},
-        // gareth: {},
-        // mcnuggets: {},
-        // cyril: {},
-        // carlos: {},
-        // wendey: {},
-        // kylee: {},
-        // roger: {},
       },
     },
     banking: { covenant: 'datum' },

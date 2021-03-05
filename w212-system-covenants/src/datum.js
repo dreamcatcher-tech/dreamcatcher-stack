@@ -50,7 +50,7 @@ const datumSchema = {
   },
 }
 
-const initialState = {
+const defaultDatum = {
   type: 'DATA',
   isEditable: true,
   namePath: [], // array of keys into formData
@@ -63,14 +63,14 @@ const initialState = {
 const reducer = async (state, action) => {
   // TODO run assertions on state shape
   if (!Object.keys(state).length) {
-    state = initialState
+    state = defaultDatum
   }
   const { type, payload } = action
   switch (type) {
     case '@@INIT': {
-      // if made from scratch, check state and make new children
       debug(`@@INIT`)
-      break
+      // TODO check state and make new children
+      return {}
     }
     case 'SET': {
       // TODO trouble is that if change schema, need to add data at the same time
@@ -203,7 +203,7 @@ const validateDatumTemplate = (datum) => {
   }
 }
 const _withDefaults = (datum) => {
-  const inflated = { ...initialState, ...datum }
+  const inflated = { ...defaultDatum, ...datum }
   const { children: currentChildren } = inflated
   const children = {}
   for (const name in currentChildren) {
