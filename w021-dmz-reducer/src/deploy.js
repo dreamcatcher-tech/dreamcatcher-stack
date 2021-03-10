@@ -19,17 +19,21 @@ const deploy = (installer) => ({
 const deployReducer = async (dmz, action) => {
   const { installer } = action.payload
   // TODO assert there is only one deployment action, from parent, and after genesis
-  // TODO check format of payload against schema
+  // TODO check format of payload.installer against schema
   // TODO check top level matches this current state
   // TODO clean up failed partial deployments ?
+  // TODO ? allow specify state in the topmost chain ?
 
   const { children: topChildren = {} } = installer
   // TODO try make promises that work on a specific action, so can run in parallel
   for (const installPath in topChildren) {
-    let { children, covenant, ...spawnOptions } = topChildren[installPath]
+    let { children, covenant, state = {}, ...spawnOptions } = topChildren[
+      installPath
+    ]
     covenant = covenant || 'unity'
     const covenantId = covenantIdModel.create(covenant)
-    spawnOptions = { ...spawnOptions, covenantId }
+    spawnOptions = { ...spawnOptions, covenantId, state }
+    // TODO remove genesisSeed
     const genesisSeed = 'seed_' + installPath
     const spawnRequest = spawn(installPath, spawnOptions, [], genesisSeed)
     // promise is made within spawnReducer

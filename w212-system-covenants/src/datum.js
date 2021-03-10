@@ -6,6 +6,9 @@ const debug = require('debug')('interblock:apps:datum')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { covenantIdModel } = require('../../w015-models')
 const { interchain } = require('../../w002-api')
+const seedrandom = require('seedrandom')
+const jsf = require('json-schema-faker')
+jsf.extend('faker', () => faker)
 /**
  * Requirements:
  *  1.  boot with state already set, and this gets checked for validity immediately
@@ -66,11 +69,12 @@ const reducer = async (state, action) => {
     state = defaultDatum
   }
   const { type, payload } = action
+  debug(`action: `, type)
   switch (type) {
     case '@@INIT': {
       debug(`@@INIT`)
       // TODO check state and make new children
-      return {}
+      return state
     }
     case 'SET': {
       // TODO trouble is that if change schema, need to add data at the same time
@@ -89,11 +93,13 @@ const reducer = async (state, action) => {
               ...demuxed.children[name],
               ...state.children[name],
             })
+            debug(`setChild`, setChild)
             const spawn = dmzReducer.actions.spawn(name)
             interchain(spawn)
             await interchain(setChild, name)
           }
         }
+        // TODO remove deleted children
       }
       return state
     }
@@ -114,6 +120,8 @@ const demuxFormData = (template, action) => {
   if (payload.isTestData) {
     const hash = action.getHash()
     const seed = parseInt(Number('0x' + hash.substring(0, 14)))
+    debug(`seed: `, seed)
+    jsf.option({ random: seedrandom(seed), alwaysFakeOptionals: true })
     faker.seed(seed)
   }
   validateDatumTemplate(template)
@@ -158,21 +166,11 @@ const _validateFormData = (template, payload) => {
 const _generateFakeData = (template, payload = {}) => {
   // TODO existing data overrides fake, provided data overrides existing
   const { formData = {}, children: payloadChildren = {} } = payload
-  Object.keys(template.schema.properties).forEach((key) => {
-    if (formData[key]) {
-      return
-    }
-    switch (key) {
-      // TODO if no faker key, switch to random strings
-      case 'firstName':
-        formData[key] = faker.name.firstName()
-        break
-      case 'address':
-        formData[key] = faker.address.streetAddress()
-        break
-    }
-  })
-  const result = { ...payload, formData }
+  const fake = jsf.generate(template.schema)
+  const inflated = { ...fake, ...formData }
+  debug(`fake: `, inflated)
+  const result = { ...payload, formData: inflated }
+
   if (Object.keys(template.children).length) {
     const children = {}
     for (const name in template.children) {

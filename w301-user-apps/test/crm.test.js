@@ -2,7 +2,7 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-require('debug').enable()
+require('debug').enable('*tests* *:datum')
 
 describe('crm', () => {
   describe('app deploy', () => {
@@ -24,6 +24,9 @@ describe('crm', () => {
       debug(`test time: ${testTime} ms`)
       const blockRate = Math.floor(testTime / shell.getBlockCount())
       debug(`blockrate: ${blockRate}ms per block`)
+
+      const { state } = await shell.getLatestFromPath('/crm/about')
+      assert(state.schema)
 
       await shell.settle()
       /**

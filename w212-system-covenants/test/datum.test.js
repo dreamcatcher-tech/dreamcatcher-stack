@@ -3,14 +3,25 @@ const { effectorFactory } = require('../..')
 const debug = require('debug')('crm:tests:datum')
 const { convertToTemplate, demuxFormData } = require('../src/datum')
 
-require('debug').enable()
+require('debug').enable('*met* *:datum')
 
 const schema = {
   title: 'Customer',
   type: 'object',
   required: ['firstName'],
+  additionalProperties: false,
   properties: {
-    firstName: { type: 'string' },
+    firstName: { type: 'string', faker: 'name.firstName' },
+  },
+}
+const address = {
+  schema: {
+    title: 'Address',
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      address: { type: 'string', faker: 'address.streetAddress' },
+    },
   },
 }
 describe('datum helper functions', () => {
@@ -27,13 +38,6 @@ describe('datum helper functions', () => {
       assert(!payload.isTestData)
     })
     test('nested', () => {
-      const address = {
-        schema: {
-          title: 'Address',
-          type: 'object',
-          properties: { address: { type: 'string' } },
-        },
-      }
       const children = { address }
       const template = convertToTemplate({ schema, children })
       assert(template.children.address)
@@ -68,13 +72,7 @@ describe('datum', () => {
     const root = await effectorFactory('nested')
     await root.add('datum1', 'datum')
     root.enableLogging()
-    const address = {
-      schema: {
-        title: 'Address',
-        type: 'object',
-        properties: { address: { type: 'string' } },
-      },
-    }
+
     const children = { address }
     await root.datum1.set({ schema, isTestData: true, children })
     const { state: datum1 } = root.datum1.getState()
@@ -85,6 +83,32 @@ describe('datum', () => {
 
     const { state: address1 } = root.datum1.address.getState()
     assert.deepStrictEqual(address1.schema, address.schema)
+    assert(address1.formData.address)
+    assert(!Object.keys(address1.children).length)
+
+    await root.settle()
+  })
+  test.only('nested datums with optional extra test data', async () => {
+    const root = await effectorFactory('nested')
+    await root.add('datum1', 'datum')
+    root.enableLogging()
+
+    const extraAddress = { schema: { ...address.schema } }
+    delete extraAddress.schema.additionalProperties
+    debug(`extraAddress`, extraAddress)
+    const children = { address: extraAddress }
+    const { additionalProperties, ...extraSchema } = schema
+    debug(`extraSchema`, extraSchema)
+    await root.datum1.set({ schema: extraSchema, isTestData: true, children })
+    const { state: datum1 } = root.datum1.getState()
+    assert.deepStrictEqual(datum1.schema, extraSchema)
+    assert.deepStrictEqual(datum1.children.address.schema, extraAddress.schema)
+    assert(datum1.formData.firstName)
+    assert(!datum1.children.address.formData)
+
+    const { state: address1 } = root.datum1.address.getState()
+    assert.deepStrictEqual(address1.schema, extraAddress.schema)
+    debug(address1.formData)
     assert(address1.formData.address)
     assert(!Object.keys(address1.children).length)
 

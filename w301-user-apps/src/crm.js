@@ -27,11 +27,14 @@ const install = {
           schema: {
             title: 'Customer',
             type: 'object',
-            required: ['firstName'],
+            required: ['custNo', 'firstName'],
             properties: {
-              firstName: { type: 'string' },
+              custNo: { type: 'integer', min: 0, default: 555 },
+              firstName: { type: 'string', faker: 'name.firstName' },
+              lastName: { type: 'string' },
             },
           },
+          namePath: ['firstName'],
           children: {
             address: {
               schema: {
@@ -44,9 +47,9 @@ const install = {
         },
       },
       children: {
-        bob: {},
-        charlie: {},
-        marg: {},
+        // bob: {},
+        // charlie: {},
+        // marg: {},
         // joshua: {},
         // mckenzie: {},
         // atlas: {},
@@ -62,9 +65,52 @@ const install = {
       },
     },
     banking: { covenant: 'datum' },
-    settings: { covenant: 'datum' },
-    about: { covenant: 'datum' },
-    logout: { covenant: 'datum' },
+    settings: {
+      covenant: 'datum',
+      state: {
+        schema: {
+          title: 'Settings',
+          type: 'object',
+          required: ['isTerminalVisible'],
+          additionalProperties: false,
+          properties: {
+            isTerminalVisible: {
+              title: 'Show Terminal',
+              type: 'boolean',
+              default: true,
+            },
+            isGuiVisible: {
+              title: 'Show GUI',
+              type: 'boolean',
+              default: true,
+            },
+            isFakeDataEnabled: {
+              title: 'Allow Fake Data',
+              type: 'boolean',
+              default: true,
+            },
+          },
+        },
+      },
+    },
+    about: {
+      covenant: 'datum',
+      state: {
+        schema: {
+          title: 'About CRM',
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            description: { type: 'string' },
+          },
+        },
+        formData: {
+          title: 'CRM',
+          description: 'Simple Customer Relationship Management with mapping',
+        },
+      },
+    },
+    account: { covenant: 'datum' },
   },
 }
 

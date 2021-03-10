@@ -74,9 +74,11 @@ const effector = (metrology, rootPierce) => {
     const action = covenants.shell.actions.dispatch({ type, payload }, to)
     return rootPierce(action)
   }
+  const subscribePending = rootPierce.subscribePending
   const base = {
     ...metrology,
     dispatch,
+    subscribePending,
     _debug: require('debug'), // used to expose debug info in the os
   }
   const children = {}
@@ -139,7 +141,7 @@ const stripChildren = (effector, children) => {
 
 const stripCovenantActions = (effector, metrology) => {
   for (const key in effector) {
-    if (key === '_debug' || metrology[key]) {
+    if (key === '_debug' || key === 'subscribePending' || metrology[key]) {
       continue
     }
     if (typeof effector[key] === 'function') {

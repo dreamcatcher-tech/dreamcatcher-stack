@@ -153,6 +153,8 @@ const config = {
       // if offline, can use the most recent data, but color code that it is stale
       // TODO use payload layer to fetch blocks directly
       // TODO allow auto updating subscriptions, possibly with broadcast for state
+      // TODO may use external functions to fetch blocks, rather than in chainland ?
+      // if it must be done thru the shell, then grab the whole block, rather than an action
       const { path } = event.payload
       debug(`getState: `, path)
       const action = dmzGetState()
