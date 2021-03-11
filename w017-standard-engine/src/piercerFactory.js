@@ -69,7 +69,9 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
         subscribers.forEach((cb) => cb(true))
       }
       pendingCount++
-      await promise
+      try {
+        await promise
+      } catch (e) {}
       pendingCount--
       assert(pendingCount >= 0)
       if (pendingCount === 0) {

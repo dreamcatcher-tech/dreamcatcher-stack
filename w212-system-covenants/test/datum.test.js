@@ -3,7 +3,7 @@ const { effectorFactory } = require('../..')
 const debug = require('debug')('crm:tests:datum')
 const { convertToTemplate, demuxFormData } = require('../src/datum')
 
-require('debug').enable('*met* *:datum')
+require('debug').enable('')
 
 const schema = {
   title: 'Customer',
@@ -88,7 +88,7 @@ describe('datum', () => {
 
     await root.settle()
   })
-  test.only('nested datums with optional extra test data', async () => {
+  test('nested datums with optional extra test data', async () => {
     const root = await effectorFactory('nested')
     await root.add('datum1', 'datum')
     root.enableLogging()

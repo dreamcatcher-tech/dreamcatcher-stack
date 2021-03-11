@@ -1,3 +1,17 @@
+const address = {
+  schema: {
+    title: 'Address',
+    type: 'object',
+    additionalProperties: false,
+    properties: { address: { type: 'string' }, faker: 'address.streetAddress' },
+  },
+}
+const gps = {
+  schema: {
+    latitude: { type: 'number', faker: 'address.latitude' },
+    longitude: { type: 'number', faker: 'address.longitude' },
+  },
+}
 const install = {
   children: {
     schedule: {
@@ -29,26 +43,27 @@ const install = {
             type: 'object',
             required: ['custNo', 'firstName'],
             properties: {
-              custNo: { type: 'integer', min: 0, default: 555 },
               firstName: { type: 'string', faker: 'name.firstName' },
-              lastName: { type: 'string' },
+              lastName: { type: 'string', faker: 'name.lastName' },
+              custNo: {
+                type: 'integer',
+                minimum: 1,
+                maximum: 15000,
+                default: 555,
+              },
             },
           },
           namePath: ['firstName'],
           children: {
-            address: {
-              schema: {
-                title: 'Address',
-                type: 'object',
-                properties: { address: { type: 'string' } },
-              },
-            },
+            serviceAddress: address,
+            serviceGps: gps,
+            billingAddress: address,
           },
         },
       },
       children: {
-        // bob: {},
-        // charlie: {},
+        bob: {},
+        charlie: {},
         // marg: {},
         // joshua: {},
         // mckenzie: {},
