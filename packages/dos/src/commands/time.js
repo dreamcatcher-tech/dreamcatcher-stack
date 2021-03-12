@@ -2,6 +2,7 @@ const pretty = require('pretty-ms')
 const debug = require('debug')('dos:commands:time')
 
 module.exports = async (ctx, ...args) => {
+  const { blockchain } = ctx
   const { evaluate } = require('../eval')
   // TODO handle nested and remote paths
 
@@ -10,11 +11,22 @@ module.exports = async (ctx, ...args) => {
   }
   const [command, ...rest] = args
   debug(`time: `, command, rest)
+  const lastBlockCount = blockchain.getBlockCount()
+  const lastChainCount = blockchain.getChainCount()
+
   const start = Date.now()
   const res = (await evaluate(ctx, command, rest)) || {}
-  res.out = res.out || ''
+  res.out = res.out ? res.out + '\n' : ''
   const options = { compact: false, separateMilliseconds: true }
-  res.out = res.out + `\nTime: ${pretty(Date.now() - start, options)}`
+  res.out = res.out + `Time: ${pretty(Date.now() - start, options)}`
+
+  const blockCount = blockchain.getBlockCount()
+  const chainCount = blockchain.getChainCount()
+  const diffBlocks = blockCount - lastBlockCount
+  const diffChains = chainCount - lastChainCount
+
+  res.out = res.out + ` [blocks: ${blockCount} chains: ${chainCount}]`
+  res.out = res.out + ` [blocks++: ${diffBlocks} chains++: ${diffChains}]`
   return res
 }
 

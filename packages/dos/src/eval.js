@@ -9,7 +9,10 @@ module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
     return
   }
   if (!Commands[cmd]) {
-    if (cmd.startsWith('./')) {
+    const isLocalCommand =
+      cmd.startsWith('./') || cmd.startsWith('/' || cmd.startsWith('../'))
+    if (isLocalCommand) {
+      // TODO allow remote location at any path to be used as actions
       const actionName = cmd.substring(2)
       debug(`non builtin command: %s assuming covenant function`, actionName)
       const { blockchain } = ctx
@@ -18,7 +21,10 @@ module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
       const actionFn = actions[actionName]
       if (actionFn) {
         // TODO decode args into params using commander or similar
-        const action = actionFn({ isTestData: true })
+        const action = actionFn({
+          isTestData: true,
+          // formData: { firstName: 'testing' },
+        })
         return blockchain.dispatch(action, wd)
       }
     }

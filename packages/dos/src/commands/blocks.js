@@ -1,7 +1,7 @@
+const assert = require('assert')
 const posix = require('path')
 const debug = require('debug')('dos:commands:blocks')
 const { engine } = require('@dreamcatcher-tech/interblock')
-const { assert } = require('console')
 const { blockPrint } = engine
 
 module.exports = async ({ blockchain }, ...[path, start, stop, ...args]) => {

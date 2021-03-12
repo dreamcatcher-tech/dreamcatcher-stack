@@ -7,11 +7,9 @@ const { withAutoComplete } = require('./auto-complete')
 const { withSpin } = require('./spinner')
 const print = require('./print')
 const loop = require('./loop')
-const commands = require('./commands')
-const wrap = require('wordwrap')(0, 80)
 
 module.exports = async function repl(opts) {
-  require('debug').enable('*:repl *:ls *:cd *:blocks *:error *commands*')
+  require('debug').enable('*:repl *commands* *:eval')
   debug(`repl`)
   opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
@@ -21,9 +19,26 @@ module.exports = async function repl(opts) {
 
   const ctx = await getInitialCtx(opts)
 
+  const exec = async (input) => {
+    let [cmd, ...cmdArgs] = input.split(' ').filter(Boolean)
+    debug(`command: `, cmd, cmdArgs)
+
+    await print(async () => {
+      if (!noTiming.includes(cmd)) {
+        cmdArgs = [cmd, ...cmdArgs]
+        cmd = 'time'
+      }
+      const result = await opts.evaluate(ctx, cmd, cmdArgs)
+      if (result && result.ctx) {
+        Object.assign(ctx, result.ctx)
+      }
+      return result
+    })
+  }
   debug(`changing to home directory`)
-  await opts.evaluate(ctx, 'cd', ['/crm/customers'])
-  await opts.evaluate(ctx, './add', ['--isTestData'])
+  await exec('cd /crm/customers')
+  await exec('./add --isTestData')
+  // await opts.evaluate(ctx, 'cd', ['/crm/customers/testing'])
   // await opts.evaluate(ctx, 'login', [])
 
   return loop(async function rep() {
@@ -36,20 +51,7 @@ module.exports = async function repl(opts) {
       }
       debug(`treating error as request to exit: `, e)
     }
-    let [cmd, ...cmdArgs] = input.split(' ').filter(Boolean)
-    debug(`command: `, cmd, cmdArgs)
-
-    await print(async () => {
-      if (!noTiming.includes(cmd) && commands[cmd]) {
-        cmdArgs = [cmd, ...cmdArgs]
-        cmd = 'time'
-      }
-      const result = await opts.evaluate(ctx, cmd, cmdArgs)
-      if (result && result.ctx) {
-        Object.assign(ctx, result.ctx)
-      }
-      return result
-    })
+    await exec(input)
   })
 }
 
