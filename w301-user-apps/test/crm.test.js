@@ -28,6 +28,9 @@ describe('crm', () => {
       const { state } = await shell.getLatestFromPath('/crm/about')
       assert(state.schema)
 
+      const newCustomer = await shell.crm.customers.add({ isTestData: true })
+      console.log(newCustomer)
+
       await shell.settle()
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21

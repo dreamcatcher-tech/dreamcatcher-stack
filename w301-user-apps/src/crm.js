@@ -1,15 +1,21 @@
-const address = {
+const address = (title) => ({
   schema: {
-    title: 'Address',
+    title,
     type: 'object',
     additionalProperties: false,
-    properties: { address: { type: 'string' }, faker: 'address.streetAddress' },
+    properties: { address: { type: 'string', faker: 'address.streetAddress' } },
   },
-}
+})
 const gps = {
   schema: {
-    latitude: { type: 'number', faker: 'address.latitude' },
-    longitude: { type: 'number', faker: 'address.longitude' },
+    title: 'Service GPS',
+    type: 'object',
+    additionalProperties: false,
+    required: ['latitude', 'longitude'],
+    properties: {
+      latitude: { type: 'number', faker: 'address.latitude' },
+      longitude: { type: 'number', faker: 'address.longitude' },
+    },
   },
 }
 const install = {
@@ -45,6 +51,7 @@ const install = {
             properties: {
               firstName: { type: 'string', faker: 'name.firstName' },
               lastName: { type: 'string', faker: 'name.lastName' },
+              other: { type: 'string', faker: 'name.lastName' },
               custNo: {
                 type: 'integer',
                 minimum: 1,
@@ -55,15 +62,15 @@ const install = {
           },
           namePath: ['firstName'],
           children: {
-            serviceAddress: address,
+            serviceAddress: address('Service Address'),
             serviceGps: gps,
-            billingAddress: address,
+            billingAddress: address('Billing Address'),
           },
         },
       },
       children: {
-        bob: {},
-        charlie: {},
+        // bob: {},
+        // charlie: {},
         // marg: {},
         // joshua: {},
         // mckenzie: {},

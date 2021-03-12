@@ -222,6 +222,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     const spawn = (alias, spawnOptions = {}) =>
       pierce(actions.spawn(alias, spawnOptions))
     const getBlockCount = () => tap.getBlockCount()
+    const getChainCount = () => tap.getChainCount()
     const getCovenants = () => ({ ...covenants, ...covenantOverloads })
     const getActionCreators = async (path) => {
       const latest = await getLatestFromPath(path)
@@ -270,6 +271,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       enableLogging,
       disableLogging,
       getBlockCount,
+      getChainCount,
       getActionCreators,
     }
   }

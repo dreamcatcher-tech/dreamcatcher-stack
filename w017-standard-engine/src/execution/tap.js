@@ -81,10 +81,12 @@ const createTap = (prefix = 'interblock:blocktap') => {
     debugBloc(formatted)
   }
   let blockCount = 0
+  let chainCount = 0
   const insertBlock = (block, cache) => {
     const chainId = block.provenance.getAddress().getChainId()
     if (!cache[chainId]) {
       cache[chainId] = []
+      chainCount++ // TODO decrement on delete chain
     }
     if (!cache[chainId].some((b) => b.equals(block))) {
       cache[chainId].push(block)
@@ -163,6 +165,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     return print(messages)
   }
   const getBlockCount = () => blockCount
+  const getChainCount = () => chainCount
   const tap = {
     on,
     off,
@@ -173,6 +176,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     getLatest,
     printNetwork,
     getBlockCount,
+    getChainCount,
   }
   needle.setTap(tap) // TODO handle multiple taps
   return tap
