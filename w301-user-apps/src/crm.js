@@ -45,22 +45,48 @@ const install = {
       state: {
         datumTemplate: {
           schema: {
-            title: 'Customer',
+            title: 'Details',
             type: 'object',
-            required: ['custNo', 'firstName'],
+            required: ['custNo', 'name', 'isEmailVerified'],
             properties: {
-              firstName: { type: 'string', faker: 'name.firstName' },
-              lastName: { type: 'string', faker: 'name.lastName' },
-              other: { type: 'string', faker: 'name.lastName' },
+              name: { title: 'Name', type: 'string', faker: 'name.findName' },
+              mobile: {
+                title: 'Mobile',
+                type: 'string',
+                faker: 'phone.phoneNumber',
+              },
+              phone: {
+                title: 'Phone',
+                type: 'string',
+                faker: 'phone.phoneNumber',
+              },
+              email: {
+                title: 'Email',
+                type: 'string',
+                format: 'email',
+                faker: 'internet.email',
+              },
+              isEmailVerified: {
+                title: 'Email Verified',
+                type: 'boolean',
+                default: false,
+              },
               custNo: {
+                title: 'Customer Number',
                 type: 'integer',
                 minimum: 1,
                 maximum: 15000,
                 default: 555,
               },
+              importedHash: { type: 'string', faker: 'git.commitSha' },
             },
           },
-          namePath: ['firstName'],
+          uiSchema: {
+            importedHash: { 'ui:widget': 'hidden' },
+            isEmailVerified: { 'ui:readonly': true },
+            custNo: { 'ui:readonly': true },
+          },
+          namePath: ['custNo'],
           children: {
             serviceAddress: address('Service Address'),
             serviceGps: gps,

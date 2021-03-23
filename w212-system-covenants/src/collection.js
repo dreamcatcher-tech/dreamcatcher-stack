@@ -92,6 +92,9 @@ const _getChildName = (datumTemplate, payload) => {
   datumTemplate.namePath.forEach((name) => {
     obj = obj[name]
   })
+  if (typeof obj === 'number') {
+    obj = obj + ''
+  }
   assert.strictEqual(typeof obj, 'string')
   debug(`_getChildName`, obj)
   return obj

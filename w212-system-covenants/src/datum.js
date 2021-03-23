@@ -65,6 +65,7 @@ const defaultDatum = {
 }
 const reducer = async (state, action) => {
   // TODO run assertions on state shape
+  // TODO assert the children match the schema definition
   if (!Object.keys(state).length) {
     state = defaultDatum
   }
