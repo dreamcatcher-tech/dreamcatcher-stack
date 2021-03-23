@@ -38,8 +38,9 @@ module.exports = async function repl(opts) {
   debug(`changing to home directory`)
   await exec('cd /crm/customers')
   await exec('./add --isTestData')
-  // await opts.evaluate(ctx, 'cd', ['/crm/customers/testing'])
-  // await opts.evaluate(ctx, 'login', [])
+  const children = ctx.blockchain.crm.customers.getChildren()
+  const child = Object.keys(children)[0]
+  await exec('cd ' + child)
 
   return loop(async function rep() {
     let input = 'exit'
