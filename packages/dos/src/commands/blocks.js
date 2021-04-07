@@ -7,6 +7,7 @@ const { blockPrint } = engine
 module.exports = async ({ blockchain }, ...[path, start, stop, ...args]) => {
   debug(`blocks %O`, path, start, stop, args)
   // TODO make this be an actual shell command that returns a binary answer
+  // TODO make this handle .@@io special case
   // reason being so we can log all the user actions in the shell
   start = safeParseInt(start)
   stop = safeParseInt(stop)

@@ -40,7 +40,7 @@ module.exports = async function repl(opts) {
   await exec('./add --isTestData')
   const children = ctx.blockchain.crm.customers.getChildren()
   const child = Object.keys(children)[0]
-  await exec('cd ' + child)
+  // await exec('cd ' + child)
 
   return loop(async function rep() {
     let input = 'exit'
