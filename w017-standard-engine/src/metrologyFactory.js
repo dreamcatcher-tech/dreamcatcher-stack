@@ -124,15 +124,26 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     }
     const blockstreamSubscribers = new Map()
     const subscribeBlockstream = (chainId, callback) => {
+      initBlockstreamSubscribers(chainId)
       const subscribers = blockstreamSubscribers.get(chainId)
       subscribers.subs.add(callback)
-      callback(subscribers.latest)
+      if (subscribers.latest) {
+        callback(subscribers.latest)
+      }
       return () => {
         subscribers.subs.delete(callback)
         // TODO cleanup by fully removing latest when no subscribers
       }
     }
-
+    const initBlockstreamSubscribers = (chainId, block) => {
+      if (!blockstreamSubscribers.has(chainId)) {
+        // TODO reuse tap cache or something else lighter than this duplicate
+        blockstreamSubscribers.set(chainId, {
+          subs: new Set(),
+          latest: block,
+        })
+      }
+    }
     const subscribers = new Set()
     const blocks = new Set() // TODO move to using the tap cache
     ioConsistency.subscribe(async (action, queuePromise) => {
@@ -144,15 +155,9 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
           blocks.add(block)
           subscribers.forEach((callback) => callback())
         }
-        if (!blockstreamSubscribers.has(chainId)) {
-          // TODO reuse tap cache or something else lighter than this duplicate
-          blockstreamSubscribers.set(chainId, {
-            subs: new Set(),
-            latest: block,
-          })
-        }
+        initBlockstreamSubscribers(chainId, block)
         const streamSubs = blockstreamSubscribers.get(chainId)
-        if (streamSubs.latest.isNext(block)) {
+        if (!streamSubs.latest || streamSubs.latest.isNext(block)) {
           streamSubs.latest = block
           streamSubs.subs.forEach((callback) => callback(block))
         }

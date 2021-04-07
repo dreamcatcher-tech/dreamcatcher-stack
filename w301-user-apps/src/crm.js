@@ -158,7 +158,23 @@ const install = {
         },
       },
     },
-    account: { covenant: 'datum' },
+    account: {
+      covenant: 'datum',
+      state: {
+        schema: {
+          title: 'Account',
+          type: 'object',
+          properties: {
+            name: { title: 'Name', type: 'string' },
+            email: {
+              title: 'Email',
+              type: 'string',
+              format: 'email',
+            },
+          },
+        },
+      },
+    },
   },
 }
 

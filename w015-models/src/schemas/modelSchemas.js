@@ -45,7 +45,7 @@ const integritySchema = {
   additionalProperties: false,
   required: ['hash', 'algorithm'],
   properties: {
-    // TODO apply regex
+    // TODO apply regex /\b[A-Fa-f0-9]{64}\b/
     hash: {
       type: 'string',
       description:
