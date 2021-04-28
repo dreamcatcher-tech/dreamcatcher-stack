@@ -20,7 +20,7 @@ describe('effects', () => {
     await assert.rejects(
       () => base.pierce({ type: 'NONCE' }),
       (error) => {
-        assert(error.message.startsWith('Non standard promise returned'))
+        assert(error.message.startsWith('Wrong type of promise'))
         return true
       }
     )

@@ -13,7 +13,7 @@ const {
   getChannel,
   getState: dmzGetState,
 } = dmzReducer.actions
-const { interchain } = require('../../w002-api')
+const { interchain, useBlocks } = require('../../w002-api')
 const dpkg = require('./dpkg')
 const {
   respond,
@@ -102,7 +102,13 @@ const config = {
       assert(posix.isAbsolute(wd))
       const absolutePath = posix.resolve(wd, path)
       debug(`changeDirectory`, absolutePath)
-      await interchain(ping(), absolutePath)
+      try {
+        const latest = await useBlocks(absolutePath) // get latest we have, or at least the genesis
+        assert(latest)
+      } catch (e) {
+        debug(`changeDirectory error:`, e)
+        throw new Error(`Non existent blockchain at: ${absolutePath}`)
+      }
       return { absolutePath }
     },
     removeActor: async (context, event) => {

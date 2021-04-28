@@ -1,3 +1,4 @@
 const api = require('./src/api')
 const hooks = require('./src/hooks')
-module.exports = { ...api, ...hooks }
+const readers = require('./src/readers')
+module.exports = { ...api, ...hooks, ...readers }

@@ -73,6 +73,7 @@ const _promise = (request) => {
 
 const all = (...promiseActions) => {
   // awaits multiple requests to multiple chains and or multiple effects to complete
+  throw new Error('Promise.all() Not Implemented')
 }
 const hook = async (tick, accumulator = [], salt = 'unsalted') => {
   assert.strictEqual(typeof tick, 'function')
@@ -110,9 +111,7 @@ const hook = async (tick, accumulator = [], salt = 'unsalted') => {
 
       if (isStillPending && !actions.requests.length) {
         // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
-        throw new Error(
-          `Non standard promise returned - use "effectInBand(...)"`
-        )
+        throw new Error(`Wrong type of promise - use "effectInBand(...)"`)
       }
       if (!isStillPending) {
         // must unwrap fully from the async/await wrapper

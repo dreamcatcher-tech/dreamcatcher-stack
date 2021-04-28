@@ -1,5 +1,7 @@
 const assert = require('assert')
-const { '@@GLOBAL_HOOK': globalHook } = require('../../../w002-api')
+const {
+  '@@GLOBAL_HOOK_INBAND': globalHookInBand,
+} = require('../../../w002-api')
 const {
   blockModel,
   rxReplyModel,
@@ -51,7 +53,7 @@ const ramIsolate = (preloadedCovenants) => {
       // TODO test rejections propogate back thru queues
       const tickSync = () => container.covenant.reducer(state, action)
       const salt = action.getHash() // TODO ensure reply actions salt uniquely
-      const syncResult = await globalHook(tickSync, accumulator, salt)
+      const syncResult = await globalHookInBand(tickSync, accumulator, salt)
       debug(`syncResult`, syncResult)
 
       const { reduction, isPending, requests, replies } = syncResult

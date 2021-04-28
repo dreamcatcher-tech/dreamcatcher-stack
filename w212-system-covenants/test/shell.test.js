@@ -6,7 +6,7 @@ const { shell } = require('..')
 const { effect, interchain } = require('../../w002-api')
 const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('../../w017-standard-engine')
-require('debug').enable('')
+require('debug').enable('*tests* *met* *reader* *shell')
 
 describe('machine validation', () => {
   describe('state machine', () => {
@@ -29,9 +29,9 @@ describe('machine validation', () => {
   test.todo('detects changes in filesystem')
   test.todo('rejects invalid path directories')
   test.todo('rejects invalid path files')
-  describe('cd', () => {
-    test('cd opens up path', async () => {
-      const base = await metrologyFactory('e', { hyper: shell })
+  describe.only('cd', () => {
+    test.only('cd opens up path', async () => {
+      const base = await metrologyFactory('cd', { hyper: shell })
       await base.spawn('child1')
       base.enableLogging()
       const cd = shell.actions.cd('child1')
