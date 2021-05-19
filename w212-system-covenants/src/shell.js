@@ -105,8 +105,9 @@ const config = {
       try {
         const latest = await useBlocks(absolutePath) // get latest we have, or at least the genesis
         assert(latest)
+        debug(`latest`, absolutePath, latest.getHash().substring(0, 9))
       } catch (e) {
-        debug(`changeDirectory error:`, e)
+        debug(`changeDirectory error:`, e.message)
         throw new Error(`Non existent blockchain at: ${absolutePath}`)
       }
       return { absolutePath }

@@ -3,7 +3,7 @@ const debug = require('debug')('interblock:tests:shell')
 const { resolve } = require('path')
 const { shell } = require('..')
 const { metrologyFactory } = require('../../w017-standard-engine')
-// require('debug').enable('*tests* *met* *reader* *shell')
+// require('debug').enable('*tests* *met* *reader* *shell *query')
 
 describe('machine validation', () => {
   describe('state machine', () => {
@@ -26,8 +26,8 @@ describe('machine validation', () => {
   test.todo('detects changes in filesystem')
   test.todo('rejects invalid path directories')
   test.todo('rejects invalid path files')
-  describe.only('cd', () => {
-    test.only('cd opens up path', async () => {
+  describe('cd', () => {
+    test('cd to valid nested path', async () => {
       const base = await metrologyFactory('cd', { hyper: shell })
       await base.spawn('child1')
       base.enableLogging()

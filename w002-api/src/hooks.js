@@ -24,6 +24,7 @@ const interchain = (type, payload, to) => {
 }
 const effect = (type, fn, ...args) => {
   // promise that will be placed on the .@@io queue and later executed
+  // TODO effects should change to being able to be possibly resolvable
   assert.strictEqual(typeof type, 'string')
   assert.strictEqual(typeof fn, 'function')
   const requestId = _incrementGlobalRequestId()

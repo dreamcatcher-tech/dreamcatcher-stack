@@ -8,6 +8,7 @@ const {
 const systemCovenants = require('../../../w212-system-covenants')
 const appCovenants = require('../../../w301-user-apps')
 const debug = require('debug')('interblock:isolate')
+const { queryFactory } = require('./queryFactory')
 // TODO move to making own containers, so can keep promises alive
 // TODO set timestamp in container by overriding Date.now()
 // TODO move to having ramIsolate be the default, but allow other hardware based isolations
@@ -58,14 +59,10 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
       // TODO remove need for salt by relaxing duplicate check in channel
       const salt = action.getHash() // TODO ensure reply actions salt uniquely
 
-      // ### provide a callback to run queries on
-      const queries = (query) => {
-        debug(`query: `, query)
-        // ### do block walking when the path is nested
-        // check if query is enabled whenever one is received
-        // enable only during hook execution
-      }
+      const queryProcessor = queryFactory(ioConsistency, container.block)
+      const queries = (query) => queryProcessor.query(query)
       const result = await hook(tick, accumulator, salt, queries)
+      queryProcessor.disable()
       debug(`result`, result)
 
       const { reduction, isPending, requests, replies } = result

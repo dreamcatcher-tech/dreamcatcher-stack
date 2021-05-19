@@ -99,12 +99,12 @@ const blockModel = standardize({
       // TODO work out validators being succeeded
       const isBlock = blockModel.isModel(nextBlock)
       const isValidated = nextBlock.isValidated()
-      const provenance = instance.provenance.isNext(nextBlock.provenance)
+      const isProvenance = provenance.isNext(nextBlock.provenance)
       // TODO check if forked lineage was applied if required
-      return isBlock && isValidated && provenance
+      return isBlock && isValidated && isProvenance
     }
-    const getChainId = () => instance.provenance.getAddress().getChainId()
-    const getHeight = () => instance.provenance.height
+    const getChainId = () => provenance.getAddress().getChainId()
+    const getHeight = () => provenance.height
     return {
       isValidated,
       getDmz,

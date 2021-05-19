@@ -105,4 +105,5 @@ describe('isolation', () => {
       }
     )
   })
+  test.todo(`queries after hook execution are rejected`)
 })

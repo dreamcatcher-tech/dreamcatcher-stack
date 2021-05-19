@@ -43,16 +43,7 @@ const useBlocks = async (path = '.', height = LATEST, count = 1, slice) => {
       throw new Error(`count must be greater than zero: ${count}`)
     }
   }
-  return _useBlocks(path, height, count)
-}
-const _useBlocks = (path, height, count) => {
-  // BP must loop and do path walking, as cannot be stored in the block itself
   debug(`useBlocks`, path, height, count)
-
-  // not same as effectInBand
-  // effectInBand should change to being resolvable
-  // effects should change to being able to be resolvable potentially
-
   return query('@@USE_BLOCKS', { path, height, count })
 }
 
