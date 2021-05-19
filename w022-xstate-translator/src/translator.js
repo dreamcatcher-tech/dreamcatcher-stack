@@ -97,7 +97,7 @@ const translator = (machine) => {
           debug(`invoke result: `, nextResponse && nextResponse.type)
 
           const { type, data } = createDoneInvoke(nextResponse, src)
-          debug(`doneInvoke`, data)
+          debug(`doneInvoke data`, data)
           interchain(type, data) // send to self
           break
         case 'xstate.stop': // end of invoke

@@ -31,8 +31,7 @@ const common = (debug) => {
       assert(dmzModel.isModel(dmz))
       const { reduceResolve } = event.data
       assert(reduceResolve)
-      const { reduction, isPending, requests, replies } = reduceResolve
-      debug(`assignResolve pending: %o`, isPending)
+      debug(`assignResolve pending: %o`, reduceResolve.isPending)
       return reductionModel.create(reduceResolve, anvil, dmz)
     },
   })

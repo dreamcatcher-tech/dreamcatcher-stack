@@ -29,7 +29,8 @@ describe('isolation', () => {
     covenantId = covenantIdModel.create('reducer2')
     const block2 = await blockModel.create(dmzModel.create({ covenantId }))
 
-    const isolateProcessor = isolateFactory(covenantMap)
+    const fakeConsistency = ioQueueFactory('fakeConsistency')
+    const isolateProcessor = isolateFactory(fakeConsistency, covenantMap)
     const queue = ioQueueFactory('testIsolate')
     queue.setProcessor(isolateProcessor)
     const isolate = toFunctions(queue)
@@ -79,7 +80,8 @@ describe('isolation', () => {
     let covenantId = covenantIdModel.create('reducer1')
     const block1 = await blockModel.create(dmzModel.create({ covenantId }))
 
-    const isolateProcessor = isolateFactory(covenantMap)
+    const fakeConsistency = ioQueueFactory('fakeConsistency')
+    const isolateProcessor = isolateFactory(fakeConsistency, covenantMap)
     const queue = ioQueueFactory('testIsolate')
     queue.setProcessor(isolateProcessor)
     const isolate = toFunctions(queue)

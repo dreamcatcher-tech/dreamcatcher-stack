@@ -25,10 +25,11 @@ const { actions } = require('../../w021-dmz-reducer')
 const initialState = {}
 const hyper = {
   reducer: async (state = initialState, action) => {
-    debug(`hyper action: `, action.type)
-    switch (action.type) {
+    debug(`hyper action: `, action)
+    const { type, payload } = action
+    switch (type) {
       case 'PING':
-        replyResolve({ type: 'PONG' })
+        replyResolve({ type: 'PONG', payload })
         break
     }
     return { ...state }

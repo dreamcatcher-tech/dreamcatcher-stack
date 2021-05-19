@@ -50,16 +50,16 @@ const testMachine = Machine(
   {
     actions: {
       respondOrigin: (context, event) => {
-        debug(`respondOrigin`)
+        debug(`respondOrigin`, event.type)
         return respond(event.data)
       },
     },
     services: {
       invoker: async (context, event) => {
         const reply = await interchain('testInvokeSelf')
-        debug(`invoker received: %O`, reply)
+        debug(`invoker first reply: %O`, reply)
         const second = await interchain('secondInvoke')
-        debug(`second: %O`, second)
+        debug(`invoker second reply: %O`, second)
         return second
       },
       instantInvoker: async (context, event) => {
@@ -82,7 +82,6 @@ describe('translator', () => {
         reducer(undefined, { type: 'TRANSITION_HOLD' })
       )
       assert.strictEqual(state.reduction.value, 'transitionHold')
-
       await assert.rejects(
         () => hook(() => reducer(state.reduction, { type: 'TRANSITION_HOLD' })),
         (error) =>

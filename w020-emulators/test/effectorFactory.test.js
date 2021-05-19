@@ -6,6 +6,7 @@ require('debug').enable()
 
 describe('effector', () => {
   test('ping single', async () => {
+    // require('debug').enable('*effectorFactory')
     const start = Date.now()
     debug(`start`)
     const client = await effectorFactory()

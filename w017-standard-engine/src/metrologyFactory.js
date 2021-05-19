@@ -69,7 +69,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     ioIncrease,
   } = engine
 
-  ioIsolate.setProcessor(isolateFactory(covenantOverloads))
+  ioIsolate.setProcessor(isolateFactory(ioConsistency, covenantOverloads))
   const ramDb = ramDynamoDbFactory()
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))

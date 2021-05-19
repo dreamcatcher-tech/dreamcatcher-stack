@@ -1,12 +1,9 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:shell')
 const { resolve } = require('path')
-const { rxReplyModel, actionModel } = require('../../w015-models')
 const { shell } = require('..')
-const { effect, interchain } = require('../../w002-api')
-const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('../../w017-standard-engine')
-require('debug').enable('*tests* *met* *reader* *shell')
+// require('debug').enable('*tests* *met* *reader* *shell')
 
 describe('machine validation', () => {
   describe('state machine', () => {

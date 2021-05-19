@@ -20,9 +20,9 @@ const fsmFactory = () => {
   const ioReceive = ioQueueFactory('ioReceive', txModel)
   const ioTransmit = ioQueueFactory('ioTransmit', interblockModel)
 
-  ioIsolate.setProcessor(isolateFactory())
   ioCrypto.setProcessor(cryptoFactory())
   ioConsistency.setProcessor(consistencyFactory())
+  ioIsolate.setProcessor(isolateFactory(ioConsistency))
 
   const pool = poolConfig(ioCrypto, ioConsistency)
   const poolProcessor = async (payload) => {
