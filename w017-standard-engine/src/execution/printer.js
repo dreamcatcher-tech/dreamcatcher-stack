@@ -24,7 +24,7 @@ const interPrint = (interblock, msg, path, bg, fg) => {
 
   const chainIdRaw = provenance.getAddress().getChainId()
   let chainId = shrink(chainIdRaw, bg)
-  const hashRaw = provenance.reflectIntegrity().hash
+  const hashRaw = interblock.getHash()
   let hash = chalk.dim(shrink(hashRaw, 'bgWhite', fg))
   let size = getSize(interblock)
 
@@ -86,7 +86,7 @@ const print = (messages) => {
 const headerPrint = (block, path, isNewChain, isDuplicate) => {
   const chainId = shrink(block.provenance.getAddress().getChainId())
   const height = chalk.green(block.provenance.height)
-  const rawHash = block.provenance.reflectIntegrity().hash
+  const rawHash = block.getHash()
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
   const size = getSize(block)
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
@@ -116,7 +116,7 @@ const networkPrint = (network) => {
     const remote = channel.getRemote()
     if (channel.heavy) {
       const { provenance } = channel.heavy
-      const rawHash = provenance.reflectIntegrity().hash
+      const rawHash = provenance.getHash()
       hash = chalk.dim(shrink(rawHash, 'bgWhite', 'magenta'))
       const { lineageHeight, heavyHeight } = channel
       height = chalk.magenta(heavyHeight + '.' + lineageHeight)

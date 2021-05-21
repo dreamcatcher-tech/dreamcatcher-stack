@@ -9,23 +9,22 @@ const {
   dmzModel,
   blockModel,
   interblockModel,
-  networkModel,
   rxRequestModel,
   txReplyModel,
 } = require('../../../w015-models')
 const { blockProducer, lockProducer } = require('../../../w016-producers')
 const { generateNext } = blockProducer
 const { definition } = require('../machines/increasor')
-const consistencyProcessor = require('../services/consistencyFactory')
-const cryptoProcessor = require('../services/cryptoFactory')
-const isolateProcessor = require('../services/isolateFactory')
+const { toFunctions: consistencyFn } = require('../services/consistencyFactory')
+const { toFunctions: cryptoFn } = require('../services/cryptoFactory')
+const { toFunctions: isolateFn } = require('../services/isolateFactory')
 const { isolatorConfig } = require('./isolatorConfig')
 const { pure } = require('../../../w001-xstate-direct')
 
 const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
-  const consistency = consistencyProcessor.toFunctions(ioConsistency)
-  const crypto = cryptoProcessor.toFunctions(ioCrypto)
-  const isolation = isolateProcessor.toFunctions(ioIsolate)
+  const consistency = consistencyFn(ioConsistency)
+  const crypto = cryptoFn(ioCrypto)
+  const isolation = isolateFn(ioIsolate)
   const isolatorMachine = isolatorConfig(isolation, consistency)
 
   const config = {
@@ -253,7 +252,6 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const isolatedExecution = () => pure(execute, machine, config)
         const { dmz, containerId } = await isolatedExecution()
 
-        // const { dmz, containerId } = await thread(executeCovenant, isolator)
         assert(dmzModel.isModel(dmz))
         return { dmz, containerId }
       },

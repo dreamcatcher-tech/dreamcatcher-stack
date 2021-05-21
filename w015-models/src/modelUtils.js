@@ -135,7 +135,11 @@ const generateHash = (schema, instance) => {
     }
     case 'Interblock':
     case 'Block': {
-      return { hash: instance.provenance.getHash(), proof: 'no proof needed' }
+      return {
+        // TODO check if hash is calculated correctly
+        hash: instance.provenance.reflectIntegrity().hash,
+        proof: 'no proof needed',
+      }
     }
     case 'Network': {
       const { hash, proof: networkChannels } = hashPattern(instance)

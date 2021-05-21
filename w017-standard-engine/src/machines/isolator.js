@@ -22,6 +22,11 @@
  * These long running tasks are like services in xstate. They take
  * place in a dedicated docker container, which might get torn down at
  * any time, so first invocation should heartbeat the chain.
+ *
+ * The isolator talks to the container subsystem, and is capable of ending any
+ * container for any reason.
+ * The isolator manages requests from inside containers for reading blocks.
+ * ContainerId is related to a loaded covenant and a blockhash.
  */
 const definition = {
   id: 'isolator',
@@ -76,9 +81,11 @@ const definition = {
     },
     isReduceable: {
       always: [
+        // check if the message system is enabled, enable if so
         { target: 'reduce', cond: 'isReduceable' },
         { target: 'pierce', cond: 'isPiercable' },
         { target: 'isCovenantUnloadable' },
+        // disable the messaging system if it was enabled
       ],
     },
     reduce: {

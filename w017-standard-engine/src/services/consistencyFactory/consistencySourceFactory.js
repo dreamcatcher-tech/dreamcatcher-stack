@@ -1,7 +1,6 @@
 const assert = require('assert')
 const _ = require('lodash')
 const {
-  actionModel,
   addressModel,
   integrityModel,
   provenanceModel,

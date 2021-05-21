@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { '@@GLOBAL_HOOK': globalHook } = require('../../../w002-api')
+const { '@@GLOBAL_HOOK': hook } = require('../../../w002-api')
 const {
   blockModel,
   rxReplyModel,
@@ -8,10 +8,13 @@ const {
 const systemCovenants = require('../../../w212-system-covenants')
 const appCovenants = require('../../../w301-user-apps')
 const debug = require('debug')('interblock:isolate')
+const { queryFactory } = require('./queryFactory')
 // TODO move to making own containers, so can keep promises alive
 // TODO set timestamp in container by overriding Date.now()
+// TODO move to having ramIsolate be the default, but allow other hardware based isolations
+// like containers, iFrames, cluster, and vm2 - same as dynamodb and ramDb
 
-const ramIsolate = (preloadedCovenants) => {
+const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
   const containers = {}
   const covenants = {
     ...systemCovenants,
@@ -25,9 +28,11 @@ const ramIsolate = (preloadedCovenants) => {
       const containerId = block.provenance.reflectIntegrity().hash
       const { name } = covenantId
       assert(covenants[name], `No covenant loaded: ${name}`)
+      // TODO reuse prior containers, and update the block each time
 
       debug(`loadCovenant %o from %o`, name, Object.keys(covenants))
       debug(`containerId: %o`, containerId.substring(0, 9))
+      await Promise.resolve()
       const covenant = covenants[name]
       containers[containerId] = { covenant, block, effects: {} }
       return containerId
@@ -49,12 +54,18 @@ const ramIsolate = (preloadedCovenants) => {
       }
 
       // TODO test rejections propogate back thru queues
-      const tickSync = () => container.covenant.reducer(state, action)
+      // TODO move to a pure container wrapper, then to vm2 or similar
+      const tick = () => container.covenant.reducer(state, action)
+      // TODO remove need for salt by relaxing duplicate check in channel
       const salt = action.getHash() // TODO ensure reply actions salt uniquely
-      const syncResult = await globalHook(tickSync, accumulator, salt)
-      debug(`syncResult`, syncResult)
 
-      const { reduction, isPending, requests, replies } = syncResult
+      const queryProcessor = queryFactory(ioConsistency, container.block)
+      const queries = (query) => queryProcessor.query(query)
+      const result = await hook(tick, accumulator, salt, queries)
+      queryProcessor.disable()
+      debug(`result`, result)
+
+      const { reduction, isPending, requests, replies } = result
       assert((reduction && !isPending) || (!reduction && isPending))
       assert.strictEqual(typeof isPending, 'boolean')
       assert(Array.isArray(requests))
@@ -62,8 +73,6 @@ const ramIsolate = (preloadedCovenants) => {
       if (isPending) {
         assert(accumulator.length || requests.length)
       }
-
-      // TODO filter all inband promises, and await their results
 
       const mappedActions = requests.map((action) => {
         const { to } = action
@@ -86,12 +95,14 @@ const ramIsolate = (preloadedCovenants) => {
       debug(`attempting to unload: %o`, containerId)
       await Promise.resolve()
       assert(containers[containerId], `No container for: ${containerId}`)
+      // TODO keep containers, in a frozen state, ready for reuse
       delete containers[containerId]
     },
     setEffectPermissions: async ({ containerId, permissions }) => {
       // toggles the default mode of complete block level isolation
       // used to allow hardware access during blocktime
       // but more commonly to allow effects to have access to network
+      // TODO allow this to be set per effect
     },
     executeEffect: async ({ containerId, effectId, timeout }) => {
       // executes and awaits the result of a previously returned promise
@@ -108,8 +119,8 @@ const ramIsolate = (preloadedCovenants) => {
   }
 }
 
-const isolateFactory = (preloadedCovenants) => {
-  const isolation = ramIsolate(preloadedCovenants)
+const isolateFactory = (ioConsistency, preloadedCovenants) => {
+  const isolation = ramIsolate(ioConsistency, preloadedCovenants)
   return (action) => {
     switch (action.type) {
       case 'LOAD_COVENANT':

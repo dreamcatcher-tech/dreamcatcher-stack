@@ -5,7 +5,7 @@ const ajv = new Ajv({ allErrors: true, verbose: true })
 const debug = require('debug')('interblock:apps:datum')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { covenantIdModel } = require('../../w015-models')
-const { interchain } = require('../../w002-api')
+const { interchain, useBlocks } = require('../../w002-api')
 const seedrandom = require('seedrandom')
 const jsf = require('json-schema-faker')
 jsf.extend('faker', () => faker)
@@ -64,7 +64,7 @@ const defaultDatum = {
   children: {},
 }
 const reducer = async (state, action) => {
-  // TODO run assertions on state shape
+  // TODO run assertions on state shape thru schema
   // TODO assert the children match the schema definition
   if (!Object.keys(state).length) {
     state = defaultDatum
@@ -86,7 +86,9 @@ const reducer = async (state, action) => {
       const demuxed = demuxFormData(state, action)
       state.formData = demuxed.formData
       if (Object.keys(state.children).length) {
-        const { children } = await interchain(dmzReducer.actions.listChildren())
+        // TODO WARNING if have changed children in current block, will be stale
+        const latest = await useBlocks()
+        const children = dmzReducer.listChildren(latest)
         for (const name in state.children) {
           if (!children[name]) {
             debug(`creating new child: `, name)

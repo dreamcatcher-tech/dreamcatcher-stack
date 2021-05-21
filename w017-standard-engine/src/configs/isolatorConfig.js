@@ -290,6 +290,7 @@ const createConfig = (isolation, consistency) => ({
       return { lineage }
     },
     loadCovenant: async ({ lock }) => {
+      // TODO handle reusing containers that are already loaded from previous blocks
       assert(lockModel.isModel(lock))
       const containerId = await isolation.loadCovenant(lock.block)
       debug(`loadCovenant containerId: ${containerId.substring(0, 9)}`)
@@ -303,13 +304,14 @@ const createConfig = (isolation, consistency) => ({
       debug(`reduce: `, externalAction.type)
       const { address } = channel
       assert(!address.isUnknown())
-      const tick = createTick(containerId, isolation.tick)
+      const tickPayload = { containerId, timeout: 30000 }
+      const tick = (state, action, accumulator) =>
+        isolation.tick({ ...tickPayload, state, action, accumulator })
+
       const { machine, config } = interpreterConfig(tick)
       const payload = { dmz, externalAction, address }
       const tickAction = { type: 'TICK', payload }
-      const interpreterTick = () => pure(tickAction, machine, config)
-      const nextDmz = await interpreterTick()
-      // const nextDmz = await thread(tickAction, interpreter)
+      const nextDmz = await pure(tickAction, machine, config)
       assert(dmzModel.isModel(nextDmz))
       return { nextDmz }
     },
@@ -377,6 +379,4 @@ const isolatorConfig = (isolation, consistency) => {
   return { machine: definition, config }
 }
 
-const createTick = (containerId, tick) => (state, action, accumulator) =>
-  tick({ containerId, state, action, accumulator, timeout: 30000 })
 module.exports = { isolatorConfig }

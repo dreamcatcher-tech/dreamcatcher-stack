@@ -6,7 +6,6 @@ const { uplinkReducer, uplinkReply } = require('./uplink')
 const { connect, connectReducer } = require('./connect')
 const { ping, pingReducer } = require('./ping')
 const { spawn, spawnReducer } = require('./spawn')
-const { listChildren, listChildrenReducer } = require('./listChildren')
 const { install, deploy, deployReducer, deployReply } = require('./deploy')
 const { getChannel, getChannelReducer } = require('./getChannel')
 const { genesisReducer, genesisReply } = require('./genesis')
@@ -34,7 +33,6 @@ const actions = {
   connect,
   ping,
   spawn,
-  listChildren,
   install,
   deploy,
   getChannel,
@@ -66,9 +64,6 @@ const reducer = async (dmz, action) => {
       break
     case '@@OPEN_CHILD':
       openChildReducer(network, action)
-      break
-    case '@@LS':
-      listChildrenReducer(network)
       break
     case '@@INTRO':
       break
@@ -126,11 +121,10 @@ const systemTypes = [
   '@@INTRO',
   '@@ACCEPT',
   '@@OPEN_CHILD',
-  '@@LS',
-  '@@GET_GIVEN_NAME',
+  '@@GET_GIVEN_NAME', // TODO may delete ?
   '@@DEPLOY',
   '@@INSTALL',
-  '@@GET_CHAN',
+  '@@GET_CHAN', // TODO may delete ?
   '@@CAT',
 ]
 const isSystemRequest = (request) => {

@@ -3,8 +3,6 @@ const { effectorFactory } = require('../..')
 const debug = require('debug')('crm:tests:datum')
 const { convertToTemplate, demuxFormData } = require('../src/datum')
 
-require('debug').enable('')
-
 const schema = {
   title: 'Customer',
   type: 'object',

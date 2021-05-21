@@ -147,6 +147,7 @@ const config = {
     },
     autoResolves: async (context) => {
       debug(`autoResolves machine`)
+      // TODO move this synchronous machine to an action
       const { machine, config } = autoResolvesConfig(context)
       const nextContext = await pure('EXEC', machine, config)
       return nextContext

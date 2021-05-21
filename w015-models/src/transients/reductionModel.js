@@ -58,7 +58,8 @@ const reductionModel = standardize({
   },
   create(reduceResolve, origin, dmz) {
     // TODO resolve circular reference problem
-    let { reduction, isPending, requests, replies } = reduceResolve
+    let { reduction, isPending, requests, replies, ...rest } = reduceResolve
+    assert.deepStrictEqual(rest, {})
     assert(Array.isArray(requests))
     assert(Array.isArray(replies))
     assert(rxRequestModel.isModel(origin) || rxReplyModel.isModel(origin))

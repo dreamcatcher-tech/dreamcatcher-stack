@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:dmzReducer')
-const { interchain, '@@GLOBAL_HOOK_INBAND': hook } = require('../../w002-api')
+const { interchain, '@@GLOBAL_HOOK': hook } = require('../../w002-api')
 const {
   dmzModel,
   rxRequestModel,

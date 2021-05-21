@@ -1,7 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:dmz:utils')
 const pad = require('pad/dist/pad.umd')
-const { channelModel } = require('../../w015-models')
+const { blockModel, channelModel } = require('../../w015-models')
 
 const autoAlias = (network, autoPrefix = 'file_') => {
   // TODO get highest current auto, and always return higher
@@ -21,7 +21,7 @@ const autoAlias = (network, autoPrefix = 'file_') => {
 }
 const getChannelParams = (network, alias) => {
   const channel = network[alias]
-  assert(channelModel.isModel(channel))
+  assert(channelModel.isModel(channel), `Not channel: ${alias}`)
   const { address, systemRole, lineageHeight, heavyHeight, heavy } = channel
   let chainId = address.isResolved() ? address.getChainId() : 'UNRESOLVED'
   chainId = address.isRoot() ? 'ROOT' : chainId
@@ -38,4 +38,24 @@ const getChannelParams = (network, alias) => {
   }
   return params
 }
-module.exports = { autoAlias, getChannelParams }
+const listChildren = (block) => {
+  assert(blockModel.isModel(block))
+  const children = {}
+  block.network.getAliases().forEach((alias) => {
+    children[alias] = getChannelParams(block.network, alias)
+  })
+  const self = children['.']
+  self.chainId = block.getChainId()
+  self.lineageHeight = block.getHeight()
+  self.heavyHeight = block.getHeight()
+  self.hash = block.getHash()
+  const parent = block.network.getParent()
+  if (parent.address.isRoot()) {
+    self.remoteName = '/'
+  } else if (parent.heavy) {
+    // heavy is not present in genesis blocks
+    self.remoteName = parent.heavy.getOriginAlias()
+  }
+  return children
+}
+module.exports = { autoAlias, getChannelParams, listChildren }

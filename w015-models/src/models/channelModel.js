@@ -73,8 +73,9 @@ const channelModel = standardize({
     }
 
     assert(lineageTip.every((interblock) => !interblock.getRemote()))
-    checkMonotonic(requests) // TODO check requests length matches
-    checkMonotonic(replies)
+    _checkAllInts(requests)
+    _checkAllInts(replies)
+    // TODO check requests and replies map to remote correctly
 
     // exit point from system to covenant
     const rxRequest = (index) => {
@@ -223,22 +224,13 @@ const _getSortedIndices = (obj) => {
   const indices = []
   Object.keys(obj).forEach((key) => {
     const number = parseInt(key)
+    assert(number >= 0, `Index out of bounds: ${number}`)
     indices.push(number)
   })
   indices.sort((first, second) => first - second)
   return indices
 }
-const checkMonotonic = (obj) => {
-  // TODO make an ordered array of all the indices, then run check on them
-  let previous = -1
-  const isMonotonic = Object.keys(obj).every((key) => {
-    const number = parseInt(key)
-    const greater = number > previous
-    previous = number
-    return greater
-  })
-  assert(isMonotonic)
-}
+const _checkAllInts = (obj) => _getSortedIndices(obj)
 const isHigherThan = (current, previous) => {
   if (!previous.length && !current.length) {
     return false

@@ -1,10 +1,10 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:tests:hooker')
-const { interchain } = require('../../w002-api')
-const { actions } = require('../../w021-dmz-reducer')
+const { interchain, useBlocks } = require('../../w002-api')
+const { actions, listChildren } = require('../../w021-dmz-reducer')
 const { metrologyFactory } = require('../src/metrologyFactory')
 
-require('debug').enable()
+// require('debug').enable('*hooker')
 
 describe('hooker', () => {
   test('loopback cleared immediately', async () => {
@@ -26,12 +26,13 @@ describe('hooker', () => {
   // basically cannot raise pending, then request something to self
   test.todo('wait for all promises')
   test('self requests during pending can buffer', async () => {
+    jest.setTimeout(400)
     const reducer = async (state, action) => {
       debug(`reducer`, action)
       if (action.type === 'NONCE') {
-        const pingPromise = interchain('PING')
-        const children = await interchain(actions.listChildren())
-        debug(`children: `, children)
+        interchain('PING')
+        const awaitedPing = await interchain(actions.ping('test'))
+        debug(`awaitedPing: `, awaitedPing)
       }
       return state
     }

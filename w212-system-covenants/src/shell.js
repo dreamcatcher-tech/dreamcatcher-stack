@@ -8,12 +8,11 @@ const {
   ping,
   spawn,
   connect,
-  listChildren,
   install,
   getChannel,
   getState: dmzGetState,
 } = dmzReducer.actions
-const { interchain } = require('../../w002-api')
+const { interchain, useBlocks } = require('../../w002-api')
 const dpkg = require('./dpkg')
 const {
   respond,
@@ -21,6 +20,7 @@ const {
   sendParent,
   translator,
 } = require('../../w022-xstate-translator')
+const { listChildren } = require('../../w021-dmz-reducer')
 
 const config = {
   actions: {
@@ -35,6 +35,7 @@ const config = {
         const normalized = posix.normalize(absolutePath)
         assert.strictEqual(normalized, absolutePath)
         debug(`assignWd`, absolutePath)
+        assert(posix.isAbsolute(absolutePath))
         return absolutePath
       },
     }),
@@ -88,12 +89,13 @@ const config = {
     },
     listActors: async ({ wd }, event) => {
       const { path } = event.payload
-      const absolutePath = posix.resolve(wd, path)
-      debug(`listActors`, absolutePath)
-      const lsAction = listChildren(absolutePath)
-      const { children } = await interchain(lsAction, absolutePath)
-      const self = await interchain(getChannel(absolutePath))
-      return { children: { ...children, '.': self } }
+      assert.strictEqual(typeof path, 'string')
+      const absPath = posix.resolve(wd, path)
+      debug(`listActors`, absPath)
+
+      const block = await useBlocks(absPath)
+      const children = listChildren(block)
+      return { children }
     },
     changeDirectory: async ({ wd }, event) => {
       // TODO ignore if same as working directory
@@ -102,7 +104,14 @@ const config = {
       assert(posix.isAbsolute(wd))
       const absolutePath = posix.resolve(wd, path)
       debug(`changeDirectory`, absolutePath)
-      await interchain(ping(), absolutePath)
+      try {
+        const latest = await useBlocks(absolutePath)
+        assert(latest)
+        debug(`latest`, absolutePath, latest.getHash().substring(0, 9))
+      } catch (e) {
+        debug(`changeDirectory error:`, e.message)
+        throw new Error(`Non existent blockchain at: ${absolutePath}`)
+      }
       return { absolutePath }
     },
     removeActor: async (context, event) => {
@@ -125,14 +134,27 @@ const config = {
       debug(`publish: `, name)
       const covenantId = covenantIdModel.create('dpkg')
       const state = { installer }
+      // TODO add registry in 'to' field, rather than using shell as reg
       await interchain(spawn(name, { covenantId, state }))
       return { dpkgPath: name }
     },
-    install: async (context, event) => {
+    install: async ({ wd }, event) => {
       const { dpkgPath, installPath } = event.payload
       debug(`install from: %o to: %o`, dpkgPath, installPath)
-      const installer = await interchain(dpkg.actions.getInstaller(), dpkgPath)
-      // TODO check installPath exists and is legal, and is direct child of something
+      // TODO useBlocks to get the installer object ?
+      const absDpkgPath = posix.resolve(wd, dpkgPath)
+      const absInstallPath = posix.resolve(wd, installPath)
+      // TODO consider a useState function to only return the state ?
+      const { state } = await useBlocks(absDpkgPath)
+      const { installer } = state
+
+      const absInstallDir = posix.dirname(absInstallPath)
+      try {
+        await useBlocks(absInstallDir) // check path exists
+      } catch (e) {
+        throw new Error(`Install directory invalid for: ${absInstallPath}`)
+      }
+
       // TODO check schema matches installer schema, including not null for covenant
       // TODO pull out everything that is part of DMZ except children
       let { children, covenant, ...spawnOptions } = installer
@@ -140,25 +162,24 @@ const config = {
       // TODO unify how covenants are referred to
       const covenantId = covenantIdModel.create(covenant)
       spawnOptions = { ...spawnOptions, covenantId }
-      const spawnAction = spawn(installPath, spawnOptions)
-      interchain(spawnAction)
+      const child = posix.basename(absInstallPath)
+      const spawnAction = spawn(child, spawnOptions)
+      interchain(spawnAction, absInstallDir)
 
       debug(`begining install`)
       const installAction = install(installer)
-      const installResult = await interchain(installAction, installPath)
+      const installResult = await interchain(installAction, absInstallPath)
       debug(`installResult: `, installResult)
     },
-    getState: async (context, event) => {
+    getState: async ({ wd }, event) => {
       // dump the contents of the chain at the given path
       // if offline, can use the most recent data, but color code that it is stale
-      // TODO use payload layer to fetch blocks directly
       // TODO allow auto updating subscriptions, possibly with broadcast for state
       // TODO may use external functions to fetch blocks, rather than in chainland ?
-      // if it must be done thru the shell, then grab the whole block, rather than an action
       const { path } = event.payload
-      debug(`getState: `, path)
-      const action = dmzGetState()
-      const state = await interchain(action, path)
+      const absolutePath = posix.resolve(wd, path)
+      debug(`getState: `, absolutePath)
+      const { state } = await useBlocks(absolutePath)
       debug(`getState result: `, state)
       return { state }
     },

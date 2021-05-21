@@ -8,9 +8,7 @@ const {
   addressModel,
 } = require('../../../w015-models')
 const dmzReducer = require('../../../w021-dmz-reducer')
-const {
-  '@@GLOBAL_HOOK_INBAND': globalHookInband,
-} = require('../../../w002-api')
+const { '@@GLOBAL_HOOK': hook } = require('../../../w002-api')
 const { definition } = require('../machines/dmz')
 const { common } = require('./common')
 const {
@@ -68,7 +66,7 @@ const config = {
       const tick = () => dmzReducer.reducer(dmz, anvil)
       const accumulator = []
       const salt = `TODO` // TODO make salt depend on something else, like the io channel index
-      const reduceResolve = await globalHookInband(tick, accumulator, salt)
+      const reduceResolve = await hook(tick, accumulator, salt)
 
       assert(reduceResolve, `System returned: ${reduceResolve}`)
       assert(!reduceResolve.isPending, `System can never raise pending`)

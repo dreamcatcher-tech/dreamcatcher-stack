@@ -87,7 +87,7 @@ const provenanceModel = standardize({
     assert(lineageKeys.every((i) => i >= 0 && i < instance.height))
     assert.strictEqual(instance.signatures.length, 1, `single signer only`)
 
-    const selfIntegrity = () => {
+    const _selfIntegrity = () => {
       const check = {}
       const checkKeys = ['dmzIntegrity', 'address', 'lineage', 'height']
       checkKeys.forEach((key) => (check[key] = instance[key]))
@@ -95,20 +95,18 @@ const provenanceModel = standardize({
       const selfIntegrity = integrity.equals(instance.integrity)
       return selfIntegrity
     }
-    const signatureIntegrity = () =>
+    const _signatureIntegrity = () =>
       instance.signatures.length &&
       instance.signatures.every(
         (signature) => signature.integrity.equals(instance.integrity)
         // TODO check order the signatures is alphabetical / stable
       )
-
-    if (!selfIntegrity()) {
+    if (!_selfIntegrity()) {
       throw new Error('Self integrity degraded - refusing to instantiate')
     }
-    if (!signatureIntegrity()) {
+    if (!_signatureIntegrity()) {
       throw new Error('Signature degraded - refusing to instantiate')
     }
-
     const reflectedIntegrity = integrityModel.create(instance)
     let { address } = instance
     if (instance.height === 0) {
