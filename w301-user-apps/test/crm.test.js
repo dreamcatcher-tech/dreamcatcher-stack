@@ -2,7 +2,7 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-require('debug').enable('')
+// require('debug').enable('*tests:crm')
 
 describe('crm', () => {
   describe('app deploy', () => {
@@ -39,6 +39,7 @@ describe('crm', () => {
        * 2021-01-28 187ms publish, 670ms install, blockcount 29 - deploy larger app with higher blockcound
        * 2021-01-28 183ms publish, 545ms install, blockcount 29 - cache partial dmz executions
        * 2021-02-04 176ms publish, 382ms install, blockcount 29, blockrate 19ms - remove immer, cache blank creates, reuse hashes for block and interblock
+       * 2021-05-19 245ms publish, 524ms install, blockcount 27, blockrate 28ms - add queries to hooks, install uses a query instead of an action
        */
     })
     test.todo('can only add customer if provide valid data')

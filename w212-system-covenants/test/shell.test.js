@@ -112,9 +112,9 @@ describe('machine validation', () => {
       const ls = shell.actions.ls()
       const { children } = await base.pierce(ls)
       debug(`ls: `, children)
-      assert.deepStrictEqual(Object.keys(children), ['..', '.@@io', '.'])
+      assert.deepStrictEqual(Object.keys(children), ['..', '.'])
       const { children: repeated } = await base.pierce(ls)
-      assert.deepStrictEqual(Object.keys(repeated), ['..', '.@@io', '.'])
+      assert.deepStrictEqual(Object.keys(repeated), ['..', '.', '.@@io'])
     })
     test('list remote directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -134,7 +134,10 @@ describe('machine validation', () => {
       await assert.rejects(
         () => base.pierce(ls),
         (error) => {
-          assert.strictEqual(error.message, 'Path invalid: nonExistentChild')
+          assert.strictEqual(
+            error.message,
+            'Non existent path: /nonExistentChild'
+          )
           return true
         }
       )
@@ -146,7 +149,7 @@ describe('machine validation', () => {
       await assert.rejects(
         () => base.pierce(ls),
         (error) => {
-          const msg = 'Path invalid: nonExistentChild/nested'
+          const msg = 'Non existent path: /nonExistentChild'
           assert.strictEqual(error.message, msg)
           return true
         }
@@ -159,7 +162,7 @@ describe('machine validation', () => {
       await assert.rejects(
         () => base.pierce(ls),
         (error) => {
-          const msg = 'Path invalid: nonExistentChild/nested1/nested2'
+          const msg = 'Non existent path: /nonExistentChild'
           assert.strictEqual(error.message, msg)
           return true
         }
@@ -173,7 +176,7 @@ describe('machine validation', () => {
       await assert.rejects(
         () => base.pierce(ls),
         (error) => {
-          const msg = 'Path invalid: validChild/nonExistentChild'
+          const msg = 'Non existent path: /validChild'
           assert.strictEqual(error.message, msg)
           return true
         }
@@ -189,7 +192,7 @@ describe('machine validation', () => {
       await assert.rejects(
         () => base.pierce(ls),
         (error) => {
-          const msg = 'Path invalid: c1/nested1/invalid'
+          const msg = 'Non existent path: /c1/nested1/invalid'
           assert.strictEqual(error.message, msg)
           return true
         }

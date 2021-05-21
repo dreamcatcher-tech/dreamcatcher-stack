@@ -27,11 +27,17 @@ const queryFactory = (ioConsistency, block) => {
     // TODO discover the absolute path from partial path
     // TODO implement height and count parameters
     assert.strictEqual(typeof path, 'string')
-    assert(posix.isAbsolute(path))
     assert(Number.isInteger(height))
     assert(height >= -1)
     assert(Number.isInteger(count))
     assert(count > 0)
+    path = posix.normalize(path)
+    if (path === '.') {
+      return block // TODO honour height and count params
+    }
+    // TODO allow fetching '.' and '..' items directly
+    // may walk to root, then use this as absolute
+    assert(posix.isAbsolute(path))
 
     debug(`@@USE_BLOCKS`, path, height, count)
     let parentBlock = block
