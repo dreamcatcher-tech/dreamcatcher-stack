@@ -125,13 +125,13 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     const blockstreamSubscribers = new Map()
     const subscribeBlockstream = (chainId, callback) => {
       initBlockstreamSubscribers(chainId)
-      const subscribers = blockstreamSubscribers.get(chainId)
-      subscribers.subs.add(callback)
-      if (subscribers.latest) {
-        callback(subscribers.latest)
+      const { subs, latest } = blockstreamSubscribers.get(chainId)
+      subs.add(callback)
+      if (latest) {
+        setTimeout(() => callback(latest))
       }
       return () => {
-        subscribers.subs.delete(callback)
+        subs.delete(callback)
         // TODO cleanup by fully removing latest when no subscribers
       }
     }
