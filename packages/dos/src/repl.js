@@ -9,7 +9,7 @@ const print = require('./print')
 const loop = require('./loop')
 
 module.exports = async function repl(opts) {
-  require('debug').enable('*:repl *commands* *:eval')
+  // require('debug').enable('*:repl *commands* *:eval')
   debug(`repl`)
   opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
