@@ -2,7 +2,7 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-// require('debug').enable('*tests:crm')
+// require('debug').enable('*tests:crm *met*')
 
 describe('crm', () => {
   describe('app deploy', () => {
@@ -44,6 +44,26 @@ describe('crm', () => {
     })
     test.todo('can only add customer if provide valid data')
     test.todo('add customer with test data using .processes/addTestCustomer')
+  })
+  describe('list customers', () => {
+    test.only('list customers basic', async () => {
+      const shell = await effectorFactory('crm')
+      const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
+      assert.strictEqual(dpkgPath, 'dpkgCrm')
+      assert(shell.dpkgCrm)
+      await shell.install(dpkgPath, 'crm')
+      shell.enableLogging()
+      const newCustomer = await shell.crm.customers.add({ isTestData: true })
+      debug(`newCustomer`, newCustomer)
+      const { children } = await shell.ls('crm/customers')
+      debug(`customers: `, children)
+      const realCustomers = Object.keys(children).filter(
+        (key) => !key.startsWith('.')
+      )
+      assert.strictEqual(realCustomers.length, 1)
+      debug(realCustomers)
+      await shell.settle()
+    })
   })
   describe('data import', () => {
     test.todo('imports customer data')

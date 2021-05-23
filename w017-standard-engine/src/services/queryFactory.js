@@ -45,7 +45,8 @@ const queryFactory = (ioConsistency, block) => {
       debug(`loop`)
       const channel = parentBlock.network.getParent()
       const { address, lineageHeight: height } = channel
-      parentBlock = await consistency.getBlock({ address, height })
+      // TODO walk height based on root knowledge
+      parentBlock = await consistency.getBlock({ address })
     }
     if (path === '/') {
       return parentBlock // TODO honour height and count params
@@ -62,7 +63,8 @@ const queryFactory = (ioConsistency, block) => {
         throw new Error(`Non existent path: ${subpath}`)
       }
       const { address, lineageHeight: height } = childBlock.network[child]
-      childBlock = await consistency.getBlock({ address, height })
+      // TODO walk height based on root knowledge
+      childBlock = await consistency.getBlock({ address })
       debug(`fetched ${subpath} at height: ${height}`)
     }
     return childBlock // TODO honour height and count params
