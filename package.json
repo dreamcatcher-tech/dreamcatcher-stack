@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/interblock",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "",
   "repository": {
     "type": "git",
@@ -13,7 +13,8 @@
   "scripts": {
     "build": "webpack",
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
-    "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch"
+    "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
+    "release": "release-it"
   },
   "private": true,
   "author": "Dreamcatcher Command",
@@ -61,6 +62,7 @@
     "jest": "^26.6.3",
     "madge": "^3.6.0",
     "prettier": "^2.1.1",
+    "release-it": "^14.7.0",
     "webpack": "^5.37.1",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.7.0",
