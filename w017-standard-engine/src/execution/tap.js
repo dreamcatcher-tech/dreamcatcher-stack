@@ -1,7 +1,5 @@
 const assert = require('assert')
 const _ = require('lodash')
-const truncate = require('cli-truncate')
-const pad = require('pad/dist/pad.umd')
 const chalk = require('ansi-colors')
 const {
   blockPrint,

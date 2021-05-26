@@ -82,9 +82,7 @@ const config = {
       }
       assert.strictEqual(typeof spawnOptions, 'object')
       const spawnAction = spawn(name, spawnOptions)
-
       const addActor = await interchain(spawnAction, to)
-
       return addActor
     },
     listActors: async ({ wd }, event) => {
