@@ -6,9 +6,11 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const WebpackObfuscator = require('webpack-obfuscator')
 
 const highPerformance = {
+  optionsPreset: 'low-obfuscation',
   compact: true,
   controlFlowFlattening: false,
-  deadCodeInjection: false,
+  deadCodeInjection: true,
+  deadCodeInjectionThreshold: 0.4,
   debugProtection: false,
   debugProtectionInterval: false,
   disableConsoleOutput: false,
@@ -20,7 +22,7 @@ const highPerformance = {
   selfDefending: false,
   shuffleStringArray: true,
   simplify: true,
-  splitStrings: false,
+  splitStrings: true,
   stringArray: true,
   stringArrayEncoding: [],
   stringArrayIndexShift: true,
@@ -30,7 +32,14 @@ const highPerformance = {
   stringArrayWrappersType: 'variable',
   stringArrayThreshold: 0.75,
   unicodeEscapeSequence: false,
+  transformObjectKeys: true,
+  target: 'node',
 }
+
+// external dependencies cannot use a function to generate their string in webpack
+const { dependencies } = require('./package.json')
+highPerformance.reservedStrings = Object.keys(dependencies)
+highPerformance.reservedStrings.push('path', 'util')
 
 module.exports = {
   entry: './index.js',
@@ -46,31 +55,16 @@ module.exports = {
   target: 'node',
   externalsPresets: { node: true },
   externals: [nodeExternals()],
-  //   mode: 'development', // need to keep assert() able to throw
-  mode: 'production', // need to keep assert() able to throw
+  mode: 'production',
   devtool: false,
-  //   stats: {
-  //     modules: false,
-  //   },
   plugins: [
     new CleanWebpackPlugin(),
     // new BundleAnalyzerPlugin(),
-    // new WebpackObfuscator(highPerformance),
+    new WebpackObfuscator(highPerformance),
   ],
-  //   rules: [
-  //     {
-  //       test: /\.js$/,
-  //       exclude: [path.resolve(__dirname, 'excluded_file_name.js')],
-  //       enforce: 'post',
-  //       use: {
-  //         loader: WebpackObfuscator.loader,
-  //         options: {},
-  //       },
-  //     },
-  //   ],
-  //   optimization: {
-  //     minimize: true,
-  //     mangleExports: 'size',
-  //     nodeEnv: 'production',
-  //   },
+  optimization: {
+    minimize: true,
+    mangleExports: 'size',
+    nodeEnv: 'production',
+  },
 }
