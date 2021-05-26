@@ -1,6 +1,5 @@
 const assert = require('assert')
 const _ = require('lodash')
-const pad = require('pad/dist/pad.cjs')
 const { sqsQueueFactory } = require('../../w003-queue')
 const {
   interblockModel,

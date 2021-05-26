@@ -1,6 +1,5 @@
 const nodeObjectHash = require('node-object-hash')({ coerce: false })
 const secureRandom = require('secure-random')
-const pad = require('pad/dist/pad.umd')
 const browserHash = require('object-hash')
 const { v4 } = require('uuid')
 
