@@ -16,7 +16,7 @@
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
     "release": "release-it"
   },
-  "private": true,
+  "private": false,
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
