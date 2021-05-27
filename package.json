@@ -69,6 +69,17 @@
     "webpack-node-externals": "^3.0.0",
     "webpack-obfuscator": "^3.3.1"
   },
+  "release-it": {
+    "github": {
+      "release": true
+    },
+    "hooks": {
+      "before:init": [
+        "npm test",
+        "npm run build"
+      ]
+    }
+  },
   "prettier": {
     "trailingComma": "es5",
     "tabWidth": 2,
