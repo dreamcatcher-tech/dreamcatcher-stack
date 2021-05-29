@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/dos",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Terminal interface to the HyperNet",
   "main": "src/index.js",
   "bin": {
@@ -10,7 +10,7 @@
     "start": "DEBUG='*dos*' node src/bin",
     "dev": "nodemon src/bin"
   },
-  "author": "",
+  "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@dreamcatcher-tech/interblock": "latest",
@@ -27,6 +27,7 @@
     "figlet": "^1.2.4",
     "filesize": "^3.6.1",
     "localforage": "^1.9.0",
+    "np": "^7.5.0",
     "ora": "^3.0.0",
     "pad": "^3.2.0",
     "pretty-ms": "^7.0.0",
