@@ -28,7 +28,6 @@
     "figlet": "^1.2.4",
     "filesize": "^3.6.1",
     "localforage": "^1.9.0",
-    "np": "^7.5.0",
     "ora": "^3.0.0",
     "pad": "^3.2.0",
     "pretty-ms": "^7.0.0",
@@ -37,7 +36,11 @@
     "wordwrap": "^1.0.0"
   },
   "devDependencies": {
-    "nodemon": "^1.19.3"
+    "nodemon": "^1.19.3",
+    "np": "^7.5.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "nodemonConfig": {
     "verbose": false,
