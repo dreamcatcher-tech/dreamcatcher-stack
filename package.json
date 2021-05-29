@@ -80,6 +80,9 @@
       ]
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "prettier": {
     "trailingComma": "es5",
     "tabWidth": 2,
