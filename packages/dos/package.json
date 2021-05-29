@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Terminal interface to the HyperNet",
   "main": "src/index.js",
+  "files": [
+    "*"
+  ],
   "bin": {
     "dos": "src/bin.js"
   },
