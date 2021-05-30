@@ -1139,7 +1139,7 @@ end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
-enquirer-browserify@^2.3.7:
+enquirer-browserify@latest:
   version "2.3.7"
   resolved "https://registry.yarnpkg.com/enquirer-browserify/-/enquirer-browserify-2.3.7.tgz#607d63f81c3f18d43802083e4b90cf22eca613f1"
   integrity sha512-aIe9CRafTNh4Z8k/pqtvTzzuIP0ylKPukWitf05vN5tGZ2r62DJzjb3+LwvEXVnVMEGCetNQf8q9RkaJCTulcw==
