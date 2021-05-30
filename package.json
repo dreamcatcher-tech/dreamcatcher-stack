@@ -14,7 +14,7 @@
     "build": "webpack",
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
-    "release": "release-it"
+    "release": "np"
   },
   "private": false,
   "author": "Dreamcatcher Command",
@@ -61,24 +61,13 @@
     "javascript-obfuscator": "^2.13.0",
     "jest": "^26.6.3",
     "madge": "^3.6.0",
+    "np": "^7.5.0",
     "prettier": "^2.1.1",
-    "release-it": "^14.7.0",
     "webpack": "^5.37.1",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.7.0",
     "webpack-node-externals": "^3.0.0",
     "webpack-obfuscator": "^3.3.1"
-  },
-  "release-it": {
-    "github": {
-      "release": true
-    },
-    "hooks": {
-      "before:init": [
-        "npm test",
-        "npm run build"
-      ]
-    }
   },
   "publishConfig": {
     "access": "public"
