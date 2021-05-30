@@ -77,8 +77,11 @@ const xstate = require('xstate')
 console.log('loaded')
 
 const { SodiumPlus } = sodiumplus
-const sodium = SodiumPlus.auto()
-console.log(`libsodium backend: `, sodium.getBackendName())
+const load = async () => {
+  const sodium = await SodiumPlus.auto()
+  console.log(`libsodium backend: `, sodium.getBackendName())
+}
+load()
 
 module.exports = {
   ajv,
