@@ -15,6 +15,7 @@ const highPerformance = {
   debugProtectionInterval: false,
   disableConsoleOutput: false,
   identifierNamesGenerator: 'hexadecimal',
+  ignoreRequireImports: true,
   log: false,
   numbersToExpressions: false,
   renameGlobals: false,
