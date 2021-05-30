@@ -11,6 +11,7 @@
   ],
   "main": "dist/interblock.js",
   "scripts": {
+    "prepublish": "yarn run build",
     "build": "webpack",
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
