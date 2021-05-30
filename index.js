@@ -67,7 +67,7 @@ const rimraf = require('rimraf')
 const securerandom = require('secure-random')
 const seedrandom = require('seedrandom')
 const serializeerror = require('serialize-error')
-const sodiumnative = require('sodium-native')
+// const sodiumnative = require('sodium-native')
 const sodiumplus = require('sodium-plus')
 const supportscolor = require('supports-color')
 const tar = require('tar')
@@ -75,6 +75,11 @@ const traverse = require('traverse')
 const uuid = require('uuid')
 const xstate = require('xstate')
 console.log('loaded')
+
+const { SodiumPlus } = sodiumplus
+const sodium = SodiumPlus.auto()
+console.log(`libsodium backend: `, sodium.getBackendName())
+
 module.exports = {
   ajv,
   ansicolors,
@@ -99,7 +104,7 @@ module.exports = {
   securerandom,
   seedrandom,
   serializeerror,
-  sodiumnative,
+  // sodiumnative,
   sodiumplus,
   supportscolor,
   tar,
