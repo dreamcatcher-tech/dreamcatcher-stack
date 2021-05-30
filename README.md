@@ -1,5 +1,7 @@
 # Interblock
 
+The blockchain protocol of the Dreamcatcher
+
 [![HitCount](http://hits.dwyl.com/dreamcatcher-tech/interblock.svg)](http://hits.dwyl.com/dreamcatcher-tech/interblock)
 
 ## License
