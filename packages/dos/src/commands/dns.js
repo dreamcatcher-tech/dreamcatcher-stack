@@ -1,6 +1,6 @@
 const debug = require('debug')('dos:commands:dns')
 const chalk = require('ansi-colors')
-const { prompt } = require('enquirer')
+const { prompt } = require('enquirer-browserify')
 
 module.exports = async ({ spinner, blockchain }, args) => {
   // TODO handle nested and remote paths

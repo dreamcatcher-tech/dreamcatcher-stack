@@ -1,5 +1,5 @@
 const debug = require('debug')('dos:commands:reset')
-const { prompt } = require('enquirer')
+const { prompt } = require('enquirer-browserify')
 
 module.exports = async ({ spinner, blockchain }) => {
   debug(`reset`)

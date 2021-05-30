@@ -1,7 +1,7 @@
 const util = require('util')
 const debug = require('debug')('dos:commands:cat')
 const chalk = require('ansi-colors')
-const { prompt } = require('enquirer')
+const { prompt } = require('enquirer-browserify')
 const posix = require('path')
 
 module.exports = async ({ spinner, blockchain }, ...[path = '.', ...args]) => {

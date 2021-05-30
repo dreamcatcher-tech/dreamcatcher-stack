@@ -1,4 +1,4 @@
-const { Input } = require('enquirer')
+const { Input } = require('enquirer-browserify')
 const debug = require('debug')('dos:read')
 const chalk = require('ansi-colors')
 const isNode = require('detect-node')
