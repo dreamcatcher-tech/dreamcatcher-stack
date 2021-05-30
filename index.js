@@ -70,7 +70,7 @@ const serializeerror = require('serialize-error')
 // const sodiumnative = require('sodium-native')
 const sodiumplus = require('sodium-plus')
 const supportscolor = require('supports-color')
-const tar = require('tar')
+// const tar = require('tar')
 const traverse = require('traverse')
 const uuid = require('uuid')
 const xstate = require('xstate')
@@ -107,7 +107,7 @@ module.exports = {
   // sodiumnative,
   sodiumplus,
   supportscolor,
-  tar,
+  // tar,
   traverse,
   uuid,
   xstate,
