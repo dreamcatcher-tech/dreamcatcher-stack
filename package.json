@@ -22,7 +22,7 @@
   "dependencies": {
     "ajv": "^6.12.4",
     "ansi-colors": "^4.1.1",
-    "assert": "^2.0.0",
+    "assert": "^1.5.0",
     "cli-truncate": "^2.1.0",
     "columnify": "^1.5.4",
     "debug": "^4.1.1",
