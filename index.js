@@ -83,6 +83,9 @@ const load = async () => {
 }
 load()
 
+const { version } = require('./package.json')
+console.log(`version: `, version)
+
 module.exports = {
   ajv,
   ansicolors,

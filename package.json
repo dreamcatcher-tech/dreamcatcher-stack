@@ -44,7 +44,7 @@
     "secure-random": "^1.1.2",
     "seedrandom": "^3.0.5",
     "serialize-error": "^8.0.0",
-    "sodium-native": "^3.2.0",
+    "sodium-native": "^3.2.1",
     "sodium-plus": "^0.9.0",
     "supports-color": "^7.2.0",
     "traverse": "^0.6.6",
