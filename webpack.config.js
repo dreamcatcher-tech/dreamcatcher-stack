@@ -41,7 +41,7 @@ const highPerformance = {
 // external dependencies cannot use a function to generate their string in webpack
 const { dependencies } = require('./package.json')
 highPerformance.reservedStrings = Object.keys(dependencies)
-highPerformance.reservedStrings.push('path', 'util')
+highPerformance.reservedStrings.push('path', 'util', 'pad/dist/pad.umd')
 
 module.exports = {
   entry: './index.js',
@@ -60,7 +60,7 @@ module.exports = {
   devtool: false,
   plugins: [
     new CleanWebpackPlugin(),
-    new NodePolyfillPlugin(),
+    // new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
     new WebpackObfuscator(highPerformance),
   ],
