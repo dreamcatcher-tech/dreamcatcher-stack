@@ -53,7 +53,7 @@ module.exports = {
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  target: 'node',
+  // target: 'node',
   externalsPresets: { node: true },
   externals: [nodeExternals()],
   mode: 'production',
