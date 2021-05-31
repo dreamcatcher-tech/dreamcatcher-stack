@@ -61,7 +61,7 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
     // new BundleAnalyzerPlugin(),
-    // new WebpackObfuscator(highPerformance),
+    new WebpackObfuscator(highPerformance),
   ],
   optimization: {
     minimize: true,
