@@ -4,6 +4,7 @@ const path = require('path')
 const nodeExternals = require('webpack-node-externals')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const WebpackObfuscator = require('webpack-obfuscator')
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
 const highPerformance = {
   optionsPreset: 'low-obfuscation',
@@ -60,8 +61,9 @@ module.exports = {
   devtool: false,
   plugins: [
     new CleanWebpackPlugin(),
+    new NodePolyfillPlugin(),
     // new BundleAnalyzerPlugin(),
-    new WebpackObfuscator(highPerformance),
+    // new WebpackObfuscator(highPerformance),
   ],
   optimization: {
     minimize: true,

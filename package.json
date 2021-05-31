@@ -60,6 +60,7 @@
     "javascript-obfuscator": "^2.13.0",
     "jest": "^26.6.3",
     "madge": "^3.6.0",
+    "node-polyfill-webpack-plugin": "^1.1.2",
     "np": "^7.5.0",
     "prettier": "^2.1.1",
     "webpack": "^5.37.1",
