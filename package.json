@@ -1,13 +1,13 @@
 {
   "name": "@dreamcatcher-tech/interblock",
-  "version": "0.0.30",
+  "version": "0.0.28",
   "description": "",
   "repository": {
     "type": "git",
     "url": "https://github.com/dreamcatcher-tech/interblock"
   },
   "files": [
-    "dist/interblock.js"
+    "dist/"
   ],
   "main": "dist/interblock.js",
   "scripts": {
