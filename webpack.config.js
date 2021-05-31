@@ -44,29 +44,39 @@ highPerformance.reservedStrings = Object.keys(dependencies)
 highPerformance.reservedStrings.push('path', 'util', 'pad/dist/pad.umd')
 
 module.exports = {
-  entry: './index.js',
+  entry: { interblock: './index.js' },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: `interblock.js`,
+    filename: `[name].js`,
     library: {
-      name: 'interblock',
+      name: 'interblock.js',
       type: 'umd',
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { web: true },
-  externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
+  // externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
   mode: 'production',
   devtool: false,
   plugins: [
     new CleanWebpackPlugin(),
     new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
-    new WebpackObfuscator(highPerformance),
+    new WebpackObfuscator(highPerformance, ['vendors.js']),
   ],
+  // stats: { errorDetails: true },
   optimization: {
     minimize: true,
     mangleExports: 'size',
     nodeEnv: 'production',
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        },
+      },
+    },
   },
 }
