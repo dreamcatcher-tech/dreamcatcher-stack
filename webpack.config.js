@@ -54,7 +54,7 @@ module.exports = {
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  externalsPresets: { node: true },
+  externalsPresets: { web: true },
   externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
   mode: 'production',
   devtool: false,
