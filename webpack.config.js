@@ -54,8 +54,7 @@ module.exports = {
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  // target: 'node',
-  externalsPresets: { web: true },
+  externalsPresets: { web: true, node: true },
   externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
   mode: 'production',
   devtool: false,
@@ -63,7 +62,7 @@ module.exports = {
     new CleanWebpackPlugin(),
     new NodePolyfillPlugin(),
     // new BundleAnalyzerPlugin(),
-    // new WebpackObfuscator(highPerformance),
+    new WebpackObfuscator(highPerformance),
   ],
   // optimization: {
   //   minimize: true,
