@@ -63,9 +63,9 @@ module.exports = {
     // new BundleAnalyzerPlugin(),
     // new WebpackObfuscator(highPerformance),
   ],
-  // optimization: {
-  //   minimize: true,
-  //   mangleExports: 'size',
-  //   nodeEnv: 'production',
-  // },
+  optimization: {
+    minimize: true,
+    mangleExports: 'size',
+    nodeEnv: 'production',
+  },
 }
