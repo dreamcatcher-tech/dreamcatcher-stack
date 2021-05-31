@@ -55,7 +55,7 @@ module.exports = {
   },
   // target: 'node',
   externalsPresets: { web: true },
-  externals: [nodeExternals()],
+  externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
   mode: 'production',
   devtool: false,
   plugins: [
