@@ -41,42 +41,38 @@ const highPerformance = {
 // external dependencies cannot use a function to generate their string in webpack
 const { dependencies } = require('./package.json')
 highPerformance.reservedStrings = Object.keys(dependencies)
-highPerformance.reservedStrings.push('path', 'util', 'pad/dist/pad.umd')
-
+highPerformance.reservedStrings.push(
+  'path',
+  'util',
+  'assert',
+  'pad/dist/pad.umd'
+)
 module.exports = {
-  entry: { interblock: './index.js' },
+  entry: './index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: `[name].js`,
+    filename: `interblock.js`,
     library: {
-      name: 'interblock.js',
+      name: 'interblock',
       type: 'umd',
+      umdNamedDefine: true,
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  externalsPresets: { web: true },
-  // externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
+  externalsPresets: { node: true },
+  externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
   mode: 'production',
   devtool: false,
   plugins: [
     new CleanWebpackPlugin(),
     new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
-    new WebpackObfuscator(highPerformance, ['vendors.js']),
+    new WebpackObfuscator(highPerformance),
   ],
   // stats: { errorDetails: true },
   optimization: {
     minimize: true,
     mangleExports: 'size',
     nodeEnv: 'production',
-    splitChunks: {
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all',
-        },
-      },
-    },
   },
 }

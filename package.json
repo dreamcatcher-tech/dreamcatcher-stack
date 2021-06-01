@@ -62,7 +62,7 @@
     "node-polyfill-webpack-plugin": "^1.1.2",
     "np": "^7.5.0",
     "prettier": "^2.1.1",
-    "webpack": "^5.37.1",
+    "webpack": "^5.38.1",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.7.0",
     "webpack-node-externals": "^3.0.0",
