@@ -67,7 +67,7 @@ module.exports = {
     new CleanWebpackPlugin(),
     new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
-    new WebpackObfuscator(highPerformance),
+    // new WebpackObfuscator(highPerformance),
   ],
   // stats: { errorDetails: true },
   optimization: {
