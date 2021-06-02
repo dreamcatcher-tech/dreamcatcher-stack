@@ -51,7 +51,6 @@ module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
 // const clitruncate = require('cli-truncate')
 // const columnify = require('columnify')
 // const debug = require('debug')
-// const dynamodblockclient = require('dynamodb-lock-client')
 // const faker = require('faker')
 // const fastdeepequal = require('fast-deep-equal')
 // const fastjsonstablestringify = require('fast-json-stable-stringify')
