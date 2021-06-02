@@ -106,7 +106,7 @@ describe('interblock', () => {
       const start = Date.now()
       interblock.getWithoutRemote()
       const elapsed = Date.now() - start
-      assert(elapsed <= 1)
+      assert(elapsed <= 1, `speed was: ${elapsed}`)
     })
     test('speed when already without remote', async () => {
       const validatedBlock = await createBlockWithEffects()
@@ -115,7 +115,7 @@ describe('interblock', () => {
       const start = Date.now()
       interblock.getWithoutRemote()
       const elapsed = Date.now() - start
-      assert(elapsed <= 1)
+      assert(elapsed <= 1, `speed was: ${elapsed}`)
     })
   })
 })

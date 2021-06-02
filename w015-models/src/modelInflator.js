@@ -1,8 +1,9 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:modelInflator')
+const { registry } = require('./registry')
 const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
-const { registry } = require('./registry')
+require('ajv-formats')(ajv)
 
 const modelInflator = (schema, instance) => {
   if (schema.title === 'State') {
@@ -83,7 +84,9 @@ const assertKeysValidated = (schema, instance) => {
   assert(!schema.additionalProperties, `additionalProperties: ${schema.title}`)
   const instanceKeys = Object.keys(instance)
   const propKeys = Object.keys(schema.properties)
-  const isRequired = schema.required.every((key) => typeof instance[key] !== 'undefined')
+  const isRequired = schema.required.every(
+    (key) => typeof instance[key] !== 'undefined'
+  )
   assert(isRequired)
   const isProps = instanceKeys.every((key) => schema.properties[key])
   assert(isProps, `fail ${schema.title}`)

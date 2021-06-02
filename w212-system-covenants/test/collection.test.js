@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { effectorFactory } = require('../..')
+const { effectorFactory } = require('../../index')
 const debug = require('debug')('crm:tests:collection')
 
 require('debug').enable()

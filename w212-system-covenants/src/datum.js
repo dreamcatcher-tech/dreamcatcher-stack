@@ -2,6 +2,7 @@ const assert = require('assert')
 const faker = require('faker/locale/en')
 const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
+require('ajv-formats')(ajv)
 const debug = require('debug')('interblock:apps:datum')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { covenantIdModel } = require('../../w015-models')
@@ -9,6 +10,7 @@ const { interchain, useBlocks } = require('../../w002-api')
 const seedrandom = require('seedrandom')
 const jsf = require('json-schema-faker')
 jsf.extend('faker', () => faker)
+ajv.addKeyword('faker')
 /**
  * Requirements:
  *  1.  boot with state already set, and this gets checked for validity immediately
@@ -222,9 +224,14 @@ const _withoutFormData = (datum) => {
 }
 const _validateChildSchemas = (datum) => {
   // compilation will throw if schemas invalid
-  const schemaCompiled = ajv.compile(datum.schema)
-  const uiSchemaCompiled = ajv.compile(datum.uiSchema)
-  Object.values(datum.children).every(_validateChildSchemas)
+  try {
+    ajv.compile(datum.schema)
+    // TODO check that datum.uiSchema is formatted correctly
+    Object.values(datum.children).every(_validateChildSchemas)
+  } catch (e) {
+    const errors = ajv.errorsText(ajv.errors)
+    throw new Error(`Child schemas failed validation: ${errors}`)
+  }
 }
 const muxTemplateWithFormData = (template, payload) => {
   const result = { ...template, children: {} }

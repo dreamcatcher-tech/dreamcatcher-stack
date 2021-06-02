@@ -23,7 +23,7 @@ const schema = {
     expires: {
       type: 'integer',
       description: 'ms until the lock expires',
-      min: 0,
+      minimum: 0,
     },
     block: blockModel.schema,
     interblocks: {

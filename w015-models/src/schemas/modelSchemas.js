@@ -67,6 +67,7 @@ const addressSchema = {
   properties: {
     chainId: integritySchema,
     status: {
+      type: 'string',
       pattern: '^UNKNOWN$|^GENESIS_|^LOOPBACK$|^ROOT$|^RESOLVED$|^INVALID$',
     },
   },

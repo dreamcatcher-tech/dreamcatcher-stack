@@ -10,7 +10,7 @@ const binaryModel = standardize({
     required: ['integrity', 'size'],
     properties: {
       integrity: integrityModel.schema,
-      size: { type: 'number', min: 0 },
+      size: { type: 'number', minimum: 0 },
     },
   },
   create(integrity, size = 0) {
