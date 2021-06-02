@@ -1,5 +1,4 @@
 const nodeObjectHash = require('node-object-hash')({ coerce: false })
-const secureRandom = require('secure-random')
 const browserHash = require('object-hash')
 const { v4 } = require('uuid')
 

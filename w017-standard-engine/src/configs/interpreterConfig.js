@@ -1,6 +1,5 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:cfg:heart')
-const detailedDiff = require('deep-object-diff').detailedDiff
 const { pure } = require('../../../w001-xstate-direct')
 const {
   rxReplyModel,

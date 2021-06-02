@@ -1,6 +1,5 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:utils')
-const isCircular = require('is-circular')
 const _ = require('lodash')
 const stringify = require('fast-json-stable-stringify')
 const { modelInflator, precompileSchema } = require('./modelInflator')
@@ -88,7 +87,6 @@ const closure = (schema, inflated, isModel) => {
     // TODO model away serialize
     if (!jsonString) {
       // TODO ensure this check is sufficient for stringify
-      // assert(!isCircular(inflated), `state must be stringifiable`)
       jsonString = stringify(inflated)
     }
     return jsonString

@@ -51,13 +51,11 @@ module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
 // const clitruncate = require('cli-truncate')
 // const columnify = require('columnify')
 // const debug = require('debug')
-// const deepobjectdiff = require('deep-object-diff')
 // const dynamodblockclient = require('dynamodb-lock-client')
 // const faker = require('faker')
 // const fastdeepequal = require('fast-deep-equal')
 // const fastjsonstablestringify = require('fast-json-stable-stringify')
 // const fastjsonstringify = require('fast-json-stringify')
-// const iscircular = require('is-circular')
 // const localforage = require('localforage')
 // const lodash = require('lodash')
 // const nodeobjecthash = require('node-object-hash')
@@ -100,7 +98,6 @@ module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
 //   fastdeepequal,
 //   fastjsonstablestringify,
 //   fastjsonstringify,
-//   iscircular,
 //   localforage,
 //   lodash,
 //   nodeobjecthash,
