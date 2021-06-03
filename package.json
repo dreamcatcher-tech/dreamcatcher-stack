@@ -47,21 +47,6 @@
   "jest": {
     "testEnvironment": "node"
   },
-  "devDependencies": {
-    "benchmark": "^2.1.4",
-    "clean-webpack-plugin": "^4.0.0-alpha.0",
-    "javascript-obfuscator": "^2.14.0",
-    "jest": "^27.0.3",
-    "madge": "^4.0.2",
-    "node-polyfill-webpack-plugin": "^1.1.2",
-    "np": "^7.5.0",
-    "prettier": "^2.3.0",
-    "webpack": "^5.38.1",
-    "webpack-bundle-analyzer": "^4.4.2",
-    "webpack-cli": "^4.7.0",
-    "webpack-node-externals": "^3.0.0",
-    "webpack-obfuscator": "^3.3.1"
-  },
   "publishConfig": {
     "access": "public"
   },
