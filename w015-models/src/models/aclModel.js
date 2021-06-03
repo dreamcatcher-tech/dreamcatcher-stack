@@ -16,11 +16,11 @@ Alias table is contained within the join slices directly.`,
   required: ['groups', 'everybody', 'balance', 'shares', 'costs'],
   additionalProperties: false,
   properties: {
-    groups: {},
-    everybody: {},
-    balance: {},
-    shares: {},
-    costs: {},
+    groups: { type: 'object' },
+    everybody: { type: 'object' },
+    balance: { type: 'object' },
+    shares: { type: 'object' },
+    costs: { type: 'object' },
   },
 }
 
