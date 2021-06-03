@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:dmz:utils')
-const pad = require('pad/dist/pad.umd')
+const pad = require('pad-left')
 const { blockModel, channelModel } = require('../../w015-models')
 
 const autoAlias = (network, autoPrefix = 'file_') => {
@@ -17,7 +17,7 @@ const autoAlias = (network, autoPrefix = 'file_') => {
       }
     }
   })
-  return autoPrefix + pad(5, highest + 1, '0')
+  return autoPrefix + pad(highest + 1, 5, '0')
 }
 const getChannelParams = (network, alias) => {
   const channel = network[alias]

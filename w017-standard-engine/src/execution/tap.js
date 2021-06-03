@@ -1,6 +1,6 @@
 const assert = require('assert')
 const _ = require('lodash')
-const chalk = require('ansi-colors')
+// const chalk = require('ansi-colors')
 const {
   blockPrint,
   interPrint,
@@ -17,7 +17,6 @@ const createTap = (prefix = 'interblock:blocktap') => {
   const off = () => (isOn = false)
   const debugBase = require('debug')(prefix)
   const cache = {}
-  const grayUndefined = chalk.gray('undefined')
 
   const debugTran = debugBase.extend('t')
   const interblockTransmit = (interblock) => {
@@ -39,11 +38,12 @@ const createTap = (prefix = 'interblock:blocktap') => {
 
   const interblockPrint = (interblock) => {
     assert(interblockModel.isModel(interblock))
-    let msg = chalk.yellow('LIGHT')
-    let forPath = chalk.gray(getPath(interblock, cache))
+    let msg = msg //chalk.yellow('LIGHT')
+    // let forPath = chalk.gray(getPath(interblock, cache))
+    let forPath = getPath(interblock, cache)
     const remote = interblock.getRemote()
     if (remote) {
-      msg = chalk.yellow('HEAVY')
+      msg = msg //chalk.yellow('HEAVY')
     }
     const formatted = interPrint(interblock, msg, forPath, 'bgYellow', 'yellow')
     return formatted
@@ -158,7 +158,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     }
     const block = getLatest(alias)
     const messages = [headerPrint(block, alias)]
-    messages[0].msg = chalk.green(msg)
+    messages[0].msg = msg //chalk.green(msg)
     messages.push(...networkPrint(network))
     return print(messages)
   }
