@@ -41,12 +41,7 @@ const highPerformance = {
 // external dependencies cannot use a function to generate their string in webpack
 const { dependencies } = require('./package.json')
 highPerformance.reservedStrings = Object.keys(dependencies)
-highPerformance.reservedStrings.push(
-  'path',
-  'util',
-  'assert',
-  'pad/dist/pad.umd'
-)
+highPerformance.reservedStrings.push('path', 'util', 'assert')
 module.exports = {
   entry: './index.js',
   output: {
@@ -60,14 +55,14 @@ module.exports = {
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { web: true },
-  externals: [nodeExternals({ modulesFromFile: true }), 'pad/dist/pad.umd'],
+  externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'production',
   devtool: false,
   plugins: [
     new CleanWebpackPlugin(),
     new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
-    new WebpackObfuscator(highPerformance),
+    // new WebpackObfuscator(highPerformance),
   ],
   // stats: { errorDetails: true },
   optimization: {
