@@ -36,82 +36,42 @@
  */
 const { version } = require('./package.json')
 console.log(`version: `, version)
-const {
-  browserFactory,
-  effectorFactory,
-  awsFactory,
-} = require('./w020-emulators')
-const engine = require('./w017-standard-engine')
-const apps = require('./w301-user-apps')
-module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
+// const {
+//   browserFactory,
+//   effectorFactory,
+//   awsFactory,
+// } = require('./w020-emulators')
+// const engine = require('./w017-standard-engine')
+// const apps = require('./w301-user-apps')
+// module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
 
-// const ajv = require('ajv')
-// const ansicolors = require('ansi-colors')
-// const assert = require('assert')
-// const clitruncate = require('cli-truncate')
-// const columnify = require('columnify')
-// const debug = require('debug')
-// const faker = require('faker')
-// const fastdeepequal = require('fast-deep-equal')
-// const fastjsonstablestringify = require('fast-json-stable-stringify')
-// const fastjsonstringify = require('fast-json-stringify')
-// const localforage = require('localforage')
-// const lodash = require('lodash')
-// const nodeobjecthash = require('node-object-hash')
-// const objecthash = require('object-hash')
-// const pad = require('pad')
-// const prettybytes = require('pretty-bytes')
-// const rimraf = require('rimraf')
-// const securerandom = require('secure-random')
-// const seedrandom = require('seedrandom')
-// const serializeerror = require('serialize-error')
-// // const sodiumnative = require('sodium-native')
-// const sodiumplus = require('sodium-plus')
-// const supportscolor = require('supports-color')
-// // const tar = require('tar')
-// const traverse = require('traverse')
-// const uuid = require('uuid')
-// const xstate = require('xstate')
-// console.log('loaded')
+const exp = {}
+exp.ajv = require('ajv')
+exp.ajvformats = require('ajv-formats')
+exp.debug = require('debug')
+exp.faker = require('faker')
+exp.fastdeepequal = require('fast-deep-equal')
+exp.fastjsonstablestringify = require('fast-json-stable-stringify')
+exp.fastjsonstringify = require('fast-json-stringify')
+exp.jsonschemafaker = require('json-schema-faker')
+exp.localforage = require('localforage')
+exp.lodash = require('lodash')
+exp.nodeobjecthash = require('node-object-hash')
+exp.objecthash = require('object-hash')
+exp.padleft = require('pad-left')
+exp.seedrandom = require('seedrandom')
+exp.serializeerror = require('serialize-error')
+exp.sodiumplus = require('sodium-plus')
+exp.uuid = require('uuid')
+exp.xstate = require('xstate')
 
-// const { SodiumPlus } = sodiumplus
-// const load = async () => {
-//   const sodium = await SodiumPlus.auto()
-//   console.log(`libsodium backend: `, sodium.getBackendName())
-// }
-// load()
+console.log('loaded')
 
-// const { version } = require('./package.json')
-// console.log(`version: `, version)
+const { SodiumPlus } = exp.sodiumplus
+const load = async () => {
+  const sodium = await SodiumPlus.auto()
+  console.log(`libsodium backend: `, sodium.getBackendName())
+}
+load()
 
-// module.exports = {
-//   ajv,
-//   ansicolors,
-//   assert,
-//   clitruncate,
-//   columnify,
-//   debug,
-//   deepobjectdiff,
-//   dynamodblockclient,
-//   faker,
-//   fastdeepequal,
-//   fastjsonstablestringify,
-//   fastjsonstringify,
-//   localforage,
-//   lodash,
-//   nodeobjecthash,
-//   objecthash,
-//   pad,
-//   prettybytes,
-//   rimraf,
-//   securerandom,
-//   seedrandom,
-//   serializeerror,
-//   // sodiumnative,
-//   sodiumplus,
-//   supportscolor,
-//   // tar,
-//   traverse,
-//   uuid,
-//   xstate,
-// }
+module.exports = exp
