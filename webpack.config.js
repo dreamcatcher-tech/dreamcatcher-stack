@@ -57,7 +57,7 @@ module.exports = {
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  externalsPresets: { web: true },
+  externalsPresets: { node: true },
   // target: 'node',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'development',
