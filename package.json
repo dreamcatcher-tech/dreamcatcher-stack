@@ -1,6 +1,6 @@
 {
   "name": "disposabletestabc",
-  "version": "0.0.46",
+  "version": "0.0.45",
   "description": "",
   "repository": {
     "type": "git",
@@ -19,7 +19,12 @@
   "private": false,
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
-  "dependencies": {},
+  "dependencies": {
+    "fast-deep-equal": "^3.1.3",
+    "fast-json-stable-stringify": "^2.1.0",
+    "fast-json-stringify": "^2.7.6",
+    "json-schema-faker": "^0.5.0-rcv.34"
+  },
   "jest": {
     "testEnvironment": "node"
   },
