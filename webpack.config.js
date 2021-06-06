@@ -47,31 +47,31 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: `interblock.js`,
-    library: 'interblock',
-    libraryTarget: 'umd',
     // library: 'interblock',
-    // library: {
-    //   name: 'interblock',
-    //   type: 'umd',
-    //   umdNamedDefine: true,
-    // },
+    // libraryTarget: 'umd',
+    // library: 'interblock',
+    library: {
+      name: 'interblock',
+      type: 'commonjs',
+      // umdNamedDefine: true,
+    },
     // globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  // externalsPresets: { web: true },
-  target: 'node',
+  externalsPresets: { node: true },
+  // target: 'node',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'development',
   devtool: false,
   plugins: [
     new CleanWebpackPlugin(),
-    // new NodePolyfillPlugin(), // didn't appear to make a difference
+    new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
     // new WebpackObfuscator(highPerformance),
   ],
   // stats: { errorDetails: true },
   optimization: {
     minimize: true,
-    // mangleExports: 'size',
+    mangleExports: 'size',
     nodeEnv: 'production',
   },
 }
