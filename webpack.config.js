@@ -55,7 +55,7 @@ module.exports = {
       type: 'umd',
       // umdNamedDefine: true,
     },
-    // globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
+    globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { web: true },
   // target: 'node',

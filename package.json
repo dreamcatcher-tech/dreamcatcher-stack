@@ -7,9 +7,9 @@
     "url": "https://github.com/dreamcatcher-tech/interblock"
   },
   "files": [
-    "dist/"
+    "index.js"
   ],
-  "main": "dist/interblock.js",
+  "main": "index.js",
   "scripts": {
     "prepack": "webpack",
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
