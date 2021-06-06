@@ -46,10 +46,10 @@ console.log(`version: `, version)
 // module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
 
 const exp = {}
-exp.ajv = require('ajv')
-exp.ajvformats = require('ajv-formats')
-exp.debug = require('debug')
-exp.faker = require('faker')
+// exp.ajv = require('ajv')
+// exp.ajvformats = require('ajv-formats')
+// exp.debug = require('debug')
+// exp.faker = require('faker')
 // exp.fastdeepequal = require('fast-deep-equal')
 // exp.fastjsonstablestringify = require('fast-json-stable-stringify')
 // exp.fastjsonstringify = require('fast-json-stringify')
