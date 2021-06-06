@@ -19,16 +19,7 @@
   "private": false,
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
-  "dependencies": {
-    "ajv": "^8.5.0",
-    "ajv-formats": "^2.1.0",
-    "debug": "^4.3.1",
-    "faker": "^5.5.3",
-    "fast-deep-equal": "^3.1.3",
-    "fast-json-stable-stringify": "^2.1.0",
-    "fast-json-stringify": "^2.7.6",
-    "json-schema-faker": "^0.5.0-rcv.34"
-  },
+  "dependencies": {},
   "jest": {
     "testEnvironment": "node"
   },
