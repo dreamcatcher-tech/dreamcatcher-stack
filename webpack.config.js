@@ -52,8 +52,8 @@ module.exports = {
     // library: 'interblock',
     library: {
       name: 'interblock',
-      type: 'umd',
-      umdNamedDefine: true,
+      type: 'commonjs',
+      // umdNamedDefine: true,
     },
     // globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
@@ -69,9 +69,9 @@ module.exports = {
     // new WebpackObfuscator(highPerformance),
   ],
   // stats: { errorDetails: true },
-  optimization: {
-    minimize: true,
-    mangleExports: 'size',
-    nodeEnv: 'production',
-  },
+  // optimization: {
+  //   minimize: true,
+  //   mangleExports: 'size',
+  //   nodeEnv: 'production',
+  // },
 }
