@@ -52,12 +52,12 @@ module.exports = {
     // library: 'interblock',
     library: {
       name: 'interblock',
-      type: 'commonjs',
+      type: 'umd',
       // umdNamedDefine: true,
     },
     // globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  externalsPresets: { node: true },
+  externalsPresets: { web: true },
   // target: 'node',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'development',
