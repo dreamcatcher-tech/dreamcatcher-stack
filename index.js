@@ -72,7 +72,27 @@ const { SodiumPlus } = exp.sodiumplus
 const load = async () => {
   const sodium = await SodiumPlus.auto()
   console.log(`libsodium backend: `, sodium.getBackendName())
+  let random = await sodium.randombytes_buf(32)
+  let hash = await sodium.crypto_generichash('hello world')
+  console.log({
+    random: random.toString('hex'),
+    hash: hash.toString('hex'),
+  })
+  console.log('crypto test complete')
 }
 load()
+
+const assert = require('assert')
+let thrown = false
+try {
+  assert()
+} catch (e) {
+  thrown = true
+}
+if (!thrown) {
+  throw new Error(
+    'Assert cannot throw - this is essential for library operation'
+  )
+}
 
 // module.exports = exp
