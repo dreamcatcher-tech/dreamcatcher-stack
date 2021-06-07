@@ -36,18 +36,6 @@
  */
 const { version } = require('./package.json')
 console.log(`version: `, version)
-if (typeof window === 'object') {
-  if (typeof window.setImmediate === 'function') {
-    setImmediate = window.setImmediate
-  }
-}
-const setImm = require('set-immediate-shim')
-const m = (arr) => {
-  const settest = new Set(arr)
-  const spread = [...settest]
-  console.log('settest:', settest, arr, spread)
-}
-setImm(m, [1, 2, 3])
 
 const {
   browserFactory,
