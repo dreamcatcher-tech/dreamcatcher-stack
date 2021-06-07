@@ -36,14 +36,14 @@
  */
 const { version } = require('./package.json')
 console.log(`version: `, version)
-// const {
-//   browserFactory,
-//   effectorFactory,
-//   awsFactory,
-// } = require('./w020-emulators')
-// const engine = require('./w017-standard-engine')
-// const apps = require('./w301-user-apps')
-// module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
+const {
+  browserFactory,
+  effectorFactory,
+  awsFactory,
+} = require('./w020-emulators')
+const engine = require('./w017-standard-engine')
+const apps = require('./w301-user-apps')
+module.exports = { browserFactory, effectorFactory, awsFactory, engine, apps }
 
 const exp = {}
 exp.ajv = require('ajv')
@@ -74,4 +74,4 @@ const load = async () => {
 }
 load()
 
-module.exports = exp
+// module.exports = exp
