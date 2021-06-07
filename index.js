@@ -34,6 +34,7 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
  */
+require('setimmediate') // needed for setImmediate polyfill
 const { version } = require('./package.json')
 console.log(`version: `, version)
 

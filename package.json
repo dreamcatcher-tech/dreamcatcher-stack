@@ -36,6 +36,7 @@
     "pad-left": "^2.1.0",
     "seedrandom": "^3.0.5",
     "serialize-error": "^8.1.0",
+    "setimmediate": "^1.0.5",
     "sodium-plus": "^0.9.0",
     "uuid": "^8.3.2",
     "xstate": "^4.19.2"
