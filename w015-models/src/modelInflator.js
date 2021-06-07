@@ -97,13 +97,7 @@ const validate = (schema, instance) => {
   assert(schema, `No schema supplied`)
   let validator = schemaMap.get(schema)
   if (!validator) {
-    try {
-      validator = ajv.compile(schema)
-      schemaMap.set(schema, validator)
-    } catch (e) {
-      const msg = `Compilation failed: ${schema && schema.title} ${e.message}`
-      throw new Error(msg)
-    }
+    validator = precompileSchema(schema)
   }
   const isValid = validator(instance)
   const errors = ajv.errorsText(validator.errors)
@@ -114,9 +108,15 @@ const validate = (schema, instance) => {
 const precompileSchema = (schema) => {
   // this is not noticeably faster, but makes profiling cleaner
   // as it does inevitable compilation before the main runs
-  assert(schema.title, `No title supplied`)
-  validator = ajv.compile(schema)
-  schemaMap.set(schema, validator)
+  assert(schema, `No schema supplied`)
+  try {
+    const validator = ajv.compile(schema)
+    schemaMap.set(schema, validator)
+    return validator
+  } catch (e) {
+    const msg = `Compilation failed: ${schema.title} ${e.message}`
+    throw new Error(msg)
+  }
 }
 
 module.exports = { modelInflator, precompileSchema }
