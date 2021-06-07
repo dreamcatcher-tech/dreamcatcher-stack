@@ -338,7 +338,8 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     )
     const deduped = new Set(affectedAddresses)
     debug(`dbQueryAffected items length: %O`, deduped.size)
-    return [...deduped]
+    const ret = [...deduped]
+    return ret
   }
 
   const getSockets = async (address) => {
