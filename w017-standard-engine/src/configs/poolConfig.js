@@ -105,7 +105,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         affectedAddresses: ({ affectedAddresses }, event) => {
           debug(`assignAffectedAddresses`)
           const affected = event.data
-          assert(Array.isArray(affected))
+          assert(Array.isArray(affected), `affected was not array`)
           return [...affected, ...affectedAddresses]
         },
       }),

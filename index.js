@@ -36,6 +36,11 @@
  */
 const { version } = require('./package.json')
 console.log(`version: `, version)
+
+const settest = new Set(...[1, 2, 3])
+const arr = [...settest]
+console.log('settest:', arr, settest)
+
 const {
   browserFactory,
   effectorFactory,
