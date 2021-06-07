@@ -284,7 +284,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
 }
 const enableLoggingWithTap = (engine, identifier) => {
   const { sqsPool, sqsTransmit, ioConsistency } = engine
-  debugPrefix = identifier ? `ib:met:${identifier}` : `ib:met`
+  const debugPrefix = identifier ? `ib:met:${identifier}` : `ib:met`
   const tap = createTap(debugPrefix)
   sqsPool.subscribe(async (action, queuePromise) => {
     // await queuePromise
