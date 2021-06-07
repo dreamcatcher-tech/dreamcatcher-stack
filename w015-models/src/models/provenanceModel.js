@@ -41,7 +41,7 @@ const provenanceModel = standardize({
     assert(Object.values(extraLineages).every(integrityModel.isModel))
     assert(!Object.keys(extraLineages).length || parentProvenance)
 
-    dmzIntegrity = integrityModel.create(dmz.getHash())
+    const dmzIntegrity = integrityModel.create(dmz.getHash())
 
     let address
     let height = 0
