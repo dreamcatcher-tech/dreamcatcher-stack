@@ -13,7 +13,7 @@
   "scripts": {
     "prepack": "webpack",
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
-    "tw": "yarn prepack && node dist/index.js",
+    "tw": "yarn prepack && node dist/interblock.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
     "release": "np"
   },

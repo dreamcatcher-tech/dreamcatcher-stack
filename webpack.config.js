@@ -8,23 +8,15 @@ const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
 const highPerformance = {
   optionsPreset: 'low-obfuscation',
-  // compact: true,
   // controlFlowFlattening: false,
-  // deadCodeInjection: true,
-  // deadCodeInjectionThreshold: 0.4,
   // debugProtection: false,
   // debugProtectionInterval: false,
-  // disableConsoleOutput: false,
   // identifierNamesGenerator: 'hexadecimal',
-  // ignoreRequireImports: true,
-  // log: false,
   // numbersToExpressions: false,
   // renameGlobals: false,
   // rotateStringArray: true,
   // selfDefending: false,
   // shuffleStringArray: true,
-  // simplify: true,
-  // splitStrings: true,
   // stringArray: true,
   // stringArrayEncoding: [],
   // stringArrayIndexShift: true,
@@ -34,14 +26,22 @@ const highPerformance = {
   // stringArrayWrappersType: 'variable',
   // stringArrayThreshold: 0.75,
   // unicodeEscapeSequence: false,
-  // transformObjectKeys: true,
-  // target: 'node',
+  splitStrings: true,
+  simplify: true,
+  deadCodeInjection: true,
+  deadCodeInjectionThreshold: 0.4,
+  compact: true,
+  disableConsoleOutput: false,
+  log: true,
+  transformObjectKeys: true,
+  ignoreRequireImports: true,
+  target: 'node',
 }
 
 // external dependencies cannot use a function to generate their string in webpack
-const { dependencies } = require('./package.json')
-highPerformance.reservedStrings = Object.keys(dependencies)
-highPerformance.reservedStrings.push('path', 'util', 'assert')
+// const { dependencies } = require('./package.json')
+// highPerformance.reservedStrings = Object.keys(dependencies)
+// highPerformance.reservedStrings.push('path', 'util', 'assert')
 module.exports = {
   entry: './index.js',
   output: {
@@ -53,7 +53,7 @@ module.exports = {
     library: {
       name: 'interblock',
       type: 'umd',
-      // umdNamedDefine: true,
+      umdNamedDefine: true,
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
@@ -69,9 +69,9 @@ module.exports = {
     new WebpackObfuscator(highPerformance),
   ],
   // stats: { errorDetails: true },
-  optimization: {
-    minimize: true,
-    mangleExports: 'size',
-    nodeEnv: 'production',
-  },
+  // optimization: {
+  //   minimize: true,
+  //   mangleExports: 'size',
+  //   nodeEnv: 'production',
+  // },
 }
