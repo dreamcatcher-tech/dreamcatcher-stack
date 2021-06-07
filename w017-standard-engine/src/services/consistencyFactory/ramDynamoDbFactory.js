@@ -1,6 +1,7 @@
 const debug = require('debug')('interblock:aws:ramDynamoDb')
 const assert = require('assert')
 const _ = require('lodash')
+const setImmediate = require('set-immediate-shim')
 
 const ramDynamoDbFactory = () => {
   const tables = {
@@ -38,11 +39,8 @@ const ramDynamoDbFactory = () => {
   }
   const query = (params) => {
     debug(`query %O`, params.TableName)
-    const {
-      TableName,
-      KeyConditionExpression,
-      ExpressionAttributeValues,
-    } = params
+    const { TableName, KeyConditionExpression, ExpressionAttributeValues } =
+      params
     assert.strictEqual(KeyConditionExpression, 'chainId = :hkey')
     const chainId = ExpressionAttributeValues[':hkey']
     assert(chainId)

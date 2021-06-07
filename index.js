@@ -34,10 +34,9 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
  */
-require('setimmediate') // needed for setImmediate polyfill
 const { version } = require('./package.json')
 console.log(`version: `, version)
-
+const setImmediate = require('set-immediate-shim')
 const m = (arr) => {
   const settest = new Set(arr)
   const spread = [...settest]

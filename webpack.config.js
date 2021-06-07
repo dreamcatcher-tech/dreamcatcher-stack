@@ -58,13 +58,13 @@ module.exports = {
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { node: true },
-  target: 'web', //'node14.17',
+  target: 'node', //'node14.17',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'development',
   devtool: false,
   plugins: [
     new CleanWebpackPlugin(),
-    new NodePolyfillPlugin(), // didn't appear to make a difference
+    // new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
     // new WebpackObfuscator(highPerformance),
   ],

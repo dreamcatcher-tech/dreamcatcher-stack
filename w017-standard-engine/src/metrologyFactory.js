@@ -30,6 +30,7 @@
 const assert = require('assert')
 const debugBase = require('debug')('ib:met')
 const _ = require('lodash')
+const setImmediate = require('set-immediate-shim')
 const { standardEngineFactory } = require('./standardEngineFactory')
 const { isolateFactory } = require('./services/isolateFactory')
 const {

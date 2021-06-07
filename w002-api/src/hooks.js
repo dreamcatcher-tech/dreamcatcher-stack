@@ -1,6 +1,7 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:api:hooks')
 const equal = require('fast-deep-equal')
+const setImmediate = require('set-immediate-shim')
 const { request, promise, resolve, reject, isReplyFor } = require('./api')
 
 const _eternalPromise = new Promise(() => {
@@ -143,9 +144,8 @@ const _incrementGlobalRequestId = () => {
 const _assertGlobals = () => {
   assert(globalThis['@@interblock'])
   assert(globalThis['@@interblock'].promises)
-  const { accumulator, requests, replies, requestId } = globalThis[
-    '@@interblock'
-  ].promises
+  const { accumulator, requests, replies, requestId } =
+    globalThis['@@interblock'].promises
   assert(Array.isArray(accumulator))
   assert(Array.isArray(requests))
   assert(Array.isArray(replies))

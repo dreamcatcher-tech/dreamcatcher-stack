@@ -1,4 +1,6 @@
 const assert = require('assert')
+const setImmediate = require('set-immediate-shim')
+
 const ioQueueFactory = (name, model) => {
   assert(name && typeof name === 'string')
   const debug = require('debug')('interblock:queue:' + name)
