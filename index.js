@@ -50,28 +50,28 @@ exp.ajv = require('ajv')
 exp.ajvformats = require('ajv-formats')
 exp.debug = require('debug')
 exp.faker = require('faker')
-// exp.fastdeepequal = require('fast-deep-equal')
-// exp.fastjsonstablestringify = require('fast-json-stable-stringify')
-// exp.fastjsonstringify = require('fast-json-stringify')
-// exp.jsonschemafaker = require('json-schema-faker')
-// exp.localforage = require('localforage')
-// exp.lodash = require('lodash')
-// exp.nodeobjecthash = require('node-object-hash')
-// exp.objecthash = require('object-hash')
-// exp.padleft = require('pad-left')
-// exp.seedrandom = require('seedrandom')
-// exp.serializeerror = require('serialize-error')
-// exp.sodiumplus = require('sodium-plus')
-// exp.uuid = require('uuid')
-// exp.xstate = require('xstate')
+exp.fastdeepequal = require('fast-deep-equal')
+exp.fastjsonstablestringify = require('fast-json-stable-stringify')
+exp.fastjsonstringify = require('fast-json-stringify')
+exp.jsonschemafaker = require('json-schema-faker')
+exp.localforage = require('localforage')
+exp.lodash = require('lodash')
+exp.nodeobjecthash = require('node-object-hash')
+exp.objecthash = require('object-hash')
+exp.padleft = require('pad-left')
+exp.seedrandom = require('seedrandom')
+exp.serializeerror = require('serialize-error')
+exp.sodiumplus = require('sodium-plus')
+exp.uuid = require('uuid')
+exp.xstate = require('xstate')
 
 console.log('loaded')
 
-// const { SodiumPlus } = exp.sodiumplus
-// const load = async () => {
-//   const sodium = await SodiumPlus.auto()
-//   console.log(`libsodium backend: `, sodium.getBackendName())
-// }
-// load()
+const { SodiumPlus } = exp.sodiumplus
+const load = async () => {
+  const sodium = await SodiumPlus.auto()
+  console.log(`libsodium backend: `, sodium.getBackendName())
+}
+load()
 
 module.exports = exp
