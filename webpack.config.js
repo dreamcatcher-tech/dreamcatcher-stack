@@ -58,7 +58,7 @@ module.exports = {
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { node: true },
-  target: 'node14.17',
+  target: 'node', //'node14.17',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'development',
   devtool: false,

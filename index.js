@@ -38,9 +38,12 @@ require('setimmediate') // needed for setImmediate polyfill
 const { version } = require('./package.json')
 console.log(`version: `, version)
 
-const settest = new Set([1, 2, 3])
-const arr = [...settest]
-console.log('settest:', arr, settest)
+const m = (arr) => {
+  const settest = new Set(arr)
+  const spread = [...settest]
+  console.log('settest:', settest, arr, spread)
+}
+setImmediate(m, [1, 2, 3])
 
 const {
   browserFactory,
