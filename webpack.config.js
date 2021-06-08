@@ -53,7 +53,7 @@ module.exports = {
   target: 'node16.17',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'production',
-  devtool: false,
+  devtool: false, // TODO make sourcemap so can debug
   plugins: [
     // new BundleAnalyzerPlugin(),
     new CleanWebpackPlugin(),

@@ -7,7 +7,7 @@
     "url": "https://github.com/dreamcatcher-tech/interblock"
   },
   "files": [
-    "dist/"
+    "dist/interblock*"
   ],
   "main": "dist/interblock.js",
   "scripts": {
