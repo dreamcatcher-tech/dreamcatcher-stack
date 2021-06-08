@@ -70,6 +70,7 @@ module.exports = {
       'sodium-native': false,
       bufferutil: false,
       'utf-8-validate': false,
+      'cli-truncate': false,
     },
   },
 }
