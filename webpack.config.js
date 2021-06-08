@@ -51,7 +51,7 @@ module.exports = {
   },
   externalsPresets: { node: true },
   target: 'node16.17',
-  externals: [nodeExternals({ modulesFromFile: true })],
+  externals: [nodeExternals({ modulesFromFile: true }), 'ws', 'cli-truncate'],
   mode: 'production',
   devtool: false,
   plugins: [
