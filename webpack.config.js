@@ -4,7 +4,6 @@ const path = require('path')
 const nodeExternals = require('webpack-node-externals')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const WebpackObfuscator = require('webpack-obfuscator')
-const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
 const highPerformance = {
   optionsPreset: 'low-obfuscation',
@@ -21,8 +20,8 @@ const highPerformance = {
   // stringArrayWrappersChainedCalls: true,
   // stringArrayWrappersParametersMaxCount: 2,
   // stringArrayWrappersType: 'variable',
-  // stringArrayThreshold: 0.75,
   // unicodeEscapeSequence: false,
+  stringArrayThreshold: 0.75,
   stringArrayIndexShift: true,
   shuffleStringArray: true,
   stringArray: true,
@@ -43,9 +42,6 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: `interblock.js`,
-    // library: 'interblock',
-    // libraryTarget: 'umd',
-    // library: 'interblock',
     library: {
       name: 'interblock',
       type: 'umd',
@@ -54,17 +50,15 @@ module.exports = {
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { node: true },
-  // target: 'node16.17',
+  target: 'node16.17',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'production',
   devtool: false,
   plugins: [
-    new CleanWebpackPlugin(),
-    // new NodePolyfillPlugin(), // didn't appear to make a difference
     // new BundleAnalyzerPlugin(),
+    new CleanWebpackPlugin(),
     new WebpackObfuscator(highPerformance),
   ],
-  // stats: { errorDetails: true },
   optimization: {
     minimize: true,
     mangleExports: 'size',
