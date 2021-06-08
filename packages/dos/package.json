@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/dos",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Terminal interface to the HyperNet",
   "main": "dist/dos.js",
   "files": [
