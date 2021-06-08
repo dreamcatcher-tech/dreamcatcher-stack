@@ -2,22 +2,25 @@
   "name": "@dreamcatcher-tech/dos",
   "version": "0.0.7",
   "description": "Terminal interface to the HyperNet",
-  "main": "src/index.js",
+  "main": "dist/dos.js",
   "files": [
-    "*"
+    "dist/dos.*"
   ],
   "bin": {
     "dos": "src/bin.js"
   },
   "scripts": {
+    "prepack": "webpack",
     "start": "DEBUG='*dos*' node src/bin",
     "dev": "nodemon src/bin",
-    "release": "np"
+    "release": "np",
+    "tw": "yarn prepack && node dist/dos.js"
   },
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@dreamcatcher-tech/interblock": "latest",
+    "ansi-colors": "^4.1.1",
     "better-opn": "^2.0.0",
     "chalk": "^4.1.0",
     "clear": "^0.1.0",
@@ -32,15 +35,20 @@
     "filesize": "^3.6.1",
     "localforage": "^1.9.0",
     "ora": "^3.0.0",
-    "pad": "^3.2.0",
+    "pad-left": "^2.1.0",
     "pretty-ms": "^7.0.0",
     "pull-stream": "^3.6.9",
     "random-hash": "^4.0.1",
     "wordwrap": "^1.0.0"
   },
   "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0-alpha.0",
     "nodemon": "^1.19.3",
-    "np": "^7.5.0"
+    "np": "^7.5.0",
+    "webpack": "^5.38.1",
+    "webpack-bundle-analyzer": "^4.4.2",
+    "webpack-cli": "^4.7.2",
+    "webpack-node-externals": "^3.0.0"
   },
   "publishConfig": {
     "access": "public"

@@ -3,7 +3,7 @@ const debug = require('debug')('dos:commands:ls')
 const posix = require('path')
 const cliui = require('cliui')
 const chalk = require('ansi-colors')
-const pad = require('pad/dist/pad.umd')
+const pad = require('pad-left')
 module.exports = async function ls({ spinner, blockchain }, path = '.') {
   spinner.text = `Resolving ${path}`
 

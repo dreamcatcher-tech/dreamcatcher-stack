@@ -1,3 +1,3 @@
 module.exports = async () => {
-  require('open')('https://aws.amazon.com/cognito/')
+  require('better-opn')('https://aws.amazon.com/cognito/')
 }
