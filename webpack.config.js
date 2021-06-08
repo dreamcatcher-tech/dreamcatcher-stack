@@ -38,10 +38,6 @@ const highPerformance = {
   target: 'node',
 }
 
-// external dependencies cannot use a function to generate their string in webpack
-// const { dependencies } = require('./package.json')
-// highPerformance.reservedStrings = Object.keys(dependencies)
-// highPerformance.reservedStrings.push('path', 'util', 'assert')
 module.exports = {
   entry: './index.js',
   output: {
