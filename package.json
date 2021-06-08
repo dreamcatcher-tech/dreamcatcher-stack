@@ -1,5 +1,5 @@
 {
-  "name": "reaper-taco-yam-lizard",
+  "name": "@dreamcatcher-tech/interblock",
   "version": "0.0.84",
   "description": "",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/dreamcatcher-tech/interblock"
   },
   "files": [
-    "dist/interblock*"
+    "dist/interblock.*"
   ],
   "main": "dist/interblock.js",
   "scripts": {
