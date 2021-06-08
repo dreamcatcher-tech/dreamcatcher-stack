@@ -18,7 +18,12 @@ module.exports = {
   },
   externalsPresets: { node: true },
   target: 'node14.17',
-  externals: [nodeExternals({ modulesFromFile: true })],
+  externals: [
+    nodeExternals({
+      modulesFromFile: true,
+      allowlist: ['enquirer-browserify'],
+    }),
+  ],
   mode: 'production',
   devtool: false, // TODO make sourcemap so can debug
   plugins: [
