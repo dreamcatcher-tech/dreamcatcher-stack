@@ -50,7 +50,7 @@ module.exports = {
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { node: true },
-  target: 'node16.17',
+  target: 'node14.17',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'production',
   devtool: false, // TODO make sourcemap so can debug
