@@ -64,4 +64,12 @@ module.exports = {
     mangleExports: 'size',
     nodeEnv: 'production',
   },
+  resolve: {
+    // stop warnings when bundling
+    fallback: {
+      'sodium-native': false,
+      bufferutil: false,
+      'utf-8-validate': false,
+    },
+  },
 }
