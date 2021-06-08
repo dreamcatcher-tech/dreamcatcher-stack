@@ -46,6 +46,7 @@
     "supports-color": "^9.0.1",
     "truncate": "^2.1.0",
     "uuid": "^8.3.2",
+    "ws": "^7.4.6",
     "xstate": "^4.19.2"
   },
   "jest": {

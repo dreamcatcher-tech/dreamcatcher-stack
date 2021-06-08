@@ -51,7 +51,7 @@ module.exports = {
   },
   externalsPresets: { node: true },
   target: 'node16.17',
-  externals: [nodeExternals({ modulesFromFile: true }), 'ws', 'cli-truncate'],
+  externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'production',
   devtool: false,
   plugins: [
@@ -63,14 +63,5 @@ module.exports = {
     minimize: true,
     mangleExports: 'size',
     nodeEnv: 'production',
-  },
-  resolve: {
-    // stop warnings when bundling
-    fallback: {
-      'sodium-native': false,
-      bufferutil: false,
-      'utf-8-validate': false,
-      'cli-truncate': false,
-    },
   },
 }
