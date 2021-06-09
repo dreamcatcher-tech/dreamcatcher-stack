@@ -14,10 +14,11 @@ jobs:
         with:
           node-version: '14.x'
           registry-url: https://registry.npmjs.org/
+      - run: git config --global user.email "actions@github.com"
+      - run: git config --global user.name "interbot"
       - run: npm config set //registry.npmjs.org/:_authToken ${NPM_AUTH_TOKEN}
         env:
           NPM_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
-      - run: npm whoami
       - run: yarn
       - run: npm run release --no-tests --no-2fa patch
 
