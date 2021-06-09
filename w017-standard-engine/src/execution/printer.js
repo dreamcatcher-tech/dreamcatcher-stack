@@ -1,7 +1,7 @@
 const assert = require('assert')
 const truncate = require('truncate')
 const chalk = require('ansi-colors')
-const pad = require('pad/dist/pad.umd')
+const pad = require('pad-left')
 const prettyBytes = require('pretty-bytes')
 const columnify = require('columnify')
 

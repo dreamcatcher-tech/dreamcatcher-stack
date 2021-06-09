@@ -13,7 +13,7 @@
   "scripts": {
     "prepack": "webpack",
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
-    "tw": "yarn prepack && node dist/interblock.js",
+    "tw": "yarn prepack && node moduleCheck.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
     "release": "np"
   },
@@ -35,7 +35,6 @@
     "lodash": "^4.17.21",
     "node-object-hash": "^2.3.3",
     "object-hash": "^2.2.0",
-    "pad": "^3.2.0",
     "pad-left": "^2.1.0",
     "pretty-bytes": "^5.6.0",
     "seedrandom": "^3.0.5",

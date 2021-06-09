@@ -1,0 +1,5 @@
+console.log('Running module load checks on ./dist/interblock.js')
+const assert = require('assert')
+const { checkModules } = require('./dist/interblock')
+const modules = checkModules()
+assert(Object.keys(modules).length)
