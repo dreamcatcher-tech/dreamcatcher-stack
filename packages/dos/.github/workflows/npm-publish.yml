@@ -17,4 +17,4 @@ jobs:
       - run: yarn
       - run: yarn run release --no-tests --no-2fa patch
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NPM_AUTH_TOKEN: ${{secrets.npm_token}}
