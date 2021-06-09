@@ -14,7 +14,6 @@ jobs:
         with:
           node-version: '14.x'
           registry-url: https://registry.npmjs.org/
-      - run: yarn
-      - run: npm run release --no-tests --no-2fa patch
+      - run: npm whoami
         env:
           NPM_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
