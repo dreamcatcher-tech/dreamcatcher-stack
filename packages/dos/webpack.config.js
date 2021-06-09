@@ -21,7 +21,6 @@ module.exports = {
   externals: [
     nodeExternals({
       modulesFromFile: true,
-      allowlist: ['enquirer-browserify'],
     }),
   ],
   mode: 'production',
