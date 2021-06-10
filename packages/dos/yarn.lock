@@ -28,10 +28,10 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.3.tgz#90420f9f9c6d3987f176a19a7d8e764271a2f55d"
   integrity sha512-Fxt+AfXgjMoin2maPIYzFZnQjAXjAL0PHscM5pRTtatFqB+vZxAM9tLp2Optnuw3QOQC40jTNeGYFOMvyf7v9g==
 
-"@dreamcatcher-tech/interblock@^0.0.85":
-  version "0.0.85"
-  resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/interblock/-/interblock-0.0.85.tgz#31fe37d0f13739fbb218162115b4a58713e0baee"
-  integrity sha512-WCDmwSRniq6scQ51bkv8VwKHj9oE7ZtAMixBwhYmCNpJtnbwxdmkvaQdsxmjcF8yIAhUm7BAuaVgwL96l4zdVg==
+"@dreamcatcher-tech/interblock@>=0.0.87":
+  version "0.0.87"
+  resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/interblock/-/interblock-0.0.87.tgz#ae86074604a776d347d39670fc6f51356cdc50a7"
+  integrity sha512-MZz7k5n7ECE8CBLBFsvR99RPfHWa2j1xLwFLuY1dASCIC9M92I16JGakQL5HRMjaG5YXkNYSuT7svflw0kIRNg==
   dependencies:
     ajv "^8.6.0"
     ajv-formats "^2.1.0"
@@ -47,7 +47,6 @@
     lodash "^4.17.21"
     node-object-hash "^2.3.3"
     object-hash "^2.2.0"
-    pad "^3.2.0"
     pad-left "^2.1.0"
     pretty-bytes "^5.6.0"
     seedrandom "^3.0.5"
@@ -3404,13 +3403,6 @@ pad-left@^2.1.0:
   integrity sha1-FuajstRKjhOMsIOMx8tAOk/J6ZQ=
   dependencies:
     repeat-string "^1.5.4"
-
-pad@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/pad/-/pad-3.2.0.tgz#be7a1d1cb6757049b4ad5b70e71977158fea95d1"
-  integrity sha512-2u0TrjcGbOjBTJpyewEl4hBO3OeX5wWue7eIFPzQTg6wFSvoaHcBTTUY5m+n0hd04gmTCPuY0kCpVIVuw5etwg==
-  dependencies:
-    wcwidth "^1.0.1"
 
 parent-module@^1.0.0:
   version "1.0.1"

@@ -2,27 +2,24 @@
   "name": "@dreamcatcher-tech/dos",
   "version": "0.0.14",
   "description": "Terminal interface to the HyperNet",
-  "main": "dist/dos.js",
+  "main": "src/index.js",
   "files": [
-    "dist/dos.*"
+    "*"
   ],
   "bin": {
     "dos": "src/bin.js"
   },
   "scripts": {
-    "prepack": "webpack",
     "start": "DEBUG='*dos*' node src/bin",
     "dev": "nodemon src/bin",
-    "release": "np",
-    "tw": "yarn prepack && node dist/dos.js"
+    "release": "np"
   },
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@dreamcatcher-tech/interblock": "^0.0.85",
+    "@dreamcatcher-tech/interblock": ">=0.0.87",
     "ansi-colors": "^4.1.1",
     "better-opn": "^2.0.0",
-    "chalk": "^4.1.0",
     "clear": "^0.1.0",
     "cliui": "^6.0.0",
     "commander": "^6.1.0",
