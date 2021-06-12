@@ -28,7 +28,7 @@ const sodiumLoader = () => {
   }
   return globalThis._sodiumPromise
 }
-// sodiumLoader() // web bundlers sometimes load multiple instances
+sodiumLoader() // web bundlers sometimes load multiple instances
 
 const _hashTemplate = objectHash('template')
 
