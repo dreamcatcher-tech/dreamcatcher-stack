@@ -17,7 +17,6 @@
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@dreamcatcher-tech/interblock": ">=0.0.87",
     "ansi-colors": "^4.1.1",
     "better-opn": "^2.0.0",
     "clear": "^0.1.0",
@@ -62,5 +61,8 @@
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true
+  },
+  "peerDependencies": {
+    "@dreamcatcher-tech/interblock": "^0.0.87"
   }
 }

@@ -323,7 +323,7 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dreamcatcher-tech/interblock@>=0.0.87":
+"@dreamcatcher-tech/interblock@^0.0.87":
   version "0.0.87"
   resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/interblock/-/interblock-0.0.87.tgz#ae86074604a776d347d39670fc6f51356cdc50a7"
   integrity sha512-MZz7k5n7ECE8CBLBFsvR99RPfHWa2j1xLwFLuY1dASCIC9M92I16JGakQL5HRMjaG5YXkNYSuT7svflw0kIRNg==
