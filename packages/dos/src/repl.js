@@ -1,12 +1,19 @@
 const debug = require('debug')('dos:repl')
 const ora = require('ora')
-const { effectorFactory, apps } = require('@dreamcatcher-tech/interblock')
+const {
+  effectorFactory,
+  apps,
+  checkModules,
+} = require('@dreamcatcher-tech/interblock')
 const { read } = require('./read')
 const { evaluate } = require('./eval')
 const { withAutoComplete } = require('./auto-complete')
 const { withSpin } = require('./spinner')
 const print = require('./print')
 const loop = require('./loop')
+
+checkModules()
+debug('loaded')
 
 module.exports = async function repl(opts) {
   // require('debug').enable('*:repl *commands* *:eval')
