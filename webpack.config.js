@@ -44,9 +44,9 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: `interblock.js`,
     library: {
-      name: 'interblock',
-      type: 'umd',
-      umdNamedDefine: true,
+      // name: 'interblock',
+      type: 'commonjs-module',
+      // umdNamedDefine: true,
     },
     globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },

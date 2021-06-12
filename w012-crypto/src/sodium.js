@@ -16,22 +16,19 @@ const pierceKeypair = {
   secretKey:
     'r6m8nU2GqsSg38+0TXKXrIgd8WHsJfr5qlSZZDz7GN7xqS1kexXKv/LLpqsmIk/wXU4jg1rl5DD2kgfp/tetXQ==',
 }
-Object.freeze(ciKeypair)
-Object.freeze(pierceKeypair)
 const _verifiedSet = new Set([
-  `${ciKeypair.publicKey}_${ciKeypair.secretKey}`,
+  `${ciKeypair.publicKey}_${ciKeypair.secretKey}`, // TODO use hashes, to obscure in memory
   `${pierceKeypair.publicKey}_${pierceKeypair.secretKey}`,
 ])
 
-let _sodiumPromise
 const sodiumLoader = () => {
   // apiGateway loads module multiple times - only instantiate when called directly.
-  if (!_sodiumPromise) {
-    _sodiumPromise = SodiumPlus.auto()
+  if (!globalThis._sodiumPromise) {
+    globalThis._sodiumPromise = SodiumPlus.auto()
   }
-  return _sodiumPromise
+  return globalThis._sodiumPromise
 }
-sodiumLoader()
+// sodiumLoader() // web bundlers sometimes load multiple instances
 
 const _hashTemplate = objectHash('template')
 
