@@ -12,9 +12,6 @@ const { withSpin } = require('./spinner')
 const print = require('./print')
 const loop = require('./loop')
 
-// checkModules()
-// debug('loaded')
-
 module.exports = async function repl(opts) {
   // require('debug').enable('*:repl *commands* *:eval')
   debug(`repl`)

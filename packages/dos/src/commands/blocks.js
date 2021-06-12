@@ -3,7 +3,6 @@ const posix = require('path')
 const debug = require('debug')('dos:commands:blocks')
 const { engine } = require('@dreamcatcher-tech/interblock')
 const { blockPrint } = engine
-// debug('loaded')
 
 module.exports = async ({ blockchain }, ...[path, start, stop, ...args]) => {
   debug(`blocks %O`, path, start, stop, args)

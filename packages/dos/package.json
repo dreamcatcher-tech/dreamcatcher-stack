@@ -63,6 +63,6 @@
     "singleQuote": true
   },
   "peerDependencies": {
-    "@dreamcatcher-tech/interblock": "^0.0.90"
+    "@dreamcatcher-tech/interblock": "^0.0.91"
   }
 }
