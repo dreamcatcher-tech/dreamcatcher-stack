@@ -24,7 +24,9 @@ const _verifiedSet = new Set([
 const sodiumLoader = () => {
   // apiGateway loads module multiple times - only instantiate when called directly.
   if (!globalThis._sodiumPromise) {
+    console.log('loading sodiumPlus')
     globalThis._sodiumPromise = SodiumPlus.auto()
+    globalThis._sodiumPromise.then(() => console.log('sodiumPlus loaded'))
   }
   return globalThis._sodiumPromise
 }

@@ -33,7 +33,11 @@
     fNtp7TG4XeeOLbZWfld16gw==UALt
     -----END PGP PUBLIC KEY BLOCK-----
 
- */
+    */
+if (globalThis._interblockLibrary) {
+  module.exports = globalThis._interblockLibrary
+  return
+}
 if (typeof globalThis.interblockLoadCounter === 'undefined') {
   globalThis.interblockLoadCounter = 0
 }
@@ -111,3 +115,4 @@ module.exports = {
   apps,
   checkModules,
 }
+globalThis._interblockLibrary = module.exports
