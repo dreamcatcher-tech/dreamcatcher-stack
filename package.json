@@ -42,7 +42,7 @@
     "set-immediate-shim": "^2.0.0",
     "sodium-native": "^3.2.1",
     "sodium-plus": "^0.9.0",
-    "supports-color": "^9.0.1",
+    "supports-color": "^8.1.1",
     "truncate": "^2.1.0",
     "uuid": "^8.3.2",
     "ws": "^7.4.6",
