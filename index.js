@@ -34,85 +34,83 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
-if (globalThis._interblockLibrary) {
-  module.exports = globalThis._interblockLibrary
-  return
-}
-if (typeof globalThis.interblockLoadCounter === 'undefined') {
-  globalThis.interblockLoadCounter = 0
-}
-globalThis.interblockLoadCounter++
-const { version } = require('./package.json')
-console.log(
-  `interblock version: ${version} loadCount: ${globalThis.interblockLoadCounter}`
-)
-
-const {
-  browserFactory,
-  effectorFactory,
-  awsFactory,
-} = require('./w020-emulators')
-const engine = require('./w017-standard-engine')
-const apps = require('./w301-user-apps')
-
-const checkModules = () => {
-  const exp = {}
-  exp.ajv = require('ajv')
-  exp.ajvformats = require('ajv-formats')
-  exp.debug = require('debug')
-  exp.faker = require('faker')
-  exp.fastdeepequal = require('fast-deep-equal')
-  exp.fastjsonstablestringify = require('fast-json-stable-stringify')
-  exp.fastjsonstringify = require('fast-json-stringify')
-  exp.jsonschemafaker = require('json-schema-faker')
-  exp.localforage = require('localforage')
-  exp.lodash = require('lodash')
-  exp.nodeobjecthash = require('node-object-hash')
-  exp.objecthash = require('object-hash')
-  exp.padleft = require('pad-left')
-  exp.seedrandom = require('seedrandom')
-  exp.serializeerror = require('serialize-error')
-  exp.sodiumplus = require('sodium-plus')
-  exp.uuid = require('uuid')
-  exp.xstate = require('xstate')
-
-  console.log('loaded')
-
-  const { SodiumPlus } = exp.sodiumplus
-  const load = async () => {
-    const sodium = await SodiumPlus.auto()
-    console.log(`libsodium backend: `, sodium.getBackendName())
-    let random = await sodium.randombytes_buf(32)
-    let hash = await sodium.crypto_generichash('hello world')
-    console.log({
-      random: random.toString('hex'),
-      hash: hash.toString('hex'),
-    })
-    console.log('crypto test complete')
+if (!globalThis._interblockLibrary) {
+  if (typeof globalThis.interblockLoadCounter === 'undefined') {
+    globalThis.interblockLoadCounter = 0
   }
-  load()
+  globalThis.interblockLoadCounter++
+  const { version } = require('./package.json')
+  console.log(
+    `interblock version: ${version} loadCount: ${globalThis.interblockLoadCounter}`
+  )
 
-  const assert = require('assert')
-  let thrown = false
-  try {
-    assert()
-  } catch (e) {
-    thrown = true
-  }
-  if (!thrown) {
-    throw new Error(
-      'Assert cannot throw - this is essential for library operation'
-    )
-  }
-  return exp
-}
+  const {
+    browserFactory,
+    effectorFactory,
+    awsFactory,
+  } = require('./w020-emulators')
+  const engine = require('./w017-standard-engine')
+  const apps = require('./w301-user-apps')
 
-module.exports = {
-  browserFactory,
-  effectorFactory,
-  awsFactory,
-  engine,
-  apps,
-  checkModules,
+  const checkModules = () => {
+    const exp = {}
+    exp.ajv = require('ajv')
+    exp.ajvformats = require('ajv-formats')
+    exp.debug = require('debug')
+    exp.faker = require('faker')
+    exp.fastdeepequal = require('fast-deep-equal')
+    exp.fastjsonstablestringify = require('fast-json-stable-stringify')
+    exp.fastjsonstringify = require('fast-json-stringify')
+    exp.jsonschemafaker = require('json-schema-faker')
+    exp.localforage = require('localforage')
+    exp.lodash = require('lodash')
+    exp.nodeobjecthash = require('node-object-hash')
+    exp.objecthash = require('object-hash')
+    exp.padleft = require('pad-left')
+    exp.seedrandom = require('seedrandom')
+    exp.serializeerror = require('serialize-error')
+    exp.sodiumplus = require('sodium-plus')
+    exp.uuid = require('uuid')
+    exp.xstate = require('xstate')
+
+    console.log('loaded')
+
+    const { SodiumPlus } = exp.sodiumplus
+    const load = async () => {
+      const sodium = await SodiumPlus.auto()
+      console.log(`libsodium backend: `, sodium.getBackendName())
+      let random = await sodium.randombytes_buf(32)
+      let hash = await sodium.crypto_generichash('hello world')
+      console.log({
+        random: random.toString('hex'),
+        hash: hash.toString('hex'),
+      })
+      console.log('crypto test complete')
+    }
+    load()
+
+    const assert = require('assert')
+    let thrown = false
+    try {
+      assert()
+    } catch (e) {
+      thrown = true
+    }
+    if (!thrown) {
+      throw new Error(
+        'Assert cannot throw - this is essential for library operation'
+      )
+    }
+    return exp
+  }
+
+  globalThis._interblockLibrary = {
+    browserFactory,
+    effectorFactory,
+    awsFactory,
+    engine,
+    apps,
+    checkModules,
+  }
 }
-globalThis._interblockLibrary = module.exports
+module.exports = globalThis._interblockLibrary
