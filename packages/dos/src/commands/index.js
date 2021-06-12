@@ -30,3 +30,6 @@ exports.blocks = require('./blocks')
 exports.scrub = require('./scrub')
 exports.namegen = require('./namegen')
 exports.validators = require('./validators')
+
+const debug = require('debug')('dos:commands')
+debug('loaded')
