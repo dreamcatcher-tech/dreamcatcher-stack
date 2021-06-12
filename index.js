@@ -34,8 +34,14 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
  */
+if (typeof globalThis.interblockLoadCounter === 'undefined') {
+  globalThis.interblockLoadCounter = 0
+}
+globalThis.interblockLoadCounter++
 const { version } = require('./package.json')
-console.log(`version: `, version)
+console.log(
+  `interblock version: ${version} loadCount: ${globalThis.interblockLoadCounter}`
+)
 
 const {
   browserFactory,
