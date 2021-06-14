@@ -19,7 +19,7 @@ module.exports = {
       //     analyzerMode: 'disabled',
       //   }),
       // ],
-      node: { fs: 'empty' },
+      node: { fs: 'empty', child_process: 'empty' },
     },
     aliases: {
       react: path.resolve('./node_modules/react'),

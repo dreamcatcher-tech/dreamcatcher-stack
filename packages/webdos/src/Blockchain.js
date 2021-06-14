@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { effectorFactory } from '@dreamcatcher-tech/interblock'
-// import commandLineShell from '@dreamcatcher-tech/dos'
+import commandLineShell from '@dreamcatcher-tech/dos'
 import debugFactory from 'debug'
 const debug = debugFactory('terminal:Blockchain')
 
@@ -24,7 +24,7 @@ const Blockchain = ({
       const blockchain = await effectorFactory(identifier)
       setBlockchain(blockchain)
       const emptyArgs = []
-      // commandLineShell(emptyArgs, { blockchain })
+      commandLineShell(emptyArgs, { blockchain })
       debug(`subscribing to blockchain`)
       unsubscribeBlocks = blockchain.subscribe(() => {
         const blockchainState = blockchain.getState()
