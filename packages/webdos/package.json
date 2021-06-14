@@ -1,7 +1,7 @@
 {
-  "name": "dosweb",
+  "name": "@dreamcatcher-tech/webdos",
   "version": "1.0.0",
-  "description": "dosweb React component",
+  "description": "Web components for DOS",
   "main": "lib/index.js",
   "module": "es/index.js",
   "files": [
@@ -11,28 +11,55 @@
     "umd"
   ],
   "scripts": {
-    "build": "nwb build-react-component",
+    "build": "nwb build-react-component --no-demo",
+    "build:watch": "nodemon -w src 'yarn build'",
     "clean": "nwb clean-module && nwb clean-demo",
     "prepublishOnly": "npm run build",
     "start": "nwb serve-react-demo",
     "test": "nwb test-react",
     "test:coverage": "nwb test-react --coverage",
-    "test:watch": "nwb test-react --server"
+    "test:watch": "nwb test-react --server",
+    "stats": "webpack-bundle-analyzer demo/dist/stats.json demo/dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@dreamcatcher-tech/interblock": "^0.0.91",
+    "@fontsource/roboto-mono": "^4.4.5",
+    "debug": "^4.3.1",
+    "fontfaceobserver": "^2.1.0",
+    "mock-stdin": "^1.0.0",
+    "xterm": "^4.13.0",
+    "xterm-addon-fit": "^0.5.0",
+    "xterm-addon-unicode11": "^0.2.0"
+  },
   "peerDependencies": {
+    "@dreamcatcher-tech/dos": ">=0.0.22",
+    "@dreamcatcher-tech/interblock": ">=0.0.91",
     "react": "16.x"
   },
   "devDependencies": {
+    "node-polyfill-webpack-plugin": "^1.1.2",
+    "nodemon": "^2.0.7",
     "nwb": "0.25.x",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "webpack-bundle-analyzer": "^4.4.2",
+    "webpack-node-externals": "^3.0.0"
   },
-  "author": "",
+  "repository": "git@github.com:dreamcatcher-tech/web-components.git",
+  "author": "evil_liskov <evil_liskov@protonmail.com>",
+  "license": "AGPL-3.0-or-later",
+  "private": false,
   "homepage": "",
-  "license": "MIT",
-  "repository": "",
   "keywords": [
     "react-component"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  }
 }
