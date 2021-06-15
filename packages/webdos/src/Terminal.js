@@ -129,7 +129,11 @@ const checkIsLikelyTor = () => {
     if (!done) {
       debug(`font: %o`, font.value)
     }
-    if (font.value && font.value[0].family === 'proxima-nova') {
+    if (
+      font.value &&
+      font.value[0] &&
+      font.value[0].family === 'proxima-nova'
+    ) {
       return false
     }
   }
