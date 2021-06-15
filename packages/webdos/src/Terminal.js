@@ -1,4 +1,4 @@
-import './Terminal.css'
+import '../css/Terminal.css'
 import assert from 'assert'
 import React, { useEffect, useRef } from 'react'
 import debugFactory from 'debug'
