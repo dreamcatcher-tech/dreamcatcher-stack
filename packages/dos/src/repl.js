@@ -4,6 +4,7 @@ const {
   effectorFactory,
   apps,
   checkModules,
+  version,
 } = require('@dreamcatcher-tech/interblock')
 const { read } = require('./read')
 const { evaluate } = require('./eval')
@@ -11,6 +12,7 @@ const { withAutoComplete } = require('./auto-complete')
 const { withSpin } = require('./spinner')
 const print = require('./print')
 const loop = require('./loop')
+const { version: dosVersion } = require('package.json')
 
 module.exports = async function repl(opts) {
   // require('debug').enable('*:repl *commands* *:eval')
@@ -69,7 +71,7 @@ async function getInitialCtx({ blockchain, evaluate }) {
     `begining boot sequence Ctrl+C to cancel and drop to local shell`
   )
   spinner.text = `checking for new app version on server "this webpage"`
-  spinner.info(`current build version: 0.0.0`).start()
+  spinner.info(`current server build version: (unknown)`).start()
   spinner.text = `looking for previous chains under the domain "this webpage"`
   // TODO check if wasm support is available - TOR blocks this in strict mode
   spinner.info(`no previous chains found`).start()
@@ -80,12 +82,10 @@ async function getInitialCtx({ blockchain, evaluate }) {
   const chainId = blockchain.getState().getChainId()
   spinner.info(`Blockchain initialized with chainId: ${chainId}`).start()
   spinner.text = `connecting to mainnet...`
-  // await new Promise((resolve) => setTimeout(resolve, 100))
   spinner.info(`connection to mainnet established`).start()
   spinner.info(`mainnet latency: 543 ms`)
   spinner.info(`peer connection count: 1`).start()
   spinner.text = `benchmarking local system` // TODO move to dedicated command with params
-  // await new Promise((resolve) => setTimeout(resolve, 100))
   spinner.info(`local blockrate 23 blocks per second / 53 ms per block`)
 
   spinner.text = `Provisioning app store`
@@ -105,8 +105,8 @@ async function getInitialCtx({ blockchain, evaluate }) {
   spinner.stop()
 
   await print(`Welcome to the HyperNet
-  Blockchain core: v0.0.5
-  Terminal:        v0.0.12
+  Blockchain core: v${version}
+  DOS:             v${dosVersion}
   type "help" to get started`)
   const user = 'root'
   const machineId = 'local'
