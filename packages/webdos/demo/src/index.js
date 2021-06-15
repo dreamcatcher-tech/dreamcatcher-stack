@@ -1,6 +1,9 @@
 import React, { Component } from 'react'
 import { render } from 'react-dom'
 import { Blockchain, Terminal } from '../../src'
+import Debug from 'debug'
+
+Debug.enable('terminal*')
 
 export default class Demo extends Component {
   render() {

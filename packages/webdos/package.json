@@ -15,7 +15,7 @@
     "build:watch": "nodemon -w src 'yarn build'",
     "clean": "nwb clean-module && nwb clean-demo",
     "prepublishOnly": "npm run build",
-    "start": "nwb serve-react-demo",
+    "start": "nwb serve-react-demo -- --reload",
     "test": "echo 'nwb test-react'",
     "test:coverage": "nwb test-react --coverage",
     "test:watch": "nwb test-react --server",
@@ -23,8 +23,6 @@
     "release": "np --no-2fa"
   },
   "dependencies": {
-    "@dreamcatcher-tech/dos": "^0.0.22",
-    "@dreamcatcher-tech/interblock": "^0.0.91",
     "@fontsource/roboto-mono": "^4.4.5",
     "debug": "^4.3.1",
     "fontfaceobserver": "^2.1.0",
@@ -39,6 +37,9 @@
     "react": "16.x"
   },
   "devDependencies": {
+    "@dreamcatcher-tech/dos": "^0.0.22",
+    "@dreamcatcher-tech/interblock": "^0.0.91",
+    "javascript-obfuscator": "^2.15.2",
     "node-polyfill-webpack-plugin": "^1.1.2",
     "nodemon": "^2.0.7",
     "np": "^7.5.0",
@@ -46,7 +47,8 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "webpack-bundle-analyzer": "^4.4.2",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-node-externals": "^3.0.0",
+    "webpack-obfuscator": "^3.3.2"
   },
   "repository": "git@github.com:dreamcatcher-tech/web-components.git",
   "author": "evil_liskov <evil_liskov@protonmail.com>",

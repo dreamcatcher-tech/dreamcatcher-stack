@@ -1,4 +1,4 @@
-import '../css/Terminal.css'
+import './Terminal.css'
 import assert from 'assert'
 import React, { useEffect, useRef } from 'react'
 import debugFactory from 'debug'
@@ -30,11 +30,11 @@ const convertToStdStream = (terminal) => {
   terminal.isTTY = true
   const clearLineCode = '\u001b[2K'
   terminal.clearLine = () => {
-    debug(`clearLine`)
+    // debug(`clearLine`)
     terminal.write(clearLineCode)
   }
   terminal.cursorTo = (x, y) => {
-    debug(`cursorTo: `, x, y)
+    // debug(`cursorTo: `, x, y)
     assert.strictEqual(x, 0)
     const leftByOneThousandChars = '\u001b[1000D'
     terminal.write(leftByOneThousandChars)
@@ -85,7 +85,7 @@ const TerminalContainer = (props) => {
     const roboto = new FontFaceObserver('Roboto Mono')
 
     const isTor = checkIsLikelyTor()
-    debug('isTor: %b', isTor)
+    debug('isTor: %o', isTor)
     const fontLoadDelay = 5000000
     const awaits = [roboto.load(null, fontLoadDelay)]
     let fonts = 'Roboto Mono'
@@ -109,6 +109,7 @@ const TerminalContainer = (props) => {
       })
       .catch((e) => {
         debug('error loading fonts: ', e)
+        console.error('error loading fonts: ', e)
       })
   }, [])
   return <div id="xterm-container" {...props}></div>
@@ -125,6 +126,9 @@ const checkIsLikelyTor = () => {
   while (!done) {
     const font = it.next()
     done = font.done
+    if (!done) {
+      debug(`font: %o`, font.value)
+    }
     if (font.value && font.value[0].family === 'proxima-nova') {
       return false
     }
