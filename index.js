@@ -111,6 +111,7 @@ if (!globalThis._interblockLibrary) {
     engine,
     apps,
     checkModules,
+    version,
   }
 }
 module.exports = globalThis._interblockLibrary
