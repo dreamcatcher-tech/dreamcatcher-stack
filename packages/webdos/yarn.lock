@@ -1069,10 +1069,10 @@
     "@babel/helper-validator-identifier" "^7.14.5"
     to-fast-properties "^2.0.0"
 
-"@dreamcatcher-tech/dos@>=0.0.22":
-  version "0.0.23"
-  resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/dos/-/dos-0.0.23.tgz#2874ed433b67ccf67c7faa1d70b6b61840da393e"
-  integrity sha512-TvQJS6zIVzU5ZnYmXyOJzVmR32V6r6Z3L8QnAoCoEM/wtPhabPwAM5NmNbM/KK4xUb7d2D69UfE4aVw2CnqjoA==
+"@dreamcatcher-tech/dos@>=0.0.24":
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/dos/-/dos-0.0.24.tgz#b4c593657d7791e94f7544289c021efbe9397457"
+  integrity sha512-HilIlmgmfTzun0NzjxRrC2olaRAZYjUPNdd+AuKk4pmulGeRSEL1dk56eguAhaalW9p4NZbeeHnGZaqk9N0Yrw==
   dependencies:
     ansi-colors "^4.1.1"
     better-opn "^2.0.0"
