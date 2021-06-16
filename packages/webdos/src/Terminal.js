@@ -101,11 +101,11 @@ const TerminalContainer = (props) => {
       // setting without delay cuases xterm layout bug
       // xterm measures using a huge default if font is not available at render
       .then(() => {
-        // debug('fonts loaded ')
-        // debug('fonts were: ', terminal.getOption('fontFamily'))
-        // terminal.setOption('fontFamily', fonts)
-        // debug('fonts set: ', terminal.getOption('fontFamily'))
-        // fitAddon.fit() // workaround for xterm blanking existing text on font change
+        debug('fonts loaded ')
+        debug('fonts were: ', terminal.getOption('fontFamily'))
+        terminal.setOption('fontFamily', fonts)
+        debug('fonts set: ', terminal.getOption('fontFamily'))
+        fitAddon.fit() // workaround for xterm blanking existing text on font change
       })
       .catch((e) => {
         debug('error loading fonts: ', e)
