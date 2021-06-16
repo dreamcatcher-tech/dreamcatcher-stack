@@ -10,6 +10,8 @@ import '@fontsource/roboto-mono'
 import 'xterm/css/xterm.css'
 import { stdin as mockStdin } from 'mock-stdin'
 
+import '../css/TorEmoji.woff2'
+
 const debug = debugFactory(`terminal:cli`)
 
 const getMockStdin = () => {
