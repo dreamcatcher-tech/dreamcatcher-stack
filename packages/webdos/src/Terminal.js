@@ -88,21 +88,22 @@ const TerminalContainer = (props) => {
     debug(`isTor: ${isTor}`)
     const fontLoadDelay = 5000000
     const fonts = []
-    const awaitRobotoLoad = roboto
-      .load(null, fontLoadDelay)
-      .then(() => fonts.push('Roboto Mono'))
-      .catch((e) => debug(`roboto load error:`, e))
-    const awaits = [awaitRobotoLoad]
+    const awaits = []
+    // const awaitRobotoLoad = roboto
+    //   .load(null, fontLoadDelay)
+    //   .then(() => fonts.push('Roboto Mono'))
+    //   .catch((e) => debug(`roboto load error:`, e))
+    // awaits.push(awaitRobotoLoad)
     if (isTor) {
       // chrome displays emojis badly
       // TODO get a webfont for emojis that displays correctly and is small
       debug('loading emojis for tor browser')
       const tor = new FontFaceObserver('TorEmoji')
-      const awaitTor = tor
-        .load('🦄', fontLoadDelay)
-        .then(() => fonts.push('TorEmoji'))
-        .catch((e) => debug(`tor load error:`, e))
-      awaits.push(awaitTor)
+      // const awaitTorLoad = tor
+      //   .load('🦄', fontLoadDelay)
+      //   .then(() => fonts.push('TorEmoji'))
+      //   .catch((e) => debug(`tor load error:`, e))
+      // awaits.push(awaitTorLoad)
     }
     Promise.all(awaits)
       // setting without delay causes xterm layout bug
