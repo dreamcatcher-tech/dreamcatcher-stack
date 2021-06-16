@@ -109,6 +109,7 @@ const TerminalContainer = (props) => {
       })
       .catch((e) => {
         debug('error loading fonts: ', e)
+        console.error('error loading fonts: ', e)
       })
   }, [])
   return <div id="xterm-container" {...props}></div>
@@ -126,7 +127,7 @@ const checkIsLikelyTor = () => {
     const font = it.next()
     done = font.done
     if (!done) {
-      debug(`font: ${font.value}`)
+      debug(`font: %o`, font.value)
     }
     if (
       font.value &&
