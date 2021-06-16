@@ -93,19 +93,19 @@ const TerminalContainer = (props) => {
       // chrome displays emojis badly
       // TODO get a webfont for emojis that displays correctly and is small
       debug('loading emojis for tor browser')
-      // const tor = new FontFaceObserver('TorEmoji')
-      // awaits.push(tor.load('🦄', fontLoadDelay))
-      // fonts += ', TorEmoji'
+      const tor = new FontFaceObserver('TorEmoji')
+      awaits.push(tor.load('🦄', fontLoadDelay))
+      fonts += ', TorEmoji'
     }
     Promise.all(awaits)
       // setting without delay cuases xterm layout bug
       // xterm measures using a huge default if font is not available at render
       .then(() => {
-        debug('fonts loaded ')
-        debug('fonts were: ', terminal.getOption('fontFamily'))
-        terminal.setOption('fontFamily', fonts)
-        debug('fonts set: ', terminal.getOption('fontFamily'))
-        fitAddon.fit() // workaround for xterm blanking existing text on font change
+        // debug('fonts loaded ')
+        // debug('fonts were: ', terminal.getOption('fontFamily'))
+        // terminal.setOption('fontFamily', fonts)
+        // debug('fonts set: ', terminal.getOption('fontFamily'))
+        // fitAddon.fit() // workaround for xterm blanking existing text on font change
       })
       .catch((e) => {
         debug('error loading fonts: ', e)
