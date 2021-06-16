@@ -82,34 +82,40 @@ const TerminalContainer = (props) => {
     process.stderr = terminal
     terminal.columns = terminal.cols // for enquirer to size itself correctly
 
-    // const roboto = new FontFaceObserver('Roboto Mono')
+    const roboto = new FontFaceObserver('Roboto Mono')
 
-    // const isTor = checkIsLikelyTor()
-    // debug(`isTor: ${isTor}`)
+    const isTor = checkIsLikelyTor()
+    debug(`isTor: ${isTor}`)
     const fontLoadDelay = 5000000
-    // const awaits = [roboto.load(null, fontLoadDelay)]
+    const awaitRobotoLoad = roboto
+      .load(null, fontLoadDelay)
+      .catch((e) => debug(`roboto load error:`, e))
+    const awaits = [awaitRobotoLoad]
     let fonts = 'Roboto Mono'
-    // if (isTor) {
-    // chrome displays emojis badly
-    // TODO get a webfont for emojis that displays correctly and is small
-    // debug('loading emojis for tor browser')
-    // const tor = new FontFaceObserver('TorEmoji')
-    // awaits.push(tor.load('🦄', fontLoadDelay))
-    // fonts += ', TorEmoji'
-    // }
-    // Promise.all(awaits)
-    //   // setting without delay causes xterm layout bug
-    //   // xterm measures using a huge default if font is not available at render
-    //   .then(() => {
-    //     // debug('fonts loaded ')
-    //     // debug('fonts were: ', terminal.getOption('fontFamily'))
-    //     // terminal.setOption('fontFamily', fonts)
-    //     // debug('fonts set: ', terminal.getOption('fontFamily'))
-    //     // fitAddon.fit() // workaround for xterm blanking existing text on font change
-    //   })
-    //   .catch((e) => {
-    //     debug('error loading fonts: ', e)
-    //   })
+    if (isTor) {
+      // chrome displays emojis badly
+      // TODO get a webfont for emojis that displays correctly and is small
+      debug('loading emojis for tor browser')
+      const tor = new FontFaceObserver('TorEmoji')
+      const awaitTor = tor
+        .load('🦄', fontLoadDelay)
+        .catch((e) => debug(`roboto load error:`, e))
+      awaits.push(awaitTor)
+      fonts += ', TorEmoji'
+    }
+    Promise.all(awaits)
+      // setting without delay causes xterm layout bug
+      // xterm measures using a huge default if font is not available at render
+      .then(() => {
+        debug('fonts loaded ')
+        debug('fonts were: ', terminal.getOption('fontFamily'))
+        terminal.setOption('fontFamily', fonts)
+        debug('fonts set: ', terminal.getOption('fontFamily'))
+        fitAddon.fit() // workaround for xterm blanking existing text on font change
+      })
+      .catch((e) => {
+        debug('error loading fonts: ', e)
+      })
     debug('terminal end')
   }, [])
   return <div id="xterm-container" {...props}></div>
