@@ -109,7 +109,6 @@ const TerminalContainer = (props) => {
       })
       .catch((e) => {
         debug('error loading fonts: ', e)
-        console.error('error loading fonts: ', e)
       })
   }, [])
   return <div id="xterm-container" {...props}></div>
