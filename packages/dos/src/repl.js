@@ -12,7 +12,7 @@ const { withAutoComplete } = require('./auto-complete')
 const { withSpin } = require('./spinner')
 const print = require('./print')
 const loop = require('./loop')
-const { version: dosVersion } = require('./package.json')
+const { version: dosVersion } = require('../package.json')
 
 module.exports = async function repl(opts) {
   // require('debug').enable('*:repl *commands* *:eval')
