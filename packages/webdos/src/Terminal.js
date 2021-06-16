@@ -85,7 +85,7 @@ const TerminalContainer = (props) => {
     const roboto = new FontFaceObserver('Roboto Mono')
 
     const isTor = checkIsLikelyTor()
-    debug('isTor: %o', isTor)
+    debug(`isTor: ${isTor}`)
     const fontLoadDelay = 5000000
     const awaits = [roboto.load(null, fontLoadDelay)]
     let fonts = 'Roboto Mono'
@@ -101,11 +101,11 @@ const TerminalContainer = (props) => {
       // setting without delay cuases xterm layout bug
       // xterm measures using a huge default if font is not available at render
       .then(() => {
-        debug('fonts loaded ')
-        debug('fonts were: ', terminal.getOption('fontFamily'))
-        terminal.setOption('fontFamily', fonts)
-        debug('fonts set: ', terminal.getOption('fontFamily'))
-        fitAddon.fit() // workaround for xterm blanking existing text on font change
+        // debug('fonts loaded ')
+        // debug('fonts were: ', terminal.getOption('fontFamily'))
+        // terminal.setOption('fontFamily', fonts)
+        // debug('fonts set: ', terminal.getOption('fontFamily'))
+        // fitAddon.fit() // workaround for xterm blanking existing text on font change
       })
       .catch((e) => {
         debug('error loading fonts: ', e)
@@ -126,7 +126,7 @@ const checkIsLikelyTor = () => {
     const font = it.next()
     done = font.done
     if (!done) {
-      debug(`font: %o`, font.value)
+      debug(`font: ${font.value}`)
     }
     if (
       font.value &&
