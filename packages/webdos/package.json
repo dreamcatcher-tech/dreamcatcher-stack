@@ -21,7 +21,7 @@
     "release": "np --no-2fa"
   },
   "dependencies": {
-    "@dreamcatcher-tech/dos": ">=0.0.22",
+    "@dreamcatcher-tech/dos": ">=0.0.24",
     "@dreamcatcher-tech/interblock": ">=0.0.91",
     "@fontsource/roboto-mono": "^4.4.5",
     "debug": "^4.3.1",
