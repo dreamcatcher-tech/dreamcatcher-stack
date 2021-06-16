@@ -93,9 +93,9 @@ const TerminalContainer = (props) => {
       // chrome displays emojis badly
       // TODO get a webfont for emojis that displays correctly and is small
       debug('loading emojis for tor browser')
-      const tor = new FontFaceObserver('TorEmoji')
-      awaits.push(tor.load('🦄', fontLoadDelay))
-      fonts += ', TorEmoji'
+      // const tor = new FontFaceObserver('TorEmoji')
+      // awaits.push(tor.load('🦄', fontLoadDelay))
+      // fonts += ', TorEmoji'
     }
     Promise.all(awaits)
       // setting without delay cuases xterm layout bug
