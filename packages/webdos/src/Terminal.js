@@ -101,11 +101,11 @@ const TerminalContainer = (props) => {
       // TODO get a webfont for emojis that displays correctly and is small
       debug('loading emojis for tor browser')
       const tor = new FontFaceObserver('TorEmoji')
-      // const awaitTorLoad = tor
-      //   .load('🦄', fontLoadDelay)
-      //   .then(() => fonts.push('TorEmoji'))
-      //   .catch((e) => debug(`tor load error:`, e))
-      // awaits.push(awaitTorLoad)
+      const awaitTorLoad = tor
+        .load('🦄', fontLoadDelay)
+        .then(() => fonts.push('TorEmoji'))
+        .catch((e) => debug(`tor load error:`, e))
+      awaits.push(awaitTorLoad)
     }
     Promise.all(awaits)
       // setting without delay causes xterm layout bug
