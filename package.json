@@ -15,7 +15,7 @@
     "test": "DEBUG_COLORS=1 DEBUG='' jest",
     "tw": "yarn prepack && node moduleCheck.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
-    "release": "np"
+    "release": "webpack && np"
   },
   "private": false,
   "author": "Dreamcatcher Command",
