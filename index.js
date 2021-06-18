@@ -34,15 +34,15 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
+const debug = require('debug')('interblock')
 if (!globalThis._interblockLibrary) {
   if (typeof globalThis.interblockLoadCounter === 'undefined') {
     globalThis.interblockLoadCounter = 0
   }
   globalThis.interblockLoadCounter++
   const { version } = require('./package.json')
-  console.log(
-    `interblock version: ${version} loadCount: ${globalThis.interblockLoadCounter}`
-  )
+  const count = globalThis.interblockLoadCounter
+  debug(`interblock version: ${version} loadCount: ${count}`)
 
   const {
     browserFactory,
@@ -73,19 +73,19 @@ if (!globalThis._interblockLibrary) {
     exp.uuid = require('uuid')
     exp.xstate = require('xstate')
 
-    console.log('loaded')
+    debug('loaded')
 
     const { SodiumPlus } = exp.sodiumplus
     const load = async () => {
       const sodium = await SodiumPlus.auto()
-      console.log(`libsodium backend: `, sodium.getBackendName())
+      debug(`libsodium backend: `, sodium.getBackendName())
       let random = await sodium.randombytes_buf(32)
       let hash = await sodium.crypto_generichash('hello world')
-      console.log({
+      debug({
         random: random.toString('hex'),
         hash: hash.toString('hex'),
       })
-      console.log('crypto test complete')
+      debug('crypto test complete')
     }
     load()
 
