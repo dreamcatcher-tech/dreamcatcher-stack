@@ -12,7 +12,7 @@
   "main": "index.js",
   "scripts": {
     "prepack": "webpack",
-    "test": "DEBUG_COLORS=1 DEBUG='' jest",
+    "test": "DEBUG_COLORS=1 DEBUG='' jest --bail",
     "tw": "yarn prepack && node moduleCheck.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
     "release": "webpack && np"
