@@ -239,6 +239,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       }
     }
     const getLatestFromPath = async (path) => {
+      // TODO use root hash to walk the known root assured latest
       // walk the tree to get the latest block
       // throw if invalid path
       const segments = _getPathSegments(path)

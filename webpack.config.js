@@ -27,10 +27,10 @@ const highPerformance = {
   // shuffleStringArray: true,
   // stringArray: true,
   // splitStrings: true,
-  // simplify: true,
+  simplify: true,
   // deadCodeInjection: true,
   // deadCodeInjectionThreshold: 0.4,
-  // compact: true,
+  compact: true,
   // disableConsoleOutput: false,
   // log: true,
   // transformObjectKeys: true,
@@ -48,7 +48,7 @@ module.exports = {
       type: 'commonjs-module',
       // umdNamedDefine: true,
     },
-    globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
+    // globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
   externalsPresets: { node: true },
   target: 'node14.17',

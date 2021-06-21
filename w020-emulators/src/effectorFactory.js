@@ -167,7 +167,11 @@ const _getCovenant = ({ covenantId }, overloads) => {
 const _inflateCovenants = (overloads) => {
   const models = {}
   for (const key in overloads) {
-    covenant = overloads[key]
+    let covenant = overloads[key]
+    assert(typeof covenant === 'object', `Covenant must be an object: ${key}`)
+    if (!covenant.covenantId) {
+      covenant = { ...covenant, covenantId: { name: key } }
+    }
     const { name, version, language, integrity } = covenant.covenantId
     covenant.covenantId = covenantIdModel.create(
       name,

@@ -139,7 +139,6 @@ const config = {
     install: async ({ wd }, event) => {
       const { dpkgPath, installPath } = event.payload
       debug(`install from: %o to: %o`, dpkgPath, installPath)
-      // TODO useBlocks to get the installer object ?
       const absDpkgPath = posix.resolve(wd, dpkgPath)
       const absInstallPath = posix.resolve(wd, installPath)
       // TODO consider a useState function to only return the state ?
@@ -168,6 +167,7 @@ const config = {
       const installAction = install(installer)
       const installResult = await interchain(installAction, absInstallPath)
       debug(`installResult: `, installResult)
+      return installResult
     },
     getState: async ({ wd }, event) => {
       // dump the contents of the chain at the given path

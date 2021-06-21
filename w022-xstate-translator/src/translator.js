@@ -45,11 +45,12 @@ const translator = (machine) => {
 
   return async (xstate, action) => {
     assert.strictEqual(typeof action, 'object')
-    if (action.type === '@@INIT') {
-      return xstate
-    }
     if (!xstate || equal(xstate, {})) {
       xstate = initialState
+    }
+    // TODO actually do an @@INIT action
+    if (action.type === '@@INIT') {
+      return xstate
     }
     assert(!xstate.actions || !xstate.actions.length, `uncleared xstate`)
     if (action.type.startsWith('done.invoke.')) {
