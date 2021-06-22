@@ -8,7 +8,19 @@ module.exports = async function ls({ spinner, blockchain }, path = '.') {
   spinner.text = `Resolving ${path}`
 
   debug(`ls`, path)
-  const { children } = await blockchain.ls(path)
+  let { children } = await blockchain.ls(path)
+  children = { ...children }
+
+  // TODO implement this in shell, not externally
+  const absPath = posix.resolve(blockchain.getContext().wd, path)
+  const actions = await blockchain.getActionCreators(absPath)
+  debug(`actions`, actions)
+  const actionNames = Object.keys(actions).map((name) => {
+    const localName = `./${name}()`
+    children[localName] = { systemRole: 'function' }
+    return localName
+  })
+
   const ui = cliui()
   const aliases = Object.keys(children)
     .sort((a, b) => {
@@ -42,21 +54,31 @@ module.exports = async function ls({ spinner, blockchain }, path = '.') {
       return 0
     })
     .filter((alias) => !alias.includes('/'))
-  debug(`aliases: `, aliases)
+
+  aliases.splice(2, 0, ...actionNames)
+  debug(`aliases: `, aliases, children)
   aliases.forEach((alias) => {
-    debug(`child: ${alias}`)
+    debug(`child: ${alias}`, children[alias])
     let { systemRole, chainId, lineageHeight, heavyHeight, hash } =
       children[alias]
-    chainId = chainId.length === 64 ? chainId.substring(0, 8) : chainId
-    lineageHeight === -1 && (lineageHeight = '-')
-    heavyHeight === -1 && (heavyHeight = '-')
-    const height = heavyHeight + '.' + lineageHeight
-    let filename
-    if (systemRole !== 'UP_LINK') {
-      filename = chalk.red(alias)
+    let filename, height
+
+    if (systemRole !== 'function') {
+      chainId = chainId.length === 64 ? chainId.substring(0, 8) : chainId
+      lineageHeight === -1 && (lineageHeight = '-')
+      heavyHeight === -1 && (heavyHeight = '-')
+      height = heavyHeight + '.' + lineageHeight
+      if (systemRole !== 'UP_LINK') {
+        filename = chalk.blueBright(alias)
+      } else {
+        filename = chalk.green(alias)
+      }
     } else {
-      filename = chalk.green(alias)
+      filename = chalk.red(alias)
+      height = ''
+      chainId = '(local function)'
     }
+
     // TODO use the same tools as networkPrint
     ui.div(
       { text: filename, width: 20 },

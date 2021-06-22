@@ -41,11 +41,12 @@ module.exports = async function repl(opts) {
       return result
     })
   }
-  debug(`changing to home directory`)
-  await exec('cd /crm/customers')
-  await exec('./add --isTestData')
-  const children = ctx.blockchain.crm.customers.getChildren()
-  const child = Object.keys(children)[0]
+  // await exec('cd /') // must make at least one block to have context
+  // debug(`changing to home directory`)
+  // await exec('cd /crm/customers')
+  // await exec('./add --isTestData')
+  // const children = ctx.blockchain.crm.customers.getChildren()
+  // const child = Object.keys(children)[0]
   // await exec('cd ' + child)
 
   return loop(async function rep() {
@@ -88,21 +89,22 @@ async function getInitialCtx({ blockchain, evaluate }) {
   spinner.text = `benchmarking local system` // TODO move to dedicated command with params
   spinner.info(`local blockrate 23 blocks per second / 53 ms per block`)
 
-  spinner.text = `Provisioning app store`
-  spinner.start()
-  const publishStart = Date.now()
-  const { dpkgPath } = await blockchain.publish('crmApp', apps.crm.install)
-  const installStart = Date.now()
-  const publishMs = installStart - publishStart
-  spinner.info(`app store set up at: /${dpkgPath} in ${publishMs}ms`)
-  spinner.text = `installing crm app at /crm`
-  spinner.start()
-  await blockchain.install(dpkgPath, 'crm')
-  const installMs = Date.now() - installStart
-  const totalMs = Date.now() - publishStart
-  spinner.info(`crm app installed at /crm in ${installMs}ms`)
-  spinner.info(`total deployment time: ${totalMs}ms`)
-  spinner.stop()
+  // spinner.text = `Provisioning app store`
+  // spinner.start()
+  // const publishStart = Date.now()
+  // const { dpkgPath } = await blockchain.publish('crmApp', apps.crm.install)
+  // const installStart = Date.now()
+  // const publishMs = installStart - publishStart
+  // spinner.info(`app store set up at: /${dpkgPath} in ${publishMs}ms`)
+  // spinner.text = `installing crm app at /crm`
+  // spinner.start()
+  // await blockchain.install(dpkgPath, 'crm')
+  // const installMs = Date.now() - installStart
+  // const totalMs = Date.now() - publishStart
+  // spinner.info(`crm app installed at /crm in ${installMs}ms`)
+  // spinner.info(`total deployment time: ${totalMs}ms`)
+  // spinner.stop()
+  await awaitBlockchain(blockchain)
 
   await print(`Welcome to the HyperNet
   Blockchain core: v${version}
@@ -116,3 +118,11 @@ async function getInitialCtx({ blockchain, evaluate }) {
 }
 
 const noTiming = ['time', 'clear', 'help']
+
+const awaitBlockchain = async (blockchain) => {
+  const { state } = blockchain.getState()
+  if (!state.context) {
+    debug(`creating one block as workaround for no @@INIT action`)
+    await blockchain.cd()
+  }
+}

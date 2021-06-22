@@ -18,6 +18,7 @@ module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
       const { blockchain } = ctx
       const { wd } = blockchain.getContext()
       const actions = await blockchain.getActionCreators(wd)
+      debug(`actions`, actions)
       const actionFn = actions[actionName]
       if (actionFn) {
         // TODO decode args into params using commander or similar
