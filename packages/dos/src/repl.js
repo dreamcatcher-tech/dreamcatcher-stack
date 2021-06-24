@@ -68,15 +68,16 @@ async function getInitialCtx({ blockchain, evaluate }) {
   // TODO get environment printout
   const spinner = ora({ spinner: 'aesthetic' }).start()
   spinner.info(`System font check: 🚦🚦🚦🌈🌈🌈❌️❌️❌️`)
-  spinner.info(
-    `begining boot sequence Ctrl+C to cancel and drop to local shell`
-  )
-  spinner.text = `checking for new app version on server "this webpage"`
+  spinner
+    .info(`begining boot sequence Ctrl+C to cancel and drop to local shell`)
+    .start()
+  spinner.text = `checking for new app version...`
   spinner.info(`current server build version: (unknown)`).start()
-  spinner.text = `looking for previous chains under the domain "this webpage"`
+  spinner.text = `looking for previous chains...`
   // TODO check if wasm support is available - TOR blocks this in strict mode
   spinner.info(`no previous chains found`).start()
   if (!blockchain) {
+    debug(`no blockchain provided`)
     spinner.text = `Initializing blockchain...`
     blockchain = await effectorFactory('console')
   }

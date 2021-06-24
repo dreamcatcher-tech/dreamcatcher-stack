@@ -1,9 +1,8 @@
-const assert = require('assert')
 const debug = require('debug')('dos:commands:ls')
 const posix = require('path')
-const cliui = require('cliui')
+const cliui = require('cliui').default
 const chalk = require('ansi-colors')
-const pad = require('pad-left')
+
 module.exports = async function ls({ spinner, blockchain }, path = '.') {
   spinner.text = `Resolving ${path}`
 
@@ -15,7 +14,7 @@ module.exports = async function ls({ spinner, blockchain }, path = '.') {
   const absPath = posix.resolve(blockchain.getContext().wd, path)
   const actions = await blockchain.getActionCreators(absPath)
   debug(`actions`, actions)
-  const actionNames = Object.keys(actions).map((name) => {
+  const actionNames = Object.keys(actions || {}).map((name) => {
     const localName = `./${name}()`
     children[localName] = { systemRole: 'function' }
     return localName
@@ -56,9 +55,9 @@ module.exports = async function ls({ spinner, blockchain }, path = '.') {
     .filter((alias) => !alias.includes('/'))
 
   aliases.splice(2, 0, ...actionNames)
-  debug(`aliases: `, aliases, children)
+  debug(`aliases: `, aliases)
   aliases.forEach((alias) => {
-    debug(`child: ${alias}`, children[alias])
+    debug(`child: ${alias}`)
     let { systemRole, chainId, lineageHeight, heavyHeight, hash } =
       children[alias]
     let filename, height
