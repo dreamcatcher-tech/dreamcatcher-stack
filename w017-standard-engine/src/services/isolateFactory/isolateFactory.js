@@ -1,14 +1,14 @@
 const assert = require('assert')
-const { '@@GLOBAL_HOOK': hook } = require('../../../w002-api')
+const { '@@GLOBAL_HOOK': hook } = require('../../../../w002-api')
 const {
   blockModel,
   rxReplyModel,
   rxRequestModel,
-} = require('../../../w015-models')
-const systemCovenants = require('../../../w212-system-covenants')
-const appCovenants = require('../../../w301-user-apps')
+} = require('../../../../w015-models')
+const systemCovenants = require('../../../../w212-system-covenants')
+const appCovenants = require('../../../../w301-user-apps')
 const debug = require('debug')('interblock:isolate')
-const { queryFactory } = require('./queryFactory')
+const { queryFactory } = require('../queryFactory')
 // TODO move to making own containers, so can keep promises alive
 // TODO set timestamp in container by overriding Date.now()
 // TODO move to having ramIsolate be the default, but allow other hardware based isolations
