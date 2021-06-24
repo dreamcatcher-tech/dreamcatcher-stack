@@ -12,6 +12,7 @@ module.exports = {
     },
     aliases: {
       react: path.resolve('./node_modules/react'),
+      readline: path.resolve('./node_modules/readline-browserify'),
     },
   },
 }

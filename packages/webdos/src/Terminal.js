@@ -35,11 +35,28 @@ const convertToStdStream = (terminal) => {
     // debug(`clearLine`)
     terminal.write(clearLineCode)
   }
+  assert(!terminal.moveCursor)
+  terminal.moveCursor = (x, y) => {
+    debug('moveCursor', x, y)
+  }
   terminal.cursorTo = (x, y) => {
+    // required for ora 4.1.? and above
     // debug(`cursorTo: `, x, y)
     assert.strictEqual(x, 0)
     const leftByOneThousandChars = '\u001b[1000D'
     terminal.write(leftByOneThousandChars)
+  }
+  terminal.on = (eventName, callback) => {
+    // required for ora 5.4.1
+    debug(`terminal.on( ${eventName} )`)
+  }
+  terminal.once = (eventName, callback) => {
+    // required for ora 5.4.1
+    debug(`terminal.once( ${eventName} )`)
+  }
+  terminal.emit = (eventName, callback) => {
+    // required for ora 5.4.1
+    debug(`terminal.emit( ${eventName} )`)
   }
 }
 
@@ -48,6 +65,7 @@ const TerminalContainer = (props) => {
 
   useEffect(() => {
     debug(`opening terminal`)
+    let isActive = true
     const terminal = new Terminal({
       cursorBlink: true,
       cursorStyle: 'block', // gets overridden by enquirer
@@ -75,22 +93,22 @@ const TerminalContainer = (props) => {
       terminal.stdin.send(key)
     })
     xtermRef.current = terminal
-    window.addEventListener('resize', () => {
+    const resizeListener = () => {
       fitAddon.fit()
       terminal.columns = terminal.cols
-    })
+    }
+    window.addEventListener('resize', resizeListener)
     process.stdout = terminal
     process.stdin = terminal.stdin
     process.stderr = terminal
     terminal.columns = terminal.cols // for enquirer to size itself correctly
-
-    const roboto = new FontFaceObserver('Roboto Mono')
 
     const isTor = checkIsLikelyTor()
     debug(`isTor: ${isTor}`)
     const fontLoadDelay = 5000000
     const fonts = []
     const awaits = []
+    const roboto = new FontFaceObserver('Roboto Mono')
     // const awaitRobotoLoad = roboto
     //   .load(null, fontLoadDelay)
     //   .then(() => fonts.push('Roboto Mono'))
@@ -101,17 +119,17 @@ const TerminalContainer = (props) => {
       // TODO get a webfont for emojis that displays correctly and is small
       debug('loading emojis for tor browser')
       const tor = new FontFaceObserver('TorEmoji')
-      const awaitTorLoad = tor
-        .load('🦄', fontLoadDelay)
-        .then(() => fonts.push('TorEmoji'))
-        .catch((e) => debug(`tor load error:`, e))
-      awaits.push(awaitTorLoad)
+      // const awaitTorLoad = tor
+      //   .load('🦄', fontLoadDelay)
+      //   .then(() => fonts.push('TorEmoji'))
+      //   .catch((e) => debug(`tor load error:`, e))
+      // awaits.push(awaitTorLoad)
     }
     Promise.all(awaits)
       // setting without delay causes xterm layout bug
       // xterm measures using a huge default if font is not available at render
       .then(() => {
-        if (fonts.length) {
+        if (fonts.length && isActive) {
           const fontsString = fonts.join(', ')
           debug('fonts loaded: ', fontsString)
           debug('fonts were: ', terminal.getOption('fontFamily'))
@@ -123,7 +141,12 @@ const TerminalContainer = (props) => {
       .catch((e) => {
         debug('error loading fonts: ', e)
       })
-    debug('terminal end')
+    debug('terminal ready')
+    return () => {
+      debug(`terminal being shutdown`)
+      window.removeEventListener('resize', resizeListener)
+      isActive = false
+    }
   }, [])
   return <div id="xterm-container" {...props}></div>
 }
