@@ -18,7 +18,7 @@ const gps = {
     },
   },
 }
-const install = {
+const installer = {
   children: {
     schedule: {
       covenant: 'datum',
@@ -179,6 +179,6 @@ const install = {
 }
 
 const covenantId = { name: 'crm' }
-const crm = { covenantId, install }
+const crm = { covenantId, installer }
 
 module.exports = { crm }

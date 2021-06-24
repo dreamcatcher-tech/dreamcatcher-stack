@@ -41,7 +41,8 @@ const sendParent = (action) => ({
  * will be translated into protocol actions and sent out.
  */
 const translator = (machine) => {
-  const { initialState } = machine
+  let { initialState } = machine
+  initialState = JSON.parse(JSON.stringify(initialState)) // remove undefined
 
   return async (xstate, action) => {
     assert.strictEqual(typeof action, 'object')

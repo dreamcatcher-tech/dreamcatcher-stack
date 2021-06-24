@@ -93,6 +93,9 @@ const config = {
 
       const block = await useBlocks(absPath)
       const children = listChildren(block)
+      // TODO implement useCovenant to return an inert json object
+      // const covenant = await useCovenant(block)
+
       return { children }
     },
     changeDirectory: async ({ wd }, event) => {
@@ -128,7 +131,14 @@ const config = {
       // TODO make covenant resolution use dpkg system
       // TODO support external registries
       // TODO support building images, and displaying progress
-      const { name, installer, registry } = event.payload
+      // TODO use npm pack to bundle a package up
+      // TODO verify that all covenants are available
+      const { name, registry } = event.payload
+      let { installer } = event.payload
+      if (!Object.keys(installer).length) {
+        debug(`making default installer`)
+        installer = { covenant: name }
+      }
       debug(`publish: `, name)
       const covenantId = covenantIdModel.create('dpkg')
       const state = { installer }
@@ -154,6 +164,8 @@ const config = {
 
       // TODO check schema matches installer schema, including not null for covenant
       // TODO pull out everything that is part of DMZ except children
+      // TODO ? make a dedicated app root for each app, so we can control cleanup ?
+      // TODO verify that all covenants in installer are available
       let { children, covenant, ...spawnOptions } = installer
       covenant = covenant || 'unity'
       // TODO unify how covenants are referred to

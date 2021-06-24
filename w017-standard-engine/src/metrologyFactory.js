@@ -231,6 +231,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     const getChainCount = () => tap.getChainCount()
     const getCovenants = () => ({ ...covenants, ...covenantOverloads })
     const getActionCreators = async (path) => {
+      assert.strictEqual(typeof path, 'string')
       const latest = await getLatestFromPath(path)
       const covenant = _getCovenant(latest, getCovenants())
       // TODO create the functions from the schema, not raw action creators
@@ -314,6 +315,7 @@ const enableLoggingWithTap = (engine, identifier) => {
   return tap
 }
 const _getCovenant = ({ covenantId }, mergedCovenants) => {
+  // TODO allow means to fetch a remote covenant asynchronously
   let covenant = covenants.unity
   if (covenantId.name === 'hyper') {
     return mergedCovenants.hyper //hyper always overridden

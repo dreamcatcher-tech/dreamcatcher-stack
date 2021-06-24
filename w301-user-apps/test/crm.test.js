@@ -10,7 +10,7 @@ describe('crm', () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       shell.enableLogging()
-      const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
+      const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
       const installStart = Date.now()
@@ -48,7 +48,7 @@ describe('crm', () => {
   describe('list customers', () => {
     test.only('list customers basic', async () => {
       const shell = await effectorFactory('crm')
-      const { dpkgPath } = await shell.publish('dpkgCrm', crm.install)
+      const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
       await shell.install(dpkgPath, 'crm')
