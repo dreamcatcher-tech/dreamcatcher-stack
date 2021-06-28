@@ -23,13 +23,14 @@ ajv.addKeyword('faker')
  *  8.  be simulateable in a parent, to know if it or its children will throw before creation
  *  9.  provide use supplied mappings to faker data so it can generate mock data easily
  *  10. a tree of datums should update atomically from parent - all or none
+ *  11. recheck schema is valid when merge occurs
  */
 
 const datumSchema = {
   type: 'object',
   title: 'Datum',
   required: [
-    'type',
+    'type', // TODO type may be replaced by covenant ?
     'namePath',
     'schema',
     'uiSchema',
