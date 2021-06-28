@@ -1,8 +1,8 @@
 const debug = require('debug')('interblock:covenants:shell')
 const posix = require('path')
 const assert = require('assert')
-const { covenantIdModel } = require('../../w015-models')
-const dmzReducer = require('../../w021-dmz-reducer')
+const { covenantIdModel } = require('../../../w015-models')
+const dmzReducer = require('../../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
 const {
   ping,
@@ -12,15 +12,15 @@ const {
   getChannel,
   getState: dmzGetState,
 } = dmzReducer.actions
-const { interchain, useBlocks } = require('../../w002-api')
-const dpkg = require('./dpkg')
+const { interchain, useBlocks } = require('../../../w002-api')
+const dpkg = require('../dpkg')
 const {
   respond,
   send,
   sendParent,
   translator,
-} = require('../../w022-xstate-translator')
-const { listChildren } = require('../../w021-dmz-reducer')
+} = require('../../../w022-xstate-translator')
+const { listChildren } = require('../../../w021-dmz-reducer')
 
 const config = {
   actions: {

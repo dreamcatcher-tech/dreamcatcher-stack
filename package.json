@@ -9,7 +9,7 @@
   "files": [
     "dist/interblock.*"
   ],
-  "main": "dist/interblock.js",
+  "main": "index.js",
   "scripts": {
     "prepack": "webpack",
     "test": "DEBUG_COLORS=1 DEBUG='' jest --bail",
