@@ -70,7 +70,8 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     ioIncrease,
   } = engine
 
-  ioIsolate.setProcessor(isolateFactory(ioConsistency, covenantOverloads))
+  const isolateProcessor = isolateFactory(ioConsistency, covenantOverloads)
+  ioIsolate.setProcessor(isolateProcessor)
   const ramDb = ramDynamoDbFactory()
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
@@ -229,7 +230,8 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       pierce(actions.spawn(alias, spawnOptions))
     const getBlockCount = () => tap.getBlockCount()
     const getChainCount = () => tap.getChainCount()
-    const getCovenants = () => ({ ...covenants, ...covenantOverloads })
+    // TODO getCovenants should return inert json only ?
+    const getCovenants = () => isolateProcessor._getCovenants()
     const getActionCreators = async (path) => {
       assert.strictEqual(typeof path, 'string')
       const latest = await getLatestFromPath(path)

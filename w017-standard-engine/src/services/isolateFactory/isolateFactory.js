@@ -113,12 +113,13 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
       const result = await action.exec()
       return result
     },
+    getCovenants: () => covenants,
   }
 }
 
 const isolateFactory = (ioConsistency, preloadedCovenants) => {
   const isolation = ramIsolate(ioConsistency, preloadedCovenants)
-  return (action) => {
+  const reducer = (action) => {
     switch (action.type) {
       case 'LOAD_COVENANT':
         return isolation.loadCovenant(action.payload)
@@ -132,6 +133,9 @@ const isolateFactory = (ioConsistency, preloadedCovenants) => {
         throw new Error(`Unknown isolator action type`)
     }
   }
+  // TODO remove this function
+  reducer._getCovenants = () => isolation.getCovenants()
+  return reducer
 }
 
 const toFunctions = (queue) => ({

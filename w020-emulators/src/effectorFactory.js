@@ -45,7 +45,9 @@ const { socketFactory } = require('./socketFactory')
 const effectorFactory = async (identifier, covenantOverloads = {}) => {
   assert(!covenantOverloads || typeof covenantOverloads === 'object')
   debug(`effectorFactory`)
+  const start = Date.now()
   covenantOverloads = _inflateCovenants(covenantOverloads)
+  console.log('inflate time', Date.now() - start)
   // start the net watcher, to reconcile hardware with chainware
   const gateway = {}
   const net = netFactory(gateway)
@@ -84,12 +86,16 @@ const effector = (metrology, rootPierce) => {
   const children = {}
   let covenantId
   const mapFunctions = () => {
+    // TODO delete this and move to a dispatch style function
     const state = metrology.getState()
     if (!state) {
       return
     }
     const liveCovenants = metrology.getCovenants()
+    const start = Date.now()
     let covenant = _getCovenant(state, liveCovenants)
+    console.log(`mf time:`, Date.now() - start)
+
     if (covenant && !covenant.covenantId.equals(covenantId)) {
       covenantId = covenant.covenantId
       debug(`set covenant to: %O`, covenantId.name)
@@ -150,16 +156,16 @@ const stripCovenantActions = (effector, metrology) => {
   }
 }
 
-const _getCovenant = ({ covenantId }, overloads) => {
-  const merge = { ...covenants, ...overloads }
+const _getCovenant = ({ covenantId }, liveCovenants) => {
   let covenant = covenants.unity
   if (covenantId.name === 'hyper') {
-    return overloads.hyper //hyper always overridden
+    return liveCovenants.hyper //hyper always overridden
   }
-  for (const key in merge) {
-    if (merge[key].covenantId.equals(covenantId)) {
+  for (const key in liveCovenants) {
+    if (liveCovenants[key].covenantId.equals(covenantId)) {
       assert(covenant === covenants.unity)
-      covenant = merge[key]
+      covenant = liveCovenants[key]
+      break
     }
   }
   return covenant
@@ -179,8 +185,13 @@ const _inflateCovenants = (overloads) => {
       language,
       integrity
     )
+    if (covenant.covenants) {
+      const covenants = _inflateCovenants(covenant.covenants)
+      covenant.covenants = covenants
+    }
     models[key] = covenant
   }
+  // TODO inflate nested covenants too
   return models
 }
 const mapDispatchToActions = (dispatch, covenant) => {
