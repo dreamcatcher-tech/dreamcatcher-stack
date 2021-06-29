@@ -105,7 +105,6 @@ const guessActionSchema = (actions) => {
     const fn = actions[name]
     assert.strictEqual(typeof fn, 'function', `${name} is not a function`)
     const result = app.parse(fn)
-    console.log(result)
   }
   const names = Object.keys(actions)
 }

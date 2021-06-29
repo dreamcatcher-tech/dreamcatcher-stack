@@ -45,9 +45,7 @@ const { socketFactory } = require('./socketFactory')
 const effectorFactory = async (identifier, covenantOverloads = {}) => {
   assert(!covenantOverloads || typeof covenantOverloads === 'object')
   debug(`effectorFactory`)
-  const start = Date.now()
   covenantOverloads = _inflateCovenants(covenantOverloads)
-  console.log('inflate time', Date.now() - start)
   // start the net watcher, to reconcile hardware with chainware
   const gateway = {}
   const net = netFactory(gateway)
@@ -92,10 +90,7 @@ const effector = (metrology, rootPierce) => {
       return
     }
     const liveCovenants = metrology.getCovenants()
-    const start = Date.now()
     let covenant = _getCovenant(state, liveCovenants)
-    console.log(`mf time:`, Date.now() - start)
-
     if (covenant && !covenant.covenantId.equals(covenantId)) {
       covenantId = covenant.covenantId
       debug(`set covenant to: %O`, covenantId.name)
