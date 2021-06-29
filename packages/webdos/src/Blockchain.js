@@ -10,7 +10,7 @@ export const BlockchainContext = React.createContext(null)
 BlockchainContext.displayName = 'Blockchain'
 
 const Blockchain = ({
-  identifier = 'terminal',
+  id = 'terminal',
   context: higherContext,
   dev,
   children,
@@ -26,11 +26,12 @@ const Blockchain = ({
       unsubscribeIsPending,
       isActive = true,
       latestLocal = latest, // TODO must be a cleaner way to do this
-      contextLocal = context
+      contextLocal = context,
+      abortCmd
     const subscribe = async () => {
-      debug(`initializing blockchain: ${identifier}`)
-      const covenantOverloads = dev ? { devApp: dev } : dev
-      const blockchain = await effectorFactory(identifier, covenantOverloads)
+      debug(`initializing blockchain: ${id}`)
+      const covenantOverloads = _extractCovenants(dev)
+      const blockchain = await effectorFactory(id, covenantOverloads)
       if (!isActive) {
         // TODO wrap stdin in package attached to blockchain so can be replaced
         debug(`blockchain loaded but torn down`)
@@ -38,7 +39,7 @@ const Blockchain = ({
       }
       setBlockchain(blockchain)
       const emptyArgs = []
-      commandLineShell(emptyArgs, { blockchain })
+      abortCmd = await commandLineShell(emptyArgs, { blockchain })
       debug(`subscribing to blockchain`)
       unsubscribeBlocks = blockchain.subscribe(() => {
         const blockchainState = blockchain.getState()
@@ -62,13 +63,15 @@ const Blockchain = ({
         debug(`installing dev mode app`)
 
         const { dpkgPath } = await blockchain.publish('devApp', dev.installer)
+        debug(`dpkgPath: `, dpkgPath)
         const installResult = await blockchain.install(dpkgPath, 'app')
+
+        debug(`app installed: `, installResult)
+        await blockchain.cd('/app')
         if (!isActive) {
           debug(`app installed, but blockchain torn down`)
           return
         }
-        debug(`app installed: `, installResult)
-        await blockchain.cd('/app')
         const command = `ls\n`
         for (const c of command) {
           // TODO fix console not in sync with terminal automatically
@@ -87,14 +90,31 @@ const Blockchain = ({
       if (unsubscribeIsPending) {
         unsubscribeIsPending()
       }
-      debug(`"${identifier}" has been shut down`)
+      if (abortCmd) {
+        // TODO perhaps all that is requried is to stop DOS ?
+        abortCmd()
+      }
+      debug(`"${id}" has been shut down`)
     }
-  }, [identifier, dev])
+  }, [id, dev])
 
   const Context = higherContext || BlockchainContext
   const contextValue = { blockchain, latest, context, isPending }
 
   return <Context.Provider value={contextValue}>{children}</Context.Provider>
 }
-
+const _extractCovenants = (dev) => {
+  if (!dev) {
+    return
+  }
+  if (!dev.installer) {
+    // TODO assert has covenant format
+    return { devApp: dev } // this matches the default installer name in shell
+  }
+  // TODO extract all covenants from the installer ?
+  // TODO assert dev meets covenant format
+  assert(dev.covenantId && dev.covenantId.name)
+  const name = dev.covenantId.name
+  return { [name]: dev }
+}
 export default Blockchain

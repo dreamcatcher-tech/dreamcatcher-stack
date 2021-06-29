@@ -4,8 +4,9 @@ import { Blockchain, Terminal } from '../../src'
 import Debug from 'debug'
 import { crm } from './crm'
 import cov from './covenant'
+import multi from './multi'
 
-Debug.enable('covenant* *Blockchain')
+Debug.enable('covenant* *Blockchain *shell*')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -19,7 +20,7 @@ export default class Demo extends Component {
     return (
       <div>
         <h1>dosweb Demo</h1>
-        <Blockchain dev={cov}>
+        <Blockchain dev={multi}>
           <Terminal path="/" style={{ height: '80vh' }} />
         </Blockchain>
       </div>

@@ -59,9 +59,14 @@ const convertToStdStream = (terminal) => {
     debug(`terminal.emit( ${eventName} )`)
   }
 }
-
+let id = 0
 const TerminalContainer = (props) => {
   const xtermRef = useRef()
+  const idRef = useRef()
+  if (!idRef.current) {
+    debug(`setting id`)
+    idRef.current = `xterm-container-${id++}`
+  }
 
   useEffect(() => {
     debug(`opening terminal`)
@@ -78,7 +83,7 @@ const TerminalContainer = (props) => {
     terminal.loadAddon(unicode11Addon)
     terminal.unicode.activeVersion = '11'
 
-    terminal.open(document.getElementById('xterm-container'))
+    terminal.open(document.getElementById(idRef.current))
     fitAddon.fit()
     terminal.focus()
     convertToStdStream(terminal)
@@ -148,7 +153,8 @@ const TerminalContainer = (props) => {
       isActive = false
     }
   }, [])
-  return <div id="xterm-container" {...props}></div>
+
+  return <div id={idRef.current} {...props}></div>
 }
 
 const ignoreKeys = 'F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12'.split(' ')
