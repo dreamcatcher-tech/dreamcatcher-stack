@@ -136,7 +136,7 @@ const config = {
       const { name, registry } = event.payload
       let { installer } = event.payload
       if (!Object.keys(installer).length) {
-        debug(`making default installer`)
+        debug(`making default installer`, name)
         installer = { covenant: name }
       }
       debug(`publish: `, name)

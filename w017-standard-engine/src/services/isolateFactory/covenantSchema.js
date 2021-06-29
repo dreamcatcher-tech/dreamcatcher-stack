@@ -3,6 +3,30 @@
  * cannot use schema as functions do not translate into schema.
  * in dev mode, want to use functions as action creators - parse functions.
  * covenant exists in reified mode, and in inert / packaged mode
+ * 
+*** DOS: how to supply custom covenants and have them work in live editing ?
+    [2021-06-25 Fri 11:27]
+***** requirements
+******* must work for single bare covenant, and complex ones with an installer
+******* nested covenants need to be referred to by external chains
+********* basePkg/nestedName
+*********** we need to expand this out, and resolve ourselves
+***** options
+******* supply key "covenants" to export them ?
+******* put in the installer, and strip out before publish
+******* single default covenant is easy as can wrap
+******* use nodejs exports to specify all covenants that you want loaded
+******* children key to match datums, and to allow infinite nesting
+********* allows compound covenants to be included as children of a higher compound app
+******* require the installer to supply the covenants it refers to ?
+***** reasoning
+******* the covenant is both a single level, and nested container
+***** model
+******* spec the allowed covenant formats in a model, but require no standardization
+******* could use model as means to generate the json object from reading a covenant
+***** ? should there be different types of covenant for those that are nested, and those that are plain ?
+
+ * 
  */
 const parseFunction = require('parse-function')()
 const assert = require('assert')

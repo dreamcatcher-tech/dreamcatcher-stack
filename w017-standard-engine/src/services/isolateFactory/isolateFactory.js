@@ -15,12 +15,9 @@ const { queryFactory } = require('../queryFactory')
 // like containers, iFrames, cluster, and vm2 - same as dynamodb and ramDb
 
 const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
+  assert.strictEqual(typeof preloadedCovenants, 'object')
   const containers = {}
-  const covenants = {
-    ...systemCovenants,
-    ...appCovenants,
-    ...preloadedCovenants,
-  }
+  const covenants = _mergeCovenants(preloadedCovenants)
   return {
     loadCovenant: async (block) => {
       assert(blockModel.isModel(block))
@@ -143,5 +140,19 @@ const toFunctions = (queue) => ({
   unloadCovenant: (payload) => queue.push({ type: 'UNLOAD_COVENANT', payload }),
   executeEffect: (payload) => queue.push({ type: 'EXECUTE', payload }),
 })
-
+const _mergeCovenants = (preloadedCovenants) => {
+  const covenants = {
+    ...systemCovenants,
+    ...appCovenants,
+    ...preloadedCovenants,
+  }
+  for (const name in preloadedCovenants) {
+    const covenant = preloadedCovenants[name]
+    if (covenant.covenants) {
+      // TODO handle arbitrary deep nesting by walking root
+      Object.assign(covenants, covenant.covenants)
+    }
+  }
+  return covenants
+}
 module.exports = { isolateFactory, toFunctions }

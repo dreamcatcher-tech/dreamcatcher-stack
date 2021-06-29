@@ -24,8 +24,6 @@ describe('machine validation', () => {
   test.todo('opens up a path')
   test.todo('coordinates with simultaneous path openings')
   test.todo('detects changes in filesystem')
-  test.todo('rejects invalid path directories')
-  test.todo('rejects invalid path files')
   describe('cd', () => {
     test('cd to valid nested path', async () => {
       const base = await metrologyFactory('cd', { hyper: shell })
@@ -230,5 +228,38 @@ describe('machine validation', () => {
   describe('add', () => {
     test.todo('invalid parent path rejects')
     test.todo('grandchild can spawn')
+  })
+  describe('install', () => {
+    test('deep child runs custom covenant', async () => {
+      let isExecuted = false
+      const covenant = {
+        installer: {
+          children: {
+            testChild: {
+              covenant: 'testChildCovenant',
+            },
+          },
+        },
+        covenants: {
+          testChildCovenant: {
+            reducer: (state, action) => {
+              debug(`testChildCovenant`, action)
+              isExecuted = true
+              return state
+            },
+          },
+        },
+      }
+      // require('debug').enable('interblock:tests:shell')
+      const overloads = { hyper: shell, test: covenant }
+      const blockchain = await metrologyFactory('install', overloads)
+      const publish = shell.actions.publish('test', covenant.installer)
+      const { dpkgPath } = await blockchain.pierce(publish)
+      debug(`dpkgPath: `, dpkgPath)
+      const install = shell.actions.install(dpkgPath, 'appTest')
+      const installResult = await blockchain.pierce(install)
+      debug(`installResult`, installResult)
+      assert(isExecuted)
+    })
   })
 })

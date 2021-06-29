@@ -105,6 +105,5 @@ describe('isolation', () => {
       }
     )
   })
-  test.todo('covenant supplied reducers execute')
   test.todo(`queries after hook execution are rejected`)
 })
