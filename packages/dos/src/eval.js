@@ -18,14 +18,15 @@ module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
       const { wd } = blockchain.getContext()
       const absolutePath = posix.resolve(wd, cmd)
       const actionName = posix.basename(absolutePath)
+      const parent = posix.dirname(absolutePath)
       debug(`non builtin command: %s assuming covenant function`, actionName)
-      const actions = await blockchain.getActionCreators(wd)
+      const actions = await blockchain.getActionCreators(parent)
       debug(`actions`, actions)
       const actionFn = actions[actionName]
       if (actionFn) {
         // TODO decode args into params using commander or similar
         const action = actionFn(...cmdArgs)
-        return blockchain.dispatch(action, wd)
+        return blockchain.dispatch(action, parent)
       }
     }
     throw new Error(`${cmd}: command not found`)

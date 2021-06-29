@@ -49,7 +49,7 @@ module.exports = async function repl(opts) {
   // const child = Object.keys(children)[0]
   // await exec('cd ' + child)
 
-  return loop(async function rep() {
+  const stopLoop = loop(async function rep() {
     let input = 'exit'
     try {
       input = await opts.read(ctx)
@@ -61,6 +61,7 @@ module.exports = async function repl(opts) {
     }
     await exec(input)
   })
+  return stopLoop
 }
 
 async function getInitialCtx({ blockchain, evaluate }) {
