@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { render } from 'react-dom'
-import { Blockchain, Terminal } from '../../src'
+import { Blockchain, Terminal, Router } from '../../src'
 import Debug from 'debug'
 import { crm } from './crm'
 import cov from './covenant'
@@ -21,7 +21,9 @@ export default class Demo extends Component {
       <div>
         <h1>dosweb Demo</h1>
         <Blockchain dev={multi}>
-          <Terminal path="/" style={{ height: '80vh' }} />
+          <Router>
+            <Terminal path="/" style={{ height: '80vh' }} />
+          </Router>
         </Blockchain>
       </div>
     )
