@@ -22,38 +22,10 @@
  *
  * Render placeholders while children may still be pulling in data.
  */
+import React, { useState, useEffect } from 'react'
 
-import CustomerList from '../components/CustomerList'
-const mock = (
-  <Switch>
-    <Route covenant="crm">
-      <Home />
-      <Route path="/schedules/" exact>
-        <Schedules />
-      </Route>
-      <Route path="/customers">
-        {' '}
-        // should be detected by covenant
-        <CustomerList />
-        <Route path="/:customer">
-          <Customer />
-        </Route>
-      </Route>
-      <Route path="**/customerId-*">
-        <Customer />
-      </Route>
-      <Route datum="Customer">
-        <Customer />
-      </Route>
-      <Route covenant="customCovenant"></Route>
-    </Route>
-  </Switch>
-)
-
-const Switch = (path) => {}
-
-const Link = (path) => {
-  // equivalent of doing a cd(path) when clicked on
+const Switch = ({ children }) => {
+  return children
 }
 
 export default Switch

@@ -4,7 +4,7 @@ import Customer from './Customer'
 import CustomerList from './CustomerList'
 import Datum from './Datum'
 import Explorer from './Explorer'
-import Home from './Home'
+import Nav from './Nav'
 import OpenDialog from './OpenDialog'
 import Settings from './Settings'
 
@@ -15,7 +15,7 @@ export {
   CustomerList,
   Datum,
   Explorer,
-  Home,
+  Nav,
   OpenDialog,
   Settings,
 }

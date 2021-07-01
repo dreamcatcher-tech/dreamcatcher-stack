@@ -7,7 +7,7 @@ import { List, ListItem, ListItemText } from '@material-ui/core'
 import { IconButton } from '@material-ui/core'
 import { Home, AccountCircle, Settings, Info } from '@material-ui/icons'
 import { makeStyles } from '@material-ui/core'
-const debug = Debug('terminal:widgets:Home')
+const debug = Debug('terminal:widgets:Nav')
 const useStyles = makeStyles({
   grow: {
     flexGrow: 1,

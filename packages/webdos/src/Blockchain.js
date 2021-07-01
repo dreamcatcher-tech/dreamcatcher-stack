@@ -4,6 +4,8 @@ import { effectorFactory } from '@dreamcatcher-tech/interblock'
 import commandLineShell from '@dreamcatcher-tech/dos'
 import Debug from 'debug'
 import equals from 'fast-deep-equal'
+import { Terminal } from '.'
+
 const debug = Debug('terminal:Blockchain')
 
 export const BlockchainContext = React.createContext(null)
@@ -20,6 +22,7 @@ const Blockchain = ({
   const [context, setContext] = useState()
   const [blockchain, setBlockchain] = useState()
   const [isPending, setIsPending] = useState(false)
+  const [isBooting, setIsBooting] = useState(true)
 
   useEffect(() => {
     let unsubscribeBlocks,
@@ -27,7 +30,8 @@ const Blockchain = ({
       isActive = true,
       latestLocal = latest, // TODO must be a cleaner way to do this
       contextLocal = context,
-      abortCmd
+      abortCmd,
+      isBootingLocal = true
     const subscribe = async () => {
       debug(`initializing blockchain: ${id}`)
       const covenantOverloads = _extractCovenants(dev)
@@ -57,6 +61,10 @@ const Blockchain = ({
       unsubscribeIsPending = blockchain.subscribePending((isPending) => {
         debug(`subscribePending`, isPending)
         setIsPending(isPending)
+        if (!isBootingLocal && !isPending) {
+          // TODO find cleaner way to trigger when boot is complete
+          setTimeout(() => setIsBooting(false), 500)
+        }
       })
       if (dev) {
         assert.strictEqual(typeof dev, 'object', `dev must be an object`)
@@ -79,6 +87,8 @@ const Blockchain = ({
           process.stdin.send(c)
         }
       }
+      isBootingLocal = false
+      // await new Promise((r) => setTimeout(r, 300))
     }
     subscribe()
     return () => {
@@ -100,8 +110,12 @@ const Blockchain = ({
 
   const Context = higherContext || BlockchainContext
   const contextValue = { blockchain, latest, context, isPending }
-
-  return <Context.Provider value={contextValue}>{children}</Context.Provider>
+  debug(`isBooting: `, isBooting)
+  return (
+    <Context.Provider value={contextValue}>
+      {isBooting ? <Terminal style={{ height: '100vh' }} /> : children}
+    </Context.Provider>
+  )
 }
 const _extractCovenants = (dev) => {
   if (!dev) {

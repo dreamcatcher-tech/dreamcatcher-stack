@@ -8,7 +8,7 @@ import { useNavigation } from '../hooks'
 
 const Router = ({ children }) => {
   useNavigation()
-  return <>{children}</>
+  return children
 }
 
 export default Router

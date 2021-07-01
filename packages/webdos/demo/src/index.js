@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { render } from 'react-dom'
-import { Blockchain, Terminal, Router, Switch } from '../../src'
+import { Blockchain, Terminal, Router, Switch, Route } from '../../src'
 import {
   About,
   Account,
@@ -8,7 +8,7 @@ import {
   CustomerList,
   Datum,
   Explorer,
-  Home,
+  Nav,
   OpenDialog,
   Settings,
 } from '../../src'
@@ -17,7 +17,7 @@ import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
 
-Debug.enable('covenant* *Blockchain *shell*')
+Debug.enable('covenant* *Blockchain *shell* *:Nav')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -39,14 +39,13 @@ export default class Demo extends Component {
         <h2>Demo</h2>
         <Blockchain dev={multi}>
           // TODO if loading, show the terminal
-          <Terminal path="/" style={{ height: '40vh' }} />
+          {/* <Terminal path="/" style={{ height: '40vh' }} />
           <Router>
             <Switch>
               <Route covenant="crm">
-                <Home />
-
+                <Nav />
                 <Route path="/schedules/" exact>
-                  <Schedules />
+                  <div>Schedules ?</div>
                 </Route>
                 <Route path="/customers">
                   // should be detected by covenant
@@ -55,7 +54,7 @@ export default class Demo extends Component {
                     <Customer />
                   </Route>
                 </Route>
-                <Route path="**/customerId-*">
+                <Route path="*d *d /customerId-*">
                   <Customer />
                 </Route>
                 <Route datum="Customer">
@@ -71,7 +70,7 @@ export default class Demo extends Component {
                 </Route>
               </Route>
             </Switch>
-          </Router>
+          </Router> */}
         </Blockchain>
       </div>
     )
