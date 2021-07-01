@@ -42,6 +42,7 @@ const installer = {
     services: { covenant: 'datum' },
     customers: {
       covenant: 'collection',
+      permissions: {},
       state: {
         datumTemplate: {
           schema: {

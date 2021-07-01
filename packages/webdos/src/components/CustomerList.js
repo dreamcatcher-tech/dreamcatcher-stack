@@ -5,10 +5,7 @@ import assert from 'assert'
 import Debug from 'debug'
 import Explorer from './Explorer'
 import { getNextPath } from '../utils'
-import {
-  useBlockchain,
-  useBlockstream,
-} from '@dreamcatcher-tech/web-components'
+import { useBlockchain, useBlockstream } from '../hooks'
 import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
 

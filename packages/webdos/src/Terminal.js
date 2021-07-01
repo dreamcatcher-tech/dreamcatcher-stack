@@ -77,6 +77,8 @@ const TerminalContainer = (props) => {
       convertEol: true,
       rendererType: 'dom', // needed in tor browser
     })
+    xtermRef.current = terminal
+
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
     const unicode11Addon = new Unicode11Addon()
@@ -97,7 +99,6 @@ const TerminalContainer = (props) => {
     terminal.onKey(({ key, domEvent }) => {
       terminal.stdin.send(key)
     })
-    xtermRef.current = terminal
     const resizeListener = () => {
       fitAddon.fit()
       terminal.columns = terminal.cols

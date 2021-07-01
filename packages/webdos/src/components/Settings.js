@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Debug from 'debug'
 import OpenDialog from './OpenDialog'
 import Form from '@rjsf/material-ui'
-import { useBlockchain } from '@dreamcatcher-tech/web-components'
+import { useBlockchain } from '../hooks'
 
 const debug = Debug('terminal:widgets:Settings')
 

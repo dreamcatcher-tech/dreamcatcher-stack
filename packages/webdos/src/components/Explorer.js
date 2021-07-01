@@ -3,7 +3,7 @@
  * Renders itself as a list of children, then renders the selected child indented.
  */
 import React from 'react'
-import { useBlockstream } from '@dreamcatcher-tech/web-components'
+import { useBlockstream } from '../hooks'
 import Debug from 'debug'
 import { getNextPath } from '../utils' // TODO remove this logic
 
