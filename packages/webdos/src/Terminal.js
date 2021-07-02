@@ -12,7 +12,7 @@ import { stdin as mockStdin } from 'mock-stdin'
 
 import '../css/TorEmoji.woff2'
 
-const debug = debugFactory(`terminal:cli`)
+const debug = debugFactory(`terminal:Terminal`)
 
 const getMockStdin = () => {
   const previousStdin = process.stdin
@@ -59,25 +59,18 @@ const convertToStdStream = (terminal) => {
     debug(`terminal.emit( ${eventName} )`)
   }
 }
-let id = 0
 const TerminalContainer = (props) => {
-  const xtermRef = useRef()
-  const idRef = useRef()
-  if (!idRef.current) {
-    debug(`setting id`)
-    idRef.current = `xterm-container-${id++}`
-  }
+  let { id = '0' } = props
+  id = `xterm-container-${id}`
 
   useEffect(() => {
     debug(`opening terminal`)
-    let isActive = true
     const terminal = new Terminal({
       cursorBlink: true,
       cursorStyle: 'block', // gets overridden by enquirer
       convertEol: true,
       rendererType: 'dom', // needed in tor browser
     })
-    xtermRef.current = terminal
 
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
@@ -85,7 +78,7 @@ const TerminalContainer = (props) => {
     terminal.loadAddon(unicode11Addon)
     terminal.unicode.activeVersion = '11'
 
-    terminal.open(document.getElementById(idRef.current))
+    terminal.open(document.getElementById(id))
     fitAddon.fit()
     terminal.focus()
     convertToStdStream(terminal)
@@ -131,6 +124,7 @@ const TerminalContainer = (props) => {
       //   .catch((e) => debug(`tor load error:`, e))
       // awaits.push(awaitTorLoad)
     }
+    let isActive = true
     Promise.all(awaits)
       // setting without delay causes xterm layout bug
       // xterm measures using a huge default if font is not available at render
@@ -149,13 +143,14 @@ const TerminalContainer = (props) => {
       })
     debug('terminal ready')
     return () => {
-      debug(`terminal being shutdown`)
+      debug(`terminal being shutdown`, id)
       window.removeEventListener('resize', resizeListener)
       isActive = false
+      terminal.dispose()
     }
-  }, [])
+  }, [id])
 
-  return <div id={idRef.current} {...props}></div>
+  return <div {...props} id={id}></div>
 }
 
 const ignoreKeys = 'F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12'.split(' ')

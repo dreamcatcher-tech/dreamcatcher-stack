@@ -111,11 +111,14 @@ const Blockchain = ({
 
   const Context = higherContext || BlockchainContext
   const contextValue = { blockchain, latest, context, isPending }
-  debug(`isBooting: `, isBooting)
   // TODO block stdin during this boot time
   return (
     <Context.Provider value={contextValue}>
-      {isBooting ? <Terminal style={{ height: '100vh' }} /> : children}
+      {isBooting ? (
+        <Terminal id="boot" style={{ height: '100vh' }} />
+      ) : (
+        children
+      )}
     </Context.Provider>
   )
 }

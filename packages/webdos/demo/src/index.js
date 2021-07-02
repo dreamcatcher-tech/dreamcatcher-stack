@@ -17,7 +17,7 @@ import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
 
-Debug.enable('covenant* *Blockchain *shell* *:Nav')
+Debug.enable('covenant* *Blockchain *shell* *:Nav *Terminal')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -38,8 +38,8 @@ export default class Demo extends Component {
       <div>
         <h2>Demo</h2>
         <Blockchain dev={multi}>
-          // TODO if loading, show the terminal
-          {/* <Terminal path="/" style={{ height: '40vh' }} />
+          <Terminal path="/" style={{ height: '40vh' }} />
+          {/*
           <Router>
             <Switch>
               <Route covenant="crm">
