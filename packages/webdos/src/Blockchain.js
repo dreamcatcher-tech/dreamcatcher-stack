@@ -25,13 +25,7 @@ const Blockchain = ({
   const [isBooting, setIsBooting] = useState(true)
 
   useEffect(() => {
-    let unsubscribeBlocks,
-      unsubscribeIsPending,
-      isActive = true,
-      latestLocal = latest, // TODO must be a cleaner way to do this
-      contextLocal = context,
-      abortCmd,
-      isBootingLocal = true
+    let isActive = true
     const subscribe = async () => {
       debug(`initializing blockchain: ${id}`)
       const covenantOverloads = _extractCovenants(dev)
@@ -42,30 +36,6 @@ const Blockchain = ({
         return
       }
       setBlockchain(blockchain)
-      const emptyArgs = []
-      abortCmd = await commandLineShell(emptyArgs, { blockchain })
-      debug(`subscribing to blockchain`)
-      unsubscribeBlocks = blockchain.subscribe(() => {
-        const blockchainState = blockchain.getState()
-        if (!equals(latestLocal, blockchainState)) {
-          debug(`setLatest to height: ${blockchainState.provenance.height}`)
-          latestLocal = blockchainState
-          setLatest(latestLocal)
-          if (!equals(blockchainState.state.context, contextLocal)) {
-            debug(`setting context %o`, blockchainState.state.context)
-            contextLocal = blockchainState.state.context
-            setContext(contextLocal)
-          }
-        }
-      })
-      unsubscribeIsPending = blockchain.subscribePending((isPending) => {
-        debug(`subscribePending`, isPending)
-        setIsPending(isPending)
-        if (!isBootingLocal && !isPending) {
-          // TODO find cleaner way to trigger when boot is complete
-          setTimeout(() => setIsBooting(false), 500)
-        }
-      })
       if (dev) {
         assert.strictEqual(typeof dev, 'object', `dev must be an object`)
         debug(`installing dev mode app`)
@@ -87,30 +57,62 @@ const Blockchain = ({
           process.stdin.send(c)
         }
       }
-      isBootingLocal = false
-      // await new Promise((r) => setTimeout(r, 300))
+      setTimeout(() => isActive && setIsBooting(false), 500)
     }
     subscribe()
     return () => {
       // TODO make the blockchain reject everything, as it is defunct
       isActive = false
-      if (unsubscribeBlocks) {
-        unsubscribeBlocks()
-      }
-      if (unsubscribeIsPending) {
-        unsubscribeIsPending()
-      }
-      if (abortCmd) {
-        // TODO perhaps all that is requried is to stop DOS ?
-        abortCmd()
-      }
+      setBlockchain()
       debug(`"${id}" has been shut down`)
     }
   }, [id, dev])
 
+  useEffect(() => {
+    if (blockchain) {
+      const awaitable = async () => {
+        const emptyArgs = []
+        const abortCmd = await commandLineShell(emptyArgs, { blockchain })
+        return abortCmd
+      }
+      return awaitable()
+    }
+  }, [blockchain])
+
+  useEffect(() => {
+    if (blockchain) {
+      let latest, contextLocal
+      const unsubscribeBlocks = blockchain.subscribe(() => {
+        const blockchainState = blockchain.getState()
+        if (!blockchainState.equals(latest)) {
+          debug(`setLatest to height: ${blockchainState.provenance.height}`)
+          latest = blockchainState
+          setLatest(latest)
+          if (!equals(blockchainState.state.context, contextLocal)) {
+            debug(`setting context %o`, blockchainState.state.context)
+            contextLocal = blockchainState.state.context
+            setContext(contextLocal)
+          }
+        }
+      })
+      return unsubscribeBlocks
+    }
+  }, [blockchain])
+
+  useEffect(() => {
+    if (blockchain) {
+      const unsubscribeIsPending = blockchain.subscribePending((isPending) => {
+        debug(`subscribePending`, isPending)
+        setIsPending(isPending)
+      })
+      return unsubscribeIsPending
+    }
+  }, [blockchain])
+
   const Context = higherContext || BlockchainContext
   const contextValue = { blockchain, latest, context, isPending }
   debug(`isBooting: `, isBooting)
+  // TODO block stdin during this boot time
   return (
     <Context.Provider value={contextValue}>
       {isBooting ? <Terminal style={{ height: '100vh' }} /> : children}
