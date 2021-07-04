@@ -1,71 +1,83 @@
 /**
- * Used to subscribe directly to the blocks of a given chain.
- * Contrasts to useChannel which offers a lightweight view into a chain
- * for reading limited data, and sending actions in.
- *
- * useBlockstream pulls in the entire block, and fires every time a new block is created.
- * Uses the binary layer to access these blocks.
- * Uses the same underlying methods that the stdengine would apply if the same
- * commands were called from inside a chain.
- *
- * If there is no path or we have no permissions, it returns `undefined` and
- * continues to try.
+ * Returns an array of blocks that are the latest block at each path segment.
+ * Updates later blocks in the array if an earlier block changes.
+ * Throws if any part of the path is invalid.
  */
 import assert from 'assert'
 import { useState, useEffect } from 'react'
 import { useBlockchain } from './useBlockchain'
 import Debug from 'debug'
-import { getPathSegments } from '../utils'
-const debug = Debug(`terminal:useBlockstream`)
+import { splitPathSegments } from '../utils'
+const debug = Debug(`webdos:hooks:usePathBlockstream`)
 
-export const useBlockstream = (cwd, slice) => {
-  // slice is some subpath in the state that we are interested in
+const isChainIdMatch = (chainId, subscription) => {
+  if (!subscription) {
+    return false
+  }
+  return subscription.chainId === chainId
+}
+const truncateSubscriptions = (subscriptions, length) => {
+  subscriptions.forEach((subscription, index) => {
+    if (index >= length) {
+      subscription.unsubscribe()
+    }
+  })
+  subscriptions.length = length
+}
+
+export const usePathBlockstream = (cwd) => {
   // TODO if we do not have permission to access block, throw an error
-  const { blockchain, latest } = useBlockchain()
-  const [block, setBlock] = useState()
-  const [currentCwd, setCwd] = useState()
+  const { blockchain } = useBlockchain()
+  const [blocks, setBlocks] = useState()
   useEffect(() => {
-    const segments = getPathSegments(cwd)
-    let active = true
-    let unsubscribe = () => (active = false)
-    let short
-    const subscribe = async () => {
-      let partialPath = segments.shift()
-      let nextBlock = latest
-      let chainId = latest.getChainId()
-      while (partialPath !== cwd) {
-        partialPath = segments.shift()
-        const alias = partialPath.split('/').pop()
-        debug(`alias %s`, alias)
-        assert(nextBlock.network[alias].address.isResolved())
-        chainId = nextBlock.network[alias].address.getChainId()
-        if (partialPath !== cwd) {
-          nextBlock = await blockchain.getLatest(chainId)
-          if (!active) {
-            return
+    const segments = splitPathSegments(cwd)
+    assert.strictEqual(segments[0], '/')
+    debug(`segments: %o`, segments)
+    const subscriptions = []
+    // starting from latest, walk each segment and subscribe to changes
+    const baseChainId = blockchain.getChainId()
+    const tracker = (chainId, index) => {
+      const shortChainId = chainId.substring(0, 9)
+      debug(`tracker %i %i %s`, shortChainId, index, segments[index])
+      const sub = (block) => {
+        setBlocks((current = []) => {
+          if (!block.equals(current[index])) {
+            const next = [...current]
+            next[index] = block
+            return next
           }
-        }
-      }
-      short = chainId.substring(0, 9)
-      debug(`subscribe %s %s`, cwd, short)
-      unsubscribe = blockchain.subscribeBlockstream(chainId, (nextBlock) => {
-        if (block && !block.isNext(nextBlock)) {
+          return current
+        })
+
+        const nextIndex = index + 1
+        if (nextIndex === segments.length) {
           return
         }
-        debug(`setting block`, cwd, short, nextBlock.getHeight())
-        setBlock(nextBlock)
-      })
+        const nextSegment = segments[nextIndex]
+        const nextChannel = block.network[nextSegment]
+        assert(nextChannel, `Invalid channel: ${nextSegment}`)
+        assert(nextChannel.address.isResolved(), `Unresolved: ${nextSegment}`)
+
+        const nextChainId = nextChannel.address.getChainId()
+        if (!isChainIdMatch(nextChainId, subscriptions[nextIndex])) {
+          truncateSubscriptions(subscriptions, nextIndex)
+          setBlocks((current) => {
+            current.length = nextIndex
+            return current
+          })
+          subscriptions.push(tracker(nextChainId, nextIndex))
+        }
+      }
+      const unsubscribe = blockchain.subscribeBlockstream(chainId, sub)
+      return { chainId, unsubscribe }
     }
-    subscribe()
+    subscriptions.push(tracker(baseChainId, 0))
+
     return () => {
-      debug(`teardown`, cwd, short)
-      unsubscribe()
+      debug(`teardown`, cwd)
+      subscriptions.forEach(({ unsubscribe }) => unsubscribe())
     }
-  }, [blockchain, latest, block, cwd, slice]) // TODO rationalize dependencies
-  if (cwd !== currentCwd) {
-    setBlock()
-    setCwd(cwd)
-    return
-  }
-  return block
+  }, [blockchain, cwd])
+
+  return blocks
 }

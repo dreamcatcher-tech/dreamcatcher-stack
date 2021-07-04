@@ -18,8 +18,7 @@ import Debug from 'debug'
 import { getPathSegments } from '../utils'
 const debug = Debug(`terminal:useBlockstream`)
 
-export const useBlockstream = (cwd, slice) => {
-  // slice is some subpath in the state that we are interested in
+export const useBlockstream = (cwd) => {
   // TODO if we do not have permission to access block, throw an error
   const { blockchain, latest } = useBlockchain()
   const [block, setBlock] = useState()
@@ -61,7 +60,7 @@ export const useBlockstream = (cwd, slice) => {
       debug(`teardown`, cwd, short)
       unsubscribe()
     }
-  }, [blockchain, latest, block, cwd, slice]) // TODO rationalize dependencies
+  }, [blockchain, latest, block, cwd]) // TODO rationalize dependencies
   if (cwd !== currentCwd) {
     setBlock()
     setCwd(cwd)
