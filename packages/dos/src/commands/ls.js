@@ -1,7 +1,8 @@
 const debug = require('debug')('dos:commands:ls')
 const posix = require('path')
-const cliui = require('cliui').default
+const cliuiModule = require('cliui')
 const chalk = require('ansi-colors')
+const cliui = cliuiModule.default || cliuiModule // issues loading in browser
 
 module.exports = async function ls({ spinner, blockchain }, path = '.') {
   spinner.text = `Resolving ${path}`

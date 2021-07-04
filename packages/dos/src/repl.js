@@ -20,26 +20,41 @@ module.exports = async function repl(opts) {
   opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
   opts.evaluate = opts.evaluate || withSpin(evaluate)
+  const stdin = opts.stdin || process.stdin
+  const stdout = opts.stdout || process.stdout
+  const stderr = opts.stderr || process.stderr
 
   debug(`opts: `, Object.keys(opts))
 
   const ctx = await getInitialCtx(opts)
+  await print(
+    `Welcome to the HyperNet
+  Blockchain core: v${version}
+  DOS:             v${dosVersion}
+  type "help" to get started`,
+    stdout,
+    stderr
+  )
 
   const exec = async (input) => {
     let [cmd, ...cmdArgs] = input.split(' ').filter(Boolean)
     debug(`command: `, cmd, cmdArgs)
 
-    await print(async () => {
-      if (!noTiming.includes(cmd)) {
-        cmdArgs = [cmd, ...cmdArgs]
-        cmd = 'time'
-      }
-      const result = await opts.evaluate(ctx, cmd, cmdArgs)
-      if (result && result.ctx) {
-        Object.assign(ctx, result.ctx)
-      }
-      return result
-    })
+    await print(
+      async () => {
+        if (!noTiming.includes(cmd)) {
+          cmdArgs = [cmd, ...cmdArgs]
+          cmd = 'time'
+        }
+        const result = await opts.evaluate(ctx, cmd, cmdArgs)
+        if (result && result.ctx) {
+          Object.assign(ctx, result.ctx)
+        }
+        return result
+      },
+      stdout,
+      stderr
+    )
   }
   // await exec('cd /') // must make at least one block to have context
   // debug(`changing to home directory`)
@@ -52,7 +67,7 @@ module.exports = async function repl(opts) {
   const stopLoop = loop(async function rep() {
     let input = 'exit'
     try {
-      input = await opts.read(ctx)
+      input = await opts.read(ctx, stdin, stdout)
     } catch (e) {
       if (e.message) {
         throw e
@@ -108,10 +123,6 @@ async function getInitialCtx({ blockchain, evaluate }) {
   // spinner.stop()
   await awaitBlockchain(blockchain)
 
-  await print(`Welcome to the HyperNet
-  Blockchain core: v${version}
-  DOS:             v${dosVersion}
-  type "help" to get started`)
   const user = 'root'
   const machineId = 'local'
   spinner.stop()
