@@ -1,7 +1,6 @@
 import assert from 'assert'
 import React, { useState, useEffect } from 'react'
 import { effectorFactory } from '@dreamcatcher-tech/interblock'
-import commandLineShell from '@dreamcatcher-tech/dos'
 import Debug from 'debug'
 import equals from 'fast-deep-equal'
 import { Terminal } from '.'
@@ -67,17 +66,6 @@ const Blockchain = ({
       debug(`"${id}" has been shut down`)
     }
   }, [id, dev])
-
-  useEffect(() => {
-    if (blockchain) {
-      const awaitable = async () => {
-        const emptyArgs = []
-        const abortCmd = await commandLineShell(emptyArgs, { blockchain })
-        return abortCmd
-      }
-      return awaitable()
-    }
-  }, [blockchain])
 
   useEffect(() => {
     if (blockchain) {

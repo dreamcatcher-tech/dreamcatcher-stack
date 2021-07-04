@@ -30,3 +30,12 @@ export const getPathSegments = (alias) => {
   })
   return paths
 }
+export const splitPathSegments = (path) => {
+  // TODO merge with metrologyFactory function
+  if (path === '/') {
+    return ['/']
+  }
+  const paths = path.split('/').filter((seg) => !!seg)
+  paths.unshift('/')
+  return paths
+}

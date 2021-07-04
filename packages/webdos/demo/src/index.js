@@ -17,7 +17,7 @@ import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
 
-Debug.enable('covenant* *Blockchain *shell* *:Nav *Terminal')
+Debug.enable('*:Nav *router:* *usePathBlockstream')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -30,6 +30,11 @@ Debug.enable('covenant* *Blockchain *shell* *:Nav *Terminal')
  * Idea is that overrides and custom items come first, then default fallbacks.
  *
  * Want the default to just be displayed based on the app.
+ * Switch can be repeatable for each piece of the path.
+ *    Can be depth first, where each case is checked for each path segment
+ *    Breadth first walks the whole path for each case before going to the next one
+ * Want consumption of parts of a path, then anything not consumed falls thru below.
+ * state matcher
  */
 
 export default class Demo extends Component {
@@ -39,16 +44,21 @@ export default class Demo extends Component {
         <h2>Demo</h2>
         <Blockchain dev={multi}>
           <Terminal path="/" style={{ height: '40vh' }} />
+          <Router>
+            <Switch>
+              <Route covenant="crm" component={<Nav />} />
+              <Route component={<Explorer />} />
+            </Switch>
+          </Router>
           {/*
           <Router>
             <Switch>
-              <Route covenant="crm">
-                <Nav />
+              <Route covenant="crm" component={<Nav />}>
                 <Route path="/schedules/" exact>
                   <div>Schedules ?</div>
                 </Route>
                 <Route path="/customers">
-                  // should be detected by covenant
+                  // should be auto detected based on covenant
                   <CustomerList />
                   <Route path="/:customer">
                     <Customer />

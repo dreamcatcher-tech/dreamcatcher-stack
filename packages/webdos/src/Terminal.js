@@ -1,6 +1,6 @@
 import '../css/Terminal.css'
 import assert from 'assert'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'
 import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
@@ -9,6 +9,8 @@ import FontFaceObserver from 'fontfaceobserver'
 import '@fontsource/roboto-mono'
 import 'xterm/css/xterm.css'
 import { stdin as mockStdin } from 'mock-stdin'
+import { useBlockchain } from '.'
+import commandLineShell from '@dreamcatcher-tech/dos'
 
 import '../css/TorEmoji.woff2'
 
@@ -27,8 +29,6 @@ const getMockStdin = () => {
 
 const convertToStdStream = (terminal) => {
   debug(`toStdStream`)
-  const stdin = getMockStdin()
-  terminal.stdin = stdin
   terminal.isTTY = true
   const clearLineCode = '\u001b[2K'
   terminal.clearLine = () => {
@@ -62,6 +62,8 @@ const convertToStdStream = (terminal) => {
 const TerminalContainer = (props) => {
   let { id = '0' } = props
   id = `xterm-container-${id}`
+  const { blockchain } = useBlockchain()
+  const [streams, setStreams] = useState()
 
   useEffect(() => {
     debug(`opening terminal`)
@@ -89,17 +91,17 @@ const TerminalContainer = (props) => {
         return false
       }
     })
+    const stdin = getMockStdin()
+    const streams = { stdout: terminal, stdin, stderr: terminal }
+    setStreams(streams)
     terminal.onKey(({ key, domEvent }) => {
-      terminal.stdin.send(key)
+      stdin.send(key)
     })
     const resizeListener = () => {
       fitAddon.fit()
       terminal.columns = terminal.cols
     }
     window.addEventListener('resize', resizeListener)
-    process.stdout = terminal
-    process.stdin = terminal.stdin
-    process.stderr = terminal
     terminal.columns = terminal.cols // for enquirer to size itself correctly
 
     const isTor = checkIsLikelyTor()
@@ -142,13 +144,34 @@ const TerminalContainer = (props) => {
         debug('error loading fonts: ', e)
       })
     debug('terminal ready')
+
     return () => {
       debug(`terminal being shutdown`, id)
       window.removeEventListener('resize', resizeListener)
       isActive = false
       terminal.dispose()
+      setStreams()
     }
   }, [id])
+
+  useEffect(() => {
+    if (blockchain && streams) {
+      const { stdout, stdin, stderr } = streams
+      process.stdout = stdout // TODO wrap ora so it sees a fake process object
+      process.stdin = stdin
+      process.stderr = stderr
+
+      const emptyArgs = []
+      const abortCmdPromise = commandLineShell(emptyArgs, {
+        blockchain,
+        ...streams,
+      })
+      return async () => {
+        const abortCmd = await abortCmdPromise
+        abortCmd
+      }
+    }
+  }, [blockchain, streams])
 
   return <div {...props} id={id}></div>
 }

@@ -1,4 +1,7 @@
 /**
+ * Renders the first Route within its direct children that matches.
+ *
+ *
  * ? do we need our own lib, or can we use react-router directly ?
  * possibly fork it, so we use some of its base components, and override some ?
  *
@@ -21,10 +24,34 @@
  * exact: path must fully match, exactly
  *
  * Render placeholders while children may still be pulling in data.
+ *
+ *
+ *
+ *
+ *
  */
 import React, { useState, useEffect } from 'react'
+import Debug from 'debug'
+import { Route, useBlockchain, usePathBlockstream } from '..'
+const debug = Debug('webdos:router:Switch')
 
 const Switch = ({ children }) => {
+  children = Array.isArray(children) ? children : [children]
+  children = children.filter((child) => child.type === Route)
+  debug(`found routes: ${children.length}`)
+  const { context, blockchain } = useBlockchain()
+  const path = context.wd
+  debug(`path`, path)
+  // redraw whenever the path blocks change in case we need to switch different ?
+  const blocks = usePathBlockstream(path)
+
+  for (const child of children) {
+    // get the current path we are in
+    if (child.props.covenant) {
+      // walk all blocks
+    }
+  }
+
   return children
 }
 
