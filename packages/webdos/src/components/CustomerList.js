@@ -11,16 +11,14 @@ import { Add } from '@material-ui/icons'
 
 const debug = Debug('terminal:widgets:CustomerList')
 const CustomerList = (props) => {
-  const { block, path, cwd } = props // TODO verify this is a Collection
+  const { blocks, path, cwd } = props // TODO verify this is a Collection
   const { isPending } = useBlockchain()
   const columnsRef = useRef()
-  const nextPath = getNextPath(path, cwd)
-  const nextProps = { ...props, cwd: nextPath }
-  const child = nextPath ? <Explorer {...nextProps} /> : null
+  const [block] = blocks
 
   const onAddCustomer = async () => {
     assert(!isPending, `Cannot add customers simultaneously`)
-    debug(`addCustomer`)
+    debug(`addCustomer `)
     // show an enquiring modal UI over the top to get the data we need
 
     const command = `./add --isTestData\n`
@@ -40,10 +38,10 @@ const CustomerList = (props) => {
     position: 'fixed',
   }
 
-  const { datumTemplate } = block.state
   const columns = columnsRef.current || []
   const rows = []
-  if (datumTemplate && !columnsRef.current) {
+  if (block && block.state.datumTemplate && !columnsRef.current) {
+    const { datumTemplate } = block.state
     columnsRef.current = columns
     // TODO get nested children columns out, hiding all but top level
     const { properties } = datumTemplate.schema
@@ -82,9 +80,6 @@ const CustomerList = (props) => {
     }
   }
   const children = _getChildren(block)
-  if (children.length === 2) {
-    // debugger
-  }
   for (const child of children) {
     rows.push({ id: rows.length, child })
   }
@@ -98,6 +93,7 @@ const CustomerList = (props) => {
     }
     const command = `cd ${nextPath}\n`
     for (const c of command) {
+      // TODO replace with NavLink
       process.stdin.send(c)
     }
   }
@@ -107,7 +103,7 @@ const CustomerList = (props) => {
       <XGrid
         columns={columns}
         rows={rows}
-        loading={!datumTemplate}
+        loading={!block}
         disableMultipleSelection
         onRowClick={onClick}
         hideFooter
@@ -122,12 +118,14 @@ const CustomerList = (props) => {
       >
         <Add />
       </Fab>
-      {child}
     </div>
   )
 }
 const _getChildren = (block) => {
   const masked = ['..', '.', '.@@io']
+  if (!block) {
+    return []
+  }
   return block.network
     .getAliases()
     .filter((alias) => !masked.includes(alias) && !alias.startsWith('.'))

@@ -7,6 +7,7 @@ import Explorer from './Explorer'
 import Nav from './Nav'
 import OpenDialog from './OpenDialog'
 import Settings from './Settings'
+import Mapping from './Mapping'
 
 export {
   About,
@@ -18,4 +19,5 @@ export {
   Nav,
   OpenDialog,
   Settings,
+  Mapping,
 }

@@ -89,6 +89,7 @@ const Nav = (props) => {
           {makeButtonIcon('account', <AccountCircle />, 'current user account')}
         </Toolbar>
       </AppBar>
+      {props.children}
     </>
   )
 }

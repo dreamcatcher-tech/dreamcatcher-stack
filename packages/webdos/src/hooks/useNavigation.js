@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useBlockchain } from './useBlockchain'
 import debugFactory from 'debug'
 
-const debug = debugFactory(`terminal:useNavigation`)
+const debug = debugFactory(`webdos:hooks:useNavigation`)
 export const useNavigation = () => {
   // TODO make urls drive the blockchain, as well as blockchain drive urls
   const { blockchain, context } = useBlockchain()
   const [popstate, setPopstate] = useState()
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     if (!blockchain) {
@@ -35,6 +36,18 @@ export const useNavigation = () => {
     return
   }
   const { wd } = context
+  useEffect(() => {
+    if (window.location.pathname !== wd) {
+      debug(`oneShot window.location.pathname !== wd`)
+      blockchain.cd(window.location.pathname)
+    }
+    setIsInitialized(true)
+  }, [])
+
+  if (!isInitialized) {
+    return
+  }
+
   if (window.location.pathname !== wd) {
     debug(`window.history.pushState: `, wd)
     if (!popstate) {

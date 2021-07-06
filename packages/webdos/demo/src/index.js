@@ -11,13 +11,14 @@ import {
   Nav,
   OpenDialog,
   Settings,
+  Mapping,
 } from '../../src'
 import Debug from 'debug'
 import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
 
-Debug.enable('*:Nav *router:* *usePathBlockstream *shell *Route')
+Debug.enable('*:widgets:* *router:* *usePathBlockstream *Route *:useNavigation')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -47,9 +48,11 @@ export default class Demo extends Component {
           <Router>
             <Switch>
               <Route covenant="multi" component={<Nav />}>
-                <div>child</div>
+                <Switch>
+                  <Route path="/customers" component={<CustomerList />} />
+                  <Route path="/services" component={<Mapping />} />
+                </Switch>
               </Route>
-
               <Route component={<Explorer />} />
             </Switch>
           </Router>

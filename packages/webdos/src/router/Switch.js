@@ -47,32 +47,52 @@ const Switch = ({ children }) => {
   const { context } = useBlockchain()
   const path = context.wd // TODO allow nested switch, so pull relative path
   debug(`path`, path)
+  const segments = splitPathSegments(path)
+
   const blocks = usePathBlockstream(path)
   debug(`blocks length`, blocks.length)
 
+  const wrapRoute = (route, index) => {
+    if (blocks.length <= index) {
+      debug(`blocks not loaded yet`)
+      return <div>Blocks still loading for {path}...</div>
+    }
+    const matchedBlocks = blocks.slice(index)
+    const matchedPath = segments
+      .slice(0, index + 1)
+      .join('/')
+      .substring(1)
+    debug(`matchedPath`, matchedPath)
+    return (
+      <RouterContext.Provider
+        value={{ blocks: matchedBlocks, path: matchedPath, cwd: path }}
+      >
+        {route}
+      </RouterContext.Provider>
+    )
+  }
   for (const route of routes) {
     const { covenant } = route.props
     if (covenant) {
-      const match = blocks.find((block) => block.covenantId.name === covenant)
-      if (match) {
-        const index = blocks.indexOf(match)
+      const matchedBlock = blocks.find(
+        (block) => block.covenantId.name === covenant
+      )
+      if (matchedBlock) {
+        const index = blocks.indexOf(matchedBlock)
         debug(`matched `, covenant, index)
         // set context provider so useRouteMatch can get the matching info
         // useRouteBlock() to get the blocks in the current matched path ?
-        const matchedBlocks = blocks.slice(index)
-        const segments = splitPathSegments(path)
-        const matchedPath = segments
-          .slice(0, index + 1)
-          .join('/')
-          .substring(1)
-        debug(`matchedPath`, matchedPath)
-        return (
-          <RouterContext.Provider
-            value={{ blocks: matchedBlocks, path: matchedPath, cwd: path }}
-          >
-            {route}
-          </RouterContext.Provider>
-        )
+        return wrapRoute(route, index)
+      }
+    }
+    const matchPath = route.props.path
+    if (matchPath) {
+      debug(`route path: `, matchPath)
+      if (path.includes(matchPath)) {
+        const lastSegment = matchPath.split('/').pop()
+        const index = segments.lastIndexOf(lastSegment)
+        assert(index >= 0, `Index not found: ${matchPath}`)
+        return wrapRoute(route, index)
       }
     }
   }
