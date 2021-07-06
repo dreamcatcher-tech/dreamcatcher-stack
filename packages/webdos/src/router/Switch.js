@@ -33,26 +33,51 @@
 import React, { useState, useEffect } from 'react'
 import Debug from 'debug'
 import { Route, useBlockchain, usePathBlockstream } from '..'
+import assert from 'assert'
+import RouterContext from './RouterContext'
+import { splitPathSegments } from '../utils'
+
 const debug = Debug('webdos:router:Switch')
 
 const Switch = ({ children }) => {
   children = Array.isArray(children) ? children : [children]
-  children = children.filter((child) => child.type === Route)
-  debug(`found routes: ${children.length}`)
-  const { context, blockchain } = useBlockchain()
-  const path = context.wd
+  const routes = children.filter((child) => child.type === Route)
+  debug(`found routes: ${routes.length}`)
+  assert.strictEqual(children.length, routes.length)
+  const { context } = useBlockchain()
+  const path = context.wd // TODO allow nested switch, so pull relative path
   debug(`path`, path)
-  // redraw whenever the path blocks change in case we need to switch different ?
   const blocks = usePathBlockstream(path)
+  debug(`blocks length`, blocks.length)
 
-  for (const child of children) {
-    // get the current path we are in
-    if (child.props.covenant) {
-      // walk all blocks
+  for (const route of routes) {
+    const { covenant } = route.props
+    if (covenant) {
+      const match = blocks.find((block) => block.covenantId.name === covenant)
+      if (match) {
+        const index = blocks.indexOf(match)
+        debug(`matched `, covenant, index)
+        // set context provider so useRouteMatch can get the matching info
+        // useRouteBlock() to get the blocks in the current matched path ?
+        const matchedBlocks = blocks.slice(index)
+        const segments = splitPathSegments(path)
+        const matchedPath = segments
+          .slice(0, index + 1)
+          .join('/')
+          .substring(1)
+        debug(`matchedPath`, matchedPath)
+        return (
+          <RouterContext.Provider
+            value={{ blocks: matchedBlocks, path: matchedPath, cwd: path }}
+          >
+            {route}
+          </RouterContext.Provider>
+        )
+      }
     }
   }
 
-  return children
+  return null
 }
 
 export default Switch

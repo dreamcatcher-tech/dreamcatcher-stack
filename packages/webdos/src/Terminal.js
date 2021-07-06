@@ -62,7 +62,14 @@ const convertToStdStream = (terminal) => {
 const TerminalContainer = (props) => {
   let { id = '0' } = props
   id = `xterm-container-${id}`
-  const { blockchain } = useBlockchain()
+  let blockchain
+  try {
+    const { blockchain: bc } = useBlockchain()
+    blockchain = bc
+  } catch (e) {
+    debugger
+    const thing = useBlockchain()
+  }
   const [streams, setStreams] = useState()
 
   useEffect(() => {

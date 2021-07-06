@@ -17,7 +17,7 @@ import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
 
-Debug.enable('*:Nav *router:* *usePathBlockstream')
+Debug.enable('*:Nav *router:* *usePathBlockstream *shell *Route')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -46,7 +46,10 @@ export default class Demo extends Component {
           <Terminal path="/" style={{ height: '40vh' }} />
           <Router>
             <Switch>
-              <Route covenant="crm" component={<Nav />} />
+              <Route covenant="multi" component={<Nav />}>
+                <div>child</div>
+              </Route>
+
               <Route component={<Explorer />} />
             </Switch>
           </Router>

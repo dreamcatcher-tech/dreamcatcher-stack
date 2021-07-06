@@ -28,7 +28,7 @@ const truncateSubscriptions = (subscriptions, length) => {
 export const usePathBlockstream = (cwd) => {
   // TODO if we do not have permission to access block, throw an error
   const { blockchain } = useBlockchain()
-  const [blocks, setBlocks] = useState()
+  const [blocks, setBlocks] = useState([])
   useEffect(() => {
     const segments = splitPathSegments(cwd)
     assert.strictEqual(segments[0], '/')
@@ -38,9 +38,9 @@ export const usePathBlockstream = (cwd) => {
     const baseChainId = blockchain.getChainId()
     const tracker = (chainId, index) => {
       const shortChainId = chainId.substring(0, 9)
-      debug(`tracker %i %i %s`, shortChainId, index, segments[index])
+      debug(`tracker %s %i %s`, shortChainId, index, segments[index])
       const sub = (block) => {
-        setBlocks((current = []) => {
+        setBlocks((current) => {
           if (!block.equals(current[index])) {
             const next = [...current]
             next[index] = block

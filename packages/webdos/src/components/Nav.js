@@ -26,22 +26,19 @@ const useStyles = makeStyles({
 const Nav = (props) => {
   debug(`props: `, props)
   const classes = useStyles()
-  const { block, path, cwd } = props
-  const nextPath = getNextPath(path, cwd)
-  const nextProps = { ...props, cwd: nextPath }
-  // TODO let Explorer figure out the nextProps on its own
-  const child = nextPath ? <Explorer {...nextProps} /> : null
-
+  const { blocks, path, cwd } = props
+  const [block] = blocks
   const children = getChildren(block)
   debug(`aliases: `, children)
+
   const navLinks = children.map((child) => ({
-    title: child,
-    path: '/' + child,
+    title: child, // TODO get the blocks of the children, and get titles out of datums
   }))
   const onClick = (child) => () => {
+    // TODO replace with <NavLink> components that handle this automatically
     debug(`onclick`, child)
-    const nextPath = cwd + '/' + child
-    if (path === nextPath) {
+    const nextPath = path + '/' + child
+    if (cwd === nextPath) {
       debug(`no change to ${path}`)
       return
     }
@@ -74,7 +71,7 @@ const Nav = (props) => {
             aria-labelledby="main navigation"
             className={classes.navDisplayFlex}
           >
-            {navLinks.map(({ title, path }) => (
+            {navLinks.map(({ title }) => (
               <div
                 key={title}
                 className={classes.linkText}
@@ -92,7 +89,6 @@ const Nav = (props) => {
           {makeButtonIcon('account', <AccountCircle />, 'current user account')}
         </Toolbar>
       </AppBar>
-      {child}
     </>
   )
 }

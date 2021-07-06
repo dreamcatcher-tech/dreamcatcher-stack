@@ -7,15 +7,10 @@ import { Terminal } from '.'
 
 const debug = Debug('terminal:Blockchain')
 
-export const BlockchainContext = React.createContext(null)
+export const BlockchainContext = React.createContext()
 BlockchainContext.displayName = 'Blockchain'
 
-const Blockchain = ({
-  id = 'terminal',
-  context: higherContext,
-  dev,
-  children,
-}) => {
+const Blockchain = ({ id = 'terminal', dev, children }) => {
   assert(typeof dev === 'object' || typeof dev === 'undefined')
   const [latest, setLatest] = useState()
   const [context, setContext] = useState()
@@ -38,8 +33,13 @@ const Blockchain = ({
       if (dev) {
         assert.strictEqual(typeof dev, 'object', `dev must be an object`)
         debug(`installing dev mode app`)
-
-        const { dpkgPath } = await blockchain.publish('devApp', dev.installer)
+        const { installer, covenantId } = dev
+        const name = covenantId.name
+        const { dpkgPath } = await blockchain.publish(
+          name,
+          installer,
+          covenantId
+        )
         debug(`dpkgPath: `, dpkgPath)
         const installResult = await blockchain.install(dpkgPath, 'app')
 
@@ -97,17 +97,16 @@ const Blockchain = ({
     }
   }, [blockchain])
 
-  const Context = higherContext || BlockchainContext
   const contextValue = { blockchain, latest, context, isPending }
   // TODO block stdin during this boot time
   return (
-    <Context.Provider value={contextValue}>
+    <BlockchainContext.Provider value={contextValue}>
       {isBooting ? (
         <Terminal id="boot" style={{ height: '100vh' }} />
       ) : (
         children
       )}
-    </Context.Provider>
+    </BlockchainContext.Provider>
   )
 }
 const _extractCovenants = (dev) => {
