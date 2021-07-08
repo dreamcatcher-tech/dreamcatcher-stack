@@ -49,7 +49,7 @@ const installer = {
       state: {
         datumTemplate: {
           schema: {
-            title: 'Details',
+            title: 'Customer',
             type: 'object',
             required: ['custNo', 'name', 'isEmailVerified'],
             properties: {

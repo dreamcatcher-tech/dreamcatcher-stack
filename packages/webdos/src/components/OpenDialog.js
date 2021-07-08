@@ -17,7 +17,7 @@ const useStyles = makeStyles({
 })
 const OpenDialog = ({ title, children }) => {
   const classes = useStyles()
-  const container = document.getElementById('DUI')
+  const container = document.getElementById('multi-nav-modal-container')
   const isTerminalFocused = !container.contains(document.activeElement)
   const onClose = () => {
     // TODO halt the user if blockchain is enquiring still

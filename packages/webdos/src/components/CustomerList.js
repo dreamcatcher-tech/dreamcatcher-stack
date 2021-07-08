@@ -3,16 +3,14 @@ import calculateSize from 'calculate-size'
 import { XGrid } from '@material-ui/x-grid'
 import assert from 'assert'
 import Debug from 'debug'
-import Explorer from './Explorer'
-import { getNextPath } from '../utils'
 import { useBlockchain, useBlockstream } from '../hooks'
 import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
 
 const debug = Debug('terminal:widgets:CustomerList')
 const CustomerList = (props) => {
-  const { blocks, path, cwd } = props // TODO verify this is a Collection
-  const { isPending } = useBlockchain()
+  const { blocks, match, cwd } = props // TODO verify this is a Collection
+  const { blockchain, isPending } = useBlockchain()
   const columnsRef = useRef()
   const [block] = blocks
 
@@ -23,8 +21,12 @@ const CustomerList = (props) => {
 
     const command = `./add --isTestData\n`
     for (const c of command) {
-      process.stdin.send(c)
+      // process.stdin.send(c)
     }
+    const { add } = await blockchain.getActionCreators(match)
+    const addAction = add({ isTestData: true })
+    const result = await blockchain.dispatch(addAction, match)
+    debug(`add result: `, result)
     // const newCustomer = await isPending
     // how to learn what customer just got added ?
     // const cd = `cd /crm/customers/bob`
@@ -56,7 +58,7 @@ const CustomerList = (props) => {
         // need to cache all the blocks so fetching them is very cheap
         // fetch block relating to this child, to get out data
         // show loading screen in meantime
-        const childPath = cwd + '/' + child
+        const childPath = match + '/' + child
         return (
           <CellBlock
             path={childPath}
@@ -85,10 +87,10 @@ const CustomerList = (props) => {
   }
   const onClick = ({ id }) => {
     const child = children[id]
-    debug(`onclick`, child, cwd)
-    const nextPath = cwd + '/' + child
-    if (path === nextPath) {
-      debug(`no change to ${path}`)
+    debug(`onclick`, child, match, cwd)
+    const nextPath = match + '/' + child
+    if (match === nextPath) {
+      debug(`no change to ${match}`)
       return
     }
     const command = `cd ${nextPath}\n`

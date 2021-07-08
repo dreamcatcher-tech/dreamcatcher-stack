@@ -1,12 +1,11 @@
 import React from 'react'
 import Debug from 'debug'
-import Explorer from './Explorer'
-import { getNextPath } from '../utils'
 import { AppBar, Toolbar } from '@material-ui/core'
 import { List, ListItem, ListItemText } from '@material-ui/core'
 import { IconButton } from '@material-ui/core'
 import { Home, AccountCircle, Settings, Info } from '@material-ui/icons'
 import { makeStyles } from '@material-ui/core'
+import { useRouterContext } from '../router/RouterContext'
 const debug = Debug('terminal:widgets:Nav')
 const useStyles = makeStyles({
   grow: {
@@ -26,7 +25,7 @@ const useStyles = makeStyles({
 const Nav = (props) => {
   debug(`props: `, props)
   const classes = useStyles()
-  const { blocks, path, cwd } = props
+  const { blocks, match, cwd } = useRouterContext()
   const [block] = blocks
   const children = getChildren(block)
   debug(`aliases: `, children)
@@ -37,9 +36,9 @@ const Nav = (props) => {
   const onClick = (child) => () => {
     // TODO replace with <NavLink> components that handle this automatically
     debug(`onclick`, child)
-    const nextPath = path + '/' + child
+    const nextPath = match + '/' + child
     if (cwd === nextPath) {
-      debug(`no change to ${path}`)
+      debug(`no change to ${match}`)
       return
     }
     const command = `cd ${nextPath}\n`

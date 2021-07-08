@@ -7,21 +7,24 @@ import Datum from './Datum'
 const debug = Debug('terminal:widgets:Customer')
 debug(`loaded`)
 const Customer = (props) => {
-  const { block, path, cwd } = props
-  const nextPath = getNextPath(path, cwd)
-  const nextProps = { ...props, cwd: nextPath }
-  const child = nextPath ? <Explorer {...nextProps} /> : null
-  // TODO assert that this is a datum, and that it is formatted correctly ?
-
-  const { title } = block.state.schema
-  const { custNo, name } = block.state.formData
+  const { blocks, match, cwd } = props
+  let title = ''
+  let name = ''
+  let custNo = ''
+  const [first, second, block] = blocks
+  // TODO I am so sorry that I did not do any route scoping
+  if (!block || !block.state.schema || !block.state.formData) {
+    return null
+  }
+  title = block.state.schema.title
+  name = block.state.formData.name
+  // TODO get the identifier key out
 
   return (
     <>
-      <OpenDialog title={`${title}: ${name} (${custNo})`}>
+      <OpenDialog title={`${title}: ${name}`}>
         <Datum block={block} />
       </OpenDialog>
-      {child}
     </>
   )
 }

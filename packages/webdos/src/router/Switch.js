@@ -45,28 +45,22 @@ const Switch = ({ children }) => {
   debug(`found routes: ${routes.length}`)
   assert.strictEqual(children.length, routes.length)
   const { context } = useBlockchain()
-  const path = context.wd // TODO allow nested switch, so pull relative path
-  debug(`path`, path)
-  const segments = splitPathSegments(path)
+  const cwd = context.wd // TODO allow nested switch, so pull relative path
+  debug(`cwd`, cwd)
+  const segments = splitPathSegments(cwd)
 
-  const blocks = usePathBlockstream(path)
+  const blocks = usePathBlockstream(cwd)
   debug(`blocks length`, blocks.length)
 
   const wrapRoute = (route, index) => {
-    if (blocks.length <= index) {
-      debug(`blocks not loaded yet`)
-      return <div>Blocks still loading for {path}...</div>
-    }
     const matchedBlocks = blocks.slice(index)
-    const matchedPath = segments
+    const match = segments
       .slice(0, index + 1)
       .join('/')
       .substring(1)
-    debug(`matchedPath`, matchedPath)
+    debug(`matchedPath`, match)
     return (
-      <RouterContext.Provider
-        value={{ blocks: matchedBlocks, path: matchedPath, cwd: path }}
-      >
+      <RouterContext.Provider value={{ blocks: matchedBlocks, match, cwd }}>
         {route}
       </RouterContext.Provider>
     )
@@ -85,13 +79,13 @@ const Switch = ({ children }) => {
         return wrapRoute(route, index)
       }
     }
-    const matchPath = route.props.path
-    if (matchPath) {
-      debug(`route path: `, matchPath)
-      if (path.includes(matchPath)) {
-        const lastSegment = matchPath.split('/').pop()
+    const { path } = route.props
+    if (path) {
+      debug(`route path: `, path)
+      if (cwd.includes(path)) {
+        const lastSegment = path.split('/').pop()
         const index = segments.lastIndexOf(lastSegment)
-        assert(index >= 0, `Index not found: ${matchPath}`)
+        assert(index >= 0, `Index not found: ${path}`)
         return wrapRoute(route, index)
       }
     }

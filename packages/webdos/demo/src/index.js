@@ -47,11 +47,15 @@ export default class Demo extends Component {
           <Terminal path="/" style={{ height: '40vh' }} />
           <Router>
             <Switch>
-              <Route covenant="multi" component={<Nav />}>
-                <Switch>
-                  <Route path="/customers" component={<CustomerList />} />
-                  <Route path="/services" component={<Mapping />} />
-                </Switch>
+              <Route covenant="multi">
+                <div id="multi-nav-modal-container">
+                  <Nav />
+                  <Switch>
+                    <Route path="/customers" component={<CustomerList />} />
+                    <Route path="/services" component={<Mapping />} />
+                  </Switch>
+                  <Route path="/custNo-*" component={<Customer />} />
+                </div>
               </Route>
               <Route component={<Explorer />} />
             </Switch>

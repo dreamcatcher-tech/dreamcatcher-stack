@@ -39,7 +39,9 @@ export const useNavigation = () => {
   useEffect(() => {
     if (window.location.pathname !== wd) {
       debug(`oneShot window.location.pathname !== wd`)
-      blockchain.cd(window.location.pathname)
+      blockchain.cd(window.location.pathname).catch((e) => {
+        debug(`pathname mismatch ${wd} ${e.message}`)
+      })
     }
     setIsInitialized(true)
   }, [])
