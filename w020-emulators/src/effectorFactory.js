@@ -66,6 +66,7 @@ const effectorFactory = async (identifier, covenantOverloads = {}) => {
 
 const effector = (metrology, rootPierce) => {
   const absolutePath = metrology.getAbsolutePath()
+  // TODO use wd or some other fortification against random entries
   const dispatch = ({ type, payload = {} }, to = absolutePath) => {
     debug(`dispatch to: %o type: %O`, to, type)
     if (absolutePath === '/') {

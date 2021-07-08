@@ -29,6 +29,7 @@
 
 const assert = require('assert')
 const debugBase = require('debug')('ib:met')
+const posix = require('path')
 const _ = require('lodash')
 const setImmediate = require('set-immediate-shim')
 const { standardEngineFactory } = require('./standardEngineFactory')
@@ -49,6 +50,7 @@ const {
   addressModel,
 } = require('../../w015-models')
 const { piercerFactory } = require('./piercerFactory')
+const setImmediateShim = require('set-immediate-shim')
 
 let id = 0
 const metrologyFactory = async (identifier, covenantOverloads = {}) => {
@@ -130,7 +132,8 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       const { subs, latest } = blockstreamSubscribers.get(chainId)
       subs.add(callback)
       if (latest) {
-        setTimeout(() => callback(latest))
+        // TODO avoid setImmediate and make function like redux, for speed
+        setImmediateShim(() => callback(latest))
       }
       return () => {
         subs.delete(callback)
@@ -165,7 +168,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         }
       }
     })
-    setImmediate(() => subscribers.forEach((callback) => callback()))
+    setImmediateShim(() => subscribers.forEach((callback) => callback()))
     const subscribe = (callback) => {
       assert.strictEqual(typeof callback, 'function')
       subscribers.add(callback)
@@ -232,8 +235,11 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     const getChainCount = () => tap.getChainCount()
     // TODO getCovenants should return inert json only ?
     const getCovenants = () => isolateProcessor._getCovenants()
+    // TODO fortify so can handle not getting full path
+    // this might be in wrapping metrology with some kind of interface
     const getActionCreators = async (path) => {
-      assert.strictEqual(typeof path, 'string')
+      assert.strictEqual(typeof path, 'string', `path must be a string`)
+      assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
       const latest = await getLatestFromPath(path)
       const covenant = _getCovenant(latest, getCovenants())
       // TODO create the functions from the schema, not raw action creators

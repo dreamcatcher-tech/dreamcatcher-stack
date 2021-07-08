@@ -95,13 +95,15 @@ const _getChildName = (datumTemplate, payload) => {
   if (typeof obj === 'number') {
     obj = obj + ''
   }
+  const prefix = datumTemplate.namePath.join('_')
+  obj = prefix + '-' + obj
   assert.strictEqual(typeof obj, 'string')
   debug(`_getChildName`, obj)
   return obj
 }
 
 const actions = {
-  add: (payload) => ({ type: 'ADD', payload }),
+  add: (payload = {}) => ({ type: 'ADD', payload }),
   setDatumTemplate: (datumTemplate) => ({
     type: 'SET_TEMPLATE',
     payload: datumTemplate,

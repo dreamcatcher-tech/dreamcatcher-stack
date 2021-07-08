@@ -139,6 +139,10 @@ const config = {
         debug(`making default installer`, name)
         installer = { covenant: name }
       }
+      if (!installer.covenant) {
+        // TODO formalize how covenants and installers are specified
+        installer = { ...installer, covenant: name }
+      }
       debug(`publish: `, name)
       const covenantId = covenantIdModel.create('dpkg')
       const state = { installer }
@@ -167,8 +171,9 @@ const config = {
       // TODO ? make a dedicated app root for each app, so we can control cleanup ?
       // TODO verify that all covenants in installer are available
       let { children, covenant, ...spawnOptions } = installer
-      covenant = covenant || 'unity'
       // TODO unify how covenants are referred to
+      covenant = covenant || 'unity'
+      debug(`installing with covenant: `, covenant)
       const covenantId = covenantIdModel.create(covenant)
       spawnOptions = { ...spawnOptions, covenantId }
       const child = posix.basename(absInstallPath)
@@ -408,11 +413,12 @@ const actions = {
     type: 'INSTALL',
     payload: { dpkgPath, installPath },
   }),
-  publish: (name, installer = {}, registry = '.') => ({
+  publish: (name, installer = {}, covenantId, registry = '.') => ({
+    // TODO handle nested covenants ?
     // TODO move to using a hardware path for covenant
     // TODO remove install file, instead generate from loading covenant in isolation
     type: 'PUBLISH',
-    payload: { name, installer, registry },
+    payload: { name, installer, covenantId, registry },
   }),
   cat: (path = '.') => ({
     type: 'CAT',
