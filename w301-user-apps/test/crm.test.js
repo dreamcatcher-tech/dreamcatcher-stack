@@ -2,11 +2,11 @@ const assert = require('assert')
 const { effectorFactory, awsFactory } = require('../../w020-emulators')
 const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
-// require('debug').enable('*tests:crm *met*')
+require('debug').enable('*tests:crm *met*')
 
 describe.skip('crm', () => {
   describe('app deploy', () => {
-    test('deploys app', async () => {
+    test.only('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       shell.enableLogging()

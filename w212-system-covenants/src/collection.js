@@ -95,7 +95,7 @@ const _getChildName = (datumTemplate, payload) => {
   if (typeof obj === 'number') {
     obj = obj + ''
   }
-  const prefix = 'customer' //datumTemplate.namePath.join('_')
+  const prefix = datumTemplate.namePath.join('_')
   obj = prefix + '-' + obj
   assert.strictEqual(typeof obj, 'string')
   debug(`_getChildName`, obj)
