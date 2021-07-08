@@ -413,7 +413,7 @@ const actions = {
     type: 'INSTALL',
     payload: { dpkgPath, installPath },
   }),
-  publish: (name, installer = {}, covenantId, registry = '.') => ({
+  publish: (name, installer = {}, covenantId = {}, registry = '.') => ({
     // TODO handle nested covenants ?
     // TODO move to using a hardware path for covenant
     // TODO remove install file, instead generate from loading covenant in isolation

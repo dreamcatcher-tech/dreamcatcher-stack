@@ -4,7 +4,7 @@ const { crm } = require('../src/crm')
 const debug = require('debug')('interblock:tests:crm')
 // require('debug').enable('*tests:crm *met*')
 
-describe('crm', () => {
+describe.skip('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
       const publishStart = Date.now()
@@ -46,9 +46,13 @@ describe('crm', () => {
     test.todo('add customer with test data using .processes/addTestCustomer')
   })
   describe('list customers', () => {
-    test.only('list customers basic', async () => {
+    test('list customers basic', async () => {
       const shell = await effectorFactory('crm')
-      const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
+      const { dpkgPath } = await shell.publish(
+        'dpkgCrm',
+        crm.installer,
+        crm.covenantId
+      )
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
       await shell.install(dpkgPath, 'crm')
