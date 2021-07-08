@@ -35,8 +35,6 @@
 
     */
 
-require('debug').enable('*')
-
 const debug = require('debug')('interblock')
 if (!globalThis._interblockLibrary) {
   const { version } = require('./package.json')

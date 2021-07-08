@@ -50,7 +50,6 @@ const {
   addressModel,
 } = require('../../w015-models')
 const { piercerFactory } = require('./piercerFactory')
-const setImmediateShim = require('set-immediate-shim')
 
 let id = 0
 const metrologyFactory = async (identifier, covenantOverloads = {}) => {
@@ -133,7 +132,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       subs.add(callback)
       if (latest) {
         // TODO avoid setImmediate and make function like redux, for speed
-        setImmediateShim(() => callback(latest))
+        setImmediate(() => callback(latest))
       }
       return () => {
         subs.delete(callback)
@@ -168,7 +167,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         }
       }
     })
-    setImmediateShim(() => subscribers.forEach((callback) => callback()))
+    setImmediate(() => subscribers.forEach((callback) => callback()))
     const subscribe = (callback) => {
       assert.strictEqual(typeof callback, 'function')
       subscribers.add(callback)
