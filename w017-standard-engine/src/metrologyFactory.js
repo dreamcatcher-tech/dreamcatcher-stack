@@ -30,6 +30,7 @@
 const assert = require('assert')
 const debugBase = require('debug')('ib:met')
 const posix = require('path')
+console.log(`posix`, posix)
 const _ = require('lodash')
 const setImmediate = require('set-immediate-shim')
 const { standardEngineFactory } = require('./standardEngineFactory')
