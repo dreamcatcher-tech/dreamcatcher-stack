@@ -34,15 +34,13 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
+
+require('debug').enable('*')
+
 const debug = require('debug')('interblock')
 if (!globalThis._interblockLibrary) {
-  if (typeof globalThis.interblockLoadCounter === 'undefined') {
-    globalThis.interblockLoadCounter = 0
-  }
-  globalThis.interblockLoadCounter++
   const { version } = require('./package.json')
-  const count = globalThis.interblockLoadCounter
-  debug(`interblock version: ${version} loadCount: ${count}`)
+  debug(`interblock version: ${version}`)
 
   const {
     browserFactory,
