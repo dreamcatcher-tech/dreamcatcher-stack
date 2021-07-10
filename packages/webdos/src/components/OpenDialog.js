@@ -4,6 +4,8 @@ import DialogContent from '@material-ui/core/DialogContent'
 import React from 'react'
 import Debug from 'debug'
 import { makeStyles } from '@material-ui/core'
+import { useAppContainer } from '../hooks'
+
 const debug = Debug('terminal:widgets:OpenDialog')
 debug(`loaded`)
 
@@ -17,8 +19,7 @@ const useStyles = makeStyles({
 })
 const OpenDialog = ({ title, children }) => {
   const classes = useStyles()
-  const container = document.getElementById('multi-nav-modal-container')
-  const isTerminalFocused = !container.contains(document.activeElement)
+  const { element, isFocused } = useAppContainer()
   const onClose = () => {
     // TODO halt the user if blockchain is enquiring still
     const command = `cd ..\n`
@@ -30,7 +31,7 @@ const OpenDialog = ({ title, children }) => {
     <Dialog
       scroll={'body'}
       maxWidth={'xl'}
-      container={container}
+      container={element}
       onClose={onClose}
       aria-labelledby="simple-dialog-title"
       open
@@ -40,8 +41,8 @@ const OpenDialog = ({ title, children }) => {
       style={{ position: 'absolute' }}
       // TODO if terminal is showing, do not grab focus
       disableEnforceFocus
-      disableRestoreFocus={isTerminalFocused}
-      disableAutoFocus={isTerminalFocused}
+      disableRestoreFocus={isFocused}
+      disableAutoFocus={isFocused}
     >
       <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
       <DialogContent dividers>{children}</DialogContent>

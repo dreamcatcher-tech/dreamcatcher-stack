@@ -7,7 +7,8 @@ import Explorer from './Explorer'
 import Nav from './Nav'
 import OpenDialog from './OpenDialog'
 import Settings from './Settings'
-import Mapping from './Mapping'
+import MapBackground from './MapBackground'
+import AppContainer from './AppContainer'
 
 export {
   About,
@@ -19,5 +20,6 @@ export {
   Nav,
   OpenDialog,
   Settings,
-  Mapping,
+  MapBackground,
+  AppContainer,
 }

@@ -6379,6 +6379,26 @@ latest-version@^5.1.0:
   dependencies:
     package-json "^6.3.0"
 
+leaflet-draw@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/leaflet-draw/-/leaflet-draw-1.0.4.tgz#45be92f378ed253e7202fdeda1fcc71885198d46"
+  integrity sha512-rsQ6saQO5ST5Aj6XRFylr5zvarWgzWnrg46zQ1MEOEIHsppdC/8hnN8qMoFvACsPvTioAuysya/TVtog15tyAQ==
+
+leaflet-extra-markers@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/leaflet-extra-markers/-/leaflet-extra-markers-1.2.1.tgz#dcea9e0ab3850c4724afa6eda8dda8fa743739fa"
+  integrity sha512-k3mGGBJg5wr4LY89MyLHcWCol3yNC9qcK1+5os+HjBk09RlxmqsywNSBwmpP1WKnkKCIgofnOFOhdM5GeK0kHQ==
+
+leaflet-providers@^1.12.0:
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/leaflet-providers/-/leaflet-providers-1.12.0.tgz#bf407f580d9564480e2346bc1e6412ef696624cf"
+  integrity sha512-pU/mR4B+NbayBGCg5/88dmRq7t1EGiNPhsVGV3yqHuDn594vIwus4CiPVW0RtiKJNKg8Vf1pILAbFl0i+yk+lQ==
+
+leaflet.markercluster@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/leaflet.markercluster/-/leaflet.markercluster-1.5.0.tgz#54db42485da32fc3d92c7ae22d0d7982879e0b67"
+  integrity sha512-Fvf/cq4o806mJL50n+fZW9+QALDDLPvt7vuAjlD2vfnxx3srMDs2vWINJze4nKYJYRY45OC6tM/669C3pLwMCA==
+
 leaflet@^1.7.1:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.7.1.tgz#10d684916edfe1bf41d688a3b97127c0322a2a19"

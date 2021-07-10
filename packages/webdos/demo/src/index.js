@@ -13,13 +13,14 @@ import {
   Nav,
   OpenDialog,
   Settings,
-  Mapping,
+  MapBackground,
+  AppContainer,
 } from '../../src'
 import Debug from 'debug'
 import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
-Debug.enable('*:widgets:* *router:* *usePathBlockstream *Route *:useNavigation')
+Debug.enable('*:widgets:* *usePathBlockstream *Route *:useNavigation')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -42,21 +43,23 @@ Debug.enable('*:widgets:* *router:* *usePathBlockstream *Route *:useNavigation')
 export default class Demo extends Component {
   render() {
     return (
-      <div class="flex-box">
+      <div className="flex-box">
         <h4>Demo version: {version}</h4>
         <Blockchain dev={multi}>
-          <Terminal path="/" class="flex-term" />
+          <Terminal path="/" className="flex-term" />
           <Router>
             <Switch>
               <Route covenant="multi">
-                <div id="multi-nav-modal-container" class="flex-gui">
+                <AppContainer>
                   <Nav />
-                  <Switch>
-                    <Route path="/customers" component={<CustomerList />} />
-                    <Route path="/services" component={<Mapping />} />
-                  </Switch>
+                  <MapBackground>
+                    <Switch>
+                      <Route path="/customers" component={<CustomerList />} />
+                      <Route path="/services" component={<div>MAP</div>} />
+                    </Switch>
+                  </MapBackground>
                   <Route path="/custNo-*" component={<Customer />} />
-                </div>
+                </AppContainer>
               </Route>
               <Route component={<Explorer />} />
             </Switch>

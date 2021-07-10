@@ -11,6 +11,8 @@ const debug = Debug('terminal:widgets:CustomerList')
 const CustomerList = (props) => {
   const { blocks, match, cwd } = props // TODO verify this is a Collection
   const { blockchain, isPending } = useBlockchain()
+  // TODO disable '+' button if we are not the cwd
+  const isCwd = true
   const columnsRef = useRef()
   const [block] = blocks
 
@@ -116,7 +118,7 @@ const CustomerList = (props) => {
         color="primary"
         style={addButtonStyle}
         onClick={onAddCustomer}
-        disabled={isPending}
+        disabled={isPending || !isCwd}
       >
         <Add />
       </Fab>

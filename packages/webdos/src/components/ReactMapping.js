@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Debug from 'debug'
 import {
   MapContainer,
@@ -7,12 +7,14 @@ import {
   Popup,
 } from '@monsonjeremy/react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { AutoSizer, List } from 'react-virtualized'
-import 'react-virtualized/styles.css' // only needs to be imported once
 
-const debug = Debug('terminal:widgets:Mapping')
+const debug = Debug('terminal:widgets:ReactMapping')
 
 const Mapping = ({ blocks, path, cwd }) => {
+  useEffect(() => {
+    debug('mounted')
+  }, [])
+
   return (
     <MapContainer
       class="flex-map"

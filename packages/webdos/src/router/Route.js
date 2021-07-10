@@ -37,15 +37,17 @@ const Route = ({ path, covenant, component, children }) => {
   }
 
   if (component) {
-    const props = { ...component.props, ...context }
-    return React.cloneElement(component, props, children)
+    const nextChildren = [
+      ...React.Children.toArray(component.props.children),
+      ...React.Children.toArray(children),
+    ]
+    return React.cloneElement(component, context, nextChildren)
   }
 
   return (
     <>
       {React.Children.map(children, (child) => {
-        const props = { ...child.props, ...context }
-        return React.cloneElement(child, props)
+        return React.cloneElement(child, context)
       })}
     </>
   )

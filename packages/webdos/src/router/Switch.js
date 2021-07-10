@@ -40,7 +40,7 @@ import { splitPathSegments } from '../utils'
 const debug = Debug('webdos:router:Switch')
 
 const Switch = ({ children }) => {
-  children = Array.isArray(children) ? children : [children]
+  children = React.Children.toArray(children)
   const routes = children.filter((child) => child.type === Route)
   debug(`found routes: ${routes.length}`)
   assert.strictEqual(children.length, routes.length)

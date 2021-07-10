@@ -11,7 +11,7 @@ body {
 
   /* background-color: rgb(223, 195, 37); */
 }
-
+/* remove all classes */
 .flex-box {
   display: flex;
   flex-flow: column;
@@ -19,17 +19,12 @@ body {
   margin: 0;
 }
 
-.flex-gui {
-  display: flex;
-  flex-flow: column;
-  flex: 1 1 auto;
-  /* margin: 0; */
-}
 .flex-term {
   height: 280px;
   margin: 0;
   background-color: black;
 }
 .flex-map {
+  /* make this draw all the time */
   flex: 1 1 auto;
 }
