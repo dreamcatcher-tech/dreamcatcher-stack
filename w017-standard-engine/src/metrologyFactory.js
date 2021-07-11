@@ -172,7 +172,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       }
     })
     const getChildren = () => {
-      // TODO make children resolve synchronously and in their own context
+      // TODO remove this function completely
       const block = getState()
       const aliases = block.network.getAliases()
       const children = {}
