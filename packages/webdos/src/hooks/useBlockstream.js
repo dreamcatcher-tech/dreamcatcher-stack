@@ -25,8 +25,8 @@ export const useBlockstream = (cwd) => {
   const [currentCwd, setCwd] = useState()
   useEffect(() => {
     const segments = getPathSegments(cwd)
-    let active = true
-    let unsubscribe = () => (active = false)
+    let isActive = true
+    let unsubscribe = () => 'noop'
     let short
     const subscribe = async () => {
       let partialPath = segments.shift()
@@ -40,7 +40,7 @@ export const useBlockstream = (cwd) => {
         chainId = nextBlock.network[alias].address.getChainId()
         if (partialPath !== cwd) {
           nextBlock = await blockchain.getLatest(chainId)
-          if (!active) {
+          if (!isActive) {
             return
           }
         }
@@ -48,6 +48,10 @@ export const useBlockstream = (cwd) => {
       short = chainId.substring(0, 9)
       debug(`subscribe %s %s`, cwd, short)
       unsubscribe = blockchain.subscribeBlockstream(chainId, (nextBlock) => {
+        if (!isActive) {
+          debugger
+          return
+        }
         if (block && !block.isNext(nextBlock)) {
           return
         }
@@ -58,10 +62,12 @@ export const useBlockstream = (cwd) => {
     subscribe()
     return () => {
       debug(`teardown`, cwd, short)
+      isActive = false
       unsubscribe()
     }
   }, [blockchain, latest, block, cwd]) // TODO rationalize dependencies
   if (cwd !== currentCwd) {
+    // TODO do not use these functions ?
     setBlock()
     setCwd(cwd)
     return

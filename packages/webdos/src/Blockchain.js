@@ -56,21 +56,25 @@ const Blockchain = ({ id = 'terminal', dev, children }) => {
           process.stdin.send(c)
         }
       }
-      setTimeout(() => isActive && setIsBooting(false), 500)
+      setTimeout(() => isActive && setIsBooting(false), 100)
     }
     subscribe()
     return () => {
       // TODO make the blockchain reject everything, as it is defunct
       isActive = false
-      setBlockchain()
       debug(`"${id}" has been shut down`)
     }
   }, [id, dev])
 
   useEffect(() => {
+    let isActive = true
     if (blockchain) {
       let latest, contextLocal
       const unsubscribeBlocks = blockchain.subscribe(() => {
+        if (!isActive) {
+          debugger
+          return
+        }
         const blockchainState = blockchain.getState()
         if (!blockchainState.equals(latest)) {
           debug(`setLatest to height: ${blockchainState.provenance.height}`)
@@ -83,17 +87,28 @@ const Blockchain = ({ id = 'terminal', dev, children }) => {
           }
         }
       })
-      return unsubscribeBlocks
+      return () => {
+        isActive = false
+        unsubscribeBlocks()
+      }
     }
   }, [blockchain])
 
   useEffect(() => {
+    let isActive = true
     if (blockchain) {
       const unsubscribeIsPending = blockchain.subscribePending((isPending) => {
+        if (!isActive) {
+          debugger
+          return
+        }
         debug(`subscribePending`, isPending)
         setIsPending(isPending)
       })
-      return unsubscribeIsPending
+      return () => {
+        isActive = false
+        unsubscribeIsPending()
+      }
     }
   }, [blockchain])
 

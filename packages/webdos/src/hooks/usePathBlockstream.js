@@ -30,6 +30,7 @@ export const usePathBlockstream = (cwd) => {
   const { blockchain } = useBlockchain()
   const [blocks, setBlocks] = useState([])
   useEffect(() => {
+    let isActive = true
     const segments = splitPathSegments(cwd)
     assert.strictEqual(segments[0], '/')
     debug(`segments: %o`, segments)
@@ -37,6 +38,9 @@ export const usePathBlockstream = (cwd) => {
     // starting from latest, walk each segment and subscribe to changes
     const baseChainId = blockchain.getChainId()
     const tracker = (chainId, index) => {
+      if (!isActive) {
+        return // TODO find cleaner way to manage bail
+      }
       const shortChainId = chainId.substring(0, 9)
       debug(`tracker %s %i %s`, shortChainId, index, segments[index])
       const sub = (block) => {
@@ -75,6 +79,7 @@ export const usePathBlockstream = (cwd) => {
 
     return () => {
       debug(`teardown`, cwd)
+      isActive = false
       subscriptions.forEach(({ unsubscribe }) => unsubscribe())
     }
   }, [blockchain, cwd])

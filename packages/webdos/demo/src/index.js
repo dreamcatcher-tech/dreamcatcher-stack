@@ -15,12 +15,13 @@ import {
   Settings,
   MapBackground,
   AppContainer,
+  Services,
 } from '../../src'
 import Debug from 'debug'
 import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
-Debug.enable('*:widgets:* *usePathBlockstream *Route *:useNavigation')
+Debug.enable('*:widgets:* *Route ')
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
@@ -39,6 +40,13 @@ Debug.enable('*:widgets:* *usePathBlockstream *Route *:useNavigation')
  * Want consumption of parts of a path, then anything not consumed falls thru below.
  * state matcher
  */
+const Map = () => {
+  return (
+    <MapBackground>
+      <h1>child drawn on top of map</h1>
+    </MapBackground>
+  )
+}
 
 export default class Demo extends Component {
   render() {
@@ -55,7 +63,7 @@ export default class Demo extends Component {
                   <MapBackground>
                     <Switch>
                       <Route path="/customers" component={<CustomerList />} />
-                      <Route path="/services" component={<div>MAP</div>} />
+                      <Route path="/services" component={<Services />} />
                     </Switch>
                   </MapBackground>
                   <Route path="/custNo-*" component={<Customer />} />

@@ -79,7 +79,7 @@ const CustomerList = (props) => {
         headerName: title,
         description,
         renderCell,
-        width: width + 60,
+        width: width + 82,
       })
     }
   }
@@ -103,7 +103,7 @@ const CustomerList = (props) => {
   }
 
   return (
-    <div style={{ flex: '1' }}>
+    <div style={{ flex: 1, background: 'white' }}>
       <XGrid
         columns={columns}
         rows={rows}

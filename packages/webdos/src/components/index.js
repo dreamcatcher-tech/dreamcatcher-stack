@@ -9,6 +9,7 @@ import OpenDialog from './OpenDialog'
 import Settings from './Settings'
 import MapBackground from './MapBackground'
 import AppContainer from './AppContainer'
+import Services from './Services'
 
 export {
   About,
@@ -22,4 +23,5 @@ export {
   Settings,
   MapBackground,
   AppContainer,
+  Services,
 }
