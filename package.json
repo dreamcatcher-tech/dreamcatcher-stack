@@ -12,6 +12,7 @@
   "main": "dist/interblock.js",
   "scripts": {
     "prepack": "webpack",
+    "dev": "webpack --watch",
     "test": "DEBUG_COLORS=1 DEBUG='' jest --bail",
     "tw": "yarn prepack && jest package.test.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",

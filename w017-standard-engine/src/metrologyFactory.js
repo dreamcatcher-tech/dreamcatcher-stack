@@ -115,14 +115,24 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       }
     }
     const getContext = () => getState(['state', 'context'])
-    const getLatest = (chainId) => {
+    const getLatest = async (chainId) => {
+      let latest, asyncLatest
+      const unsubscribe = subscribeBlockstream(chainId, (block) => {
+        latest = block
+        if (asyncLatest) {
+          asyncLatest(block)
+        }
+        // TODO handle rejection if we can never resolve the block
+      })
+      if (latest) {
+        unsubscribe()
+        return latest
+      }
       return new Promise((resolve, reject) => {
-        const unsubscribe = subscribeBlockstream(chainId, async (block) => {
-          resolve(block)
-          await Promise.resolve()
+        asyncLatest = (block) => {
           unsubscribe()
-          // TODO handle rejection if we can never resolve the block
-        })
+          resolve(block)
+        }
       })
     }
     const blockstreamSubscribers = new Map()
@@ -131,8 +141,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       const { subs, latest } = blockstreamSubscribers.get(chainId)
       subs.add(callback)
       if (latest) {
-        // TODO avoid setImmediate and make function like redux, for speed
-        setImmediate(() => callback(latest))
+        callback(latest)
       }
       return () => {
         subs.delete(callback)
@@ -162,6 +171,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         initBlockstreamSubscribers(chainId, block)
         const streamSubs = blockstreamSubscribers.get(chainId)
         if (!streamSubs.latest || streamSubs.latest.isNext(block)) {
+          // TODO warning if subscribe to latest before it gets generated
           streamSubs.latest = block
           streamSubs.subs.forEach((callback) => callback(block))
         }
