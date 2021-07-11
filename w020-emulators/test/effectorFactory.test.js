@@ -6,22 +6,21 @@ require('debug').enable()
 
 describe('effector', () => {
   test('ping single', async () => {
-    // require('debug').enable('*effectorFactory')
     const start = Date.now()
     debug(`start`)
-    const client = await effectorFactory()
+    const shell = await effectorFactory()
     // client.enableLogging()
     debug(`effector ready`)
     const pingStart = Date.now()
     const payload = { test: 'ping' }
-    const reply = await client.ping('.', payload)
+    const reply = await shell.ping('.', payload)
     debug(`reply: `, reply)
     assert.deepStrictEqual(reply, payload)
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
-    debug(`blockcount: ${client.getBlockCount()}`)
+    debug(`blockcount: ${shell.metro.getBlockCount()}`)
     debug(`test time: ${Date.now() - start} ms`)
-    await client.settle()
+    await shell.metro.settle()
 
     debug(`stop`)
     /**
@@ -56,12 +55,12 @@ describe('effector', () => {
   test.skip('ping many times', async () => {
     jest.setTimeout(10000)
     debug(`start`)
-    const client = await effectorFactory()
+    const shell = await effectorFactory()
     // client.metrology.enableLogging()
     let count = 0
     const promises = []
     while (count < 100) {
-      const reply = client.ping('.', { count })
+      const reply = shell.ping('.', { count })
       promises.push(reply)
       count++
       if (count % 10 === 0) {
@@ -69,10 +68,10 @@ describe('effector', () => {
       }
     }
     const results = await Promise.all(promises)
-    await client.settle()
+    await shell.settle()
     assert(results.every((reply) => reply && Number.isInteger(reply.count)))
     assert(results.every((reply, index) => reply.count === index))
-    debug(`blockcount: `, client.getBlockCount())
+    debug(`blockcount: `, shell.metro.getBlockCount())
     debug(`stop`)
     /**
      * 2020-05-11 7,209ms 100 pings, batchsize 10, 68 blocks in total
@@ -87,13 +86,15 @@ describe('effector', () => {
   })
   test('create child', async () => {
     const client = await effectorFactory()
-    client.enableLogging()
+    client.metro.enableLogging()
     reply = await client.add('child1')
     debug(`reply: `, reply)
     assert.strictEqual(reply.alias, 'child1')
-    const { child1 } = await client.getState().network
+    const {
+      network: { child1 },
+    } = await client.latest()
     assert.strictEqual(child1.address.getChainId(), reply.chainId)
-    await client.settle()
+    await client.metro.settle()
   })
   test('ping created child', async () => {
     const client = await effectorFactory()
@@ -102,7 +103,7 @@ describe('effector', () => {
     const reply = await client.ping('testChild')
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
     assert(reply)
-    await client.settle()
+    await client.metro.settle()
   })
   test('cannot create same child twice', async () => {
     // TODO handle errors in the translator

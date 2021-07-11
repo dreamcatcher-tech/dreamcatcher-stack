@@ -8,7 +8,7 @@ describe('metrology', () => {
       jest.setTimeout(100000)
       require('debug').enable('interblock:tests:metrology')
       const client = await metrologyFactory()
-      client.enableLogging()
+      client.metro.enableLogging()
       let count = 0
       const awaits = []
       const start = Date.now()

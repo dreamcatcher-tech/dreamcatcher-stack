@@ -53,43 +53,46 @@ describe('datum', () => {
   test('simple datum with test data', async () => {
     const root = await effectorFactory('datum')
     await root.add('datum1', 'datum')
-    root.enableLogging()
-    assert.strictEqual(root.datum1.getState().covenantId.name, 'datum')
-    await root.datum1.set({ schema, isTestData: true })
+    root.metro.enableLogging()
+    const latest = await root.latest('datum1')
+    assert.strictEqual(latest.covenantId.name, 'datum')
+    const actions = await root.actions('datum1')
+    await actions.set({ schema, isTestData: true })
 
-    const { state } = root.datum1.getState()
+    const { state } = await root.latest('datum1')
     assert.deepStrictEqual(
       Object.keys(state.formData),
       Object.keys(schema.properties)
     )
     assert.deepStrictEqual(state.schema, schema)
-    await root.settle()
+    await root.metro.settle()
   })
   test('nested datums with test data', async () => {
     // make a customer, and show the data being broken up automatically to childrenconst root = await effectorFactory('datum', { datum })
     const root = await effectorFactory('nested')
     await root.add('datum1', 'datum')
-    root.enableLogging()
+    root.metro.enableLogging()
 
     const children = { address }
-    await root.datum1.set({ schema, isTestData: true, children })
-    const { state: datum1 } = root.datum1.getState()
+    const actions = await root.actions('datum1')
+    await actions.set({ schema, isTestData: true, children })
+    const { state: datum1 } = await root.latest('datum1')
     assert.deepStrictEqual(datum1.schema, schema)
     assert.deepStrictEqual(datum1.children.address.schema, address.schema)
     assert(datum1.formData.firstName)
     assert(!datum1.children.address.formData)
 
-    const { state: address1 } = root.datum1.address.getState()
+    const { state: address1 } = await root.latest('datum1/address')
     assert.deepStrictEqual(address1.schema, address.schema)
     assert(address1.formData.address)
     assert(!Object.keys(address1.children).length)
 
-    await root.settle()
+    await root.metro.settle()
   })
   test('nested datums with optional extra test data', async () => {
     const root = await effectorFactory('nested')
     await root.add('datum1', 'datum')
-    root.enableLogging()
+    root.metro.enableLogging()
 
     const extraAddress = { schema: { ...address.schema } }
     delete extraAddress.schema.additionalProperties
@@ -97,20 +100,21 @@ describe('datum', () => {
     const children = { address: extraAddress }
     const { additionalProperties, ...extraSchema } = schema
     debug(`extraSchema`, extraSchema)
-    await root.datum1.set({ schema: extraSchema, isTestData: true, children })
-    const { state: datum1 } = root.datum1.getState()
+    const actions = await root.actions('datum1')
+    await actions.set({ schema: extraSchema, isTestData: true, children })
+    const { state: datum1 } = await root.latest('datum1')
     assert.deepStrictEqual(datum1.schema, extraSchema)
     assert.deepStrictEqual(datum1.children.address.schema, extraAddress.schema)
     assert(datum1.formData.firstName)
     assert(!datum1.children.address.formData)
 
-    const { state: address1 } = root.datum1.address.getState()
+    const { state: address1 } = await root.latest('datum1/address')
     assert.deepStrictEqual(address1.schema, extraAddress.schema)
     debug(address1.formData)
     assert(address1.formData.address)
     assert(!Object.keys(address1.children).length)
 
-    await root.settle()
+    await root.metro.settle()
   })
   test.todo('updates data')
   test.todo('create a datum with genesis state and schema')

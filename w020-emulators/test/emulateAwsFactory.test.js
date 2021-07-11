@@ -10,7 +10,7 @@ describe('emulateAwsFactory', () => {
     require('debug').enable('*metro* *socket*')
     debug(`start`)
     const client = await effectorFactory('eff')
-    client.enableLogging()
+    client.metro.enableLogging()
     const aws = await awsFactory('aws')
     aws.engine.disableLogging()
 

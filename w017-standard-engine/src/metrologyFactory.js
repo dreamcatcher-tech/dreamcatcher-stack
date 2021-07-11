@@ -253,13 +253,14 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       const covenant = _getCovenant(latest, getCovenants())
       // TODO create the functions from the schema, not raw action creators
       if (covenant) {
-        return covenant.actions
+        return covenant.actions || {}
       }
     }
     const getLatestFromPath = async (path) => {
       // TODO use root hash to walk the known root assured latest
       // walk the tree to get the latest block
       // throw if invalid path
+      assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
       const segments = _getPathSegments(path)
       let partialPath = segments.shift()
       let chainId = baseAddress.getChainId()

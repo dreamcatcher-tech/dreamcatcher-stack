@@ -9,7 +9,7 @@ describe.skip('crm', () => {
     test.only('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
-      shell.enableLogging()
+      shell.metro.enableLogging()
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
@@ -56,7 +56,7 @@ describe.skip('crm', () => {
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       assert(shell.dpkgCrm)
       await shell.install(dpkgPath, 'crm')
-      shell.enableLogging()
+      shell.metro.enableLogging()
       const newCustomer = await shell.crm.customers.add({ isTestData: true })
       debug(`newCustomer`, newCustomer)
       const { children } = await shell.ls('crm/customers')

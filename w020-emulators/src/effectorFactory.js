@@ -35,6 +35,7 @@
 const assert = require('assert')
 const { metrologyFactory } = require('../../w017-standard-engine')
 const _ = require('lodash')
+const posix = require('path')
 const debug = require('debug')('interblock:effector')
 const { covenantIdModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
@@ -45,7 +46,7 @@ const { socketFactory } = require('./socketFactory')
 const effectorFactory = async (identifier, covenantOverloads = {}) => {
   assert(!covenantOverloads || typeof covenantOverloads === 'object')
   debug(`effectorFactory`)
-  covenantOverloads = _inflateCovenants(covenantOverloads)
+  covenantOverloads = _inflateOverloads(covenantOverloads)
   // start the net watcher, to reconcile hardware with chainware
   const gateway = {}
   const net = netFactory(gateway)
@@ -57,116 +58,46 @@ const effectorFactory = async (identifier, covenantOverloads = {}) => {
     hyper: covenants.shell,
   }
   const metrology = await metrologyFactory(identifier, covenantOverloads)
-  const shell = effector(metrology, metrology.pierce)
+  const shell = effector(metrology)
   shell.startNetworking = async () =>
     await shell.add('net', { covenantId: net.covenantId })
   // TODO only have base metro functions, like getEngine, on root
   return shell
 }
 
-const effector = (metrology, rootPierce) => {
-  const absolutePath = metrology.getAbsolutePath()
+const effector = (metro) => {
   // TODO use wd or some other fortification against random entries
-  const dispatch = ({ type, payload = {} }, to = absolutePath) => {
-    debug(`dispatch to: %o type: %O`, to, type)
-    if (absolutePath === '/') {
-      return rootPierce({ type, payload })
-    }
-    const action = covenants.shell.actions.dispatch({ type, payload }, to)
-    return rootPierce(action)
-  }
-  const subscribePending = rootPierce.subscribePending
-  const base = {
-    ...metrology,
-    dispatch,
-    subscribePending,
-    _debug: require('debug'), // used to expose debug info in the os
-  }
-  const children = {}
-  let covenantId
-  const mapFunctions = () => {
-    // TODO delete this and move to a dispatch style function
-    const state = metrology.getState()
-    if (!state) {
-      return
-    }
-    const liveCovenants = metrology.getCovenants()
-    let covenant = _getCovenant(state, liveCovenants)
-    if (covenant && !covenant.covenantId.equals(covenantId)) {
-      covenantId = covenant.covenantId
-      debug(`set covenant to: %O`, covenantId.name)
-      const mappedActions = mapDispatchToActions(dispatch, covenant)
-      stripCovenantActions(base, metrology)
-      Object.assign(base, mappedActions)
-    }
-
-    const metroChildren = metrology.getChildren()
-    if (!isChildrenEqual(metroChildren, children)) {
-      stripChildren(base, children)
-      for (const key in metroChildren) {
-        debug(`creating child: %O`, key)
-        children[key] = effector(metroChildren[key], rootPierce)
+  const subscribePending = metro.pierce.subscribePending
+  const actions = async (path = '.') => {
+    const absPath = posix.resolve('/', path)
+    debug(`actions`, absPath)
+    const actions = await metro.getActionCreators(absPath)
+    const mapped = {}
+    for (const key in actions) {
+      mapped[key] = (...args) => {
+        const action = actions[key](...args)
+        return shellActions.dispatch(action, absPath)
       }
-
-      // check children by their chainId
-      // update the base obj for creates and deletes
-      // children will take care of their own children, and expose their own functions
-      // if children have changed, reattach
-      // wrap the children in effectors, so they auto detect their functions, and update themselves
-      Object.assign(base, children)
-
-      // for each child, wrap in an effector wrapper
-      // when running effector, determine covenant, grab the functions, wrap with dispatch
-      // later, finesse the functions with what our permissions are
-      // TODO wrap linked files too, such as remote locations
     }
+    return mapped
   }
-
-  mapFunctions()
-  metrology.subscribe(mapFunctions)
-  return base
-}
-
-const isChildrenEqual = (current, previous) => {
-  // if we deleted one, or added one
-  const currentKeys = Object.keys(current).sort()
-  const previousKeys = Object.keys(previous).sort()
-  return _.isEqual(currentKeys, previousKeys)
-}
-
-const stripChildren = (effector, children) => {
-  for (const key in children) {
-    delete effector[key]
-    delete children[key]
+  const latest = (path = '.') => {
+    const absPath = posix.resolve('/', path)
+    debug(`latest`, absPath)
+    return metro.getLatestFromPath(absPath)
   }
-}
-
-const stripCovenantActions = (effector, metrology) => {
-  for (const key in effector) {
-    if (key === '_debug' || key === 'subscribePending' || metrology[key]) {
-      continue
-    }
-    if (typeof effector[key] === 'function') {
-      delete effector[key]
-    }
+  const base = {
+    metro,
+    subscribePending, // TODO make this a promise with result
+    actions,
+    latest,
+    _debug: require('debug'), // used to expose debug info in dos
   }
+  const shellActions = _mapPierceToActions(metro.pierce)
+  assert(!Object.keys(shellActions).some((s) => base[s]))
+  return { ...base, ...shellActions }
 }
-
-const _getCovenant = ({ covenantId }, liveCovenants) => {
-  let covenant = covenants.unity
-  if (covenantId.name === 'hyper') {
-    return liveCovenants.hyper //hyper always overridden
-  }
-  for (const key in liveCovenants) {
-    if (liveCovenants[key].covenantId.equals(covenantId)) {
-      assert(covenant === covenants.unity)
-      covenant = liveCovenants[key]
-      break
-    }
-  }
-  return covenant
-}
-const _inflateCovenants = (overloads) => {
+const _inflateOverloads = (overloads) => {
   const models = {}
   for (const key in overloads) {
     let covenant = overloads[key]
@@ -182,7 +113,7 @@ const _inflateCovenants = (overloads) => {
       integrity
     )
     if (covenant.covenants) {
-      const covenants = _inflateCovenants(covenant.covenants)
+      const covenants = _inflateOverloads(covenant.covenants)
       covenant.covenants = covenants
     }
     models[key] = covenant
@@ -190,18 +121,16 @@ const _inflateCovenants = (overloads) => {
   // TODO inflate nested covenants too
   return models
 }
-const mapDispatchToActions = (dispatch, covenant) => {
-  const mappedActions = {}
-  if (typeof covenant.actions !== 'object') {
-    return mappedActions
-  }
-  for (const key in covenant.actions) {
-    mappedActions[key] = (...args) => {
-      const action = covenant.actions[key](...args)
-      return dispatch(action)
+const _mapPierceToActions = (pierce) => {
+  const mapped = {}
+  const { actions } = covenants.shell
+  for (const key in actions) {
+    mapped[key] = (...args) => {
+      const action = actions[key](...args)
+      return pierce(action)
     }
   }
-  return mappedActions
+  return mapped
 }
 const connectGateway = (gateway, netEffector) => {
   const { sqsRx, sqsTx } = netEffector.getEngine()

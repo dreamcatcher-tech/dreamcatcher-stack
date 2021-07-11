@@ -9,7 +9,7 @@ describe('netFactory', () => {
     jest.setTimeout(20000)
     debug(`start`)
     const client = await effectorFactory()
-    client.enableLogging()
+    client.metro.enableLogging()
     const url = 'wss://echo.websocket.org'
     const urlSafe = 'wss:||echo.websocket.org'
     await client.startNetworking()
