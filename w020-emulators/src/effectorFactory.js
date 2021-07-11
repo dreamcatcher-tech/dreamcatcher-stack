@@ -61,7 +61,6 @@ const effectorFactory = async (identifier, covenantOverloads = {}) => {
   const shell = effector(metrology)
   shell.startNetworking = async () =>
     await shell.add('net', { covenantId: net.covenantId })
-  // TODO only have base metro functions, like getEngine, on root
   return shell
 }
 
@@ -69,19 +68,15 @@ const effector = (metro) => {
   // TODO use wd or some other fortification against random entries
   const subscribePending = metro.pierce.subscribePending
   const actions = async (path = '.') => {
+    assert.strictEqual(typeof path, 'string', `path not string: ${path}`)
     const absPath = posix.resolve('/', path)
     debug(`actions`, absPath)
     const actions = await metro.getActionCreators(absPath)
-    const mapped = {}
-    for (const key in actions) {
-      mapped[key] = (...args) => {
-        const action = actions[key](...args)
-        return shellActions.dispatch(action, absPath)
-      }
-    }
-    return mapped
+    const dispatch = (action) => shellActions.dispatch(action, absPath)
+    return _mapPierceToActions(dispatch, actions)
   }
   const latest = (path = '.') => {
+    assert.strictEqual(typeof path, 'string', `path not string: ${path}`)
     const absPath = posix.resolve('/', path)
     debug(`latest`, absPath)
     return metro.getLatestFromPath(absPath)
@@ -121,13 +116,12 @@ const _inflateOverloads = (overloads) => {
   // TODO inflate nested covenants too
   return models
 }
-const _mapPierceToActions = (pierce) => {
+const _mapPierceToActions = (dispatch, actions = covenants.shell.actions) => {
   const mapped = {}
-  const { actions } = covenants.shell
   for (const key in actions) {
     mapped[key] = (...args) => {
       const action = actions[key](...args)
-      return pierce(action)
+      return dispatch(action)
     }
   }
   return mapped
