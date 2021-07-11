@@ -157,17 +157,11 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         })
       }
     }
-    const subscribers = new Set()
-    const blocks = new Set() // TODO move to using the tap cache
     ioConsistency.subscribe(async (action, queuePromise) => {
       if (action.type === 'UNLOCK') {
         await queuePromise // TODO see if faster without waiting for the promise ?
         const { block } = action.payload
         const chainId = block.getChainId()
-        if (!blocks.has(block) && chainId === address.getChainId()) {
-          blocks.add(block)
-          subscribers.forEach((callback) => callback())
-        }
         initBlockstreamSubscribers(chainId, block)
         const streamSubs = blockstreamSubscribers.get(chainId)
         if (!streamSubs.latest || streamSubs.latest.isNext(block)) {
@@ -177,12 +171,6 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         }
       }
     })
-    setImmediate(() => subscribers.forEach((callback) => callback()))
-    const subscribe = (callback) => {
-      assert.strictEqual(typeof callback, 'function')
-      subscribers.add(callback)
-      return () => subscribers.delete(callback)
-    }
     const getChildren = () => {
       // TODO make children resolve synchronously and in their own context
       const block = getState()
@@ -278,7 +266,6 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     return {
       pierce,
       spawn,
-      subscribe,
       subscribeBlockstream,
       getLatest,
       getLatestFromPath,
