@@ -27,6 +27,7 @@ const truncateSubscriptions = (subscriptions, length) => {
 
 export const usePathBlockstream = (cwd) => {
   // TODO if we do not have permission to access block, throw an error
+  // TODO do not push new blocks until all blocks in path are resolved
   const { blockchain } = useBlockchain()
   const [blocks, setBlocks] = useState([])
   useEffect(() => {
@@ -36,7 +37,6 @@ export const usePathBlockstream = (cwd) => {
     debug(`segments: %o`, segments)
     const subscriptions = []
     // starting from latest, walk each segment and subscribe to changes
-    const baseChainId = blockchain.getChainId()
     const tracker = (chainId, index) => {
       if (!isActive) {
         return // TODO find cleaner way to manage bail
@@ -75,6 +75,7 @@ export const usePathBlockstream = (cwd) => {
       const unsubscribe = blockchain.subscribeBlockstream(chainId, sub)
       return { chainId, unsubscribe }
     }
+    const baseChainId = blockchain.latest().getChainId()
     subscriptions.push(tracker(baseChainId, 0))
 
     return () => {

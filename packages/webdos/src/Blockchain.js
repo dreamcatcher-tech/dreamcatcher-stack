@@ -18,104 +18,85 @@ const Blockchain = ({ id = 'terminal', dev, children }) => {
   const [isPending, setIsPending] = useState(false)
   const [isBooting, setIsBooting] = useState(true)
 
-  useEffect(() => {
+  const initializeBlockchain = async () => {
     let isActive = true
-    const subscribe = async () => {
-      debug(`initializing blockchain: ${id}`)
-      const covenantOverloads = _extractCovenants(dev)
-      const blockchain = await effectorFactory(id, covenantOverloads)
+    debug(`initializing blockchain: ${id}`)
+    const covenantOverloads = _extractCovenants(dev)
+    const blockchain = await effectorFactory(id, covenantOverloads)
+    if (!isActive) {
+      // TODO wrap stdin in package attached to blockchain so can be replaced
+      debug(`blockchain loaded but torn down`)
+      return
+    }
+    setBlockchain(blockchain)
+    if (dev) {
+      assert.strictEqual(typeof dev, 'object', `dev must be an object`)
+      debug(`installing dev mode app`)
+      const { installer, covenantId } = dev
+      const name = covenantId.name
+      const { dpkgPath } = await blockchain.publish(name, installer, covenantId)
+      debug(`dpkgPath: `, dpkgPath)
+      const installResult = await blockchain.install(dpkgPath, 'app')
+
+      debug(`app installed: `, installResult)
+      await blockchain.cd('/app')
       if (!isActive) {
-        // TODO wrap stdin in package attached to blockchain so can be replaced
-        debug(`blockchain loaded but torn down`)
+        debug(`app installed, but blockchain torn down`)
         return
       }
-      setBlockchain(blockchain)
-      if (dev) {
-        assert.strictEqual(typeof dev, 'object', `dev must be an object`)
-        debug(`installing dev mode app`)
-        const { installer, covenantId } = dev
-        const name = covenantId.name
-        const { dpkgPath } = await blockchain.publish(
-          name,
-          installer,
-          covenantId
-        )
-        debug(`dpkgPath: `, dpkgPath)
-        const installResult = await blockchain.install(dpkgPath, 'app')
-
-        debug(`app installed: `, installResult)
-        await blockchain.cd('/app')
-        if (!isActive) {
-          debug(`app installed, but blockchain torn down`)
-          return
-        }
-        const command = `ls\n`
-        for (const c of command) {
-          // TODO fix console not in sync with terminal automatically
-          // TODO make writeline command
-          process.stdin.send(c)
-        }
+      const command = `ls\n`
+      for (const c of command) {
+        // TODO fix console not in sync with terminal automatically
+        // TODO make writeline command
+        process.stdin.send(c)
       }
-      setTimeout(() => isActive && setIsBooting(false), 100)
     }
-    subscribe()
+    setTimeout(() => isActive && setIsBooting(false), 100)
     return () => {
       // TODO make the blockchain reject everything, as it is defunct
       isActive = false
       debug(`"${id}" has been shut down`)
     }
-  }, [id, dev])
-
-  useEffect(() => {
-    let isActive = true
-    if (blockchain) {
-      let latest, contextLocal
-      const unsubscribeBlocks = blockchain.subscribe(() => {
-        if (!isActive) {
-          debugger
-          return
-        }
-        const blockchainState = blockchain.getState()
-        if (!blockchainState.equals(latest)) {
-          debug(`setLatest to height: ${blockchainState.provenance.height}`)
-          latest = blockchainState
-          setLatest(latest)
-          if (!equals(blockchainState.state.context, contextLocal)) {
-            debug(`setting context %o`, blockchainState.state.context)
-            contextLocal = blockchainState.state.context
-            setContext(contextLocal)
-          }
-        }
-      })
-      return () => {
-        isActive = false
-        unsubscribeBlocks()
-      }
+  }
+  const subscribeToLatestBlock = () => {
+    if (!blockchain) {
+      return
     }
-  }, [blockchain])
-
-  useEffect(() => {
-    let isActive = true
-    if (blockchain) {
-      const unsubscribeIsPending = blockchain.subscribePending((isPending) => {
-        if (!isActive) {
-          debugger
-          return
+    const unsubscribe = blockchain.subscribe((block) => {
+      debug(`setLatest to height: ${block.provenance.height}`)
+      setLatest(block)
+      setContext((current) => {
+        const { context } = block.state
+        if (!equals(context, current)) {
+          debug(`setting context %o`, context)
+          return context
         }
-        debug(`subscribePending`, isPending)
-        setIsPending(isPending)
+        return current
       })
-      return () => {
-        isActive = false
-        unsubscribeIsPending()
-      }
+    })
+    return () => {
+      unsubscribe()
     }
-  }, [blockchain])
+  }
+  const subscribePending = () => {
+    if (!blockchain) {
+      return
+    }
+    const unsubscribeIsPending = blockchain.subscribePending((isPending) => {
+      debug(`subscribePending`, isPending)
+      setIsPending(isPending)
+    })
+    return unsubscribeIsPending
+  }
 
-  const contextValue = { blockchain, latest, context, isPending }
+  useEffect(() => initializeBlockchain(), [id, dev])
+  useEffect(subscribeToLatestBlock, [blockchain])
+  useEffect(subscribePending, [blockchain])
+
+  const providerValue = { blockchain, latest, context, isPending }
   // TODO block stdin during this boot time
   return (
-    <BlockchainContext.Provider value={contextValue}>
+    <BlockchainContext.Provider value={providerValue}>
       {isBooting ? (
         <Terminal id="boot" style={{ height: '100vh' }} />
       ) : (

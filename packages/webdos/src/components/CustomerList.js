@@ -25,9 +25,8 @@ const CustomerList = (props) => {
     for (const c of command) {
       // process.stdin.send(c)
     }
-    const { add } = await blockchain.getActionCreators(match)
-    const addAction = add({ isTestData: true })
-    const result = await blockchain.dispatch(addAction, match)
+    const { add } = await blockchain.actions(match)
+    const result = await add({ isTestData: true })
     debug(`add result: `, result)
     // const newCustomer = await isPending
     // how to learn what customer just got added ?

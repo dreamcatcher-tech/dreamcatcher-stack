@@ -22,6 +22,7 @@ import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
 Debug.enable('*:widgets:* *Route ')
+
 /**
  * Have to be able to install without publishing.
  * Must install if the app not already installed. ? ensureInstall() ?
