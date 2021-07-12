@@ -9,6 +9,7 @@ const {
   networkModel,
   dmzModel,
   rxRequestModel,
+  covenantIdModel,
 } = require('../../w015-models')
 const { channelProducer, networkProducer } = require('../../w016-producers')
 const { autoAlias } = require('./utils')
@@ -36,7 +37,8 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
   let { alias, spawnOpts } = originAction.payload
-  const { network, validators, covenantId } = dmz
+  const { network, validators } = dmz
+  const covenantId = covenantIdModel.create('unity')
   let child = dmzModel.create({
     network: networkModel.create(),
     covenantId,

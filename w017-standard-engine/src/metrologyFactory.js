@@ -83,38 +83,15 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
   const metrology = (address, absolutePath) => {
     assert(addressModel.isModel(address))
 
-    const getState = (path = [], height) => {
-      if (typeof path === 'number' && height === undefined) {
-        height = path
-        path = []
-      }
+    const getState = (height) => {
       // a synchronous snapshot of the current state of storage
       // TODO pull straight from blocks ?
-      const { dbChains } = ramDb._getTables()
-      const chain = dbChains[address.getChainId()] || {}
-      let blockItem
-      if (height === undefined) {
-        blockItem = _.last(Object.values(chain))
-      } else {
-        if (!chain[height]) {
-          throw new Error(`out of bounds: ${height} ${chain.length}`)
-        }
-        blockItem = chain[height]
-      }
-      if (blockItem) {
-        const s3Key = s3Keys.fromBlockItem(blockItem)
-        const { wbblockbucket } = ramS3._getBuckets()
-        const block = wbblockbucket[s3Key]
-        assert(blockModel.isModel(block))
-        let ret = block
-        path.forEach((segment) => {
-          assert(ret[segment], `No segment: ${segment}`)
-          ret = ret[segment]
-        })
-        return ret
-      }
+      return _getBlock(address.getChainId(), height)
     }
-    const getContext = () => getState(['state', 'context'])
+    const getContext = () => {
+      const block = getState()
+      return block.state.context
+    }
     const getLatest = async (chainId) => {
       let latest, asyncLatest
       const unsubscribe = subscribeBlockstream(chainId, (block) => {
@@ -146,6 +123,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       return () => {
         subs.delete(callback)
         // TODO cleanup by fully removing latest when no subscribers
+        // but waiting on some way to recover if subscribe again
       }
     }
     const initBlockstreamSubscribers = (chainId, block) => {
@@ -194,7 +172,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     }
     const getEngine = () => engine
     const getPersistence = () => ioConsistency.getProcessor().persistence
-    const getChainId = () => getState().provenance.getAddress().getChainId()
+    const getChainId = () => address.getChainId()
     const getHeight = () => getState().provenance.height
     const getPool = () => {
       // a synchronous snapshot of the current state of storage
@@ -244,25 +222,57 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         return covenant.actions || {}
       }
     }
-    const getLatestFromPath = async (path) => {
+    // TODO make height be special case to get latest or next
+    const getLatestFromPath = async (path, height = -1) => {
       // TODO use root hash to walk the known root assured latest
       // walk the tree to get the latest block
       // throw if invalid path
       assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
+      assert(Number.isInteger(height))
+      assert(height >= -1)
       const segments = _getPathSegments(path)
-      let partialPath = segments.shift()
+      let alias = segments.shift()
       let chainId = baseAddress.getChainId()
       let nextBlock = await getLatest(chainId)
-      while (partialPath !== path) {
-        partialPath = segments.shift()
-        const alias = partialPath.split('/').pop()
+      while (segments.length) {
+        alias = segments.shift()
         assert(nextBlock.network[alias].address.isResolved())
         chainId = nextBlock.network[alias].address.getChainId()
         nextBlock = await getLatest(chainId)
       }
-      return nextBlock
+      if (height === -1 || height === nextBlock.getHeight()) {
+        return nextBlock
+      }
+      if (height > nextBlock.getHeight()) {
+        // TODO subscribe, seek, or otherwise find if height insufficient
+      }
+      // TODO fetch from other block producers
+      return _getBlock(nextBlock.getChainId(), height)
     }
-
+    const _getBlock = (chainId, height) => {
+      if (typeof height !== 'undefined') {
+        assert(Number.isInteger(height))
+        assert(height >= -1)
+      }
+      const { dbChains } = ramDb._getTables()
+      const chain = dbChains[chainId] || {}
+      let blockItem
+      if (height === undefined) {
+        blockItem = _.last(Object.values(chain))
+      } else {
+        if (!chain[height]) {
+          throw new Error(`out of bounds: ${height} ${chain.length}`)
+        }
+        blockItem = chain[height]
+      }
+      if (blockItem) {
+        const s3Key = s3Keys.fromBlockItem(blockItem)
+        const { wbblockbucket } = ramS3._getBuckets()
+        const block = wbblockbucket[s3Key]
+        assert(blockModel.isModel(block))
+        return block
+      }
+    }
     return {
       pierce,
       spawn,
@@ -290,6 +300,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
   }
   return metrology(baseAddress, '/')
 }
+
 const enableLoggingWithTap = (engine, identifier) => {
   const { sqsPool, sqsTransmit, ioConsistency } = engine
   const debugPrefix = identifier ? `ib:met:${identifier}` : `ib:met`
@@ -338,14 +349,8 @@ const _getPathSegments = (alias) => {
   if (alias === '/') {
     return ['/']
   }
-  let prefix = ''
   const splits = alias.split('/').filter((seg) => !!seg)
   splits.unshift('/')
-  const paths = splits.map((segment) => {
-    prefix && prefix !== '/' && (prefix += '/') // TODO make child naming convention avoid this check ?
-    prefix += segment
-    return prefix
-  })
-  return paths
+  return splits
 }
 module.exports = { metrologyFactory }

@@ -66,8 +66,9 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
     const { promise, callbacks } = generateDispatchPromise()
     promises.set(sequence, callbacks)
     const updatePending = async () => {
-      if (!pendingCount) {
-        subscribers.forEach((cb) => cb(true))
+      if (pendingCount === 0) {
+        const pendingSwitchingHigh = true
+        subscribers.forEach((cb) => cb(pendingSwitchingHigh))
       }
       pendingCount++
       try {
@@ -76,7 +77,8 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
       pendingCount--
       assert(pendingCount >= 0)
       if (pendingCount === 0) {
-        subscribers.forEach((cb) => cb(false))
+        const pendingSettled = false
+        subscribers.forEach((cb) => cb(pendingSettled))
       }
     }
     updatePending()

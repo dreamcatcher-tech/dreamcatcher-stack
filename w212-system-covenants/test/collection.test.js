@@ -46,4 +46,5 @@ describe('collection', () => {
   test.todo('collection with initial state already set')
   test.todo('reject add with key already assigned')
   test.todo('collection of collections')
+  test.todo('datum with collection child')
 })

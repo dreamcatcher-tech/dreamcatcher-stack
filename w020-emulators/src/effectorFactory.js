@@ -66,7 +66,24 @@ const effectorFactory = async (identifier, covenantOverloads = {}) => {
 
 const effector = (metro) => {
   // TODO use wd or some other fortification against random entries
-  const subscribePending = metro.pierce.subscribePending
+  const subscribePending = (cb) => metro.pierce.subscribePending(cb)
+  const subscribeBlockstream = (chainId, callback) =>
+    metro.subscribeBlockstream(chainId, callback)
+
+  /**
+   * Subscribe to new blocks in the root chain.
+   * The root chain is represented by alias "/".
+   * @callback blockCallback
+   * @param {block} block the latest block
+   */
+  /**
+   *
+   * @param {blockCallback} callback
+   * @returns
+   */
+  const subscribe = (callback) =>
+    metro.subscribeBlockstream(metro.getChainId(), callback)
+
   const actions = async (path = '.') => {
     assert.strictEqual(typeof path, 'string', `path not string: ${path}`)
     const absPath = posix.resolve('/', path)
@@ -75,17 +92,24 @@ const effector = (metro) => {
     const dispatch = (action) => shellActions.dispatch(action, absPath)
     return _mapPierceToActions(dispatch, actions)
   }
-  const latest = (path = '.') => {
+  const latest = (path = '.', height) => {
     assert.strictEqual(typeof path, 'string', `path not string: ${path}`)
     const absPath = posix.resolve('/', path)
     debug(`latest`, absPath)
-    return metro.getLatestFromPath(absPath)
+    if (absPath === '/') {
+      return metro.getState(height)
+    }
+    return metro.getLatestFromPath(absPath, height)
   }
+  const context = () => metro.getContext()
   const base = {
     metro,
     subscribePending, // TODO make this a promise with result
+    subscribeBlockstream,
+    subscribe,
     actions,
     latest,
+    context,
     _debug: require('debug'), // used to expose debug info in dos
   }
   const shellActions = _mapPierceToActions(metro.pierce)

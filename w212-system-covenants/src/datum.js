@@ -100,7 +100,9 @@ const reducer = async (state, action) => {
               ...state.children[name],
             })
             debug(`setChild`, setChild)
-            const spawn = dmzReducer.actions.spawn(name)
+            // TODO honour type somehow, if specify a collection ?
+            const covenantId = covenantIdModel.create('datum')
+            const spawn = dmzReducer.actions.spawn(name, { covenantId })
             interchain(spawn)
             await interchain(setChild, name)
           }

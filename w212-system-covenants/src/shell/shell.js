@@ -43,6 +43,7 @@ const config = {
   guards: {},
   services: {
     ping: async (context, event) => {
+      // TODO make shell do wd resolution internally
       debug(`ping: %O`, event)
       const { type, payload } = event
       const { to = '.', ...rest } = payload
