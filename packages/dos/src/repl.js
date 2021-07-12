@@ -15,7 +15,7 @@ const loop = require('./loop')
 const { version: dosVersion } = require('../package.json')
 
 module.exports = async function repl(opts) {
-  // require('debug').enable('*:repl *commands* *:eval')
+  require('debug').enable('*:repl *commands* *:eval')
   debug(`repl`)
   opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
@@ -96,8 +96,10 @@ async function getInitialCtx({ blockchain, evaluate }) {
     debug(`no blockchain provided`)
     spinner.text = `Initializing blockchain...`
     blockchain = await effectorFactory('console')
+    debug('blockchain created')
   }
-  const chainId = blockchain.getState().getChainId()
+  const latest = await blockchain.latest()
+  const chainId = latest.getChainId()
   spinner.info(`Blockchain initialized with chainId: ${chainId}`).start()
   spinner.text = `connecting to mainnet...`
   spinner.info(`connection to mainnet established`).start()
@@ -133,7 +135,7 @@ async function getInitialCtx({ blockchain, evaluate }) {
 const noTiming = ['time', 'clear', 'help']
 
 const awaitBlockchain = async (blockchain) => {
-  const { state } = blockchain.getState()
+  const { state } = await blockchain.latest()
   if (!state.context) {
     debug(`creating one block as workaround for no @@INIT action`)
     await blockchain.cd()

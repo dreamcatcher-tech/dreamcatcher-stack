@@ -12,10 +12,11 @@ module.exports = async function ls({ spinner, blockchain }, path = '.') {
   children = { ...children }
 
   // TODO implement this in shell, not externally
-  const absPath = posix.resolve(blockchain.getContext().wd, path)
-  const actions = await blockchain.getActionCreators(absPath)
+  const { wd } = await blockchain.context()
+  const absPath = posix.resolve(wd, path)
+  const actions = await blockchain.actions(absPath)
   debug(`actions`, actions)
-  const actionNames = Object.keys(actions || {}).map((name) => {
+  const actionNames = Object.keys(actions).map((name) => {
     const localName = `./${name}()`
     children[localName] = { systemRole: 'function' }
     return localName

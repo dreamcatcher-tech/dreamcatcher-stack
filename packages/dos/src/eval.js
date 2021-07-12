@@ -15,18 +15,17 @@ module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
     if (isLocalCommand) {
       // TODO allow remote location at any path to be used as actions
       const { blockchain } = ctx
-      const { wd } = blockchain.getContext()
+      const { wd } = blockchain.context()
       const absolutePath = posix.resolve(wd, cmd)
       const actionName = posix.basename(absolutePath)
       const parent = posix.dirname(absolutePath)
       debug(`non builtin command: %s assuming covenant function`, actionName)
-      const actions = await blockchain.getActionCreators(parent)
+      const actions = await blockchain.actions(parent)
       debug(`actions`, actions)
       const actionFn = actions[actionName]
       if (actionFn) {
-        // TODO decode args into params using commander or similar
-        const action = actionFn(...cmdArgs)
-        return blockchain.dispatch(action, parent)
+        // TODO decode args into params using commander, minimist, or similar
+        return actionFn(...cmdArgs)
       }
     }
     throw new Error(`${cmd}: command not found`)

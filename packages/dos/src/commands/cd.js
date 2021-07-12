@@ -6,7 +6,7 @@ const cd = async ({ spinner, blockchain }, path = '.') => {
   debug(`cd: ${path}`)
   spinner.text = `Resolving: ${path}`
   await blockchain.cd(path)
-  const context = blockchain.getContext()
+  const context = blockchain.context()
   debug(`context: %O`, context)
   const { wd } = context
   return { ctx: { wd } }
