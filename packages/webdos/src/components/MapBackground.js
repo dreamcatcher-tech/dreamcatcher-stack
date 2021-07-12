@@ -216,9 +216,9 @@ const MapBackground = ({ children }) => {
     flexFlow: 'column',
   }
   return (
-    <div style={mapContainerStyle} id="mapContainer">
+    <div id="mapContainer" style={mapContainerStyle}>
       <div id={MAP_ID} style={mapBackgroundStyle} />
-      <div style={childrenAboveMapStyle} id="mapChildren">
+      <div id="mapChildren" style={childrenAboveMapStyle} className="noselect">
         {children}
       </div>
     </div>

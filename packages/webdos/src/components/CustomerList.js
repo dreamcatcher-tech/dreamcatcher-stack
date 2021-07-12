@@ -86,7 +86,7 @@ const CustomerList = (props) => {
   for (const child of children) {
     rows.push({ id: rows.length, child })
   }
-  const onClick = ({ id }) => {
+  const onRowClick = ({ id }) => {
     const child = children[id]
     debug(`onclick`, child, match, cwd)
     const nextPath = match + '/' + child
@@ -106,12 +106,11 @@ const CustomerList = (props) => {
       <XGrid
         columns={columns}
         rows={rows}
-        loading={!block}
-        disableMultipleSelection
-        onRowClick={onClick}
-        hideFooter
         autoHeight
-        logLevel="warn" // does not work
+        disableMultipleSelection
+        hideFooter
+        loading={!block}
+        onRowClick={onRowClick}
       />
       <Fab
         color="primary"
