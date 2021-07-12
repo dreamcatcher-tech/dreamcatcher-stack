@@ -9,11 +9,12 @@ const Services = () => {
   // const { title, description } = state.formData
   const title = 'Services'
   const description = 'Services Description'
+  const aboveMapStyle = { position: 'relative' }
   return (
-    <>
+    <div style={aboveMapStyle}>
       <h2>{title}</h2>
       <p>{description}</p>
-    </>
+    </div>
   )
 }
 

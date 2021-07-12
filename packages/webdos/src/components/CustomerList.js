@@ -100,13 +100,21 @@ const CustomerList = (props) => {
       process.stdin.send(c)
     }
   }
+  const hideMapBackgrond = {
+    position: 'absolute', // hits top of the map background container
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    background: 'white',
+  }
 
   return (
-    <div style={{ flex: 1, background: 'white' }}>
+    <div style={hideMapBackgrond}>
       <XGrid
         columns={columns}
         rows={rows}
-        autoHeight
+        // autoHeight
         disableMultipleSelection
         hideFooter
         loading={!block}

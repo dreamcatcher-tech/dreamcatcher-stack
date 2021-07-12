@@ -193,8 +193,6 @@ const MapBackground = ({ children }) => {
   const mapContainerStyle = {
     flex: '1 1 auto',
     position: containerAsPositionedElement,
-    display: 'flex',
-    flexFlow: 'column',
   }
 
   const mustHaveZIndex = 0
@@ -210,17 +208,11 @@ const MapBackground = ({ children }) => {
     zIndex: mustHaveZIndex,
   }
 
-  const childrenAboveMapStyle = {
-    position: 'relative',
-    display: 'flex',
-    flexFlow: 'column',
-  }
+  // TODO maybe clone all children and add zIndex to their styles
   return (
     <div id="mapContainer" style={mapContainerStyle}>
-      <div id={MAP_ID} style={mapBackgroundStyle} />
-      <div id="mapChildren" style={childrenAboveMapStyle} className="noselect">
-        {children}
-      </div>
+      <div id={MAP_ID} style={mapBackgroundStyle}></div>
+      {children}
     </div>
   )
 }
