@@ -35,6 +35,7 @@
     "pretty-ms": "^7.0.1",
     "pull-stream": "^3.6.9",
     "random-hash": "^4.0.1",
+    "set-immediate-shim": "^2.0.0",
     "wordwrap": "^1.0.0"
   },
   "devDependencies": {
