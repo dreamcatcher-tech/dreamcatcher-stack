@@ -21,7 +21,7 @@ const Route = ({ path, covenant, component, children }) => {
   // check if our path matches, and if we should render at all
   const { cwd, match } = context
   let matchedCovenant = false,
-    matchedPath = true
+    matchedPath = false
   if (path) {
     let pathTest = path
     if (path.endsWith('*')) {
@@ -30,11 +30,13 @@ const Route = ({ path, covenant, component, children }) => {
     }
     matchedPath = cwd.includes(pathTest)
   }
+  debug(`matchedPath: %o matchedCovenant: %o`, matchedPath, matchedCovenant)
   // TODO check if covenant is matched
   if (!matchedPath && !matchedCovenant) {
     debug(`no match`, path)
     return null
   }
+  debug(`match found`, path, covenant)
 
   if (component) {
     const nextChildren = [

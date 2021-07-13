@@ -100,57 +100,6 @@ const MapBackground = ({ children }) => {
           maxZoom: maxZoom,
         }
       ),
-      'Mapbox Pencil': L.tileLayer(
-        'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
-        {
-          maxNativeZoom: maxNativeZoom,
-          maxZoom: maxZoom,
-          id: 'mapbox.pencil',
-          accessToken:
-            'pk.eyJ1IjoiYm9iamFuZGFsIiwiYSI6ImNpajIxNXdqaDAwZTJ0dWx3bWlyZTF5MDgifQ.n7d0M0Uqo_UBTj6zxFcZ3g',
-        }
-      ),
-
-      'Mapbox Wheatpaste': L.tileLayer(
-        'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
-        {
-          maxNativeZoom: maxNativeZoom,
-          maxZoom: maxZoom,
-          id: 'mapbox.wheatpaste',
-          accessToken:
-            'pk.eyJ1IjoiYm9iamFuZGFsIiwiYSI6ImNpajIxNXdqaDAwZTJ0dWx3bWlyZTF5MDgifQ.n7d0M0Uqo_UBTj6zxFcZ3g',
-        }
-      ),
-      'Mapbox Streets': L.tileLayer(
-        'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
-        {
-          maxNativeZoom: maxNativeZoom,
-          maxZoom: maxZoom,
-          id: 'mapbox.streets',
-          accessToken:
-            'pk.eyJ1IjoiYm9iamFuZGFsIiwiYSI6ImNpajIxNXdqaDAwZTJ0dWx3bWlyZTF5MDgifQ.n7d0M0Uqo_UBTj6zxFcZ3g',
-        }
-      ),
-      'Mapbox Emerald': L.tileLayer(
-        'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
-        {
-          maxNativeZoom: maxNativeZoom,
-          maxZoom: maxZoom,
-          id: 'mapbox.emerald',
-          accessToken:
-            'pk.eyJ1IjoiYm9iamFuZGFsIiwiYSI6ImNpajIxNXdqaDAwZTJ0dWx3bWlyZTF5MDgifQ.n7d0M0Uqo_UBTj6zxFcZ3g',
-        }
-      ),
-      'Mapbox Comic': L.tileLayer(
-        'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
-        {
-          maxNativeZoom: maxNativeZoom,
-          maxZoom: maxZoom,
-          id: 'mapbox.comic',
-          accessToken:
-            'pk.eyJ1IjoiYm9iamFuZGFsIiwiYSI6ImNpajIxNXdqaDAwZTJ0dWx3bWlyZTF5MDgifQ.n7d0M0Uqo_UBTj6zxFcZ3g',
-        }
-      ),
     }
     baseLayers['OpenStreetMap'].addTo(map)
 
@@ -171,13 +120,13 @@ const MapBackground = ({ children }) => {
       layers.eachLayer(function (layer) {
         modifiedGeometry[layer.sectorId] = layer.toGeoJSON()
       })
-      geometryEdited(modifiedGeometry)
+      // geometryEdited(modifiedGeometry)
     })
 
     map.on(L.Draw.Event.CREATED, (event) => {
       debug('draw:created')
       const geoJson = event.layer.toGeoJSON()
-      geometryCreated(geoJson)
+      // geometryCreated(geoJson)
     })
 
     scale.addTo(map)
@@ -192,7 +141,7 @@ const MapBackground = ({ children }) => {
 
   const containerAsPositionedElement = 'relative'
   const mapContainerStyle = {
-    flex: '1 1 auto',
+    flex: 1,
     position: containerAsPositionedElement,
   }
 

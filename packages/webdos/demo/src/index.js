@@ -49,13 +49,41 @@ const Map = () => {
   )
 }
 
+const Timesheets = () => {
+  return (
+    <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
+      <h4>Demo version: {version}</h4>
+      <Blockchain dev={multi}>
+        <Terminal style={{ height: '280px', background: 'black' }} />
+        <Router>
+          <Switch>
+            <Route covenant="multi">
+              <AppContainer>
+                <Nav />
+                <MapBackground>
+                  <Switch>
+                    <Route path="/customers" component={<CustomerList />} />
+                    <Route path="/services" component={<Services />} />
+                  </Switch>
+                </MapBackground>
+                <Route path="/custNo-*" component={<Customer />} />
+              </AppContainer>
+            </Route>
+            <Route component={<Explorer />} />
+          </Switch>
+        </Router>
+      </Blockchain>
+    </div>
+  )
+}
+
 export default class Demo extends Component {
   render() {
     return (
       <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
         <h4>Demo version: {version}</h4>
         <Blockchain dev={multi}>
-          <Terminal path="/" style={{ height: '280px', background: 'black' }} />
+          <Terminal style={{ height: '280px', background: 'black' }} />
           <Router>
             <Switch>
               <Route covenant="multi">
@@ -110,4 +138,4 @@ export default class Demo extends Component {
   }
 }
 
-render(<Demo />, document.querySelector('#demo'))
+render(<Timesheets />, document.querySelector('#demo'))
