@@ -94,7 +94,7 @@ const MapBackground = ({ children }) => {
 
     const baseLayers = {
       OpenStreetMap: L.tileLayer(
-        'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         {
           maxNativeZoom: maxNativeZoom,
           maxZoom: maxZoom,
