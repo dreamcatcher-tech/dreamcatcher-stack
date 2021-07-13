@@ -70,36 +70,15 @@ const Datum = ({ block }) => {
             action={
               <>
                 <IconButton aria-label="edit">
+                  <Edit color="primary" />
+                </IconButton>
+                <IconButton aria-label="edit">
                   <Save color="primary" />
                 </IconButton>
                 <IconButton aria-label="edit">
                   <Cancel color="secondary" />
                 </IconButton>
               </>
-            }
-          />
-
-          <CardContent>
-            <Form
-              disabled={true}
-              schema={noTitleSchema}
-              uiSchema={uiSchema}
-              formData={liveFormData}
-              children
-              onBlur={onBlur}
-              onChange={onChange}
-            />
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid item>
-        <Card className={classes.card}>
-          <CardHeader
-            title="Address"
-            action={
-              <IconButton aria-label="edit">
-                <Edit color="primary" />
-              </IconButton>
             }
           />
           <CardContent>

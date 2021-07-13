@@ -31,7 +31,9 @@ const Route = ({ path, covenant, component, children }) => {
     matchedPath = cwd.includes(pathTest)
   }
   debug(`matchedPath: %o matchedCovenant: %o`, matchedPath, matchedCovenant)
-  // TODO check if covenant is matched
+  // TODO check if covenant is matched by using code from Switch
+  matchedCovenant = !!covenant
+
   if (!matchedPath && !matchedCovenant) {
     debug(`no match`, path)
     return null

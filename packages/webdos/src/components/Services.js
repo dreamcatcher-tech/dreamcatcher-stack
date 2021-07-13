@@ -7,8 +7,8 @@ const Services = () => {
   // const { state } = block
   // debug(`state`, state)
   // const { title, description } = state.formData
-  const title = 'Services'
-  const description = 'Services Description'
+  const title = 'Sites'
+  const description = 'Geography of sites'
   const aboveMapStyle = { position: 'relative', pointerEvents: 'none' }
   return (
     <div style={aboveMapStyle}>

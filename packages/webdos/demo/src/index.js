@@ -21,26 +21,8 @@ import Debug from 'debug'
 import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
+import timesheets from './timesheets'
 Debug.enable('*:widgets:* *Route ')
-
-/**
- * Have to be able to install without publishing.
- * Must install if the app not already installed. ? ensureInstall() ?
- * In dev, must be able to set up a full system, and load fake data.
- *
- * Hot patch already published code, so we override the execution ?
- *
- * Route specifies a priority based switch between route matches
- * If all of path not fully matched, keeps going down the switch statement.
- * Idea is that overrides and custom items come first, then default fallbacks.
- *
- * Want the default to just be displayed based on the app.
- * Switch can be repeatable for each piece of the path.
- *    Can be depth first, where each case is checked for each path segment
- *    Breadth first walks the whole path for each case before going to the next one
- * Want consumption of parts of a path, then anything not consumed falls thru below.
- * state matcher
- */
 const Map = () => {
   return (
     <MapBackground>
@@ -53,17 +35,19 @@ const Timesheets = () => {
   return (
     <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
       <h4>Demo version: {version}</h4>
-      <Blockchain dev={multi}>
+      <Blockchain dev={timesheets}>
         <Terminal style={{ height: '280px', background: 'black' }} />
         <Router>
           <Switch>
-            <Route covenant="multi">
+            <Route covenant="timesheets">
               <AppContainer>
                 <Nav />
                 <MapBackground>
                   <Switch>
-                    <Route path="/customers" component={<CustomerList />} />
-                    <Route path="/services" component={<Services />} />
+                    <Route path="/timesheets" component={<CustomerList />} />
+                    <Route path="/personnel" component={<CustomerList />} />
+                    <Route path="/sites" component={<Services />} />
+                    <Route path="/payments" component={<CustomerList />} />
                   </Switch>
                 </MapBackground>
                 <Route path="/custNo-*" component={<Customer />} />
