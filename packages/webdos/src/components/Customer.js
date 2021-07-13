@@ -17,7 +17,7 @@ const Customer = (props) => {
     return null
   }
   title = block.state.schema.title
-  name = block.state.formData.name
+  name = block.state.formData.name || block.state.formData.to
   // TODO get the identifier key out
 
   return (

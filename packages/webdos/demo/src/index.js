@@ -51,6 +51,7 @@ const Timesheets = () => {
                   </Switch>
                 </MapBackground>
                 <Route path="/custNo-*" component={<Customer />} />
+                <Route path="/payNo-*" component={<Customer />} />
               </AppContainer>
             </Route>
             <Route component={<Explorer />} />

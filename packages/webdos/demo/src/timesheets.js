@@ -139,38 +139,30 @@ const installer = {
           schema: {
             title: 'Payment',
             type: 'object',
-            required: ['custNo', 'name', 'isEmailVerified'],
+            required: ['payNo', 'to', 'amount'],
             properties: {
-              name: { title: 'Name', type: 'string', faker: 'name.findName' },
-              mobile: {
-                title: 'Mobile',
+              to: {
+                title: 'Payment To',
                 type: 'string',
-                faker: 'phone.phoneNumber',
+                faker: 'name.findName',
+              },
+              amount: {
+                title: 'Amount',
+                type: 'number',
+                faker: 'finance.amount',
               },
               phone: {
                 title: 'Phone',
                 type: 'string',
                 faker: 'phone.phoneNumber',
               },
-              email: {
-                title: 'Email',
-                type: 'string',
-                format: 'email',
-                faker: 'internet.email',
-              },
-              isEmailVerified: {
-                title: 'Email Verified',
-                type: 'boolean',
-                default: false,
-              },
-              custNo: {
-                title: 'Customer Number',
+              payNo: {
+                title: 'Payment Number',
                 type: 'integer',
                 minimum: 1,
                 maximum: 15000,
                 default: 555,
               },
-              importedHash: { type: 'string', faker: 'git.commitSha' },
             },
           },
           uiSchema: {
@@ -178,7 +170,7 @@ const installer = {
             isEmailVerified: { 'ui:readonly': true },
             custNo: { 'ui:readonly': true },
           },
-          namePath: ['custNo'],
+          namePath: ['payNo'],
           children: {
             serviceAddress: address('Service Address'),
             serviceGps: gps,
