@@ -76,13 +76,13 @@ module.exports = async function ls({ spinner, blockchain }, path = '.') {
       }
     } else {
       filename = chalk.red(alias)
-      height = ''
+      height = ' '
       chainId = '(local function)'
     }
 
     // TODO use the same tools as networkPrint
     ui.div(
-      { text: filename, width: 20 },
+      { text: filename, width: 35 },
       { text: height, width: 10 },
       { text: chainId, width: 55 }
     )
