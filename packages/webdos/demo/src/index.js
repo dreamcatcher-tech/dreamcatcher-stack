@@ -52,10 +52,10 @@ const Map = () => {
 export default class Demo extends Component {
   render() {
     return (
-      <div className="flex-box">
+      <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
         <h4>Demo version: {version}</h4>
         <Blockchain dev={multi}>
-          <Terminal path="/" className="flex-term" />
+          <Terminal path="/" style={{ height: '280px', background: 'black' }} />
           <Router>
             <Switch>
               <Route covenant="multi">

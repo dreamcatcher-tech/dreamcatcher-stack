@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Debug from 'debug'
 import 'leaflet/dist/leaflet.css'
-import 'leaflet'
+import L from 'leaflet'
 
 import 'leaflet-draw/dist/leaflet.draw.css'
 import 'leaflet-draw/dist/leaflet.draw.js'
@@ -158,6 +158,7 @@ const MapBackground = ({ children }) => {
     const layerConfig = {
       position: 'bottomright',
       collapsed: true,
+      hideSingleBase: true,
     }
 
     const layerControl = L.control.layers(baseLayers, overlays, layerConfig)
