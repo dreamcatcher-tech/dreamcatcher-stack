@@ -13,7 +13,7 @@ const DialogDatum = () => {
   let title = ''
   let name = ''
   let custNo = ''
-  const [block] = blocks
+  const [block1, block] = blocks
   // TODO I am so sorry that I did not do any route scoping
   // TODO make a datum container that can be placed anywhere
   // datums need to display children too, so making a container allows blocks to be passed down ?

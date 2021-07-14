@@ -44,8 +44,12 @@ const Timesheets = () => {
                 <Nav />
                 <MapBackground>
                   <Switch>
-                    <Route path="/timesheets" component={<CollectionList />} />
-                    <Route path="/personnel" component={<CollectionList />} />
+                    <Route path="/timesheets" component={<CollectionList />}>
+                      <Route path="/custNo-*" component={<DialogDatum />} />
+                    </Route>
+                    <Route path="/personnel" component={<CollectionList />}>
+                      <Route path="/custNo-*" component={<DialogDatum />} />
+                    </Route>
                     <Route path="/sites" component={<Geometry />} />
                     <Route path="/payments" component={<CollectionList />}>
                       <Route path="/payNo-*" component={<DialogDatum />} />
@@ -55,7 +59,6 @@ const Timesheets = () => {
                     <Route path="/account" component={<Account />} />
                   </Switch>
                 </MapBackground>
-                <Route path="/custNo-*" component={<DialogDatum />} />
               </AppContainer>
             </Route>
             <Route component={<Explorer />} />

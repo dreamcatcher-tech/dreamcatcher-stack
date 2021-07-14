@@ -10,6 +10,7 @@ import { Add } from '@material-ui/icons'
 const debug = Debug('terminal:widgets:CollectionList')
 const CollectionList = (props) => {
   const { blocks, match, cwd, children } = props // TODO verify this is a Collection
+
   const { blockchain, isPending } = useBlockchain()
   // TODO disable '+' button if we are not the cwd
   const isCwd = true
