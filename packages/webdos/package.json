@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/webdos",
-  "version": "0.0.45",
+  "version": "0.0.46",
   "description": "Web components for DOS",
   "main": "lib/index.js",
   "module": "es/index.js",
