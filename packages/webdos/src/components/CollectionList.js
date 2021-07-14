@@ -3,18 +3,19 @@ import calculateSize from 'calculate-size'
 import { XGrid } from '@material-ui/x-grid'
 import assert from 'assert'
 import Debug from 'debug'
-import { useBlockchain, useBlockstream } from '../hooks'
+import { useBlockchain, useBlockstream, useRouter } from '../hooks'
 import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
 
 const debug = Debug('terminal:widgets:CollectionList')
 const CollectionList = (props) => {
-  const { blocks, match, cwd, children } = props // TODO verify this is a Collection
+  const { children } = props // TODO verify this is a Collection
+  const { blocks, match, cwd } = useRouter()
 
   const { blockchain, isPending } = useBlockchain()
   // TODO disable '+' button if we are not the cwd
   const isCwd = true
-  const columnsRef = useRef()
+  const columnsRef = {} //useRef()
   const [block] = blocks
 
   const onAddCustomer = async () => {
