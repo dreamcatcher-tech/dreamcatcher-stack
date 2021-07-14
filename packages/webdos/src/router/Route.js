@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { useBlockchain } from '..'
-import { useRouterContext } from './RouterContext'
+import { useRouter } from '../hooks'
 
 const debug = Debug('webdos:router:Route')
 /**
@@ -15,8 +15,14 @@ const debug = Debug('webdos:router:Route')
  * @returns
  */
 const Route = ({ path, covenant, component, children }) => {
-  debug(`children`, !!children)
-  const context = useRouterContext()
+  debug(
+    `Route path: %s covenant: %s component: %s children: %s`,
+    path,
+    covenant,
+    !!component,
+    !!children
+  )
+  const context = useRouter()
 
   // check if our path matches, and if we should render at all
   const { cwd, match } = context
@@ -48,6 +54,7 @@ const Route = ({ path, covenant, component, children }) => {
     return React.cloneElement(component, context, nextChildren)
   }
 
+  // TODO wrap in a routerProvider, rather than injecting props
   return (
     <>
       {React.Children.map(children, (child) => {

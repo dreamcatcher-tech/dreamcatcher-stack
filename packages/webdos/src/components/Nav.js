@@ -5,7 +5,7 @@ import { List, ListItem, ListItemText } from '@material-ui/core'
 import { IconButton } from '@material-ui/core'
 import { Home, AccountCircle, Settings, Info } from '@material-ui/icons'
 import { makeStyles } from '@material-ui/core'
-import { useRouterContext } from '../router/RouterContext'
+import { useRouter } from '../hooks'
 const debug = Debug('terminal:widgets:Nav')
 const useStyles = makeStyles({
   grow: {
@@ -25,7 +25,7 @@ const useStyles = makeStyles({
 const Nav = (props) => {
   debug(`props: `, props)
   const classes = useStyles()
-  const { blocks, match, cwd } = useRouterContext()
+  const { blocks, match, cwd } = useRouter()
   const [block] = blocks
   const children = getChildren(block)
   debug(`aliases: `, children)

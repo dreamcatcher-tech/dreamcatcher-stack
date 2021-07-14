@@ -2,11 +2,17 @@ import React, { useState } from 'react'
 import Debug from 'debug'
 import OpenDialog from './OpenDialog'
 import Form from '@rjsf/material-ui'
-import { useBlockchain } from '../hooks'
+import { useRouter, useBlockchain } from '../hooks'
 
 const debug = Debug('terminal:widgets:Settings')
 
-const Settings = ({ block }) => {
+const Settings = () => {
+  const { blocks, match, cwd } = useRouter()
+  const [block] = blocks
+  if (!block) {
+    debug(`not enough info to render`)
+    return null
+  }
   const { state } = block
   // TODO assert that this matches the settings schema
   const { schema, formData: storedFormData } = state

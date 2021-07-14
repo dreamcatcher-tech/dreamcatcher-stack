@@ -84,38 +84,21 @@ const installer = {
           schema: {
             title: 'Timesheet',
             type: 'object',
-            required: ['custNo', 'name', 'isEmailVerified'],
+            required: ['custNo', 'name'],
+            // date
+            // start hours
+            // end hours
+            // default activity
+
             properties: {
               name: { title: 'Name', type: 'string', faker: 'name.findName' },
-              mobile: {
-                title: 'Mobile',
-                type: 'string',
-                faker: 'phone.phoneNumber',
-              },
-              phone: {
-                title: 'Phone',
-                type: 'string',
-                faker: 'phone.phoneNumber',
-              },
-              email: {
-                title: 'Email',
-                type: 'string',
-                format: 'email',
-                faker: 'internet.email',
-              },
-              isEmailVerified: {
-                title: 'Email Verified',
-                type: 'boolean',
-                default: false,
-              },
               custNo: {
-                title: 'Customer Number',
+                title: 'Personnel ID',
                 type: 'integer',
                 minimum: 1,
                 maximum: 15000,
                 default: 555,
               },
-              importedHash: { type: 'string', faker: 'git.commitSha' },
             },
           },
           uiSchema: {
@@ -211,7 +194,7 @@ const installer = {
       covenant: 'datum',
       state: {
         schema: {
-          title: 'About CRM',
+          title: 'About',
           type: 'object',
           properties: {
             title: { type: 'string' },
@@ -219,8 +202,8 @@ const installer = {
           },
         },
         formData: {
-          title: 'CRM',
-          description: 'Simple Customer Relationship Management',
+          title: ' TIMESHEETpro',
+          description: 'Simple timesheet tracking tooling',
         },
       },
     },

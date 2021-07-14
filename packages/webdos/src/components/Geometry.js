@@ -3,7 +3,13 @@ import Debug from 'debug'
 
 const debug = Debug('terminal:widgets:Services')
 
-const Services = () => {
+/**
+ * Overlays the map with tooling and inserts geometry layers.
+ * Geo layers represent the children of the collection that this component faces
+ *
+ */
+
+const Geometry = () => {
   // const { state } = block
   // debug(`state`, state)
   // const { title, description } = state.formData
@@ -18,4 +24,4 @@ const Services = () => {
   )
 }
 
-export default Services
+export default Geometry

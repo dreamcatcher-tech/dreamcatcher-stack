@@ -107,7 +107,7 @@ const MapBackground = ({ children }) => {
     const layerConfig = {
       position: 'bottomright',
       collapsed: true,
-      hideSingleBase: true,
+      hideSingleBase: false,
     }
 
     const layerControl = L.control.layers(baseLayers, overlays, layerConfig)

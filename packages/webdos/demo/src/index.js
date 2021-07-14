@@ -6,8 +6,8 @@ import { Blockchain, Terminal, Router, Switch, Route } from '../../src'
 import {
   About,
   Account,
-  Customer,
-  CustomerList,
+  DialogDatum,
+  CollectionList,
   Datum,
   Explorer,
   Nav,
@@ -15,7 +15,7 @@ import {
   Settings,
   MapBackground,
   AppContainer,
-  Services,
+  Geometry,
 } from '../../src'
 import Debug from 'debug'
 import { crm } from './crm'
@@ -44,14 +44,18 @@ const Timesheets = () => {
                 <Nav />
                 <MapBackground>
                   <Switch>
-                    <Route path="/timesheets" component={<CustomerList />} />
-                    <Route path="/personnel" component={<CustomerList />} />
-                    <Route path="/sites" component={<Services />} />
-                    <Route path="/payments" component={<CustomerList />} />
+                    <Route path="/timesheets" component={<CollectionList />} />
+                    <Route path="/personnel" component={<CollectionList />} />
+                    <Route path="/sites" component={<Geometry />} />
+                    <Route path="/payments" component={<CollectionList />}>
+                      <Route path="/payNo-*" component={<DialogDatum />} />
+                    </Route>
+                    <Route path="/about" component={<About />} />
+                    <Route path="/settings" component={<Settings />} />
+                    <Route path="/account" component={<Account />} />
                   </Switch>
                 </MapBackground>
-                <Route path="/custNo-*" component={<Customer />} />
-                <Route path="/payNo-*" component={<Customer />} />
+                <Route path="/custNo-*" component={<DialogDatum />} />
               </AppContainer>
             </Route>
             <Route component={<Explorer />} />
@@ -76,7 +80,7 @@ export default class Demo extends Component {
                   <Nav />
                   <MapBackground>
                     <Switch>
-                      <Route path="/customers" component={<CustomerList />} />
+                      <Route path="/customers" component={<CollectionList />} />
                       <Route path="/services" component={<Services />} />
                     </Switch>
                   </MapBackground>
@@ -95,7 +99,7 @@ export default class Demo extends Component {
                 </Route>
                 <Route path="/customers">
                   // should be auto detected based on covenant
-                  <CustomerList />
+                  <CollectionList />
                   <Route path="/:customer">
                     <Customer />
                   </Route>

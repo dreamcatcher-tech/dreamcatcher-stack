@@ -1,7 +1,7 @@
 import About from './About'
 import Account from './Account'
-import Customer from './Customer'
-import CustomerList from './CustomerList'
+import DialogDatum from './DialogDatum'
+import CollectionList from './CollectionList'
 import Datum from './Datum'
 import Explorer from './Explorer'
 import Nav from './Nav'
@@ -9,13 +9,13 @@ import OpenDialog from './OpenDialog'
 import Settings from './Settings'
 import MapBackground from './MapBackground'
 import AppContainer from './AppContainer'
-import Services from './Services'
+import Geometry from './Geometry'
 
 export {
   About,
   Account,
-  Customer,
-  CustomerList,
+  DialogDatum,
+  CollectionList,
   Datum,
   Explorer,
   Nav,
@@ -23,5 +23,5 @@ export {
   Settings,
   MapBackground,
   AppContainer,
-  Services,
+  Geometry,
 }

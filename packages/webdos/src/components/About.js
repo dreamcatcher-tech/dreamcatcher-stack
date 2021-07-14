@@ -1,11 +1,18 @@
 import React from 'react'
 import Debug from 'debug'
 import OpenDialog from './OpenDialog'
+import { useRouter } from '../hooks'
 
 const debug = Debug('terminal:widgets:About')
 debug(`loaded`)
 
-const About = ({ block, path, cwd }) => {
+const About = () => {
+  const { blocks, match, cwd } = useRouter()
+  const [block] = blocks
+  if (!block) {
+    debug(`not enough info to render`)
+    return null
+  }
   const { state } = block
   const { title, description } = state.formData
   return (

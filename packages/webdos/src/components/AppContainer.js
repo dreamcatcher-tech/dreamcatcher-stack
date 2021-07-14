@@ -1,9 +1,7 @@
 import React from 'react'
-import { useContext, useRef } from 'react'
+import { useRef } from 'react'
 
 export const AppContainerContext = React.createContext('appContainer')
-
-export const useAppContainer = () => useContext(AppContainerContext)
 
 const AppContainer = ({ children }) => {
   const style = {

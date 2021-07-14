@@ -7,9 +7,9 @@ import { useBlockchain, useBlockstream } from '../hooks'
 import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
 
-const debug = Debug('terminal:widgets:CustomerList')
-const CustomerList = (props) => {
-  const { blocks, match, cwd } = props // TODO verify this is a Collection
+const debug = Debug('terminal:widgets:CollectionList')
+const CollectionList = (props) => {
+  const { blocks, match, cwd, children } = props // TODO verify this is a Collection
   const { blockchain, isPending } = useBlockchain()
   // TODO disable '+' button if we are not the cwd
   const isCwd = true
@@ -82,12 +82,12 @@ const CustomerList = (props) => {
       })
     }
   }
-  const children = _getChildren(block)
-  for (const child of children) {
+  const listItems = _getChildren(block)
+  for (const child of listItems) {
     rows.push({ id: rows.length, child })
   }
   const onRowClick = ({ id }) => {
-    const child = children[id]
+    const child = listItems[id]
     debug(`onclick`, child, match, cwd)
     const nextPath = match + '/' + child
     if (match === nextPath) {
@@ -128,6 +128,7 @@ const CustomerList = (props) => {
       >
         <Add />
       </Fab>
+      {children}
     </div>
   )
 }
@@ -156,4 +157,4 @@ const CellBlock = ({ path, field, alias, namePath }) => {
   return <div>{text}</div>
 }
 
-export default CustomerList
+export default CollectionList

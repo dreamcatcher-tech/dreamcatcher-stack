@@ -1,9 +1,10 @@
+const { useAppContainer } = require('./useAppContainer')
 const { useBinary } = require('./useBinary')
 const { useBlockchain } = require('./useBlockchain')
 const { useBlockstream } = require('./useBlockstream')
-const { usePathBlockstream } = require('./usePathBlockstream')
 const { useNavigation } = require('./useNavigation')
-const { useAppContainer } = require('../components/AppContainer')
+const { usePathBlockstream } = require('./usePathBlockstream')
+const { useRouter } = require('./useRouter')
 
 module.exports = {
   useBinary,
@@ -11,5 +12,6 @@ module.exports = {
   useBlockstream,
   usePathBlockstream,
   useNavigation,
+  useRouter,
   useAppContainer,
 }
