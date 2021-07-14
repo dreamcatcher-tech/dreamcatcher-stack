@@ -14,7 +14,7 @@ const About = () => {
     return null
   }
   const { state } = block
-  const { title, description } = state.formData
+  const { title, description } = state.formData || state.schema || {}
   return (
     <OpenDialog title={'About'}>
       <h2>{title}</h2>

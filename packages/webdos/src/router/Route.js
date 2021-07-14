@@ -1,9 +1,11 @@
 import assert from 'assert'
+import posix from 'path'
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { useBlockchain } from '..'
 import { useRouter } from '../hooks'
+import RouterContext from '../router/RouterContext'
 
 const debug = Debug('webdos:router:Route')
 /**
@@ -25,7 +27,12 @@ const Route = ({ path, covenant, component, children }) => {
   const context = useRouter()
 
   // check if our path matches, and if we should render at all
-  const { cwd, match } = context
+  const { blocks, match, cwd } = context
+  // path match is when some remains of (cwd - match) === path
+  assert(posix.isAbsolute(match), `match not absolute: ${match} ${cwd}`)
+  assert(posix.isAbsolute(cwd), `match not absolute: ${match} ${cwd}`)
+  assert(Array.isArray(blocks))
+
   let matchedCovenant = false,
     matchedPath = false
   if (path) {
@@ -46,22 +53,38 @@ const Route = ({ path, covenant, component, children }) => {
   }
   debug(`match found`, path, covenant)
 
+  // TODO wrap in a routerProvider, rather than injecting props
+  const wrapRoute = (route, index) => {
+    const matchedBlocks = blocks.slice(index)
+    const match = segments
+      .slice(0, index + 1)
+      .join('/')
+      .substring(1)
+    debug(`matchedPath`, match)
+    return (
+      <RouterContext.Provider value={{ blocks: matchedBlocks, match, cwd }}>
+        {route}
+      </RouterContext.Provider>
+    )
+  }
+  let result
+
   if (component) {
     const nextChildren = [
       ...React.Children.toArray(component.props.children),
       ...React.Children.toArray(children),
     ]
-    return React.cloneElement(component, context, nextChildren)
+    result = React.cloneElement(component, context, nextChildren)
+  } else {
+    result = (
+      <>
+        {React.Children.map(children, (child) => {
+          return React.cloneElement(child, context)
+        })}
+      </>
+    )
   }
-
-  // TODO wrap in a routerProvider, rather than injecting props
-  return (
-    <>
-      {React.Children.map(children, (child) => {
-        return React.cloneElement(child, context)
-      })}
-    </>
-  )
+  return result
 }
 Route.propTypes = {
   path: PropTypes.string,
