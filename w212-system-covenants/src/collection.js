@@ -42,6 +42,7 @@ const reducer = async (state, action) => {
       const muxed = muxTemplateWithFormData(datumTemplate, formData)
       const set = datum.actions.set(muxed)
       debug(`datum set action`, set)
+      // TODO set this in the state of the spawn, to reduce block count
       await interchain(set, name)
       return state
     }

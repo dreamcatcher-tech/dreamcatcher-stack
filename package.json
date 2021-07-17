@@ -22,15 +22,15 @@
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "ajv": "^8.6.0",
+    "ajv": "^8.6.2",
     "ajv-formats": "^2.1.0",
     "ansi-colors": "^4.1.1",
     "columnify": "^1.5.4",
-    "debug": "^4.3.1",
+    "debug": "^4.3.2",
     "faker": "^5.5.3",
     "fast-deep-equal": "^3.1.3",
     "fast-json-stable-stringify": "^2.1.0",
-    "fast-json-stringify": "^2.7.6",
+    "fast-json-stringify": "^2.7.7",
     "json-schema-faker": "0.5.0-rcv.34",
     "localforage": "^1.9.0",
     "lodash": "^4.17.21",
@@ -48,8 +48,8 @@
     "supports-color": "^9.0.1",
     "truncate": "^2.1.0",
     "uuid": "^8.3.2",
-    "ws": "^7.5.0",
-    "xstate": "^4.19.2"
+    "ws": "^7.5.3",
+    "xstate": "^4.23.0"
   },
   "jest": {
     "testEnvironment": "node"
@@ -57,13 +57,13 @@
   "devDependencies": {
     "benchmark": "^2.1.4",
     "clean-webpack-plugin": "^4.0.0-alpha.0",
-    "javascript-obfuscator": "^2.15.5",
-    "jest": "^27.0.5",
+    "javascript-obfuscator": "^2.16.0",
+    "jest": "^27.0.6",
     "madge": "^5.0.1",
-    "node-polyfill-webpack-plugin": "^1.1.3",
+    "node-polyfill-webpack-plugin": "^1.1.4",
     "np": "^7.5.0",
-    "prettier": "^2.3.1",
-    "webpack": "5.40.0",
+    "prettier": "^2.3.2",
+    "webpack": "5.45.1",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.7.2",
     "webpack-node-externals": "^3.0.0",
