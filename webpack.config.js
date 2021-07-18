@@ -52,7 +52,11 @@ module.exports = {
   // target: 'node14.17',
   target: 'web',
   externals: [
-    nodeExternals({ modulesFromFile: true, allowlist: ['json-schema-faker'] }),
+    nodeExternals({
+      modulesFromFile: true,
+      // ajv-formats: if do not include, in stackblitz will cause requirements on: ajv, ajv-formats, long
+      allowlist: ['json-schema-faker', 'ajv-formats'],
+    }),
   ],
   mode: 'production',
   devtool: false, // TODO make sourcemap so can debug
