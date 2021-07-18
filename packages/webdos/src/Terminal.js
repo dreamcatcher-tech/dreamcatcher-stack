@@ -12,7 +12,7 @@ import { stdin as mockStdin } from 'mock-stdin'
 import { useBlockchain } from '.'
 import commandLineShell from '@dreamcatcher-tech/dos'
 
-import '../css/TorEmoji.woff2'
+// import '../css/TorEmoji.woff2'
 
 const debug = debugFactory(`terminal:Terminal`)
 
@@ -126,7 +126,7 @@ const TerminalContainer = (props) => {
       // chrome displays emojis badly
       // TODO get a webfont for emojis that displays correctly and is small
       debug('loading emojis for tor browser')
-      const tor = new FontFaceObserver('TorEmoji')
+      // const tor = new FontFaceObserver('TorEmoji')
       // const awaitTorLoad = tor
       //   .load('🦄', fontLoadDelay)
       //   .then(() => fonts.push('TorEmoji'))
