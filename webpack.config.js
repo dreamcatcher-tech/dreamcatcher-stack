@@ -51,7 +51,9 @@ module.exports = {
   // externalsPresets: { node: true },
   // target: 'node14.17',
   target: 'web',
-  externals: [nodeExternals({ modulesFromFile: true })],
+  externals: [
+    nodeExternals({ modulesFromFile: true, allowlist: ['json-schema-faker'] }),
+  ],
   mode: 'production',
   devtool: false, // TODO make sourcemap so can debug
   plugins: [

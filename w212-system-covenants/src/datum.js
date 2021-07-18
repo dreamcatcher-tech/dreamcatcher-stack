@@ -9,10 +9,14 @@ const { covenantIdModel } = require('../../w015-models')
 const { interchain, useBlocks } = require('../../w002-api')
 const seedrandom = require('seedrandom')
 ajv.addKeyword('faker')
-const jsf = require('json-schema-faker') || {
-  extend: () => true,
-  option: () => true,
-  generate: () => ({}),
+const jsf = require('json-schema-faker')
+const isBrowserBundle = !jsf.extend
+if (isBrowserBundle) {
+  Object.assign(jsf, {
+    extend: () => true,
+    option: () => true,
+    generate: () => ({}),
+  })
 }
 jsf.extend('faker', () => faker)
 /**

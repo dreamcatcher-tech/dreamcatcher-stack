@@ -67,7 +67,7 @@ if (!globalThis._interblockLibrary) {
     exp.sodiumplus = require('sodium-plus')
     exp.uuid = require('uuid')
     exp.xstate = require('xstate')
-
+    exp.jsonSchemaFaker = require('json-schema-faker')
     debug('loaded')
 
     const { SodiumPlus } = exp.sodiumplus
