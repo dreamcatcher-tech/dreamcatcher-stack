@@ -21,6 +21,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "ansi-colors": "^4.1.1",
+    "assert": "^2.0.0",
     "better-opn": "^3.0.0",
     "clear": "^0.1.0",
     "cliui": "^7.0.4",
@@ -33,9 +34,9 @@
     "figlet": "^1.2.4",
     "filesize": "^6.3.0",
     "localforage": "^1.9.0",
-    "node-polyfill-webpack-plugin": "^1.1.4",
     "ora": "5.4.1",
     "pad-left": "^2.1.0",
+    "path-browserify": "^1.0.1",
     "pretty-ms": "^7.0.1",
     "pull-stream": "^3.6.9",
     "random-hash": "^4.0.1",

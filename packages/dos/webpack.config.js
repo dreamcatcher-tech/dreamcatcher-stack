@@ -2,11 +2,23 @@ const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const path = require('path')
 const nodeExternals = require('webpack-node-externals')
-const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-
 const externals = nodeExternals({ modulesFromFile: true, allowlist: ['ora'] })
-// const externals = nodeExternals({ modulesFromFile: true })
+
+/**
+ * Ora uses the readline module, which is unavailable in the browser.
+ * This is the whole reason for having a webpack bundle that is built for the browser.
+ *
+ * All of ora must be included in the bundle, else the downstream bundler will attempt to
+ * bundle ora its own way, and will not work instantly.
+ *
+ * Target must be set to 'web' or else webpack thinks that readline is a node
+ * module which is available, so it makes no attempt to bundle using the fallbacks.
+ *
+ * Target 'web' causes the path and assert modules to be missing, so a fallback
+ * is added here, as well as an install of 'assert' which needs no fallback as the
+ * name is identical.
+ */
 
 module.exports = {
   entry: './src/index.js',
@@ -26,11 +38,11 @@ module.exports = {
   plugins: [
     //   new BundleAnalyzerPlugin(),
     new CleanWebpackPlugin(),
-    new NodePolyfillPlugin({}),
   ],
   resolve: {
     fallback: {
       readline: require.resolve('readline-browserify'),
+      path: require.resolve('path-browserify'),
     },
   },
   optimization: {
