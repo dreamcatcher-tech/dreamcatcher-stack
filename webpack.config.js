@@ -1,6 +1,6 @@
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-const path = require('path')
+const path = require('path-browserify')
 const nodeExternals = require('webpack-node-externals')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const WebpackObfuscator = require('webpack-obfuscator')
@@ -58,6 +58,12 @@ module.exports = {
     new CleanWebpackPlugin(),
     new WebpackObfuscator(highPerformance),
   ],
+  // resolve: {
+  //   fallback: {
+  //     // readline: require.resolve('readline-browserify'),
+  //     path: require.resolve('path-browserify'),
+  //   },
+  // },
   optimization: {
     minimize: true,
     mangleExports: 'size',

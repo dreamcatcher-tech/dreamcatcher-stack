@@ -1,5 +1,5 @@
 const assert = require('assert')
-const posix = require('path')
+const posix = require('path-browserify')
 const debug = require('debug')('interblock:producers:network')
 const _ = require('lodash')
 const {

@@ -1,5 +1,5 @@
 const assert = require('assert')
-const posix = require('path')
+const posix = require('path-browserify')
 const { blockModel } = require('../../../w015-models')
 const debug = require('debug')('interblock:query')
 const { toFunctions } = require('./consistencyFactory')

@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:dmz:getChannel')
-const posix = require('path')
+const posix = require('path-browserify')
 const { replyResolve } = require('../../w002-api')
 const { getChannelParams } = require('./utils')
 

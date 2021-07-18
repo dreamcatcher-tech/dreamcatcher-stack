@@ -35,7 +35,7 @@
 const assert = require('assert')
 const { metrologyFactory } = require('../../w017-standard-engine')
 const _ = require('lodash')
-const posix = require('path')
+const posix = require('path-browserify')
 const debug = require('debug')('interblock:effector')
 const { covenantIdModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')

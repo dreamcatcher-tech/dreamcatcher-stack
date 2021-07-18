@@ -29,7 +29,7 @@
 
 const assert = require('assert')
 const debugBase = require('debug')('ib:met')
-const posix = require('path')
+const posix = require('path-browserify')
 const _ = require('lodash')
 const setImmediate = require('set-immediate-shim')
 const { standardEngineFactory } = require('./standardEngineFactory')

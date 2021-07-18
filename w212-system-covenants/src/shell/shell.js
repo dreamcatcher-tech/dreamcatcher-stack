@@ -1,5 +1,5 @@
 const debug = require('debug')('interblock:covenants:shell')
-const posix = require('path')
+const posix = require('path-browserify')
 const assert = require('assert')
 const { covenantIdModel } = require('../../../w015-models')
 const dmzReducer = require('../../../w021-dmz-reducer')
