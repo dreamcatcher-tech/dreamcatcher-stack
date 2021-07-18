@@ -23,6 +23,7 @@ import cov from './covenant'
 import multi from './multi'
 import timesheets from './timesheets'
 Debug.enable('*:widgets:* *Route ')
+
 const Map = () => {
   return (
     <MapBackground>

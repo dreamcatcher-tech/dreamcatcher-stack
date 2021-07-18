@@ -72,5 +72,11 @@
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true
+  },
+  "browser": {
+    "fs": false,
+    "child_process": false,
+    "react": "./node_modules/react",
+    "readline": "./node_modules/readline-browserify"
   }
 }

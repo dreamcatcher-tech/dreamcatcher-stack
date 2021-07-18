@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import calculateSize from 'calculate-size'
 import { XGrid } from '@material-ui/x-grid'
 import assert from 'assert'
@@ -6,6 +6,7 @@ import Debug from 'debug'
 import { useBlockchain, useBlockstream, useRouter } from '../hooks'
 import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
+import equal from 'fast-deep-equal'
 
 const debug = Debug('terminal:widgets:CollectionList')
 const CollectionList = (props) => {
@@ -15,7 +16,6 @@ const CollectionList = (props) => {
   const { blockchain, isPending } = useBlockchain()
   // TODO disable '+' button if we are not the cwd
   const isCwd = true
-  const columnsRef = {} //useRef()
   const [block] = blocks
 
   const onAddCustomer = async () => {
@@ -42,12 +42,9 @@ const CollectionList = (props) => {
     left: 'auto',
     position: 'fixed',
   }
-
-  const columns = columnsRef.current || []
-  const rows = []
-  if (block && block.state.datumTemplate && !columnsRef.current) {
-    const { datumTemplate } = block.state
-    columnsRef.current = columns
+  const regenerateColumns = (datumTemplate) => {
+    debug(`generating new columns`)
+    const columns = []
     // TODO get nested children columns out, hiding all but top level
     const { properties } = datumTemplate.schema
     const { namePath } = datumTemplate
@@ -57,7 +54,7 @@ const CollectionList = (props) => {
       const renderCell = (params) => {
         const { row, field } = params
         const { child } = row
-        // need to unmap the field to the nested child
+        // TODO need to unmap the field to the nested child
         // need to cache all the blocks so fetching them is very cheap
         // fetch block relating to this child, to get out data
         // show loading screen in meantime
@@ -83,8 +80,22 @@ const CollectionList = (props) => {
         width: width + 82,
       })
     }
+    return columns
   }
+  const ref = useRef({ columns: [], datumTemplate: {} })
+  if (block && block.state.datumTemplate) {
+    const { datumTemplate } = block.state
+    if (datumTemplate) {
+      if (!equal(ref.current.datumTemplate, datumTemplate)) {
+        debug(`updating datumTemplate`)
+        ref.current.datumTemplate = datumTemplate
+        ref.current.columns = regenerateColumns(datumTemplate)
+      }
+    }
+  }
+
   const listItems = _getChildren(block)
+  const rows = []
   for (const child of listItems) {
     rows.push({ id: rows.length, child })
   }
@@ -114,7 +125,7 @@ const CollectionList = (props) => {
   return (
     <div style={hideMapBackgrond}>
       <XGrid
-        columns={columns}
+        columns={ref.current.columns}
         rows={rows}
         // autoHeight
         disableMultipleSelection

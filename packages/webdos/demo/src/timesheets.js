@@ -99,6 +99,25 @@ const installer = {
                 maximum: 15000,
                 default: 555,
               },
+              startHours: {
+                title: 'Start Hours',
+                type: 'string',
+                description: 'Start time for work',
+                // format: 'date-time',
+                // faker: 'time.recent',
+              },
+              endHours: {
+                title: 'End Hours',
+                type: 'string',
+                description: 'End time for work',
+                // format: 'date-time',
+                // faker: 'time.recent',
+              },
+              activity: {
+                title: 'Activity',
+                type: 'string',
+                faker: 'company.catchPhraseNoun',
+              },
             },
           },
           uiSchema: {
