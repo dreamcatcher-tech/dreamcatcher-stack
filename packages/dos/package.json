@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/dos",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "description": "Terminal interface to the HyperNet",
   "main": "src/index.js",
   "browser": "dist/dosBrowser.js",
