@@ -35,7 +35,7 @@ const highPerformance = {
   // log: true,
   // transformObjectKeys: true,
   ignoreRequireImports: true,
-  target: 'node',
+  // target: 'node',
 }
 
 module.exports = {
@@ -44,14 +44,12 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: `interblock.js`,
     library: {
-      // name: 'interblock',
       type: 'commonjs-module',
-      // umdNamedDefine: true,
     },
-    // globalObject: 'this', // else defaults to 'self' and fails in nodejs environment
   },
-  externalsPresets: { node: true },
-  target: 'node14.17',
+  // externalsPresets: { node: true },
+  // target: 'node14.17',
+  target: 'web',
   externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'production',
   devtool: false, // TODO make sourcemap so can debug
