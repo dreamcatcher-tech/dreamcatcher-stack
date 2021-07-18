@@ -47,12 +47,11 @@ module.exports = {
       type: 'commonjs-module',
     },
   },
+  // TODO turn back on to make two bundles - one for browser, one for node
   // externalsPresets: { node: true },
   // target: 'node14.17',
   target: 'web',
-  externals: [
-    nodeExternals({ modulesFromFile: true, allowlist: ['json-schema-faker'] }),
-  ],
+  externals: [nodeExternals({ modulesFromFile: true })],
   mode: 'production',
   devtool: false, // TODO make sourcemap so can debug
   plugins: [
@@ -61,12 +60,7 @@ module.exports = {
     new WebpackObfuscator(highPerformance),
   ],
   resolve: {
-    fallback: {
-      // readline: require.resolve('readline-browserify'),
-      http: require.resolve('stream-http'),
-      https: require.resolve('https-browserify'),
-      vm: require.resolve('vm-browserify'),
-    },
+    alias: { 'json-schema-faker': false },
   },
   optimization: {
     minimize: true,

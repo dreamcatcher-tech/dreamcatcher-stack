@@ -1,5 +1,4 @@
 const assert = require('assert')
-const truncate = require('truncate')
 const chalk = require('ansi-colors')
 const pad = require('pad-left')
 const prettyBytes = require('pretty-bytes')
@@ -174,8 +173,8 @@ const getSize = (model) => {
   sizeCache.set(model, size)
   return size
 }
-const shrink = (chainId, bg = 'bgGreen', fg = 'white') => {
-  const shrunk = ` ${truncate(pad(chainId, 9), 9)} `
+const shrink = (string = '', bg = 'bgGreen', fg = 'white') => {
+  const shrunk = ` ${pad(string, 9).substring(0, 9)} `
   return chalk[fg][bg].bold(shrunk)
 }
 

@@ -8,9 +8,13 @@ const dmzReducer = require('../../w021-dmz-reducer')
 const { covenantIdModel } = require('../../w015-models')
 const { interchain, useBlocks } = require('../../w002-api')
 const seedrandom = require('seedrandom')
-const jsf = require('json-schema-faker')
-jsf.extend('faker', () => faker)
 ajv.addKeyword('faker')
+const jsf = require('json-schema-faker') || {
+  extend: () => true,
+  option: () => true,
+  generate: () => ({}),
+}
+jsf.extend('faker', () => faker)
 /**
  * Requirements:
  *  1.  boot with state already set, and this gets checked for validity immediately
