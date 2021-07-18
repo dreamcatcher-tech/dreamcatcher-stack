@@ -60,12 +60,14 @@ module.exports = {
     new CleanWebpackPlugin(),
     new WebpackObfuscator(highPerformance),
   ],
-  // resolve: {
-  //   fallback: {
-  //     // readline: require.resolve('readline-browserify'),
-  //     path: require.resolve('path-browserify'),
-  //   },
-  // },
+  resolve: {
+    fallback: {
+      // readline: require.resolve('readline-browserify'),
+      http: require.resolve('stream-http'),
+      https: require.resolve('https-browserify'),
+      vm: require.resolve('vm-browserify'),
+    },
+  },
   optimization: {
     minimize: true,
     mangleExports: 'size',
