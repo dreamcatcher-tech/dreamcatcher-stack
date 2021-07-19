@@ -27,6 +27,7 @@
     "@material-ui/x-grid": "^4.0.0-alpha.33",
     "@rjsf/core": "^3.0.0",
     "@rjsf/material-ui": "^3.0.0",
+    "assert": "^2.0.0",
     "calculate-size": "^1.1.1",
     "debug": "^4.3.2",
     "fast-deep-equal": "^3.1.3",

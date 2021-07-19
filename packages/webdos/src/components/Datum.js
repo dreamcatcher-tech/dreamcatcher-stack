@@ -14,6 +14,7 @@ import Debug from 'debug'
 const debug = Debug('terminal:widgets:Datum')
 
 const useStyles = makeStyles((theme) => ({
+  // TODO try remove makeStyles and use basic classes - adds much to stackblitz
   root: {
     flexGrow: 1,
   },

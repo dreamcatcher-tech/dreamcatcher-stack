@@ -88,8 +88,7 @@ const TerminalContainer = (props) => {
     terminal.unicode.activeVersion = '11'
 
     terminal.open(document.getElementById(id))
-    fitAddon.fit()
-    terminal.focus()
+    // terminal.focus() // grabs focus in stackblitz
     convertToStdStream(terminal)
     terminal.attachCustomKeyEventHandler((event) => {
       const { key, type } = event
@@ -105,11 +104,17 @@ const TerminalContainer = (props) => {
       stdin.send(key)
     })
     const resizeListener = () => {
+      const term = document.getElementById(id)
+      if (term.getClientRects().length === 0) {
+        debug(`avoided throw from fitAddon.fit() on hidden element`)
+        debugger
+        return
+      }
       fitAddon.fit()
-      terminal.columns = terminal.cols
+      terminal.columns = terminal.cols // for enquirer to size itself correctly
     }
+    resizeListener() // set initial sizing
     window.addEventListener('resize', resizeListener)
-    terminal.columns = terminal.cols // for enquirer to size itself correctly
 
     const isTor = checkIsLikelyTor()
     debug(`isTor: ${isTor}`)
