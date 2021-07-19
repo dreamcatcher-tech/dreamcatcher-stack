@@ -33,6 +33,7 @@
     "fast-json-stringify": "^2.7.7",
     "localforage": "^1.9.0",
     "lodash": "^4.17.21",
+    "long": "^4.0.0",
     "node-object-hash": "^2.3.7",
     "object-hash": "^2.2.0",
     "pad-left": "^2.1.0",

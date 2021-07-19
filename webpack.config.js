@@ -55,6 +55,8 @@ module.exports = {
     nodeExternals({
       modulesFromFile: true,
       // ajv-formats: if do not include, in stackblitz will cause requirements on: ajv, ajv-formats, long
+      // json-schema-faker: causes huge bundling problems for browser
+      // long: needs to be added as dependency, but can be externalized
       allowlist: ['json-schema-faker', 'ajv-formats'],
     }),
   ],
