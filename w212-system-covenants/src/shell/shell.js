@@ -277,6 +277,9 @@ const machine = Machine(
       moveActor: {
         // move a chain to a new path, which might be on a different root
         // reject if path does not exist, or not accessible
+        // allow --merge to perform a merge on the target of the move
+        // specify how to reconcile diffs in the objects
+        // includes moving a whole tree too
       },
       linkActor: {
         // set up a softlink to a chain, with optional hardlink as backup parent

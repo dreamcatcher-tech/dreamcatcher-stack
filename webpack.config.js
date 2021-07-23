@@ -68,6 +68,7 @@ module.exports = {
     new WebpackObfuscator(highPerformance),
   ],
   resolve: {
+    // blank it so browser bundlers do not try to bundle it
     alias: { 'json-schema-faker': false },
   },
   optimization: {
