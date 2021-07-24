@@ -6,17 +6,25 @@
     "type": "git",
     "url": "https://github.com/dreamcatcher-tech/interblock"
   },
+  "homepage": "",
   "files": [
-    "dist/interblock.*"
+    "es",
+    "lib",
+    "umd"
   ],
-  "main": "dist/interblock.js",
+  "main": "lib/index.js",
+  "module": "es/index.js",
   "scripts": {
-    "prepack": "webpack",
-    "dev": "webpack --watch",
+    "build": "nwb build-web-module",
+    "clean": "nwb clean-module",
+    "prepublishOnly": "npm run build",
     "test": "DEBUG_COLORS=1 DEBUG='' jest --bail",
-    "tw": "yarn prepack && jest package.test.js",
+    "test:web": "nwb test",
+    "test:coverage": "nwb test --coverage",
+    "test:watch": "nwb test --server",
+    "test:package": "yarn build && jest tests/package.test.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
-    "release": "webpack && np"
+    "release": "np"
   },
   "private": false,
   "author": "Dreamcatcher Command",
@@ -54,19 +62,13 @@
     "testEnvironment": "node"
   },
   "devDependencies": {
+    "nwb": "0.25.x",
     "benchmark": "^2.1.4",
-    "clean-webpack-plugin": "^4.0.0-alpha.0",
-    "javascript-obfuscator": "^2.16.0",
     "jest": "^27.0.6",
     "json-schema-faker": "^0.5.0-rcv.36",
     "madge": "^5.0.1",
     "np": "^7.5.0",
-    "prettier": "^2.3.2",
-    "webpack": "5.45.1",
-    "webpack-bundle-analyzer": "^4.4.2",
-    "webpack-cli": "^4.7.2",
-    "webpack-node-externals": "^3.0.0",
-    "webpack-obfuscator": "^3.3.2"
+    "prettier": "^2.3.2"
   },
   "publishConfig": {
     "access": "public"

@@ -35,69 +35,69 @@
 
     */
 
-const debug = require('debug')('interblock')
+const debug = require("debug")("interblock");
 if (!globalThis._interblockLibrary) {
-  const { version } = require('./package.json')
-  debug(`interblock version: ${version}`)
+  const { version } = require("../package.json");
+  debug(`interblock version: ${version}`);
 
   const {
     browserFactory,
     effectorFactory,
     awsFactory,
-  } = require('./w020-emulators')
-  const engine = require('./w017-standard-engine')
-  const apps = require('./w301-user-apps')
+  } = require("../w020-emulators");
+  const engine = require("../w017-standard-engine");
+  const apps = require("../w301-user-apps");
 
   const checkModules = () => {
-    const exp = {}
-    exp.ajv = require('ajv')
-    exp.ajvformats = require('ajv-formats')
-    exp.debug = require('debug')
-    exp.faker = require('faker')
-    exp.fastdeepequal = require('fast-deep-equal')
-    exp.fastjsonstablestringify = require('fast-json-stable-stringify')
-    exp.fastjsonstringify = require('fast-json-stringify')
-    exp.localforage = require('localforage')
-    exp.lodash = require('lodash')
-    exp.nodeobjecthash = require('node-object-hash')
-    exp.objecthash = require('object-hash')
-    exp.padleft = require('pad-left')
-    exp.seedrandom = require('seedrandom')
-    exp.serializeerror = require('serialize-error')
-    exp.sodiumplus = require('sodium-plus')
-    exp.uuid = require('uuid')
-    exp.xstate = require('xstate')
-    exp.jsonSchemaFaker = require('json-schema-faker')
-    debug('loaded')
+    const exp = {};
+    exp.ajv = require("ajv");
+    exp.ajvformats = require("ajv-formats");
+    exp.debug = require("debug");
+    exp.faker = require("faker");
+    exp.fastdeepequal = require("fast-deep-equal");
+    exp.fastjsonstablestringify = require("fast-json-stable-stringify");
+    exp.fastjsonstringify = require("fast-json-stringify");
+    exp.localforage = require("localforage");
+    exp.lodash = require("lodash");
+    exp.nodeobjecthash = require("node-object-hash");
+    exp.objecthash = require("object-hash");
+    exp.padleft = require("pad-left");
+    exp.seedrandom = require("seedrandom");
+    exp.serializeerror = require("serialize-error");
+    exp.sodiumplus = require("sodium-plus");
+    exp.uuid = require("uuid");
+    exp.xstate = require("xstate");
+    exp.jsonSchemaFaker = require("json-schema-faker");
+    debug("loaded");
 
-    const { SodiumPlus } = exp.sodiumplus
+    const { SodiumPlus } = exp.sodiumplus;
     const load = async () => {
-      const sodium = await SodiumPlus.auto()
-      debug(`libsodium backend: `, sodium.getBackendName())
-      let random = await sodium.randombytes_buf(32)
-      let hash = await sodium.crypto_generichash('hello world')
+      const sodium = await SodiumPlus.auto();
+      debug(`libsodium backend: `, sodium.getBackendName());
+      let random = await sodium.randombytes_buf(32);
+      let hash = await sodium.crypto_generichash("hello world");
       debug({
-        random: random.toString('hex'),
-        hash: hash.toString('hex'),
-      })
-      debug('crypto test complete')
-    }
-    load()
+        random: random.toString("hex"),
+        hash: hash.toString("hex"),
+      });
+      debug("crypto test complete");
+    };
+    load();
 
-    const assert = require('assert')
-    let thrown = false
+    const assert = require("assert");
+    let thrown = false;
     try {
-      assert()
+      assert();
     } catch (e) {
-      thrown = true
+      thrown = true;
     }
     if (!thrown) {
       throw new Error(
-        'Assert cannot throw - this is essential for library operation'
-      )
+        "Assert cannot throw - this is essential for library operation"
+      );
     }
-    return exp
-  }
+    return exp;
+  };
 
   globalThis._interblockLibrary = {
     browserFactory,
@@ -107,6 +107,8 @@ if (!globalThis._interblockLibrary) {
     apps,
     checkModules,
     version,
-  }
+  };
+} else {
+  debug(`duplicate load`);
 }
-module.exports = globalThis._interblockLibrary
+module.exports = globalThis._interblockLibrary;
