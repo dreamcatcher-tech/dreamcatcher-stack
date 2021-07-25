@@ -42,7 +42,6 @@ module.exports = {
   resolve: {
     fallback: {
       readline: require.resolve('readline-browserify'),
-      path: require.resolve('path-browserify'),
     },
   },
   optimization: {

@@ -1,6 +1,6 @@
 const debug = require('debug')('dos:eval')
 const Commands = require('./commands')
-const posix = require('path')
+const posix = require('path-browserify')
 
 module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
   debug(`command: `, cmd, cmdArgs)

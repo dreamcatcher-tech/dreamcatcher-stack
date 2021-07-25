@@ -2,7 +2,7 @@ const util = require('util')
 const debug = require('debug')('dos:commands:cat')
 const chalk = require('ansi-colors')
 const { prompt } = require('enquirer-browserify')
-const posix = require('path')
+const posix = require('path-browserify')
 
 module.exports = async ({ spinner, blockchain }, ...[path = '.', ...args]) => {
   // TODO specify slices into state

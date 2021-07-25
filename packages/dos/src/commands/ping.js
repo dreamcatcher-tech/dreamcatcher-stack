@@ -1,5 +1,5 @@
 const debug = require('debug')('dos:commands:ping')
-const posix = require('path')
+const posix = require('path-browserify')
 module.exports = async ({ spinner, blockchain }, path = '.', options) => {
   // TODO handle nested and remote paths
   // TODO make shell do wd resolution internally

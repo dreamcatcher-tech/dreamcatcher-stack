@@ -1,5 +1,5 @@
 const debug = require('debug')('dos:commands:ls')
-const posix = require('path')
+const posix = require('path-browserify')
 const cliuiModule = require('cliui')
 const chalk = require('ansi-colors')
 const cliui = cliuiModule.default || cliuiModule // issues loading in browser

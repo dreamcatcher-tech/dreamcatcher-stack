@@ -1,5 +1,5 @@
 const assert = require('assert')
-const posix = require('path')
+const posix = require('path-browserify')
 const debug = require('debug')('dos:commands:blocks')
 const { engine } = require('@dreamcatcher-tech/interblock')
 const { blockPrint } = engine
