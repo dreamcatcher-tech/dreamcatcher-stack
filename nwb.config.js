@@ -2,14 +2,19 @@ module.exports = {
   type: 'web-module',
   npm: {
     esModules: true,
-    umd: {
-      global: 'interblock',
-      externals: {},
-    },
+    cjs: true,
+    umd: false,
   },
-  webpack: {
-    extra: {
-      node: { fs: 'empty' },
+  babel: {
+    presets: [
+      [
+        'minify',
+        { builtIns: false, keepFnName: false, mangle: { topLevel: true } },
+      ],
+    ],
+    config: (config) => {
+      config.comments = false // strip comments out of minified code
+      return config
     },
   },
 }
