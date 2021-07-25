@@ -28,6 +28,7 @@
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@babel/runtime": "^7.14.8",
     "ajv": "^8.6.2",
     "ajv-formats": "^2.1.0",
     "ansi-colors": "^4.1.1",
