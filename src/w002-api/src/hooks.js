@@ -203,12 +203,12 @@ const awaitPending = async (pending) => {
     // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
     throw new Error(`Wrong type of promise - use "effectInBand(...)"`)
   }
+  let isPending = false
   if (!isStillPending) {
     if (typeof result !== 'object') {
       throw new Error(`Must resolve object from tick: ${result}`)
     }
     reduction = result
-    isPending = false
   } else {
     isPending = true
   }

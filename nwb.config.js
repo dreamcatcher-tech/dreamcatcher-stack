@@ -6,12 +6,12 @@ module.exports = {
     umd: false,
   },
   babel: {
-    presets: [
-      [
-        'minify',
-        { builtIns: false, keepFnName: false, mangle: { topLevel: true } },
-      ],
-    ],
+    // presets: [
+    //   [
+    //     'minify',
+    //     { builtIns: false, keepFnName: false, mangle: { topLevel: true } },
+    //   ],
+    // ],
     config: (config) => {
       config.comments = false // strip comments out of minified code
       return config

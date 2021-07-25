@@ -150,7 +150,7 @@ const createConfig = (isolation, consistency) => ({
           txChannel = channelProducer.txReply(txChannel, reply, index)
         })
 
-        network = { ...pierceDmz.network, '@@PIERCE_TARGET': txChannel }
+        const network = { ...pierceDmz.network, '@@PIERCE_TARGET': txChannel }
         pierceDmz = dmzModel.clone({ ...pierceDmz, network })
         return pierceDmz
       },

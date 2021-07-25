@@ -1,6 +1,5 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:xstate:translator')
-const _ = require('lodash')
 const equal = require('fast-deep-equal')
 const { State } = require('xstate')
 const {

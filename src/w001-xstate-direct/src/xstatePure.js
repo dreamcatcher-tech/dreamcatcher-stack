@@ -278,7 +278,7 @@ const pure = async (event, definition, config = {}) => {
       state = invokeResult.state
       event = invokeResult.event
     } else if (isParallel(state)) {
-      result = await parallel(state, event)
+      const result = await parallel(state, event)
       state = result.state
       event = result.event
     } else if (isParent(state)) {

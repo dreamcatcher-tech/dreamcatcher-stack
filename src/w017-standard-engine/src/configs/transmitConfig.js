@@ -147,7 +147,10 @@ const transmitConfig = (ioConsistency) => {
         const flat = _.flatten(socketsAll)
         const socketsSet = new Set(flat)
         debug(`fetchListeningSockets length: ${socketsSet.size}`)
-        const sockets = [...socketsSet]
+        const sockets = Array.from(socketsSet)
+        if (!sockets.every(socketModel.isModel)) {
+          debugger
+        }
         assert(sockets.every(socketModel.isModel))
         return { sockets }
       },

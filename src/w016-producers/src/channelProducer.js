@@ -11,6 +11,9 @@ const {
 const ingestInterblocks = (channel, interblocks) => {
   assert(channelModel.isModel(channel))
   assert(Array.isArray(interblocks))
+  if (!interblocks.every(interblockModel.isModel)) {
+    debugger
+  }
   assert(interblocks.every(interblockModel.isModel))
   interblocks = [...interblocks]
   interblocks.sort((a, b) => a.provenance.height - b.provenance.height)

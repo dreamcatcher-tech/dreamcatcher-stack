@@ -29,13 +29,13 @@ const ingestInterblocks = (network, interblocks = [], config) => {
   interblocks = _cloneArray(interblocks, interblockModel.clone) // TODO remove ?
   assert(configModel.isModel(config))
 
-  const perChain = displaceLightWithHeavy(interblocks)
+  const perChainMap = displaceLightWithHeavy(interblocks)
   const nextNetwork = {}
-  for (const address of perChain.keys()) {
+  for (const address of perChainMap.keys()) {
     const alias = network.getAlias(address)
     // TODO split handling opening public channel into seperate function call
     const isPublic = config.isPublicChannelOpen
-    const interblocks = [...perChain.get(address).values()]
+    const interblocks = Array.from(perChainMap.get(address).values())
     const firstInterblock = interblocks[0]
     if (!alias && isPublic && firstInterblock.isConnectionAttempt()) {
       debug(`connection attempt accepted`)
@@ -235,13 +235,13 @@ const removeBufferPromise = (network, request) => {
 }
 const displaceLightWithHeavy = (interblocks) => {
   // TODO remove this function when remotechains is implemented
-  const perChain = new Map()
+  const perChainMap = new Map()
   interblocks.forEach((interblock) => {
     const address = interblock.provenance.getAddress()
-    if (!perChain.get(address)) {
-      perChain.set(address, new Map())
+    if (!perChainMap.get(address)) {
+      perChainMap.set(address, new Map())
     }
-    const displaced = perChain.get(address)
+    const displaced = perChainMap.get(address)
     const height = interblock.provenance.height
     if (displaced.has(height)) {
       if (interblock.getOriginAlias()) {
@@ -251,7 +251,7 @@ const displaceLightWithHeavy = (interblocks) => {
       displaced.set(height, interblock)
     }
   })
-  return perChain
+  return perChainMap
 }
 module.exports = {
   ingestInterblocks,

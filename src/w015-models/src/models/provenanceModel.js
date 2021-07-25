@@ -1,5 +1,4 @@
 const assert = require('assert')
-const _ = require('lodash')
 const debug = require('debug')('interblock:models:provenance')
 const { standardize } = require('../modelUtils')
 const { integrityModel } = require('./integrityModel')
