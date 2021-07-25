@@ -8,7 +8,6 @@
   },
   "homepage": "",
   "files": [
-    "es",
     "lib"
   ],
   "main": "lib/index.js",
@@ -71,8 +70,7 @@
     "madge": "^5.0.1",
     "np": "^7.5.0",
     "nwb": "0.25.x",
-    "prettier": "^2.3.2",
-    "webpack-bundle-analyzer": "^4.4.2"
+    "prettier": "^2.3.2"
   },
   "publishConfig": {
     "access": "public"
