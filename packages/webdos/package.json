@@ -44,8 +44,8 @@
     "xterm-addon-unicode11": "^0.2.0"
   },
   "peerDependencies": {
-    "@dreamcatcher-tech/dos": ">=0.0.29",
-    "@dreamcatcher-tech/interblock": ">=0.0.96",
+    "@dreamcatcher-tech/dos": ">=0.0.34",
+    "@dreamcatcher-tech/interblock": ">=0.0.115",
     "react": "16.x"
   },
   "devDependencies": {

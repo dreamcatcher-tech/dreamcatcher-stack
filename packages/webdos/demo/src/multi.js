@@ -43,7 +43,18 @@ const installer = {
         },
       },
     },
-    services: { covenant: 'datum' },
+    sectors: {
+      covenant: 'collection',
+      state: {
+        datumTemplate: {
+          schema: {
+            title: 'Sector',
+            description: 'Geometry of a map region',
+            type: '',
+          },
+        },
+      },
+    },
     customers: {
       covenant: 'collection',
       state: {

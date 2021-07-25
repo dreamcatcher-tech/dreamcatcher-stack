@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigation } from '../hooks'
 
 const Router = ({ children }) => {
+  // TODO place the root context here, which all switch statements depend upon
   useNavigation()
   return children
 }

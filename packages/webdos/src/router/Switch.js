@@ -49,6 +49,8 @@ const Switch = ({ children }) => {
   debug(`cwd`, cwd)
   const segments = splitPathSegments(cwd)
 
+  // TODO switch needs to be aware of when it is nested
+
   const blocks = usePathBlockstream(cwd)
   debug(`blocks length`, blocks.length)
 

@@ -30,7 +30,7 @@ const Route = ({ path, covenant, component, children }) => {
   const { blocks, match, cwd } = context
   // path match is when some remains of (cwd - match) === path
   assert(posix.isAbsolute(match), `match not absolute: ${match} ${cwd}`)
-  assert(posix.isAbsolute(cwd), `match not absolute: ${match} ${cwd}`)
+  assert(posix.isAbsolute(cwd), `cwd not absolute: ${match} ${cwd}`)
   assert(Array.isArray(blocks))
 
   let matchedCovenant = false,

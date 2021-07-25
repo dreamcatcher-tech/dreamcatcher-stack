@@ -30,8 +30,10 @@ export const usePathBlockstream = (cwd) => {
   // TODO do not push new blocks until all blocks in path are resolved
   const { blockchain } = useBlockchain()
   const [blocks, setBlocks] = useState([])
+  const [fetchedCwd, setFetchedCwd] = useState()
   useEffect(() => {
     let isActive = true
+    setFetchedCwd(cwd)
     const segments = splitPathSegments(cwd)
     assert.strictEqual(segments[0], '/')
     debug(`segments: %o`, segments)
@@ -84,6 +86,8 @@ export const usePathBlockstream = (cwd) => {
       subscriptions.forEach(({ unsubscribe }) => unsubscribe())
     }
   }, [blockchain, cwd])
-
-  return blocks
+  if (fetchedCwd === cwd) {
+    return blocks
+  }
+  return []
 }

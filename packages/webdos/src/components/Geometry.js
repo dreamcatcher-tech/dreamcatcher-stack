@@ -1,6 +1,6 @@
 import React from 'react'
 import Debug from 'debug'
-
+import { useRouter } from '../hooks'
 const debug = Debug('terminal:widgets:Services')
 
 /**
@@ -10,8 +10,14 @@ const debug = Debug('terminal:widgets:Services')
  */
 
 const Geometry = () => {
-  // const { state } = block
-  // debug(`state`, state)
+  const { blocks, match, cwd } = useRouter()
+  const [block] = blocks
+  if (!block) {
+    return null
+  }
+  const { state } = block
+  debug(`state`, state)
+
   // const { title, description } = state.formData
   const title = 'Sites'
   const description = 'Geography of sites'

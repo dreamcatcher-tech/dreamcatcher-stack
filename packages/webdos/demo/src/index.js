@@ -22,7 +22,7 @@ import { crm } from './crm'
 import cov from './covenant'
 import multi from './multi'
 import timesheets from './timesheets'
-Debug.enable('*:widgets:* *Route ')
+Debug.enable('*:widgets:* *Route *Switch')
 
 const Map = () => {
   return (
@@ -36,11 +36,11 @@ const Timesheets = () => {
   return (
     <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
       <h4>Demo version: {version}</h4>
-      <Blockchain dev={timesheets}>
+      <Blockchain dev={multi}>
         <Terminal style={{ height: '280px', background: 'black' }} />
         <Router>
           <Switch>
-            <Route covenant="timesheets">
+            <Route covenant="multi">
               <AppContainer>
                 <Nav />
                 <MapBackground>
@@ -85,50 +85,19 @@ export default class Demo extends Component {
                   <MapBackground>
                     <Switch>
                       <Route path="/customers" component={<CollectionList />} />
-                      <Route path="/services" component={<Services />} />
+                      <Route path="/services" component={<Geometry />} />
                     </Switch>
                   </MapBackground>
-                  <Route path="/custNo-*" component={<Customer />} />
+                  <Route path="/custNo-*" component={<DialogDatum />} />
                 </AppContainer>
               </Route>
               <Route component={<Explorer />} />
             </Switch>
           </Router>
-          {/*
-          <Router>
-            <Switch>
-              <Route covenant="crm" component={<Nav />}>
-                <Route path="/schedules/" exact>
-                  <div>Schedules ?</div>
-                </Route>
-                <Route path="/customers">
-                  // should be auto detected based on covenant
-                  <CollectionList />
-                  <Route path="/:customer">
-                    <Customer />
-                  </Route>
-                </Route>
-                <Route path="*d *d /customerId-*">
-                  <Customer />
-                </Route>
-                <Route datum="Customer">
-                  <Customer />
-                </Route>
-                <Route covenant="customCovenant"></Route>
-                <Route path="/">
-                  // render a blockexplorer component for everything else
-                </Route>
-                <Route auto>
-                  display nested covenants using default display items for known
-                  covenants
-                </Route>
-              </Route>
-            </Switch>
-          </Router> */}
         </Blockchain>
       </div>
     )
   }
 }
 
-render(<Timesheets />, document.querySelector('#demo'))
+render(<Demo />, document.querySelector('#demo'))
