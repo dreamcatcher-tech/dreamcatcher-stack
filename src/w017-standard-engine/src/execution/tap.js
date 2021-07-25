@@ -43,7 +43,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     let forPath = getPath(interblock, cache)
     const remote = interblock.getRemote()
     if (remote) {
-      msg = msg //chalk.yellow('HEAVY')
+      // msg = chalk.yellow('HEAVY')
     }
     const formatted = interPrint(interblock, msg, forPath, 'bgYellow', 'yellow')
     return formatted

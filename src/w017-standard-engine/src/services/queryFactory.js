@@ -15,9 +15,10 @@ const queryFactory = (ioConsistency, block) => {
     }
     const { type, payload } = query
     switch (type) {
-      case '@@USE_BLOCKS':
+      case '@@USE_BLOCKS': {
         const { path, height, count } = payload
         return useBlocks(path, height, count)
+      }
       default:
         throw new Error(`Unknown query: ${type}`)
     }

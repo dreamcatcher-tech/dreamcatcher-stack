@@ -104,9 +104,10 @@ const interblockModel = standardize({
     }
     const isGenesisAttempt = () => {
       try {
-        return extractGenesis()
-      } catch (e) {}
-      return false
+        return !!extractGenesis()
+      } catch (e) {
+        return false
+      }
     }
     const isConnectionResponse = () => {
       // TODO handle covenant renaming incoming conneciton before first transmission

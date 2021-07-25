@@ -33,8 +33,10 @@ const getChannelParams = (network, alias) => {
   }
   if (heavy) {
     params.hash = heavy.provenance.reflectIntegrity().hash
-    remoteName = heavy.getOriginAlias()
-    remoteName && (params.remoteName = remoteName)
+    const remoteName = heavy.getOriginAlias()
+    if (remoteName) {
+      params.remoteName = remoteName
+    }
   }
   return params
 }

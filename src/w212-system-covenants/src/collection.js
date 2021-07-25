@@ -16,11 +16,13 @@ const {
 const reducer = async (state, action) => {
   const { type, payload } = action
   switch (type) {
-    case '@@INIT':
+    case '@@INIT': {
       debug('init')
-      const datumTemplate = convertToTemplate(state.datumTemplate || {})
+      const template = state.datumTemplate || {}
+      const datumTemplate = convertToTemplate(template)
       debug(`datumTemplate`, datumTemplate)
       return { ...state, datumTemplate }
+    }
     case 'ADD': {
       // can only contain formData keys, or be testData
       const { datumTemplate } = state

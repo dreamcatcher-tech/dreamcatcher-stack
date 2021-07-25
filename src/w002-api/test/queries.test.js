@@ -32,7 +32,7 @@ describe('queries', () => {
     let isThrown = false
     const reducer = async () => {
       try {
-        queryResult = await useBlocks()
+        await useBlocks()
       } catch (e) {
         isThrown = true
       }

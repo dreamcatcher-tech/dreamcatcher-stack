@@ -199,7 +199,7 @@ const getIndexSpan = (requests, replies) => {
   const rep = _getSortedIndices(replies)
   const merge = [...req, ...rep]
   const dedupe = new Set(merge)
-  const indices = [...dedupe]
+  const indices = Array.from(dedupe)
   indices.sort((a, b) => a - b)
   return indices
 }

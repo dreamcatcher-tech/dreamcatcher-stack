@@ -1,5 +1,4 @@
 const assert = require('assert')
-const {} = require('../src/services/consistencyFactory/lockFactory')
 const {
   lockFactory,
 } = require('../src/services/consistencyFactory/lockFactory')

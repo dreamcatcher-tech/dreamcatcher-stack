@@ -94,8 +94,7 @@ const tcpTransportFactory = (url) => {
     return new Promise((resolve) => {
       ws.send(`VERSION`)
       ws.on('message', (response) => {
-        assert.strictEqual(response.toString(), `PONG_LAMBDA ${data}`)
-        resolve(Date.now() - start)
+        debug(`version`)
       })
     })
   }

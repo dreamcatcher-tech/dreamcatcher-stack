@@ -21,7 +21,6 @@ const {
   translator,
 } = require('../../../w022-xstate-translator')
 const { listChildren } = require('../../../w021-dmz-reducer')
-
 const config = {
   actions: {
     respondOrigin: (context, event) => {
@@ -54,14 +53,15 @@ const config = {
       return result
     },
     login: async (context, event) => {
+      // TODO make this actually work
       debug(`login: %O`, event.payload)
       const { terminalChainId, credentials } = event.payload
       // TODO check terminal regex is a chainId
       const connectToTerminal = connect('terminal', terminalChainId)
-      await invoke(connectToTerminal)
+      await interchain(connectToTerminal)
 
       // TODO import from authenticator / terminal functions
-      const loginResult = await invoke('@@INTRO', credentials, 'terminal')
+      const loginResult = await interchain('@@INTRO', credentials, 'terminal')
       debug(`loginResult: %O`, loginResult)
       return { loginResult }
     },

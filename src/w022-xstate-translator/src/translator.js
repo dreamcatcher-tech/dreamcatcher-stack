@@ -85,7 +85,7 @@ const translator = (machine) => {
 
     const awaits = actions.map(async (xstateAction) => {
       switch (xstateAction.type) {
-        case 'xstate.start':
+        case 'xstate.start': {
           debug(`xstate.start`)
           const { activity } = xstateAction
           assert(activity && activity.type === 'xstate.invoke')
@@ -101,6 +101,7 @@ const translator = (machine) => {
           debug(`doneInvoke data`, data)
           interchain(type, data) // send to self
           break
+        }
         case 'xstate.stop': // end of invoke
           debug(`end of invoke`)
           break
@@ -115,8 +116,7 @@ const translator = (machine) => {
             }
           } else {
             debug(`standard action ? %O`, xstateAction)
-            const mapped = mapXstateToContinuation(xstateAction, originAction)
-            protocolActions.push(mapped)
+            // TODO process action somehow ?
           }
           break
       }
@@ -145,12 +145,10 @@ const mapXstateToContinuation = (xstateAction, originAction) => {
       // TODO break out the paths, send as specified
       debug(`send: %O`, xstateAction)
       throw new Error('not implemented')
-      return // TODO
     case '@@SEND_PARENT':
       // TODO handle parent being the alias
       debug(`sendParent: %O`, xstateAction)
       throw new Error('not implemented')
-      return // TODO
     case '@@RESPOND':
       // TODO use the origin action
       debug(`@@RESPOND to: `, originAction.type)

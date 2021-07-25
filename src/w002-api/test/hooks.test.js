@@ -3,14 +3,16 @@ const debug = require('debug')('interblock:tests:hooks')
 const { '@@GLOBAL_HOOK': hook, interchain, effect } = require('..')
 require('debug').enable()
 describe('hooks', () => {
-  const nested = (id, depth = 0) => async () => {
-    if (depth === 0) {
-      return { id }
-    } else {
-      interchain(`id: ${id} depth: ${depth}`)
-      return nested(id, depth - 1)()
+  const nested =
+    (id, depth = 0) =>
+    async () => {
+      if (depth === 0) {
+        return { id }
+      } else {
+        interchain(`id: ${id} depth: ${depth}`)
+        return nested(id, depth - 1)()
+      }
     }
-  }
 
   test('nested hooks awaited', async () => {
     const result = await hook(nested(57, 10))

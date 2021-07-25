@@ -11,9 +11,6 @@ const {
 const ingestInterblocks = (channel, interblocks) => {
   assert(channelModel.isModel(channel))
   assert(Array.isArray(interblocks))
-  if (!interblocks.every(interblockModel.isModel)) {
-    debugger
-  }
   assert(interblocks.every(interblockModel.isModel))
   interblocks = [...interblocks]
   interblocks.sort((a, b) => a.provenance.height - b.provenance.height)
@@ -149,10 +146,12 @@ const txReply = (channel, reply, replyIndex) => {
   const nextReplyIndex = channel.getNextReplyIndex()
   // TODO replies during promises needs to be deduplicated
   replyIndex = Number.isInteger(replyIndex) ? replyIndex : nextReplyIndex
+  assert(Number.isInteger(replyIndex), `replyIndex not a number`)
   const highestRequest = _.last(channel.getRemoteRequestIndices())
+  assert(Number.isInteger(highestRequest), `highestRequest not a number`)
   const isInbounds = replyIndex >= 0 && replyIndex <= highestRequest
   assert(isInbounds, `replyIndex out of bounds: ${replyIndex}`)
-  assert(channel.getRemote().requests[replyIndex])
+  assert(channel.getRemote().requests[replyIndex], `no remote requests`)
 
   let { replies } = channel
   const existingReply = replies[replyIndex]

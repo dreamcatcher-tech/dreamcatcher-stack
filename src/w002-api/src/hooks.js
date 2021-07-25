@@ -228,14 +228,14 @@ const hook = async (tick, accumulator = [], salt = '_', queries = q) => {
   accumulator = [...accumulator]
   // TODO might be faster rehook as soon as the first promise resolves
   pending = await execute(tick, accumulator, salt)
-  do {
-    const { isPending } = pending
+  const skimPending = (pending) => {
     replies.push(...pending.replies)
     requests.push(...pending.requests.filter((req) => !req.inBand))
     inbandPromises = pending.requests.filter((req) => req.inBand)
-    if (!inbandPromises.length) {
-      break
-    }
+  }
+  skimPending(pending)
+  while (inbandPromises.length) {
+    const { isPending } = pending
     assert(isPending, `inband promises must be awaited`)
     const results = await awaitInbandPromises(inbandPromises, queries)
 
@@ -247,7 +247,8 @@ const hook = async (tick, accumulator = [], salt = '_', queries = q) => {
       throw e
     }
     pending = await awaitPending(pending) // unhooks global
-  } while (true)
+    skimPending(pending)
+  }
   if (pending.isPending) {
     delete pending.reduction
   }

@@ -114,9 +114,8 @@ const config = {
     isExternalRequestBuffered: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(externalAction))
-      const isExternalRequestBuffered = dmz.pending.getIsBuffered(
-        externalAction
-      )
+      const isExternalRequestBuffered =
+        dmz.pending.getIsBuffered(externalAction)
       debug(`isExternalRequestBuffered`, isExternalRequestBuffered)
       return isExternalRequestBuffered
     },

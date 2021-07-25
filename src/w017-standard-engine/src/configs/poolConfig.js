@@ -106,6 +106,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
           debug(`assignAffectedAddresses`)
           const affected = event.data
           assert(Array.isArray(affected), `affected was not array`)
+          assert(Array.isArray(affectedAddresses), `not array`)
           return [...affected, ...affectedAddresses]
         },
       }),
@@ -129,11 +130,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
       isGenesis: ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
-        let isGenesis = false
-        try {
-          interblock.extractGenesis()
-          isGenesis = true
-        } catch (e) {}
+        const isGenesis = interblock.isGenesisAttempt()
         debug(`isGenesis: ${isGenesis}`)
         return isGenesis
       },

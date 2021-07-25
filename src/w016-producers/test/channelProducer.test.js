@@ -8,6 +8,7 @@ const {
   isReplyFor,
 } = require('../../w002-api')
 const {
+  stateModel,
   channelModel,
   provenanceModel,
   actionModel,
@@ -19,13 +20,8 @@ const {
   continuationModel,
 } = require('../../w015-models')
 const { channelProducer } = require('..')
-const {
-  setAddress,
-  txRequest,
-  txReply,
-  ingestInterblock,
-  shiftTxRequest,
-} = channelProducer
+const { setAddress, txRequest, txReply, ingestInterblock, shiftTxRequest } =
+  channelProducer
 require('../../w012-crypto').testMode()
 
 describe('channelProducer', () => {

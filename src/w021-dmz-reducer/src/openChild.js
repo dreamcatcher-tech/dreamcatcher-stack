@@ -52,7 +52,7 @@ const openChildReply = (network, reply) => {
   const { child, parent, fullPath } = reply.request.payload
   assert.strictEqual(typeof fullPath, 'string')
   switch (reply.type) {
-    case '@@RESOLVE':
+    case '@@RESOLVE': {
       const { chainId } = reply.payload
       debug(`reply received for @@OPEN_CHILD: %o`, chainId.substring(0, 9))
       // TODO move to using network and action sequence to discover fullPath
@@ -60,13 +60,15 @@ const openChildReply = (network, reply) => {
       debug(`connecting to: `, alias)
       interchain(connect(alias, chainId))
       break
-    case '@@REJECT':
+    }
+    case '@@REJECT': {
       debug(`reject child: %o parent: %o fullPath: %o`, child, parent, fullPath)
       const normalized = posix.normalize(fullPath)
       assert.strictEqual(normalized, fullPath)
       const channel = channelProducer.invalidate(network[fullPath])
       network = networkModel.clone({ ...network, [fullPath]: channel })
       break
+    }
     default:
       throw new Error(`Invalid action type: ${reply.type}`)
   }

@@ -20,6 +20,7 @@ const reducer = async (state, action) => {
       return state
     }
     case 'SET_INSTALL': {
+      debug(`SET_INSTALL`)
     }
   }
 }

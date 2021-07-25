@@ -5,6 +5,7 @@ const { provenanceModel } = require('./provenanceModel')
 const { keypairModel } = require('./keypairModel')
 const { dmzModel } = require('./dmzModel')
 const { integrityModel } = require('./integrityModel')
+const { publicKeyModel } = require('./publicKeyModel')
 const dmzSchema = dmzModel.schema
 
 const schema = {

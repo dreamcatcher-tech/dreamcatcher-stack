@@ -1,3 +1,4 @@
+const Buffer = require('buffer').Buffer
 const assert = require('assert')
 const debug = require('debug')('interblock:crypto:sodium')
 const {
@@ -74,7 +75,9 @@ const verifyKeyPair = async ({ publicKey, secretKey }) => {
     if (verified) {
       _verifiedSet.add(mapKey)
     }
-  } catch (e) {}
+  } catch (e) {
+    // key not found
+  }
   return _verifiedSet.has(mapKey)
 }
 

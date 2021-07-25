@@ -1,9 +1,9 @@
 /*
-Name:        Wishbone
+Name: Wishbone
 
-Acronym:     WBN
+Acronym: WBN
 
-Purpose:     To represent all knowledge as a single hash
+Purpose: To represent all knowledge as a single hash
 
 Description:
 

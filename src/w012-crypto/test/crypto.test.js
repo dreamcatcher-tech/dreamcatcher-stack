@@ -237,13 +237,13 @@ describe('crypto', () => {
     })
     test('long seed', () => {
       crypto.injectSeed('so many Qs: QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ')
-      nonce = crypto.generateNonce()
+      const nonce = crypto.generateNonce()
       assert.strictEqual(typeof nonce, 'string')
       assert.strictEqual(nonce.length, 32)
     })
     test('random seed', () => {
       crypto.injectSeed('')
-      nonce = crypto.generateNonce()
+      const nonce = crypto.generateNonce()
       assert.strictEqual(typeof nonce, 'string')
       assert.strictEqual(nonce.length, 36)
     })

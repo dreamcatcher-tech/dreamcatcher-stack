@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:dmz:uplink')
-const { replyResolve } = require('../../w002-api')
+const { replyResolve, replyReject } = require('../../w002-api')
 const {
   networkModel,
   addressModel,
@@ -35,13 +35,14 @@ const uplinkReducer = (network, action) => {
 const uplinkReply = (network, reply) => {
   const { originAction } = reply.getRequest().payload
   switch (reply.type) {
-    case '@@RESOLVE':
+    case '@@RESOLVE': {
       const { child } = originAction.payload
       debug('reply: ', child)
       const chainId = network[child].address.getChainId()
       const payload = { chainId }
       replyResolve(payload, originAction)
       break
+    }
     case '@@REJECT':
       debug('reject: ', reply)
       replyReject(reply.payload, originAction)

@@ -1,3 +1,4 @@
+const Buffer = require('buffer').Buffer
 const nodeObjectHash = require('node-object-hash')({ coerce: false })
 const browserHash = require('object-hash')
 const { v4 } = require('uuid')

@@ -87,7 +87,7 @@ describe('effector', () => {
   test('create child', async () => {
     const client = await effectorFactory()
     client.metro.enableLogging()
-    reply = await client.add('child1')
+    const reply = await client.add('child1')
     debug(`reply: `, reply)
     assert.strictEqual(reply.alias, 'child1')
     const {

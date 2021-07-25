@@ -23,7 +23,7 @@ const socketFactory = (gateway) => {
           const { chainId } = event.payload
           assert.strictEqual(typeof chainId, 'string')
           set.add(chainId)
-          chainIds = [...set]
+          chainIds = Array.from(set)
           debug(`chainIds length: %o`, chainIds)
           return chainIds
         },
@@ -35,7 +35,7 @@ const socketFactory = (gateway) => {
           const { chainId } = event.payload
           assert.strictEqual(typeof chainId, 'string')
           set.delete(chainId)
-          chainIds = [...set]
+          chainIds = Array.from(set)
           debug(`chainIds length: %o`, chainIds)
           return chainIds
         },

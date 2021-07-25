@@ -150,11 +150,11 @@ describe('standard model', () => {
   })
   test.skip('no circular references in models', async () => {
     const madge = require('madge')
-    const res = await madge(__dirname + '/../src/models', {
+    const res = await madge(globalThis.__dirname + '/../src/models', {
       excludeRegExp: [/\.\./],
     })
     const path = await res.image(
-      __dirname + '/../../website/static/img/models.svg'
+      globalThis.__dirname + '/../../website/static/img/models.svg'
     )
     console.log(`wrote image to: ${path}`)
   })

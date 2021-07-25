@@ -27,9 +27,12 @@ const deployReducer = async (dmz, action) => {
   const { children: topChildren = {} } = installer
   // TODO try make promises that work on a specific action, so can run in parallel
   for (const installPath in topChildren) {
-    let { children, covenant, state = {}, ...spawnOptions } = topChildren[
-      installPath
-    ]
+    let {
+      children,
+      covenant,
+      state = {},
+      ...spawnOptions
+    } = topChildren[installPath]
     covenant = covenant || 'unity'
     const covenantId = covenantIdModel.create(covenant)
     spawnOptions = { ...spawnOptions, covenantId, state }

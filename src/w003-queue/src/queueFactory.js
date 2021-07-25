@@ -5,9 +5,9 @@ const ioQueueFactory = (name, model) => {
   assert(name && typeof name === 'string')
   const debug = require('debug')('interblock:queue:' + name)
 
-  const _isActive = true
   const _requests = []
   const _awaiting = new Set()
+  let _isActive = true
   let _concurrency = Number.MAX_SAFE_INTEGER
   let _requestCount = 0
   let _processor

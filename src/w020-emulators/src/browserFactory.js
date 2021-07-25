@@ -8,8 +8,6 @@ const browserFactory = async (identifier) => {
   const effector = await effectorFactory('web')
   debug(`browser client ready`)
   return effector
-
-  ioConsistency.setProcessor(consistencyFactory(dynamoDb, s3, lockName))
 }
 
 module.exports = { browserFactory }

@@ -128,10 +128,8 @@ const removeProcessedPiercings = (block, { requests, replies }) => {
     return { requests, replies }
   }
   const ioChannel = block.network['.@@io']
-  const {
-    requests: remoteRequests,
-    replies: remoteReplies,
-  } = ioChannel.getRemote() // TODO handle replies
+  const { requests: remoteRequests, replies: remoteReplies } =
+    ioChannel.getRemote() // TODO handle replies
 
   const requestActions = Object.values(remoteRequests)
   const replyActions = Object.values(remoteReplies)
