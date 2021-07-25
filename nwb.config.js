@@ -2,7 +2,7 @@ module.exports = {
   type: 'web-module',
   npm: {
     cjs: true,
-    esModules: true,
+    esModules: false,
     umd: false,
   },
   babel: {

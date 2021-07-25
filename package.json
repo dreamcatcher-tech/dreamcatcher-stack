@@ -12,7 +12,6 @@
     "lib"
   ],
   "main": "lib/index.js",
-  "module": "es/index.js",
   "scripts": {
     "build": "nwb build-web-module",
     "clean": "nwb clean-module",
