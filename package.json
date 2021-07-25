@@ -9,8 +9,7 @@
   "homepage": "",
   "files": [
     "es",
-    "lib",
-    "umd"
+    "lib"
   ],
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -24,7 +23,7 @@
     "test:watch": "nwb test --server",
     "test:package": "yarn build && jest tests/package.test.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
-    "release": "np"
+    "release": "yarn build && np"
   },
   "private": false,
   "author": "Dreamcatcher Command",
