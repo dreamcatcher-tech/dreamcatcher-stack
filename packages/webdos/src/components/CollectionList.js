@@ -8,6 +8,8 @@ import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
 import equal from 'fast-deep-equal'
 
+const localProcess = process || {}
+
 const debug = Debug('terminal:widgets:CollectionList')
 const CollectionList = (props) => {
   const { children } = props // TODO verify this is a Collection
@@ -110,7 +112,7 @@ const CollectionList = (props) => {
     const command = `cd ${nextPath}\n`
     for (const c of command) {
       // TODO replace with NavLink
-      process.stdin.send(c)
+      localProcess.stdin.send(c)
     }
   }
   const hideMapBackgrond = {

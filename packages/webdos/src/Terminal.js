@@ -15,12 +15,13 @@ import commandLineShell from '@dreamcatcher-tech/dos'
 // import '../css/TorEmoji.woff2'
 
 const debug = debugFactory(`terminal:Terminal`)
+const localProcess = process || {}
 
 const getMockStdin = () => {
-  const previousStdin = process.stdin
+  const previousStdin = localProcess.stdin
   mockStdin()
-  const { stdin } = process
-  Object.defineProperty(process, 'stdin', {
+  const { stdin } = localProcess
+  Object.defineProperty(localProcess, 'stdin', {
     value: previousStdin,
     writable: true,
   })
@@ -169,9 +170,9 @@ const TerminalContainer = (props) => {
   useEffect(() => {
     if (blockchain && streams) {
       const { stdout, stdin, stderr } = streams
-      process.stdout = stdout // TODO wrap ora so it sees a fake process object
-      process.stdin = stdin
-      process.stderr = stderr
+      localProcess.stdout = stdout // TODO wrap ora so it sees a fake process object
+      localProcess.stdin = stdin
+      localProcess.stderr = stderr
 
       const emptyArgs = []
       const abortCmdPromise = commandLineShell(emptyArgs, {

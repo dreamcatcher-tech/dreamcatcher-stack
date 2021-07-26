@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useBlockchain } from './useBlockchain'
 import debugFactory from 'debug'
-
+const localProcess = process || {}
 const debug = debugFactory(`webdos:hooks:useNavigation`)
+
 export const useNavigation = () => {
   // TODO make urls drive the blockchain, as well as blockchain drive urls
   const { blockchain, context } = useBlockchain()
@@ -21,7 +22,7 @@ export const useNavigation = () => {
       // TODO store the current terminal contents, delete back to the prompt
       const command = `cd ${wd}\n`
       for (const c of command) {
-        process.stdin.send(c)
+        localProcess.stdin.send(c)
       }
       // TODO restore the existing terminal text
       setPopstate(wd)

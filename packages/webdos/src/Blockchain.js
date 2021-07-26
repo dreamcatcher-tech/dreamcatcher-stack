@@ -9,7 +9,7 @@ const debug = Debug('terminal:Blockchain')
 
 export const BlockchainContext = React.createContext()
 BlockchainContext.displayName = 'Blockchain'
-
+const localProcess = process || {}
 const Blockchain = ({ id = 'terminal', dev, children }) => {
   assert(typeof dev === 'object' || typeof dev === 'undefined')
   const [latest, setLatest] = useState()
@@ -48,7 +48,7 @@ const Blockchain = ({ id = 'terminal', dev, children }) => {
       for (const c of command) {
         // TODO fix console not in sync with terminal automatically
         // TODO make writeline command
-        process.stdin.send(c)
+        localProcess.stdin.send(c)
       }
     }
     setTimeout(() => isActive && setIsBooting(false), 100)

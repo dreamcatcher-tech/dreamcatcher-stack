@@ -4,6 +4,7 @@ import OpenDialog from './OpenDialog'
 import Form from '@rjsf/material-ui'
 import { useRouter, useBlockchain } from '../hooks'
 
+const localProcess = process || {}
 const debug = Debug('terminal:widgets:Settings')
 
 const Settings = () => {
@@ -29,7 +30,7 @@ const Settings = () => {
 
     const command = `./set --formData ${string}\n`
     for (const c of command) {
-      process.stdin.send(c)
+      localProcess.stdin.send(c)
     }
   }
   const onChange = ({ formData }) => {
