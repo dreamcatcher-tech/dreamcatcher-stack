@@ -1,6 +1,5 @@
 const debug = require('debug')('interblock:aws:ramS3')
 const assert = require('assert')
-const _ = require('lodash')
 
 const ramS3Factory = () => {
   const buckets = {

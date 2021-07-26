@@ -1,5 +1,5 @@
 const assert = require('assert')
-const _ = require('lodash')
+const random = require('lodash')
 const {
   request,
   promise,
@@ -183,9 +183,9 @@ describe('stress tests', () => {
     let on = false
     while (on) {
       // generate random numbers
-      const bufferedInterblocksCount = _.random(10)
+      const bufferedInterblocksCount = random(10)
       const interblocks = Array(bufferedInterblocksCount).map(() => {
-        const bufferedActionsCount = _.random(10)
+        const bufferedActionsCount = random(10)
         const interblock = transmitNext(bufferedActionsCount)
         return interblock
       })

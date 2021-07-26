@@ -30,7 +30,7 @@
 const assert = require('assert')
 const debugBase = require('debug')('ib:met')
 const posix = require('path-browserify')
-const _ = require('lodash')
+const last = require('lodash/last')
 const setImmediate = require('set-immediate-shim')
 const { standardEngineFactory } = require('./standardEngineFactory')
 const { isolateFactory } = require('./services/isolateFactory')
@@ -258,7 +258,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       const chain = dbChains[chainId] || {}
       let blockItem
       if (height === undefined) {
-        blockItem = _.last(Object.values(chain))
+        blockItem = last(Object.values(chain))
       } else {
         if (!chain[height]) {
           throw new Error(`out of bounds: ${height} ${chain.length}`)

@@ -1,5 +1,5 @@
 const assert = require('assert')
-const _ = require('lodash')
+const compact = require('lodash/compact')
 const {
   addressModel,
   integrityModel,
@@ -136,7 +136,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
       return interblock
     })
     const resolved = await Promise.all(interblockAwaits)
-    const interblocks = _.compact(resolved)
+    const interblocks = compact(resolved)
     // TODO remove light blocks from lock - will be superseded when modelchains is implemented
     debug(`interblocks fetched: ${interblocks.length}`)
     const block = await blockPromise
@@ -261,7 +261,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
       const isAnyAffected = await getIsAnyAffected(interblock)
       return isAnyAffected ? false : interblock
     })
-    const lightOrphans = _.compact(await Promise.all(lightAwaits))
+    const lightOrphans = compact(await Promise.all(lightAwaits))
     return [...lightOrphans, ...heavies]
   }
   const _purgePiercings = async (block, piercings) => {

@@ -1,7 +1,7 @@
 const assert = require('assert')
 const posix = require('path-browserify')
 const debug = require('debug')('interblock:producers:network')
-const _ = require('lodash')
+const without = require('lodash/without')
 const {
   channelModel,
   continuationModel,
@@ -71,7 +71,7 @@ const ingestInterblocks = (network, interblocks = [], config) => {
     let channel = nextNetwork[alias] || original
 
     const purgeableTips = original.lineageTip.slice(0, -1)
-    const lineageTip = _.without(channel.lineageTip, ...purgeableTips)
+    const lineageTip = without(channel.lineageTip, ...purgeableTips)
 
     // trim lineage to start with heavy, or lineageTip
     const heavyIndex = channel.lineage.findIndex((integrity) =>

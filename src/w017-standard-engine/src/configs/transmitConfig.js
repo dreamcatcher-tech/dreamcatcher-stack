@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:cfg:transmit')
-const _ = require('lodash')
+const flatten = require('lodash/flatten')
 const { assign } = require('xstate')
 const {
   interblockModel,
@@ -144,7 +144,7 @@ const transmitConfig = (ioConsistency) => {
           return socketsPromise
         })
         const socketsAll = await Promise.all(awaits)
-        const flat = _.flatten(socketsAll)
+        const flat = flatten(socketsAll)
         const socketsSet = new Set(flat)
         debug(`fetchListeningSockets length: ${socketsSet.size}`)
         const sockets = Array.from(socketsSet)

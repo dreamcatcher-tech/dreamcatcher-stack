@@ -1,6 +1,5 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:dmz')
-const _ = require('lodash')
 const { openChildReducer, openChildReply, openPaths } = require('./openChild')
 const { uplinkReducer, uplinkReply } = require('./uplink')
 const { connect, connectReducer } = require('./connect')

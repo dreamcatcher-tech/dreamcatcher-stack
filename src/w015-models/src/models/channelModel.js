@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:channel')
-const _ = require('lodash')
+const last = require('lodash/last')
 const { rxRequestModel, rxReplyModel } = require('../transients')
 const { standardize } = require('../modelUtils')
 const { addressModel } = require('./addressModel')
@@ -67,9 +67,9 @@ const channelModel = standardize({
       assert(lineageHeight >= heavyHeight)
     }
     if (lineageTip.length) {
-      const { provenance } = _.last(lineageTip)
+      const { provenance } = last(lineageTip)
       assert.strictEqual(provenance.height, lineageHeight)
-      assert(_.last(lineage).equals(provenance.reflectIntegrity()))
+      assert(last(lineage).equals(provenance.reflectIntegrity()))
     }
 
     assert(lineageTip.every((interblock) => !interblock.getRemote()))
@@ -211,7 +211,7 @@ const isTipPromise = (indicies, replies) => {
   if (!indicies.length) {
     return false
   }
-  const index = _.last(indicies)
+  const index = last(indicies)
   return replies[index].isPromise()
 }
 const isNewActions = (current, previous) => {
@@ -241,8 +241,8 @@ const isHigherThan = (current, previous) => {
   if (previous.length && !current.length) {
     return false
   }
-  const previousHighest = _.last(previous)
-  const currentHighest = _.last(current)
+  const previousHighest = last(previous)
+  const currentHighest = last(current)
   return currentHighest > previousHighest
 }
 module.exports = { channelModel }

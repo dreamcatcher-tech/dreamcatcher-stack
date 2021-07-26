@@ -58,7 +58,6 @@ if (!globalThis._interblockLibrary) {
     exp.fastjsonstablestringify = require('fast-json-stable-stringify')
     exp.fastjsonstringify = require('fast-json-stringify')
     exp.localforage = require('localforage')
-    exp.lodash = require('lodash')
     exp.nodeobjecthash = require('node-object-hash')
     exp.objecthash = require('object-hash')
     exp.padleft = require('pad-left')

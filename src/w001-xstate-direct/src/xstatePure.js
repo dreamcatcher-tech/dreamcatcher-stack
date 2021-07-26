@@ -1,5 +1,5 @@
 const assert = require('assert')
-const _ = require('lodash')
+const memoize = require('lodash/memoize')
 const debug = require('debug')('interblock:xstate:pure')
 const createContext = (initial) => {
   let context = initial || {}
@@ -333,6 +333,6 @@ const pure = async (event, definition, config = {}) => {
 
   return settleState(state, event)
 }
-const splitPathSpeedup = _.memoize((path) => path.split('.'))
+const splitPathSpeedup = memoize((path) => path.split('.'))
 
 module.exports = { pure }

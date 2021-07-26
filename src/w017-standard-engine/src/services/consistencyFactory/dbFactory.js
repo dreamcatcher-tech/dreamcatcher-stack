@@ -1,6 +1,5 @@
 const debug = require('debug')('interblock:consistency:db')
 const assert = require('assert')
-const _ = require('lodash')
 const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
 
 const dbFactory = (dynamodb = ramDynamoDbFactory()) => {

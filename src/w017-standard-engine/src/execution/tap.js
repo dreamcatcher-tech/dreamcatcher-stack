@@ -1,5 +1,5 @@
 const assert = require('assert')
-const _ = require('lodash')
+const last = require('lodash/last')
 // const chalk = require('ansi-colors')
 const {
   blockPrint,
@@ -93,7 +93,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
   }
 
   const getPath = (block, cache) => {
-    block = _.last(cache[block.provenance.getAddress().getChainId()])
+    block = last(cache[block.provenance.getAddress().getChainId()])
     const unknown = '(unknown)'
     if (!block) {
       return unknown
@@ -112,7 +112,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
         child = undefined
       } else {
         const parentChainId = address.getChainId()
-        const parent = _.last(cache[parentChainId])
+        const parent = last(cache[parentChainId])
         assert(blockModel.isModel(parent), `Hole in pedigree`)
         const name = parent.network.getAlias(child.provenance.getAddress())
         path.unshift(name)
@@ -133,7 +133,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     // TODO deal with a absolute path alias being provided
     let latest
     Object.values(cache).some((chainArray) => {
-      const block = _.last(chainArray)
+      const block = last(chainArray)
       const parentChannel = block.network['..']
       if (parentChannel.address.isRoot() && alias === '/') {
         assert(!latest)

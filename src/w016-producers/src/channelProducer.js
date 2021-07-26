@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:producers:channel')
-const _ = require('lodash')
+const last = require('lodash/last')
 const {
   addressModel,
   channelModel,
@@ -57,14 +57,14 @@ const ingestInterblockRaw = (channel, interblock) => {
       debug(`ingested heavy: ${provenance.height}`)
     }
   }
-  const last = _.last(channel.lineageTip)
-  if (!last) {
+  const lastLineage = last(channel.lineageTip)
+  if (!lastLineage) {
     if (provenance.address.isGenesis()) {
       debug(`ingesting genesis`)
       pushLight()
       pushHeavy()
     }
-  } else if (last.provenance.isNext(provenance)) {
+  } else if (lastLineage.provenance.isNext(provenance)) {
     pushLight()
   }
   if (remote && heavy) {
@@ -147,7 +147,7 @@ const txReply = (channel, reply, replyIndex) => {
   // TODO replies during promises needs to be deduplicated
   replyIndex = Number.isInteger(replyIndex) ? replyIndex : nextReplyIndex
   assert(Number.isInteger(replyIndex), `replyIndex not a number`)
-  const highestRequest = _.last(channel.getRemoteRequestIndices())
+  const highestRequest = last(channel.getRemoteRequestIndices())
   assert(Number.isInteger(highestRequest), `highestRequest not a number`)
   const isInbounds = replyIndex >= 0 && replyIndex <= highestRequest
   assert(isInbounds, `replyIndex out of bounds: ${replyIndex}`)

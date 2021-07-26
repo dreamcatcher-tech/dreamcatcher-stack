@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:utils')
-const _ = require('lodash')
+const memoize = require('lodash/memoize')
 const stringify = require('fast-json-stable-stringify')
 const { modelInflator, precompileSchema } = require('./modelInflator')
 const { registry } = require('./registry')
@@ -183,7 +183,7 @@ const _pickRemoteRaw = (instance) => {
   const remote = remoteModel.clone(remotePick)
   return remote
 }
-const _pickRemote = _.memoize(_pickRemoteRaw)
+const _pickRemote = memoize(_pickRemoteRaw)
 const _pick = (obj, keys) => {
   // much faster than lodash pick
   const blank = {}
@@ -267,7 +267,7 @@ const checkStructure = (model) => {
   }
 }
 const memoizeCreate = (model) => {
-  const memoized = _.memoize(model.create)
+  const memoized = memoize(model.create)
   return (...args) => {
     if (!args.length) {
       return memoized(...args)

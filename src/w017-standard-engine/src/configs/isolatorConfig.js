@@ -1,5 +1,5 @@
 const assert = require('assert')
-const _ = require('lodash')
+const memoize = require('lodash/memoize')
 const debug = require('debug')('interblock:cfg:isolator')
 const { assign } = require('xstate')
 const { pure } = require('../../../w001-xstate-direct')
@@ -362,7 +362,7 @@ const _extractPierceDmzRaw = (block) => {
   const network = { ...baseDmz.network, '@@PIERCE_TARGET': pierceChannel }
   return dmzModel.clone({ ...baseDmz, network })
 }
-const _extractPierceDmz = _.memoize(_extractPierceDmzRaw)
+const _extractPierceDmz = memoize(_extractPierceDmzRaw)
 const _getPierceProvenance = (block) => {
   const ioChannel = block.network['.@@io']
   if (!ioChannel) {
