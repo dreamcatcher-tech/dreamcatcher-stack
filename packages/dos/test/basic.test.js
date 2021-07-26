@@ -1,3 +1,4 @@
+const process = require('process')
 describe.skip('basic', () => {
   test('ls', async () => {
     // NOT WORKING

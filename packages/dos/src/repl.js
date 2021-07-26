@@ -1,3 +1,4 @@
+const process = require('process')
 const debug = require('debug')('dos:repl')
 const ora = require('ora')
 const {

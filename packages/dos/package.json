@@ -38,6 +38,7 @@
     "pad-left": "^2.1.0",
     "path-browserify": "^1.0.1",
     "pretty-ms": "^7.0.1",
+    "process": "^0.11.10",
     "pull-stream": "^3.6.9",
     "random-hash": "^4.0.1",
     "readline-browserify": "^0.0.4",
@@ -75,6 +76,6 @@
     "singleQuote": true
   },
   "peerDependencies": {
-    "@dreamcatcher-tech/interblock": "^0.0.91"
+    "@dreamcatcher-tech/interblock": "^0.0.115"
   }
 }

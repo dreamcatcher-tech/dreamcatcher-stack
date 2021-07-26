@@ -1,3 +1,4 @@
+const process = require('process')
 const debug = require('debug')('dos')
 const repl = require('./repl')
 const { evaluate } = require('./eval')
