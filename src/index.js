@@ -56,7 +56,6 @@ if (!globalThis._interblockLibrary) {
     exp.faker = require('faker/locale/en')
     exp.fastdeepequal = require('fast-deep-equal')
     exp.fastjsonstablestringify = require('fast-json-stable-stringify')
-    exp.fastjsonstringify = require('fast-json-stringify')
     exp.localforage = require('localforage')
     exp.nodeobjecthash = require('node-object-hash')
     exp.objecthash = require('object-hash')
