@@ -3,7 +3,6 @@ const BundleAnalyzerPlugin =
 const path = require('path')
 const nodeExternals = require('webpack-node-externals')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const externals = nodeExternals({ modulesFromFile: true, allowlist: ['ora'] })
 
 /**
  * Ora uses the readline module, which is unavailable in the browser.
@@ -20,6 +19,10 @@ const externals = nodeExternals({ modulesFromFile: true, allowlist: ['ora'] })
  * name is identical.
  */
 
+const externals = nodeExternals({
+  modulesFromFile: true,
+  allowlist: ['ora', 'util'],
+})
 module.exports = {
   entry: './src/index.js',
   output: {
