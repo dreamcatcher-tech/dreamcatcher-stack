@@ -1,7 +1,7 @@
 const assert = require('assert')
 const posix = require('path-browserify')
 const debug = require('debug')('interblock:producers:network')
-const without = require('lodash/without')
+const without = require('lodash.without')
 const {
   channelModel,
   continuationModel,

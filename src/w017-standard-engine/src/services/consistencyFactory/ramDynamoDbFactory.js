@@ -1,6 +1,5 @@
 const debug = require('debug')('interblock:aws:ramDynamoDb')
 const assert = require('assert')
-const _ = require('lodash')
 const setImmediate = require('set-immediate-shim')
 
 const ramDynamoDbFactory = () => {

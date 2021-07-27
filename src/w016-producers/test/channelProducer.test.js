@@ -1,5 +1,5 @@
 const assert = require('assert')
-const random = require('lodash')
+const random = require('lodash.random')
 const {
   request,
   promise,

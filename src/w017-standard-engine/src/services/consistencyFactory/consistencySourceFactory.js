@@ -1,5 +1,5 @@
 const assert = require('assert')
-const compact = require('lodash/compact')
+const compact = require('lodash.compact')
 const {
   addressModel,
   integrityModel,

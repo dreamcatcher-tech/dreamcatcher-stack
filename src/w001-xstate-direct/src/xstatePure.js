@@ -1,5 +1,5 @@
 const assert = require('assert')
-const memoize = require('lodash/memoize')
+const memoize = require('lodash.memoize')
 const debug = require('debug')('interblock:xstate:pure')
 const createContext = (initial) => {
   let context = initial || {}

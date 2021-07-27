@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:utils')
-const memoize = require('lodash/memoize')
+const memoize = require('lodash.memoize')
 const stringify = require('fast-json-stable-stringify')
 const { modelInflator, precompileSchema } = require('./modelInflator')
 const { registry } = require('./registry')

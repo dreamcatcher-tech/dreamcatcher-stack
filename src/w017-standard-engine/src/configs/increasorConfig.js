@@ -1,6 +1,5 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:cfg:increasor')
-const _ = require('lodash')
 const { assign } = require('xstate')
 const {
   channelModel,

@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:network')
-const _ = require('lodash')
+const last = require('lodash.last')
 const { standardize } = require('../modelUtils')
 const { channelModel } = require('./channelModel')
 const { addressModel } = require('./addressModel')
@@ -109,7 +109,7 @@ const networkModel = standardize({
         lineageIncludes = true
       }
       if (provenance.height === channel.lineageHeight) {
-        const isTip = provenance.equals(_.last(channel.lineageTip).provenance)
+        const isTip = provenance.equals(last(channel.lineageTip).provenance)
         assert(isTip)
       }
       const remote = interblock.getRemote()

@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:cfg:transmit')
-const flatten = require('lodash/flatten')
+const flatten = require('lodash.flatten')
 const { assign } = require('xstate')
 const {
   interblockModel,

@@ -1,6 +1,5 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:consistency:s3')
-const _ = require('lodash')
 const {
   cryptoCacher,
   blockModel,

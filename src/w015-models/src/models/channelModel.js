@@ -1,6 +1,6 @@
 const assert = require('assert')
 const debug = require('debug')('interblock:models:channel')
-const last = require('lodash/last')
+const last = require('lodash.last')
 const { rxRequestModel, rxReplyModel } = require('../transients')
 const { standardize } = require('../modelUtils')
 const { addressModel } = require('./addressModel')
