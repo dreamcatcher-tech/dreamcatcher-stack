@@ -5,7 +5,6 @@ module.exports = async (ctx, ...args) => {
     `
 `
   )
-  require('better-opn')('https://aws.amazon.com/cognito/')
   return timeout(2000)
 }
 

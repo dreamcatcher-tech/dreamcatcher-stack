@@ -1,7 +1,6 @@
 const debug = require('debug')('dos:commands:help')
 const cliui = require('cliui')
 const commands = require('.')
-const dedent = require('dedent')
 
 const strip = (str) => str.replace(/\n|\r|\r\n/g, ' ').trim()
 

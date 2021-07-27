@@ -34,7 +34,6 @@ module.exports = {
   target: 'web',
   externals,
   mode: 'production',
-  devtool: 'source-map', // TODO make sourcemap so can debug
   plugins: [
     //   new BundleAnalyzerPlugin(),
     new CleanWebpackPlugin(),
