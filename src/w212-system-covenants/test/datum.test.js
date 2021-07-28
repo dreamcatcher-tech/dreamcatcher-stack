@@ -22,7 +22,7 @@ const address = {
     },
   },
 }
-describe('datum helper functions', () => {
+describe.skip('datum helper functions', () => {
   describe('convertToTemplate', () => {
     const action = {
       type: 'FAKE',
@@ -49,7 +49,7 @@ describe('datum helper functions', () => {
   describe('demuxFormData', () => {})
 })
 
-describe('datum', () => {
+describe.skip('datum', () => {
   test('simple datum with test data', async () => {
     const root = await effectorFactory('datum')
     await root.add('datum1', 'datum')

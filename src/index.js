@@ -53,11 +53,9 @@ if (!globalThis._interblockLibrary) {
     exp.ajv = require('ajv')
     exp.ajvformats = require('ajv-formats')
     exp.debug = require('debug')
-    exp.faker = require('faker/locale/en')
     exp.fastdeepequal = require('fast-deep-equal')
     exp.fastjsonstablestringify = require('fast-json-stable-stringify')
     exp.localforage = require('localforage')
-    exp.nodeobjecthash = require('node-object-hash')
     exp.objecthash = require('object-hash')
     exp.padleft = require('pad-left')
     exp.seedrandom = require('seedrandom')
@@ -65,7 +63,6 @@ if (!globalThis._interblockLibrary) {
     exp.sodiumplus = require('sodium-plus')
     exp.uuid = require('uuid')
     exp.xstate = require('xstate')
-    exp.jsonSchemaFaker = require('json-schema-faker')
     debug('loaded')
 
     const { SodiumPlus } = exp.sodiumplus

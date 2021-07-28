@@ -1,5 +1,5 @@
 const assert = require('assert')
-const faker = require('faker/locale/en')
+// const faker = require('faker/locale/en')
 const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
 require('ajv-formats')(ajv)
@@ -9,16 +9,16 @@ const { covenantIdModel } = require('../../w015-models')
 const { interchain, useBlocks } = require('../../w002-api')
 const seedrandom = require('seedrandom')
 ajv.addKeyword('faker')
-const jsf = require('json-schema-faker')
-const isBrowserBundle = !jsf.extend
-if (isBrowserBundle) {
-  Object.assign(jsf, {
-    extend: () => true,
-    option: () => true,
-    generate: () => ({}),
-  })
-}
-jsf.extend('faker', () => faker)
+// const jsf = require('json-schema-faker')
+// const isBrowserBundle = !jsf.extend
+// if (isBrowserBundle) {
+//   Object.assign(jsf, {
+//     extend: () => true,
+//     option: () => true,
+//     generate: () => ({}),
+//   })
+// }
+// jsf.extend('faker', () => faker)
 /**
  * Requirements:
  *  1.  boot with state already set, and this gets checked for validity immediately
@@ -137,8 +137,8 @@ const demuxFormData = (template, action) => {
     const hash = action.getHash()
     const seed = parseInt(Number('0x' + hash.substring(0, 14)))
     debug(`seed: `, seed)
-    jsf.option({ random: seedrandom(seed), alwaysFakeOptionals: true })
-    faker.seed(seed)
+    // jsf.option({ random: seedrandom(seed), alwaysFakeOptionals: true })
+    // faker.seed(seed)
   }
   validateDatumTemplate(template)
 
@@ -182,7 +182,7 @@ const _validateFormData = (template, payload) => {
 const _generateFakeData = (template, payload = {}) => {
   // TODO existing data overrides fake, provided data overrides existing
   const { formData = {}, children: payloadChildren = {} } = payload
-  const fake = jsf.generate(template.schema)
+  const fake = {} // jsf.generate(template.schema)
   const inflated = { ...fake, ...formData }
   debug(`fake: `, inflated)
   const result = { ...payload, formData: inflated }

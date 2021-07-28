@@ -4,7 +4,7 @@ const debug = require('debug')('crm:tests:collection')
 
 require('debug').enable()
 
-describe('collection', () => {
+describe.skip('collection', () => {
   test('add with test data', async () => {
     const schema = {
       title: 'Customer',
