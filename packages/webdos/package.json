@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "@fontsource/roboto-mono": "^4.5.0",
-    "@material-ui/core": "^4.12.1",
+    "@material-ui/core": "^4.12.2",
     "@material-ui/icons": "^4.11.2",
-    "@material-ui/x-grid": "^4.0.0-alpha.33",
+    "@material-ui/x-grid": "^4.0.0-alpha.34",
     "@rjsf/core": "^3.0.0",
     "@rjsf/material-ui": "^3.0.0",
     "assert": "^2.0.0",
