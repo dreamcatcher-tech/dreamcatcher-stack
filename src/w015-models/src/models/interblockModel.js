@@ -1,15 +1,13 @@
 import assert from 'assert'
+import { standardize } from '../modelUtils'
+import { continuationModel } from './continuationModel'
+import { blockModel } from './blockModel'
+import { channelModel } from './channelModel'
+import { remoteModel } from './remoteModel'
+import { interblockSchema } from '../schemas/modelSchemas'
+import { proofModel } from './proofModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:interblock')
-const { standardize } = require('../modelUtils')
-const { provenanceModel } = require('./provenanceModel')
-const { integrityModel } = require('./integrityModel')
-const { continuationModel } = require('./continuationModel')
-const { blockModel } = require('./blockModel')
-const { channelModel } = require('./channelModel')
-const { remoteModel } = require('./remoteModel')
-const { interblockSchema } = require('../schemas/modelSchemas')
-const { proofModel } = require('./proofModel')
 
 const interblockModel = standardize({
   schema: interblockSchema,
@@ -188,4 +186,4 @@ const assertParams = (block, targetAlias) => {
   }
 }
 
-module.exports = { interblockModel }
+export { interblockModel }

@@ -1,15 +1,15 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { covenantIdModel } = require('./covenantIdModel')
-const { timestampModel } = require('./timestampModel')
-const { keypairModel } = require('./keypairModel')
-const { aclModel } = require('./aclModel')
-const { binaryModel } = require('./binaryModel')
-const { networkModel } = require('./networkModel')
-const { stateModel } = require('./stateModel')
-const { configModel } = require('./configModel')
-const { validatorsModel } = require('./validatorsModel')
-const { pendingModel } = require('./pendingModel')
+import { standardize } from '../modelUtils'
+import { covenantIdModel } from './covenantIdModel'
+import { timestampModel } from './timestampModel'
+import { keypairModel } from './keypairModel'
+import { aclModel } from './aclModel'
+import { binaryModel } from './binaryModel'
+import { networkModel } from './networkModel'
+import { stateModel } from './stateModel'
+import { configModel } from './configModel'
+import { validatorsModel } from './validatorsModel'
+import { pendingModel } from './pendingModel'
 
 const schema = {
   type: 'object',
@@ -86,4 +86,4 @@ const dmzModel = standardize({
   },
 })
 
-module.exports = { dmzModel }
+export { dmzModel }

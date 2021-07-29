@@ -1,15 +1,15 @@
 import assert from 'assert'
+import last from 'lodash.last'
+import { rxRequestModel, rxReplyModel } from '../transients'
+import { standardize } from '../modelUtils'
+import { addressModel } from './addressModel'
+import { actionModel } from './actionModel'
+import { continuationModel } from './continuationModel'
+import { remoteModel } from './remoteModel'
+import { channelSchema } from '../schemas/modelSchemas'
+import { reject } from '../../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:models:channel')
-const last = require('lodash.last')
-const { rxRequestModel, rxReplyModel } = require('../transients')
-const { standardize } = require('../modelUtils')
-const { addressModel } = require('./addressModel')
-const { actionModel } = require('./actionModel')
-const { continuationModel } = require('./continuationModel')
-const { remoteModel } = require('./remoteModel')
-const { channelSchema } = require('../schemas/modelSchemas')
-const { reject } = require('../../../w002-api')
 
 const channelModel = standardize({
   schema: channelSchema,
@@ -246,4 +246,4 @@ const isHigherThan = (current, previous) => {
   const currentHighest = last(current)
   return currentHighest > previousHighest
 }
-module.exports = { channelModel }
+export { channelModel }

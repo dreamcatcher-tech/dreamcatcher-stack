@@ -1,13 +1,13 @@
 import assert from 'assert'
+import { v4 as uuidCreator } from 'uuid'
+import { standardize } from '../modelUtils'
+import { timestampModel } from './timestampModel'
+import { blockModel } from './blockModel'
+import { interblockModel } from './interblockModel'
+import { txReplyModel } from '../transients/txReplyModel'
+import { txRequestModel } from '../transients/txRequestModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:lock')
-const { v4: uuidCreator } = require('uuid')
-const { standardize } = require('../modelUtils')
-const { timestampModel } = require('./timestampModel')
-const { blockModel } = require('./blockModel')
-const { interblockModel } = require('./interblockModel')
-const { txReplyModel } = require('../transients/txReplyModel')
-const { txRequestModel } = require('../transients/txRequestModel')
 
 const schema = {
   title: 'Lock',
@@ -170,6 +170,4 @@ const sort = (items) => {
   })
 }
 
-module.exports = {
-  lockModel,
-}
+export { lockModel }

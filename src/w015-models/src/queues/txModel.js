@@ -1,7 +1,7 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { interblockModel } = require('../models/interblockModel')
-const { socketModel } = require('./socketModel')
+import { standardize } from '../modelUtils'
+import { interblockModel } from '../models/interblockModel'
+import { socketModel } from './socketModel'
 
 const txModel = standardize({
   schema: {
@@ -25,4 +25,4 @@ const txModel = standardize({
   },
 })
 
-module.exports = { txModel }
+export { txModel }

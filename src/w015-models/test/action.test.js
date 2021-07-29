@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { actionModel } = require('..')
+import { actionModel } from '..'
 
 describe('acl', () => {
   test('throws on blank creation', () => assert.throws(actionModel.create))

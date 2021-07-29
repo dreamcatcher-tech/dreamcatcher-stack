@@ -1,9 +1,9 @@
 import assert from 'assert'
+import * as crypto from '../../../w012-crypto'
+import { standardize } from '../modelUtils'
+import { integritySchema } from '../schemas/modelSchemas'
 import Debug from 'debug'
 const debug = Debug('interblock:models:integrity')
-const crypto = require('../../../w012-crypto')
-const { standardize } = require('../modelUtils')
-const { integritySchema } = require('../schemas/modelSchemas')
 
 const integrityModel = standardize({
   schema: integritySchema,
@@ -40,4 +40,4 @@ const integrityModel = standardize({
     return { isUnknown, isIntegrityMatch }
   },
 })
-module.exports = { integrityModel }
+export { integrityModel }

@@ -70,7 +70,7 @@ Create requires the sequence to be included.
   },
 }
 
-module.exports = {
+export {
   txRequestSchema,
   rxRequestSchema,
   txReplySchema,

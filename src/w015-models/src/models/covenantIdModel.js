@@ -1,5 +1,5 @@
-const { standardize } = require('../modelUtils')
-const { integrityModel } = require('./integrityModel')
+import { standardize } from '../modelUtils'
+import { integrityModel } from './integrityModel'
 
 const covenantIdModel = standardize({
   schema: {
@@ -49,18 +49,8 @@ may be supplied`,
     return covenantIdModel.clone({ name, version, integrity, language })
   },
   logicize(instance) {
-    return {
-      isSystemCovenant: () => isSystemCovenant(instance.name),
-    }
+    return {}
   },
 })
 
-const isSystemCovenant = (name) => {
-  if (typeof name !== 'string') {
-    return false
-  }
-  const system = require('../../../w212-system-covenants')
-  return !!system[name]
-}
-
-module.exports = { covenantIdModel }
+export { covenantIdModel }

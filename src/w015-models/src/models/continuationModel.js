@@ -1,6 +1,6 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { continuationSchema } = require('../schemas/modelSchemas')
+import { standardize } from '../modelUtils'
+import { continuationSchema } from '../schemas/modelSchemas'
 
 const continuationModel = standardize({
   schema: continuationSchema,
@@ -24,4 +24,4 @@ const continuationModel = standardize({
   },
 })
 
-module.exports = { continuationModel }
+export { continuationModel }

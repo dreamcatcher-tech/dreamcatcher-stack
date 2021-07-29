@@ -1,5 +1,5 @@
-const { standardize } = require('../modelUtils')
-const { publicKeySchema } = require('../schemas/modelSchemas')
+import { standardize } from '../modelUtils'
+import { publicKeySchema } from '../schemas/modelSchemas'
 
 const publicKeyModel = standardize({
   schema: publicKeySchema,
@@ -13,4 +13,4 @@ const publicKeyModel = standardize({
   },
 })
 
-module.exports = { publicKeyModel }
+export { publicKeyModel }

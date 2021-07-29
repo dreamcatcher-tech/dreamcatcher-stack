@@ -1,6 +1,6 @@
 import assert from 'assert'
-const { v4: uuid } = require('uuid')
-const { standardize } = require('../modelUtils')
+import { v4 as uuid } from 'uuid'
+import { standardize } from '../modelUtils'
 
 const selfSocket = {
   id: 'fd9e9077-cda5-4b1d-afbf-c8a7cf648ded',
@@ -33,4 +33,4 @@ const socketModel = standardize({
   },
 })
 
-module.exports = { socketModel }
+export { socketModel }

@@ -1,14 +1,14 @@
 import assert from 'assert'
+import last from 'lodash.last'
+import { standardize } from '../modelUtils'
+import { channelModel } from './channelModel'
+import { addressModel } from './addressModel'
+import { provenanceModel } from './provenanceModel'
+import { rxRequestModel } from '../transients/rxRequestModel'
+import { rxReplyModel } from '../transients/rxReplyModel'
+import { reject } from '../../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:models:network')
-const last = require('lodash.last')
-const { standardize } = require('../modelUtils')
-const { channelModel } = require('./channelModel')
-const { addressModel } = require('./addressModel')
-const { provenanceModel } = require('./provenanceModel')
-const { rxRequestModel } = require('../transients/rxRequestModel')
-const { rxReplyModel } = require('../transients/rxReplyModel')
-const { reject } = require('../../../w002-api')
 
 const schema = {
   title: 'Network',
@@ -176,4 +176,4 @@ const networkModel = standardize({
   },
 })
 
-module.exports = { networkModel }
+export { networkModel }

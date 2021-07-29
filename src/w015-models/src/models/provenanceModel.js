@@ -1,26 +1,13 @@
 import assert from 'assert'
+import { standardize } from '../modelUtils'
+import { integrityModel } from './integrityModel'
+import { addressModel } from './addressModel'
+import { provenanceSchema } from '../schemas/modelSchemas'
+import { ciSigner } from '../ciSigners' // TODO do not import from outside of folder
+import { registry } from '../registry'
 import Debug from 'debug'
 const debug = Debug('interblock:models:provenance')
-const { standardize } = require('../modelUtils')
-const { integrityModel } = require('./integrityModel')
-const { keypairModel } = require('./keypairModel')
-const { addressModel } = require('./addressModel')
-const { provenanceSchema } = require('../schemas/modelSchemas')
-const crypto = require('../../../w012-crypto')
-const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair) // if they can inject blocks into our ram, we are already pwnt.
-const ciKeypair = keypairModel.create('CI', crypto.ciKeypair)
 
-let dmzModel // avoid circular reference
-
-const ciSigner = (integrity) => {
-  assert(integrityModel.isModel(integrity))
-  return ciKeypair.sign(integrity)
-}
-
-const pierceSigner = (integrity) => {
-  assert(integrityModel.isModel(integrity))
-  return pierceKeypair.sign(integrity)
-}
 const provenanceModel = standardize({
   schema: provenanceSchema,
   async create(
@@ -29,11 +16,9 @@ const provenanceModel = standardize({
     extraLineages = {},
     asyncSigner = ciSigner
   ) {
-    if (!dmzModel) {
-      // avoid circular reference
-      dmzModel = require('./dmzModel').dmzModel
-      assert(dmzModel)
-    }
+    const avoidCircularReference = 'Dmz'
+    const dmzModel = registry.get(avoidCircularReference)
+    assert(dmzModel)
     dmz = dmz || dmzModel.create()
     assert(dmzModel.isModel(dmz))
     assert(!parentProvenance || provenanceModel.isModel(parentProvenance))
@@ -149,4 +134,4 @@ const provenanceModel = standardize({
   },
 })
 
-module.exports = { provenanceModel, ciSigner, pierceSigner }
+export { provenanceModel }

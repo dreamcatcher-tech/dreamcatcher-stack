@@ -30,7 +30,7 @@
 import assert from 'assert'
 const debugBase = require('debug')('ib:met')
 const posix = require('path-browserify')
-const last = require('lodash.last')
+import last from 'lodash.last'
 import setImmediate from 'set-immediate-shim'
 const { standardEngineFactory } = require('./standardEngineFactory')
 const { isolateFactory } = require('./services/isolateFactory')

@@ -315,7 +315,7 @@ const channelSchema = {
   },
 }
 
-module.exports = {
+export {
   integritySchema,
   addressSchema,
   proofSchema,

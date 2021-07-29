@@ -1,5 +1,5 @@
 import assert from 'assert'
-const last = require('lodash.last')
+import last from 'lodash.last'
 // const chalk = require('ansi-colors')
 const {
   blockPrint,

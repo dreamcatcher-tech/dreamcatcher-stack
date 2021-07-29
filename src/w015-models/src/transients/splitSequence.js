@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { addressModel } = require('../models/addressModel')
+import { addressModel } from '../models/addressModel'
 const splitSequence = (sequence) => {
   assert(typeof sequence === 'string')
   const [hash, indexString] = sequence.split('_')
@@ -15,4 +15,4 @@ const splitSequence = (sequence) => {
   return { address, index }
 }
 
-module.exports = splitSequence
+export { splitSequence }

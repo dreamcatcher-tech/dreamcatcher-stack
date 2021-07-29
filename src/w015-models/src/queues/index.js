@@ -1,3 +1,2 @@
-const { txModel } = require('./txModel')
-const { socketModel } = require('./socketModel')
-module.exports = { socketModel, txModel }
+export * from './txModel'
+export * from './socketModel'

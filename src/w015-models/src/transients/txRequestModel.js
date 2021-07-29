@@ -1,7 +1,7 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { actionModel } = require('../models/actionModel')
-const { txRequestSchema } = require('../schemas/transientSchemas')
+import { standardize } from '../modelUtils'
+import { actionModel } from '../models/actionModel'
+import { txRequestSchema } from '../schemas/transientSchemas'
 
 const txRequestModel = standardize({
   schema: txRequestSchema,
@@ -19,4 +19,4 @@ const txRequestModel = standardize({
   },
 })
 
-module.exports = { txRequestModel }
+export { txRequestModel }

@@ -1,10 +1,10 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { txRequestModel } = require('./txRequestModel')
-const { txReplyModel } = require('./txReplyModel')
-const { rxReplyModel } = require('./rxReplyModel')
-const { rxRequestModel } = require('./rxRequestModel')
-const { registry } = require('../registry')
+import { standardize } from '../modelUtils'
+import { txRequestModel } from './txRequestModel'
+import { txReplyModel } from './txReplyModel'
+import { rxReplyModel } from './rxReplyModel'
+import { rxRequestModel } from './rxRequestModel'
+import { registry } from '../registry'
 
 const _inflate = (action, defaultAction) => {
   if (!action) {
@@ -105,4 +105,4 @@ const reductionModel = standardize({
   },
 })
 
-module.exports = { reductionModel }
+export { reductionModel }

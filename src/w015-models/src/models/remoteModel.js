@@ -1,7 +1,8 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { remoteSchema } = require('../schemas/modelSchemas')
-const { addressModel } = require('./addressModel')
+import { standardize } from '../modelUtils'
+import { remoteSchema } from '../schemas/modelSchemas'
+import { addressModel } from './addressModel'
+
 const remoteModel = standardize({
   schema: remoteSchema,
   create(remote = {}) {
@@ -34,4 +35,4 @@ const remoteModel = standardize({
   },
 })
 
-module.exports = { remoteModel }
+export { remoteModel }

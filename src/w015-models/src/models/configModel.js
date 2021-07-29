@@ -1,4 +1,4 @@
-const { standardize } = require('../modelUtils')
+import { standardize } from '../modelUtils'
 
 const schema = {
   title: 'Config',
@@ -54,4 +54,4 @@ const configModel = standardize({
   },
 })
 
-module.exports = { configModel }
+export { configModel }

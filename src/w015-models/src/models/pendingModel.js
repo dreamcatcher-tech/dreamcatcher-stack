@@ -1,9 +1,9 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { rxRequestModel, rxReplyModel } = require('../transients')
-const { simpleArrayModel } = require('./simpleArrayModel')
-const { networkModel } = require('./networkModel')
-const { addressModel } = require('./addressModel')
+import { standardize } from '../modelUtils'
+import { rxRequestModel, rxReplyModel } from '../transients'
+import { simpleArrayModel } from './simpleArrayModel'
+import { networkModel } from './networkModel'
+import { addressModel } from './addressModel'
 
 const pendingModel = standardize({
   // TODO make model cleaner once util can handle OR in schemas
@@ -92,4 +92,4 @@ const pendingModel = standardize({
   },
 })
 
-module.exports = { pendingModel }
+export { pendingModel }

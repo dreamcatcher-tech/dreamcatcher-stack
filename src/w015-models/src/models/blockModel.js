@@ -1,12 +1,12 @@
 import assert from 'assert'
+import { standardize } from '../modelUtils'
+import { provenanceModel } from './provenanceModel'
+import { keypairModel } from './keypairModel'
+import { dmzModel } from './dmzModel'
+import { integrityModel } from './integrityModel'
+import { publicKeyModel } from './publicKeyModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:block')
-const { standardize } = require('../modelUtils')
-const { provenanceModel } = require('./provenanceModel')
-const { keypairModel } = require('./keypairModel')
-const { dmzModel } = require('./dmzModel')
-const { integrityModel } = require('./integrityModel')
-const { publicKeyModel } = require('./publicKeyModel')
 const dmzSchema = dmzModel.schema
 
 const schema = {
@@ -22,6 +22,7 @@ A DMZ with a 'provenance' key is a block.`,
 }
 
 const ciSigner = async (integrity) => {
+  // TODO dedupe with cisigners
   const ciKeypair = await keypairModel.create('CI')
   assert(integrityModel.isModel(integrity))
   return ciKeypair.sign(integrity)
@@ -118,4 +119,4 @@ const blockModel = standardize({
   },
 })
 
-module.exports = { blockModel }
+export { blockModel }

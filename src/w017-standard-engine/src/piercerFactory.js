@@ -1,6 +1,6 @@
 import assert from 'assert'
 const { deserializeError } = require('serialize-error')
-const { v4: uuid } = require('uuid')
+import { v4 as uuid } from 'uuid'
 import setImmediate from 'set-immediate-shim'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:piercerFactory')

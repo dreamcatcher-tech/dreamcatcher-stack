@@ -1,10 +1,11 @@
 import assert from 'assert'
+import { registry } from './registry'
+import Ajv from 'ajv'
+import AjvFormats from 'ajv-formats'
 import Debug from 'debug'
 const debug = Debug('interblock:models:modelInflator')
-const { registry } = require('./registry')
-const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
-require('ajv-formats')(ajv)
+AjvFormats(ajv)
 
 const modelInflator = (schema, instance) => {
   if (schema.title === 'State') {
@@ -120,4 +121,4 @@ const precompileSchema = (schema) => {
   }
 }
 
-module.exports = { modelInflator, precompileSchema }
+export { modelInflator, precompileSchema }

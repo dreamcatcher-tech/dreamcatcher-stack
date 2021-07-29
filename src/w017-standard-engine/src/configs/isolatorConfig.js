@@ -17,7 +17,7 @@ const {
 const { networkProducer, channelProducer } = require('../../../w016-producers')
 const { interpreterConfig } = require('./interpreterConfig')
 const { definition } = require('../machines/isolator')
-const crypto = require('../../../w012-crypto')
+import * as crypto from '../../../w012-crypto'
 const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
 
 const isReduceable = ({ dmz }) => {

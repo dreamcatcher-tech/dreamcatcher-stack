@@ -1,11 +1,11 @@
 import assert from 'assert'
+import * as crypto from '../../../w012-crypto'
+import { standardize } from '../modelUtils'
+import { publicKeyModel } from './publicKeyModel'
+import { integrityModel } from './integrityModel'
+import { signatureModel } from './signatureModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:keypair')
-const crypto = require('../../../w012-crypto')
-const { standardize } = require('../modelUtils')
-const { publicKeyModel } = require('./publicKeyModel')
-const { integrityModel } = require('./integrityModel')
-const { signatureModel } = require('./signatureModel')
 
 const keypairModel = standardize({
   schema: {
@@ -70,4 +70,4 @@ const keypairModel = standardize({
   },
 })
 
-module.exports = { keypairModel }
+export { keypairModel }

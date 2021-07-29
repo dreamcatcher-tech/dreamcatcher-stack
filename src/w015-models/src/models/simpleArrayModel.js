@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
+import { standardize } from '../modelUtils'
 
 // TODO remove this when can handle arrays in patterns
 const simpleArrayModel = standardize({
@@ -25,4 +25,4 @@ const simpleArrayModel = standardize({
   },
 })
 
-module.exports = { simpleArrayModel }
+export { simpleArrayModel }

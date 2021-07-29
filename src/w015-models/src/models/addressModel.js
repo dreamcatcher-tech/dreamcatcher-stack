@@ -1,8 +1,8 @@
 import assert from 'assert'
-const crypto = require('../../../w012-crypto')
-const { standardize } = require('../modelUtils')
-const { integrityModel } = require('./integrityModel')
-const { addressSchema } = require('../schemas/modelSchemas')
+import * as crypto from '../../../w012-crypto'
+import { standardize } from '../modelUtils'
+import { integrityModel } from './integrityModel'
+import { addressSchema } from '../schemas/modelSchemas'
 
 const addressModel = standardize({
   schema: addressSchema,
@@ -80,4 +80,4 @@ const addressModel = standardize({
   },
 })
 
-module.exports = { addressModel }
+export { addressModel }

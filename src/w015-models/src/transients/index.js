@@ -1,12 +1,5 @@
-const { rxReplyModel } = require('./rxReplyModel')
-const { rxRequestModel } = require('./rxRequestModel')
-const { txReplyModel } = require('./txReplyModel')
-const { txRequestModel } = require('./txRequestModel')
-const { reductionModel } = require('./reductionModel')
-module.exports = {
-  rxReplyModel,
-  rxRequestModel,
-  txReplyModel,
-  txRequestModel,
-  reductionModel,
-}
+export * from './rxReplyModel'
+export * from './rxRequestModel'
+export * from './txReplyModel'
+export * from './txRequestModel'
+export * from './reductionModel'

@@ -1,4 +1,4 @@
-const crypto = require('../../w012-crypto')
+import * as crypto from '../../w012-crypto'
 const cacheVerifyHash = async (obj) => {
   // needed so model.clone() can logicize synchronously
   if (typeof obj !== 'object') {
@@ -47,4 +47,4 @@ const cacheVerifyKeypair = async (obj) => {
   }
 }
 
-module.exports = { cacheVerifyHash, cacheVerifyKeypair }
+export { cacheVerifyHash, cacheVerifyKeypair }

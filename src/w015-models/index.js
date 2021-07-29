@@ -68,59 +68,19 @@
  *      modelCreators used to make subtypes
  */
 
-const modelNames = [
-  'aclModel',
-  'actionModel',
-  'addressModel',
-  'binaryModel',
-  'blockModel',
-  'covenantIdModel',
-  'continuationModel',
-  'dmzModel',
-  'configModel',
-  'integrityModel',
-  'interblockModel',
-  'keypairModel',
-  'lockModel',
-  'provenanceModel',
-  'publicKeyModel',
-  'signatureModel',
-  'timestampModel',
-  'channelModel',
-  'networkModel',
-  'stateModel',
-  'remoteModel',
-  'validatorsModel',
-  'proofModel',
-  'pendingModel',
-  'simpleArrayModel',
-]
+import * as models from './src/models'
+import * as queues from './src/queues'
+import * as transients from './src/transients'
 
-const models = {}
-modelNames.forEach((name) => {
-  try {
-    const modelModule = require(`./src/models/${name}`)
-    models[name] = modelModule[name]
-  } catch (e) {
-    console.error(`error loading: ${name}`)
-    throw e
-  }
-})
-const queues = require('./src/queues')
-const transients = require('./src/transients')
+import { registry } from './src/registry'
+import * as cryptoCacher from './src/cryptoCacher'
+import { ciSigner, pierceSigner } from './src/ciSigners'
 
-const { registry } = require('./src/registry')
 registry.registerModels(models)
 registry.registerModels(queues)
 registry.registerModels(transients)
-const cryptoCacher = require('./src/cryptoCacher')
-const { ciSigner, pierceSigner } = require('./src/models/provenanceModel')
-module.exports = {
-  ...models,
-  ...transients,
-  ...queues,
-  registry,
-  cryptoCacher,
-  ciSigner,
-  pierceSigner,
-}
+
+export * from './src/models'
+export * from './src/queues'
+export * from './src/transients'
+export { registry, cryptoCacher, ciSigner, pierceSigner }

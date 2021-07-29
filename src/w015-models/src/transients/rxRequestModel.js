@@ -1,9 +1,9 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const splitSequence = require('./splitSequence')
-const { actionModel } = require('../models/actionModel')
-const { addressModel } = require('../models/addressModel')
-const { rxRequestSchema } = require('../schemas/transientSchemas')
+import { standardize } from '../modelUtils'
+import { splitSequence } from './splitSequence'
+import { actionModel } from '../models/actionModel'
+import { addressModel } from '../models/addressModel'
+import { rxRequestSchema } from '../schemas/transientSchemas'
 
 const rxRequestModel = standardize({
   schema: rxRequestSchema,
@@ -33,4 +33,4 @@ const rxRequestModel = standardize({
   },
 })
 
-module.exports = { rxRequestModel }
+export { rxRequestModel }

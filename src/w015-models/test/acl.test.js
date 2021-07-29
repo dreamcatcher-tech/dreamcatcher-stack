@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { aclModel } = require('..')
+import { aclModel } from '..'
 
 describe('acl', () => {
   test('creates default', () => {

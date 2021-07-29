@@ -1,8 +1,8 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { continuationModel } = require('../models/continuationModel')
-const { txReplySchema } = require('../schemas/transientSchemas')
-const splitSequence = require('./splitSequence')
+import { standardize } from '../modelUtils'
+import { continuationModel } from '../models/continuationModel'
+import { txReplySchema } from '../schemas/transientSchemas'
+import { splitSequence } from './splitSequence'
 
 const txReplyModel = standardize({
   schema: txReplySchema,
@@ -25,4 +25,4 @@ const txReplyModel = standardize({
   },
 })
 
-module.exports = { txReplyModel }
+export { txReplyModel }

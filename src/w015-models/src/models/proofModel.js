@@ -1,7 +1,7 @@
 import assert from 'assert'
-const { standardize } = require('../modelUtils')
-const { proofSchema } = require('../schemas/modelSchemas')
-const { blockModel } = require('./blockModel')
+import { standardize } from '../modelUtils'
+import { proofSchema } from '../schemas/modelSchemas'
+import { blockModel } from './blockModel'
 
 const proofModel = standardize({
   schema: proofSchema,
@@ -20,4 +20,4 @@ const proofModel = standardize({
   },
 })
 
-module.exports = { proofModel }
+export { proofModel }

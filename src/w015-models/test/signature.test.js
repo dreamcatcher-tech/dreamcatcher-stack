@@ -1,6 +1,6 @@
 import assert from 'assert'
-const { integrityModel, signatureModel, keypairModel } = require('..')
-const crypto = require('../../w012-crypto')
+import { integrityModel, signatureModel, keypairModel } from '..'
+import crypto from '../../w012-crypto'
 
 describe('signature', () => {
   test('throws on create attempts', () => {

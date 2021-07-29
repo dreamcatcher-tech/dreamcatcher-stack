@@ -1,14 +1,13 @@
-const { standardize } = require('../modelUtils')
-const { validatorsSchema } = require('../schemas/modelSchemas')
-const { publicKeyModel } = require('./publicKeyModel')
-const { keypairModel, ciKeypair } = require('./keypairModel')
+import { standardize } from '../modelUtils'
+import { validatorsSchema } from '../schemas/modelSchemas'
+import { keypairModel } from './keypairModel'
 
 const validatorsModel = standardize({
   schema: validatorsSchema,
   create() {
-    const keypair = keypairModel.create('CI', ciKeypair)
+    const ciKeypair = keypairModel.create()
     // TODO move asynchrony to the caller ?
-    const entry = keypair.getValidatorEntry()
+    const entry = ciKeypair.getValidatorEntry()
     return validatorsModel.clone(entry)
   },
   logicize(instance) {
@@ -17,4 +16,4 @@ const validatorsModel = standardize({
   },
 })
 
-module.exports = { validatorsModel }
+export { validatorsModel }

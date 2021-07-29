@@ -1,5 +1,7 @@
 import assert from 'assert'
-const {
+import madge from 'madge'
+
+import {
   channelModel,
   networkModel,
   integrityModel,
@@ -7,8 +9,7 @@ const {
   addressModel,
   provenanceModel,
   signatureModel,
-} = require('..')
-require('../../w012-crypto').testMode()
+} from '..'
 
 describe('standard model', () => {
   test('isModel', () => {
@@ -67,18 +68,17 @@ describe('standard model', () => {
   test('objects are immutable', () => {
     const integrity = integrityModel.create({ test: 'test' })
     assert(integrity.hash)
-    delete integrity.hash
+    assert.throws(() => delete integrity.hash)
     assert(integrity.hash)
   })
   test('functions are immutable', () => {
     const integrity = integrityModel.create({ test: 'test' })
     assert(integrity.isUnknown)
-    delete integrity.isUnknown
+    assert.throws(() => delete integrity.isUnknown)
     assert(integrity.isUnknown)
   })
   test('nested objects are inflated from clones', () => {
     const covenantId = covenantIdModel.create()
-    assert(covenantId.isSystemCovenant())
     const deflated = JSON.parse(JSON.stringify(covenantId))
     const altered = { ...deflated, name: 'altered' }
     const clone = covenantIdModel.clone(deflated)
@@ -148,7 +148,6 @@ describe('standard model', () => {
     assert(covenantIdModel.isModel(modelClone))
   })
   test.skip('no circular references in models', async () => {
-    const madge = require('madge')
     const res = await madge(globalThis.__dirname + '/../src/models', {
       excludeRegExp: [/\.\./],
     })
@@ -157,6 +156,7 @@ describe('standard model', () => {
     )
     console.log(`wrote image to: ${path}`)
   })
+  test('models all found', () => {})
   test.todo('check the version of the message format')
   test.todo('can always create default with no arguments')
   test.todo('clone handles dmz.state with loops')

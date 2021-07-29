@@ -7,7 +7,7 @@ const {
   integrityModel,
 } = require('../../../w015-models')
 const { ramDynamoDbFactory, dbFactory } = require('./consistencyFactory')
-const crypto = require('../../../w012-crypto')
+import * as crypto from '../../../w012-crypto'
 const { cacheVerifyKeypair } = cryptoCacher
 
 const cryptoSourceFactory = (dynamoDb, keyname = 'CI') => {

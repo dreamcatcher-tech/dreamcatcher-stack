@@ -25,4 +25,4 @@ const registry = {
   _getContainer: () => container,
 }
 
-module.exports = { registry }
+export { registry }

@@ -1,12 +1,12 @@
 import assert from 'assert'
+import memoize from 'lodash.memoize'
+import stringify from 'fast-json-stable-stringify'
+import { modelInflator, precompileSchema } from './modelInflator'
+import { registry } from './registry'
+import * as crypto from '../../w012-crypto'
+import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('interblock:models:utils')
-const memoize = require('lodash.memoize')
-const stringify = require('fast-json-stable-stringify')
-const { modelInflator, precompileSchema } = require('./modelInflator')
-const { registry } = require('./registry')
-const crypto = require('../../w012-crypto')
-import equal from 'fast-deep-equal'
 
 const standardize = (model) => {
   checkStructure(model)
@@ -292,4 +292,4 @@ const deepFreeze = (o) => {
   }
 }
 
-module.exports = { standardize }
+export { standardize }

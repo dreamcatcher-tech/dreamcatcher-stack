@@ -1,8 +1,6 @@
-const crypto = require('../../../w012-crypto')
-const { standardize } = require('../modelUtils')
-const { publicKeyModel } = require('./publicKeyModel')
-const { integrityModel } = require('./integrityModel')
-const { signatureSchema } = require('../schemas/modelSchemas')
+import * as crypto from '../../../w012-crypto'
+import { standardize } from '../modelUtils'
+import { signatureSchema } from '../schemas/modelSchemas'
 
 const signatureModel = standardize({
   schema: signatureSchema,
@@ -22,4 +20,4 @@ const signatureModel = standardize({
   },
 })
 
-module.exports = { signatureModel }
+export { signatureModel }

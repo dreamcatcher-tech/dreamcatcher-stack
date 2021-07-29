@@ -1,5 +1,5 @@
-const { standardize } = require('../modelUtils')
-const { integrityModel } = require('./integrityModel')
+import { standardize } from '../modelUtils'
+import { integrityModel } from './integrityModel'
 
 const binaryModel = standardize({
   schema: {
@@ -22,4 +22,4 @@ const binaryModel = standardize({
   },
 })
 
-module.exports = { binaryModel }
+export { binaryModel }

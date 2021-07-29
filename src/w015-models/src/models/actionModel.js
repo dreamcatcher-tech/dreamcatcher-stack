@@ -1,5 +1,5 @@
-const { standardize } = require('../modelUtils')
-const { actionSchema } = require('../schemas/modelSchemas')
+import { standardize } from '../modelUtils'
+import { actionSchema } from '../schemas/modelSchemas'
 
 const actionModel = standardize({
   schema: actionSchema,
@@ -20,4 +20,4 @@ const actionModel = standardize({
   },
 })
 
-module.exports = { actionModel }
+export { actionModel }

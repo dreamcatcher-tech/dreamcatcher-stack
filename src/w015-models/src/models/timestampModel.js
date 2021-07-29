@@ -1,4 +1,4 @@
-const { standardize } = require('../modelUtils')
+import { standardize } from '../modelUtils'
 
 const timestampModel = standardize({
   schema: {
@@ -34,4 +34,4 @@ const timestampModel = standardize({
   },
 })
 
-module.exports = { timestampModel }
+export { timestampModel }
