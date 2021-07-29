@@ -9,8 +9,8 @@ import FontFaceObserver from 'fontfaceobserver'
 import '@fontsource/roboto-mono'
 import 'xterm/css/xterm.css'
 import { stdin as mockStdin } from 'mock-stdin'
-import { useBlockchain } from '.'
-import commandLineShell from '@dreamcatcher-tech/dos'
+import { useBlockchain } from './hooks'
+import commandLineShell from '../../dos/src/index' // in build, gets aliased to @dreamcatcher-tech/dos
 
 // import '../css/TorEmoji.woff2'
 

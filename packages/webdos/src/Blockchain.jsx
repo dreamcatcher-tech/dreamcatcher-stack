@@ -1,6 +1,6 @@
 import assert from 'assert'
 import React, { useState, useEffect } from 'react'
-import { effectorFactory } from '@dreamcatcher-tech/interblock'
+import { effectorFactory } from '../../interblock/src/index' // in build, gets aliased with @dreamcatcher-tech/interblock
 import Debug from 'debug'
 import equals from 'fast-deep-equal'
 import { Terminal } from '.'
