@@ -1,7 +1,8 @@
-const Buffer = require('buffer').Buffer
-const nodeObjectHash = require('node-object-hash')({ coerce: false })
-const browserHash = require('object-hash')
-const { v4 } = require('uuid')
+import { Buffer } from 'buffer'
+import browserHash from 'object-hash'
+import { v4 } from 'uuid'
+import NodeObjectHash from 'node-object-hash'
+const nodeObjectHash = NodeObjectHash({ coerce: false })
 
 // TODO see if sodium hashing performs better
 // use stable stringify for equality, and serialize, then compute hash if requested
@@ -43,4 +44,4 @@ const injectSeed = (_seed) => {
   seed = _seed.substring(0, 32)
 }
 
-module.exports = { injectSeed, objectHash, generateNonce }
+export { injectSeed, objectHash, generateNonce }

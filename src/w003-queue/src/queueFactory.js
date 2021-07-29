@@ -168,4 +168,4 @@ const sqsQueueFactory = (name, model) => {
   }
 }
 
-module.exports = { ioQueueFactory, sqsQueueFactory }
+export { ioQueueFactory, sqsQueueFactory }

@@ -1,13 +1,11 @@
-const Buffer = require('buffer').Buffer
+import { Buffer } from 'buffer'
 import assert from 'assert'
+import SodiumPlusExport from 'sodium-plus'
+import { objectHash, generateNonce } from './common'
 import Debug from 'debug'
 const debug = Debug('interblock:crypto:sodium')
-const {
-  SodiumPlus,
-  Ed25519PublicKey,
-  Ed25519SecretKey,
-} = require('sodium-plus')
-const { objectHash, generateNonce } = require('./common')
+const { SodiumPlus, Ed25519PublicKey, Ed25519SecretKey } = SodiumPlusExport
+
 const ciKeypair = {
   publicKey: 'I7xUkSwebpLEqGglyGfif/3FVb/71CRPF6Jqv//ull0=',
   secretKey:
@@ -120,7 +118,7 @@ const _getBackend = async () => {
   return sodium.getBackendName()
 }
 
-module.exports = {
+export {
   signHash,
   verifyHash,
   verifyHashSync,

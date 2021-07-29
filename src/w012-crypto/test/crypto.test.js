@@ -1,6 +1,6 @@
 import assert from 'assert'
-const crypto = require('..')
-const Benchmark = require('benchmark')
+import * as crypto from '..'
+import Benchmark from 'benchmark'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crypto')
 
