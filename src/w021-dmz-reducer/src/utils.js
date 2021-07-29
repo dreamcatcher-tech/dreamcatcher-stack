@@ -1,8 +1,8 @@
 import assert from 'assert'
+import pad from 'pad-left'
+import { blockModel, channelModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:utils')
-const pad = require('pad-left')
-const { blockModel, channelModel } = require('../../w015-models')
 
 const autoAlias = (network, autoPrefix = 'file_') => {
   // TODO get highest current auto, and always return higher
@@ -61,4 +61,4 @@ const listChildren = (block) => {
   }
   return children
 }
-module.exports = { autoAlias, getChannelParams, listChildren }
+export { autoAlias, getChannelParams, listChildren }

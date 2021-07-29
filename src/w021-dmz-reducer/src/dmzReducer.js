@@ -1,16 +1,16 @@
 import assert from 'assert'
+import { openChildReducer, openChildReply, openPaths } from './openChild'
+import { uplinkReducer, uplinkReply } from './uplink'
+import { connect, connectReducer } from './connect'
+import { ping, pingReducer } from './ping'
+import { spawn, spawnReducer } from './spawn'
+import { install, deploy, deployReducer, deployReply } from './deploy'
+import { getChannel, getChannelReducer } from './getChannel'
+import { genesisReducer, genesisReply } from './genesis'
+import { getStateReducer, getState } from './getState'
+import { dmzModel, rxRequestModel, rxReplyModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz')
-const { openChildReducer, openChildReply, openPaths } = require('./openChild')
-const { uplinkReducer, uplinkReply } = require('./uplink')
-const { connect, connectReducer } = require('./connect')
-const { ping, pingReducer } = require('./ping')
-const { spawn, spawnReducer } = require('./spawn')
-const { install, deploy, deployReducer, deployReply } = require('./deploy')
-const { getChannel, getChannelReducer } = require('./getChannel')
-const { genesisReducer, genesisReply } = require('./genesis')
-const { getStateReducer, getState } = require('./getState')
-const { dmzModel, rxRequestModel, rxReplyModel } = require('../../w015-models')
 /**
  * DmzReducer is responsible for:
  *  1. altering the structure of the DMZ
@@ -153,10 +153,4 @@ const isSystemReply = (reply) => {
   return isSystemReply
 }
 
-module.exports = {
-  actions,
-  reducer,
-  isSystemRequest,
-  isSystemReply,
-  openPaths,
-}
+export { actions, reducer, isSystemRequest, isSystemReply, openPaths }

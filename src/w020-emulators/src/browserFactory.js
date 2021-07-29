@@ -1,8 +1,8 @@
-const { effectorFactory } = require('./effectorFactory')
+import { effectorFactory } from './effectorFactory'
+import localForage from 'localforage'
 import Debug from 'debug'
 const debug = Debug('interblock:browser')
-const localForage = require('localforage')
-
+// TODO delete this as not needed ?
 const browserFactory = async (identifier) => {
   localForage.config({ name: `@dreamcatcher/interblock_${identifier}` })
   debug(`loading browser module`)
@@ -11,4 +11,4 @@ const browserFactory = async (identifier) => {
   return effector
 }
 
-module.exports = { browserFactory }
+export { browserFactory }

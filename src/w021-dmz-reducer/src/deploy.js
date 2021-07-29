@@ -1,12 +1,12 @@
 import assert from 'assert'
-const { rxReplyModel, dmzModel, covenantIdModel } = require('../../w015-models')
-const { spawn, spawnReducerWithoutPromise } = require('./spawn')
-const {
+import { rxReplyModel, dmzModel, covenantIdModel } from '../../w015-models'
+import { spawn, spawnReducerWithoutPromise } from './spawn'
+import {
   interchain,
   isReplyFor,
   replyResolve,
   replyPromise,
-} = require('../../w002-api')
+} from '../../w002-api'
 
 const install = (installer) => ({
   type: '@@INSTALL',
@@ -93,4 +93,4 @@ const deployReply = (network, reply) => {
     }
   }
 }
-module.exports = { install, deploy, deployReducer, deployReply }
+export { install, deploy, deployReducer, deployReply }

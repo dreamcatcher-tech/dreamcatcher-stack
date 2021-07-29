@@ -1,18 +1,18 @@
-import Debug from 'debug'
-const debug = Debug('interblock:covenants:socket')
 import assert from 'assert'
-const dmzReducer = require('../../w021-dmz-reducer')
-const { Machine, assign } = require('xstate')
-const { spawn, connect, getChannel } = dmzReducer.actions
-const { socketModel, covenantIdModel } = require('../../w015-models')
-const { tcpTransportFactory } = require('./tcpTransportFactory')
-const { effect, interchain } = require('../../w002-api')
-const {
+import { actions } from '../../w021-dmz-reducer'
+import { Machine, assign } from 'xstate'
+import { socketModel, covenantIdModel } from '../../w015-models'
+import { tcpTransportFactory } from './tcpTransportFactory'
+import { effect, interchain } from '../../w002-api'
+import {
   respond,
   send,
   sendParent,
   translator,
-} = require('../../w022-xstate-translator')
+} from '../../w022-xstate-translator'
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:socket')
+const { spawn, connect, getChannel } = actions
 
 const socketFactory = (gateway) => {
   const config = {
@@ -188,4 +188,4 @@ const socketFactory = (gateway) => {
   return { actions, schemas, reducer, covenantId }
 }
 
-module.exports = { socketFactory }
+export { socketFactory }

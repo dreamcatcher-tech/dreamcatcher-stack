@@ -1,10 +1,7 @@
 import assert from 'assert'
-const {
-  lockFactory,
-} = require('../src/services/consistencyFactory/lockFactory')
+import { lockFactory } from '../src/services/consistencyFactory/lockFactory'
 
 describe('lockFactory', () => {
-  require('debug').enable()
   test('cannot acquire lock twice in order', async () => {
     const chainId = 'testChainId'
     const awsRequestId = 'testAwsRequestId'

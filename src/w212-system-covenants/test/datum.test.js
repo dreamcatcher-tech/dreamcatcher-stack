@@ -1,8 +1,8 @@
 import assert from 'assert'
-const { effectorFactory } = require('../../index')
+import { effectorFactory } from '../../index'
+import { convertToTemplate, demuxFormData } from '../src/datum'
 import Debug from 'debug'
 const debug = Debug('crm:tests:datum')
-const { convertToTemplate, demuxFormData } = require('../src/datum')
 
 const schema = {
   title: 'Customer',

@@ -1,24 +1,24 @@
 import assert from 'assert'
-const posix = require('path-browserify')
-import Debug from 'debug'
-const debug = Debug('interblock:dmz:openChild')
-const {
+import posix from 'path-browserify'
+import {
   actionModel,
   networkModel,
   rxRequestModel,
   rxReplyModel,
-} = require('../../w015-models')
-const { channelProducer } = require('../../w016-producers')
-const {
+} from '../../w015-models'
+import { channelProducer } from '../../w016-producers'
+import {
   replyPromise,
   replyResolve,
   replyReject,
   isReplyFor,
   effectInBand,
   interchain,
-} = require('../../w002-api')
-const { uplink } = require('./uplink')
-const { connect } = require('./connect')
+} from '../../w002-api'
+import { uplink } from './uplink'
+import { connect } from './connect'
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:openChild')
 
 const openChild = (child, parent, fullPath) => ({
   // parent and fullPath are required for continuation,
@@ -146,4 +146,4 @@ const _getPathSegments = (alias) => {
   })
   return paths
 }
-module.exports = { openChild, openChildReducer, openChildReply, openPaths }
+export { openChild, openChildReducer, openChildReply, openPaths }

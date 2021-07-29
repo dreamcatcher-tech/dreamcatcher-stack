@@ -1,6 +1,5 @@
 import assert from 'assert'
-const { lockModel } = require('..')
-require('../../w012-crypto').testMode()
+import { lockModel } from '..'
 
 describe('lock', () => {
   test('creates', () => {

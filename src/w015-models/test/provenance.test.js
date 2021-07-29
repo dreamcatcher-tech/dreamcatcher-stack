@@ -1,11 +1,5 @@
 import assert from 'assert'
-const {
-  keypairModel,
-  integrityModel,
-  dmzModel,
-  provenanceModel,
-} = require('../index')
-require('../../w012-crypto').testMode()
+import { integrityModel, dmzModel, provenanceModel } from '../index'
 
 describe('provenance', () => {
   test('creates default model', async () => {

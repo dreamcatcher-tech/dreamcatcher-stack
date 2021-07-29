@@ -1,12 +1,12 @@
 import assert from 'assert'
-const { deserializeError } = require('serialize-error')
+import { deserializeError } from 'serialize-error'
 import { v4 as uuid } from 'uuid'
 import setImmediate from 'set-immediate-shim'
+import { request } from '../../w002-api'
+import { txRequestModel } from '../../w015-models'
+import { toFunctions } from './services/consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:piercerFactory')
-const { request } = require('../../w002-api')
-const { txRequestModel } = require('../../w015-models')
-const { toFunctions } = require('./services/consistencyFactory')
 
 const piercerFactory = (address, ioConsistency, sqsIncrease) => {
   const promises = new Map()
@@ -108,4 +108,4 @@ const generateDispatchPromise = () => {
   return { promise, callbacks }
 }
 
-module.exports = { piercerFactory }
+export { piercerFactory }

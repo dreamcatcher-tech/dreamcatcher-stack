@@ -1,10 +1,9 @@
 import assert from 'assert'
+import { resolve } from 'path-browserify'
+import { shell } from '..'
+import { metrologyFactory } from '../../w017-standard-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:shell')
-const { resolve } = require('path-browserify')
-const { shell } = require('..')
-const { metrologyFactory } = require('../../w017-standard-engine')
-// require('debug').enable('*tests* *met* *reader* *shell *query')
 
 describe('machine validation', () => {
   describe('state machine', () => {

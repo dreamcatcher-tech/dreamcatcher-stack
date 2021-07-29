@@ -1,9 +1,7 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:pool')
-const { assign } = require('xstate')
-const { definition } = require('../machines/pool')
-const {
+import { assign } from 'xstate'
+import { definition } from '../machines/pool'
+import {
   channelModel,
   networkModel,
   blockModel,
@@ -13,10 +11,12 @@ const {
   dmzModel,
   covenantIdModel,
   publicKeyModel,
-} = require('../../../w015-models')
-const { lockProducer } = require('../../../w016-producers')
-const consistencyProcessor = require('../services/consistencyFactory')
-const cryptoProcessor = require('../services/cryptoFactory')
+} from '../../../w015-models'
+import { lockProducer } from '../../../w016-producers'
+import consistencyProcessor from '../services/consistencyFactory'
+import cryptoProcessor from '../services/cryptoFactory'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:pool')
 
 const poolConfig = (ioCrypto, ioConsistency) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
@@ -240,4 +240,4 @@ const poolConfig = (ioCrypto, ioConsistency) => {
   return { machine: definition, config }
 }
 
-module.exports = { poolConfig }
+export { poolConfig }

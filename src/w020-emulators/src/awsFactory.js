@@ -1,5 +1,5 @@
-const { metrologyFactory } = require('../../w017-standard-engine')
-const { hyper } = require('../../w212-system-covenants')
+import { metrologyFactory } from '../../w017-standard-engine'
+import { hyper } from '../../w212-system-covenants'
 const awsFactory = async (identifier = 'aws', reifiedCovenantMap) => {
   reifiedCovenantMap = { ...reifiedCovenantMap, hyper }
   const engine = await metrologyFactory(identifier, reifiedCovenantMap)
@@ -9,4 +9,4 @@ const awsFactory = async (identifier = 'aws', reifiedCovenantMap) => {
   return { sqsTx, sqsRx, hyperAddress, engine }
 }
 
-module.exports = { awsFactory }
+export { awsFactory }

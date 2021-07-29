@@ -1,9 +1,9 @@
 import assert from 'assert'
-const posix = require('path-browserify')
-const { blockModel } = require('../../../w015-models')
+import posix from 'path-browserify'
+import { blockModel } from '../../../w015-models'
+import { toFunctions } from './consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:query')
-const { toFunctions } = require('./consistencyFactory')
 const queryFactory = (ioConsistency, block) => {
   assert(blockModel.isModel(block))
   let isQueryEnabled = true
@@ -74,4 +74,4 @@ const queryFactory = (ioConsistency, block) => {
   return { query, disable }
 }
 
-module.exports = { queryFactory }
+export { queryFactory }

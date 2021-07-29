@@ -1,10 +1,6 @@
 import assert from 'assert'
-const {
-  networkModel,
-  addressModel,
-  channelModel,
-} = require('../../w015-models')
-const { channelProducer } = require('../../w016-producers')
+import { networkModel, addressModel, channelModel } from '../../w015-models'
+import { channelProducer } from '../../w016-producers'
 
 const connect = (alias, chainId) => ({
   type: '@@CONNECT',
@@ -23,4 +19,4 @@ const connectReducer = (network, action) => {
   channel = channelProducer.setAddress(channel, address)
   return networkModel.clone({ ...network, [alias]: channel })
 }
-module.exports = { connect, connectReducer }
+export { connect, connectReducer }

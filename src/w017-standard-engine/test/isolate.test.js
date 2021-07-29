@@ -1,18 +1,15 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:tests:isolate')
-const { ioQueueFactory } = require('../../w003-queue')
-const {
-  isolateFactory,
-  toFunctions,
-} = require('../src/services/isolateFactory')
-const {
+import { ioQueueFactory } from '../../w003-queue'
+import { isolateFactory, toFunctions } from '../src/services/isolateFactory'
+import {
   rxRequestModel,
   covenantIdModel,
   dmzModel,
   blockModel,
-} = require('../../w015-models')
-require('debug').enable()
+} from '../../w015-models'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:isolate')
+
 describe('isolation', () => {
   test('handle two covenants', async () => {
     const reducer1 = () => ({

@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { continuationModel } = require('..')
+import { continuationModel } from '..'
 describe('continuation', () => {
   test('promise cannot have payload', () => {
     const resolve = continuationModel.create('@@RESOLVE', {

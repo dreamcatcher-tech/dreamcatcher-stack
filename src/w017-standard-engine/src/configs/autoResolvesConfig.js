@@ -1,16 +1,16 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart.autoResolves')
-const {
+import {
   txReplyModel,
   rxReplyModel,
   rxRequestModel,
   dmzModel,
   pendingModel,
-} = require('../../../w015-models')
-const { networkProducer } = require('../../../w016-producers')
-const { definition } = require('../machines/autoResolves')
-const { assign } = require('xstate')
+} from '../../../w015-models'
+import { networkProducer } from '../../../w016-producers'
+import { definition } from '../machines/autoResolves'
+import { assign } from 'xstate'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:heart.autoResolves')
 const config = {
   actions: {
     resolveExternalAction: assign({
@@ -130,4 +130,4 @@ const autoResolvesConfig = (context) => {
   return { machine, config }
 }
 
-module.exports = { autoResolvesConfig }
+export { autoResolvesConfig }

@@ -1,8 +1,8 @@
-const { v4: uuidv4 } = require('uuid')
-const debugFactory = require('debug')
+import { v4 as uuidv4 } from 'uuid'
+import Debug from 'debug'
 const machineLogger = (type, machine) => {
   const invocation = uuidv4()
-  const debug = debugFactory(`interblock:machines:${machine}`)
+  const debug = Debug(`interblock:machines:${machine}`)
   debug(`INVOCATION: ${machine} -> ${type}`)
   const history = []
   let initialized = false
@@ -39,4 +39,4 @@ const machineLogger = (type, machine) => {
 }
 let transitionCount = 0
 
-module.exports = { machineLogger }
+export { machineLogger }

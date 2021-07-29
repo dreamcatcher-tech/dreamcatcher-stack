@@ -33,15 +33,15 @@
  *
  */
 import assert from 'assert'
-const { metrologyFactory } = require('../../w017-standard-engine')
-const posix = require('path-browserify')
+import { metrologyFactory } from '../../w017-standard-engine'
+import posix from 'path-browserify'
+import { covenantIdModel } from '../../w015-models'
+import { tcpTransportFactory } from './tcpTransportFactory'
+import covenants from '../../w212-system-covenants'
+import { netFactory } from './netFactory'
+import { socketFactory } from './socketFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:effector')
-const { covenantIdModel } = require('../../w015-models')
-const { tcpTransportFactory } = require('./tcpTransportFactory')
-const covenants = require('../../w212-system-covenants')
-const { netFactory } = require('./netFactory')
-const { socketFactory } = require('./socketFactory')
 
 const effectorFactory = async (identifier, covenantOverloads = {}) => {
   assert(!covenantOverloads || typeof covenantOverloads === 'object')
@@ -166,4 +166,4 @@ const connectGateway = (gateway, netEffector) => {
 
   gateway.removeSocket = (url) => {}
 }
-module.exports = { effectorFactory }
+export { effectorFactory }

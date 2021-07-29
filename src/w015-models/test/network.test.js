@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { networkModel } = require('..')
+import { networkModel } from '..'
 
 describe('network', () => {
   test('creates default', () => {

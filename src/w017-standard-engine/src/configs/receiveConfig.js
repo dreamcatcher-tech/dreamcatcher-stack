@@ -1,21 +1,10 @@
 import assert from 'assert'
+import { assign } from 'xstate'
+import { txModel, blockModel, interblockModel } from '../../../w015-models'
+import { definition } from '../machines/receive'
+import consistencyProcessor from '../services/consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:receive')
-const { assign } = require('xstate')
-const {
-  lockModel,
-  addressModel,
-  txModel,
-  blockModel,
-  interblockModel,
-} = require('../../../w015-models')
-const {
-  blockProducer,
-  lockProducer,
-  networkProducer,
-} = require('../../../w016-producers')
-const { definition } = require('../machines/receive')
-const consistencyProcessor = require('../services/consistencyFactory')
 
 const receiveConfig = (ioConsistency) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
@@ -92,4 +81,4 @@ const receiveConfig = (ioConsistency) => {
   return { machine: definition, config }
 }
 
-module.exports = { receiveConfig }
+export { receiveConfig }

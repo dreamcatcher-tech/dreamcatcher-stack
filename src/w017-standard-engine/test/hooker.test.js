@@ -1,11 +1,9 @@
 import assert from 'assert'
+import { interchain, useBlocks } from '../../w002-api'
+import { actions, listChildren } from '../../w021-dmz-reducer'
+import { metrologyFactory } from '../src/metrologyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:hooker')
-const { interchain, useBlocks } = require('../../w002-api')
-const { actions, listChildren } = require('../../w021-dmz-reducer')
-const { metrologyFactory } = require('../src/metrologyFactory')
-
-// require('debug').enable('*hooker')
 
 describe('hooker', () => {
   test('loopback cleared immediately', async () => {

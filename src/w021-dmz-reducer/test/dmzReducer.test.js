@@ -1,8 +1,6 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:tests:dmzReducer')
-const { interchain, '@@GLOBAL_HOOK': hook } = require('../../w002-api')
-const {
+import { interchain, _hook as hook } from '../../w002-api'
+import {
   dmzModel,
   rxRequestModel,
   actionModel,
@@ -10,12 +8,14 @@ const {
   addressModel,
   stateModel,
   covenantIdModel,
-} = require('../../w015-models')
-const { networkProducer } = require('../../w016-producers')
-const { actions } = require('..')
-const { metrologyFactory } = require('../../w017-standard-engine')
-const { spawnReducer, spawn } = require('../src/spawn')
-require('debug').enable()
+} from '../../w015-models'
+import { networkProducer } from '../../w016-producers'
+import { actions } from '..'
+import { metrologyFactory } from '../../w017-standard-engine'
+import { spawnReducer, spawn } from '../src/spawn'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:dmzReducer')
+Debug.enable()
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')

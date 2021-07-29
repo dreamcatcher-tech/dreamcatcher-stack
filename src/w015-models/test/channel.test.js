@@ -1,12 +1,5 @@
 import assert from 'assert'
-const { isReplyFor } = require('../../w002-api')
-const {
-  actionModel,
-  addressModel,
-  continuationModel,
-  channelModel,
-  provenanceModel,
-} = require('..')
+import { actionModel, addressModel, channelModel, provenanceModel } from '..'
 
 describe('channel', () => {
   describe('create', () => {

@@ -28,8 +28,9 @@
 
  * 
  */
-const parseFunction = require('parse-function')()
 import assert from 'assert'
+import parseFunction from 'parse-function'
+const parseFunction = ParseFunction()
 
 const covenantSchema = {
   type: 'object',

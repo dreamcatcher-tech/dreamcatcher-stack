@@ -1,15 +1,14 @@
 import assert from 'assert'
-const { ioQueueFactory } = require('../../w003-queue')
-const { interblockModel, addressModel, txModel } = require('../../w015-models')
-const { isolateFactory } = require('./services/isolateFactory')
-const { cryptoFactory } = require('./services/cryptoFactory')
-const { consistencyFactory } = require('./services/consistencyFactory')
-const { increasorConfig } = require('./configs/increasorConfig')
-const { poolConfig } = require('./configs/poolConfig')
-const { receiveConfig } = require('./configs/receiveConfig')
-const { transmitConfig } = require('./configs/transmitConfig')
-
-const { pure } = require('../../w001-xstate-direct')
+import { ioQueueFactory } from '../../w003-queue'
+import { interblockModel, addressModel, txModel } from '../../w015-models'
+import { isolateFactory } from './services/isolateFactory'
+import { cryptoFactory } from './services/cryptoFactory'
+import { consistencyFactory } from './services/consistencyFactory'
+import { increasorConfig } from './configs/increasorConfig'
+import { poolConfig } from './configs/poolConfig'
+import { receiveConfig } from './configs/receiveConfig'
+import { transmitConfig } from './configs/transmitConfig'
+import { pure } from '../../w001-xstate-direct'
 
 const fsmFactory = () => {
   const ioIsolate = ioQueueFactory('ioIsolate')
@@ -75,4 +74,4 @@ const fsmFactory = () => {
   }
 }
 
-module.exports = { fsmFactory }
+export { fsmFactory }

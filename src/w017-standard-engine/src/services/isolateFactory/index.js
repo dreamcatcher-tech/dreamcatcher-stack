@@ -1,1 +1,1 @@
-module.exports = require('./isolateFactory')
+export * from './isolateFactory'

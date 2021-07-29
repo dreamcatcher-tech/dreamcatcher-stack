@@ -1,4 +1,4 @@
-const { blockModel, interblockModel } = require('../../../w015-models')
+import { blockModel, interblockModel } from '../../../w015-models'
 
 const createBase = async (ioConsistency, sqsPool) => {
   triggerIgnition(sqsPool)
@@ -25,4 +25,4 @@ const tapConsistency = (ioConsistency) => {
   return promise
 }
 
-module.exports = { createBase }
+export { createBase }

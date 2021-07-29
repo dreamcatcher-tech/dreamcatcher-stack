@@ -1,7 +1,6 @@
 import assert from 'assert'
-const { keypairModel, blockModel, dmzModel } = require('../../w015-models')
-const { blockProducer } = require('../../w016-producers')
-require('../../w012-crypto').testMode()
+import { keypairModel, blockModel, dmzModel } from '../../w015-models'
+import { blockProducer } from '../../w016-producers'
 
 describe('blockProducer', () => {
   describe('generateNext', () => {

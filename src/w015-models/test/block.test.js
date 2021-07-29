@@ -1,12 +1,12 @@
 import assert from 'assert'
-const {
+import {
   dmzModel,
   provenanceModel,
   blockModel,
   keypairModel,
   cryptoCacher,
-} = require('..')
-const crypto = require('../../w012-crypto')
+} from '..'
+import * as crypto from '../../w012-crypto'
 
 describe('block', () => {
   describe('instantiation', () => {

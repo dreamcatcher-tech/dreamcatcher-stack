@@ -1,7 +1,6 @@
 import assert from 'assert'
-const { keypairModel } = require('..')
-const crypto = require('../../w012-crypto')
-require('../../w012-crypto').testMode()
+import { keypairModel } from '..'
+import * as crypto from '../../w012-crypto'
 
 describe('keypair', () => {
   test('verifies keys on load', async () => {

@@ -1,4 +1,4 @@
-const api = require('../../w002-api')
+import api from '../../w002-api'
 const types = {
   PING: `pingpong/PING`,
   PONG: `pingpong/PONG`,
@@ -48,8 +48,4 @@ const reducer = (state = initialState, action) => {
   }
 }
 
-module.exports = {
-  types,
-  actions,
-  reducer,
-}
+export { types, actions, reducer }

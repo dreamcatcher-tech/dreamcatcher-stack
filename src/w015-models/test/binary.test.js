@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { binaryModel } = require('..')
+import { binaryModel } from '..'
 
 describe('binary', () => {
   test('creates default', () => {

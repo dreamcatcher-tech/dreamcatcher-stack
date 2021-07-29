@@ -1,7 +1,7 @@
+import assert from 'assert'
+import { ramDynamoDbFactory } from './ramDynamoDbFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:consistency:db')
-import assert from 'assert'
-const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
 
 const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
   let baseChainItem
@@ -168,4 +168,4 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
   }
 }
 
-module.exports = { dbFactory }
+export { dbFactory }

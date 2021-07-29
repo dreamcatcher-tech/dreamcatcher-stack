@@ -1,9 +1,9 @@
 import assert from 'assert'
+import posix from 'path-browserify'
+import { replyResolve } from '../../w002-api'
+import { getChannelParams } from './utils'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:getChannel')
-const posix = require('path-browserify')
-const { replyResolve } = require('../../w002-api')
-const { getChannelParams } = require('./utils')
 
 const getChannel = (alias = '.') => ({
   type: '@@GET_CHAN',
@@ -23,4 +23,4 @@ const getChannelReducer = (network, action) => {
   }
   replyResolve(getChannelParams(network, alias))
 }
-module.exports = { getChannel, getChannelReducer }
+export { getChannel, getChannelReducer }

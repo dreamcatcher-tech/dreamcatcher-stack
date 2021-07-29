@@ -27,16 +27,8 @@
  * but the logic they use are the execution functions only.
  */
 
-const networkProducer = require('./src/networkProducer')
-const blockProducer = require('./src/blockProducer')
-const lockProducer = require('./src/lockProducer')
-const channelProducer = require('./src/channelProducer')
-const pendingProducer = require('./src/pendingProducer')
-
-module.exports = {
-  networkProducer,
-  blockProducer,
-  lockProducer,
-  channelProducer,
-  pendingProducer,
-}
+export * from './src/networkProducer'
+export * from './src/blockProducer'
+export * from './src/lockProducer'
+export * from './src/channelProducer'
+export * from './src/pendingProducer'

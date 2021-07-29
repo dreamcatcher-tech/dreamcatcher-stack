@@ -1,6 +1,6 @@
 import assert from 'assert'
-const { interpret } = require('xstate')
-const { machineLogger } = require('./machineLogger')
+import { interpret } from 'xstate'
+import { machineLogger } from './machineLogger'
 
 let _logFactory = machineLogger
 
@@ -47,4 +47,4 @@ const setLogger = (logger) => {
   _logFactory = logger
 }
 
-module.exports = { thread, setLogger }
+export { thread, setLogger }

@@ -1,12 +1,11 @@
 import assert from 'assert'
+import { metrologyFactory } from '../src/metrologyFactory'
+import { interblockModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pool')
-const { metrologyFactory } = require('../src/metrologyFactory')
-const { interblockModel } = require('../../w015-models')
-require('../../w012-crypto').testMode()
+Debug.enable()
 
 describe('transmit', () => {
-  require('debug').enable()
   test('base has pooled lineage except genesis', async () => {
     const base = await metrologyFactory()
 

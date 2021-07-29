@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { timestampModel } = require('..')
+import { timestampModel } from '..'
 describe('timestamp', () => {
   test('create', () => {
     const now = timestampModel.create()

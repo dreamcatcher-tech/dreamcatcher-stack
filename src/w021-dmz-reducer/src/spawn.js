@@ -1,7 +1,5 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:dmz:spawn')
-const {
+import {
   blockModel,
   actionModel,
   channelModel,
@@ -11,10 +9,12 @@ const {
   dmzModel,
   rxRequestModel,
   covenantIdModel,
-} = require('../../w015-models')
-const { channelProducer, networkProducer } = require('../../w016-producers')
-const { autoAlias } = require('./utils')
-const { effectInBand, replyPromise } = require('../../w002-api')
+} from '../../w015-models'
+import { channelProducer, networkProducer } from '../../w016-producers'
+import { autoAlias } from './utils'
+import { effectInBand, replyPromise } from '../../w002-api'
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:spawn')
 
 const spawn = (alias, spawnOpts = {}, actions = []) => {
   const action = {
@@ -80,4 +80,4 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   return networkModel.merge(network, nextNetwork)
 }
 
-module.exports = { spawn, spawnReducer, spawnReducerWithoutPromise }
+export { spawn, spawnReducer, spawnReducerWithoutPromise }

@@ -1,11 +1,10 @@
 import assert from 'assert'
+import { metrologyFactory } from '../src/metrologyFactory'
+import { blockModel } from '../../w015-models'
+import { shell } from '../../w212-system-covenants'
+import { request } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:covenants')
-const { metrologyFactory } = require('../src/metrologyFactory')
-const { blockModel } = require('../../w015-models')
-const { shell } = require('../../w212-system-covenants')
-const { request } = require('../../w002-api')
-// require('debug').enable('*met* *tests*')
 
 describe('user covenants', () => {
   test('@@INIT', async () => {

@@ -1,13 +1,7 @@
 import assert from 'assert'
-const random = require('lodash.random')
-const {
-  request,
-  promise,
-  resolve,
-  reject,
-  isReplyFor,
-} = require('../../w002-api')
-const {
+import random from 'lodash.random'
+import { request, isReplyFor } from '../../w002-api'
+import {
   stateModel,
   channelModel,
   provenanceModel,
@@ -18,11 +12,10 @@ const {
   blockModel,
   interblockModel,
   continuationModel,
-} = require('../../w015-models')
-const { channelProducer } = require('..')
+} from '../../w015-models'
+import { channelProducer } from '..'
 const { setAddress, txRequest, txReply, ingestInterblock, shiftTxRequest } =
   channelProducer
-require('../../w012-crypto').testMode()
 
 describe('channelProducer', () => {
   test('resolve address', async () => {

@@ -1,17 +1,17 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:transmit')
-const flatten = require('lodash.flatten')
-const { assign } = require('xstate')
-const {
+import flatten from 'lodash.flatten'
+import { assign } from 'xstate'
+import {
   interblockModel,
   blockModel,
   socketModel,
   txModel,
   addressModel,
-} = require('../../../w015-models')
-const { definition } = require('../machines/transmit')
-const consistencyProcessor = require('../services/consistencyFactory')
+} from '../../../w015-models'
+import { definition } from '../machines/transmit'
+import consistencyProcessor from '../services/consistencyFactory'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:transmit')
 
 const transmitConfig = (ioConsistency) => {
   const consistency = consistencyProcessor.toFunctions(ioConsistency)
@@ -207,4 +207,4 @@ const transmitConfig = (ioConsistency) => {
   return { machine: definition, config }
 }
 
-module.exports = { transmitConfig }
+export { transmitConfig }

@@ -28,28 +28,25 @@
  */
 
 import assert from 'assert'
-const debugBase = require('debug')('ib:met')
-const posix = require('path-browserify')
+import posix from 'path-browserify'
 import last from 'lodash.last'
 import setImmediate from 'set-immediate-shim'
-const { standardEngineFactory } = require('./standardEngineFactory')
-const { isolateFactory } = require('./services/isolateFactory')
-const {
+import { standardEngineFactory } from './standardEngineFactory'
+import { isolateFactory } from './services/isolateFactory'
+import {
   consistencyFactory,
   ramDynamoDbFactory,
   ramS3Factory,
   s3Keys,
-} = require('./services/consistencyFactory')
-const { createBase } = require('./execution/createBase')
-const { createTap } = require('./execution/tap')
-const { actions } = require('../../w021-dmz-reducer')
-const covenants = require('../../w212-system-covenants')
-const {
-  blockModel,
-  interblockModel,
-  addressModel,
-} = require('../../w015-models')
-const { piercerFactory } = require('./piercerFactory')
+} from './services/consistencyFactory'
+import { createBase } from './execution/createBase'
+import { createTap } from './execution/tap'
+import { actions } from '../../w021-dmz-reducer'
+import covenants from '../../w212-system-covenants'
+import { blockModel, interblockModel, addressModel } from '../../w015-models'
+import { piercerFactory } from './piercerFactory'
+import Debug from 'debug'
+const debugBase = Debug('ib:met')
 
 let id = 0
 const metrologyFactory = async (identifier, covenantOverloads = {}) => {
@@ -353,4 +350,4 @@ const _getPathSegments = (alias) => {
   splits.unshift('/')
   return splits
 }
-module.exports = { metrologyFactory }
+export { metrologyFactory }

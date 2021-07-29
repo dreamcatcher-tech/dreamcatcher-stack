@@ -1,12 +1,12 @@
 import assert from 'assert'
+import { metrologyFactory } from '..'
+import { request } from '../../w002-api'
+import { actions } from '../../w021-dmz-reducer'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pierce')
-const { metrologyFactory } = require('..')
-const { request } = require('../../w002-api')
-const { actions } = require('../../w021-dmz-reducer')
+Debug.enable()
 
 describe('pierce', () => {
-  require('debug').enable()
   test('basic ping', async () => {
     const base = await metrologyFactory()
     const ping = request('PING')

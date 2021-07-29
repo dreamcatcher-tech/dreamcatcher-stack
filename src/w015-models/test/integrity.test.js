@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { integrityModel } = require('../../w015-models')
+import { integrityModel } from '../../w015-models'
 
 describe('integrity', () => {
   test('stable hashing when object keys shuffle', () => {

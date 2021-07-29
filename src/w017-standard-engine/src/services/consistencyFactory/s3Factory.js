@@ -1,12 +1,12 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:consistency:s3')
-const {
+import {
   cryptoCacher,
   blockModel,
   interblockModel,
-} = require('../../../../w015-models')
-const { ramS3Factory } = require('./ramS3Factory')
+} from '../../../../w015-models'
+import { ramS3Factory } from './ramS3Factory'
+import Debug from 'debug'
+const debug = Debug('interblock:consistency:s3')
 
 const s3Factory = (s3 = ramS3Factory()) => {
   const cache = new Map()
@@ -158,4 +158,4 @@ const _dbChainsItemFromBlock = (block) => {
   return item
 }
 
-module.exports = { s3Factory, s3Keys }
+export { s3Factory, s3Keys }

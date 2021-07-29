@@ -1,6 +1,5 @@
 import assert from 'assert'
-const { addressModel, integrityModel } = require('..')
-require('../../w012-crypto').testMode()
+import { addressModel, integrityModel } from '..'
 
 describe('address', () => {
   test('no params makes unknown address', () => {

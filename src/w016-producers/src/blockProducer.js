@@ -1,17 +1,11 @@
 import assert from 'assert'
-const {
+import {
   dmzModel,
-  keypairModel,
   provenanceModel,
   blockModel,
   integrityModel,
-} = require('../../w015-models')
-
-const ciSigner = async (integrity) => {
-  const ciKeypair = keypairModel.create('CI')
-  assert(integrityModel.isModel(integrity))
-  return ciKeypair.sign(integrity)
-}
+  ciSigner,
+} from '../../w015-models'
 
 const generateNext = async (dmz, block, asyncSigner = ciSigner) => {
   // TODO check the dmz follows from the current one ?
@@ -46,4 +40,4 @@ const generateNext = async (dmz, block, asyncSigner = ciSigner) => {
   return nextBlock
 }
 
-module.exports = { generateNext }
+export { generateNext }

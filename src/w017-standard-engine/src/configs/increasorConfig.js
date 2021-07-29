@@ -1,8 +1,6 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:increasor')
-const { assign } = require('xstate')
-const {
+import { assign } from 'xstate'
+import {
   channelModel,
   lockModel,
   addressModel,
@@ -11,15 +9,17 @@ const {
   interblockModel,
   rxRequestModel,
   txReplyModel,
-} = require('../../../w015-models')
-const { blockProducer, lockProducer } = require('../../../w016-producers')
+} from '../../../w015-models'
+import { blockProducer, lockProducer } from '../../../w016-producers'
+import { definition } from '../machines/increasor'
+import { toFunctions as consistencyFn } from '../services/consistencyFactory'
+import { toFunctions as cryptoFn } from '../services/cryptoFactory'
+import { toFunctions as isolateFn } from '../services/isolateFactory'
+import { isolatorConfig } from './isolatorConfig'
+import { pure } from '../../../w001-xstate-direct'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:increasor')
 const { generateNext } = blockProducer
-const { definition } = require('../machines/increasor')
-const { toFunctions: consistencyFn } = require('../services/consistencyFactory')
-const { toFunctions: cryptoFn } = require('../services/cryptoFactory')
-const { toFunctions: isolateFn } = require('../services/isolateFactory')
-const { isolatorConfig } = require('./isolatorConfig')
-const { pure } = require('../../../w001-xstate-direct')
 
 const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
   const consistency = consistencyFn(ioConsistency)
@@ -354,4 +354,4 @@ const _isPierceChanged = (network, previous) => {
   return ioChannel.isTxGreaterThan(previousChannel)
 }
 
-module.exports = { increasorConfig }
+export { increasorConfig }

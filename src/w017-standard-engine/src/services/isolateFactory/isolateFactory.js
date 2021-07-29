@@ -1,15 +1,15 @@
 import assert from 'assert'
-const { '@@GLOBAL_HOOK': hook } = require('../../../../w002-api')
-const {
+import { _hook as hook } from '../../../../w002-api'
+import {
   blockModel,
   rxReplyModel,
   rxRequestModel,
-} = require('../../../../w015-models')
-const systemCovenants = require('../../../../w212-system-covenants')
-const appCovenants = require('../../../../w301-user-apps')
+} from '../../../../w015-models'
+import systemCovenants from '../../../../w212-system-covenants'
+import appCovenants from '../../../../w301-user-apps'
+import { queryFactory } from '../queryFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:isolate')
-const { queryFactory } = require('../queryFactory')
 // TODO move to making own containers, so can keep promises alive
 // TODO set timestamp in container by overriding Date.now()
 // TODO move to having ramIsolate be the default, but allow other hardware based isolations
@@ -160,4 +160,4 @@ const _mergeCovenants = (preloadedCovenants) => {
   }
   return covenants
 }
-module.exports = { isolateFactory, toFunctions }
+export { isolateFactory, toFunctions }

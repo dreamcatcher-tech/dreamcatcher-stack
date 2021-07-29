@@ -1,9 +1,7 @@
 import assert from 'assert'
-const posix = require('path-browserify')
-import Debug from 'debug'
-const debug = Debug('interblock:producers:network')
-const without = require('lodash.without')
-const {
+import posix from 'path-browserify'
+import without from 'lodash.without'
+import {
   channelModel,
   continuationModel,
   actionModel,
@@ -14,8 +12,10 @@ const {
   txRequestModel,
   txReplyModel,
   configModel,
-} = require('../../w015-models')
-const channelProducer = require('./channelProducer')
+} from '../../w015-models'
+import * as channelProducer from './channelProducer'
+import Debug from 'debug'
+const debug = Debug('interblock:producers:network')
 
 /**
  * Interblocks cannot:
@@ -254,7 +254,7 @@ const displaceLightWithHeavy = (interblocks) => {
   })
   return perChainMap
 }
-module.exports = {
+export {
   ingestInterblocks,
   respondRejection,
   respondRequest,

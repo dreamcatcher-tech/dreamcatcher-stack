@@ -1,5 +1,5 @@
 import Debug from 'debug'
-const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
+import { ramDynamoDbFactory } from './ramDynamoDbFactory'
 
 let instanceId = 0
 let ramLockId = 1
@@ -55,4 +55,4 @@ const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
   return { tryAcquire, isValid, release }
 }
 
-module.exports = { lockFactory }
+export { lockFactory }

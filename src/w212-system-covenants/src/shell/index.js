@@ -1,1 +1,1 @@
-module.exports = require('./shell')
+export * from './shell'

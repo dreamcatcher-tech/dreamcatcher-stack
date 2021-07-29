@@ -1,15 +1,9 @@
 import assert from 'assert'
-const chalk = require('ansi-colors')
-const pad = require('pad-left')
-const prettyBytes = require('pretty-bytes')
-const columnify = require('columnify')
-
-const {
-  interblockModel,
-  blockModel,
-  addressModel,
-  provenanceModel,
-} = require('../../../w015-models')
+import chalk from 'ansi-colors'
+import pad from 'pad-left'
+import prettyBytes from 'pretty-bytes'
+import columnify from 'columnify'
+import { interblockModel } from '../../../w015-models'
 const grayUndefined = chalk.gray('undefined')
 
 const interPrint = (interblock, msg, path, bg, fg) => {
@@ -212,10 +206,4 @@ const _getSortedIndices = (obj) => {
   indices.sort((first, second) => first - second)
   return indices
 }
-module.exports = {
-  blockPrint,
-  interPrint,
-  headerPrint,
-  networkPrint,
-  print,
-}
+export { blockPrint, interPrint, headerPrint, networkPrint, print }

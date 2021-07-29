@@ -1,12 +1,12 @@
 import assert from 'assert'
+import { effect } from '../../w002-api'
+import covenants from '../../w212-system-covenants'
+import { metrologyFactory } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:effects')
-const { effect, interchain } = require('../../w002-api')
-const covenants = require('../../w212-system-covenants')
-const { metrologyFactory } = require('..')
+Debug.enable()
 
 describe('effects', () => {
-  require('debug').enable()
   // jest.setTimeout('500')
   test('non hooked promise throws', async () => {
     const reducer = async (state, action) => {

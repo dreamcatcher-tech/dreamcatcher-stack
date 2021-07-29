@@ -1,11 +1,10 @@
 import assert from 'assert'
+import { metrologyFactory } from '../src/metrologyFactory'
+import { shell, hyper, probe } from '../../w212-system-covenants'
+import { isReplyFor } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:heart')
-const { metrologyFactory } = require('../src/metrologyFactory')
-const { shell, hyper, probe } = require('../../w212-system-covenants')
-const { isReplyFor } = require('../../w002-api')
-require('../../w012-crypto').testMode()
-require('debug').enable()
+Debug.enable()
 
 describe('interpreter', () => {
   test('respond to ping with pong', async () => {

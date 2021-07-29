@@ -1,17 +1,17 @@
-import Debug from 'debug'
-const debug = Debug('interblock:covenants:net')
 import assert from 'assert'
-const { interchain } = require('../../w002-api')
-const dmzReducer = require('../../w021-dmz-reducer')
-const { Machine, assign } = require('xstate')
-const { spawn, connect } = dmzReducer.actions
-const { socketModel, covenantIdModel } = require('../../w015-models')
-const {
+import { interchain } from '../../w002-api'
+import { actions } from '../../w021-dmz-reducer'
+import { Machine, assign } from 'xstate'
+import { socketModel, covenantIdModel } from '../../w015-models'
+import {
   respond,
   send,
   sendParent,
   translator,
-} = require('../../w022-xstate-translator')
+} from '../../w022-xstate-translator'
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:net')
+const { spawn, connect } = actions
 
 const netFactory = (gateway) => {
   const config = {
@@ -114,4 +114,4 @@ const netFactory = (gateway) => {
   const covenantId = covenantIdModel.create('net')
   return { actions, schemas, reducer, covenantId }
 }
-module.exports = { netFactory }
+export { netFactory }

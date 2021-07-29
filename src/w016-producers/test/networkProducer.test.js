@@ -1,15 +1,3 @@
-import assert from 'assert'
-const {
-  interblockModel,
-  dmzModel,
-  stateModel,
-  blockModel,
-  addressModel,
-} = require('../../w015-models')
-const { dispatches } = require('../../w021-dmz-reducer')
-const { networkProducer } = require('..')
-require('../../w012-crypto').testMode()
-
 describe('networkProducer', () => {
   test.todo('addValidator appends to existing list')
   describe('ingestInterblocks', () => {

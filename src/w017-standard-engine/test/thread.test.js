@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { shell } = require('../../w212-system-covenants')
+import { shell } from '../../w212-system-covenants'
 
 describe('engine', () => {
   jest.setTimeout(100)

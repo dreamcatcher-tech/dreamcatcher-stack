@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { effectorFactory } = require('..')
+import { effectorFactory } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:effectorFactory')
 

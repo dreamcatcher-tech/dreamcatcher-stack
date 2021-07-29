@@ -1,10 +1,9 @@
 import assert from 'assert'
+import { metrologyFactory } from '../src/metrologyFactory'
+import { blockModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pool')
-const { metrologyFactory } = require('../src/metrologyFactory')
-const { blockModel } = require('../../w015-models')
-require('../../w012-crypto').testMode()
-require('debug').enable()
+Debug.enable()
 
 describe('pool', () => {
   describe('initializeStorage', () => {

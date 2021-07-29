@@ -1,9 +1,9 @@
 import assert from 'assert'
+import { metrologyFactory } from '../src/metrologyFactory'
+import { shell } from '../../w212-system-covenants'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:increasor')
-const { metrologyFactory } = require('../src/metrologyFactory')
-const { shell } = require('../../w212-system-covenants')
-require('debug').enable()
+Debug.enable()
 
 describe('increasor', () => {
   test('no new block from lineage interblocks', async () => {

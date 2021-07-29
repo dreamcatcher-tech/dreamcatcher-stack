@@ -1,5 +1,5 @@
 import assert from 'assert'
-const {
+import {
   dmzModel,
   actionModel,
   networkModel,
@@ -7,11 +7,8 @@ const {
   blockModel,
   channelModel,
   addressModel,
-} = require('..')
-const {
-  channelProducer: { txRequest },
-} = require('../../w016-producers')
-require('../../w012-crypto').testMode()
+} from '..'
+import { txRequest } from '../../w016-producers'
 
 const createBlockWithEffects = async () => {
   const address = addressModel.create('TEST')

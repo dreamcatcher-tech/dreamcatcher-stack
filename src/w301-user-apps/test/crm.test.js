@@ -1,9 +1,9 @@
 import assert from 'assert'
-const { effectorFactory, awsFactory } = require('../../w020-emulators')
-const { crm } = require('../src/crm')
+import { effectorFactory, awsFactory } from '../../w020-emulators'
+import { crm } from '../src/crm'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
-require('debug').enable('*tests:crm *met*')
+Debug.enable('*tests:crm *met*')
 
 describe.skip('crm', () => {
   describe('app deploy', () => {

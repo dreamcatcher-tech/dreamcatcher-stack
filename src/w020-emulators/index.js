@@ -29,8 +29,6 @@ const sideEffects = {
 
 */
 
-const { effectorFactory } = require('./src/effectorFactory')
-const { awsFactory } = require('./src/awsFactory')
-const { browserFactory } = require('./src/browserFactory')
-
-module.exports = { effectorFactory, awsFactory, browserFactory }
+export * from './src/effectorFactory'
+export * from './src/awsFactory'
+export * from './src/browserFactory'

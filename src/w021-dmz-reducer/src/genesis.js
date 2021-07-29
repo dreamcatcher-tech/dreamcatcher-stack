@@ -1,7 +1,7 @@
+import { interchain, replyResolve } from '../../w002-api'
+import { blockModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:genesis')
-const { interchain, replyResolve } = require('../../w002-api')
-const { blockModel } = require('../../w015-models')
 
 const genesisReducer = (network, action) => {
   // TODO check can only have come from parent, and must be the first action in the channel
@@ -21,4 +21,4 @@ const genesisReply = (action) => {
   }
   debug('reply received for @@GENESIS')
 }
-module.exports = { genesisReducer, genesisReply }
+export { genesisReducer, genesisReply }

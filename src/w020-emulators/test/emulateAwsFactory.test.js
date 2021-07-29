@@ -1,8 +1,7 @@
 import assert from 'assert'
-const { effectorFactory, awsFactory } = require('..')
+import { effectorFactory, awsFactory } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:awsFactory')
-require('../../w012-crypto').testMode()
 
 describe('emulateAwsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal

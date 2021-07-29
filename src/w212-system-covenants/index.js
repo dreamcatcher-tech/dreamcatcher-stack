@@ -1,32 +1,32 @@
-const { covenantIdModel } = require('../w015-models')
+import { covenantIdModel } from '../w015-models'
 
-const collection = require('./src/collection')
+import collection from './src/collection'
 collection.covenantId = covenantIdModel.create('collection')
 
-const datum = require('./src/datum')
+import datum from './src/datum'
 
-const dpkg = require('./src/dpkg')
+import dpkg from './src/dpkg'
 dpkg.covenantId = covenantIdModel.create('dpkg')
 
-const shell = require('./src/shell')
+import shell from './src/shell'
 shell.covenantId = covenantIdModel.create('shell')
 
-const net = require('../w020-emulators/src/netFactory')
+import net from '../w020-emulators/src/netFactory'
 net.covenantId = covenantIdModel.create('net')
 
-const socket = require('../w020-emulators/src/socketFactory')
+import socket from '../w020-emulators/src/socketFactory'
 socket.covenantId = covenantIdModel.create('socket')
 
-const hyper = require('./src/hyper')
+import hyper from './src/hyper'
 hyper.covenantId = covenantIdModel.create('hyper')
 
 const unity = { reducer: (state = {}) => state }
 unity.covenantId = covenantIdModel.create('unity')
 
-const probe = require('./src/probe')
+import probe from './src/probe'
 probe.covenantId = covenantIdModel.create('probe')
 
-module.exports = {
+Object.values({
   collection,
   datum,
   dpkg,
@@ -36,6 +36,6 @@ module.exports = {
   shell,
   socket,
   unity,
-}
+}).forEach(Object.freeze)
 
-Object.values(module.exports).forEach(Object.freeze)
+export { collection, datum, dpkg, hyper, net, probe, shell, socket, unity }

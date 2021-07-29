@@ -1,21 +1,18 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart:pending')
-const {
+import {
   txReplyModel,
   rxReplyModel,
   rxRequestModel,
-  addressModel,
   dmzModel,
-  channelModel,
   reductionModel,
-  pendingModel,
   txRequestModel,
-} = require('../../../w015-models')
-const { networkProducer, pendingProducer } = require('../../../w016-producers')
-const { definition } = require('../machines/pending')
-const { assign } = require('xstate')
-const { common } = require('./common')
+} from '../../../w015-models'
+import { networkProducer, pendingProducer } from '../../../w016-producers'
+import { definition } from '../machines/pending'
+import { assign } from 'xstate'
+import { common } from './common'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:heart:pending')
 const {
   transmit,
   assignResolve,
@@ -171,4 +168,4 @@ const pendingConfig = (context) => {
   return { machine, config }
 }
 
-module.exports = { pendingConfig }
+export { pendingConfig }

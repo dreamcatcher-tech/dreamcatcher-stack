@@ -1,12 +1,12 @@
+import assert from 'assert'
+import { Machine } from 'xstate'
+import { send, sendParent, respond, translator } from '..'
+import { shell } from '../../w212-system-covenants'
+import { rxReplyModel, actionModel } from '../../w015-models'
+import { _hook as hook, interchain } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:translator')
-import assert from 'assert'
-const { Machine } = require('xstate')
-const { send, sendParent, respond, translator } = require('..')
-const { shell } = require('../../w212-system-covenants')
-const { rxReplyModel, actionModel } = require('../../w015-models')
-const { '@@GLOBAL_HOOK': hook, interchain } = require('../../w002-api')
-require('debug').enable()
+Debug.enable()
 const testMachine = Machine(
   {
     id: 'testMachine',

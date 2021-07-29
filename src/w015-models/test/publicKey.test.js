@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { publicKeyModel } = require('..')
+import { publicKeyModel } from '..'
 describe('publicKey', () => {
   test('cannot create', () => {
     assert.throws(publicKeyModel.create)

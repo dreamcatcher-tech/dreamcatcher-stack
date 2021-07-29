@@ -1,9 +1,9 @@
-const { consistencySourceFactory } = require('./consistencySourceFactory')
-const { toFunctions, fromFunctions } = require('./queueToFunctions')
-const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
-const { ramS3Factory } = require('./ramS3Factory')
-const { s3Keys } = require('./s3Factory')
-const { dbFactory } = require('./dbFactory')
+import { consistencySourceFactory } from './consistencySourceFactory'
+import { toFunctions, fromFunctions } from './queueToFunctions'
+import { ramDynamoDbFactory } from './ramDynamoDbFactory'
+import { ramS3Factory } from './ramS3Factory'
+import { s3Keys } from './s3Factory'
+import { dbFactory } from './dbFactory'
 
 const consistencyFactory = (dynamoDb, s3Base, awsRequestId) => {
   const consistencySource = consistencySourceFactory(
@@ -15,7 +15,7 @@ const consistencyFactory = (dynamoDb, s3Base, awsRequestId) => {
   return consistencyProcessor
 }
 
-module.exports = {
+export {
   consistencyFactory,
   toFunctions,
   ramDynamoDbFactory,

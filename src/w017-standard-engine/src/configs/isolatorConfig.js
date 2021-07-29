@@ -1,10 +1,8 @@
 import assert from 'assert'
-const memoize = require('lodash/memoize')
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:isolator')
-const { assign } = require('xstate')
-const { pure } = require('../../../w001-xstate-direct')
-const {
+import memoize from 'lodash/memoize'
+import { assign } from 'xstate'
+import { pure } from '../../../w001-xstate-direct'
+import {
   channelModel,
   interblockModel,
   blockModel,
@@ -13,11 +11,13 @@ const {
   lockModel,
   keypairModel,
   pierceSigner,
-} = require('../../../w015-models')
-const { networkProducer, channelProducer } = require('../../../w016-producers')
-const { interpreterConfig } = require('./interpreterConfig')
-const { definition } = require('../machines/isolator')
+} from '../../../w015-models'
+import { networkProducer, channelProducer } from '../../../w016-producers'
+import { interpreterConfig } from './interpreterConfig'
+import { definition } from '../machines/isolator'
 import * as crypto from '../../../w012-crypto'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:isolator')
 const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
 
 const isReduceable = ({ dmz }) => {
@@ -380,4 +380,4 @@ const isolatorConfig = (isolation, consistency) => {
   return { machine: definition, config }
 }
 
-module.exports = { isolatorConfig }
+export { isolatorConfig }

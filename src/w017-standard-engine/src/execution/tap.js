@@ -1,21 +1,22 @@
 import assert from 'assert'
 import last from 'lodash.last'
-// const chalk = require('ansi-colors')
-const {
+// const chalk from 'ansi-colors')
+import {
   blockPrint,
   interPrint,
   headerPrint,
   networkPrint,
   print,
-} = require('./printer')
-const { blockModel, interblockModel } = require('../../../w015-models')
-const needle = require('../../../w004-needle')
+} from './printer'
+import { blockModel, interblockModel } from '../../../w015-models'
+import needle from '../../../w004-needle'
+import Debug from 'debug'
 
 const createTap = (prefix = 'interblock:blocktap') => {
   let isOn = false
   const on = () => (isOn = true)
   const off = () => (isOn = false)
-  const debugBase = require('debug')(prefix)
+  const debugBase = Debug(prefix)
   const cache = {}
 
   const debugTran = debugBase.extend('t')
@@ -179,4 +180,4 @@ const createTap = (prefix = 'interblock:blocktap') => {
   needle.setTap(tap) // TODO handle multiple taps
   return tap
 }
-module.exports = { createTap }
+export { createTap }

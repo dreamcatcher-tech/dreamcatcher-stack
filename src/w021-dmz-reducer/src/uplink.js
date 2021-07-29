@@ -1,13 +1,9 @@
 import assert from 'assert'
+import { replyResolve, replyReject } from '../../w002-api'
+import { networkModel, addressModel, channelModel } from '../../w015-models'
+import { autoAlias } from './utils'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:uplink')
-const { replyResolve, replyReject } = require('../../w002-api')
-const {
-  networkModel,
-  addressModel,
-  channelModel,
-} = require('../../w015-models')
-const { autoAlias } = require('./utils')
 
 const uplink = (chainId, originAction) => ({
   type: '@@UPLINK',
@@ -51,4 +47,4 @@ const uplinkReply = (network, reply) => {
   }
 }
 
-module.exports = { uplink, uplinkReducer, uplinkReply }
+export { uplink, uplinkReducer, uplinkReply }

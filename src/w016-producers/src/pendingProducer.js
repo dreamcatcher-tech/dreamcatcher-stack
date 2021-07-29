@@ -1,9 +1,5 @@
 import assert from 'assert'
-const {
-  rxRequestModel,
-  rxReplyModel,
-  pendingModel,
-} = require('../../w015-models')
+import { rxRequestModel, rxReplyModel, pendingModel } from '../../w015-models'
 
 const raisePending = (pending, pendingRequest) => {
   assert(rxRequestModel.isModel(pendingRequest))
@@ -53,10 +49,4 @@ const shiftRequests = (pending, network) => {
   return pendingModel.clone({ ...pending, requests })
 }
 
-module.exports = {
-  raisePending,
-  bufferRequest,
-  pushReply,
-  settle,
-  shiftRequests,
-}
+export { raisePending, bufferRequest, pushReply, settle, shiftRequests }

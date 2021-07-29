@@ -35,38 +35,19 @@
 
     */
 import assert from 'assert'
+import { version } from '../package.json'
+import sodiumplus from 'sodium-plus'
+import { browserFactory, effectorFactory, awsFactory } from './w020-emulators'
+import engine from './w017-standard-engine'
+import apps from './w301-user-apps'
 import Debug from 'debug'
 const debug = Debug('interblock')
+
 if (!globalThis._interblockLibrary) {
-  const { version } = require('../package.json')
   debug(`interblock version: ${version}`)
 
-  const {
-    browserFactory,
-    effectorFactory,
-    awsFactory,
-  } = require('./w020-emulators')
-  const engine = require('./w017-standard-engine')
-  const apps = require('./w301-user-apps')
-
   const checkModules = () => {
-    const exp = {}
-    exp.ajv = require('ajv')
-    exp.ajvformats = require('ajv-formats')
-    exp.debug = require('debug')
-    exp.fastdeepequal = require('fast-deep-equal')
-    exp.fastjsonstablestringify = require('fast-json-stable-stringify')
-    exp.localforage = require('localforage')
-    exp.objecthash = require('object-hash')
-    exp.padleft = require('pad-left')
-    exp.seedrandom = require('seedrandom')
-    exp.serializeerror = require('serialize-error')
-    exp.sodiumplus = require('sodium-plus')
-    exp.uuid = require('uuid')
-    exp.xstate = require('xstate')
-    debug('loaded')
-
-    const { SodiumPlus } = exp.sodiumplus
+    const { SodiumPlus } = sodiumplus
     const load = async () => {
       const sodium = await SodiumPlus.auto()
       debug(`libsodium backend: `, sodium.getBackendName())

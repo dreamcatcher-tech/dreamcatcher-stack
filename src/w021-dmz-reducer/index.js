@@ -1,3 +1,3 @@
-const dmzReducer = require('./src/dmzReducer')
-const { listChildren } = require('./src/utils')
-module.exports = { ...dmzReducer, listChildren }
+export * from './src/dmzReducer'
+// TODO export all from utils ?
+export { listChildren } from './src/utils'

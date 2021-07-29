@@ -1,15 +1,14 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:tests:consistency')
-const {
+import {
   ramDynamoDbFactory,
   consistencySourceFactory,
-} = require('../src/services/consistencyFactory')
-const { addressModel, blockModel, lockModel } = require('../../w015-models')
-const { v4 } = require('uuid')
-const { integrityModel } = require('../../w015-models')
-require('debug').enable()
-require('../../w012-crypto').testMode()
+} from '../src/services/consistencyFactory'
+import { addressModel, blockModel, lockModel } from '../../w015-models'
+import { v4 } from 'uuid'
+import { integrityModel } from '../../w015-models'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:consistency')
+Debug.enable()
 
 describe('awsConsistency', () => {
   const lockExpiresMs = 2

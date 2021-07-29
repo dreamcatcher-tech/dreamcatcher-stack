@@ -1,6 +1,5 @@
 import assert from 'assert'
-const { dmzModel } = require('..')
-require('../../w012-crypto').testMode()
+import { dmzModel } from '..'
 
 describe('dmz', () => {
   test('create defaults', () => {

@@ -1,17 +1,16 @@
 import assert from 'assert'
+import * as datum from './datum'
+import { interchain } from '../../w002-api'
+import { actions } from '../../w021-dmz-reducer'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
-const datum = require('./datum')
 const {
   convertToTemplate,
   demuxFormData,
   validateDatumTemplate,
   muxTemplateWithFormData,
 } = datum
-const { interchain } = require('../../w002-api')
-const {
-  actions: { spawn },
-} = require('../../w021-dmz-reducer')
+const { spawn } = actions
 
 // TODO allow collection to also store formData as tho it was a datum, without children spec
 const reducer = async (state, action) => {
@@ -117,4 +116,4 @@ const actions = {
   delete: () => ({ type: 'DELETE' }), // or can delete the child directly ?
 }
 
-module.exports = { reducer, actions }
+export { reducer, actions }

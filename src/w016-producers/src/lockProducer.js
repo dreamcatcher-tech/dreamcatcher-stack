@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { lockModel, blockModel } = require('../../w015-models')
+import { lockModel, blockModel } from '../../w015-models'
 /**
  * Given a lock and a block, return a new lock with the pool reconciled,
  * as the latest block may already contain some of the interblock pool,
@@ -17,4 +17,4 @@ const reconcile = (lock, block) => {
   return lockModel.clone({ ...lock, block, piercings, interblocks })
 }
 
-module.exports = { reconcile }
+export { reconcile }

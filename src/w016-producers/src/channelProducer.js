@@ -1,14 +1,14 @@
 import assert from 'assert'
+import last from 'lodash/last'
 import Debug from 'debug'
 const debug = Debug('interblock:producers:channel')
-const last = require('lodash/last')
-const {
+import {
   addressModel,
   channelModel,
   interblockModel,
   actionModel,
   continuationModel,
-} = require('../../w015-models')
+} from '../../w015-models'
 const ingestInterblocks = (channel, interblocks) => {
   assert(channelModel.isModel(channel))
   assert(Array.isArray(interblocks))
@@ -206,7 +206,7 @@ const invalidate = (channel) => {
   const invalid = addressModel.create('INVALID')
   return setAddress(channel, invalid)
 }
-module.exports = {
+export {
   ingestInterblocks,
   ingestInterblock,
   ingestPierceInterblock,

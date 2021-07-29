@@ -1,18 +1,18 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart.direct')
-const {
+import {
   txReplyModel,
   rxReplyModel,
   rxRequestModel,
   dmzModel,
-  channelModel,
   reductionModel,
-} = require('../../../w015-models')
-const { networkProducer, pendingProducer } = require('../../../w016-producers')
-const { definition } = require('../machines/direct')
-const { assign } = require('xstate')
-const { common } = require('./common')
+} from '../../../w015-models'
+import { networkProducer, pendingProducer } from '../../../w016-producers'
+import { definition } from '../machines/direct'
+import { assign } from 'xstate'
+import { common } from './common'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:heart.direct')
+
 const {
   transmit,
   respondReply,
@@ -147,4 +147,4 @@ const directConfig = (context) => {
   return { machine, config }
 }
 
-module.exports = { directConfig }
+export { directConfig }

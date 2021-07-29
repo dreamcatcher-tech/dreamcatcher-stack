@@ -1,21 +1,21 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart')
-const { pure } = require('../../../w001-xstate-direct')
-const {
+import { pure } from '../../../w001-xstate-direct'
+import {
   rxReplyModel,
   rxRequestModel,
   addressModel,
   dmzModel,
-} = require('../../../w015-models')
-const { networkProducer } = require('../../../w016-producers')
-const dmzReducer = require('../../../w021-dmz-reducer')
-const { definition } = require('../machines/interpreter')
-const { directConfig } = require('./directConfig')
-const { pendingConfig } = require('./pendingConfig')
-const { autoResolvesConfig } = require('./autoResolvesConfig')
-const { dmzConfig } = require('./dmzConfig')
-const { assign } = require('xstate')
+} from '../../../w015-models'
+import { networkProducer } from '../../../w016-producers'
+import dmzReducer from '../../../w021-dmz-reducer'
+import { definition } from '../machines/interpreter'
+import { directConfig } from './directConfig'
+import { pendingConfig } from './pendingConfig'
+import { autoResolvesConfig } from './autoResolvesConfig'
+import { dmzConfig } from './dmzConfig'
+import { assign } from 'xstate'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:heart')
 
 const config = {
   actions: {
@@ -168,4 +168,4 @@ const interpreterConfig = (isolatedTick) => {
   return { machine, config }
 }
 
-module.exports = { interpreterConfig }
+export { interpreterConfig }

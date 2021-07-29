@@ -2,8 +2,8 @@ import assert from 'assert'
 import Debug from 'debug'
 const debug = Debug('interblock:xstate:translator')
 import equal from 'fast-deep-equal'
-const { State } = require('xstate')
-const {
+import { State } from 'xstate'
+import {
   request,
   promise,
   resolve,
@@ -13,7 +13,7 @@ const {
   replyReject,
   replyResolve,
   interchain,
-} = require('../../w002-api')
+} from '../../w002-api'
 
 const respond = (payload) => {
   if (typeof payload === 'string') {
@@ -174,4 +174,4 @@ const assertActionIsValid = (state, action) => {
   }
 }
 
-module.exports = { respond, send, sendParent, translator }
+export { respond, send, sendParent, translator }

@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { addressModel, rxRequestModel, integrityModel } = require('..')
+import { addressModel, rxRequestModel, integrityModel } from '..'
 
 describe('rxRequest', () => {
   test('addresses are identical', () => {

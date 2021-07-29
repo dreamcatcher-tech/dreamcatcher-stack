@@ -1,6 +1,5 @@
-const { covenantIdModel } = require('../w015-models')
-
-const { crm } = require('./src/crm')
+import { covenantIdModel } from '../w015-models'
+import { crm } from './src/crm'
 crm.covenantId = covenantIdModel.create('crm')
 
-module.exports = { crm }
+export { crm }

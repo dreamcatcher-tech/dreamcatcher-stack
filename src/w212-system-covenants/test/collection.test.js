@@ -1,9 +1,8 @@
 import assert from 'assert'
-const { effectorFactory } = require('../../index')
+import { effectorFactory } from '../../index'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
-
-require('debug').enable()
+Debug.enable()
 
 describe.skip('collection', () => {
   test('add with test data', async () => {

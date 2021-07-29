@@ -1,7 +1,7 @@
 import assert from 'assert'
+import { metrologyFactory } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:metrology')
-const { metrologyFactory } = require('..')
 
 describe('metrology', () => {
   describe('spawn', () => {

@@ -1,16 +1,15 @@
 import assert from 'assert'
-const {
+import {
   channelModel,
   addressModel,
   rxReplyModel,
   rxRequestModel,
   dmzModel,
   reductionModel,
-  txRequestModel,
   pendingModel,
-} = require('../../../w015-models')
-const { networkProducer } = require('../../../w016-producers')
-const { assign } = require('xstate')
+} from '../../../w015-models'
+import { networkProducer } from '../../../w016-producers'
+import { assign } from 'xstate'
 const common = (debug) => {
   const reduceCovenant = async ({ dmz, covenantAction, isolatedTick }) => {
     // TODO test the actions are allowed actions using the ACL
@@ -192,4 +191,4 @@ const common = (debug) => {
     isAnvilNotLoopback,
   }
 }
-module.exports = { common }
+export { common }

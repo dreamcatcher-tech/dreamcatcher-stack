@@ -1,6 +1,6 @@
 import assert from 'assert'
-const compact = require('lodash.compact')
-const {
+import compact from 'lodash.compact'
+import {
   addressModel,
   integrityModel,
   provenanceModel,
@@ -10,7 +10,12 @@ const {
   interblockModel,
   txRequestModel,
   txReplyModel,
-} = require('../../../../w015-models')
+} from '../../../../w015-models'
+import { lockFactory } from './lockFactory'
+import { dbFactory } from './dbFactory'
+import { s3Factory, s3Keys } from './s3Factory'
+import { ramDynamoDbFactory } from './ramDynamoDbFactory'
+import { ramS3Factory } from './ramS3Factory'
 import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
@@ -64,12 +69,6 @@ const _dbSubscriptionFromBlock = (block) => (subscriptionAddress) => {
   }
   return item
 }
-
-const { lockFactory } = require('./lockFactory')
-const { dbFactory } = require('./dbFactory')
-const { s3Factory, s3Keys } = require('./s3Factory')
-const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
-const { ramS3Factory } = require('./ramS3Factory')
 
 const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
   dynamoDb = dynamoDb || ramDynamoDbFactory()
@@ -489,4 +488,4 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     putPierceReply,
   }
 }
-module.exports = { consistencySourceFactory }
+export { consistencySourceFactory }

@@ -1,5 +1,6 @@
 import assert from 'assert'
-const { checkModules } = require('./lib/index.js')
+import { checkModules } from './lib/index.js'
+import { main, module } from './package.json'
 
 describe('package', () => {
   test('Running module load checks on ./lib/index.js', async () => {
@@ -7,9 +8,8 @@ describe('package', () => {
     assert(Object.keys(modules).length)
   })
   test('package.json/main points to ./lib/index.js', () => {
-    const { main, module } = require('./package.json')
     assert.strictEqual(main, 'lib/index.js')
-    // assert.strictEqual(module, 'es/index.js')
+    assert.strictEqual(module, 'es/index.js')
   })
   test.todo('ensure no comments in the bundled code')
   test.todo('ensure both bundles are minimized')

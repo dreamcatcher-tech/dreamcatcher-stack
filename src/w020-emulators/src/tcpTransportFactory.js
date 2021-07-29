@@ -10,10 +10,10 @@
  *
  */
 import assert from 'assert'
-const { blockModel, interblockModel } = require('../../w015-models')
+import { blockModel, interblockModel } from '../../w015-models'
+import WebSocket from 'ws'
 import Debug from 'debug'
 const debug = Debug('interblock:transport')
-const WebSocket = require('ws')
 
 const tcpTransportFactory = (url) => {
   // const dummyBlock = await blockModel.create()
@@ -117,4 +117,4 @@ const tcpTransportFactory = (url) => {
   return { connect, ping, pingLambda, version, disconnect, interblock }
 }
 
-module.exports = { tcpTransportFactory }
+export { tcpTransportFactory }

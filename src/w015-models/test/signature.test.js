@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { integrityModel, signatureModel, keypairModel } from '..'
-import crypto from '../../w012-crypto'
+import * as crypto from '../../w012-crypto'
 
 describe('signature', () => {
   test('throws on create attempts', () => {

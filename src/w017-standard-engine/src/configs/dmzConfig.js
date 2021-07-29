@@ -1,17 +1,18 @@
 import assert from 'assert'
-import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart:dmz')
-const {
+import {
   rxReplyModel,
   rxRequestModel,
   dmzModel,
   reductionModel,
   addressModel,
-} = require('../../../w015-models')
-const dmzReducer = require('../../../w021-dmz-reducer')
-const { '@@GLOBAL_HOOK': hook } = require('../../../w002-api')
-const { definition } = require('../machines/dmz')
-const { common } = require('./common')
+} from '../../../w015-models'
+import dmzReducer from '../../../w021-dmz-reducer'
+import { _hook as hook } from '../../../w002-api'
+import { definition } from '../machines/dmz'
+import { common } from './common'
+import { assign } from 'xstate'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:heart:dmz')
 const {
   transmit,
   respondReply,
@@ -23,7 +24,6 @@ const {
   isLoopbackResponseDone,
   isAnvilNotLoopback,
 } = common(debug)
-const { assign } = require('xstate')
 
 const config = {
   actions: {
@@ -84,4 +84,4 @@ const dmzConfig = (context) => {
   return { machine, config }
 }
 
-module.exports = { dmzConfig }
+export { dmzConfig }

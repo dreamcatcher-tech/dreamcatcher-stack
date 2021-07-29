@@ -1,8 +1,8 @@
 import assert from 'assert'
-const { replyResolve } = require('../../w002-api')
+import { replyResolve } from '../../w002-api'
+import { rxRequestModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:ping')
-const { rxRequestModel } = require('../../w015-models')
 
 const ping = (payload = {}) => {
   if (typeof payload === 'string') {
@@ -18,4 +18,4 @@ const pingReducer = (request) => {
   replyResolve(payload)
 }
 
-module.exports = { ping, pingReducer }
+export { ping, pingReducer }

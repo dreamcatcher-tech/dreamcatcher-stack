@@ -17,25 +17,21 @@
  *          hyper1
  *          hyper2
  */
+import { replyResolve } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:hyper')
 
-const { replyResolve, request } = require('../../w002-api')
-const { actions } = require('../../w021-dmz-reducer')
-
 const initialState = {}
-const hyper = {
-  reducer: async (state = initialState, action) => {
-    debug(`hyper action: `, action)
-    const { type, payload } = action
-    switch (type) {
-      case 'PING':
-        replyResolve({ type: 'PONG', payload })
-        break
-    }
-    return { ...state }
-  },
-  actions: {},
+const reducer = async (state = initialState, action) => {
+  debug(`hyper action: `, action)
+  const { type, payload } = action
+  switch (type) {
+    case 'PING':
+      replyResolve({ type: 'PONG', payload })
+      break
+  }
+  return { ...state }
 }
+const actions = {}
 
-module.exports = { ...hyper }
+export { reducer, actions }

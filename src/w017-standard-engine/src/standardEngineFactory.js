@@ -1,13 +1,9 @@
 import assert from 'assert'
-const { sqsQueueFactory } = require('../../w003-queue')
-const {
-  interblockModel,
-  addressModel,
-  txModel,
-  socketModel,
-} = require('../../w015-models')
-const { fsmFactory } = require('./fsmFactory')
-const debugBase = require('debug')('interblock:engine')
+import { sqsQueueFactory } from '../../w003-queue'
+import { interblockModel, addressModel, txModel } from '../../w015-models'
+import { fsmFactory } from './fsmFactory'
+import Debug from 'debug'
+const debugBase = Debug('interblock:engine')
 
 /**
  * Takes the finite state machines and connects them up using queues.
@@ -170,4 +166,4 @@ const standardEngineFactory = () => {
   Object.freeze(engine)
   return engine
 }
-module.exports = { standardEngineFactory }
+export { standardEngineFactory }

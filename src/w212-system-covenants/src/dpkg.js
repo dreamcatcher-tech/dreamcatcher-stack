@@ -9,7 +9,7 @@
  */
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:dpkg')
-const { replyResolve } = require('../../w002-api')
+import { replyResolve } from '../../w002-api'
 
 const reducer = async (state, action) => {
   // TODO verify the state against schema
@@ -31,4 +31,4 @@ const actions = {
   getInstaller: () => ({ type: 'GET_INSTALL' }),
 }
 
-module.exports = { reducer, actions }
+export { reducer, actions }

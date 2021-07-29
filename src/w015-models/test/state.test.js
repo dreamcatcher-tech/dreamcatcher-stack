@@ -1,6 +1,5 @@
 import assert from 'assert'
-const { stateModel } = require('..')
-const { request, promise, resolve, reject } = require('../../w002-api')
+import { stateModel } from '..'
 
 // TODO add in the covenant api tools, and make some actions
 

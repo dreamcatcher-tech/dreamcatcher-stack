@@ -1,13 +1,13 @@
-import Debug from 'debug'
-const debug = Debug('interblock:services:crypto')
 import assert from 'assert'
-const {
+import {
   cryptoCacher,
   keypairModel,
   integrityModel,
-} = require('../../../w015-models')
-const { ramDynamoDbFactory, dbFactory } = require('./consistencyFactory')
+} from '../../../w015-models'
+import { ramDynamoDbFactory, dbFactory } from './consistencyFactory'
 import * as crypto from '../../../w012-crypto'
+import Debug from 'debug'
+const debug = Debug('interblock:services:crypto')
 const { cacheVerifyKeypair } = cryptoCacher
 
 const cryptoSourceFactory = (dynamoDb, keyname = 'CI') => {
@@ -79,4 +79,4 @@ const toFunctions = (queue) => ({
   getValidatorEntry: () => queue.push({ type: 'VALIDATOR' }),
 })
 
-module.exports = { cryptoFactory, toFunctions, crypto }
+export { cryptoFactory, toFunctions, crypto }

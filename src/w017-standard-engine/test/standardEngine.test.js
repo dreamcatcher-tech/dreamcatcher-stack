@@ -1,6 +1,5 @@
 import assert from 'assert'
-const { metrologyFactory } = require('../src/metrologyFactory')
-require('debug').enable()
+import { metrologyFactory } from '../src/metrologyFactory'
 describe('standardEngine', () => {
   test('multiple increase requests successfully lock chain twice', async () => {
     const base = await metrologyFactory()

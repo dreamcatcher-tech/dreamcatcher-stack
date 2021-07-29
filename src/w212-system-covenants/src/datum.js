@@ -1,16 +1,18 @@
 import assert from 'assert'
-// const faker = require('faker/locale/en')
-const Ajv = require('ajv')
-const ajv = new Ajv({ allErrors: true, verbose: true })
-require('ajv-formats')(ajv)
+// const faker from 'faker/locale/en')
+import Ajv from 'ajv'
+import AjvFormats from 'ajv-formats'
+import * as dmzReducer from '../../w021-dmz-reducer'
+import { covenantIdModel } from '../../w015-models'
+import { interchain, useBlocks } from '../../w002-api'
+import seedrandom from 'seedrandom'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:datum')
-const dmzReducer = require('../../w021-dmz-reducer')
-const { covenantIdModel } = require('../../w015-models')
-const { interchain, useBlocks } = require('../../w002-api')
-const seedrandom = require('seedrandom')
+const ajv = new Ajv({ allErrors: true, verbose: true })
+AjvFormats(ajv)
 ajv.addKeyword('faker')
-// const jsf = require('json-schema-faker')
+
+// const jsf from 'json-schema-faker')
 // const isBrowserBundle = !jsf.extend
 // if (isBrowserBundle) {
 //   Object.assign(jsf, {
@@ -265,7 +267,7 @@ const actions = {
 }
 const covenantId = covenantIdModel.create('datum')
 
-module.exports = {
+export {
   actions,
   reducer,
   convertToTemplate,

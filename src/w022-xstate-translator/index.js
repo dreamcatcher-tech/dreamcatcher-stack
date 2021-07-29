@@ -3,5 +3,4 @@
  * an interblock compatible reducer.
  */
 
-const translator = require('./src/translator')
-module.exports = translator
+export { default as default } from './src/translator'

@@ -1,27 +1,15 @@
+import posix from 'path-browserify'
+import assert from 'assert'
+import { covenantIdModel } from '../../../w015-models'
+import * as dmzReducer from '../../../w021-dmz-reducer'
+import { Machine, assign } from 'xstate'
+
+import { interchain, useBlocks } from '../../../w002-api'
+import { respond, translator } from '../../../w022-xstate-translator'
+import { listChildren } from '../../../w021-dmz-reducer'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:shell')
-const posix = require('path-browserify')
-import assert from 'assert'
-const { covenantIdModel } = require('../../../w015-models')
-const dmzReducer = require('../../../w021-dmz-reducer')
-const { Machine, assign } = require('xstate')
-const {
-  ping,
-  spawn,
-  connect,
-  install,
-  getChannel,
-  getState: dmzGetState,
-} = dmzReducer.actions
-const { interchain, useBlocks } = require('../../../w002-api')
-const dpkg = require('../dpkg')
-const {
-  respond,
-  send,
-  sendParent,
-  translator,
-} = require('../../../w022-xstate-translator')
-const { listChildren } = require('../../../w021-dmz-reducer')
+const { ping, spawn, connect, install } = dmzReducer.actions
 const config = {
   actions: {
     respondOrigin: (context, event) => {
@@ -441,4 +429,4 @@ const actions = {
   //   CP: 'copy' // fork a chain and give it a new parent
 }
 const reducer = translator(machine)
-module.exports = { actions, reducer }
+export { actions, reducer }
