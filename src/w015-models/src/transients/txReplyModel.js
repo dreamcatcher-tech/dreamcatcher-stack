@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { standardize } = require('../modelUtils')
 const { continuationModel } = require('../models/continuationModel')
 const { txReplySchema } = require('../schemas/transientSchemas')

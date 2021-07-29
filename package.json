@@ -13,16 +13,17 @@
   ],
   "main": "lib/index.js",
   "module": "es/index.js",
+  "type": "module",
   "scripts": {
     "build": "nwb build-web-module",
     "clean": "nwb clean-module",
     "prepublishOnly": "npm run build",
-    "test": "eslint src && DEBUG_COLORS=1 DEBUG='' jest --bail",
+    "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --bail",
     "test:web": "nwb test",
     "test:coverage": "nwb test --coverage",
     "test:watch": "nwb test --server",
     "test:package": "yarn build && jest package.test.js",
-    "watch": "DEBUG_COLORS=1 DEBUG='' jest --watch",
+    "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --watch",
     "release": "yarn build && np"
   },
   "private": false,
@@ -62,7 +63,8 @@
     "xstate": "^4.23.1"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "transform": {}
   },
   "devDependencies": {
     "babel-preset-minify": "^0.5.1",

@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { continuationModel } = require('..')
 describe('continuation', () => {
   test('promise cannot have payload', () => {

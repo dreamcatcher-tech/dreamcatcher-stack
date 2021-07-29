@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:models:interblock')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:models:interblock')
 const { standardize } = require('../modelUtils')
 const { provenanceModel } = require('./provenanceModel')
 const { integrityModel } = require('./integrityModel')

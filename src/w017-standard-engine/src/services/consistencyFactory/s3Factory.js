@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:consistency:s3')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:consistency:s3')
 const {
   cryptoCacher,
   blockModel,

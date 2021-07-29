@@ -17,7 +17,8 @@
  *          hyper1
  *          hyper2
  */
-const debug = require('debug')('interblock:covenants:hyper')
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:hyper')
 
 const { replyResolve, request } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')

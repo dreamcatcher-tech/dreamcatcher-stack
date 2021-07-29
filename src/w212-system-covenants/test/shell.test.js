@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:shell')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:shell')
 const { resolve } = require('path-browserify')
 const { shell } = require('..')
 const { metrologyFactory } = require('../../w017-standard-engine')

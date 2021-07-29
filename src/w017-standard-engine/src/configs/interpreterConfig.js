@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:cfg:heart')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:heart')
 const { pure } = require('../../../w001-xstate-direct')
 const {
   rxReplyModel,

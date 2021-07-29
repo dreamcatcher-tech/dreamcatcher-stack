@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:models:network')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:models:network')
 const last = require('lodash.last')
 const { standardize } = require('../modelUtils')
 const { channelModel } = require('./channelModel')

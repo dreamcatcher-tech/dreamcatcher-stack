@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { addressModel } = require('../models/addressModel')
 const splitSequence = (sequence) => {
   assert(typeof sequence === 'string')

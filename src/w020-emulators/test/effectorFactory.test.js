@@ -1,7 +1,8 @@
-const assert = require('assert')
+import assert from 'assert'
 const { effectorFactory } = require('..')
 const pingpongConfig = require('../../w302-test-covenants/pingpong/interblock.config')
-const debug = require('debug')('interblock:tests:effectorFactory')
+import Debug from 'debug'
+const debug = Debug('interblock:tests:effectorFactory')
 require('debug').enable()
 
 describe('effector', () => {

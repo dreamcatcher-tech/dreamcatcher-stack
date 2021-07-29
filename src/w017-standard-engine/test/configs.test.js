@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 describe('configs', () => {
   test('all config function names are present in the machines', () => {
     const machines = {

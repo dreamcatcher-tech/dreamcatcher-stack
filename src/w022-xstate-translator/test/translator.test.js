@@ -1,5 +1,6 @@
-const debug = require('debug')('interblock:tests:translator')
-const assert = require('assert')
+import Debug from 'debug'
+const debug = Debug('interblock:tests:translator')
+import assert from 'assert'
 const { Machine } = require('xstate')
 const { send, sendParent, respond, translator } = require('..')
 const { shell } = require('../../w212-system-covenants')

@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:dmz')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:dmz')
 const { openChildReducer, openChildReply, openPaths } = require('./openChild')
 const { uplinkReducer, uplinkReply } = require('./uplink')
 const { connect, connectReducer } = require('./connect')

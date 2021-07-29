@@ -1,5 +1,6 @@
-const debug = require('debug')('interblock:services:crypto')
-const assert = require('assert')
+import Debug from 'debug'
+const debug = Debug('interblock:services:crypto')
+import assert from 'assert'
 const {
   cryptoCacher,
   keypairModel,

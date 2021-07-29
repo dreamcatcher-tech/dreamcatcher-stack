@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { interpret } = require('xstate')
 const { machineLogger } = require('./machineLogger')
 

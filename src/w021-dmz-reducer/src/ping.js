@@ -1,6 +1,7 @@
-const assert = require('assert')
+import assert from 'assert'
 const { replyResolve } = require('../../w002-api')
-const debug = require('debug')('interblock:dmz:ping')
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:ping')
 const { rxRequestModel } = require('../../w015-models')
 
 const ping = (payload = {}) => {

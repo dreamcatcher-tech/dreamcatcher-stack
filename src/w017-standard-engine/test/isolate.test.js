@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:isolate')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:isolate')
 const { ioQueueFactory } = require('../../w003-queue')
 const {
   isolateFactory,

@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { dmzModel } = require('..')
 require('../../w012-crypto').testMode()
 

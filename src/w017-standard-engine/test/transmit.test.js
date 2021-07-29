@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:pool')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:pool')
 const { metrologyFactory } = require('../src/metrologyFactory')
 const { interblockModel } = require('../../w015-models')
 require('../../w012-crypto').testMode()

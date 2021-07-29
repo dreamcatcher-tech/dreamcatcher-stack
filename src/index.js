@@ -34,8 +34,9 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
-
-const debug = require('debug')('interblock')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock')
 if (!globalThis._interblockLibrary) {
   const { version } = require('../package.json')
   debug(`interblock version: ${version}`)
@@ -79,7 +80,6 @@ if (!globalThis._interblockLibrary) {
     }
     load()
 
-    const assert = require('assert')
     let thrown = false
     try {
       assert()

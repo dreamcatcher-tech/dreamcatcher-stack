@@ -1,9 +1,10 @@
+import Debug from 'debug'
 const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
 
 let instanceId = 0
 let ramLockId = 1
 const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
-  const debug = require('debug')(`interblock:aws:lock:id-${instanceId++}`)
+  const debug = Debug(`interblock:aws:lock:id-${instanceId++}`)
 
   const locks = new Map()
   const tryAcquire = async (chainId, awsRequestId, expiryMs) => {

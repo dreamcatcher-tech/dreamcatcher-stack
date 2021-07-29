@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:apps:collection')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:apps:collection')
 const datum = require('./datum')
 const {
   convertToTemplate,

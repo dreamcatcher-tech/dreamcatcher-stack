@@ -1,6 +1,7 @@
-const assert = require('assert')
+import assert from 'assert'
 const { effectorFactory, awsFactory } = require('..')
-const debug = require('debug')('interblock:tests:awsFactory')
+import Debug from 'debug'
+const debug = Debug('interblock:tests:awsFactory')
 require('../../w012-crypto').testMode()
 
 describe('emulateAwsFactory', () => {

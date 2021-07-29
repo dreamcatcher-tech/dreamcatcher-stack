@@ -9,9 +9,10 @@
  *    - multiplexing multiple outstanding request replies, like pings and pongs
  *
  */
-const assert = require('assert')
+import assert from 'assert'
 const { blockModel, interblockModel } = require('../../w015-models')
-const debug = require('debug')('interblock:transport')
+import Debug from 'debug'
+const debug = Debug('interblock:transport')
 const WebSocket = require('ws')
 
 const tcpTransportFactory = (url) => {

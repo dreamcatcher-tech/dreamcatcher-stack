@@ -1,7 +1,8 @@
-const assert = require('assert')
+import assert from 'assert'
 const crypto = require('..')
 const Benchmark = require('benchmark')
-const debug = require('debug')('interblock:tests:crypto')
+import Debug from 'debug'
+const debug = Debug('interblock:tests:crypto')
 
 const testHash = crypto.objectHash('testHash')
 describe('crypto', () => {

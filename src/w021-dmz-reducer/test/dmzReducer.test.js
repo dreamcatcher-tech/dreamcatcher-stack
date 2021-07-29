@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:dmzReducer')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:dmzReducer')
 const { interchain, '@@GLOBAL_HOOK': hook } = require('../../w002-api')
 const {
   dmzModel,

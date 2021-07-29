@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { keypairModel, blockModel, dmzModel } = require('../../w015-models')
 const { blockProducer } = require('../../w016-producers')
 require('../../w012-crypto').testMode()

@@ -1,7 +1,9 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:hooks')
-const { '@@GLOBAL_HOOK': hook, interchain, effect } = require('..')
-require('debug').enable()
+import assert from 'assert'
+import { _hook as hook, interchain, effect } from '..'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:hooks')
+Debug.enable()
+
 describe('hooks', () => {
   const nested =
     (id, depth = 0) =>

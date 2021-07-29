@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { metrologyFactory } = require('../src/metrologyFactory')
 require('debug').enable()
 describe('standardEngine', () => {

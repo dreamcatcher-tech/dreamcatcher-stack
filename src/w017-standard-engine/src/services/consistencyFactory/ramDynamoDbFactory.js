@@ -1,6 +1,7 @@
-const debug = require('debug')('interblock:aws:ramDynamoDb')
-const assert = require('assert')
-const setImmediate = require('set-immediate-shim')
+import Debug from 'debug'
+const debug = Debug('interblock:aws:ramDynamoDb')
+import assert from 'assert'
+import setImmediate from 'set-immediate-shim'
 
 const ramDynamoDbFactory = () => {
   const tables = {

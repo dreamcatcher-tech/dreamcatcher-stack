@@ -32,10 +32,11 @@
  *      to allow emulation mode.
  *
  */
-const assert = require('assert')
+import assert from 'assert'
 const { metrologyFactory } = require('../../w017-standard-engine')
 const posix = require('path-browserify')
-const debug = require('debug')('interblock:effector')
+import Debug from 'debug'
+const debug = Debug('interblock:effector')
 const { covenantIdModel } = require('../../w015-models')
 const { tcpTransportFactory } = require('./tcpTransportFactory')
 const covenants = require('../../w212-system-covenants')

@@ -1,6 +1,7 @@
-const assert = require('assert')
-const { deserializeError } = require('serialize-error')
-const { isReplyFor, request, promise, resolve, reject } = require('..')
+import assert from 'assert'
+import { deserializeError } from 'serialize-error'
+import { isReplyFor, request, promise, resolve, reject } from '..'
+
 describe('api', () => {
   describe('isReplyFor', () => {
     test('no request check if is reply', () => {

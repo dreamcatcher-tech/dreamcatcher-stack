@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { '@@GLOBAL_HOOK': hook } = require('../../../../w002-api')
 const {
   blockModel,
@@ -7,7 +7,8 @@ const {
 } = require('../../../../w015-models')
 const systemCovenants = require('../../../../w212-system-covenants')
 const appCovenants = require('../../../../w301-user-apps')
-const debug = require('debug')('interblock:isolate')
+import Debug from 'debug'
+const debug = Debug('interblock:isolate')
 const { queryFactory } = require('../queryFactory')
 // TODO move to making own containers, so can keep promises alive
 // TODO set timestamp in container by overriding Date.now()

@@ -1,6 +1,8 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:queries')
-const { '@@GLOBAL_HOOK': hook, interchain, useBlocks } = require('..')
+import assert from 'assert'
+import { _hook as hook, interchain, useBlocks } from '..'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:queries')
+
 // require('debug').enable('*:queries* *hooks *isolate')
 describe('queries', () => {
   test('settle after query', async () => {

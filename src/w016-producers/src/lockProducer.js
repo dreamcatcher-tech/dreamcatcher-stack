@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { lockModel, blockModel } = require('../../w015-models')
 /**
  * Given a lock and a block, return a new lock with the pool reconciled,

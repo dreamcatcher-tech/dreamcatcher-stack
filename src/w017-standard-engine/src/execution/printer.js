@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const chalk = require('ansi-colors')
 const pad = require('pad-left')
 const prettyBytes = require('pretty-bytes')

@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { integrityModel } = require('../../w015-models')
 
 describe('integrity', () => {

@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:increasor')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:increasor')
 const { metrologyFactory } = require('../src/metrologyFactory')
 const { shell } = require('../../w212-system-covenants')
 require('debug').enable()

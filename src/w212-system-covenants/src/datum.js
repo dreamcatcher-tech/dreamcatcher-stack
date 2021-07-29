@@ -1,9 +1,10 @@
-const assert = require('assert')
+import assert from 'assert'
 // const faker = require('faker/locale/en')
 const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
 require('ajv-formats')(ajv)
-const debug = require('debug')('interblock:apps:datum')
+import Debug from 'debug'
+const debug = Debug('interblock:apps:datum')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { covenantIdModel } = require('../../w015-models')
 const { interchain, useBlocks } = require('../../w002-api')

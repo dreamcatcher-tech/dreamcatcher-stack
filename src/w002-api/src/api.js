@@ -1,5 +1,5 @@
-const equal = require('fast-deep-equal')
-const { serializeError } = require('serialize-error')
+import equal from 'fast-deep-equal'
+import { serializeError } from 'serialize-error'
 /**
  * ACTION CREATORS FOR USE INSIDE COVENANTS
  *
@@ -100,4 +100,4 @@ const _isNotReplyFormat = (reply) => {
   return !reply || !reply.type || !_replyTypes.includes(reply.type)
 }
 
-module.exports = { request, promise, resolve, reject, isReplyFor }
+export { request, promise, resolve, reject, isReplyFor }

@@ -1,6 +1,7 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:xstate:translator')
-const equal = require('fast-deep-equal')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:xstate:translator')
+import equal from 'fast-deep-equal'
 const { State } = require('xstate')
 const {
   request,

@@ -1,4 +1,3 @@
-const api = require('./src/api')
-const hooks = require('./src/hooks')
-const queries = require('./src/queries')
-module.exports = { ...api, ...hooks, ...queries }
+export * from './src/api'
+export * from './src/hooks'
+export * from './src/queries'

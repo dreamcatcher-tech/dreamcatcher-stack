@@ -2,7 +2,8 @@
  * Stub for the probe covenant, which will eventually
  * exercise the entire system from within.
  */
-const debug = require('debug')('interblock:covenants:probe')
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:probe')
 
 const { replyResolve, request } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')

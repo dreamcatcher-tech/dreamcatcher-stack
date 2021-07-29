@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const crypto = require('../../../w012-crypto')
 const { standardize } = require('../modelUtils')
 const { integrityModel } = require('./integrityModel')

@@ -1,9 +1,10 @@
-const assert = require('assert')
-const setImmediate = require('set-immediate-shim')
+import assert from 'assert'
+import setImmediate from 'set-immediate-shim'
+import Debug from 'debug'
 
 const ioQueueFactory = (name, model) => {
   assert(name && typeof name === 'string')
-  const debug = require('debug')('interblock:queue:' + name)
+  const debug = Debug('interblock:queue:' + name)
 
   const _requests = []
   const _awaiting = new Set()
@@ -135,7 +136,7 @@ const _assertAddable = (model, action) => {
  */
 const sqsQueueFactory = (name, model) => {
   assert(name && typeof name === 'string')
-  const debug = require('debug')('interblock:queue:sqs:' + name)
+  const debug = Debug('interblock:queue:sqs:' + name)
   const queue = ioQueueFactory(name, model)
   /**
    * Bypasses whatever infrastructure is connected to the queue,

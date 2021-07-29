@@ -1,2 +1,1 @@
-const { pure } = require('./src/xstatePure')
-module.exports = { pure }
+export { pure } from './src/xstatePure'

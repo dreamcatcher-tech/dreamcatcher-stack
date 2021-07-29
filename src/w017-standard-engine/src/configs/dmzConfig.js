@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:cfg:heart:dmz')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:heart:dmz')
 const {
   rxReplyModel,
   rxRequestModel,

@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:cfg:transmit')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:transmit')
 const flatten = require('lodash.flatten')
 const { assign } = require('xstate')
 const {

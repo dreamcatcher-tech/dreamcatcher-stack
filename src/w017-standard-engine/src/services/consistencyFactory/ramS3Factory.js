@@ -1,5 +1,6 @@
-const debug = require('debug')('interblock:aws:ramS3')
-const assert = require('assert')
+import Debug from 'debug'
+const debug = Debug('interblock:aws:ramS3')
+import assert from 'assert'
 
 const ramS3Factory = () => {
   const buckets = {

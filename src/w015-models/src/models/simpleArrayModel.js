@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { standardize } = require('../modelUtils')
 
 // TODO remove this when can handle arrays in patterns

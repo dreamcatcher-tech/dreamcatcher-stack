@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const last = require('lodash.last')
 // const chalk = require('ansi-colors')
 const {

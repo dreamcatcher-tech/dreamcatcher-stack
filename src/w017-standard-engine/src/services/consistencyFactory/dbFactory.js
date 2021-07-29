@@ -1,5 +1,6 @@
-const debug = require('debug')('interblock:consistency:db')
-const assert = require('assert')
+import Debug from 'debug'
+const debug = Debug('interblock:consistency:db')
+import assert from 'assert'
 const { ramDynamoDbFactory } = require('./ramDynamoDbFactory')
 
 const dbFactory = (dynamodb = ramDynamoDbFactory()) => {

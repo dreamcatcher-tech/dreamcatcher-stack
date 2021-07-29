@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { rxReplyModel, dmzModel, covenantIdModel } = require('../../w015-models')
 const { spawn, spawnReducerWithoutPromise } = require('./spawn')
 const {

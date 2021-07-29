@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { v4: uuid } = require('uuid')
 const { standardize } = require('../modelUtils')
 

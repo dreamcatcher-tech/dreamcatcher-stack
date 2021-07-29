@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:effects')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:effects')
 const { effect, interchain } = require('../../w002-api')
 const covenants = require('../../w212-system-covenants')
 const { metrologyFactory } = require('..')

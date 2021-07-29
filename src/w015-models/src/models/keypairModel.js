@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:models:keypair')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:models:keypair')
 const crypto = require('../../../w012-crypto')
 const { standardize } = require('../modelUtils')
 const { publicKeyModel } = require('./publicKeyModel')

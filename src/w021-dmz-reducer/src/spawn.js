@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:dmz:spawn')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:spawn')
 const {
   blockModel,
   actionModel,

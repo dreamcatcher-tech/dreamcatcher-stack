@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { lockModel } = require('..')
 require('../../w012-crypto').testMode()
 

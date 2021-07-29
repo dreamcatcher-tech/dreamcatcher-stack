@@ -1,4 +1,5 @@
-const debug = require('debug')('interblock:dmz:genesis')
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:genesis')
 const { interchain, replyResolve } = require('../../w002-api')
 const { blockModel } = require('../../w015-models')
 

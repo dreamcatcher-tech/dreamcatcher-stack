@@ -7,7 +7,8 @@
  * 1. DOS will cause either default config applied, or covenant config to be used
  * 2. Linux will cause the package manager to install an image
  */
-const debug = require('debug')('interblock:covenants:dpkg')
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:dpkg')
 const { replyResolve } = require('../../w002-api')
 
 const reducer = async (state, action) => {

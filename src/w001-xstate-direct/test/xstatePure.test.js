@@ -1,8 +1,10 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:xstatePure')
-const { interpret, Machine, assign } = require('xstate')
-require('debug').enable()
-const { pure } = require('..')
+import assert from 'assert'
+import Debug from 'debug'
+import { interpret, Machine, assign } from 'xstate'
+import { pure } from '..'
+
+const debug = Debug('interblock:tests:xstatePure')
+Debug.enable()
 const definition = {
   initial: 'idle',
   strict: true,

@@ -1,6 +1,7 @@
 const Buffer = require('buffer').Buffer
-const assert = require('assert')
-const debug = require('debug')('interblock:crypto:sodium')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:crypto:sodium')
 const {
   SodiumPlus,
   Ed25519PublicKey,

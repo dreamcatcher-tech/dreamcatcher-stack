@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:pierce')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:pierce')
 const { metrologyFactory } = require('..')
 const { request } = require('../../w002-api')
 const { actions } = require('../../w021-dmz-reducer')

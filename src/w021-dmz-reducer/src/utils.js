@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:dmz:utils')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:utils')
 const pad = require('pad-left')
 const { blockModel, channelModel } = require('../../w015-models')
 

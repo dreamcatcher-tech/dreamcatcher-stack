@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { standardize } = require('../modelUtils')
 const { rxRequestModel, rxReplyModel } = require('../transients')
 const { simpleArrayModel } = require('./simpleArrayModel')

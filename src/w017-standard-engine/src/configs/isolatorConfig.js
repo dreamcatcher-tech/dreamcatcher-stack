@@ -1,6 +1,7 @@
-const assert = require('assert')
+import assert from 'assert'
 const memoize = require('lodash/memoize')
-const debug = require('debug')('interblock:cfg:isolator')
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:isolator')
 const { assign } = require('xstate')
 const { pure } = require('../../../w001-xstate-direct')
 const {

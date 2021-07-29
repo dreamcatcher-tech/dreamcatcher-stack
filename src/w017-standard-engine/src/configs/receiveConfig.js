@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:cfg:receive')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:receive')
 const { assign } = require('xstate')
 const {
   lockModel,

@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { publicKeyModel } = require('..')
 describe('publicKey', () => {
   test('cannot create', () => {

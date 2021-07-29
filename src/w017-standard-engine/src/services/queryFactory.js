@@ -1,7 +1,8 @@
-const assert = require('assert')
+import assert from 'assert'
 const posix = require('path-browserify')
 const { blockModel } = require('../../../w015-models')
-const debug = require('debug')('interblock:query')
+import Debug from 'debug'
+const debug = Debug('interblock:query')
 const { toFunctions } = require('./consistencyFactory')
 const queryFactory = (ioConsistency, block) => {
   assert(blockModel.isModel(block))

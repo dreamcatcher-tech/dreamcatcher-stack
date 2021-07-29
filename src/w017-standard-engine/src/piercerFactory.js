@@ -1,8 +1,9 @@
-const assert = require('assert')
+import assert from 'assert'
 const { deserializeError } = require('serialize-error')
 const { v4: uuid } = require('uuid')
-const debug = require('debug')('interblock:engine:piercerFactory')
-const setImmediate = require('set-immediate-shim')
+import setImmediate from 'set-immediate-shim'
+import Debug from 'debug'
+const debug = Debug('interblock:engine:piercerFactory')
 const { request } = require('../../w002-api')
 const { txRequestModel } = require('../../w015-models')
 const { toFunctions } = require('./services/consistencyFactory')

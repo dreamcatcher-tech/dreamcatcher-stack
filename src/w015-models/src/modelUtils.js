@@ -1,11 +1,12 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:models:utils')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:models:utils')
 const memoize = require('lodash.memoize')
 const stringify = require('fast-json-stable-stringify')
 const { modelInflator, precompileSchema } = require('./modelInflator')
 const { registry } = require('./registry')
 const crypto = require('../../w012-crypto')
-const equal = require('fast-deep-equal')
+import equal from 'fast-deep-equal'
 
 const standardize = (model) => {
   checkStructure(model)

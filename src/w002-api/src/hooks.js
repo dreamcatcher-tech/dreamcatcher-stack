@@ -1,8 +1,9 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:api:hooks')
-const equal = require('fast-deep-equal')
-const setImmediate = require('set-immediate-shim')
-const { request, promise, resolve, reject, isReplyFor } = require('./api')
+import assert from 'assert'
+import equal from 'fast-deep-equal'
+import setImmediate from 'set-immediate-shim'
+import { request, promise, resolve, reject, isReplyFor } from './api'
+import Debug from 'debug'
+const debug = Debug('interblock:api:hooks')
 
 const _eternalPromise = new Promise(() => {
   // this can never resolve, as we do not want to execute the reducer code past this point.
@@ -296,7 +297,7 @@ const awaitInbandPromises = async (promises, queries) => {
   return results
 }
 
-module.exports = {
+export {
   replyPromise,
   replyResolve,
   replyReject,
@@ -306,5 +307,5 @@ module.exports = {
   query,
   all,
   // TODO move this out of the API
-  '@@GLOBAL_HOOK': hook, // system use only
+  hook as _hook, // system use only
 }

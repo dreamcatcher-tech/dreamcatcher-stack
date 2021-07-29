@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:producers:channel')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:producers:channel')
 const last = require('lodash/last')
 const {
   addressModel,

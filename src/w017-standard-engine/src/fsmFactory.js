@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { ioQueueFactory } = require('../../w003-queue')
 const { interblockModel, addressModel, txModel } = require('../../w015-models')
 const { isolateFactory } = require('./services/isolateFactory')

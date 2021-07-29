@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:dmz:uplink')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:uplink')
 const { replyResolve, replyReject } = require('../../w002-api')
 const {
   networkModel,

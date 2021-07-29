@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { addressModel, integrityModel } = require('..')
 require('../../w012-crypto').testMode()
 

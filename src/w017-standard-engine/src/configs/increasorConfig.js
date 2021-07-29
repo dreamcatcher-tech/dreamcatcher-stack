@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:cfg:increasor')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:increasor')
 const { assign } = require('xstate')
 const {
   channelModel,

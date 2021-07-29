@@ -3,12 +3,13 @@
  * aware decisions, to run custom code like debug breakpoints.
  * Without this, getting the system to the needed state and stepping in to
  * the desired point in the engine code can be impractical.
- */
-const assert = require('assert')
+ */ 
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('ib:needle')
 let _tap
-const debug = require('debug')('ib:needle')
-module.exports = {
-  test: (network, alias, height, fn) => {
+
+  export const test = (network, alias, height, fn) => {
     assert(_tap, `tap not set`)
     // if network belongs to this alias, and is at this height, run this fn
     const block = _tap.getLatest(alias)
@@ -19,16 +20,16 @@ module.exports = {
     if (isParentSame && isAliasSame && isHeightSame) {
       fn(debug)
     }
-  },
-  setTap: (tap) => {
+  }
+  export const setTap = (tap) => {
     _tap = tap
-  },
-  printNetwork: (network, msg) => {
+  }
+  export const printNetwork= (network, msg) => {
     const text = _tap.printNetwork(network, msg)
     debug(text)
-  },
-  print: (...args) => debug(...args),
-}
+  }
+ export const print = (...args) => debug(...args),
+
 
 const compareAliases = (channelA, channelB) => {
   if (channelA.address.isRoot() && channelB.address.isRoot()) {

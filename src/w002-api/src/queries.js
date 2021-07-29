@@ -2,8 +2,9 @@
  * Purpose of the readers is to read from the blocks of other chains
  * and insert those results back in to the executing current block.
  */
-const debug = require('debug')('interblock:api:queries')
-const { query } = require('./hooks')
+import Debug from 'debug'
+import { query } from './hooks'
+const debug = Debug('interblock:api:queries')
 const useFind = (pathPattern, query) => {
   // find within the json data, treating mathing paths as a collection
 }
@@ -66,7 +67,7 @@ const setBinary = async (buffer, path) => {}
  */
 const updateBinary = async (buffer, path, start, length) => {}
 const deleteBinary = async (path) => {}
-module.exports = {
+export {
   useFind,
   useFindBinary,
   useBlocks,

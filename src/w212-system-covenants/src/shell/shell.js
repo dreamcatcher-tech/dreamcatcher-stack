@@ -1,6 +1,7 @@
-const debug = require('debug')('interblock:covenants:shell')
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:shell')
 const posix = require('path-browserify')
-const assert = require('assert')
+import assert from 'assert'
 const { covenantIdModel } = require('../../../w015-models')
 const dmzReducer = require('../../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')

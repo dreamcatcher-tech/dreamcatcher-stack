@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { stateModel } = require('..')
 const { request, promise, resolve, reject } = require('../../w002-api')
 

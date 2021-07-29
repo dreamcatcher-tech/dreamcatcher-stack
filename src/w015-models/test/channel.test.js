@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { isReplyFor } = require('../../w002-api')
 const {
   actionModel,

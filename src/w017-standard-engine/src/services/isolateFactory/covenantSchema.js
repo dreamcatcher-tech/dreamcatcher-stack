@@ -29,7 +29,7 @@
  * 
  */
 const parseFunction = require('parse-function')()
-const assert = require('assert')
+import assert from 'assert'
 
 const covenantSchema = {
   type: 'object',

@@ -1,5 +1,6 @@
-const debug = require('debug')('interblock:covenants:socket')
-const assert = require('assert')
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:socket')
+import assert from 'assert'
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')
 const { spawn, connect, getChannel } = dmzReducer.actions

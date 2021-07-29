@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const compact = require('lodash.compact')
 const {
   addressModel,
@@ -11,7 +11,8 @@ const {
   txRequestModel,
   txReplyModel,
 } = require('../../../../w015-models')
-const debug = require('debug')('interblock:services:consistency')
+import Debug from 'debug'
+const debug = Debug('interblock:services:consistency')
 
 const _addressFromChainId = (chainId) => {
   const blank = integrityModel.create()

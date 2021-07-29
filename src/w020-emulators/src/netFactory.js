@@ -1,5 +1,6 @@
-const debug = require('debug')('interblock:covenants:net')
-const assert = require('assert')
+import Debug from 'debug'
+const debug = Debug('interblock:covenants:net')
+import assert from 'assert'
 const { interchain } = require('../../w002-api')
 const dmzReducer = require('../../w021-dmz-reducer')
 const { Machine, assign } = require('xstate')

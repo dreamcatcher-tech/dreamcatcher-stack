@@ -1,5 +1,6 @@
 const { effectorFactory } = require('./effectorFactory')
-const debug = require('debug')('interblock:browser')
+import Debug from 'debug'
+const debug = Debug('interblock:browser')
 const localForage = require('localforage')
 
 const browserFactory = async (identifier) => {

@@ -1,6 +1,7 @@
-const assert = require('assert')
+import assert from 'assert'
 const posix = require('path-browserify')
-const debug = require('debug')('interblock:producers:network')
+import Debug from 'debug'
+const debug = Debug('interblock:producers:network')
 const without = require('lodash.without')
 const {
   channelModel,

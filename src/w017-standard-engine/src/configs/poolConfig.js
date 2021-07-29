@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:cfg:pool')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:cfg:pool')
 const { assign } = require('xstate')
 const { definition } = require('../machines/pool')
 const {

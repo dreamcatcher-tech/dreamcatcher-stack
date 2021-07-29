@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:hooker')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:hooker')
 const { interchain, useBlocks } = require('../../w002-api')
 const { actions, listChildren } = require('../../w021-dmz-reducer')
 const { metrologyFactory } = require('../src/metrologyFactory')

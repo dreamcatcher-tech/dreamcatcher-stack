@@ -1,6 +1,7 @@
-const assert = require('assert')
+import assert from 'assert'
 const posix = require('path-browserify')
-const debug = require('debug')('interblock:dmz:openChild')
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:openChild')
 const {
   actionModel,
   networkModel,

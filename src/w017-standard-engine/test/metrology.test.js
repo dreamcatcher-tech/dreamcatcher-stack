@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:tests:metrology')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:metrology')
 const { metrologyFactory } = require('..')
 
 describe('metrology', () => {

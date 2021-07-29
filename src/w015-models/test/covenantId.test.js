@@ -1,4 +1,4 @@
-const assert = require('assert')
+import assert from 'assert'
 const { covenantIdModel } = require('..')
 describe('covenantId', () => {
   test('makes integrity out of name', () => {

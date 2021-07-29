@@ -1,5 +1,6 @@
-const assert = require('assert')
-const debug = require('debug')('interblock:models:modelInflator')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('interblock:models:modelInflator')
 const { registry } = require('./registry')
 const Ajv = require('ajv')
 const ajv = new Ajv({ allErrors: true, verbose: true })
