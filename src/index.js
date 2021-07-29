@@ -107,3 +107,13 @@ if (!globalThis._interblockLibrary) {
   debug(`duplicate load`)
 }
 module.exports = globalThis._interblockLibrary
+
+export const {
+  browserFactory,
+  effectorFactory,
+  awsFactory,
+  engine,
+  apps,
+  checkModules,
+  version,
+} = globalThis._interblockLibrary

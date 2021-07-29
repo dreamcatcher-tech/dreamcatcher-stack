@@ -5,6 +5,7 @@
     "es2021": true,
     "jest": true
   },
+  "sourceType": "module",
   "extends": ["eslint:recommended", "plugin:prettier/recommended"],
   "parserOptions": {
     "ecmaVersion": 12

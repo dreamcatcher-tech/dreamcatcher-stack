@@ -8,7 +8,8 @@
   },
   "homepage": "",
   "files": [
-    "lib"
+    "lib",
+    "es"
   ],
   "main": "lib/index.js",
   "module": "es/index.js",
