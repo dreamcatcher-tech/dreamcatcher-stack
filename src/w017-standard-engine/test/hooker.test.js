@@ -2,6 +2,7 @@ import assert from 'assert'
 import { interchain, useBlocks } from '../../w002-api'
 import { actions, listChildren } from '../../w021-dmz-reducer'
 import { metrologyFactory } from '../src/metrologyFactory'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:hooker')
 

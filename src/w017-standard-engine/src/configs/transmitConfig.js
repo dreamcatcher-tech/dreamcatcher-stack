@@ -8,13 +8,13 @@ import {
   txModel,
   addressModel,
 } from '../../../w015-models'
-import { definition } from '../machines/transmit'
-import consistencyProcessor from '../services/consistencyFactory'
+import { transmitMachine } from '../machines'
+import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:transmit')
 
 const transmitConfig = (ioConsistency) => {
-  const consistency = consistencyProcessor.toFunctions(ioConsistency)
+  const consistency = consistencyFn(ioConsistency)
   const config = {
     actions: {
       assignInterblock: assign({
@@ -204,7 +204,7 @@ const transmitConfig = (ioConsistency) => {
       },
     },
   }
-  return { machine: definition, config }
+  return { machine: transmitMachine, config }
 }
 
 export { transmitConfig }

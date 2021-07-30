@@ -70,6 +70,4 @@ const install = {
 }
 
 const covenantId = { name: 'crm' }
-const crm = { covenantId, install }
-
-module.exports = { crm }
+export { covenantId, install }

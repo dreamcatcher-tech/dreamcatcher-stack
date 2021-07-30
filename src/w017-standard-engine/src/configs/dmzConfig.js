@@ -6,9 +6,9 @@ import {
   reductionModel,
   addressModel,
 } from '../../../w015-models'
-import dmzReducer from '../../../w021-dmz-reducer'
+import * as dmzReducer from '../../../w021-dmz-reducer'
 import { _hook as hook } from '../../../w002-api'
-import { definition } from '../machines/dmz'
+import { dmzMachine } from '../machines'
 import { common } from './common'
 import { assign } from 'xstate'
 import Debug from 'debug'
@@ -80,7 +80,7 @@ const config = {
 
 const dmzConfig = (context) => {
   assert.strictEqual(typeof context, 'object')
-  const machine = { ...definition, context }
+  const machine = { ...dmzMachine, context }
   return { machine, config }
 }
 

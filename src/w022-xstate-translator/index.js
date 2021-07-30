@@ -3,4 +3,4 @@
  * an interblock compatible reducer.
  */
 
-export { default as default } from './src/translator'
+export * from './src/translator'

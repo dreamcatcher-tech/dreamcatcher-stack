@@ -111,8 +111,7 @@ const definition = {
   },
 }
 
-if (typeof module === 'object') {
-  module.exports = { definition }
-} else {
+if (typeof Machine === 'function') {
   Machine(definition)
 }
+export default definition

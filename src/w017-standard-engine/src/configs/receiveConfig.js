@@ -1,13 +1,13 @@
 import assert from 'assert'
 import { assign } from 'xstate'
 import { txModel, blockModel, interblockModel } from '../../../w015-models'
-import { definition } from '../machines/receive'
-import consistencyProcessor from '../services/consistencyFactory'
+import { receiveMachine } from '../machines'
+import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:receive')
 
 const receiveConfig = (ioConsistency) => {
-  const consistency = consistencyProcessor.toFunctions(ioConsistency)
+  const consistency = consistencyFn(ioConsistency)
   const config = {
     actions: {
       assignInterblock: assign({
@@ -78,7 +78,7 @@ const receiveConfig = (ioConsistency) => {
       },
     },
   }
-  return { machine: definition, config }
+  return { machine: receiveMachine, config }
 }
 
 export { receiveConfig }

@@ -27,8 +27,8 @@
  * but the logic they use are the execution functions only.
  */
 
-export * from './src/networkProducer'
-export * from './src/blockProducer'
-export * from './src/lockProducer'
-export * from './src/channelProducer'
-export * from './src/pendingProducer'
+export * as networkProducer from './src/networkProducer'
+export * as blockProducer from './src/blockProducer'
+export * as lockProducer from './src/lockProducer'
+export * as channelProducer from './src/channelProducer'
+export * as pendingProducer from './src/pendingProducer'

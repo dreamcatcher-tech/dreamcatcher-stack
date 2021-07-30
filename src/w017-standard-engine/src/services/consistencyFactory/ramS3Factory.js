@@ -61,4 +61,4 @@ const ramS3Factory = () => {
   return { putObject, getObject, deleteObject, _getBuckets, _isRam }
 }
 
-module.exports = { ramS3Factory }
+export { ramS3Factory }

@@ -1,7 +1,8 @@
 import assert from 'assert'
 import { effect } from '../../w002-api'
-import covenants from '../../w212-system-covenants'
+import * as covenants from '../../w212-system-covenants'
 import { metrologyFactory } from '..'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:effects')
 Debug.enable()

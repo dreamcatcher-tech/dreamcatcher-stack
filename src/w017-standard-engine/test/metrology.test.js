@@ -1,5 +1,6 @@
 import assert from 'assert'
 import { metrologyFactory } from '..'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:metrology')
 

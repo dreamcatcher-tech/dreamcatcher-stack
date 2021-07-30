@@ -9,7 +9,7 @@ import {
   print,
 } from './printer'
 import { blockModel, interblockModel } from '../../../w015-models'
-import needle from '../../../w004-needle'
+import { setTap } from '../../../w004-needle'
 import Debug from 'debug'
 
 const createTap = (prefix = 'interblock:blocktap') => {
@@ -177,7 +177,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     getBlockCount,
     getChainCount,
   }
-  needle.setTap(tap) // TODO handle multiple taps
+  setTap(tap) // TODO handle multiple taps
   return tap
 }
 export { createTap }

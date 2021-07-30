@@ -1,16 +1,18 @@
 import assert from 'assert'
 import * as datum from './datum'
 import { interchain } from '../../w002-api'
-import { actions } from '../../w021-dmz-reducer'
+import * as dmzReducer from '../../w021-dmz-reducer'
+import { covenantIdModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
+const covenantId = covenantIdModel.create('collection')
+
 const {
   convertToTemplate,
   demuxFormData,
   validateDatumTemplate,
   muxTemplateWithFormData,
 } = datum
-const { spawn } = actions
 
 // TODO allow collection to also store formData as tho it was a datum, without children spec
 const reducer = async (state, action) => {
@@ -34,7 +36,7 @@ const reducer = async (state, action) => {
       const formData = demuxFormData(datumTemplate, action)
       let name = _getChildName(datumTemplate, formData)
       const { covenantId } = datum
-      const spawnAction = spawn(name, { covenantId })
+      const spawnAction = dmzReducer.actions.spawn(name, { covenantId })
       if (name) {
         interchain(spawnAction)
       } else {
@@ -116,4 +118,4 @@ const actions = {
   delete: () => ({ type: 'DELETE' }), // or can delete the child directly ?
 }
 
-export { reducer, actions }
+export { reducer, actions, covenantId }

@@ -7,7 +7,7 @@ import {
   reductionModel,
 } from '../../../w015-models'
 import { networkProducer, pendingProducer } from '../../../w016-producers'
-import { definition } from '../machines/direct'
+import { directMachine } from '../machines'
 import { assign } from 'xstate'
 import { common } from './common'
 import Debug from 'debug'
@@ -143,7 +143,7 @@ const config = {
 
 const directConfig = (context) => {
   assert.strictEqual(typeof context, 'object')
-  const machine = { ...definition, context }
+  const machine = { ...directMachine, context }
   return { machine, config }
 }
 

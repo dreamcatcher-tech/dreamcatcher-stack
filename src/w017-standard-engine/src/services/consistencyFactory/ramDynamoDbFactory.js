@@ -134,4 +134,4 @@ const getRangeKey = (tableName, item) => {
   return item[rangeKeyName]
 }
 
-module.exports = { ramDynamoDbFactory }
+export { ramDynamoDbFactory }

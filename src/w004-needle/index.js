@@ -9,7 +9,7 @@ import Debug from 'debug'
 const debug = Debug('ib:needle')
 let _tap
 
-export const test = (network, alias, height, fn) => {
+const test = (network, alias, height, fn) => {
   assert(_tap, `tap not set`)
   // if network belongs to this alias, and is at this height, run this fn
   const block = _tap.getLatest(alias)
@@ -22,14 +22,14 @@ export const test = (network, alias, height, fn) => {
   }
 }
 
-export const setTap = (tap) => {
+const setTap = (tap) => {
   _tap = tap
 }
-export const printNetwork = (network, msg) => {
+const printNetwork = (network, msg) => {
   const text = _tap.printNetwork(network, msg)
   debug(text)
 }
-export const print = (...args) => debug(...args)
+const print = (...args) => debug(...args)
 
 const compareAliases = (channelA, channelB) => {
   if (channelA.address.isRoot() && channelB.address.isRoot()) {
@@ -42,3 +42,5 @@ const compareAliases = (channelA, channelB) => {
   const aliasB = channelB.heavy.getOriginAlias()
   return aliasA === aliasB
 }
+
+export { test, setTap, printNetwork, print }

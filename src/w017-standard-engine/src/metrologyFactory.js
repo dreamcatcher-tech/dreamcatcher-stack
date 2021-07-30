@@ -42,7 +42,7 @@ import {
 import { createBase } from './execution/createBase'
 import { createTap } from './execution/tap'
 import { actions } from '../../w021-dmz-reducer'
-import covenants from '../../w212-system-covenants'
+import * as covenants from '../../w212-system-covenants'
 import { blockModel, interblockModel, addressModel } from '../../w015-models'
 import { piercerFactory } from './piercerFactory'
 import Debug from 'debug'

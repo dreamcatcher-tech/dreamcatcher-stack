@@ -3,12 +3,13 @@ import assert from 'assert'
 import { covenantIdModel } from '../../../w015-models'
 import * as dmzReducer from '../../../w021-dmz-reducer'
 import { Machine, assign } from 'xstate'
-
 import { interchain, useBlocks } from '../../../w002-api'
 import { respond, translator } from '../../../w022-xstate-translator'
 import { listChildren } from '../../../w021-dmz-reducer'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:shell')
+const covenantId = covenantIdModel.create('shell')
+
 const { ping, spawn, connect, install } = dmzReducer.actions
 const config = {
   actions: {
@@ -429,4 +430,4 @@ const actions = {
   //   CP: 'copy' // fork a chain and give it a new parent
 }
 const reducer = translator(machine)
-export { actions, reducer }
+export { actions, reducer, covenantId }

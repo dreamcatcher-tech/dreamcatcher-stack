@@ -43,53 +43,42 @@ import apps from './w301-user-apps'
 import Debug from 'debug'
 const debug = Debug('interblock')
 
+const checkModules = () => {
+  const { SodiumPlus } = sodiumplus
+  const load = async () => {
+    const sodium = await SodiumPlus.auto()
+    debug(`libsodium backend: `, sodium.getBackendName())
+    let random = await sodium.randombytes_buf(32)
+    let hash = await sodium.crypto_generichash('hello world')
+    debug({
+      random: random.toString('hex'),
+      hash: hash.toString('hex'),
+    })
+    debug('crypto test complete')
+  }
+  load()
+
+  let thrown = false
+  try {
+    assert()
+  } catch (e) {
+    thrown = true
+  }
+  if (!thrown) {
+    throw new Error(
+      'Assert cannot throw - this is essential for library operation'
+    )
+  }
+}
+
 if (!globalThis._interblockLibrary) {
   debug(`interblock version: ${version}`)
-
-  const checkModules = () => {
-    const { SodiumPlus } = sodiumplus
-    const load = async () => {
-      const sodium = await SodiumPlus.auto()
-      debug(`libsodium backend: `, sodium.getBackendName())
-      let random = await sodium.randombytes_buf(32)
-      let hash = await sodium.crypto_generichash('hello world')
-      debug({
-        random: random.toString('hex'),
-        hash: hash.toString('hex'),
-      })
-      debug('crypto test complete')
-    }
-    load()
-
-    let thrown = false
-    try {
-      assert()
-    } catch (e) {
-      thrown = true
-    }
-    if (!thrown) {
-      throw new Error(
-        'Assert cannot throw - this is essential for library operation'
-      )
-    }
-    return exp
-  }
-
-  globalThis._interblockLibrary = {
-    browserFactory,
-    effectorFactory,
-    awsFactory,
-    engine,
-    apps,
-    checkModules,
-    version,
-  }
+  globalThis._interblockLibrary = true
 } else {
   debug(`duplicate load`)
 }
-module.exports = globalThis._interblockLibrary
 
-export const {
+export {
   browserFactory,
   effectorFactory,
   awsFactory,
@@ -97,4 +86,4 @@ export const {
   apps,
   checkModules,
   version,
-} = globalThis._interblockLibrary
+}

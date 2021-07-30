@@ -7,8 +7,8 @@ import {
   dmzModel,
 } from '../../../w015-models'
 import { networkProducer } from '../../../w016-producers'
-import dmzReducer from '../../../w021-dmz-reducer'
-import { definition } from '../machines/interpreter'
+import * as dmzReducer from '../../../w021-dmz-reducer'
+import { interpreterMachine } from '../machines'
 import { directConfig } from './directConfig'
 import { pendingConfig } from './pendingConfig'
 import { autoResolvesConfig } from './autoResolvesConfig'
@@ -164,7 +164,7 @@ const config = {
 const interpreterConfig = (isolatedTick) => {
   assert.strictEqual(typeof isolatedTick, 'function')
   // TODO multiplex the function with a code, so can use the same machine repeatedly
-  const machine = { ...definition, context: { isolatedTick } }
+  const machine = { ...interpreterMachine, context: { isolatedTick } }
   return { machine, config }
 }
 

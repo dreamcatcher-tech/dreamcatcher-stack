@@ -70,9 +70,4 @@ Create requires the sequence to be included.
   },
 }
 
-export {
-  txRequestSchema,
-  rxRequestSchema,
-  txReplySchema,
-  rxReplySchema,
-}
+export { txRequestSchema, rxRequestSchema, txReplySchema, rxReplySchema }

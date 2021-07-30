@@ -8,7 +8,7 @@ import {
   txRequestModel,
 } from '../../../w015-models'
 import { networkProducer, pendingProducer } from '../../../w016-producers'
-import { definition } from '../machines/pending'
+import { pendingMachine } from '../machines'
 import { assign } from 'xstate'
 import { common } from './common'
 import Debug from 'debug'
@@ -164,7 +164,7 @@ const _dereference = (path) => {
 
 const pendingConfig = (context) => {
   assert.strictEqual(typeof context, 'object')
-  const machine = { ...definition, context }
+  const machine = { ...pendingMachine, context }
   return { machine, config }
 }
 

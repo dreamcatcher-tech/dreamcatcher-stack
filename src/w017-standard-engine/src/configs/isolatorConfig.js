@@ -14,7 +14,7 @@ import {
 } from '../../../w015-models'
 import { networkProducer, channelProducer } from '../../../w016-producers'
 import { interpreterConfig } from './interpreterConfig'
-import { definition } from '../machines/isolator'
+import { isolatorMachine } from '../machines'
 import * as crypto from '../../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:isolator')
@@ -377,7 +377,7 @@ const _getPierceProvenance = (block) => {
 const isolatorConfig = (isolation, consistency) => {
   debug(`isolatorConfig`)
   const config = createConfig(isolation, consistency)
-  return { machine: definition, config }
+  return { machine: isolatorMachine, config }
 }
 
 export { isolatorConfig }

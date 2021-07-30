@@ -29,7 +29,7 @@
  * 
  */
 import assert from 'assert'
-import parseFunction from 'parse-function'
+import ParseFunction from 'parse-function'
 const parseFunction = ParseFunction()
 
 const covenantSchema = {

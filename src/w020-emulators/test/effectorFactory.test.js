@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { effectorFactory } from '..'
-import pingpongConfig from '../../w302-test-covenants/pingpong/interblock.config'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:effectorFactory')
 Debug.enable()

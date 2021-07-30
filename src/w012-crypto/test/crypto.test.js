@@ -1,6 +1,7 @@
 import assert from 'assert'
 import * as crypto from '..'
 import Benchmark from 'benchmark'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crypto')
 

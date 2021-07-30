@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { assign } from 'xstate'
-import { definition } from '../machines/pool'
+import { poolMachine } from '../machines'
 import {
   channelModel,
   networkModel,
@@ -13,14 +13,14 @@ import {
   publicKeyModel,
 } from '../../../w015-models'
 import { lockProducer } from '../../../w016-producers'
-import consistencyProcessor from '../services/consistencyFactory'
-import cryptoProcessor from '../services/cryptoFactory'
+import { toFunctions as consistencyFn } from '../services/consistencyFactory'
+import { toFunctions as cryptoFn } from '../services/cryptoFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:pool')
 
 const poolConfig = (ioCrypto, ioConsistency) => {
-  const consistency = consistencyProcessor.toFunctions(ioConsistency)
-  const crypto = cryptoProcessor.toFunctions(ioCrypto)
+  const consistency = consistencyFn(ioConsistency)
+  const crypto = cryptoFn(ioCrypto)
   const config = {
     actions: {
       dumpAffected: assign({
@@ -237,7 +237,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
     },
   }
-  return { machine: definition, config }
+  return { machine: poolMachine, config }
 }
 
 export { poolConfig }

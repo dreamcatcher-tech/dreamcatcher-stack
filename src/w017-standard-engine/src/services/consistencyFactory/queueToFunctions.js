@@ -47,4 +47,4 @@ const toFunctions = (queue) => ({
   putPierceReply: (payload) => queue.push({ type: 'PIERCE_REP', payload }),
 })
 
-module.exports = { toFunctions, fromFunctions }
+export { toFunctions, fromFunctions }

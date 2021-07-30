@@ -4,8 +4,10 @@
  */
 
 import { replyResolve, request } from '../../w002-api'
+import { covenantIdModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:probe')
+const covenantId = covenantIdModel.create('probe')
 
 const initialState = {}
 const reducer = async (state = initialState, action) => {
@@ -20,4 +22,4 @@ const reducer = async (state = initialState, action) => {
 }
 const actions = {}
 
-export { reducer, actions }
+export { reducer, actions, covenantId }

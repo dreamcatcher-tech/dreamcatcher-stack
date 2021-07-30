@@ -7,7 +7,7 @@ import {
   pendingModel,
 } from '../../../w015-models'
 import { networkProducer } from '../../../w016-producers'
-import { definition } from '../machines/autoResolves'
+import { autoResolvesMachine } from '../machines'
 import { assign } from 'xstate'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:heart.autoResolves')
@@ -126,7 +126,7 @@ const config = {
 
 const autoResolvesConfig = (context) => {
   assert.strictEqual(typeof context, 'object')
-  const machine = { ...definition, context }
+  const machine = { ...autoResolvesMachine, context }
   return { machine, config }
 }
 

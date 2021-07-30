@@ -5,8 +5,8 @@ import {
   rxReplyModel,
   rxRequestModel,
 } from '../../../../w015-models'
-import systemCovenants from '../../../../w212-system-covenants'
-import appCovenants from '../../../../w301-user-apps'
+import * as systemCovenants from '../../../../w212-system-covenants'
+import * as appCovenants from '../../../../w301-user-apps'
 import { queryFactory } from '../queryFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:isolate')

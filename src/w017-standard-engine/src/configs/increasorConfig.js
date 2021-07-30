@@ -11,7 +11,7 @@ import {
   txReplyModel,
 } from '../../../w015-models'
 import { blockProducer, lockProducer } from '../../../w016-producers'
-import { definition } from '../machines/increasor'
+import { increasorMachine } from '../machines'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import { toFunctions as cryptoFn } from '../services/cryptoFactory'
 import { toFunctions as isolateFn } from '../services/isolateFactory'
@@ -326,7 +326,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       },
     },
   }
-  return { machine: definition, config }
+  return { machine: increasorMachine, config }
 }
 const _purgePiercings = (lock, previousLock) => {
   // leverage that piercings are always fully processed each cycle
