@@ -7,7 +7,7 @@ describe('emulateAwsFactory', () => {
   test.todo('parallel connects') // two shells connecting to the same terminal
   // one after the other should result in correct connections for both
   test.skip('connect', async () => {
-    require('debug').enable('*metro* *socket*')
+    Debug.enable('*metro* *socket*')
     debug(`start`)
     const client = await effectorFactory('eff')
     client.metro.enableLogging()
@@ -50,7 +50,7 @@ describe('emulateAwsFactory', () => {
     debug(`loginResult: `, loginResult)
     await client.engine.settle(aws.engine)
 
-    require('debug').enable('*metro* *shell *awsFactory')
+    Debug.enable('*metro* *shell *awsFactory')
     debug(`begin ping`)
     const start = Date.now()
     const pong = await client.ping('terminal')

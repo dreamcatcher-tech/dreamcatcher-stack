@@ -3,7 +3,6 @@ import { _hook as hook, interchain, useBlocks } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:queries')
 
-// require('debug').enable('*:queries* *hooks *isolate')
 describe('queries', () => {
   test('settle after query', async () => {
     const mockBlock = { mock: 'block' }

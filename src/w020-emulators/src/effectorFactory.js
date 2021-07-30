@@ -37,7 +37,7 @@ import { metrologyFactory } from '../../w017-standard-engine'
 import posix from 'path-browserify'
 import { covenantIdModel } from '../../w015-models'
 import { tcpTransportFactory } from './tcpTransportFactory'
-import covenants from '../../w212-system-covenants'
+import * as covenants from '../../w212-system-covenants'
 import { netFactory } from './netFactory'
 import { socketFactory } from './socketFactory'
 import Debug from 'debug'
@@ -110,7 +110,7 @@ const effector = (metro) => {
     actions,
     latest,
     context,
-    _debug: require('debug'), // used to expose debug info in dos
+    _debug: Debug, // used to expose debug info in dos
   }
   const shellActions = _mapPierceToActions(metro.pierce)
   assert(!Object.keys(shellActions).some((s) => base[s]))

@@ -5,7 +5,7 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:effectorFactory')
 
 describe('netFactory', () => {
-  require('debug').enable('*met* *tests* *effector *:net *:socket *transport')
+  Debug.enable('*met* *tests* *effector *:net *:socket *transport')
 
   test.skip('ping single', async () => {
     jest.setTimeout(20000)

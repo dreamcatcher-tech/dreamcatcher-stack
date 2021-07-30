@@ -8,7 +8,7 @@ import {
   channelModel,
   addressModel,
 } from '..'
-import { txRequest } from '../../w016-producers'
+import { channelProducer } from '../../w016-producers'
 
 const createBlockWithEffects = async () => {
   const address = addressModel.create('TEST')
@@ -79,14 +79,14 @@ describe('interblock', () => {
     const rm = actionModel.create('RM', {})
     const tx = channelModel.create(addressModel.create('TEST'))
 
-    const channelLs = txRequest(tx, ls)
+    const channelLs = channelProducer.txRequest(tx, ls)
     const network = networkModel.create({ effects: channelLs })
     const opts = { network }
     const dmz = dmzModel.create(opts)
     const validatedBlock = await blockModel.create(dmz)
     const interblock = interblockModel.create(validatedBlock, 'effects')
 
-    const channelRm = txRequest(tx, rm)
+    const channelRm = channelProducer.txRequest(tx, rm)
     const tamper = { ...interblock, network: { ...interblock.network } }
     tamper.network.effects = channelRm
     assert(interblockModel.clone(interblock))

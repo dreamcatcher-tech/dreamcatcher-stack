@@ -1,6 +1,7 @@
 import assert from 'assert'
 import { checkModules } from './lib/index.js'
-import { main, module } from './package.json'
+import packageJson from './package.json'
+const { main, module } = packageJson
 
 describe('package', () => {
   test('Running module load checks on ./lib/index.js', async () => {

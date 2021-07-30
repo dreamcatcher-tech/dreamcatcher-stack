@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { effectorFactory, awsFactory } from '../../w020-emulators'
-import { crm } from '../src/crm'
+import { crm } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
 Debug.enable('*tests:crm *met*')

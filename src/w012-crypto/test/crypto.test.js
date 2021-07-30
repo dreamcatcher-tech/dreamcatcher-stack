@@ -53,7 +53,7 @@ describe('crypto', () => {
   }
 
   test.skip('benchmark', async () => {
-    require('debug').enable('interblock:tests:crypto')
+    Debug.enable('interblock:tests:crypto')
     jest.setTimeout(1000000)
     const suite = new Benchmark.Suite()
     let log = ''

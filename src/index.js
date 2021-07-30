@@ -35,13 +35,14 @@
 
     */
 import assert from 'assert'
-import { version } from '../package.json'
+import packageJson from '../package.json'
 import sodiumplus from 'sodium-plus'
 import { browserFactory, effectorFactory, awsFactory } from './w020-emulators'
-import engine from './w017-standard-engine'
-import apps from './w301-user-apps'
+import * as engine from './w017-standard-engine'
+import * as apps from './w301-user-apps'
 import Debug from 'debug'
 const debug = Debug('interblock')
+const { version } = packageJson
 
 const checkModules = () => {
   const { SodiumPlus } = sodiumplus

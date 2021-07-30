@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { resolve } from 'path-browserify'
+import posix from 'path-browserify'
 import { shell } from '..'
 import { metrologyFactory } from '../../w017-standard-engine'
 import Debug from 'debug'
@@ -218,6 +218,7 @@ describe('machine validation', () => {
   })
   describe('normalize', () => {
     test('normalize tests', () => {
+      const { resolve } = posix
       assert.strictEqual(resolve('/something', '/other/path/.'), '/other/path')
       assert.strictEqual(resolve(`/child/..`), `/`)
       assert.strictEqual(resolve(`/child/../random/..`), `/`)
@@ -250,7 +251,6 @@ describe('machine validation', () => {
           },
         },
       }
-      // require('debug').enable('interblock:tests:shell')
       const overloads = { hyper: shell, test: covenant }
       const blockchain = await metrologyFactory('install', overloads)
       const publish = shell.actions.publish('test', covenant.installer)

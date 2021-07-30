@@ -9,8 +9,8 @@ import { listChildren } from '../../../w021-dmz-reducer'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:shell')
 const covenantId = covenantIdModel.create('shell')
-
 const { ping, spawn, connect, install } = dmzReducer.actions
+
 const config = {
   actions: {
     respondOrigin: (context, event) => {
