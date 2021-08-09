@@ -74,9 +74,9 @@ const cryptoFactory = (dynamoDb, keyname = 'CI') => {
   return cryptoProcessor
 }
 
-const toFunctions = (queue) => ({
+const toCryptoFunctions = (queue) => ({
   sign: (payload) => queue.push({ type: 'SIGN', payload }),
   getValidatorEntry: () => queue.push({ type: 'VALIDATOR' }),
 })
 
-export { cryptoFactory, toFunctions, crypto }
+export { cryptoFactory, toCryptoFunctions, crypto }

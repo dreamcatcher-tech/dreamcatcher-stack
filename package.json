@@ -15,14 +15,7 @@
   "module": "es/index.js",
   "type": "module",
   "scripts": {
-    "build": "nwb build-web-module",
-    "clean": "nwb clean-module",
-    "prepublishOnly": "npm run build",
     "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --bail",
-    "test:web": "nwb test",
-    "test:coverage": "nwb test --coverage",
-    "test:watch": "nwb test --server",
-    "test:package": "yarn build && jest package.test.js",
     "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --watch",
     "release": "yarn build && np"
   },
@@ -34,10 +27,14 @@
     "ajv": "^8.6.2",
     "ajv-formats": "^2.1.0",
     "ansi-colors": "^4.1.1",
+    "assert": "^2.0.0",
+    "buffer": "^6.0.3",
     "columnify": "^1.5.4",
+    "crypto-js": "^4.1.1",
     "debug": "^4.3.2",
     "fast-deep-equal": "^3.1.3",
     "fast-json-stable-stringify": "^2.1.0",
+    "is-in-browser": "^2.0.0",
     "localforage": "^1.9.0",
     "lodash.compact": "^3.0.1",
     "lodash.flatten": "^4.4.0",
@@ -46,6 +43,7 @@
     "lodash.random": "^3.2.0",
     "lodash.without": "^4.4.0",
     "long": "^4.0.0",
+    "noble-secp256k1": "^1.2.9",
     "node-object-hash": "^2.3.7",
     "object-hash": "^2.2.0",
     "pad-left": "^2.1.0",
@@ -55,11 +53,9 @@
     "seedrandom": "^3.0.5",
     "serialize-error": "^8.1.0",
     "set-immediate-shim": "^2.0.0",
-    "sodium-native": "^3.2.1",
-    "sodium-plus": "^0.9.0",
     "supports-color": "^9.0.2",
     "uuid": "^8.3.2",
-    "ws": "^7.5.3",
+    "ws": "^8.0.0",
     "xstate": "^4.23.1"
   },
   "jest": {
@@ -67,7 +63,6 @@
     "transform": {}
   },
   "devDependencies": {
-    "babel-preset-minify": "^0.5.1",
     "benchmark": "^2.1.4",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
@@ -75,7 +70,6 @@
     "jest": "^27.0.6",
     "madge": "^5.0.1",
     "np": "^7.5.0",
-    "nwb": "0.25.x",
     "prettier": "^2.3.2"
   },
   "publishConfig": {

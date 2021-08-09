@@ -1,6 +1,7 @@
 import assert from 'assert'
 import madge from 'madge'
-
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
 import {
   channelModel,
   networkModel,
@@ -148,11 +149,13 @@ describe('standard model', () => {
     assert(covenantIdModel.isModel(modelClone))
   })
   test.skip('no circular references in models', async () => {
-    const res = await madge(globalThis.__dirname + '/../src/models', {
+    const __filename = fileURLToPath(import.meta.url)
+    const __dirname = dirname(__filename)
+    const res = await madge(__dirname + '/../src/models', {
       excludeRegExp: [/\.\./],
     })
     const path = await res.image(
-      globalThis.__dirname + '/../../website/static/img/models.svg'
+      __dirname + '/../../../website/static/img/models.svg'
     )
     console.log(`wrote image to: ${path}`)
   })

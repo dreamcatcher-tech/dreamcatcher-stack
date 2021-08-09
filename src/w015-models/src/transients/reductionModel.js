@@ -4,7 +4,7 @@ import { txRequestModel } from './txRequestModel'
 import { txReplyModel } from './txReplyModel'
 import { rxReplyModel } from './rxReplyModel'
 import { rxRequestModel } from './rxRequestModel'
-import { registry } from '../registry'
+import { registry } from '../registry' // handles circular reference to dmzmodel
 
 const _inflate = (action, defaultAction) => {
   if (!action) {
@@ -63,7 +63,8 @@ const reductionModel = standardize({
     assert(Array.isArray(requests))
     assert(Array.isArray(replies))
     assert(rxRequestModel.isModel(origin) || rxReplyModel.isModel(origin))
-    assert(registry.get('Dmz').isModel(dmz))
+    const dmzModel = registry.get('Dmz')
+    assert(dmzModel.isModel(dmz))
     requests = requests.map((request) => _inflate(request, origin))
     replies = replies.map((reply) => _inflate(reply, origin))
     requests.forEach((txRequest) => {

@@ -7,9 +7,11 @@ Debug.enable()
 
 describe('effector', () => {
   test('ping single', async () => {
+    // Debug.enable('*tests*')
     const start = Date.now()
     debug(`start`)
     const shell = await effectorFactory()
+    debug(`boot time: ${Date.now() - start} ms`)
     // client.enableLogging()
     debug(`effector ready`)
     const pingStart = Date.now()
@@ -51,6 +53,8 @@ describe('effector', () => {
      * 2021-01-25 108ms total, 49ms RTT - all machines using fast-xstate but still loading old machines
      * 2021-01-25 93ms total, 46ms RTT - xstate removed
      * 2021-01-26 88ms total, 46ms RTT - birthblocks removed
+     * 2021-07-30 185ms total, 94ms RTT - move to es6, jest as es6, browerify some dependencies
+     * 2021-07-30 96ms total, 75ms RTT - IN BROWSER
      */
   })
   test.skip('ping many times', async () => {

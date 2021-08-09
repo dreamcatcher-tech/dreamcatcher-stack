@@ -44,6 +44,7 @@ const blockModel = standardize({
       forkedLineages,
       asyncSigner
     )
+    debug('provenance created')
     // TODO verify that we are able to sign this dmz ?
     const block = blockModel.clone({ ...dmz, provenance })
     return block

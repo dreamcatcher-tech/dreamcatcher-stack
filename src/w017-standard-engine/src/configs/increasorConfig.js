@@ -13,7 +13,7 @@ import {
 import { blockProducer, lockProducer } from '../../../w016-producers'
 import { increasorMachine } from '../machines'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
-import { toFunctions as cryptoFn } from '../services/cryptoFactory'
+import { toCryptoFunctions } from '../services/cryptoFactory'
 import { toFunctions as isolateFn } from '../services/isolateFactory'
 import { isolatorConfig } from './isolatorConfig'
 import { pure } from '../../../w001-xstate-direct'
@@ -23,7 +23,7 @@ const { generateNext } = blockProducer
 
 const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
   const consistency = consistencyFn(ioConsistency)
-  const crypto = cryptoFn(ioCrypto)
+  const crypto = toCryptoFunctions(ioCrypto)
   const isolation = isolateFn(ioIsolate)
   const isolatorMachine = isolatorConfig(isolation, consistency)
 

@@ -6,7 +6,6 @@ import { integrityModel } from './integrityModel'
 import { signatureModel } from './signatureModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:keypair')
-
 const keypairModel = standardize({
   schema: {
     title: 'Keypair',
@@ -56,12 +55,17 @@ const keypairModel = standardize({
       }
       integrity = integrityModel.clone(integrity)
       const { hash } = integrity
-      const { publicKey, secretKey } = instance
-      const { signature: seal } = await crypto.signHash(hash, secretKey)
-      const verified = await crypto.verifyHash(hash, seal, publicKey.key)
+      const { secretKey } = instance
+      const { signature: seal } = await crypto.signHash(
+        hash,
+        secretKey,
+        publicKey
+      )
+      const verified = await crypto.verifyHash(hash, seal, publicKey)
       assert(verified)
-      assert(crypto.verifyHashSync(hash, seal, publicKey.key))
-      const signature = { publicKey, integrity, seal }
+      assert(crypto.verifyHashSync(hash, seal, publicKey))
+      // TODO find a cleaner way to use publicKey objects, and publicKey strings in crypto
+      const signature = { publicKey: instance.publicKey, integrity, seal }
       const model = signatureModel.clone(signature)
       debug(`sign complete`)
       return model

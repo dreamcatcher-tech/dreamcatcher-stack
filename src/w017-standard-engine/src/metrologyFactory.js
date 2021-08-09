@@ -297,7 +297,6 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
   }
   return metrology(baseAddress, '/')
 }
-
 const enableLoggingWithTap = (engine, identifier) => {
   const { sqsPool, sqsTransmit, ioConsistency } = engine
   const debugPrefix = identifier ? `ib:met:${identifier}` : `ib:met`

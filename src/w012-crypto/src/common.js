@@ -1,6 +1,8 @@
 import { Buffer } from 'buffer'
-import browserHash from 'object-hash'
+import sha256 from 'crypto-js/sha256'
+import sha256Encoder from 'crypto-js/enc-hex'
 import { v4 } from 'uuid'
+import { isBrowser } from 'is-in-browser'
 import NodeObjectHash from 'node-object-hash'
 const nodeObjectHash = NodeObjectHash({ coerce: false })
 
@@ -8,10 +10,11 @@ const nodeObjectHash = NodeObjectHash({ coerce: false })
 // use stable stringify for equality, and serialize, then compute hash if requested
 // model based stringify, only if hash requested, use hash of this string
 const objectHash = (obj) => {
-  if (typeof process === 'undefined') {
+  if (isBrowser) {
     // TODO move to https://github.com/crypto-browserify/crypto-browserify
     const string = nodeObjectHash.sort(obj)
-    return browserHash(string, { algorithm: 'sha256', encoding: 'hex' })
+    const hash = sha256(string)
+    return hash.toString(sha256Encoder)
   }
   return nodeObjectHash.hash(obj)
 }

@@ -34,9 +34,9 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
+
 import assert from 'assert'
 import packageJson from '../package.json'
-import sodiumplus from 'sodium-plus'
 import { browserFactory, effectorFactory, awsFactory } from './w020-emulators'
 import * as engine from './w017-standard-engine'
 import * as apps from './w301-user-apps'
@@ -45,20 +45,6 @@ const debug = Debug('interblock')
 const { version } = packageJson
 
 const checkModules = () => {
-  const { SodiumPlus } = sodiumplus
-  const load = async () => {
-    const sodium = await SodiumPlus.auto()
-    debug(`libsodium backend: `, sodium.getBackendName())
-    let random = await sodium.randombytes_buf(32)
-    let hash = await sodium.crypto_generichash('hello world')
-    debug({
-      random: random.toString('hex'),
-      hash: hash.toString('hex'),
-    })
-    debug('crypto test complete')
-  }
-  load()
-
   let thrown = false
   try {
     assert()
@@ -70,13 +56,6 @@ const checkModules = () => {
       'Assert cannot throw - this is essential for library operation'
     )
   }
-}
-
-if (!globalThis._interblockLibrary) {
-  debug(`interblock version: ${version}`)
-  globalThis._interblockLibrary = true
-} else {
-  debug(`duplicate load`)
 }
 
 export {

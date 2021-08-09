@@ -1,4 +1,5 @@
 const container = {}
+
 const registry = {
   registerModels(models) {
     Object.keys(models).forEach((key) => {

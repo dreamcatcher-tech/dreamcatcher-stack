@@ -1,10 +1,20 @@
 import { Buffer } from 'buffer'
 import assert from 'assert'
-import SodiumPlusExport from 'sodium-plus'
-import { objectHash, generateNonce } from './common'
+// import SodiumPlusLibrary from 'sodium-plus'
+import { objectHash } from './common'
 import Debug from 'debug'
+
 const debug = Debug('interblock:crypto:sodium')
-const { SodiumPlus, Ed25519PublicKey, Ed25519SecretKey } = SodiumPlusExport
+const { SodiumPlus, Ed25519PublicKey, Ed25519SecretKey } = SodiumPlusLibrary
+
+/**
+ *  needed for libsodium as does not import Buffer correctly.
+ * Any global called in a dependency seems to be able to be patched
+ * by assigning to globalThis.
+ * Just has to be defined before the dependency code is used, so
+ * impossible if called as part of the import process in the module.
+ */
+globalThis.Buffer = Buffer
 
 const ciKeypair = {
   publicKey: 'I7xUkSwebpLEqGglyGfif/3FVb/71CRPF6Jqv//ull0=',
@@ -21,16 +31,17 @@ const _verifiedSet = new Set([
   `${pierceKeypair.publicKey}_${pierceKeypair.secretKey}`,
 ])
 
+let _sodiumPromise
 const sodiumLoader = () => {
   // apiGateway loads module multiple times - only instantiate when called directly.
-  if (!globalThis._sodiumPromise) {
+  if (!_sodiumPromise) {
     debug('loading sodiumPlus')
-    globalThis._sodiumPromise = SodiumPlus.auto()
-    globalThis._sodiumPromise.then(() => debug('sodiumPlus loaded'))
+    _sodiumPromise = SodiumPlus.auto()
+    _sodiumPromise.then(() => debug('sodiumPlus loaded'))
   }
-  return globalThis._sodiumPromise
+  return _sodiumPromise
 }
-sodiumLoader() // web bundlers sometimes load multiple instances
+// sodiumLoader() // web bundlers sometimes load multiple instances
 
 const _hashTemplate = objectHash('template')
 
@@ -109,10 +120,6 @@ const verifyHash = async (messageHash, signature, publicKey) => {
   return ver
 }
 
-const testMode = () => {
-  debug(`no testmode in sodium`)
-}
-
 const _getBackend = async () => {
   const sodium = await sodiumLoader()
   return sodium.getBackendName()
@@ -125,7 +132,6 @@ export {
   generateKeyPair,
   verifyKeyPair,
   verifyKeyPairSync,
-  testMode,
   ciKeypair,
   pierceKeypair,
   _verifiedSet,

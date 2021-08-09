@@ -1,2 +1,2 @@
-export * from './src/sodium'
+export * from './src/noble'
 export * from './src/common'

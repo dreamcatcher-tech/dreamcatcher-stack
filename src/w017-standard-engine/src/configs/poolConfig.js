@@ -14,7 +14,7 @@ import {
 } from '../../../w015-models'
 import { lockProducer } from '../../../w016-producers'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
-import { toFunctions as cryptoFn } from '../services/cryptoFactory'
+import { toCryptoFunctions as cryptoFn } from '../services/cryptoFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:pool')
 

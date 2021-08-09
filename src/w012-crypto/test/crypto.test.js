@@ -4,12 +4,12 @@ import Benchmark from 'benchmark'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crypto')
-
 const testHash = crypto.objectHash('testHash')
+
 describe('crypto', () => {
   let keypair
-  beforeAll(async () => {
-    keypair = await crypto.generateKeyPair()
+  beforeAll(() => {
+    keypair = crypto.generateKeyPair()
   })
 
   const hashString = () => {
@@ -28,13 +28,13 @@ describe('crypto', () => {
       'hash does not match the expected value'
     )
   }
-  const generateKeyPair = async () => {
-    const keyPair = await crypto.generateKeyPair()
+  const generateKeyPair = () => {
+    const keyPair = crypto.generateKeyPair()
     assert(keyPair)
   }
-  const verifyKeyPair = async () => {
+  const verifyKeyPair = () => {
     const { publicKey, secretKey } = keypair
-    const verified = await crypto.verifyKeyPair({
+    const verified = crypto.verifyKeyPair({
       publicKey,
       secretKey,
     })
@@ -46,9 +46,9 @@ describe('crypto', () => {
     assert(signature)
     return signature
   }
-  const verifySignature = (signature) => async () => {
+  const verifySignature = (signature) => () => {
     const { publicKey } = keypair
-    const verified = await crypto.verifyHash(testHash, signature, publicKey)
+    const verified = crypto.verifyHash(testHash, signature, publicKey)
     assert(verified)
   }
 
@@ -61,12 +61,10 @@ describe('crypto', () => {
     const { signature } = await signHash()
     await new Promise((resolve) => {
       suite
-        .add('Generate Keypair', generateKeyPair, { async: true })
-        .add('Verify Keypair', verifyKeyPair, { async: true })
+        .add('Generate Keypair', generateKeyPair)
+        .add('Verify Keypair', verifyKeyPair)
         .add('Sign a hash', signHash, { async: true })
-        .add('Verify signature', verifySignature(signature), {
-          async: true,
-        })
+        .add('Verify signature', verifySignature(signature))
         .add('Hash a string', hashString)
         .add('Hash an object', hashObject)
         .on('cycle', (event) => {
@@ -94,6 +92,13 @@ describe('crypto', () => {
     Verify signature x 258,182 ops/sec ±5.56% (62 runs sampled)
     Hash a string x 460,995 ops/sec ±5.23% (71 runs sampled)
 
+    2021-08-08 noble + modules
+    Generate Keypair x 1,184 ops/sec ±2.66% (77 runs sampled)
+    Verify Keypair x 7,302 ops/sec ±19.18% (71 runs sampled)
+    Sign a hash x 7,502 ops/sec ±11.03% (50 runs sampled)
+    Verify signature x 211 ops/sec ±2.65% (72 runs sampled)
+    Hash a string x 237,581 ops/sec ±5.31% (72 runs sampled)
+    Hash an object x 131,985 ops/sec ±2.46% (73 runs sampled)    
     */
   })
 
@@ -147,29 +152,23 @@ describe('crypto', () => {
   })
 
   describe('generateKeyPair', () => {
-    test('same pair from same seed', async () => {
-      const seed = '0123456789abcdef0123456789abcdef'
-      const other = '70b467b32a6ea695555039bc52eba591'
-      const kp1 = await crypto.generateKeyPair(seed)
-      const kp2 = await crypto.generateKeyPair(seed)
-      const kp3 = await crypto.generateKeyPair(other)
-      const noSeed1 = await crypto.generateKeyPair()
-      const noSeed2 = await crypto.generateKeyPair()
-
-      assert.deepStrictEqual(kp1, kp2)
-      assert.notStrictEqual(kp2, kp3)
-      assert.notStrictEqual(kp3, noSeed1)
-      assert.notStrictEqual(noSeed1, noSeed2)
+    test('different pairs each call', () => {
+      const kp1 = crypto.generateKeyPair()
+      const kp2 = crypto.generateKeyPair()
+      assert.notStrictEqual(kp1, kp2)
+      assert(kp1.publicKey !== kp2.publicKey)
+      assert(kp1.secretKey !== kp2.secretKey)
     })
   })
   describe('sign|verify', () => {
     test('verifies signatures for previous signed objects', async () => {
       const hash = crypto.objectHash('test hash')
       const { publicKey, secretKey } = keypair
-      const { signature } = await crypto.signHash(hash, secretKey)
-      assert(await crypto.verifyHash(hash, signature, publicKey))
-      const tamp = 'a different hash'
-      const isNotOk = await crypto.verifyHash(tamp, signature, publicKey)
+      const { signature } = await crypto.signHash(hash, secretKey, publicKey)
+      const isVerified = crypto.verifyHash(hash, signature, publicKey)
+      assert(isVerified)
+      const tamp = crypto.objectHash('a different hash')
+      const isNotOk = crypto.verifyHash(tamp, signature, publicKey)
       assert(!isNotOk)
       const isNotOkSync = crypto.verifyHashSync(tamp, signature, publicKey)
       assert(!isNotOkSync)
@@ -177,21 +176,24 @@ describe('crypto', () => {
     test('throws if hash not a secure hash', async () => {
       const notSecure = 'random'
       const secure = crypto.objectHash(notSecure)
-      const { secretKey } = keypair
+      const { publicKey, secretKey } = keypair
 
-      await assert.rejects(crypto.signHash(notSecure, secretKey))
-      assert.ok(await crypto.signHash(secure, secretKey))
+      await assert.rejects(crypto.signHash(notSecure, secretKey, publicKey))
+      assert.ok(await crypto.signHash(secure, secretKey, publicKey))
     })
     test('caches already verified signatures', async () => {
-      const { publicKey, secretKey } = await crypto.generateKeyPair()
+      const { publicKey, secretKey } = crypto.generateKeyPair()
       const { size } = crypto._verifiedSet
-      const { signature } = await crypto.signHash(testHash, secretKey)
-      assert.strictEqual(crypto._verifiedSet.size, size)
-      assert(!crypto.verifyHashSync(testHash, signature, publicKey))
-      const verified = await crypto.verifyHash(testHash, signature, publicKey)
-      assert(verified)
+      const { signature } = await crypto.signHash(
+        testHash,
+        secretKey,
+        publicKey
+      )
       assert.strictEqual(crypto._verifiedSet.size, size + 1)
       assert(crypto.verifyHashSync(testHash, signature, publicKey))
+      const isVerified = crypto.verifyHash(testHash, signature, publicKey)
+      assert(isVerified)
+      assert.strictEqual(crypto._verifiedSet.size, size + 1)
     })
     test.todo('caches created signatures for instant verify')
     test.todo('alerts if asked to sign the same thing twice')
