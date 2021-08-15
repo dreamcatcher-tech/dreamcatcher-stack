@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer'
 import assert from 'assert'
-// import SodiumPlusLibrary from 'sodium-plus'
+import SodiumPlusLibrary from 'sodium-plus'
 import { objectHash } from './common'
 import Debug from 'debug'
 

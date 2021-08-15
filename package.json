@@ -60,7 +60,8 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "transform": {}
+    "transform": {},
+    "maxWorkers": "95%"
   },
   "devDependencies": {
     "benchmark": "^2.1.4",

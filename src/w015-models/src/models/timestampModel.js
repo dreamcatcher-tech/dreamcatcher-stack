@@ -4,7 +4,7 @@ const timestampModel = standardize({
   schema: {
     title: 'Timestamp',
     type: 'object',
-    description: 'Time of issuance in standard format, with Zulu offset',
+    // description: 'Time of issuance in standard format, with Zulu offset',
     additionalProperties: false,
     required: ['date', 'ms'],
     properties: {

@@ -4,15 +4,15 @@ import { integrityModel } from './integrityModel'
 const covenantIdModel = standardize({
   schema: {
     title: 'CovenantId',
-    description: `Covenants are how behaviour is introduced to the system.
-A Covenant represents the loaded piece of language specific code.
-A covenant is a binary package on disk, but in ram it is executable code.
+    //     description: `Covenants are how behaviour is introduced to the system.
+    // A Covenant represents the loaded piece of language specific code.
+    // A covenant is a binary package on disk, but in ram it is executable code.
 
-In all languages, a reducer must be supplied.
-This pure function takes a json state, and a json action, and returns a json state
+    // In all languages, a reducer must be supplied.
+    // This pure function takes a json state, and a json action, and returns a json state
 
-Optionally, a list of async functions that are invoked by the side effect system 
-may be supplied`,
+    // Optionally, a list of async functions that are invoked by the side effect system
+    // may be supplied`,
     type: 'object',
     additionalProperties: false,
     required: ['name', 'version', 'integrity', 'language'],

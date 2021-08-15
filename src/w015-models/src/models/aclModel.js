@@ -3,16 +3,16 @@ import { standardize } from '../modelUtils'
 const schema = {
   type: 'object',
   title: 'Acl',
-  description: `Access control list, power rating, alias table, and chargeout rates
-Groups are similar to roles.
-Groups contain only Actors
-Actors are similar to users, but represent chains
-This is the alias table
-Actors contain only a single ChainId
-This might be extended to cover token balance from other chains.
-Could use proofs to show your current balance when an action was requested.
+  //   description: `Access control list, power rating, alias table, and chargeout rates
+  // Groups are similar to roles.
+  // Groups contain only Actors
+  // Actors are similar to users, but represent chains
+  // This is the alias table
+  // Actors contain only a single ChainId
+  // This might be extended to cover token balance from other chains.
+  // Could use proofs to show your current balance when an action was requested.
 
-Alias table is contained within the join slices directly.`,
+  // Alias table is contained within the join slices directly.`,
   required: ['groups', 'everybody', 'balance', 'shares', 'costs'],
   additionalProperties: false,
   properties: {

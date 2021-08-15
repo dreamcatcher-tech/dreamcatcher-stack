@@ -10,6 +10,7 @@ const nodeObjectHash = NodeObjectHash({ coerce: false })
 // use stable stringify for equality, and serialize, then compute hash if requested
 // model based stringify, only if hash requested, use hash of this string
 const objectHash = (obj) => {
+  // TODO move to using fast-stable-stringify or similar, then hash that string
   if (isBrowser) {
     // TODO move to https://github.com/crypto-browserify/crypto-browserify
     const string = nodeObjectHash.sort(obj)

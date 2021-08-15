@@ -6,7 +6,7 @@ import { socketModel } from './socketModel'
 const txModel = standardize({
   schema: {
     title: 'Tx',
-    description: `An interblock plus socket info, used for transmission functions`,
+    // description: `An interblock plus socket info, used for transmission functions`,
     type: 'object',
     required: ['socket', 'interblock'],
     additionalProperties: false,

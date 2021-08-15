@@ -11,32 +11,32 @@ const debug = Debug('interblock:models:lock')
 
 const schema = {
   title: 'Lock',
-  description: 'Locking of the persistence layer for execution to take place.',
+  // description: 'Locking of the persistence layer for execution to take place.',
   type: 'object',
   required: ['uuid', 'timestamp', 'expires', 'interblocks', 'piercings'],
   additionalProperties: false,
   properties: {
     uuid: {
       type: 'string',
-      description: 'uuidv4 identifying a lock on a chainId',
+      // description: 'uuidv4 identifying a lock on a chainId',
     },
     timestamp: timestampModel.schema,
     expires: {
       type: 'integer',
-      description: 'ms until the lock expires',
+      // description: 'ms until the lock expires',
       minimum: 0,
     },
     block: blockModel.schema,
     interblocks: {
       type: 'array',
-      description:
-        'Punched out blocks from other chains that have accumulated for this chain',
+      // description:
+      //   'Punched out blocks from other chains that have accumulated for this chain',
       uniqueItems: true,
       items: interblockModel.schema,
     },
     piercings: {
       type: 'object',
-      description: 'Side effects',
+      // description: 'Side effects',
       required: ['requests', 'replies'],
       properties: {
         requests: {

@@ -5,7 +5,7 @@ import { standardize } from '../modelUtils'
 const simpleArrayModel = standardize({
   schema: {
     title: 'SimpleArray',
-    description: 'ascending indexes of requests to process',
+    // description: 'ascending indexes of requests to process',
     type: 'array',
     uniqueItems: true,
     items: { type: 'number', minimum: 0, multipleOf: 1 },

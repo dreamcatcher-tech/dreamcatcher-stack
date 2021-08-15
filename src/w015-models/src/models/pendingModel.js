@@ -9,13 +9,13 @@ const pendingModel = standardize({
   // TODO make model cleaner once util can handle OR in schemas
   schema: {
     title: 'Pending',
-    description: `Indicates chain is waiting for a promise to resolve
-    Stores the address and index of the request.
-    Note that only requests can be origin actions for promises
-    First request is the origin request
-    The pendingRequest is saved in its entirety so structural changes
-    can occur to networking and channels, and the request will still
-    be able to proceed.`,
+    // description: `Indicates chain is waiting for a promise to resolve
+    // Stores the address and index of the request.
+    // Note that only requests can be origin actions for promises
+    // First request is the origin request
+    // The pendingRequest is saved in its entirety so structural changes
+    // can occur to networking and channels, and the request will still
+    // be able to proceed.`,
     type: 'object',
     required: ['replies', 'requests'],
     additionalProperties: false,
@@ -23,8 +23,8 @@ const pendingModel = standardize({
       pendingRequest: rxRequestModel.schema,
       replies: {
         type: 'array',
-        description: `Full replies, allowing the originating request to be lowered,
-        and the remote side to lower the reply, without losing it from the accumulator`,
+        // description: `Full replies, allowing the originating request to be lowered,
+        // and the remote side to lower the reply, without losing it from the accumulator`,
         uniqueItems: true,
         items: rxReplyModel.schema,
       },

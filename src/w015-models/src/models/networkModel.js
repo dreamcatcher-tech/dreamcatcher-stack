@@ -12,7 +12,7 @@ const debug = Debug('interblock:models:network')
 
 const schema = {
   title: 'Network',
-  description: `All communication in and out of this blockchain.`,
+  // description: `All communication in and out of this blockchain.`,
   type: 'object',
   required: ['..', '.'],
   additionalProperties: false,

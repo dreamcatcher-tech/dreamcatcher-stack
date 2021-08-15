@@ -5,7 +5,7 @@ const binaryModel = standardize({
   schema: {
     title: 'Binary',
     type: 'object',
-    description: `Manages the binary attached to each chain.`,
+    // description: `Manages the binary attached to each chain.`,
     additionalProperties: false,
     required: ['integrity', 'size'],
     properties: {

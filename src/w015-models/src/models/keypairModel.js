@@ -9,7 +9,7 @@ const debug = Debug('interblock:models:keypair')
 const keypairModel = standardize({
   schema: {
     title: 'Keypair',
-    description: 'public private key pair',
+    // description: 'public private key pair',
     type: 'object',
     additionalProperties: false,
     required: ['name', 'publicKey', 'secretKey', 'algorithm'],

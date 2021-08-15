@@ -14,8 +14,8 @@ import { pendingModel } from './pendingModel'
 const schema = {
   type: 'object',
   title: 'Dmz',
-  description: `DMZ coordinates all the models in one place.
-Dmz is equivalent to CombineReducers in Redux.`,
+  //   description: `DMZ coordinates all the models in one place.
+  // Dmz is equivalent to CombineReducers in Redux.`,
   required: [
     'validators', // interblock
     'encryption', // interblock

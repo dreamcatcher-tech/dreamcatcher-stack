@@ -12,8 +12,8 @@ const dmzSchema = dmzModel.schema
 const schema = {
   ...dmzSchema,
   title: 'Block',
-  description: `The fundamental unit of state persistence and transmission
-A DMZ with a 'provenance' key is a block.`,
+  //   description: `The fundamental unit of state persistence and transmission
+  // A DMZ with a 'provenance' key is a block.`,
   required: [...dmzSchema.required, 'provenance'],
   properties: {
     ...dmzSchema.properties,

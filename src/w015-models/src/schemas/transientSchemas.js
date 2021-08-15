@@ -1,6 +1,6 @@
 const txRequestSchema = {
   title: `txRequest`,
-  description: `Covenant created`,
+  // description: `Covenant created`,
   type: 'object',
   required: ['type', 'payload', 'to'],
   additionalProperties: false,
@@ -13,7 +13,7 @@ const txRequestSchema = {
 
 const rxRequestSchema = {
   title: `rxRequest`,
-  description: `System created inside ChannelModel`,
+  // description: `System created inside ChannelModel`,
   type: 'object',
   required: ['type', 'payload', 'sequence'], // we destroy who they sent it to
   additionalProperties: false,
@@ -27,7 +27,7 @@ const rxRequestSchema = {
 
 const txReplySchema = {
   title: `txReply`,
-  description: `Covenant created`,
+  // description: `Covenant created`,
   type: 'object',
   required: ['type', 'payload', 'request'],
   additionalProperties: false,
@@ -48,9 +48,9 @@ const txReplySchema = {
 }
 const rxReplySchema = {
   title: `rxReply`,
-  description: `System created.
-Create requires the sequence to be included.
-@@PROMISE cannot ever be dispatched to a reducer, hence its exclusion from "type"`,
+  //   description: `System created.
+  // Create requires the sequence to be included.
+  // @@PROMISE cannot ever be dispatched to a reducer, hence its exclusion from "type"`,
   type: 'object',
   required: ['type', 'payload', 'request'],
   additionalProperties: false,
@@ -58,7 +58,7 @@ Create requires the sequence to be included.
     type: { type: 'string', enum: ['@@REJECT', '@@RESOLVE'] },
     payload: { type: 'object' },
     request: {
-      description: `Covenants original request, without the 'to' field`,
+      // description: `Covenants original request, without the 'to' field`,
       type: 'object',
       required: ['type', 'payload'],
       additionalProperties: false,

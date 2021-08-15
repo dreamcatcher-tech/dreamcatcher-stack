@@ -11,7 +11,7 @@ const selfSocket = {
 const socketModel = standardize({
   schema: {
     title: 'Socket',
-    description: `Socket info, used to store info about block producers`,
+    // description: `Socket info, used to store info about block producers`,
     type: 'object',
     required: ['id', 'type', 'info'],
     additionalProperties: false,
