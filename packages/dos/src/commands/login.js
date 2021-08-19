@@ -1,8 +1,10 @@
-const debug = require('debug')('dos:commands:login')
+import Debug from 'debug'
+const debug = Debug('dos:commands:login')
 const timeout = (ms) => new Promise((res) => setTimeout(res, ms))
 
-module.exports = async ({ spinner, blockchain }, ...args) => {
+export const login = async ({ spinner, blockchain }, ...args) => {
   // see if we have a url for this particular chain address
+  const url = 'TODO'
 
   // choose the default to connect to
   const chainId =
@@ -17,7 +19,7 @@ module.exports = async ({ spinner, blockchain }, ...args) => {
   return { out: url }
 }
 
-module.exports.help = `Loop the user through a signon process that links
+export const help = `Loop the user through a signon process that links
 The current machine pubkey to their interblock user chain.
 When this occurs, the guest chain will transition to the
 user chain, and the prompt will change from "guest" to "user"`

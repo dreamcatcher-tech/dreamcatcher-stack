@@ -1,6 +1,6 @@
 const timeout = (ms) => new Promise((res) => setTimeout(res, ms))
 
-module.exports = async (ctx, ...args) => {
+export const logout = async (ctx, ...args) => {
   console.log(
     `
 `
@@ -8,6 +8,6 @@ module.exports = async (ctx, ...args) => {
   return timeout(2000)
 }
 
-module.exports.help = `
+export const help = `
 Disconnect from the current remote host, else error and stay as local
 `

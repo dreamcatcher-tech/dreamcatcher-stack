@@ -1,10 +1,10 @@
-const debug = require('debug')('dos:commands:add')
-const chalk = require('ansi-colors')
-const { prompt } = require('enquirer-browserify')
+import chalk from 'ansi-colors'
+import Debug from 'debug'
+const debug = Debug('dos:commands:validators')
 
-module.exports = async ({ spinner, blockchain }, ...args) => {}
+export const validators = async ({ spinner, blockchain }, ...args) => {}
 
-module.exports.help = `
+export const help = `
 View, change the validator set of a chain or group of chains.
 Recursively change all validators of the chains children.
 Validators must accept the role before the handover is complete.

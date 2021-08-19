@@ -1,8 +1,8 @@
-const debug = require('debug')('dos:commands:add')
-const chalk = require('ansi-colors')
-const { prompt } = require('enquirer-browserify')
+import chalk from 'ansi-colors'
+import Debug from 'debug'
+const debug = Debug('dos:commands:add')
 
-module.exports = async ({ spinner, blockchain }, ...paths) => {
+export const add = async ({ spinner, blockchain }, ...paths) => {
   // TODO handle nested and remote paths
   debug(`add: %O`, paths)
   if (!paths.length) {
@@ -23,7 +23,7 @@ module.exports = async ({ spinner, blockchain }, ...paths) => {
   }
 }
 
-module.exports.help = `
+export const help = `
 This command will be overridden by each application.
 It serves as the general action of creating a new entity
 where the entity is specific to the application being executed.

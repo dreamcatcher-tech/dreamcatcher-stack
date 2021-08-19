@@ -1,7 +1,8 @@
-const Chalk = require('ansi-colors')
-const debug = require('debug')('dos:print')
+import process from 'process'
+import Debug from 'debug'
+const debug = Debug('dos:print')
 
-module.exports = async function print(func, stdout, stderr) {
+export default async function print(func, stdout, stderr) {
   try {
     let res
     if (typeof func === 'string') {
@@ -18,11 +19,11 @@ module.exports = async function print(func, stdout, stderr) {
       }
       // use cliui to handle string wrapping
       const terminalString = string.replace(/(?:\r\n|\r|\n)/g, '\r\n')
-      stdout.write(terminalString)
-      stdout.write('\r\n')
+      process.stdout.write(terminalString)
+      process.stdout.write('\r\n')
     }
   } catch (err) {
     debug(err)
-    stderr.write(`❌️ ${err}\r\n`)
+    process.stderr.write(`❌️ ${err}\r\n`)
   }
 }

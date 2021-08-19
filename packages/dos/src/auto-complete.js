@@ -1,9 +1,10 @@
-const debug = require('debug')('dos:auto-complete')
-const Chalk = require('ansi-colors')
-const { withSpin } = require('./spinner')
-const Commands = require('./commands')
+import Chalk from 'ansi-colors'
+import { withSpin } from './spinner'
+import * as commands from './commands'
+import Debug from 'debug'
+const debug = Debug('dos:auto-complete')
 
-class AutoComplete {
+export class AutoComplete {
   constructor() {
     this._list = []
     this.getList = this.getList.bind(this)
@@ -13,7 +14,7 @@ class AutoComplete {
   async updateList({ wd, spinner }) {
     if (spinner) spinner.text = 'Updating auto-complete list'
 
-    const cmdNames = Object.keys(Commands)
+    const cmdNames = Object.keys(commands)
     let autoCompleteLinks = []
 
     this._list = cmdNames
@@ -22,13 +23,11 @@ class AutoComplete {
   // Given a string of chars typed by the user, return a list of auto-completion
   // options
   getList(s) {
-    return s.includes(' ') ? this._list : Object.keys(Commands)
+    return s.includes(' ') ? this._list : Object.keys(commands)
   }
 }
 
-exports.AutoComplete = AutoComplete
-
-exports.withAutoComplete = (fn) => {
+export const withAutoComplete = (fn) => {
   return async function fnWithAutoComplete(ctx) {
     if (!ctx.autoComplete) {
       ctx.autoComplete = new AutoComplete()

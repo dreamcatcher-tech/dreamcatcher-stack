@@ -1,6 +1,8 @@
-const debug = require('debug')('dos:loop')
-const setImmediate = require('set-immediate-shim')
-module.exports = function loop(func) {
+import setImmediate from 'set-immediate-shim'
+import Debug from 'debug'
+const debug = Debug('dos:loop')
+
+export default function loop(func) {
   debug(`begin loop`)
   let isActive = true
   setImmediate(async () => {

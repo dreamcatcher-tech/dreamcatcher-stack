@@ -1,3 +1,3 @@
-module.exports = function pwd({ wd }) {
+export const pwd = ({ wd }) => {
   return { out: wd }
 }

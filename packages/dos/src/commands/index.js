@@ -1,33 +1,35 @@
-exports.cd = require('./cd')
-exports.exit = require('./exit')
-exports.help = require('./help')
-exports.ls = require('./ls')
-exports.pwd = require('./pwd')
-exports.version = require('./version')
-exports.pkg = require('./pkg')
-exports.clear = require('./clear')
-exports.error = require('./error')
-exports.open = require('./open')
-exports.login = require('./login')
-exports.logout = require('./logout')
-exports.su = require('./su')
-exports.add = require('./add')
-exports.ln = require('./ln')
-exports.rm = require('./rm')
-exports.whoami = require('./whoami')
-exports.search = require('./search')
-exports.time = require('./time')
-exports.ping = require('./ping')
-exports.reset = require('./reset')
-exports.dns = require('./dns')
-exports.cat = require('./cat')
-exports.net = require('./net')
-exports.debug = require('./debug')
-exports.edit = require('./edit')
-exports.about = require('./about')
-exports.blocks = require('./blocks')
-exports.scrub = require('./scrub')
-exports.namegen = require('./namegen')
-exports.validators = require('./validators')
+export * from './cd'
+export * from './exit'
+export * from './ls'
+export * from './pwd'
+export * from './version'
+export * from './pkg'
+export * from './clear'
+export * from './error'
+export * from './open'
+export * from './login'
+export * from './logout'
+export * from './su'
+export * from './add'
+export * from './ln'
+export * from './rm'
+export * from './whoami'
+export * from './search'
+export * from './time'
+export * from './ping'
+export * from './reset'
+export * from './dns'
+export * from './cat'
+export * from './net'
+export * from './debug'
+export * from './edit'
+export * from './about'
+export * from './blocks'
+export * from './scrub'
+export * from './namegen'
+export * from './validators'
 
-const debug = require('debug')('dos:commands')
+export * from './help' // TODO change how imports work, as help command gets overridden by other exports
+
+import Debug from 'debug'
+const debug = Debug('dos:commands')

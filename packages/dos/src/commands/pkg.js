@@ -1,4 +1,5 @@
-const debug = require('debug')('dos:commands:pkg')
+import Debug from 'debug'
+const debug = Debug('dos:commands:pkg')
 
 /**
  * Commands
@@ -8,7 +9,7 @@ const debug = require('debug')('dos:commands:pkg')
  * apps - list all packages which are apps
  */
 
-module.exports = async ({ spinner, blockchain }, subcmd, ...args) => {
+export const pkg = async ({ spinner, blockchain }, subcmd, ...args) => {
   debug(subcmd, args)
   // TODO move to commander for parsing, and shell commands for action
   switch (subcmd) {
@@ -16,7 +17,7 @@ module.exports = async ({ spinner, blockchain }, subcmd, ...args) => {
     case 'help':
       debug('help command')
       break
-    case 'install':
+    case 'install': {
       const dpkgPath = args[0]
       const installPath = args[1]
       if (typeof dpkgPath !== 'string') {
@@ -31,10 +32,11 @@ module.exports = async ({ spinner, blockchain }, subcmd, ...args) => {
       await blockchain.install(dpkgPath, installPath)
       spinner.info(`Install complete`)
       break
+    }
   }
 }
 
-module.exports.help = `
+export const help = `
 The platform package manager.  Use list --installed 
 to list all applications installed on the system.
 use list to show all available applications available for install.

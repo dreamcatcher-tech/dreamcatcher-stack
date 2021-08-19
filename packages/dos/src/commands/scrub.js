@@ -1,6 +1,6 @@
-module.exports = async () => {}
+export const scrub = async () => {}
 
-module.exports.help = `
+export const help = `
 To ensure the integrity of the system, invoke scrub to
 check the hashes of all objects at this location,
 and to verify the availability of all objects.

@@ -1,5 +1,5 @@
-const pkg = require('../../package.json')
+import pkg from '../../package.json'
 
-module.exports = function version() {
+export const version = () => {
   return { out: `v${pkg.version}` }
 }

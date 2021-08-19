@@ -1,22 +1,23 @@
-const process = require('process')
-const debug = require('debug')('dos:repl')
-const ora = require('ora')
-const {
+import process from 'process'
+import ora from 'ora'
+import {
   effectorFactory,
   apps,
   checkModules,
   version,
-} = require('@dreamcatcher-tech/interblock')
-const { read } = require('./read')
-const { evaluate } = require('./eval')
-const { withAutoComplete } = require('./auto-complete')
-const { withSpin } = require('./spinner')
-const print = require('./print')
-const loop = require('./loop')
-const { version: dosVersion } = require('../package.json')
+} from '../../interblock/src/index' // in build, gets aliased to @dreamcatcher-tech/interblock
+import { read } from './read'
+import { evaluate } from './eval'
+import { withAutoComplete } from './auto-complete'
+import { withSpin } from './spinner'
+import print from './print'
+import loop from './loop'
+import packageJson from '../package.json'
+import Debug from 'debug'
+const debug = Debug('dos:repl')
 
-module.exports = async function repl(opts) {
-  require('debug').enable('*:repl *commands* *:eval')
+export default async function repl(opts) {
+  Debug.enable('*:repl *commands* *:eval')
   debug(`repl`)
   opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
@@ -31,7 +32,7 @@ module.exports = async function repl(opts) {
   await print(
     `Welcome to the HyperNet
   Blockchain core: v${version}
-  DOS:             v${dosVersion}
+  DOS:             v${packageJson.version}
   type "help" to get started`,
     stdout,
     stderr

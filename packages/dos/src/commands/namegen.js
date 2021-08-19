@@ -1,7 +1,8 @@
-const debug = require('debug')('dos:commands:namegen')
-const dockerNames = require('docker-names')
+import dockerNames from 'docker-names'
+import Debug from 'debug'
+const debug = Debug('dos:commands:namegen')
 
-module.exports = async ({ spinner, blockchain }, count = 1) => {
+export const namegen = async ({ spinner, blockchain }, count = 1) => {
   // TODO handle nested and remote paths
   debug(`count: %O`, count)
   let out = ``
@@ -18,6 +19,6 @@ module.exports = async ({ spinner, blockchain }, count = 1) => {
   }
 }
 
-module.exports.help = `
+export const help = `
 Generate a random name, which can be used as an identity for anything.
 `

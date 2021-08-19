@@ -1,15 +1,16 @@
-const debug = require('debug')('dos:eval')
-const Commands = require('./commands')
-const posix = require('path-browserify')
+import * as commands from './commands'
+import posix from 'path-browserify'
+import Debug from 'debug'
+const debug = Debug('dos:eval')
 
-module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
+export const evaluate = async (ctx, cmd, cmdArgs = []) => {
   debug(`command: `, cmd, cmdArgs)
   cmd = cmd || ''
 
   if (!cmd) {
     return
   }
-  if (!Commands[cmd]) {
+  if (!commands[cmd]) {
     const isLocalCommand =
       cmd.startsWith('./') || cmd.startsWith('/' || cmd.startsWith('../'))
     if (isLocalCommand) {
@@ -31,5 +32,5 @@ module.exports.evaluate = async (ctx, cmd, cmdArgs = []) => {
     throw new Error(`${cmd}: command not found`)
   }
 
-  return Commands[cmd](ctx, ...cmdArgs)
+  return commands[cmd](ctx, ...cmdArgs)
 }

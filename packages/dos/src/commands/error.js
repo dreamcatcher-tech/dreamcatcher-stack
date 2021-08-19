@@ -1,6 +1,8 @@
-const debug = require('debug')('dos:commands:error')
+import Debug from 'debug'
+const debug = Debug('dos:commands:error')
+
 let count = 0
-module.exports = async (ctx, useAwait) => {
+export const error = async (ctx, useAwait) => {
   const msg = 'Test Error'
   if (useAwait) {
     debug(`async error test`)
@@ -14,4 +16,4 @@ module.exports = async (ctx, useAwait) => {
   throw new Error(msg + ' ' + count++)
 }
 
-module.exports.help = `Throw an error, to test system response`
+export const help = `Throw an error, to test system response`

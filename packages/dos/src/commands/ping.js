@@ -1,6 +1,8 @@
-const debug = require('debug')('dos:commands:ping')
-const posix = require('path-browserify')
-module.exports = async ({ spinner, blockchain }, path = '.', options) => {
+import posix from 'path-browserify'
+import Debug from 'debug'
+const debug = Debug('dos:commands:ping')
+
+export const ping = async ({ spinner, blockchain }, path = '.', options) => {
   // TODO handle nested and remote paths
   // TODO make shell do wd resolution internally
   const { wd } = await blockchain.context()
@@ -9,7 +11,7 @@ module.exports = async ({ spinner, blockchain }, path = '.', options) => {
   await blockchain.ping(absPath)
 }
 
-module.exports.help = `
+export const help = `
 Send a ping to a chain, receive a response.
 
 TODO: 

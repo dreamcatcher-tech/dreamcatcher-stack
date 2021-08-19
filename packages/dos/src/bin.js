@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 
-const shell = require('.')
+import shell from '.'
 shell()

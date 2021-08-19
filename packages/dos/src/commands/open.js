@@ -1,4 +1,6 @@
-const { prompt } = require('enquirer-browserify')
-module.exports = async (ctx, url) => {
+import Debug from 'debug'
+const debug = Debug('dos:commands:open')
+
+export const open = async (ctx, url) => {
   debug(`open: `, url)
 }

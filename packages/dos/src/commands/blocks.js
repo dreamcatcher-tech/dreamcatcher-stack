@@ -1,10 +1,14 @@
-const assert = require('assert')
-const posix = require('path-browserify')
-const debug = require('debug')('dos:commands:blocks')
-const { engine } = require('@dreamcatcher-tech/interblock')
+import assert from 'assert'
+import posix from 'path-browserify'
+import { engine } from '../../../interblock/src/index' // in build, gets aliased as @dreamcatcher-tech/interblock
+import Debug from 'debug'
+const debug = Debug('dos:commands:blocks')
 const { blockPrint } = engine
 
-module.exports = async ({ blockchain }, ...[path, start, stop, ...args]) => {
+export const blocks = async (
+  { blockchain },
+  ...[path, start, stop, ...args]
+) => {
   debug(`blocks %O`, path, start, stop, args)
   // TODO make this be an actual shell command that returns a binary answer
   // TODO make this handle .@@io special case
@@ -34,9 +38,11 @@ module.exports = async ({ blockchain }, ...[path, start, stop, ...args]) => {
 const safeParseInt = (toParse) => {
   try {
     return parseInt(toParse)
-  } catch (e) {}
+  } catch (e) {
+    // not an integer
+  }
 }
-module.exports.help = `
+export const help = `
 Show the blocks of any given blockchain.
 If no chain ID or alias given, print the blocks of the 
 blockchain at the cwd

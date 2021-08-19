@@ -1,13 +1,13 @@
-const debug = require('debug')('dos:commands:tx')
-const chalk = require('ansi-colors')
-const { prompt } = require('enquirer-browserify')
+import chalk from 'ansi-colors'
+import Debug from 'debug'
+const debug = Debug('dos:commands:tx')
 
-module.exports = async ({ spinner, blockchain }) => {
+export const net = async ({ spinner, blockchain }) => {
   // TODO handle nested and remote paths
   debug(`TODO tx: %O`)
 }
 
-module.exports.help = `
+export const help = `
 List and modify the transports used.  These are typically URLs
 which point to various block producing peers
 `

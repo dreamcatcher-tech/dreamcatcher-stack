@@ -1,7 +1,8 @@
-const assert = require('assert')
-const debug = require('debug')('dos:commands:cd')
+import assert from 'assert'
+import Debug from 'debug'
+const debug = Debug('dos:commands:cd')
 
-const cd = async ({ spinner, blockchain }, path = '.') => {
+export const cd = async ({ spinner, blockchain }, path = '.') => {
   assert.strictEqual(typeof path, 'string')
   debug(`cd: ${path}`)
   spinner.text = `Resolving: ${path}`
@@ -12,9 +13,7 @@ const cd = async ({ spinner, blockchain }, path = '.') => {
   return { ctx: { wd } }
 }
 
-module.exports = cd
-
-module.exports.help = `
+export const help = `
 Navigate through the filesystem graph using Posix compliant pathing.
 Can jump straight to an object by specifying a chainId.
 `

@@ -1,10 +1,11 @@
-const debug = require('debug')('dos:commands:reset')
-const { prompt } = require('enquirer-browserify')
+import Enquirer from 'enquirer-browserify'
+import Debug from 'debug'
+const debug = Debug('dos:commands:reset')
 
-module.exports = async ({ spinner, blockchain }) => {
+export const reset = async ({ spinner, blockchain }) => {
   debug(`reset`)
   spinner.stop()
-  const { reset } = await prompt({
+  const { reset } = await Enquirer.prompt({
     type: 'confirm',
     name: 'reset',
     message: 'Resetting will delete all local blockchains',
@@ -18,7 +19,7 @@ module.exports = async ({ spinner, blockchain }) => {
   return { out: msg }
 }
 
-module.exports.help = `
+export const help = `
 Dump all the local blockchain state, generate a new
 genesis block, reset login status.
 In dev mode will also reset the emulated aws.

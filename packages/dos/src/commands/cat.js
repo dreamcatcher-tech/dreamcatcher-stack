@@ -1,10 +1,13 @@
-const util = require('util')
-const debug = require('debug')('dos:commands:cat')
-const chalk = require('ansi-colors')
-const { prompt } = require('enquirer-browserify')
-const posix = require('path-browserify')
+import util from 'util'
+import chalk from 'ansi-colors'
+import posix from 'path-browserify'
+import Debug from 'debug'
+const debug = Debug('dos:commands:cat')
 
-module.exports = async ({ spinner, blockchain }, ...[path = '.', ...args]) => {
+export const cat = async (
+  { spinner, blockchain },
+  ...[path = '.', ...args]
+) => {
   // TODO specify slices into state
   // TODO watch for state changes
   // TODO move to be a shell command that returns a binary payload
@@ -18,7 +21,7 @@ module.exports = async ({ spinner, blockchain }, ...[path = '.', ...args]) => {
   return { out }
 }
 
-module.exports.help = `
+export const help = `
 Show the internal state of a chain.
 
 TODO

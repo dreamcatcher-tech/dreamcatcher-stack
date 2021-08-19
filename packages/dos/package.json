@@ -1,5 +1,6 @@
 {
   "name": "@dreamcatcher-tech/dos",
+  "type": "module",
   "version": "0.0.37",
   "description": "Terminal interface to the HyperNet",
   "main": "src/index.js",
@@ -12,8 +13,8 @@
     "dos": "src/bin.js"
   },
   "scripts": {
-    "start": "DEBUG='*dos*' node src/bin",
-    "dev": "nodemon src/bin",
+    "start": "DEBUG='*dos*' node --experimental-specifier-resolution=node src/bin",
+    "dev": "nodemon --experimental-specifier-resolution=node src/bin",
     "release": "np",
     "prepack": "webpack",
     "test:webpack": "webpack --config test.webpack.config.js"
@@ -39,9 +40,13 @@
   },
   "devDependencies": {
     "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "eslint": "^7.31.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "jest": "^27.0.5",
     "nodemon": "^2.0.7",
     "np": "^7.5.0",
+    "prettier": "^2.3.2",
     "webpack": "^5.45.1",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.7.2",
@@ -59,15 +64,13 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "transform": {}
+    "transform": {},
+    "maxWorkers": "95%"
   },
   "prettier": {
     "trailingComma": "es5",
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true
-  },
-  "peerDependencies": {
-    "@dreamcatcher-tech/interblock": "^0.0.115"
   }
 }

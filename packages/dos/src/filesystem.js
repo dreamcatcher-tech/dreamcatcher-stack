@@ -86,11 +86,11 @@ const dreamcatcher = {
       title: 'General Artificial Intelligence',
       tweet: '',
     },
-    chainId2: {
+    chainId3: {
       title: 'Invention Machine',
       tweet: '',
     },
-    chainId3: {
+    chainId4: {
       title: 'Classification of dreamscape items as Problems or Solutions',
       tweet:
         'Is there a need to describe any item in the dreamscape as a problem or a solution ?  Can something be both ?',

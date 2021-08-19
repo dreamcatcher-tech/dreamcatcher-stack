@@ -1,10 +1,11 @@
-const debug = require('debug')('dos:commands:help')
-const cliui = require('cliui')
-const commands = require('.')
+import cliui from 'cliui'
+import * as commands from '.'
+import Debug from 'debug'
+const debug = Debug('dos:commands:help')
 
 const strip = (str) => str.replace(/\n|\r|\r\n/g, ' ').trim()
 
-module.exports = function help(ctx) {
+export const help = (ctx) => {
   const ui = cliui()
   debug(`help: `, Object.keys(commands))
   ui.div(`Use the following commands (use "tab" for autocomplete):\n`)
@@ -24,7 +25,3 @@ module.exports = function help(ctx) {
 
   return { out: ui.toString() }
 }
-
-module.exports.help = `
-Prints this message
-`

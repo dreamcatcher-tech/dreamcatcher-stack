@@ -1,1 +1,1 @@
-module.exports = async () => {}
+export const edit = async () => {}

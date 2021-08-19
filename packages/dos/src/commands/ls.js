@@ -1,10 +1,11 @@
-const debug = require('debug')('dos:commands:ls')
-const posix = require('path-browserify')
-const cliuiModule = require('cliui')
-const chalk = require('ansi-colors')
+import posix from 'path-browserify'
+import cliuiModule from 'cliui'
+import chalk from 'ansi-colors'
+import Debug from 'debug'
+const debug = Debug('dos:commands:ls')
 const cliui = cliuiModule.default || cliuiModule // issues loading in browser
 
-module.exports = async function ls({ spinner, blockchain }, path = '.') {
+export const ls = async ({ spinner, blockchain }, path = '.') => {
   spinner.text = `Resolving ${path}`
 
   debug(`ls`, path)
@@ -90,6 +91,6 @@ module.exports = async function ls({ spinner, blockchain }, path = '.') {
   return { out: ui.toString() }
 }
 
-module.exports.help = `
+export const help = `
 list the objects at the cwd.  lists alias, heavy height.lineage height, and chainId
 `

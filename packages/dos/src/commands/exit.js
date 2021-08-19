@@ -1,7 +1,7 @@
-const process = require('process')
-module.exports = function exit({ spinner }) {
+import process from 'process'
+export const exit = ({ spinner }) => {
   if (spinner) spinner.stop()
   process.exit()
 }
 
-module.exports.help = `Exit the current program`
+export const help = `Exit the current program`

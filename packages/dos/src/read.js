@@ -1,9 +1,10 @@
-const { Input } = require('enquirer-browserify')
-const debug = require('debug')('dos:read')
-const chalk = require('ansi-colors')
-const isNode = require('detect-node')
-
-exports.read = async (
+import Enquirer from 'enquirer-browserify'
+import chalk from 'ansi-colors'
+import isNode from 'detect-node'
+import Debug from 'debug'
+const debug = Debug('dos:read')
+const { Input } = Enquirer
+export const read = async (
   { autoComplete, user, machineId, blockchain },
   stdin,
   stdout

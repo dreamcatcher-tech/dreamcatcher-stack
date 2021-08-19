@@ -1,5 +1,5 @@
-const Chalk = require('ansi-colors')
-const cliui = require('cliui')
+import Chalk from 'ansi-colors'
+import cliui from 'cliui'
 const object = Chalk.bold.yellow('Object')
 const link = Chalk.bold.yellow('Link')
 const covenant = Chalk.bold.yellow('Covenant')
@@ -8,7 +8,7 @@ const os = Chalk.bold.yellow('DistributedOperatingSystem')
 const fs = Chalk.bold.yellow('FileSystem')
 const app = Chalk.bold.yellow('App')
 
-module.exports = async () => {
+export const about = async () => {
   const ui = cliui()
   ui.div(`Everything in this ${os} is a Blockchain ${object}`)
   ui.div()
@@ -54,4 +54,4 @@ module.exports = async () => {
   return { out: ui.toString() }
 }
 
-module.exports.help = `Information about the HyperNet`
+export const help = `Information about the HyperNet`

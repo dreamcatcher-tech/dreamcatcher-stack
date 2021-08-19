@@ -1,9 +1,10 @@
-const pretty = require('pretty-ms')
-const debug = require('debug')('dos:commands:time')
+import pretty from 'pretty-ms'
+import { evaluate } from '../eval'
+import Debug from 'debug'
+const debug = Debug('dos:commands:time')
 
-module.exports = async (ctx, ...args) => {
+export const time = async (ctx, ...args) => {
   const { blockchain } = ctx
-  const { evaluate } = require('../eval')
   // TODO handle nested and remote paths
 
   if (args.length < 1) {
@@ -30,6 +31,6 @@ module.exports = async (ctx, ...args) => {
   return res
 }
 
-module.exports.help = `
+export const help = `
 Measure how long a command takes.
 `

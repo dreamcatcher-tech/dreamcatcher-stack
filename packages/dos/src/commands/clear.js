@@ -1,4 +1,2 @@
-const clear = require('clear')
-module.exports = () => clear()
-
-module.exports.help = `Clear the screen`
+export { default as clear } from 'clear'
+export const help = `Clear the screen`

@@ -1,8 +1,9 @@
-const debug = require('debug')('dos:commands:whoami')
-const chalk = require('ansi-colors')
-const cliui = require('cliui')
+import chalk from 'ansi-colors'
+import cliui from 'cliui'
+import Debug from 'debug'
+const debug = Debug('dos:commands:whoami')
 
-module.exports = async ({ blockchain }) => {
+export const whoami = async ({ blockchain }) => {
   const chainId = blockchain.getState().getChainId()
   const ui = cliui()
   ui.div({ text: `User:`, width: 15 }, `root`)
@@ -12,6 +13,6 @@ module.exports = async ({ blockchain }) => {
   return { out: ui.toString() }
 }
 
-module.exports.help = `
+export const help = `
 Lists info about the current machine, current user, and connected hypercomputer
 `

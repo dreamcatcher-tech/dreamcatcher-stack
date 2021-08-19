@@ -1,6 +1,8 @@
-const ora = require('ora')
-const debug = require('debug')('dos:spinner')
-exports.withSpin = (fn) => {
+import ora from 'ora'
+import Debug from 'debug'
+const debug = Debug('dos:spinner')
+
+export const withSpin = (fn) => {
   return async function fnWithSpin(ctx) {
     debug(`spinner`)
     ctx.spinner = ora({ spinner: 'moon' }).start()

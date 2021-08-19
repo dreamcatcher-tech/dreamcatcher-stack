@@ -1,9 +1,10 @@
-const process = require('process')
-const debug = require('debug')('dos')
-const repl = require('./repl')
-const { evaluate } = require('./eval')
-const { withSpin } = require('./spinner')
-const print = require('./print')
+import process from 'process'
+import repl from './repl'
+import { evaluate } from './eval'
+import { withSpin } from './spinner'
+import print from './print'
+import Debug from 'debug'
+const debug = Debug('dos')
 
 const evalPrint = (ctx, cmd, cmdArgs, opts) => {
   // TODO use this so can call commands from unit tests
@@ -14,10 +15,10 @@ const evalPrint = (ctx, cmd, cmdArgs, opts) => {
   return print(() => opts.evaluate(ctx, cmd, cmdArgs))
 }
 
-module.exports = async (argv, opts = {}) => {
+export default async (argv, opts = {}) => {
   debug(`argv`, argv)
   argv = (argv || process.argv).slice(2)
   debug(`argv`, argv)
-
-  return argv.length ? evalPrint(ctx, argv[0], argv.slice(1), opts) : repl(opts)
+  // return argv.length ? evalPrint(ctx, argv[0], argv.slice(1), opts) : repl(opts)
+  return repl(opts)
 }
