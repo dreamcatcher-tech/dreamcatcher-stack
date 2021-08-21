@@ -7,7 +7,7 @@ export const net = async ({ spinner, blockchain }) => {
   debug(`TODO tx: %O`)
 }
 
-export const help = `
+const help = `
 List and modify the transports used.  These are typically URLs
 which point to various block producing peers
 `

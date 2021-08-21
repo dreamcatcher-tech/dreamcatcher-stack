@@ -8,6 +8,6 @@ export const logout = async (ctx, ...args) => {
   return timeout(2000)
 }
 
-export const help = `
+const help = `
 Disconnect from the current remote host, else error and stay as local
 `

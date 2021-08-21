@@ -16,7 +16,7 @@ export const debug = async ({ blockchain }, ...args) => {
   return { out }
 }
 
-export const help = `
+const help = `
 Change flags to alter debug output on console.
 
 With no arguments, toggle disable and enable, and will print the currently set flags.

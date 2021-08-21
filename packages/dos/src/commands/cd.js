@@ -13,7 +13,7 @@ export const cd = async ({ spinner, blockchain }, path = '.') => {
   return { ctx: { wd } }
 }
 
-export const help = `
+const help = `
 Navigate through the filesystem graph using Posix compliant pathing.
 Can jump straight to an object by specifying a chainId.
 `

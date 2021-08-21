@@ -19,6 +19,6 @@ export const namegen = async ({ spinner, blockchain }, count = 1) => {
   }
 }
 
-export const help = `
+const help = `
 Generate a random name, which can be used as an identity for anything.
 `

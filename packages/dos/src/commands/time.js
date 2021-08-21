@@ -31,6 +31,6 @@ export const time = async (ctx, ...args) => {
   return res
 }
 
-export const help = `
+const help = `
 Measure how long a command takes.
 `

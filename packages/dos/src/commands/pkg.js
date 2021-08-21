@@ -36,7 +36,7 @@ export const pkg = async ({ spinner, blockchain }, subcmd, ...args) => {
   }
 }
 
-export const help = `
+const help = `
 The platform package manager.  Use list --installed 
 to list all applications installed on the system.
 use list to show all available applications available for install.

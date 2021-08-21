@@ -19,7 +19,7 @@ export const reset = async ({ spinner, blockchain }) => {
   return { out: msg }
 }
 
-export const help = `
+const help = `
 Dump all the local blockchain state, generate a new
 genesis block, reset login status.
 In dev mode will also reset the emulated aws.

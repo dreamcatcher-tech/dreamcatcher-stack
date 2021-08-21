@@ -4,4 +4,4 @@ export const exit = ({ spinner }) => {
   process.exit()
 }
 
-export const help = `Exit the current program`
+const help = `Exit the current program`

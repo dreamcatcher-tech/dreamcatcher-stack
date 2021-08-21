@@ -21,7 +21,7 @@ export const cat = async (
   return { out }
 }
 
-export const help = `
+const help = `
 Show the internal state of a chain.
 
 TODO

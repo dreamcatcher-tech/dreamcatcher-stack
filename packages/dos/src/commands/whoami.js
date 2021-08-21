@@ -13,6 +13,6 @@ export const whoami = async ({ blockchain }) => {
   return { out: ui.toString() }
 }
 
-export const help = `
+const help = `
 Lists info about the current machine, current user, and connected hypercomputer
 `

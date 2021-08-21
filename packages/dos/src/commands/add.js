@@ -23,7 +23,7 @@ export const add = async ({ spinner, blockchain }, ...paths) => {
   }
 }
 
-export const help = `
+const help = `
 This command will be overridden by each application.
 It serves as the general action of creating a new entity
 where the entity is specific to the application being executed.

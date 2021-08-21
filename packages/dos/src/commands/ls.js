@@ -91,6 +91,6 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
   return { out: ui.toString() }
 }
 
-export const help = `
+const help = `
 list the objects at the cwd.  lists alias, heavy height.lineage height, and chainId
 `

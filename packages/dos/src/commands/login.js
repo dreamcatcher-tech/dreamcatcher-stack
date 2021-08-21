@@ -19,7 +19,7 @@ export const login = async ({ spinner, blockchain }, ...args) => {
   return { out: url }
 }
 
-export const help = `Loop the user through a signon process that links
+const help = `Loop the user through a signon process that links
 The current machine pubkey to their interblock user chain.
 When this occurs, the guest chain will transition to the
 user chain, and the prompt will change from "guest" to "user"`

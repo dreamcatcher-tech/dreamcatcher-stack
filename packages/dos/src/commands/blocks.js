@@ -42,7 +42,7 @@ const safeParseInt = (toParse) => {
     // not an integer
   }
 }
-export const help = `
+const help = `
 Show the blocks of any given blockchain.
 If no chain ID or alias given, print the blocks of the 
 blockchain at the cwd

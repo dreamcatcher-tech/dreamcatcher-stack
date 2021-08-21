@@ -11,7 +11,7 @@ export const ping = async ({ spinner, blockchain }, path = '.', options) => {
   await blockchain.ping(absPath)
 }
 
-export const help = `
+const help = `
 Send a ping to a chain, receive a response.
 
 TODO: 

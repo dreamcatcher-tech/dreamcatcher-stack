@@ -8,7 +8,7 @@ export const rm = async ({ spinner, blockchain }, path) => {
   debug(`result: %O`, result)
 }
 
-export const help = `
+const help = `
 Remove blockchains.  If they are symlinks, will remove
 the link only.  If children, will be permanently deleted.
 `

@@ -54,4 +54,4 @@ export const about = async () => {
   return { out: ui.toString() }
 }
 
-export const help = `Information about the HyperNet`
+const help = `Information about the HyperNet`

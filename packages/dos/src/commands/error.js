@@ -16,4 +16,4 @@ export const error = async (ctx, useAwait) => {
   throw new Error(msg + ' ' + count++)
 }
 
-export const help = `Throw an error, to test system response`
+const help = `Throw an error, to test system response`
