@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useBlockchain } from './useBlockchain'
+import { default as useBlockchain } from './useBlockchain'
 import debugFactory from 'debug'
 const localProcess = process || {}
 const debug = debugFactory(`webdos:hooks:useNavigation`)
 
-export const useNavigation = () => {
+export default () => {
   // TODO make urls drive the blockchain, as well as blockchain drive urls
   const { blockchain, context } = useBlockchain()
   const [popstate, setPopstate] = useState()

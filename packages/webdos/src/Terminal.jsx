@@ -28,7 +28,7 @@ const getMockStdin = () => {
   return stdin
 }
 
-const convertToStdStream = (terminal) => {
+const convertToStdOutStream = (terminal) => {
   debug(`toStdStream`)
   terminal.isTTY = true
   const clearLineCode = '\u001b[2K'
@@ -90,7 +90,7 @@ const TerminalContainer = (props) => {
 
     terminal.open(document.getElementById(id))
     // terminal.focus() // grabs focus in stackblitz
-    convertToStdStream(terminal)
+    convertToStdOutStream(terminal)
     terminal.attachCustomKeyEventHandler((event) => {
       const { key, type } = event
       if (ignoreKeys.includes(key)) {
@@ -98,6 +98,7 @@ const TerminalContainer = (props) => {
         return false
       }
     })
+    // TODO skip stdin mocking and use direct objects somehow ?
     const stdin = getMockStdin()
     const streams = { stdout: terminal, stdin, stderr: terminal }
     setStreams(streams)

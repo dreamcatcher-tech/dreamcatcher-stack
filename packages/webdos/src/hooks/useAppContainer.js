@@ -1,3 +1,3 @@
 import { useContext } from 'react'
 import { AppContainerContext } from '../components/AppContainer'
-export const useAppContainer = () => useContext(AppContainerContext)
+export default () => useContext(AppContainerContext)

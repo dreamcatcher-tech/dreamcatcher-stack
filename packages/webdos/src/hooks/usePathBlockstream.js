@@ -5,7 +5,7 @@
  */
 import assert from 'assert'
 import { useState, useEffect } from 'react'
-import { useBlockchain } from './useBlockchain'
+import { default as useBlockchain } from './useBlockchain'
 import Debug from 'debug'
 import { splitPathSegments } from '../utils'
 const debug = Debug(`webdos:hooks:usePathBlockstream`)
@@ -25,7 +25,7 @@ const truncateSubscriptions = (subscriptions, length) => {
   subscriptions.length = length
 }
 
-export const usePathBlockstream = (cwd) => {
+export default (cwd) => {
   // TODO if we do not have permission to access block, throw an error
   // TODO do not push new blocks until all blocks in path are resolved
   const { blockchain } = useBlockchain()

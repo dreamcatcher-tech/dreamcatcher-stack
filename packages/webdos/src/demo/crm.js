@@ -180,6 +180,4 @@ const installer = {
 }
 
 const covenantId = { name: 'crm' }
-const crm = { covenantId, installer }
-
-module.exports = { crm }
+export const crm = { covenantId, installer }

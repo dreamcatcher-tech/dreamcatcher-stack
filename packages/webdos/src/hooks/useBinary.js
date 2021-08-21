@@ -9,4 +9,4 @@ const useBinary = (path, range) => {
   // range is the byte range that you might want
 }
 
-module.exports = { useBinary }
+export default useBinary

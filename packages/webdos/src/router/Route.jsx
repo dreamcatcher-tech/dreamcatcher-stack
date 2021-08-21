@@ -3,9 +3,8 @@ import posix from 'path'
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import { useBlockchain } from '..'
 import { useRouter } from '../hooks'
-import RouterContext from '../router/RouterContext'
+import RouterContext from './RouterContext'
 
 const debug = Debug('webdos:router:Route')
 /**

@@ -1,11 +1,11 @@
 import assert from 'assert'
 import React, { useState, useEffect } from 'react'
-import { effectorFactory } from '../../interblock/src/index' // in build, gets aliased with @dreamcatcher-tech/interblock
-import Debug from 'debug'
+import { effectorFactory, checkModules } from '../../interblock/src/index' // in build, gets aliased with @dreamcatcher-tech/interblock
 import equals from 'fast-deep-equal'
 import { Terminal } from '.'
-
+import Debug from 'debug'
 const debug = Debug('terminal:Blockchain')
+checkModules()
 
 export const BlockchainContext = React.createContext()
 BlockchainContext.displayName = 'Blockchain'

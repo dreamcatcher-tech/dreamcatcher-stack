@@ -1,4 +1,4 @@
 import { useContext } from 'react'
 import { BlockchainContext } from '../Blockchain'
 
-export const useBlockchain = () => useContext(BlockchainContext)
+export default () => useContext(BlockchainContext)

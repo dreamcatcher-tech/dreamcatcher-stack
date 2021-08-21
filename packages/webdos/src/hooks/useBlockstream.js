@@ -12,14 +12,14 @@
  * continues to try.
  */
 import assert from 'assert'
-import { usePathBlockstream } from './usePathBlockstream'
+import { default as usePathBlockstream } from './usePathBlockstream'
 import Debug from 'debug'
 import { splitPathSegments } from '../utils'
 import posix from 'path'
 
 const debug = Debug(`terminal:useBlockstream`)
 
-export const useBlockstream = (cwd) => {
+export default (cwd) => {
   assert(posix.isAbsolute(cwd), `path must be absolute: ${cwd}`)
   const blocks = usePathBlockstream(cwd)
   const segments = splitPathSegments(cwd)

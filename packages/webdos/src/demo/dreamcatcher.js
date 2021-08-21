@@ -1,4 +1,5 @@
-const debug = require('debug')('covenant')
+import Debug from 'debug'
+const debug = Debug('covenant')
 
 const covenants = {
   projects: {
