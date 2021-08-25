@@ -1,5 +1,4 @@
-import util from 'util'
-import chalk from 'ansi-colors'
+import { inspect } from 'util'
 import posix from 'path-browserify'
 import Debug from 'debug'
 const debug = Debug('dos:commands:cat')
@@ -17,7 +16,7 @@ export const cat = async (
   debug(`absolutePath`, absolutePath)
   const latest = await blockchain.latest(absolutePath)
   const { state } = latest
-  const out = util.inspect(state, { colors: true, depth: null })
+  const out = inspect(state, { colors: true, depth: null })
   return { out }
 }
 

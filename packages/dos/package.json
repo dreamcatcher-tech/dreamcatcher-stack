@@ -36,7 +36,8 @@
     "pretty-ms": "^7.0.1",
     "process": "^0.11.10",
     "readline-browserify": "^0.0.4",
-    "set-immediate-shim": "^2.0.0"
+    "set-immediate-shim": "^2.0.0",
+    "util": "^0.12.4"
   },
   "devDependencies": {
     "clean-webpack-plugin": "^4.0.0-alpha.0",
