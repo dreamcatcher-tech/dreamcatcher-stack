@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
 import without from 'lodash.without'
 import {

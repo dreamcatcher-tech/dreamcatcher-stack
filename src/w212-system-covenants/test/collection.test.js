@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { effectorFactory } from '../../index'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
@@ -35,7 +35,7 @@ describe.skip('collection', () => {
 
     await col1Actions.add({ isTestData: true })
     const { state } = await root.latest('col1')
-    assert.deepStrictEqual(state, col1State)
+    assert.deepEqual(state, col1State)
     const { state: customer } = await root.latest('col1/file_00001')
     assert(customer.formData.firstName)
     assert(!customer.children.address.formData)

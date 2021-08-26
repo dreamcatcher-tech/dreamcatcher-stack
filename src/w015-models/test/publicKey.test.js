@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { publicKeyModel } from '..'
 describe('publicKey', () => {
   test('cannot create', () => {

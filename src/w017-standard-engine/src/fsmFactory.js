@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { ioQueueFactory } from '../../w003-queue'
 import { interblockModel, addressModel, txModel } from '../../w015-models'
 import { isolateFactory } from './services/isolateFactory'

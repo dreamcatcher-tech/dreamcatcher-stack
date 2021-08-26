@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { dmzModel } from '..'
 
 describe('dmz', () => {
@@ -17,7 +17,7 @@ describe('dmz', () => {
       timestamp: same1.timestamp,
       encryption: same1.encryption,
     })
-    assert.deepStrictEqual(same1, same2)
+    assert.deepEqual(same1, same2)
     assert(same1.equals(same2))
   })
   test('reclone after spread still equals', async () => {

@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import flatten from 'lodash.flatten'
 import { assign } from 'xstate'
 import {

@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import pad from 'pad-left'
 import { blockModel, channelModel } from '../../w015-models'
 import Debug from 'debug'

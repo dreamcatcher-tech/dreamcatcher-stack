@@ -28,7 +28,7 @@
 
  * 
  */
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import ParseFunction from 'parse-function'
 const parseFunction = ParseFunction()
 

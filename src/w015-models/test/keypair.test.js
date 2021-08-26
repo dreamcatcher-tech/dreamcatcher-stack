@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { keypairModel } from '..'
 import * as crypto from '../../w012-crypto'
 
@@ -34,6 +34,11 @@ describe('keypair', () => {
   })
   test('refuse to sign blank inputs', async () => {
     const keypair = await keypairModel.create()
-    await assert.rejects(keypair.sign)
+    try {
+      await keypair.sign()
+      assert.fail()
+    } catch (e) {
+      // ok
+    }
   })
 })

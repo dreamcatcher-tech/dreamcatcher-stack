@@ -1,9 +1,11 @@
-import assert from 'assert'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import * as crypto from '..'
 import Benchmark from 'benchmark'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crypto')
+chai.use(chaiAsPromised)
 const testHash = crypto.objectHash('testHash')
 
 describe('crypto', () => {
@@ -178,7 +180,7 @@ describe('crypto', () => {
       const secure = crypto.objectHash(notSecure)
       const { publicKey, secretKey } = keypair
 
-      await assert.rejects(crypto.signHash(notSecure, secretKey, publicKey))
+      await assert.isRejected(crypto.signHash(notSecure, secretKey, publicKey))
       assert.ok(await crypto.signHash(secure, secretKey, publicKey))
     })
     test('caches already verified signatures', async () => {

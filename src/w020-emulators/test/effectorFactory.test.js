@@ -1,9 +1,11 @@
-import assert from 'assert'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import { effectorFactory } from '..'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:effectorFactory')
 Debug.enable()
+chai.use(chaiAsPromised)
 
 describe('effector', () => {
   test('ping single', async () => {
@@ -18,7 +20,7 @@ describe('effector', () => {
     const payload = { test: 'ping' }
     const reply = await shell.ping('.', payload)
     debug(`reply: `, reply)
-    assert.deepStrictEqual(reply, payload)
+    assert.deepEqual(reply, payload)
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
     debug(`blockcount: ${shell.metro.getBlockCount()}`)
@@ -114,7 +116,7 @@ describe('effector', () => {
     // TODO handle errors in the translator
     const client = await effectorFactory()
     await client.add('testChild')
-    await assert.rejects(() => client.add('testChild'))
+    await assert.isRejected(client.add('testChild'))
   })
 })
 

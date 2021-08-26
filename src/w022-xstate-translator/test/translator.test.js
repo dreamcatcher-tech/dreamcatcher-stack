@@ -1,4 +1,5 @@
-import assert from 'assert'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import { Machine } from 'xstate'
 import { send, sendParent, respond, translator } from '..'
 import { shell } from '../../w212-system-covenants'
@@ -7,6 +8,8 @@ import { _hook as hook, interchain } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:translator')
 Debug.enable()
+chai.use(chaiAsPromised)
+
 const testMachine = Machine(
   {
     id: 'testMachine',
@@ -83,10 +86,9 @@ describe('translator', () => {
         reducer(undefined, { type: 'TRANSITION_HOLD' })
       )
       assert.strictEqual(state.reduction.value, 'transitionHold')
-      await assert.rejects(
-        () => hook(() => reducer(state.reduction, { type: 'TRANSITION_HOLD' })),
-        (error) =>
-          error.message.startsWith('State: transitionHold does not accept')
+      await assert.isRejected(
+        hook(() => reducer(state.reduction, { type: 'TRANSITION_HOLD' })),
+        'State: transitionHold does not accept'
       )
       debug(state)
     })
@@ -116,8 +118,8 @@ describe('translator', () => {
       assert.strictEqual(state.requests.length, 0)
       const [pingResolve] = state.replies
       assert.strictEqual(pingResolve.type, '@@RESOLVE')
-      assert.deepStrictEqual(pingResolve.payload, {})
-      assert.deepStrictEqual(pingResolve.request, ping)
+      assert.deepEqual(pingResolve.payload, {})
+      assert.deepEqual(pingResolve.request, ping)
     })
     test('remote ping', async () => {
       let state
@@ -146,8 +148,8 @@ describe('translator', () => {
       assert.strictEqual(state.replies.length, 1)
       const [resolve] = state.replies
       assert.strictEqual(resolve.type, '@@RESOLVE')
-      assert.deepStrictEqual(resolve.payload, replyPayload)
-      assert.deepStrictEqual(resolve.request, pingRemote)
+      assert.deepEqual(resolve.payload, replyPayload)
+      assert.deepEqual(resolve.request, pingRemote)
     })
     test.todo('cascaded ping')
     test.todo('rejecting ping')
@@ -202,8 +204,8 @@ describe('translator', () => {
     assert.strictEqual(result.replies.length, 1)
     const [resolve] = result.replies
     assert.strictEqual(resolve.type, '@@RESOLVE')
-    assert.deepStrictEqual(resolve.request, { type: 'INVOKE' })
-    assert.deepStrictEqual(resolve.payload, reply2.payload)
+    assert.deepEqual(resolve.request, { type: 'INVOKE' })
+    assert.deepEqual(resolve.payload, reply2.payload)
   })
   test('instant services return', async () => {
     const reducer = translator(testMachine)
@@ -219,8 +221,8 @@ describe('translator', () => {
     assert.strictEqual(nextState.reduction.value, 'done')
     const [resolve] = nextState.replies
     assert.strictEqual(resolve.type, '@@RESOLVE')
-    assert.deepStrictEqual(resolve.request, request)
-    assert.deepStrictEqual(resolve.payload, { result: 'instantResponse' })
+    assert.deepEqual(resolve.request, request)
+    assert.deepEqual(resolve.payload, { result: 'instantResponse' })
   })
   test('undefined response from service', async () => {
     const reducer = translator(testMachine)
@@ -230,7 +232,7 @@ describe('translator', () => {
     assert.strictEqual(nextState.requests.length, 1)
     const [doneInvoke] = nextState.requests
     assert.strictEqual(doneInvoke.type, 'done.invoke.testInvokeUndefinedResult')
-    assert.deepStrictEqual(doneInvoke.payload, {})
+    assert.deepEqual(doneInvoke.payload, {})
   })
   test.todo('instant return after multiple awaits')
   test.todo('multiple parallel invokes')

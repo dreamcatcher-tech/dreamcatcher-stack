@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '../src/metrologyFactory'
 describe('standardEngine', () => {
   test('multiple increase requests successfully lock chain twice', async () => {

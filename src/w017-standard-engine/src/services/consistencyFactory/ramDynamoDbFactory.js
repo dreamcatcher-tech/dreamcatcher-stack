@@ -1,6 +1,6 @@
 import Debug from 'debug'
 const debug = Debug('interblock:aws:ramDynamoDb')
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import setImmediate from 'set-immediate-shim'
 
 const ramDynamoDbFactory = () => {

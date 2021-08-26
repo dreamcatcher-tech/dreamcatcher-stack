@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { v4 as uuidCreator } from 'uuid'
 import { standardize } from '../modelUtils'
 import { timestampModel } from './timestampModel'

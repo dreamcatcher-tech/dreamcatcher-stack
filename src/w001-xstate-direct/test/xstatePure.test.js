@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
 import { interpret, Machine, assign } from 'xstate'
 import { pure } from '..'

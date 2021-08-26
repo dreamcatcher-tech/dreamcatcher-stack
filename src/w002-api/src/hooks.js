@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import equal from 'fast-deep-equal'
 import setImmediate from 'set-immediate-shim'
 import { request, promise, resolve, reject, isReplyFor } from './api'

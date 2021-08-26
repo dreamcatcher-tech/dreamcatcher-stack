@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import last from 'lodash.last'
 // const chalk from 'ansi-colors')
 import {

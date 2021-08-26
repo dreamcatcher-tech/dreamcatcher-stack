@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { covenantIdModel } from '..'
 describe('covenantId', () => {
   test('makes integrity out of name', () => {

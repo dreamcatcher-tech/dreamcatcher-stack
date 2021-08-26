@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { timestampModel } from '..'
 describe('timestamp', () => {
   test('create', () => {

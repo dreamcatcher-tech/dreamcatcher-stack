@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { standardize } from '../modelUtils'
 import { remoteSchema } from '../schemas/modelSchemas'
 import { addressModel } from './addressModel'

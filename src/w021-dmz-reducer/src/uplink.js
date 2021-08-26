@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { replyResolve, replyReject } from '../../w002-api'
 import { networkModel, addressModel, channelModel } from '../../w015-models'
 import { autoAlias } from './utils'

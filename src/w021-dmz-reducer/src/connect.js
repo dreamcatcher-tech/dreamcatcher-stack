@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { networkModel, addressModel, channelModel } from '../../w015-models'
 import { channelProducer } from '../../w016-producers'
 

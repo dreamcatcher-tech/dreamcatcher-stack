@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '..'
 import { jest } from '@jest/globals'
 import Debug from 'debug'

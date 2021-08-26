@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { integrityModel } from '../../w015-models'
 
 describe('integrity', () => {

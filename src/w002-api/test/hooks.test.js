@@ -1,7 +1,9 @@
-import assert from 'assert'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import { _hook as hook, interchain, effect } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:hooks')
+chai.use(chaiAsPromised)
 Debug.enable()
 
 describe('hooks', () => {
@@ -32,9 +34,9 @@ describe('hooks', () => {
     assert(results.every(({ reduction: { id } }, index) => id === index))
   })
   test('reduction must be an object', async () => {
-    await assert.rejects(hook(() => () => 'this is a function'))
-    await assert.rejects(hook(() => true))
-    await assert.rejects(hook(() => 'string'))
+    await assert.isRejected(hook(() => () => 'this is a function'))
+    await assert.isRejected(hook(() => true))
+    await assert.isRejected(hook(() => 'string'))
   })
   test('duplicate requests rejected in same call', async () => {
     const double = async () => {
@@ -43,7 +45,7 @@ describe('hooks', () => {
       // TODO supply a response, and verify the second request gets a different response
       return {}
     }
-    await assert.rejects(() => hook(double))
+    await assert.isRejected(hook(double))
   })
   test.todo('duplicate requests permitted in different calls')
 })

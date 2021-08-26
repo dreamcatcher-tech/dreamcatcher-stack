@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { interchain, useBlocks } from '../../w002-api'
 import { actions, listChildren } from '../../w021-dmz-reducer'
 import { metrologyFactory } from '../src/metrologyFactory'
@@ -39,7 +39,7 @@ describe('hooker', () => {
     const hyper = { reducer }
     const base = await metrologyFactory('self', { hyper })
     base.enableLogging()
-    await assert.doesNotReject(() => base.pierce({ type: 'NONCE' }))
+    const isNotRejected = await base.pierce({ type: 'NONCE' })
     await base.settle()
   })
   test.todo('awaiting on self alone rejects')

@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { v4 as uuid } from 'uuid'
 import { standardize } from '../modelUtils'
 

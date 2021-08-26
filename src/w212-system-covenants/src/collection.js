@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import * as datum from './datum'
 import { interchain } from '../../w002-api'
 import * as dmzReducer from '../../w021-dmz-reducer'

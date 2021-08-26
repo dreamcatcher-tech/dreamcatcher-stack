@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { keypairModel } from './models/keypairModel' // TODO do not import across folder boundaries
 // maybe move ciSigners to be inside the models folder
 import { integrityModel } from './models/integrityModel'

@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import memoize from 'lodash.memoize'
 import stringify from 'fast-json-stable-stringify'
 import { modelInflator, precompileSchema } from './modelInflator'

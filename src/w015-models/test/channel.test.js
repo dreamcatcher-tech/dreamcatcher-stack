@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { actionModel, addressModel, channelModel, provenanceModel } from '..'
 
 describe('channel', () => {

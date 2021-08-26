@@ -4,7 +4,7 @@
  * Without this, getting the system to the needed state and stepping in to
  * the desired point in the engine code can be impractical.
  */
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
 const debug = Debug('ib:needle')
 let _tap

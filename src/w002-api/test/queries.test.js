@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { _hook as hook, interchain, useBlocks } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:queries')

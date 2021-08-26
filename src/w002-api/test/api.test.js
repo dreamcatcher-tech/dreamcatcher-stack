@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { deserializeError } from 'serialize-error'
 import { isReplyFor, request, promise, resolve, reject } from '..'
 
@@ -29,28 +29,29 @@ describe('api', () => {
       const action = { type: 'PLAIN', payload: { test: 'data' } }
       const to = 'farAway'
       const addressed = request(action, to)
-      assert.deepStrictEqual(addressed, { ...action, to })
+      assert.deepEqual(addressed, { ...action, to })
     })
   })
   describe('reject', () => {
     test('plain objects passed thru', async () => {
       const payload = { plain: 'object' }
       const rejection = reject(payload)
-      assert.deepStrictEqual(rejection.payload, payload)
+      assert.deepEqual(rejection.payload, payload)
     })
     test('errors can be reinflated', async () => {
       const payload = new Error(`test error`)
       const rejection = reject(payload)
       assert.strictEqual(typeof rejection.payload, 'object')
       const inflated = deserializeError(rejection.payload)
-      assert.deepStrictEqual(inflated, payload)
+      assert.deepEqual(inflated.message, payload.message)
     })
     test('string payloads convert to errors', () => {
       const payload = `test error`
       const rejection = reject(payload)
       assert.strictEqual(typeof rejection.payload, 'object')
       const inflated = deserializeError(rejection.payload)
-      assert.deepStrictEqual(inflated, new Error(payload))
+      const testError = new Error(payload)
+      assert.deepEqual(inflated.message, testError.message)
     })
   })
   describe('model compatibility', () => {

@@ -1,4 +1,5 @@
-import assert from 'assert'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import { effect } from '../../w002-api'
 import * as covenants from '../../w212-system-covenants'
 import { metrologyFactory } from '..'
@@ -6,6 +7,7 @@ import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:effects')
 Debug.enable()
+chai.use(chaiAsPromised)
 
 describe('effects', () => {
   // jest.setTimeout('500')
@@ -19,13 +21,11 @@ describe('effects', () => {
     const base = await metrologyFactory('effect', { hyper })
     base.enableLogging()
     await base.settle()
-    await assert.rejects(
-      () => base.pierce({ type: 'NONCE' }),
-      (error) => {
-        assert(error.message.startsWith('Wrong type of promise'))
-        return true
-      }
+    await assert.isRejected(
+      base.pierce({ type: 'NONCE' }),
+      'Wrong type of promise'
     )
+
     const { state } = base.getState()
     debug(`state:`, state)
   })
@@ -47,7 +47,7 @@ describe('effects', () => {
     await base.pierce({ type: 'NONCE' })
     const { state } = base.getState()
     debug(`state:`, state)
-    assert.deepStrictEqual(state.reducerResult, testData)
+    assert.deepEqual(state.reducerResult, testData)
   })
   test.todo('inband effect included in block')
   test.todo('effect promise rejection after timeout')

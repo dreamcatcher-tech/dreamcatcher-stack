@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import random from 'lodash.random'
 import { request, isReplyFor } from '../../w002-api'
 import {
@@ -145,7 +145,7 @@ describe('channelProducer', () => {
       txChannel = ingestInterblock(txChannel, rxInterblock)
 
       const remoteReply = txChannel.rxReply()
-      assert.deepStrictEqual(remoteReply.payload, reply.payload)
+      assert.deepEqual(remoteReply.payload, reply.payload)
       assert(isReplyFor(remoteReply, action))
       txChannel = shiftTxRequest(txChannel)
       assert(!txChannel.rxReply())

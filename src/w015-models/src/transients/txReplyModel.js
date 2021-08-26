@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { standardize } from '../modelUtils'
 import { continuationModel } from '../models/continuationModel'
 import { txReplySchema } from '../schemas/transientSchemas'

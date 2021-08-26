@@ -1,4 +1,5 @@
-import assert from 'assert'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import { ioQueueFactory } from '../../w003-queue'
 import { isolateFactory, toFunctions } from '../src/services/isolateFactory'
 import {
@@ -9,6 +10,7 @@ import {
 } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:isolate')
+chai.use(chaiAsPromised)
 
 describe('isolation', () => {
   test('handle two covenants', async () => {
@@ -56,17 +58,17 @@ describe('isolation', () => {
     const r1 = await r1Await
     const r2 = await r2Await
 
-    assert.deepStrictEqual(r1.reduction, { test: 'reducer1' })
-    assert.deepStrictEqual(r2.reduction, { test: 'reducer2' })
+    assert.deepEqual(r1.reduction, { test: 'reducer1' })
+    assert.deepEqual(r2.reduction, { test: 'reducer2' })
 
     debug(`unload tests`)
-    await assert.rejects(() => isolate.unloadCovenant('not valid containerId'))
+    await assert.isRejected(isolate.unloadCovenant('not valid containerId'))
     debug(`unloading id1`)
     await isolate.unloadCovenant(await id1)
     debug(`attempting tick1`)
-    await assert.rejects(() => isolate.tick(tick1))
+    await assert.isRejected(isolate.tick(tick1))
 
-    assert.deepStrictEqual(await id1, block1.provenance.reflectIntegrity().hash)
+    assert.deepEqual(await id1, block1.provenance.reflectIntegrity().hash)
   })
   test('reducer throw propogates back', async () => {
     const reducerThrower = () => {
@@ -95,13 +97,7 @@ describe('isolation', () => {
       accumulator: [],
       timeout: 30000,
     }
-    await assert.rejects(
-      () => isolate.tick(tick1),
-      (error) => {
-        assert.strictEqual(error.message, 'reducerThrower')
-        return true
-      }
-    )
+    await assert.isRejected(isolate.tick(tick1), 'reducerThrower')
   })
   test.todo(`queries after hook execution are rejected`)
 })

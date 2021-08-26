@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { registry } from './registry'
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'

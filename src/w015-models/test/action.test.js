@@ -1,9 +1,13 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { actionModel } from '..'
 
 describe('acl', () => {
-  test('throws on blank creation', () => assert.throws(actionModel.create))
-  test('throws on blank clone', () => assert.throws(actionModel.clone))
+  test('throws on blank creation', () => {
+    assert.throws(actionModel.create)
+  })
+  test('throws on blank clone', () => {
+    assert.throws(actionModel.clone)
+  })
   test('creates default', () => {
     const action = actionModel.create('action1')
     assert(action)

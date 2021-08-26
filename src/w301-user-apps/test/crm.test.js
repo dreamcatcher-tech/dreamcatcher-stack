@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { effectorFactory, awsFactory } from '../../w020-emulators'
 import { crm } from '..'
 import Debug from 'debug'

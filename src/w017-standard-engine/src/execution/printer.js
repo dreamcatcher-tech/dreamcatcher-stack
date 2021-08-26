@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import chalk from 'ansi-colors'
 import pad from 'pad-left'
 import prettyBytes from 'pretty-bytes'

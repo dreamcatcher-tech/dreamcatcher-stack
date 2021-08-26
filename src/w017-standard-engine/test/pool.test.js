@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { blockModel } from '../../w015-models'
 import Debug from 'debug'

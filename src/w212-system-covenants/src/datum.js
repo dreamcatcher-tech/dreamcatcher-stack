@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 // const faker from 'faker/locale/en')
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'

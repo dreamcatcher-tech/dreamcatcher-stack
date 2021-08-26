@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { shell } from '../../w212-system-covenants'
 import { jest } from '@jest/globals'
 

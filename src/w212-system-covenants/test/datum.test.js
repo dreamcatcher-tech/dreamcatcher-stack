@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { effectorFactory } from '../../index'
 import { convertToTemplate, demuxFormData } from '../src/datum'
 import Debug from 'debug'
@@ -61,11 +61,11 @@ describe.skip('datum', () => {
     await actions.set({ schema, isTestData: true })
 
     const { state } = await root.latest('datum1')
-    assert.deepStrictEqual(
+    assert.deepEqual(
       Object.keys(state.formData),
       Object.keys(schema.properties)
     )
-    assert.deepStrictEqual(state.schema, schema)
+    assert.deepEqual(state.schema, schema)
     await root.metro.settle()
   })
   test('nested datums with test data', async () => {
@@ -78,13 +78,13 @@ describe.skip('datum', () => {
     const actions = await root.actions('datum1')
     await actions.set({ schema, isTestData: true, children })
     const { state: datum1 } = await root.latest('datum1')
-    assert.deepStrictEqual(datum1.schema, schema)
-    assert.deepStrictEqual(datum1.children.address.schema, address.schema)
+    assert.deepEqual(datum1.schema, schema)
+    assert.deepEqual(datum1.children.address.schema, address.schema)
     assert(datum1.formData.firstName)
     assert(!datum1.children.address.formData)
 
     const { state: address1 } = await root.latest('datum1/address')
-    assert.deepStrictEqual(address1.schema, address.schema)
+    assert.deepEqual(address1.schema, address.schema)
     assert(address1.formData.address)
     assert(!Object.keys(address1.children).length)
 
@@ -104,13 +104,13 @@ describe.skip('datum', () => {
     const actions = await root.actions('datum1')
     await actions.set({ schema: extraSchema, isTestData: true, children })
     const { state: datum1 } = await root.latest('datum1')
-    assert.deepStrictEqual(datum1.schema, extraSchema)
-    assert.deepStrictEqual(datum1.children.address.schema, extraAddress.schema)
+    assert.deepEqual(datum1.schema, extraSchema)
+    assert.deepEqual(datum1.children.address.schema, extraAddress.schema)
     assert(datum1.formData.firstName)
     assert(!datum1.children.address.formData)
 
     const { state: address1 } = await root.latest('datum1/address')
-    assert.deepStrictEqual(address1.schema, extraAddress.schema)
+    assert.deepEqual(address1.schema, extraAddress.schema)
     debug(address1.formData)
     assert(address1.formData.address)
     assert(!Object.keys(address1.children).length)

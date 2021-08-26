@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { stateModel } from '..'
 
 // TODO add in the covenant api tools, and make some actions

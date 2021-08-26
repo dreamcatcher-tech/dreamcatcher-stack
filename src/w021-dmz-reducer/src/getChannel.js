@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
 import { replyResolve } from '../../w002-api'
 import { getChannelParams } from './utils'

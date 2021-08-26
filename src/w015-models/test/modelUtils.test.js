@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import madge from 'madge'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'

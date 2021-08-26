@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { addressModel, rxRequestModel, integrityModel } from '..'
 
 describe('rxRequest', () => {

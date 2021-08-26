@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { assign } from 'xstate'
 import { txModel, blockModel, interblockModel } from '../../../w015-models'
 import { receiveMachine } from '../machines'

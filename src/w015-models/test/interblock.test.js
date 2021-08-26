@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import {
   dmzModel,
   actionModel,
@@ -102,7 +102,7 @@ describe('interblock', () => {
       const start = Date.now()
       interblock.getWithoutRemote()
       const elapsed = Date.now() - start
-      assert(elapsed <= 1, `speed was: ${elapsed}`)
+      assert(elapsed <= 10, `speed was: ${elapsed}`)
     })
     test('speed when already without remote', async () => {
       const validatedBlock = await createBlockWithEffects()
@@ -111,7 +111,7 @@ describe('interblock', () => {
       const start = Date.now()
       interblock.getWithoutRemote()
       const elapsed = Date.now() - start
-      assert(elapsed <= 1, `speed was: ${elapsed}`)
+      assert(elapsed <= 10, `speed was: ${elapsed}`)
     })
   })
 })

@@ -35,7 +35,7 @@
 
     */
 
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import packageJson from '../package.json'
 import { browserFactory, effectorFactory, awsFactory } from './w020-emulators'
 import * as engine from './w017-standard-engine'

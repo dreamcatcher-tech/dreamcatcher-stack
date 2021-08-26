@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { interchain } from '../../w002-api'
 import { actions } from '../../w021-dmz-reducer'
 import { Machine, assign } from 'xstate'

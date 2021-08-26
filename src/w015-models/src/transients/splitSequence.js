@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { addressModel } from '../models/addressModel'
 const splitSequence = (sequence) => {
   assert(typeof sequence === 'string')

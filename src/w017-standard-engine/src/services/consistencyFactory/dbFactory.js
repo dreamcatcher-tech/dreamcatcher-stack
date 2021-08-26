@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { ramDynamoDbFactory } from './ramDynamoDbFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:consistency:db')

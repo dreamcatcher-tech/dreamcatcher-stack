@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { lockFactory } from '../src/services/consistencyFactory/lockFactory'
 
 describe('lockFactory', () => {

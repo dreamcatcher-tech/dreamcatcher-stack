@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer'
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import SodiumPlusLibrary from 'sodium-plus'
 import { objectHash } from './common'
 import Debug from 'debug'

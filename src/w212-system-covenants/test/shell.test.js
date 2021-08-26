@@ -1,9 +1,11 @@
-import assert from 'assert'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import posix from 'path-browserify'
 import { shell } from '..'
 import { metrologyFactory } from '../../w017-standard-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:shell')
+chai.use(chaiAsPromised)
 
 describe('machine validation', () => {
   describe('state machine', () => {
@@ -49,18 +51,18 @@ describe('machine validation', () => {
     test('cd errors on garbage path', async () => {
       const base = await metrologyFactory('e', { hyper: shell })
       const cd = shell.actions.cd('garbagePath')
-      await assert.rejects(() => base.pierce(cd))
+      await assert.isRejected(base.pierce(cd))
       await base.settle()
     })
     test('cd errors on nested garbage path', async () => {
       const base = await metrologyFactory('e', { hyper: shell })
       await base.spawn('child1')
       const cd = shell.actions.cd('child1/garbagePath')
-      await assert.rejects(() => base.pierce(cd))
+      await assert.isRejected(base.pierce(cd))
       const cdTrailing = shell.actions.cd('child1/garbagePath/')
-      await assert.rejects(() => base.pierce(cdTrailing))
+      await assert.isRejected(base.pierce(cdTrailing))
       const cdLong = shell.actions.cd('child1/garbagePath/asdf/asdf/')
-      await assert.rejects(() => base.pierce(cdLong))
+      await assert.isRejected(base.pierce(cdLong))
       await base.settle()
     })
     test('. is resolved', async () => {
@@ -110,9 +112,9 @@ describe('machine validation', () => {
       const ls = shell.actions.ls()
       const { children } = await base.pierce(ls)
       debug(`ls: `, children)
-      assert.deepStrictEqual(Object.keys(children), ['..', '.'])
+      assert.deepEqual(Object.keys(children), ['..', '.'])
       const { children: repeated } = await base.pierce(ls)
-      assert.deepStrictEqual(Object.keys(repeated), ['..', '.', '.@@io'])
+      assert.deepEqual(Object.keys(repeated), ['..', '.', '.@@io'])
     })
     test('list remote directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -120,65 +122,41 @@ describe('machine validation', () => {
       await base.spawn('child1')
       const ls = shell.actions.ls('child1')
       const { children } = await base.pierce(ls)
-      assert.deepStrictEqual(Object.keys(children), ['..', '.'])
+      assert.deepEqual(Object.keys(children), ['..', '.'])
       const lsAbsolute = shell.actions.ls('child1')
       const { children: childrenAbsolute } = await base.pierce(lsAbsolute)
-      assert.deepStrictEqual(Object.keys(childrenAbsolute), ['..', '.'])
+      assert.deepEqual(Object.keys(childrenAbsolute), ['..', '.'])
     })
     test('throws on invalid directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
       base.enableLogging()
       const ls = shell.actions.ls('nonExistentChild')
-      await assert.rejects(
-        () => base.pierce(ls),
-        (error) => {
-          assert.strictEqual(
-            error.message,
-            'Non existent path: /nonExistentChild'
-          )
-          return true
-        }
+      await assert.isRejected(
+        base.pierce(ls),
+        'Non existent path: /nonExistentChild'
       )
     })
     test('throws on invalid nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
       base.enableLogging()
       const ls = shell.actions.ls('nonExistentChild/nested')
-      await assert.rejects(
-        () => base.pierce(ls),
-        (error) => {
-          const msg = 'Non existent path: /nonExistentChild'
-          assert.strictEqual(error.message, msg)
-          return true
-        }
+      await assert.isRejected(
+        base.pierce(ls),
+        'Non existent path: /nonExistentChild'
       )
     })
     test('throws on invalid double nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
       base.enableLogging()
       const ls = shell.actions.ls('nonExistentChild/nested1/nested2')
-      await assert.rejects(
-        () => base.pierce(ls),
-        (error) => {
-          const msg = 'Non existent path: /nonExistentChild'
-          assert.strictEqual(error.message, msg)
-          return true
-        }
-      )
+      await assert.isRejected(base.pierce(ls))
     })
     test('throws on shallow invalid nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
       await base.spawn('child1')
       base.enableLogging()
       const ls = shell.actions.ls('validChild/nonExistentChild')
-      await assert.rejects(
-        () => base.pierce(ls),
-        (error) => {
-          const msg = 'Non existent path: /validChild'
-          assert.strictEqual(error.message, msg)
-          return true
-        }
-      )
+      await assert.isRejected(base.pierce(ls), 'Non existent path: /validChild')
     })
     test('throws on deep invalid nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -187,13 +165,9 @@ describe('machine validation', () => {
       base.enableLogging()
 
       const ls = shell.actions.ls('c1/nested1/invalid')
-      await assert.rejects(
-        () => base.pierce(ls),
-        (error) => {
-          const msg = 'Non existent path: /c1/nested1/invalid'
-          assert.strictEqual(error.message, msg)
-          return true
-        }
+      await assert.isRejected(
+        base.pierce(ls),
+        'Non existent path: /c1/nested1/invalid'
       )
     })
     test('root path when cd is child', async () => {

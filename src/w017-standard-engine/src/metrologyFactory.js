@@ -27,7 +27,7 @@
  *
  */
 
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
 import last from 'lodash.last'
 import setImmediate from 'set-immediate-shim'
