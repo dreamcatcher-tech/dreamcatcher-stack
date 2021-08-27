@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
 const debug = Debug('dos:commands:cd')
 

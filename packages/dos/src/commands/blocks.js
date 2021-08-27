@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
 import { engine } from '../../../interblock/src/index' // in build, gets aliased as @dreamcatcher-tech/interblock
 import Debug from 'debug'
