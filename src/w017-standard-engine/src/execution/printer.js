@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import chalk from 'ansi-colors'
+import chalk from 'ansi-colors-browserify'
 import pad from 'pad-left'
 import prettyBytes from 'pretty-bytes'
 import columnify from 'columnify'

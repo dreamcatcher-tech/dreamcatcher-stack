@@ -847,6 +847,13 @@ ansi-align@^3.0.0:
   dependencies:
     string-width "^3.0.0"
 
+ansi-colors-browserify@^4.1.2:
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/ansi-colors-browserify/-/ansi-colors-browserify-4.1.2.tgz#5359a9cec888d249f694eee769ff4c7386f7d812"
+  integrity sha512-yZqI0NO7bInKIQzEx7g0svQD+CxlgoPsjCb2qMg/Czwwxu3oAZbExykWFVCPtMnxXJkzLPz0IKINXi18OgWPIg==
+  dependencies:
+    process "^0.11.10"
+
 ansi-colors@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/ansi-colors/-/ansi-colors-4.1.1.tgz#cbb9ae256bf750af1eab344f229aa27fe94ba348"
