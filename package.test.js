@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai'
 import { checkModules } from './lib/index.js'
 import packageJson from './package.json'
 const { main, module } = packageJson
