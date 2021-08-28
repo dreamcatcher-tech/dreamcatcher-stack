@@ -1,4 +1,4 @@
-import chalk from 'ansi-colors'
+import chalk from 'ansi-colors-browserify'
 import Debug from 'debug'
 const debug = Debug('dos:commands:add')
 

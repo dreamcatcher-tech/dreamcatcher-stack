@@ -1,5 +1,5 @@
 import Enquirer from 'enquirer-browserify'
-import chalk from 'ansi-colors'
+import chalk from 'ansi-colors-browserify'
 import isNode from 'detect-node'
 import Debug from 'debug'
 const debug = Debug('dos:read')

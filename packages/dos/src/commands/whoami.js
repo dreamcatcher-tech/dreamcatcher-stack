@@ -1,4 +1,4 @@
-import chalk from 'ansi-colors'
+import chalk from 'ansi-colors-browserify'
 import cliui from 'cliui'
 import Debug from 'debug'
 const debug = Debug('dos:commands:whoami')

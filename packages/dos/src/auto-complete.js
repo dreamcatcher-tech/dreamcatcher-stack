@@ -1,4 +1,4 @@
-import Chalk from 'ansi-colors'
+import chalk from 'ansi-colors-browserify'
 import { withSpin } from './spinner'
 import * as commands from './commands'
 import Debug from 'debug'
@@ -38,7 +38,7 @@ export const withAutoComplete = (fn) => {
     try {
       await ctx.autoComplete.updateList(ctx)
     } catch (err) {
-      console.warn(`${Chalk.yellow('⚠')} failed to update auto-complete list`)
+      console.warn(`${chalk.yellow('⚠')} failed to update auto-complete list`)
       debug(err)
     }
     debug('auto-complete')

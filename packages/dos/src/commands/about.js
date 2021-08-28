@@ -1,12 +1,12 @@
-import Chalk from 'ansi-colors'
+import chalk from 'ansi-colors-browserify'
 import cliui from 'cliui'
-const object = Chalk.bold.yellow('Object')
-const link = Chalk.bold.yellow('Link')
-const covenant = Chalk.bold.yellow('Covenant')
-const stateMachine = Chalk.bold.yellow('StateMachine')
-const os = Chalk.bold.yellow('DistributedOperatingSystem')
-const fs = Chalk.bold.yellow('FileSystem')
-const app = Chalk.bold.yellow('App')
+const object = chalk.bold.yellow('Object')
+const link = chalk.bold.yellow('Link')
+const covenant = chalk.bold.yellow('Covenant')
+const stateMachine = chalk.bold.yellow('StateMachine')
+const os = chalk.bold.yellow('DistributedOperatingSystem')
+const fs = chalk.bold.yellow('FileSystem')
+const app = chalk.bold.yellow('App')
 
 export const about = async () => {
   const ui = cliui()

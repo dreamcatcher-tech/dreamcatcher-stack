@@ -1,5 +1,6 @@
 import process from 'process'
 import ora from 'ora'
+import { assert } from 'chai'
 import {
   effectorFactory,
   apps,
@@ -16,16 +17,16 @@ import packageJson from '../package.json'
 import Debug from 'debug'
 const debug = Debug('dos:repl')
 
-export default async function repl(opts) {
+export default async function repl(opts = {}) {
+  assert.strictEqual(typeof opts, 'object')
   Debug.enable('*:repl *commands* *:eval')
   debug(`repl`)
-  opts = opts || {}
   opts.read = opts.read || withAutoComplete(read)
   opts.evaluate = opts.evaluate || withSpin(evaluate)
   const stdin = opts.stdin || process.stdin
   const stdout = opts.stdout || process.stdout
   const stderr = opts.stderr || process.stderr
-
+  opts = { ...opts, stdin, stdout, stderr }
   debug(`opts: `, Object.keys(opts))
 
   const ctx = await getInitialCtx(opts)
@@ -81,10 +82,10 @@ export default async function repl(opts) {
   return stopLoop
 }
 
-async function getInitialCtx({ blockchain, evaluate }) {
+async function getInitialCtx({ blockchain, stdout: stream }) {
   // TODO move this to the reboot command
   // TODO get environment printout
-  const spinner = ora({ spinner: 'aesthetic' }).start()
+  const spinner = ora({ spinner: 'aesthetic', stream }).start()
   spinner.info(`System font check: 🚦🚦🚦🌈🌈🌈❌️❌️❌️`)
   spinner
     .info(`begining boot sequence Ctrl+C to cancel and drop to local shell`)

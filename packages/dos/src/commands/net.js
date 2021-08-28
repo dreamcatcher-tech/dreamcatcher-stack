@@ -1,4 +1,3 @@
-import chalk from 'ansi-colors'
 import Debug from 'debug'
 const debug = Debug('dos:commands:tx')
 

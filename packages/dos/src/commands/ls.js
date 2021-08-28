@@ -1,6 +1,6 @@
 import posix from 'path-browserify'
 import cliuiModule from 'cliui'
-import chalk from 'ansi-colors'
+import chalk from 'ansi-colors-browserify'
 import Debug from 'debug'
 const debug = Debug('dos:commands:ls')
 const cliui = cliuiModule.default || cliuiModule // issues loading in browser
