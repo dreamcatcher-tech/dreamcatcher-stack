@@ -5,7 +5,7 @@ import { withSpin } from './spinner'
 import print from './print'
 import Debug from 'debug'
 const debug = Debug('dos')
-globalThis.process = process // attempt to shim for all the packages being imported that depend on process
+// globalThis.process = process // attempt to shim for all the packages being imported that depend on process
 
 const evalPrint = (ctx, cmd, cmdArgs, opts) => {
   // TODO use this so can call commands from unit tests

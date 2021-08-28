@@ -1,4 +1,3 @@
-import process from 'process'
 import Debug from 'debug'
 const debug = Debug('dos:print')
 
@@ -19,11 +18,11 @@ export default async function print(func, stdout, stderr) {
       }
       // use cliui to handle string wrapping
       const terminalString = string.replace(/(?:\r\n|\r|\n)/g, '\r\n')
-      process.stdout.write(terminalString)
-      process.stdout.write('\r\n')
+      stdout.write(terminalString)
+      stdout.write('\r\n')
     }
   } catch (err) {
     debug(err)
-    process.stderr.write(`❌️ ${err}\r\n`)
+    stderr.write(`❌️ ${err}\r\n`)
   }
 }
