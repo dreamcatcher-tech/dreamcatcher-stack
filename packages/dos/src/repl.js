@@ -6,7 +6,7 @@ import {
   apps,
   checkModules,
   version,
-} from '../../interblock/src/index' // in build, gets aliased to @dreamcatcher-tech/interblock
+} from '@dreamcatcher-tech/interblock' // in build, gets aliased to @dreamcatcher-tech/interblock
 import { read } from './read'
 import { evaluate } from './eval'
 import { withAutoComplete } from './auto-complete'

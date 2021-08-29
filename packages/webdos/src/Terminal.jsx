@@ -10,7 +10,7 @@ import '@fontsource/roboto-mono'
 import 'xterm/css/xterm.css'
 import { stdin as mockStdin } from 'mock-stdin'
 import { useBlockchain } from './hooks'
-import commandLineShell from '../../dos/src/index' // in build, gets aliased to @dreamcatcher-tech/dos
+import commandLineShell from '@dreamcatcher-tech/dos' // in build, gets aliased to @dreamcatcher-tech/dos
 import process from 'process'
 import {Buffer} from 'buffer'
 // import '../css/TorEmoji.woff2'

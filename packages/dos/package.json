@@ -18,6 +18,7 @@
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
+    "@dreamcatcher-tech/interblock": "^0.0.121",
     "ansi-colors-browserify": "^4.1.2",
     "chai": "^4.3.4",
     "clear": "^0.1.0",

@@ -1,6 +1,6 @@
 import {assert} from 'chai/index.mjs'
 import React, { useState, useEffect } from 'react'
-import { effectorFactory, checkModules } from '../../interblock/src/index' // in build, gets aliased with @dreamcatcher-tech/interblock
+import { effectorFactory, checkModules } from '@dreamcatcher-tech/interblock' 
 import equals from 'fast-deep-equal'
 import { Terminal } from '.'
 import process from 'process'

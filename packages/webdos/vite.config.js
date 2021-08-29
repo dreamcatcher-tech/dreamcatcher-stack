@@ -84,9 +84,9 @@ export default defineConfig({
        *    2. events (mockStdin)
        *    3. buffer (mockStdin)
        */
-      stream: path.resolve('../node_modules/stream-browserify'), // mock-stdin
-      'signal-exit': path.resolve('../node_modules/signal-exit-browserify'),
-      'ansi-colors': path.resolve('../node_modules/ansi-colors-browserify'),
+      stream: path.resolve('../../node_modules/stream-browserify'), // mock-stdin
+      'signal-exit': path.resolve('../../node_modules/signal-exit-browserify'),
+      'ansi-colors': path.resolve('../../node_modules/ansi-colors-browserify'),
     },
   },
   define: {

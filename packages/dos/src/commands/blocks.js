@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
-import { engine } from '../../../interblock/src/index' // in build, gets aliased as @dreamcatcher-tech/interblock
+import { engine } from '@dreamcatcher-tech/interblock' // in build, gets aliased as @dreamcatcher-tech/interblock
 import Debug from 'debug'
 const debug = Debug('dos:commands:blocks')
 const { blockPrint } = engine
