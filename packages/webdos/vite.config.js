@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
+import process from 'process'
 
 /**
  * Make client-project be just the terminal, so that can do front end easily
@@ -48,6 +49,13 @@ import path from 'path'
  *    refer to interblock using relative path in webdos
  *    use git submodules to house the independent packages ?
  *    set all packages to private, except webdos
+ *
+ *    nest interblock and dos inside of webdos, treat webdos as a base package
+ *
+ *    publish each package independently, do a replace on webdos to pull in code not built
+ *
+ *    publish only webdos, but link to the other packages at build time
+ *    publish all packages, including built versions of interblock with minification
  */
 
 // https://vitejs.dev/config/
@@ -76,9 +84,9 @@ export default defineConfig({
        *    2. events (mockStdin)
        *    3. buffer (mockStdin)
        */
-      stream: path.resolve('node_modules/stream-browserify'), // mock-stdin
-      'signal-exit': path.resolve('node_modules/signal-exit-browserify'),
-      'ansi-colors': path.resolve('node_modules/ansi-colors-browserify'),
+      stream: path.resolve('../node_modules/stream-browserify'), // mock-stdin
+      'signal-exit': path.resolve('../node_modules/signal-exit-browserify'),
+      'ansi-colors': path.resolve('../node_modules/ansi-colors-browserify'),
     },
   },
   define: {
