@@ -25,7 +25,7 @@
     "debug": "^4.3.1",
     "detect-node": "^2.1.0",
     "docker-names": "^1.1.1",
-    "enquirer-browserify": "^2.3.12",
+    "enquirer-browserify": "^2.3.13",
     "ora": "3.0.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
