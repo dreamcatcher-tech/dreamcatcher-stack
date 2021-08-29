@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import Debug from 'debug'
 import OpenDialog from './OpenDialog'
 import Form from '@rjsf/material-ui'
 import { useRouter, useBlockchain } from '../hooks'
-
-const localProcess = process || {}
+import process from 'process'
+import Debug from 'debug'
 const debug = Debug('terminal:widgets:Settings')
+
 
 const Settings = () => {
   const { blocks, match, cwd } = useRouter()
@@ -30,7 +30,7 @@ const Settings = () => {
 
     const command = `./set --formData ${string}\n`
     for (const c of command) {
-      localProcess.stdin.send(c)
+      process.stdin.send(c)
     }
   }
   const onChange = ({ formData }) => {

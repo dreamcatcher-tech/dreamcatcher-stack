@@ -1,5 +1,5 @@
 import '../css/Terminal.css'
-import assert from 'assert'
+import {assert} from 'chai/index.mjs'
 import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'
 import { Terminal } from 'xterm'
@@ -11,20 +11,17 @@ import 'xterm/css/xterm.css'
 import { stdin as mockStdin } from 'mock-stdin'
 import { useBlockchain } from './hooks'
 import commandLineShell from '../../dos/src/index' // in build, gets aliased to @dreamcatcher-tech/dos
-
+import process from 'process'
+import {Buffer} from 'buffer'
 // import '../css/TorEmoji.woff2'
 
 const debug = debugFactory(`terminal:Terminal`)
-const localProcess = process || {}
 
 const getMockStdin = () => {
-  const previousStdin = localProcess.stdin
+  globalThis.Buffer = Buffer // shim for mock-stdin
+  globalThis.process = process // shim for mock-stdin
   mockStdin()
-  const { stdin } = localProcess
-  Object.defineProperty(localProcess, 'stdin', {
-    value: previousStdin,
-    writable: true,
-  })
+  const { stdin } = process
   return stdin
 }
 
@@ -171,9 +168,13 @@ const TerminalContainer = (props) => {
   useEffect(() => {
     if (blockchain && streams) {
       const { stdout, stdin, stderr } = streams
-      localProcess.stdout = stdout // TODO wrap ora so it sees a fake process object
-      localProcess.stdin = stdin
-      localProcess.stderr = stderr
+      Object.defineProperty(process, 'stdin', {
+        value: stdin,
+        writable: true,
+      })
+      process.stdin = stdin
+      process.stdout = stdout // TODO wrap ora so it sees a fake process object
+      process.stderr = stderr
 
       const emptyArgs = []
       const abortCmdPromise = commandLineShell(emptyArgs, {

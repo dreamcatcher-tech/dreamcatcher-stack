@@ -1,10 +1,56 @@
 import { defineConfig } from 'vite'
 import reactRefresh from '@vitejs/plugin-react-refresh'
-import inject from '@rollup/plugin-inject'
 import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
-// https://vitejs.dev/config/
 
+/**
+ * Make client-project be just the terminal, so that can do front end easily
+ *
+ * Build and dev strategy for making npm modules work with vite:
+ *    1. handle runtime use of nodejs globals by applying polyfiles to globalThis
+ *        in the library that uses it eg: dos, interblock, webdos
+ *    2. use replace plugin to do highly targetted text replacement of import time
+ *        uses of node globals, such as process, buffer.  Use a seperate instance
+ *        of the plugin for each npm package that needs operating on
+ *    3. anything at import time that does not work for this strategy uses highly
+ *        targetted inject plugin to import one of the globals
+ *    4. where possible in the dependency graph use alias to resolve browser
+ *        friendly versions
+ *    5. define is best for strings, as consistent behaviour between dev and build
+ *    6. first, try to remove the offending library from usage, if within our control
+ *
+ * Troubleshooting tactics:
+ *    1. use sourcemaps on build, then try run in browser
+ *    2. breakpoint in the plugins code to see if they apply correctly
+ *    3. fork replace plugin to allow it to jump out of baseProject ? or wait until hoist?
+ *    4. ensure the full dep chain is fulfilled, else gives empty result from require()
+ *    5. ensure that common js files end in .cjs and es modules end in .mjs
+ *
+ * Other options:
+ *    1. use alias to make a shim load which adds process and other to globalThis ?
+ *    2. load each problematic library using a shim alias
+ *
+ * Problems:
+ *    1. dev concats files sometimes, but build does not, so high precision by
+ *       filename does not work reliably.  Alias is the ultimate in precision.
+ *    2. replace does not run during dev
+ *    3. cannot mix import and require, else the commonjs bundler ignores mixed instances
+ *        so if inject an import in a cjs file, require ends up undefined
+ *
+ * TODO:
+ *    1. alias out keypress in enquirer
+ *    2. hoist all dependencies to decrease vendor bundle size
+ *
+ * Workspaces:
+ *    Publish only webdos
+ *    run a bundler with a minifier
+ *    or, publish all packages at once
+ *    refer to interblock using relative path in webdos
+ *    use git submodules to house the independent packages ?
+ *    set all packages to private, except webdos
+ */
+
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     reactRefresh(),
@@ -21,28 +67,30 @@ export default defineConfig({
         return modules
       },
     },
-    inject({
-      // when changing, must use --force on the dev server to rebuild deps
-      // use inject to insert shims for global variables used in dependencies
-      process: 'process', // assert
-      global: path.resolve('global.js'), // assert
-      Buffer: ['buffer', 'Buffer'], // mock-stdin
-    }),
   ],
   resolve: {
     alias: {
+      /**
+       * Extra packages added:
+       *    1. util (mockStdin)
+       *    2. events (mockStdin)
+       *    3. buffer (mockStdin)
+       */
       stream: path.resolve('node_modules/stream-browserify'), // mock-stdin
-      events: path.resolve('node_modules/events'), // mock-stdin
-      path: path.resolve('node_modules/path-browserify'), // Route.jsx
+      'signal-exit': path.resolve('node_modules/signal-exit-browserify'),
+      'ansi-colors': path.resolve('node_modules/ansi-colors-browserify'),
     },
   },
-  // define: {
-  // 'process.env.NODE_DEBUG': false, // for assert.js
-  // global: 'globalThis', // lifesaver
-  // },
+  define: {
+    // TODO see if can remove even these too, after republishing all browser specific packages
+    'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG), // assert#util
+    'global.Uint8Array': JSON.stringify('globalThis.Uint8Array'), // stream-browserify#readable-stream
+    'process.platform': JSON.stringify('browser'),
+  },
   build: {
     target: 'esnext',
-    minify: 'esbuild',
+    minify: 'esbuild', // required to transform biginteger in noble-crypto
+    sourcemap: true,
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],
     },

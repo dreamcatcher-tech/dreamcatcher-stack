@@ -11,7 +11,7 @@
  * If there is no path or we have no permissions, it returns `undefined` and
  * continues to try.
  */
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { default as usePathBlockstream } from './usePathBlockstream'
 import Debug from 'debug'
 import { splitPathSegments } from '../utils'

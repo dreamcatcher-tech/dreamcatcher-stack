@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { default as useBlockchain } from './useBlockchain'
 import debugFactory from 'debug'
-const localProcess = process || {}
+import process from 'process'
 const debug = debugFactory(`webdos:hooks:useNavigation`)
 
 export default () => {
@@ -22,7 +22,7 @@ export default () => {
       // TODO store the current terminal contents, delete back to the prompt
       const command = `cd ${wd}\n`
       for (const c of command) {
-        localProcess.stdin.send(c)
+        process.stdin.send(c)
       }
       // TODO restore the existing terminal text
       setPopstate(wd)

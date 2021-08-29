@@ -1,14 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react'
 import calculateSize from 'calculate-size'
 import { XGrid } from '@material-ui/x-grid'
-import assert from 'assert'
+import {assert} from 'chai/index.mjs'
 import Debug from 'debug'
 import { useBlockchain, useBlockstream, useRouter } from '../hooks'
 import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
 import equal from 'fast-deep-equal'
+import process from 'process'
 
-const localProcess = process || {}
+
 
 const debug = Debug('terminal:widgets:CollectionList')
 const CollectionList = (props) => {
@@ -112,7 +113,7 @@ const CollectionList = (props) => {
     const command = `cd ${nextPath}\n`
     for (const c of command) {
       // TODO replace with NavLink
-      localProcess.stdin.send(c)
+      process.stdin.send(c)
     }
   }
   const hideMapBackgrond = {

@@ -1,6 +1,5 @@
 import { version } from '../../package.json'
 import './demo.css'
-import assert from 'assert'
 
 import React, { useEffect, Component } from 'react'
 import ReactDOM from 'react-dom'

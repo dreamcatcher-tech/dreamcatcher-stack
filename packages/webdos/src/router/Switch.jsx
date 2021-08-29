@@ -33,7 +33,7 @@
 import React from 'react'
 import Debug from 'debug'
 import { Route, useBlockchain, usePathBlockstream } from '..'
-import assert from 'assert'
+import {assert} from 'chai/index.mjs'
 import RouterContext from './RouterContext'
 import { splitPathSegments } from '../utils'
 

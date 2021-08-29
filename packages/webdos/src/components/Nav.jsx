@@ -6,8 +6,8 @@ import { IconButton } from '@material-ui/core'
 import { Home, AccountCircle, Settings, Info } from '@material-ui/icons'
 import { makeStyles } from '@material-ui/core'
 import { useRouter } from '../hooks'
+import process from 'process'
 const debug = Debug('terminal:widgets:Nav')
-const localProcess = process || {}
 
 const useStyles = makeStyles({
   grow: {
@@ -45,7 +45,7 @@ const Nav = (props) => {
     }
     const command = `cd ${nextPath}\n`
     for (const c of command) {
-      localProcess.stdin.send(c)
+      process.stdin.send(c)
     }
   }
 

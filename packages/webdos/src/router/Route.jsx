@@ -1,5 +1,5 @@
-import assert from 'assert'
-import posix from 'path'
+import {assert} from 'chai/index.mjs'
+import posix from 'path-browserify'
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
@@ -28,7 +28,7 @@ const Route = ({ path, covenant, component, children }) => {
   // check if our path matches, and if we should render at all
   const { blocks, match, cwd } = context
   // path match is when some remains of (cwd - match) === path
-  assert(posix.isAbsolute(match), `match not absolute: ${match} ${cwd}`)
+  // assert(posix.isAbsolute(match), `match not absolute: ${match} ${cwd}`)
   assert(posix.isAbsolute(cwd), `cwd not absolute: ${match} ${cwd}`)
   assert(Array.isArray(blocks))
 

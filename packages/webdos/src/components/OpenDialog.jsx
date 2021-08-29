@@ -5,8 +5,8 @@ import React from 'react'
 import Debug from 'debug'
 import { makeStyles } from '@material-ui/core'
 import { useAppContainer } from '../hooks'
+import process from 'process'
 
-const localProcess = process || {}
 const debug = Debug('terminal:widgets:OpenDialog')
 debug(`loaded`)
 
@@ -25,7 +25,7 @@ const OpenDialog = ({ title, children }) => {
     // TODO halt the user if blockchain is enquiring still
     const command = `cd ..\n`
     for (const c of command) {
-      localProcess.stdin.send(c)
+      process.stdin.send(c)
     }
   }
   return (
