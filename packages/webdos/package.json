@@ -17,7 +17,7 @@
     "release": "np --no-2fa"
   },
   "dependencies": {
-    "@dreamcatcher-tech/dos": "^0.0.41",
+    "@dreamcatcher-tech/dos": "^1.0.0",
     "@dreamcatcher-tech/interblock": "^1.0.0",
     "@fontsource/roboto-mono": "^4.5.0",
     "@material-ui/core": "^4.12.3",
