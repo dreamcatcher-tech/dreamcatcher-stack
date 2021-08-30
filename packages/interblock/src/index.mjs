@@ -36,13 +36,11 @@
     */
 
 import { assert } from 'chai/index.mjs'
-import packageJson from '../package.json'
 import { browserFactory, effectorFactory, awsFactory } from './w020-emulators'
 import * as engine from './w017-standard-engine'
 import * as apps from './w301-user-apps'
 import Debug from 'debug'
 const debug = Debug('interblock')
-const { version } = packageJson
 
 const checkModules = () => {
   let thrown = false
@@ -65,5 +63,4 @@ export {
   engine,
   apps,
   checkModules,
-  version,
 }

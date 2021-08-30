@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import memoize from 'lodash/memoize'
+import memoize from 'lodash.memoize'
 import { assign } from 'xstate'
 import { pure } from '../../../w001-xstate-direct'
 import {
