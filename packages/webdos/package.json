@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/webdos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Web components for DOS",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -17,8 +17,8 @@
     "release": "np --no-2fa"
   },
   "dependencies": {
-    "@dreamcatcher-tech/dos": "^1.0.0",
-    "@dreamcatcher-tech/interblock": "^1.0.0",
+    "@dreamcatcher-tech/dos": "^1.0.1",
+    "@dreamcatcher-tech/interblock": "^1.0.1",
     "@fontsource/roboto-mono": "^4.5.0",
     "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",
