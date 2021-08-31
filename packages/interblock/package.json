@@ -13,6 +13,7 @@
   "module": "dist/interblock.es.js",
   "type": "module",
   "scripts": {
+    "prepublishOnly": "yarn build",
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
