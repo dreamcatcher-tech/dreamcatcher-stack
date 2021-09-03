@@ -5,15 +5,15 @@ import {
   effectorFactory,
   apps,
   checkModules,
-  version,
-} from '@dreamcatcher-tech/interblock' // in build, gets aliased to @dreamcatcher-tech/interblock
+} from '@dreamcatcher-tech/interblock'
+import interblockPackageJson from '@dreamcatcher-tech/interblock/package.json'
 import { read } from './read'
 import { evaluate } from './eval'
 import { withAutoComplete } from './auto-complete'
 import { withSpin } from './spinner'
 import print from './print'
 import loop from './loop'
-import packageJson from '../package.json'
+import dosPackageJson from '../package.json'
 import Debug from 'debug'
 const debug = Debug('dos:repl')
 
@@ -32,8 +32,8 @@ export default async function repl(opts = {}) {
   const ctx = await getInitialCtx(opts)
   await print(
     `Welcome to the HyperNet
-  Blockchain core: v${version}
-  DOS:             v${packageJson.version}
+  Blockchain core: v${interblockPackageJson.version}
+  DOS:             v${dosPackageJson.version}
   type "help" to get started`,
     stdout,
     stderr

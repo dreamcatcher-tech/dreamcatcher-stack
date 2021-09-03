@@ -17,11 +17,8 @@ export default defineConfig({
       name: 'singleHMR workaround',
       handleHotUpdate({ modules, file }) {
         modules.map((m) => {
-          // const interblockModels = 'w015'
-          // if (m.file.includes(interblockModels)) {
           m.importedModules = new Set()
           m.importers = new Set()
-          // }
         })
         return modules
       },

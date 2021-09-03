@@ -5,7 +5,6 @@ import AjvFormats from 'ajv-formats'
 import * as dmzReducer from '../../w021-dmz-reducer'
 import { covenantIdModel } from '../../w015-models'
 import { interchain, useBlocks } from '../../w002-api'
-import seedrandom from 'seedrandom'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:datum')
 const ajv = new Ajv({ allErrors: true, verbose: true })

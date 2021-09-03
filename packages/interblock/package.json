@@ -10,7 +10,7 @@
   "files": [
     "dist/interblock.es.js"
   ],
-  "module": "dist/interblock.es.js",
+  "main": "dist/interblock.es.js",
   "type": "module",
   "scripts": {
     "prepublishOnly": "yarn build",
@@ -18,8 +18,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --bail",
-    "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --watch",
-    "release": "yarn build && np"
+    "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --watch"
   },
   "private": false,
   "author": "Dreamcatcher Command",
