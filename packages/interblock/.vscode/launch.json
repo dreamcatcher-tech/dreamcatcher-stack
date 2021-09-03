@@ -5,6 +5,7 @@
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
+        "--experimental-vm-modules",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
@@ -20,6 +21,7 @@
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
+        "--experimental-vm-modules",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
@@ -35,6 +37,7 @@
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
+        "--experimental-vm-modules",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
@@ -50,6 +53,7 @@
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
+        "--experimental-vm-modules",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",

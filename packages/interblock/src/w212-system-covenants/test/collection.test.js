@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { effectorFactory } from '../../index'
+import { effectorFactory } from '../../index.mjs'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
 Debug.enable()

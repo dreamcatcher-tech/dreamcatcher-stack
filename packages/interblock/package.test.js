@@ -1,16 +1,20 @@
-import { assert } from 'chai'
-import { checkModules } from './lib/index.js'
+import { assert } from 'chai/index.mjs'
+import { checkModules, effectorFactory } from './dist/interblock.es'
 import packageJson from './package.json'
-const { main, module } = packageJson
+import viteConfig from './vite.config'
+const { main, type } = packageJson
 
 describe('package', () => {
   test('Running module load checks on ./lib/index.js', async () => {
-    const modules = checkModules()
-    assert(Object.keys(modules).length)
+    checkModules()
+    assert.strictEqual(typeof effectorFactory, 'function')
   })
-  test('package.json/main points to ./lib/index.js', () => {
-    assert.strictEqual(main, 'lib/index.js')
-    assert.strictEqual(module, 'es/index.js')
+  test('package.json/main points to dist/interblock.es.js', () => {
+    assert.strictEqual(main, 'dist/interblock.es.js')
+    assert.strictEqual(type, 'module')
+  })
+  test('vite config is minimized', () => {
+    assert.strictEqual(viteConfig.build.minify, 'esbuild')
   })
   test.todo('ensure no comments in the bundled code')
   test.todo('ensure both bundles are minimized')
