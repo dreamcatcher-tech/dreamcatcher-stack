@@ -3,6 +3,24 @@ import reactRefresh from '@vitejs/plugin-react-refresh'
 import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 import process from 'process'
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+const { dependencies: deps } = require('./package.json')
+deps['chai/index.mjs'] = true
+deps['react'] = true
+deps['react-dom'] = true
+deps['xterm/css/xterm.css'] = true
+deps['@material-ui/core/styles'] = true
+deps['@material-ui/core/Dialog'] = true
+deps['@material-ui/core/DialogTitle'] = true
+deps['@material-ui/core/DialogContent'] = true
+deps['leaflet/dist/leaflet.css'] = true
+deps['leaflet-draw/dist/leaflet.draw.css'] = true
+deps['leaflet-draw/dist/leaflet.draw.js'] = true
+deps['leaflet.markercluster/dist/MarkerCluster.css'] = true
+deps['leaflet.markercluster/dist/MarkerCluster.Default.css'] = true
+deps['leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css'] = true
+deps['leaflet-extra-markers/dist/js/leaflet.extra-markers.min'] = true
 
 /**
  * Make client-project be just the terminal, so that can do front end easily
@@ -60,22 +78,7 @@ import process from 'process'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    reactRefresh(),
-    {
-      name: 'singleHMR workaround',
-      handleHotUpdate({ modules, file }) {
-        modules.map((m) => {
-          const interblockModels = 'w015'
-          if (m.file.includes(interblockModels)) {
-            m.importedModules = new Set()
-            m.importers = new Set()
-          }
-        })
-        return modules
-      },
-    },
-  ],
+  plugins: [reactRefresh()],
   resolve: {
     alias: {
       /**
@@ -102,6 +105,11 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],
+      external: Object.keys(deps),
+    },
+    lib: {
+      formats: ['es'],
+      entry: path.resolve('./src/index.js'),
     },
   },
   /**

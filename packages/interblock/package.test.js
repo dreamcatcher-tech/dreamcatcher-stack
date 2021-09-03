@@ -15,6 +15,7 @@ describe('package', () => {
   })
   test('vite config is minimized', () => {
     assert.strictEqual(viteConfig.build.minify, 'esbuild')
+    assert.strictEqual(viteConfig.build.sourcemap, undefined)
   })
   test.todo('ensure no comments in the bundled code')
   test.todo('ensure both bundles are minimized')
