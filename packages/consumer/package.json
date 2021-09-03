@@ -1,11 +1,11 @@
 {
   "name": "consumer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Test consumer of webdos package",
   "author": "evil_liskov <evil_liskov@protonmail.com>",
   "homepage": "https://github.com/dreamcatcher-tech/interblock#readme",
   "license": "AGPL-3.0",
-  "private":true,
+  "private": true,
   "main": "",
   "files": [
     "lib"
@@ -23,7 +23,7 @@
     "url": "https://github.com/dreamcatcher-tech/interblock/issues"
   },
   "dependencies": {
-    "@dreamcatcher-tech/webdos": "^1.0.1",
+    "@dreamcatcher-tech/webdos": "^1.0.2",
     "react": "^17.0.0",
     "react-dom": "^17.0.0"
   },
