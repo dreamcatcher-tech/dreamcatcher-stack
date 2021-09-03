@@ -19,6 +19,6 @@ jobs:
       - run: yarn
       - run: lerna run build --ignore consumer
       - run: lerna run test --ignore consumer
-      - run: lerna publish patch --ignore consumer
+      - run: lerna publish patch --yes
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
