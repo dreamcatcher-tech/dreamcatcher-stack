@@ -35,7 +35,7 @@
     "leaflet-extra-markers": "^1.2.1",
     "leaflet-providers": "^1.12.0",
     "leaflet.markercluster": "^1.5.0",
-    "mock-stdin-browserify": "^1.0.7",
+    "mock-stdin-browserify": "^1.0.8",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "prop-types": "^15.7.2",
