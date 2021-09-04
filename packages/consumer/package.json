@@ -1,6 +1,6 @@
 {
   "name": "consumer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Test consumer of webdos package",
   "author": "evil_liskov <evil_liskov@protonmail.com>",
   "homepage": "https://github.com/dreamcatcher-tech/interblock#readme",
