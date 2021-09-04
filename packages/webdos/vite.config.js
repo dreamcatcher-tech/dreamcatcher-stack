@@ -2,10 +2,11 @@ import { defineConfig } from 'vite'
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
-import process from 'process'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const { dependencies: deps } = require('./package.json')
+
+// every imported path not in package.json must be excluded from the bundle
 deps['chai/index.mjs'] = true
 deps['react'] = true
 deps['react-dom'] = true
@@ -56,9 +57,7 @@ deps['leaflet-extra-markers/dist/js/leaflet.extra-markers.min'] = true
  *    3. cannot mix import and require, else the commonjs bundler ignores mixed instances
  *        so if inject an import in a cjs file, require ends up undefined
  *
- * TODO:
- *    1. alias out keypress in enquirer
- *    2. hoist all dependencies to decrease vendor bundle size
+ * Solved all problems by forking packages, particularly mock-stdin
  *
  * Workspaces:
  *    Publish only webdos
@@ -79,25 +78,6 @@ deps['leaflet-extra-markers/dist/js/leaflet.extra-markers.min'] = true
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [reactRefresh()],
-  resolve: {
-    alias: {
-      /**
-       * Extra packages added:
-       *    1. util (mockStdin)
-       *    2. events (mockStdin)
-       *    3. buffer (mockStdin)
-       */
-      // 'signal-exit': path.resolve('../../node_modules/signal-exit-browserify'),
-      // 'ansi-colors': path.resolve('../../node_modules/ansi-colors-browserify'),
-      // assert: path.resolve('../../node_modules/chai/lib/chai/interface/assert'), // dos#clear
-    },
-  },
-  define: {
-    // TODO see if can remove even these too, after republishing all browser specific packages
-    // 'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG), // assert#util
-    // 'global.Uint8Array': JSON.stringify('globalThis.Uint8Array'), // stream-browserify#readable-stream
-    // 'process.platform': JSON.stringify('browser'),
-  },
   build: {
     target: 'esnext',
     minify: 'esbuild', // required to transform biginteger in noble-crypto

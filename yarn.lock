@@ -3482,10 +3482,10 @@ enhanced-resolve@^5.3.2:
     graceful-fs "^4.2.4"
     tapable "^2.2.0"
 
-enquirer-browserify@^2.3.14:
-  version "2.3.14"
-  resolved "https://registry.yarnpkg.com/enquirer-browserify/-/enquirer-browserify-2.3.14.tgz#28ddc94cd01dfb5b3766f9c7591cfe2b050b94f7"
-  integrity sha512-ZJNCSm8vXm3ajksak7kpU+5H/XMzdK0GIBKq5g6q5ZYM5WSwZFn4up4f0bAT+JkAzRFCHlfnEjEXlur8GFmqeg==
+enquirer-browserify@^2.3.15:
+  version "2.3.15"
+  resolved "https://registry.yarnpkg.com/enquirer-browserify/-/enquirer-browserify-2.3.15.tgz#9d9e9b3e5dd82e2e727e3f963c509c0612d51d24"
+  integrity sha512-Jr/CNHzEbu9wJ8507jO1GtV1FWsfQrAjZOQz0xrRwkNuEE7UwdWOLkLzIKDyU4qlGoWZu5iV8vg4pyFxGoCAdA==
   dependencies:
     ansi-colors-browserify "^4.1.2"
     buffer "^6.0.3"
