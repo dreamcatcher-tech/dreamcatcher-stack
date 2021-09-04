@@ -330,107 +330,6 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dreamcatcher-tech/dos@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/dos/-/dos-1.0.3.tgz#2cbcff64c90710f448dbea26638a86b822c258c5"
-  integrity sha512-tEc1OnY2dL2v2JheYSvLN8WhspbHV9FaC/fJkVqnw0GtwfkNa0V18J3+8A27RVMh/ecPFHT2p21epDJMiXXTlA==
-  dependencies:
-    "@dreamcatcher-tech/interblock" "^1.0.3"
-    ansi-colors-browserify "^4.1.2"
-    chai "^4.3.4"
-    clear "^0.1.0"
-    cliui "^7.0.4"
-    debug "^4.3.1"
-    detect-node "^2.1.0"
-    docker-names "^1.1.1"
-    enquirer-browserify "^2.3.13"
-    ora "3.0.0"
-    os-browserify "^0.3.0"
-    path-browserify "^1.0.1"
-    pretty-ms "^7.0.1"
-    process "^0.11.10"
-    readline-browserify "^0.0.4"
-    set-immediate-shim "^2.0.0"
-    util "^0.12.4"
-
-"@dreamcatcher-tech/interblock@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/interblock/-/interblock-1.0.3.tgz#ab8cd9f7e3dcb1a14a3b84f999424b587ed8d939"
-  integrity sha512-MVAadCpobw1aFuy1anqCWzVscct7gArsLwS3X/+feEQ3Oym7VCWDNEGmCq/26Lhew5ziEDAW5rR0BUjs0jh2ZA==
-  dependencies:
-    ajv "^8.6.2"
-    ajv-formats "^2.1.0"
-    ansi-colors-browserify "^4.1.2"
-    assert "^2.0.0"
-    buffer "^6.0.3"
-    chai "^4.3.4"
-    columnify "^1.5.4"
-    crypto-js "^4.1.1"
-    debug "^4.3.2"
-    fast-deep-equal "^3.1.3"
-    fast-json-stable-stringify "^2.1.0"
-    is-in-browser "^2.0.0"
-    localforage "^1.9.0"
-    lodash.compact "^3.0.1"
-    lodash.flatten "^4.4.0"
-    lodash.last "^3.0.0"
-    lodash.memoize "^4.1.2"
-    lodash.random "^3.2.0"
-    lodash.without "^4.4.0"
-    long "^4.0.0"
-    noble-secp256k1 "^1.2.9"
-    node-object-hash "^2.3.7"
-    object-hash "^2.2.0"
-    pad-left "^2.1.0"
-    parse-function "^5.6.10"
-    path-browserify "^1.0.1"
-    pretty-bytes "^5.6.0"
-    process "^0.11.10"
-    seedrandom "^3.0.5"
-    serialize-error "^8.1.0"
-    set-immediate-shim "^2.0.0"
-    supports-color "^9.0.2"
-    uuid "^8.3.2"
-    ws "^8.0.0"
-    xstate "^4.23.1"
-
-"@dreamcatcher-tech/webdos@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@dreamcatcher-tech/webdos/-/webdos-1.0.3.tgz#048ad072b682b5cd028ba8bc24316ce733becd57"
-  integrity sha512-jU+IdgGkYH95yMQhPuYnUJ9Sqz71Qj6+eiQ0Xp05kO/hWX21IO7oQklc5VwAJHY8FZls9AlTO2Urn6xnM118GQ==
-  dependencies:
-    "@dreamcatcher-tech/dos" "^1.0.3"
-    "@dreamcatcher-tech/interblock" "^1.0.3"
-    "@fontsource/roboto-mono" "^4.5.0"
-    "@material-ui/core" "^4.12.3"
-    "@material-ui/icons" "^4.11.2"
-    "@material-ui/x-grid" "^4.0.0-alpha.37"
-    "@rjsf/core" "^3.1.0"
-    "@rjsf/material-ui" "^3.1.0"
-    ansi-colors-browserify "^4.1.2"
-    buffer "^6.0.3"
-    calculate-size "^1.1.1"
-    chai "^4.3.4"
-    debug "^4.3.2"
-    events "^3.3.0"
-    fast-deep-equal "^3.1.3"
-    fontfaceobserver "^2.1.0"
-    leaflet "^1.7.1"
-    leaflet-draw "^1.0.4"
-    leaflet-extra-markers "^1.2.1"
-    leaflet-providers "^1.12.0"
-    leaflet.markercluster "^1.5.0"
-    mock-stdin "^1.0.0"
-    path-browserify "^1.0.1"
-    process "^0.11.10"
-    prop-types "^15.7.2"
-    signal-exit-browserify "^3.0.4"
-    stream-browserify "^3.0.0"
-    util "^0.12.4"
-    xterm "^4.13.0"
-    xterm-addon-fit "^0.5.0"
-    xterm-addon-unicode11 "^0.2.0"
-
 "@emotion/hash@^0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@emotion/hash/-/hash-0.8.0.tgz#bbbff68978fefdbe68ccb533bc8cbe1d1afb5413"
@@ -3583,7 +3482,7 @@ enhanced-resolve@^5.3.2:
     graceful-fs "^4.2.4"
     tapable "^2.2.0"
 
-enquirer-browserify@^2.3.13, enquirer-browserify@^2.3.14:
+enquirer-browserify@^2.3.14:
   version "2.3.14"
   resolved "https://registry.yarnpkg.com/enquirer-browserify/-/enquirer-browserify-2.3.14.tgz#28ddc94cd01dfb5b3766f9c7591cfe2b050b94f7"
   integrity sha512-ZJNCSm8vXm3ajksak7kpU+5H/XMzdK0GIBKq5g6q5ZYM5WSwZFn4up4f0bAT+JkAzRFCHlfnEjEXlur8GFmqeg==
@@ -6604,20 +6503,15 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-mock-stdin-browserify@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/mock-stdin-browserify/-/mock-stdin-browserify-1.0.6.tgz#92689dac6e4d38c4531b5482edfd40166ae05a0d"
-  integrity sha512-XBF0dzpcM1twO1gM2Q7tVPKqNUBZPfQqGnzwDriO+I4FhcvFMcltdNtduarmwBYZLV1X7kJYQYfrbcU2zKIPLw==
+mock-stdin-browserify@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/mock-stdin-browserify/-/mock-stdin-browserify-1.0.7.tgz#d1eccc387534494444ae29d6a69a92e44c7e5f4a"
+  integrity sha512-o7NssDeAGzZJ7JvyQYYQasTuvRtyy5JhsEOMEMPFtijBe5B1X/qqrvJkwrx53QIekAY1mGJ7uKnPUcijM69geg==
   dependencies:
     buffer "^6.0.3"
     process "^0.11.10"
     stream-browserify "^3.0.0"
     util "^0.12.4"
-
-mock-stdin@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/mock-stdin/-/mock-stdin-1.0.0.tgz#efcfaf4b18077e14541742fd758b9cae4e5365ea"
-  integrity sha512-tukRdb9Beu27t6dN+XztSRHq9J0B/CoAOySGzHfn8UTfmqipA5yNT/sDUEyYdAV3Hpka6Wx6kOMxuObdOex60Q==
 
 modify-values@^1.0.0:
   version "1.0.1"
@@ -9597,7 +9491,7 @@ xmlchars@^2.2.0:
   resolved "https://registry.yarnpkg.com/xmlchars/-/xmlchars-2.2.0.tgz#060fe1bcb7f9c76fe2a17db86a9bc3ab894210cb"
   integrity sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
 
-xstate@^4.23.1, xstate@^4.23.4:
+xstate@^4.23.4:
   version "4.23.4"
   resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.23.4.tgz#b894205ac46bb3acc09755907d3e57c81c86e80e"
   integrity sha512-lWaUvyrd0HGhosyKnf8i9wBlszVaS+/uIs0EfnuPYNsZIh1BW9ed4bZ64P57wVYk2uln7v3u+Mv98FC+r8xrxQ==

@@ -17,8 +17,8 @@ import process from 'process'
 const debug = debugFactory(`terminal:Terminal`)
 
 const getMockStdin = () => {
-  mockStdin()
-  const { stdin } = process
+  const isDetached = true
+  const stdin = mockStdin(isDetached)
   return stdin
 }
 
@@ -169,6 +169,7 @@ const TerminalContainer = (props) => {
         value: stdin,
         writable: true,
       })
+      // TODO allow multiple simultaneous stdins
       process.stdin = stdin
       process.stdout = stdout // TODO wrap ora so it sees a fake process object
       process.stderr = stderr
