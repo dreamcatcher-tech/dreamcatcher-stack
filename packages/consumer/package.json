@@ -23,7 +23,7 @@
     "url": "https://github.com/dreamcatcher-tech/interblock/issues"
   },
   "dependencies": {
-    "@dreamcatcher-tech/webdos": "^1.0.2",
+    "@dreamcatcher-tech/webdos": "^1.0.3",
     "react": "^17.0.0",
     "react-dom": "^17.0.0"
   },

@@ -35,7 +35,7 @@
     "leaflet-extra-markers": "^1.2.1",
     "leaflet-providers": "^1.12.0",
     "leaflet.markercluster": "^1.5.0",
-    "mock-stdin": "^1.0.0",
+    "mock-stdin-browserify": "^1.0.6",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "prop-types": "^15.7.2",
@@ -56,7 +56,7 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "rollup-plugin-visualizer": "^5.5.2",
-    "vite": "2.5.1"
+    "vite": "2.5.3"
   },
   "repository": "git@github.com:dreamcatcher-tech/webdos.git",
   "author": "evil_liskov <evil_liskov@protonmail.com>",

@@ -87,17 +87,16 @@ export default defineConfig({
        *    2. events (mockStdin)
        *    3. buffer (mockStdin)
        */
-      stream: path.resolve('../../node_modules/stream-browserify'), // mock-stdin
-      'signal-exit': path.resolve('../../node_modules/signal-exit-browserify'),
-      'ansi-colors': path.resolve('../../node_modules/ansi-colors-browserify'),
-      assert: path.resolve('../../node_modules/chai/lib/chai/interface/assert'), // dos#clear
+      // 'signal-exit': path.resolve('../../node_modules/signal-exit-browserify'),
+      // 'ansi-colors': path.resolve('../../node_modules/ansi-colors-browserify'),
+      // assert: path.resolve('../../node_modules/chai/lib/chai/interface/assert'), // dos#clear
     },
   },
   define: {
     // TODO see if can remove even these too, after republishing all browser specific packages
-    'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG), // assert#util
-    'global.Uint8Array': JSON.stringify('globalThis.Uint8Array'), // stream-browserify#readable-stream
-    'process.platform': JSON.stringify('browser'),
+    // 'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG), // assert#util
+    // 'global.Uint8Array': JSON.stringify('globalThis.Uint8Array'), // stream-browserify#readable-stream
+    // 'process.platform': JSON.stringify('browser'),
   },
   build: {
     target: 'esnext',

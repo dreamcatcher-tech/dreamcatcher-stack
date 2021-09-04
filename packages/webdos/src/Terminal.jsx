@@ -1,5 +1,5 @@
 import '../css/Terminal.css'
-import {assert} from 'chai/index.mjs'
+import { assert } from 'chai/index.mjs'
 import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'
 import { Terminal } from 'xterm'
@@ -8,18 +8,15 @@ import { Unicode11Addon } from 'xterm-addon-unicode11'
 import FontFaceObserver from 'fontfaceobserver'
 import '@fontsource/roboto-mono'
 import 'xterm/css/xterm.css'
-import { stdin as mockStdin } from 'mock-stdin'
+import { stdin as mockStdin } from 'mock-stdin-browserify'
 import { useBlockchain } from './hooks'
 import commandLineShell from '@dreamcatcher-tech/dos' // in build, gets aliased to @dreamcatcher-tech/dos
 import process from 'process'
-import {Buffer} from 'buffer'
 // import '../css/TorEmoji.woff2'
 
 const debug = debugFactory(`terminal:Terminal`)
 
 const getMockStdin = () => {
-  globalThis.Buffer = Buffer // shim for mock-stdin
-  globalThis.process = process // shim for mock-stdin
   mockStdin()
   const { stdin } = process
   return stdin
