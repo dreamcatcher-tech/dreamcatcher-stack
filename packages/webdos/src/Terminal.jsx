@@ -1,4 +1,4 @@
-import '../css/Terminal.css'
+import './Terminal.css'
 import { assert } from 'chai/index.mjs'
 import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'

@@ -2,11 +2,10 @@
   "name": "@dreamcatcher-tech/webdos",
   "version": "1.0.6",
   "description": "Web components for DOS",
-  "main": "dist/webdos.es.js",
+  "main": "src/index.mjs",
   "type": "module",
   "files": [
-    "dist/webdos.es.js",
-    "dist/webdos.es.js.map"
+    "src"
   ],
   "scripts": {
     "dev": "vite --force",
