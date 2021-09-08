@@ -88,7 +88,7 @@ export default defineConfig({
     },
     lib: {
       formats: ['es'],
-      entry: path.resolve('./src/index.js'),
+      entry: path.resolve('./src/index.mjs'),
     },
   },
   /**
