@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/webdos",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Web components for DOS",
   "main": "src/index.mjs",
   "type": "module",
@@ -13,8 +13,8 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@dreamcatcher-tech/dos": "^1.0.6",
-    "@dreamcatcher-tech/interblock": "^1.0.6",
+    "@dreamcatcher-tech/dos": "^1.0.7",
+    "@dreamcatcher-tech/interblock": "^1.0.7",
     "@fontsource/roboto-mono": "^4.5.0",
     "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",
