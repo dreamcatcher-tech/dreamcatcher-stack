@@ -14,40 +14,50 @@ const {
   muxTemplateWithFormData,
 } = datum
 
+const add = async (payload, datumTemplate) => {
+  _checkOnlyFormData(payload)
+  const formData = demuxFormData(datumTemplate, payload)
+  let name = _getChildName(datumTemplate, formData)
+  const { covenantId } = datum
+  const spawnAction = dmzReducer.actions.spawn(name, { covenantId })
+  if (name) {
+    interchain(spawnAction)
+  } else {
+    // TODO calculate name using same method as spawn, to save awaiting
+    const { alias } = await interchain(spawnAction)
+    name = alias
+  }
+  const muxed = muxTemplateWithFormData(datumTemplate, formData)
+  const set = datum.actions.set(muxed)
+  debug(`datum set action`, set)
+  // TODO set this in the state of the spawn, to reduce block count
+  await interchain(set, name)
+}
+
 // TODO allow collection to also store formData as tho it was a datum, without children spec
 const reducer = async (state, action) => {
   const { type, payload } = action
+  if (type === '@@INIT') {
+    debug('init')
+    const template = state.datumTemplate || {}
+    const datumTemplate = convertToTemplate(template)
+    debug(`datumTemplate`, datumTemplate)
+    return { ...state, datumTemplate }
+  }
+  const { datumTemplate } = state
+  validateDatumTemplate(datumTemplate)
+
+  // TODO remove test data from being inside the covenant at all
   switch (type) {
-    case '@@INIT': {
-      debug('init')
-      const template = state.datumTemplate || {}
-      const datumTemplate = convertToTemplate(template)
-      debug(`datumTemplate`, datumTemplate)
-      return { ...state, datumTemplate }
-    }
     case 'ADD': {
-      // can only contain formData keys, or be testData
-      const { datumTemplate } = state
-      validateDatumTemplate(datumTemplate)
-      // TODO make single method in datum to check incoming
-      if (!payload.isTestData) {
-        _checkOnlyFormData(payload)
-      }
-      const formData = demuxFormData(datumTemplate, action)
-      let name = _getChildName(datumTemplate, formData)
-      const { covenantId } = datum
-      const spawnAction = dmzReducer.actions.spawn(name, { covenantId })
-      if (name) {
-        interchain(spawnAction)
-      } else {
-        const { alias } = await interchain(spawnAction)
-        name = alias
-      }
-      const muxed = muxTemplateWithFormData(datumTemplate, formData)
-      const set = datum.actions.set(muxed)
-      debug(`datum set action`, set)
-      // TODO set this in the state of the spawn, to reduce block count
-      await interchain(set, name)
+      await add(payload, datumTemplate, action)
+      return state
+    }
+    case 'BATCH': {
+      const { batch } = payload
+      assert(Array.isArray(batch))
+      const awaits = batch.map((payload) => add(payload, datumTemplate))
+      await Promise.all(awaits)
       return state
     }
     case 'SET_TEMPLATE': {
@@ -65,7 +75,7 @@ const _checkOnlyFormData = (payload) => {
   if (typeof formData === 'undefined') {
     throw new Error(`Must provide formData key`)
   }
-  if (rest) {
+  if (Object.keys(rest).length) {
     throw new Error(`Only allowed keys are formData and children`)
   }
   if (!children) {
@@ -109,6 +119,7 @@ const _getChildName = (datumTemplate, payload) => {
 
 const actions = {
   add: (payload = {}) => ({ type: 'ADD', payload }),
+  batch: (batch = []) => ({ type: 'BATCH', payload: { batch } }),
   setDatumTemplate: (datumTemplate) => ({
     type: 'SET_TEMPLATE',
     payload: datumTemplate,

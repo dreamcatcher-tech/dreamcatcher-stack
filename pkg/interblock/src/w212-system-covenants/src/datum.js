@@ -21,6 +21,8 @@ ajv.addKeyword('faker')
 //   })
 // }
 // jsf.extend('faker', () => faker)
+// jsf.option({ random: seedrandom(seed), alwaysFakeOptionals: true })
+// faker.seed(seed)
 /**
  * Requirements:
  *  1.  boot with state already set, and this gets checked for validity immediately
@@ -96,7 +98,7 @@ const reducer = async (state, action) => {
       if (_isTemplateIncluded(payload)) {
         state = convertToTemplate(payload)
       }
-      const demuxed = demuxFormData(state, action)
+      const demuxed = demuxFormData(state, payload)
       state.formData = demuxed.formData
       if (Object.keys(state.children).length) {
         // TODO WARNING if have changed children in current block, will be stale
@@ -133,23 +135,9 @@ const _isTemplateIncluded = (payload) => {
   return Object.values(children).some(_isTemplateIncluded)
 }
 
-const demuxFormData = (template, action) => {
-  const { payload } = action
-  if (payload.isTestData) {
-    const hash = action.getHash()
-    const seed = parseInt(Number('0x' + hash.substring(0, 14)))
-    debug(`seed: `, seed)
-    // jsf.option({ random: seedrandom(seed), alwaysFakeOptionals: true })
-    // faker.seed(seed)
-  }
+const demuxFormData = (template, payload) => {
   validateDatumTemplate(template)
-
-  const { isTestData, ...rest } = payload
-  let unmixed = _separateFormData(rest)
-  if (isTestData) {
-    // make fakes for current and all children
-    unmixed = _generateFakeData(template, unmixed)
-  }
+  const unmixed = _separateFormData(payload)
   _validateFormData(template, unmixed)
   return unmixed
 }
@@ -175,6 +163,7 @@ const _validateFormData = (template, payload) => {
   const isValid = ajv.validate(template.schema, payload.formData)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
+    console.log(payload)
     throw new Error(`${template.schema.title} failed validation: ${errors}`)
   }
   for (const name in template.children) {

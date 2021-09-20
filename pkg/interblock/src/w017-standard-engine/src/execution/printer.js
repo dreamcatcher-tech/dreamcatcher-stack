@@ -81,7 +81,7 @@ const headerPrint = (block, path, isNewChain, isDuplicate) => {
   const height = chalk.green(block.provenance.height)
   const rawHash = block.getHash()
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
-  const size = getSize(block)
+  // const size = getSize(block)
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
   const header = { msg, height, path, chainId, hash }
   if (isNewChain) {

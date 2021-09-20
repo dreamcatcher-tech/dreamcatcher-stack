@@ -59,8 +59,8 @@ describe('dmzReducer', () => {
     })
   })
   describe('openPaths', () => {
-    test.todo('missing parents with open children skips straight to children')
     test.todo('cannot be more than one outstanding @@OPEN request in a channel')
+    test.todo('missing parents with open children skips straight to children')
     test.todo('3 levels deep')
     test.todo('random path opening and closing and reopening')
     test.todo('simultaneous requests with common parent')
