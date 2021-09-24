@@ -17,7 +17,7 @@ const ioQueueFactory = (name, model) => {
     if (!_processor) {
       return
     }
-    await Promise.resolve()
+    // await Promise.resolve() // TODO ensure no need to thread break
 
     while (_isActive && _awaiting.size < _concurrency && _requests.length) {
       debug(`awaiting size: ${_awaiting.size}`)

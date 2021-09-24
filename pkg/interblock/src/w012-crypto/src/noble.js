@@ -62,7 +62,9 @@ const signHash = async (messageHash, secretKey, publicKey) => {
   assert.strictEqual(messageHash.length, _hashTemplate.length, `invalid hash`)
   // TODO check the format of the hash string
   const secret = Buffer.from(secretKey, 'base64').toString('hex')
+  // async due to using subtle crypto hmac
   const signatureRaw = await secp.sign(messageHash, secret)
+  // TODO check if secp is faster if internal methods are used for string conversion
   const signature = Buffer.from(signatureRaw, 'hex').toString('base64')
 
   const key = `${messageHash}_${signature}_${publicKey}`

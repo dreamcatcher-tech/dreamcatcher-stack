@@ -7,12 +7,14 @@ import { ciSigner } from '../ciSigners' // TODO do not import from outside of fo
 import { registry } from '../registry'
 import Debug from 'debug'
 const debug = Debug('interblock:models:provenance')
+
 const provenanceModel = standardize({
   schema: provenanceSchema,
   async create(
     dmz,
     parentProvenance,
     extraLineages = {},
+    // TODO pass in the keymodel, not a function ?
     asyncSigner = ciSigner
   ) {
     const avoidCircularReference = 'Dmz'

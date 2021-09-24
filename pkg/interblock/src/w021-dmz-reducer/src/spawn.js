@@ -40,7 +40,7 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   let { alias, spawnOpts } = originAction.payload
   const { network, validators } = dmz
   const covenantId = covenantIdModel.create('unity')
-  let child = dmzModel.create({
+  const childDmz = dmzModel.create({
     network: networkModel.create(),
     covenantId,
     ...spawnOpts,
@@ -58,7 +58,9 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   }
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
   // TODO use chain key for signing
-  const genesis = await effectInBand('SIGN_BLOCK', blockModel.create, child)
+
+  // TODO signing is pointless - use some standard key for speed
+  const genesis = await effectInBand('SIGN_BLOCK', blockModel.create, childDmz)
   assert(blockModel.isModel(genesis), `Genesis block creation failed`)
   const payload = { genesis, alias, originAction }
   const genesisRequest = actionModel.create('@@GENESIS', payload)

@@ -5,6 +5,7 @@ import { keypairModel } from './keypairModel'
 import { dmzModel } from './dmzModel'
 import { integrityModel } from './integrityModel'
 import { publicKeyModel } from './publicKeyModel'
+import { ciSigner } from '../ciSigners'
 import Debug from 'debug'
 const debug = Debug('interblock:models:block')
 const dmzSchema = dmzModel.schema
@@ -21,16 +22,10 @@ const schema = {
   },
 }
 
-const ciSigner = async (integrity) => {
-  // TODO dedupe with cisigners
-  const ciKeypair = await keypairModel.create('CI')
-  assert(integrityModel.isModel(integrity))
-  return ciKeypair.sign(integrity)
-}
-
 const blockModel = standardize({
   schema,
   async create(dmz, asyncSigner = ciSigner) {
+    // asyncSigner used instead of key so can use hardware signing services
     debug('create')
     assert(typeof asyncSigner === 'function')
 
@@ -45,7 +40,7 @@ const blockModel = standardize({
       asyncSigner
     )
     debug('provenance created')
-    // TODO verify that we are able to sign this dmz ?
+    // TODO verify that we are permitted to sign this dmz ?
     const block = blockModel.clone({ ...dmz, provenance })
     return block
   },

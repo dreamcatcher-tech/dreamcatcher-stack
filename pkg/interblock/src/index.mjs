@@ -36,7 +36,7 @@
     */
 
 import { assert } from 'chai/index.mjs'
-import { browserFactory, effectorFactory, awsFactory } from './w020-emulators'
+import { effectorFactory, awsFactory } from './w020-emulators'
 import * as engine from './w017-standard-engine'
 import * as apps from './w301-user-apps'
 import Debug from 'debug'
@@ -56,12 +56,4 @@ const checkModules = () => {
   }
 }
 
-export {
-  browserFactory,
-  effectorFactory,
-  awsFactory,
-  engine,
-  apps,
-  checkModules,
-  Debug,
-}
+export { effectorFactory, awsFactory, engine, apps, checkModules, Debug }

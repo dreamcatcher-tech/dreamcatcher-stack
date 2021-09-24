@@ -31,4 +31,3 @@ const sideEffects = {
 
 export * from './src/effectorFactory'
 export * from './src/awsFactory'
-export * from './src/browserFactory'

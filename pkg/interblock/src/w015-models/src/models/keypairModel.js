@@ -49,20 +49,16 @@ const keypairModel = standardize({
       [instance.name]: instance.publicKey,
     })
     const sign = async (integrity) => {
+      assert(integrityModel.isModel(integrity), `invalid: ${integrity}`)
       debug(`sign`)
-      if (!integrity) {
-        throw new Error('Refusing to sign undefined integrity')
-      }
-      integrity = integrityModel.clone(integrity)
       const { hash } = integrity
       const { secretKey } = instance
+      // async due to using subtle crypto hmac
       const { signature: seal } = await crypto.signHash(
         hash,
         secretKey,
         publicKey
       )
-      const verified = await crypto.verifyHash(hash, seal, publicKey)
-      assert(verified)
       assert(crypto.verifyHashSync(hash, seal, publicKey))
       // TODO find a cleaner way to use publicKey objects, and publicKey strings in crypto
       const signature = { publicKey: instance.publicKey, integrity, seal }

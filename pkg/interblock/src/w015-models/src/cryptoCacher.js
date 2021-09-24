@@ -1,6 +1,6 @@
 import * as crypto from '../../w012-crypto'
 const cacheVerifyHash = async (obj) => {
-  // needed so model.clone() can logicize synchronously
+  // needed so model.clone() can operate synchronously if verify is not synchronous
   if (typeof obj !== 'object') {
     return
   }
