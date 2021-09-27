@@ -98,7 +98,7 @@ const pure = async (event, definition, config = {}) => {
         state = resolveTransition(state, event)
         return { state, event }
       } catch (data) {
-        console.log(data) // TODO these errors are supposed to bubble up somewhere
+        console.log('error in invoke:', data) // TODO these errors are supposed to bubble up somewhere
         debug(`invoke error: %o`, data.message)
         event = { type: `error.invoke.${invoke.src}`, data }
         state = resolveTransition(state, event)

@@ -181,7 +181,7 @@ const TerminalContainer = (props) => {
       })
       return async () => {
         const abortCmd = await abortCmdPromise
-        abortCmd
+        abortCmd()
       }
     }
   }, [blockchain, streams])

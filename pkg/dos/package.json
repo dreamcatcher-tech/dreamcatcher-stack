@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.0.8",
   "description": "Terminal interface to the HyperNet",
-  "main": "src/index.js",
+  "main": "src/index.mjs",
   "files": [
     "src/"
   ],
@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "DEBUG='*dos*' nodemon --experimental-specifier-resolution=node src/bin.js",
-    "dev": "vite",
+    "dev": "vite --force",
     "build": "vite build",
     "serve": "vite preview"
   },
@@ -21,6 +21,7 @@
   "dependencies": {
     "@dreamcatcher-tech/interblock": "^1.0.8",
     "ansi-colors-browserify": "^4.1.2",
+    "assert": "^2.0.0",
     "chai": "^4.3.4",
     "clear": "^0.1.0",
     "cliui": "^7.0.4",
@@ -41,11 +42,12 @@
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "jest": "^27.0.5",
-    "nodemon": "^2.0.7",
+    "eslint-plugin-react": "^7.26.0",
+    "jest": "^27.2.2",
+    "nodemon": "^2.0.13",
     "np": "^7.5.0",
-    "prettier": "^2.3.2",
-    "vite": "^2.5.3"
+    "prettier": "^2.4.1",
+    "vite": "^2.5.10"
   },
   "publishConfig": {
     "access": "public"

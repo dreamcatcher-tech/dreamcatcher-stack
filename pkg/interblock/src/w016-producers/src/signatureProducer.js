@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from 'chai/index.mjs'
 import { signatureModel, integrityModel, keypairModel } from '../../w015-models'
 import * as crypto from '../../w012-crypto'
 import Debug from 'debug'

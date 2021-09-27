@@ -9,7 +9,7 @@ chai.use(chaiAsPromised)
 
 describe('effector', () => {
   test('ping single', async () => {
-    // Debug.enable('*tests*')
+    Debug.enable('*tests*')
     const start = Date.now()
     debug(`start`)
     const shell = await effectorFactory()
@@ -57,6 +57,7 @@ describe('effector', () => {
      * 2021-01-26 88ms total, 46ms RTT - birthblocks removed
      * 2021-07-30 185ms total, 94ms RTT - move to es6, jest as es6, browerify some dependencies
      * 2021-07-30 96ms total, 75ms RTT - IN BROWSER
+     * 2021-09-27 127ms total, 57ms RTT - no sig genesis or pierce, xeon proc
      */
   })
   test.skip('ping many times', async () => {
