@@ -31,6 +31,7 @@ const pendingModel = standardize({
       requests: {
         type: 'object',
         additionalProperties: false,
+        // description: `chainIds mapped to indexes of requests`,
         patternProperties: {
           '(.*?)': simpleArrayModel.schema, // TODO use chainId regex
         },

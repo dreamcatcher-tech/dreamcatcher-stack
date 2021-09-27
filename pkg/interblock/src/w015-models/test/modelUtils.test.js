@@ -8,8 +8,10 @@ import {
   integrityModel,
   covenantIdModel,
   addressModel,
-  provenanceModel,
-  signatureModel,
+  pendingModel,
+  rxReplyModel,
+  actionModel,
+  rxRequestModel,
 } from '..'
 
 describe('standard model', () => {
@@ -126,16 +128,25 @@ describe('standard model', () => {
     const clone = networkModel.clone(network.serialize())
     assert(clone.testPattern.equals(tx))
   })
-  test('array items are inflated', async () => {
-    const undefinedDmz = undefined
-    const provenance = await provenanceModel.create()
-    const { signatures } = provenance
-    assert(Array.isArray(signatures))
-    assert.strictEqual(signatures.length, 1)
-    const json = JSON.stringify(provenance)
-    const revived = provenanceModel.clone(json)
-    assert(revived.equals(provenance))
-    assert(revived.signatures.every(signatureModel.isModel))
+  test('array items are inflated', () => {
+    const address = addressModel.create('TEST')
+    const pendingRequest = rxRequestModel.create('TEST', {}, address, 0)
+    const extraRequest = actionModel.create('TEST')
+    const reply = rxReplyModel.create(undefined, undefined, extraRequest)
+    const pending = pendingModel.clone({
+      pendingRequest,
+      replies: [reply],
+      requests: {},
+    })
+    assert(Array.isArray(pending.replies))
+    assert.strictEqual(pending.replies.length, 1)
+
+    const json = pending.serialize()
+    assert.strictEqual(typeof json, 'string')
+    const revived = pendingModel.clone(json)
+    assert(revived.equals(pending))
+    assert.strictEqual(revived.replies.length, 1)
+    assert(revived.replies.every(rxReplyModel.isModel))
   })
   test.todo('array items inside pattern properties are inflated')
   test.todo('isModel only returns true if the object is in the clone cache')

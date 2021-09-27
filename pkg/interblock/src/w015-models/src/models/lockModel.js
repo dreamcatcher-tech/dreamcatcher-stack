@@ -87,6 +87,8 @@ const lockModel = standardize({
     // TODO remove light blocks from lock - will be superseded when modelchains is implemented
     // assertUniqueHeights(interblocks)
     // TODO check piercings are sorted correctly
+    // TODO assert that if no block, cannot be any interblocks
+    // TODO check all interblocks are valid in this block
     const isLocked = () => !timestamp.isExpired(expires)
     const isMatch = (lock) => lock.uuid === instance.uuid
     const isPiercingsPresent = () => requests.length || replies.length
