@@ -238,7 +238,7 @@ const reflect = async (transmission) => {
   const network = networkModel.create({ transmission })
   const dmz = dmzModel.create({ network })
   const block = await blockModel.create(dmz)
-  assert(block.isValidated())
+  assert(block.isVerifiedBlock())
   const interblock = interblockModel.create(block, 'transmission')
   return interblock
 }

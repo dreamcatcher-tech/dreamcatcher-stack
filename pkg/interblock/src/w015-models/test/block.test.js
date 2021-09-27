@@ -1,61 +1,55 @@
 import { assert } from 'chai/index.mjs'
-import {
-  dmzModel,
-  provenanceModel,
-  blockModel,
-  keypairModel,
-  cryptoCacher,
-} from '..'
+import { dmzModel, provenanceModel, blockModel, keypairModel } from '..'
 import * as crypto from '../../w012-crypto'
 
 describe('block', () => {
   describe('instantiation', () => {
-    test('default isValidated', async () => {
-      const defaultBlock = await blockModel.create()
-      assert(defaultBlock.isValidated())
+    test('default is verified genesis', () => {
+      const defaultBlock = blockModel.create()
+      assert(defaultBlock.provenance.address.isGenesis())
+      assert(defaultBlock.isVerifiedBlock())
     })
-    test('default serialization', async () => {
-      const defaultBlock = await blockModel.create()
+    test('default serialization', () => {
+      const defaultBlock = blockModel.create()
       const json = defaultBlock.serialize()
+      assert.strictEqual(typeof json, 'string')
       const clone = blockModel.clone(json)
       assert(defaultBlock.equals(clone))
     })
-    test('custom key isValidated', async () => {
-      const keypair = keypairModel.create('CUSTOM-KEY')
+    test('custom key isVerifiedBlock', () => {
+      const rawKeys = crypto.generateKeyPair()
+      const keypair = keypairModel.create('CUSTOM-KEY', rawKeys)
       const dmz = dmzModel.create({
         validators: keypair.getValidatorEntry(),
       })
-      const defaultBlock = await blockModel.create(dmz, keypair.sign) // TODO move to block producer
-      assert(defaultBlock.isValidated())
+      const defaultBlock = blockModel.create(dmz)
+      assert(defaultBlock.isVerifiedBlock())
     })
-    test('genesis can be signed by any key', async () => {
-      const keypair = await keypairModel.create('SPAWN')
-      const kp = await crypto.generateKeyPair()
+    test('genesis has no signature checks', () => {
+      const kp = crypto.generateKeyPair()
       const different = keypairModel.create('FOREIGN_VALIDATOR', kp)
       const child = dmzModel.create({
         validators: different.getValidatorEntry(),
       })
-      const block = await blockModel.create(child, keypair.sign)
-      assert(block.isValidated())
+      const block = blockModel.create(child)
+      assert(block.isVerifiedBlock())
     })
-    test.todo('changed validators uses previous validators for current block')
-    test('generate unique genesis by default', async () => {
+    test('generate unique genesis by default', () => {
       const dmz = dmzModel.create()
-      const block = await blockModel.create(dmz)
+      const block = blockModel.create(dmz)
       const clone = blockModel.clone(block)
       assert(clone.equals(block))
       assert(blockModel.isModel(clone))
-      const second = await blockModel.create(dmz)
+      const second = blockModel.create(dmz)
       assert(!second.equals(block))
       assert(block.getHash() !== second.getHash())
       assert(block.getChainId() !== second.getChainId())
     })
-
-    test('check of provenance passes', async () => {
+    test('check of provenance passes', () => {
       const dmz = dmzModel.create()
-      const provenance = await provenanceModel.create(dmz)
+      const provenance = provenanceModel.create(dmz)
       const block = blockModel.clone({ ...dmz, provenance })
-      assert(block && typeof block.isValidated === 'function')
+      assert(block.isVerifiedBlock())
 
       const dmzClone = dmzModel.clone(dmz.serialize())
       const provenanceClone = provenanceModel.clone(provenance.serialize())
@@ -63,10 +57,8 @@ describe('block', () => {
         ...dmzClone,
         provenance: provenanceClone,
       })
-      assert(clone && typeof clone.isValidated === 'function')
+      assert(clone.isVerifiedBlock())
     })
-    test.todo('can provide initial parameters to make a block from')
-    test.todo('throws if provenance does not match dmz')
     test('validation throws if provenance does not match', () => {
       const dmz1 = dmzModel.create()
       const dmz2 = dmzModel.create({ config: { isPierced: true } })
@@ -82,6 +74,9 @@ describe('block', () => {
         })
       )
     })
+    test.todo('changed validators uses previous validators for current block')
+    test.todo('can provide initial parameters to make a block from')
+    test.todo('throws if provenance does not match dmz')
     test.todo('no self channel allowed')
   })
   describe('signatures controlled by dmz.validators', () => {
@@ -89,14 +84,4 @@ describe('block', () => {
     test.todo('throws if tries to create a block but has no right to sign it')
   })
   test.todo('check for partially validated blocks produced during consensus')
-  test.skip('dual validator signing', async () => {
-    const kp1 = await crypto.generateKeyPair()
-    const kp2 = await crypto.generateKeyPair()
-    const keypair1 = keypairModel.create('CI1', kp1)
-    const keypair2 = keypairModel.create('CI2', kp2)
-    const duo = dmzModel.create({
-      validators: { alice: keypair1.publicKey, bob: keypair2.publicKey },
-    })
-    // TODO how to test dual block signing ?
-  })
 })

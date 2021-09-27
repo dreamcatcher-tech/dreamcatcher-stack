@@ -4,15 +4,14 @@ import {
   actionModel,
   channelModel,
   interblockModel,
-  txRequestModel,
   networkModel,
   dmzModel,
   rxRequestModel,
   covenantIdModel,
 } from '../../w015-models'
-import { channelProducer, networkProducer } from '../../w016-producers'
+import { channelProducer } from '../../w016-producers'
 import { autoAlias } from './utils'
-import { effectInBand, replyPromise } from '../../w002-api'
+import { replyPromise } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:spawn')
 
@@ -59,9 +58,7 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
   // TODO use chain key for signing
 
-  // TODO signing is pointless - use some standard key for speed
-  const genesis = await effectInBand('SIGN_BLOCK', blockModel.create, childDmz)
-  assert(blockModel.isModel(genesis), `Genesis block creation failed`)
+  const genesis = blockModel.create(childDmz)
   const payload = { genesis, alias, originAction }
   const genesisRequest = actionModel.create('@@GENESIS', payload)
   const address = genesis.provenance.getAddress()

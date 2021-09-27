@@ -82,25 +82,5 @@ const generatePierceProvenance = (pierceDmz, parentProvenance) => {
     signatures,
   })
 }
-const generateGenesisProvenance = (dmz, forkedLineage = {}) => {
-  dmz = dmz || dmzModel.create()
-  assert(dmzModel.isModel(dmz))
-  const dmzIntegrity = integrityModel.create(dmz.getHash())
-  const provenance = {
-    dmzIntegrity,
-    height: 0,
-    address: addressModel.create('GENESIS'),
-    lineage: forkedLineage,
-  }
-  const integrity = integrityModel.create(provenance)
-  const signatures = []
 
-  return provenanceModel.clone({ ...provenance, integrity, signatures })
-}
-
-export {
-  generateNextProvenance,
-  generateGenesisProvenance,
-  generatePierceProvenance,
-  addSignature,
-}
+export { generateNextProvenance, generatePierceProvenance, addSignature }

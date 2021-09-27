@@ -74,7 +74,6 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
   const ramS3 = ramS3Factory()
   ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
   const tap = enableLoggingWithTap(engine, identifier)
-
   const baseAddress = await createBase(ioConsistency, sqsPool)
 
   const metrology = (address, absolutePath) => {
@@ -139,7 +138,7 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         const chainId = block.getChainId()
         initBlockstreamSubscribers(chainId, block)
         const streamSubs = blockstreamSubscribers.get(chainId)
-        if (!streamSubs.latest || streamSubs.latest.isNext(block)) {
+        if (!streamSubs.latest || streamSubs.latest.isNextBlock(block)) {
           // TODO warning if subscribe to latest before it gets generated
           streamSubs.latest = block
           streamSubs.subs.forEach((callback) => callback(block))

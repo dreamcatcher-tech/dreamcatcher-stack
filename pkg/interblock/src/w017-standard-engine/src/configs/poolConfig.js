@@ -12,7 +12,7 @@ import {
   covenantIdModel,
   publicKeyModel,
 } from '../../../w015-models'
-import { lockProducer } from '../../../w016-producers'
+import { lockProducer, blockProducer } from '../../../w016-producers'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import { toCryptoFunctions as cryptoFn } from '../services/cryptoFactory'
 import Debug from 'debug'
@@ -191,8 +191,10 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         return entry
       },
       signBlock: async ({ baseDmz }) => {
+        // TODO replace with dedicated startup process
         debug(`signBlock`)
-        const block = await blockModel.create(baseDmz, crypto.sign)
+        assert(dmzModel.isModel(baseDmz))
+        const block = blockModel.create(baseDmz)
         return block
       },
       lockBaseChain: async ({ nextBlock }) => {

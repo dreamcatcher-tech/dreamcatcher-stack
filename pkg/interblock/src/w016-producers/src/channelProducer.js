@@ -65,7 +65,7 @@ const ingestInterblockRaw = (channel, interblock) => {
       pushLight()
       pushHeavy()
     }
-  } else if (lastLineage.provenance.isNext(provenance)) {
+  } else if (lastLineage.provenance.isNextProvenance(provenance)) {
     pushLight()
   }
   if (remote && heavy) {

@@ -6,7 +6,6 @@ const validatorsModel = standardize({
   schema: validatorsSchema,
   create() {
     const ciKeypair = keypairModel.create()
-    // TODO move asynchrony to the caller ?
     const entry = ciKeypair.getValidatorEntry()
     return validatorsModel.clone(entry)
   },

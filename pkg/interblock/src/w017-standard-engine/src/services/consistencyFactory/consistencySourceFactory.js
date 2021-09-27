@@ -181,7 +181,7 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     const previousLock = locks.get(chainId)
     const previous = previousLock.block
     // TODO check getting latest is still the correct previous ?
-    if (previous && !previous.isNext(block)) {
+    if (previous && !previous.isNextBlock(block)) {
       debug(`block is not next %O`, block.provenance.height)
       debug(`no change: `, previous.equals(block))
     } else if (!previous && !block.provenance.address.isGenesis()) {

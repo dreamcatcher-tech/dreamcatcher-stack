@@ -1,12 +1,13 @@
 import { blockModel, interblockModel } from '../../../w015-models'
 
 const createBase = async (ioConsistency, sqsPool) => {
+  const baseAddressPromise = tapConsistency(ioConsistency)
   triggerIgnition(sqsPool)
-  const baseAddress = await tapConsistency(ioConsistency)
+  const baseAddress = await baseAddressPromise
   return baseAddress
 }
-const triggerIgnition = async (sqsPool) => {
-  const dummyBlock = await blockModel.create()
+const triggerIgnition = (sqsPool) => {
+  const dummyBlock = blockModel.create()
   const igniter = interblockModel.create(dummyBlock)
   sqsPool.push(igniter)
 }

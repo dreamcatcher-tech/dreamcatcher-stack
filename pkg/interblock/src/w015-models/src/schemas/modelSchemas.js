@@ -84,7 +84,7 @@ const publicKeySchema = {
       type: 'string', // TODO format checks to set fixed length
     },
     algorithm: {
-      enum: ['tweetnacl', 'sodium'],
+      enum: ['tweetnacl', 'sodium', 'noble-secp256k1', '@@pierce'],
     },
   },
 }
@@ -123,9 +123,9 @@ const provenanceSchema = {
   additionalProperties: false,
   required: [
     'dmzIntegrity',
+    'height', // TODO why care about height in git like structures ?
     'address',
     'lineage',
-    'height', // TODO why care about height in git like structures ?
     'integrity',
     'signatures',
   ],

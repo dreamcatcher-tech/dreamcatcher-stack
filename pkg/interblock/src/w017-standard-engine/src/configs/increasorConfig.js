@@ -19,7 +19,6 @@ import { isolatorConfig } from './isolatorConfig'
 import { pure } from '../../../w001-xstate-direct'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:increasor')
-const { generateNext } = blockProducer
 
 const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
   const consistency = consistencyFn(ioConsistency)
@@ -256,13 +255,15 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         return { dmz, containerId }
       },
       signBlock: async ({ lock, nextDmz }) => {
-        assert(dmzModel.isModel(nextDmz))
         assert(lockModel.isModel(lock))
         const { block } = lock
         assert(block)
+        assert(dmzModel.isModel(nextDmz))
+        debug(`signBlock`)
 
-        const nextBlock = await generateNext(nextDmz, block, crypto.sign)
-
+        const unsignedBlock = blockProducer.generateUnsigned(nextDmz, block)
+        const signature = await crypto.sign(unsignedBlock.provenance.integrity)
+        const nextBlock = blockProducer.assemble(unsignedBlock, signature)
         return { nextBlock }
       },
       effects: async ({ containerId, nextLock, lock }) => {

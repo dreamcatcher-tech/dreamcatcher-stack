@@ -12,30 +12,32 @@ const keypairModel = standardize({
     // description: 'public private key pair',
     type: 'object',
     additionalProperties: false,
-    required: ['name', 'publicKey', 'secretKey', 'algorithm'],
+    required: ['name', 'publicKey', 'secretKey'],
     properties: {
       name: { type: 'string' },
       publicKey: publicKeyModel.schema,
       secretKey: {
         type: 'string',
       },
-      algorithm: {
-        enum: ['tweetnacl', 'sodium'],
-      },
     },
   },
-  create(name = 'CI', keypairRaw = crypto.ciKeypair) {
+  create(name = 'CI', keypairRaw = crypto.ciKeypair, algorithm) {
     assert.strictEqual(typeof name, 'string')
+    // TODO assert keypairRaw format
+    algorithm = algorithm || 'noble-secp256k1'
+    assert.strictEqual(typeof algorithm, 'string')
+    if (name !== 'CI' && keypairRaw === crypto.ciKeypair) {
+      keypairRaw = crypto.generateKeyPair()
+    }
     const publicKey = publicKeyModel.clone({
       key: keypairRaw.publicKey,
-      algorithm: 'sodium',
+      algorithm,
     })
     const { secretKey } = keypairRaw
     return keypairModel.clone({
       name,
       publicKey,
       secretKey,
-      algorithm: 'sodium',
     })
   },
   logicize(instance) {
@@ -48,25 +50,7 @@ const keypairModel = standardize({
     const getValidatorEntry = () => ({
       [instance.name]: instance.publicKey,
     })
-    const sign = async (integrity) => {
-      assert(integrityModel.isModel(integrity), `invalid: ${integrity}`)
-      debug(`sign`)
-      const { hash } = integrity
-      const { secretKey } = instance
-      // async due to using subtle crypto hmac
-      const { signature: seal } = await crypto.signHash(
-        hash,
-        secretKey,
-        publicKey
-      )
-      assert(crypto.verifyHashSync(hash, seal, publicKey))
-      // TODO find a cleaner way to use publicKey objects, and publicKey strings in crypto
-      const signature = { publicKey: instance.publicKey, integrity, seal }
-      const model = signatureModel.clone(signature)
-      debug(`sign complete`)
-      return model
-    }
-    return { sign, getValidatorEntry }
+    return { getValidatorEntry }
   },
 })
 

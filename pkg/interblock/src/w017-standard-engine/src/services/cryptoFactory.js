@@ -1,23 +1,21 @@
 import { assert } from 'chai/index.mjs'
-import {
-  cryptoCacher,
-  keypairModel,
-  integrityModel,
-} from '../../../w015-models'
+import { cryptoCacher, keypairModel } from '../../../w015-models'
+import { signatureProducer } from '../../../w016-producers'
 import { ramDynamoDbFactory, dbFactory } from './consistencyFactory'
 import * as crypto from '../../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:services:crypto')
 const { cacheVerifyKeypair } = cryptoCacher
 
+// TODO reuse the same key if CI for deterministic blocks
 const cryptoSourceFactory = (dynamoDb, keyname = 'CI') => {
   dynamoDb = dynamoDb || ramDynamoDbFactory()
   const db = dbFactory(dynamoDb)
   assert(typeof keyname === 'string')
   const sign = async (integrity) => {
-    assert(integrityModel.isModel(integrity))
+    debug(`sign`)
     const keypair = await _getKeypair()
-    return keypair.sign(integrity)
+    return signatureProducer.sign(integrity, keypair)
   }
 
   const getValidatorEntry = async () => {

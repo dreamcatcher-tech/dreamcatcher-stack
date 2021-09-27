@@ -6,19 +6,25 @@ import {
   channelModel,
   interblockModel,
   blockModel,
-  provenanceModel,
   dmzModel,
   lockModel,
   keypairModel,
-  pierceSigner,
 } from '../../../w015-models'
-import { networkProducer, channelProducer } from '../../../w016-producers'
+import {
+  networkProducer,
+  channelProducer,
+  blockProducer,
+} from '../../../w016-producers'
 import { interpreterConfig } from './interpreterConfig'
 import { isolatorMachine } from '../machines'
 import * as crypto from '../../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:isolator')
-const pierceKeypair = keypairModel.create('PIERCE', crypto.pierceKeypair)
+const pierceKeypair = keypairModel.create(
+  'PIERCE',
+  crypto.pierceKeypair,
+  '@@pierce'
+)
 
 const isReduceable = ({ dmz }) => {
   // TODO check the time available, probably as a parallel transition
@@ -317,21 +323,15 @@ const createConfig = (isolation, consistency) => ({
       return { nextDmz }
     },
     signPierceDmz: async ({ pierceDmz, lock }) => {
+      // TODO move this to be an action
       assert(dmzModel.isModel(pierceDmz))
       assert(lockModel.isModel(lock))
       const { block } = lock
       assert(block)
-      const previousProvenance = _getPierceProvenance(block)
-      debug(`signPierceDmz with previous: %O`, !!previousProvenance)
 
-      const extraLineages = {}
-      const provenance = await provenanceModel.create(
-        pierceDmz,
-        previousProvenance,
-        extraLineages,
-        pierceSigner
-      )
-      const pierceBlock = blockModel.clone({ ...pierceDmz, provenance })
+      const pierceBlock = blockProducer.generatePierceBlock(pierceDmz, block)
+      debug(`signPierceDmz height: %O`, pierceBlock.getHeight())
+
       return { pierceBlock }
     },
     unloadCovenant: async ({ containerId }) => {
@@ -364,15 +364,6 @@ const _extractPierceDmzRaw = (block) => {
   return dmzModel.clone({ ...baseDmz, network })
 }
 const _extractPierceDmz = memoize(_extractPierceDmzRaw)
-const _getPierceProvenance = (block) => {
-  const ioChannel = block.network['.@@io']
-  if (!ioChannel) {
-    return undefined
-  }
-  const { provenance } = ioChannel.heavy
-  assert(provenanceModel.isModel(provenance))
-  return provenance
-}
 
 const isolatorConfig = (isolation, consistency) => {
   debug(`isolatorConfig`)

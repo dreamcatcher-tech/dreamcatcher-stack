@@ -1,11 +1,8 @@
 import { assert } from 'chai/index.mjs'
 import { standardize } from '../modelUtils'
 import { provenanceModel } from './provenanceModel'
-import { keypairModel } from './keypairModel'
 import { dmzModel } from './dmzModel'
-import { integrityModel } from './integrityModel'
 import { publicKeyModel } from './publicKeyModel'
-import { ciSigner } from '../ciSigners'
 import Debug from 'debug'
 const debug = Debug('interblock:models:block')
 const dmzSchema = dmzModel.schema
@@ -21,26 +18,33 @@ const schema = {
     provenance: provenanceModel.schema,
   },
 }
+const checkSignatures = (validators, provenance) => {
+  const requiredPublicKeys = Object.values(validators)
 
+  const isPierce =
+    requiredPublicKeys[0].algorithm === '@@pierce' &&
+    requiredPublicKeys.length === 1 &&
+    !provenance.signatures.length
+
+  const providedPublicKeys = provenance.signatures.map(
+    (signature) => signature.publicKey
+  )
+  const isAllRequired = requiredPublicKeys.every((key) =>
+    providedPublicKeys.some((providedKey) => providedKey.equals(key))
+  )
+  const isOnlyRequired = providedPublicKeys.every((key) =>
+    requiredPublicKeys.some((requiredKey) => requiredKey.equals(key))
+  )
+  return { isPierce, isAllRequired, isOnlyRequired }
+}
 const blockModel = standardize({
   schema,
-  async create(dmz, asyncSigner = ciSigner) {
-    // asyncSigner used instead of key so can use hardware signing services
-    debug('create')
-    assert(typeof asyncSigner === 'function')
-
-    dmz = dmzModel.clone(dmz)
-    // TODO move await out of models and in to the blockProducer
-    const previousBlock = undefined
-    const forkedLineages = {}
-    const provenance = await provenanceModel.create(
-      dmz,
-      previousBlock,
-      forkedLineages,
-      asyncSigner
-    )
-    debug('provenance created')
-    // TODO verify that we are permitted to sign this dmz ?
+  create(dmz, forkedLineages = {}) {
+    // throw new Error(`Only blockProducer can make new block models`)
+    dmz = dmz || dmzModel.create()
+    assert(dmzModel.isModel(dmz))
+    assert.strictEqual(typeof forkedLineages, 'object')
+    const provenance = provenanceModel.create(dmz, forkedLineages)
     const block = blockModel.clone({ ...dmz, provenance })
     return block
   },
@@ -52,26 +56,21 @@ const blockModel = standardize({
     assert(!isLoop, `Loop detected`)
     const { provenance, ...spreadDmz } = instance
     const dmz = dmzModel.clone(spreadDmz)
-
     const hash = dmz.getHash()
     assert(hash === provenance.dmzIntegrity.hash)
+    const { validators } = dmz
+    const { isOnlyRequired } = checkSignatures(validators, provenance)
+    if (!isOnlyRequired) {
+      throw new Error('Invalid signatures detected on block')
+    }
 
-    const isValidated = () => {
+    const isVerifiedBlock = () => {
       if (provenance.address.isGenesis()) {
         return true
       }
-      const { validators } = dmz
-      const requiredPublicKeys = Object.values(validators)
-      const providedPublicKeys = provenance.signatures.map(
-        (signature) => signature.publicKey
-      )
-      const allRequired = requiredPublicKeys.every((key) =>
-        providedPublicKeys.some((providedKey) => providedKey.equals(key))
-      )
-      const onlyRequired = providedPublicKeys.every((key) =>
-        requiredPublicKeys.some((requiredKey) => requiredKey.equals(key))
-      )
-      return allRequired && onlyRequired
+      const sigCheck = checkSignatures(validators, provenance)
+      const { isPierce, isAllRequired, isOnlyRequired } = sigCheck
+      return isPierce || (isAllRequired && isOnlyRequired)
     }
 
     const getDmz = () => dmz
@@ -94,21 +93,21 @@ const blockModel = standardize({
       })
     }
 
-    const isNext = (nextBlock) => {
+    const isNextBlock = (nextBlock) => {
       // TODO work out validators being succeeded
       const isBlock = blockModel.isModel(nextBlock)
-      const isValidated = nextBlock.isValidated()
-      const isProvenance = provenance.isNext(nextBlock.provenance)
+      const isVerifiedBlock = nextBlock.isVerifiedBlock()
+      const isProvenance = provenance.isNextProvenance(nextBlock.provenance)
       // TODO check if forked lineage was applied if required
-      return isBlock && isValidated && isProvenance
+      return isBlock && isVerifiedBlock && isProvenance
     }
     const getChainId = () => provenance.getAddress().getChainId()
     const getHeight = () => provenance.height
     return {
-      isValidated,
+      isVerifiedBlock,
       getDmz,
       whoami,
-      isNext,
+      isNextBlock,
       getChainId,
       getHeight,
     }

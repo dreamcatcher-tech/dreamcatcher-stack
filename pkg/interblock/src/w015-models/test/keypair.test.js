@@ -32,13 +32,4 @@ describe('keypair', () => {
     const s2 = await keypairModel.create('CI', kp1)
     assert(s1.equals(s2))
   })
-  test('refuse to sign blank inputs', async () => {
-    const keypair = await keypairModel.create()
-    try {
-      await keypair.sign()
-      assert.fail()
-    } catch (e) {
-      // ok
-    }
-  })
 })

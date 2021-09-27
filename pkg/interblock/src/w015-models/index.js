@@ -74,7 +74,6 @@ import * as transients from './src/transients'
 
 import { registry } from './src/registry'
 import * as cryptoCacher from './src/cryptoCacher'
-import { ciSigner, pierceSigner } from './src/ciSigners'
 
 registry.registerModels(models)
 registry.registerModels(queues)
@@ -83,4 +82,4 @@ registry.registerModels(transients)
 export * from './src/models'
 export * from './src/queues'
 export * from './src/transients'
-export { registry, cryptoCacher, ciSigner, pierceSigner }
+export { registry, cryptoCacher }

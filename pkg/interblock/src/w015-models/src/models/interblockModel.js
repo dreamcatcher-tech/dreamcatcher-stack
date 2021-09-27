@@ -178,7 +178,7 @@ const assertParams = (block, targetAlias) => {
   if (targetAlias && typeof targetAlias !== 'string') {
     throw new Error(`Invalid format for target alias: ${targetAlias}`)
   }
-  if (!block.isValidated()) {
+  if (!block.isVerifiedBlock()) {
     throw new Error(`Only validated blocks can be reduced to Interblocks`)
   }
   if (targetAlias === '.') {

@@ -2,7 +2,6 @@ import { assert } from 'chai/index.mjs'
 import { dmzModel, blockModel } from '../../w015-models'
 import {
   generateNextProvenance,
-  generateGenesisProvenance,
   addSignature,
   generatePierceProvenance,
 } from './provenanceProducer'
@@ -17,13 +16,6 @@ const generateUnsigned = (nextDmz, block) => {
   const provenance = generateNextProvenance(nextDmz, block)
   return blockModel.clone({ ...nextDmz, provenance })
 }
-const generateGenesisBlock = (dmz, forkedLineages = {}) => {
-  dmz = dmz || dmzModel.create()
-  assert(dmzModel.isModel(dmz))
-  const provenance = generateGenesisProvenance(dmz, forkedLineages)
-  const block = blockModel.clone({ ...dmz, provenance })
-  return block
-}
 const generatePierceBlock = (pierceDmz, block) => {
   const ioChannel = block.network['.@@io']
   if (ioChannel) {
@@ -32,6 +24,6 @@ const generatePierceBlock = (pierceDmz, block) => {
     const provenance = generatePierceProvenance(pierceDmz, parentProvenance)
     return blockModel.clone({ ...pierceDmz, provenance })
   }
-  return generateGenesisBlock(pierceDmz)
+  return blockModel.create(pierceDmz)
 }
-export { generateGenesisBlock, assemble, generateUnsigned, generatePierceBlock }
+export { assemble, generateUnsigned, generatePierceBlock }
