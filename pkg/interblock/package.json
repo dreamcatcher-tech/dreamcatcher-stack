@@ -27,6 +27,7 @@
     "ajv": "^8.6.3",
     "ajv-formats": "^2.1.0",
     "ansi-colors-browserify": "^4.1.2",
+    "assert-fast": "^1.0.1",
     "buffer": "^6.0.3",
     "chai": "^4.3.4",
     "columnify": "^1.5.4",
