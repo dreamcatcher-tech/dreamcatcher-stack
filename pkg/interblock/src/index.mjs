@@ -38,6 +38,7 @@
 import { assert } from 'chai/index.mjs'
 import { effectorFactory, awsFactory } from './w020-emulators'
 import * as engine from './w017-standard-engine'
+import * as system from './w212-system-covenants'
 import * as apps from './w301-user-apps'
 import Debug from 'debug'
 const debug = Debug('interblock')
@@ -56,4 +57,12 @@ const checkModules = () => {
   }
 }
 
-export { effectorFactory, awsFactory, engine, apps, checkModules, Debug }
+export {
+  effectorFactory,
+  awsFactory,
+  engine,
+  system,
+  apps,
+  Debug,
+  checkModules,
+}

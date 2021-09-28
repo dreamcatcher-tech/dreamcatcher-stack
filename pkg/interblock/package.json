@@ -10,7 +10,7 @@
   "files": [
     "dist/interblock.es.js"
   ],
-  "main": "dist/interblock.es.js",
+  "main": "src/index.mjs",
   "type": "module",
   "scripts": {
     "prepublishOnly": "yarn build",

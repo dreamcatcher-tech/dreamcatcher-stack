@@ -13,7 +13,7 @@ describe('package', () => {
     assert.strictEqual(main, 'dist/interblock.es.js')
     assert.strictEqual(type, 'module')
   })
-  test('vite config is minimized', () => {
+  test('vite config is minimized with no sourcemap', () => {
     assert.strictEqual(viteConfig.build.minify, 'esbuild')
     assert.strictEqual(viteConfig.build.sourcemap, undefined)
   })

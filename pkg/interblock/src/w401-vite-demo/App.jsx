@@ -3,6 +3,7 @@ import { effectorFactory } from '..'
 import logo from './logo.svg'
 import './App.css'
 import { assert } from 'chai/index.mjs'
+import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')
 
@@ -20,7 +21,7 @@ function App() {
       const payload = { test: 'ping' }
       const reply = await shell.ping('.', payload)
       debug(`reply: `, reply)
-      assert.deepStrictEqual(reply, payload)
+      assert(equal(reply, payload))
       debug(`pong received`)
       debug(`ping RTT: ${Date.now() - pingStart} ms`)
       debug(`blockcount: ${shell.metro.getBlockCount()}`)

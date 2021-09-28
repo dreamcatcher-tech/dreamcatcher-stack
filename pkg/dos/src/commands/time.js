@@ -17,6 +17,7 @@ export const time = async (ctx, ...args) => {
 
   const start = Date.now()
   const res = (await evaluate(ctx, command, rest)) || {}
+  await blockchain.metro.settle()
   res.out = res.out ? res.out + '\n' : ''
   const options = { compact: false, separateMilliseconds: true }
   res.out = res.out + `Time: ${pretty(Date.now() - start, options)}`

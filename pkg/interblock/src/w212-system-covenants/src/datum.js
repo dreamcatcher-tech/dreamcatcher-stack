@@ -137,8 +137,9 @@ const _isTemplateIncluded = (payload) => {
 
 const demuxFormData = (template, payload) => {
   validateDatumTemplate(template)
+  // TODO remove the mixing of setting the template and setting the data
   const unmixed = _separateFormData(payload)
-  _validateFormData(template, unmixed)
+  validateFormData(template, unmixed)
   return unmixed
 }
 const _separateFormData = (payload) => {
@@ -159,15 +160,15 @@ const _separateFormData = (payload) => {
   return result
 }
 
-const _validateFormData = (template, payload) => {
+const validateFormData = (template, payload) => {
   const isValid = ajv.validate(template.schema, payload.formData)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
-    console.log(payload)
+    debug(`error validating:`, payload)
     throw new Error(`${template.schema.title} failed validation: ${errors}`)
   }
   for (const name in template.children) {
-    _validateFormData(template.children[name], payload.children[name])
+    validateFormData(template.children[name], payload.children[name])
   }
 }
 const _generateFakeData = (template, payload = {}) => {
@@ -200,8 +201,8 @@ const convertToTemplate = (datum) => {
   _validateChildSchemas(template)
   return template
 }
-const validateDatumTemplate = (datum) => {
-  const isValid = ajv.validate(datumSchema, datum)
+const validateDatumTemplate = (datumTemplate) => {
+  const isValid = ajv.validate(datumSchema, datumTemplate)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
     throw new Error(`Datum failed validation: ${errors}`)
@@ -263,4 +264,5 @@ export {
   validateDatumTemplate,
   muxTemplateWithFormData,
   covenantId,
+  validateFormData,
 }

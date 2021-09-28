@@ -156,7 +156,7 @@ const config = {
 }
 const _dereference = (path) => {
   if (path.startsWith('/')) {
-    assert.notStrictEqual(path, '/')
+    assert(path !== '/')
     return path.substring(1)
   }
   return path
