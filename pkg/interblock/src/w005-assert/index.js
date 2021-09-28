@@ -13,5 +13,5 @@ assert.strictEqual = (a, b, message) => {
     throw new Error(message)
   }
 }
-
+// TODO add fast-deep-equal as a function
 export default assert
