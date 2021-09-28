@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { dmzModel } from '../../w015-models'
 import { replyResolve } from '../../w002-api'
 const getStateReducer = (dmz) => {

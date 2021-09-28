@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
 import { actionModel } from '../models/actionModel'
 import { rxReplySchema } from '../schemas/transientSchemas'

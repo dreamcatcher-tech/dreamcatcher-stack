@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { rxReplyModel, dmzModel, covenantIdModel } from '../../w015-models'
 import { spawn, spawnReducerWithoutPromise } from './spawn'
 import {

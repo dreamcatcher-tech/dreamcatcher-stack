@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { effectorFactory } from '..'
 import logo from './logo.svg'
 import './App.css'
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')

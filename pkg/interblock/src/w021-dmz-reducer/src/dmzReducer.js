@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { openChildReducer, openChildReply, openPaths } from './openChild'
 import { uplinkReducer, uplinkReply } from './uplink'
 import { connect, connectReducer } from './connect'

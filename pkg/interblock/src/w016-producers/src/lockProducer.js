@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { lockModel, blockModel } from '../../w015-models'
 /**
  * Given a lock and a block, return a new lock with the pool reconciled,

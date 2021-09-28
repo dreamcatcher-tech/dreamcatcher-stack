@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import setImmediate from 'set-immediate-shim'
 import Debug from 'debug'
 

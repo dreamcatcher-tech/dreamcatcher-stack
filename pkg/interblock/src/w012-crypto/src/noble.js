@@ -1,6 +1,6 @@
 import * as secp from 'noble-secp256k1'
 import { Buffer } from 'buffer'
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import Debug from 'debug'
 
 const debug = Debug('interblock:crypto:noble')

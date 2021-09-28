@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import * as crypto from '../../../w012-crypto'
 import { standardize } from '../modelUtils'
 import { integrityModel } from './integrityModel'

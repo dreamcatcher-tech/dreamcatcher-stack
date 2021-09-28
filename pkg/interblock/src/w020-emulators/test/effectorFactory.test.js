@@ -58,6 +58,7 @@ describe('effector', () => {
      * 2021-07-30 185ms total, 94ms RTT - move to es6, jest as es6, browerify some dependencies
      * 2021-07-30 96ms total, 75ms RTT - IN BROWSER
      * 2021-09-27 127ms total, 57ms RTT - no sig genesis or pierce, xeon proc
+     * 2021-09-28 97ms total, 38ms RTT - assert-fast added
      */
   })
   test.skip('ping many times', async () => {

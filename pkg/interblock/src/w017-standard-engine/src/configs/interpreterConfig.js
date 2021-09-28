@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { pure } from '../../../w001-xstate-direct'
 import {
   rxReplyModel,

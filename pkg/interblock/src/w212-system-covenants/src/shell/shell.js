@@ -1,5 +1,5 @@
 import posix from 'path-browserify'
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { covenantIdModel } from '../../../w015-models'
 import * as dmzReducer from '../../../w021-dmz-reducer'
 import { Machine, assign } from 'xstate'

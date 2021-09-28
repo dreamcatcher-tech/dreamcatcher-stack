@@ -32,7 +32,7 @@
  *      to allow emulation mode.
  *
  */
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { metrologyFactory } from '../../w017-standard-engine'
 import posix from 'path-browserify'
 import { covenantIdModel } from '../../w015-models'

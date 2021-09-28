@@ -9,7 +9,7 @@
  *    - multiplexing multiple outstanding request replies, like pings and pongs
  *
  */
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { blockModel, interblockModel } from '../../w015-models'
 import WebSocket from 'ws'
 import Debug from 'debug'

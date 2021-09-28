@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { rxRequestModel, rxReplyModel, pendingModel } from '../../w015-models'
 
 const raisePending = (pending, pendingRequest) => {

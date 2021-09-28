@@ -1,7 +1,7 @@
 // produces a prototype of provenance - everything except the actual signature
 // can only be used on blocks 1 or higher
 // must supply parentProvenance
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import {
   dmzModel,
   provenanceModel,

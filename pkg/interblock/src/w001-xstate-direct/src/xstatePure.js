@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import memoize from 'lodash.memoize'
 import Debug from 'debug'
 const debug = Debug('interblock:xstate:pure')

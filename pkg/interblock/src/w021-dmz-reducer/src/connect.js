@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { networkModel, addressModel, channelModel } from '../../w015-models'
 import { channelProducer } from '../../w016-producers'
 

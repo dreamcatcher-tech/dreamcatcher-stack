@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import posix from 'path-browserify'
 import { blockModel } from '../../../w015-models'
 import { toFunctions } from './consistencyFactory'

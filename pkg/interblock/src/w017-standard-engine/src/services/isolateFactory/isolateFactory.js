@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { _hook as hook } from '../../../../w002-api'
 import {
   blockModel,

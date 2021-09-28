@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
 import { proofSchema } from '../schemas/modelSchemas'
 import { blockModel } from './blockModel'

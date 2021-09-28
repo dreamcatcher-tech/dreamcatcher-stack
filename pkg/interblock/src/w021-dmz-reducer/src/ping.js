@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { replyResolve } from '../../w002-api'
 import { rxRequestModel } from '../../w015-models'
 import Debug from 'debug'

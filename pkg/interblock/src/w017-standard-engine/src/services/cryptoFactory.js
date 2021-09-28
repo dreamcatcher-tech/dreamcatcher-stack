@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import assert from 'assert-fast'
 import { cryptoCacher, keypairModel } from '../../../w015-models'
 import { signatureProducer } from '../../../w016-producers'
 import { ramDynamoDbFactory, dbFactory } from './consistencyFactory'
