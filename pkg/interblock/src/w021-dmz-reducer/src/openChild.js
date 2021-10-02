@@ -121,7 +121,7 @@ const openPaths = (network) => {
       return true
     })
   })
-  return networkModel.merge(network, nextNetwork)
+  return network.merge(nextNetwork)
 }
 const _isAwaitingOpen = (channel, fullPath) => {
   // TODO WARNING must consider all paths that are its parent too

@@ -196,7 +196,8 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         }
       }
     }
-    const enableLogging = () => tap.on()
+    const enableLogging = ({ headersOnly, size, path } = {}) =>
+      tap.on({ headersOnly, size, path })
     const disableLogging = () => tap.off()
     const pierce = piercerFactory(address, ioConsistency, sqsIncrease)
     // TODO remove this function as does not operate on children

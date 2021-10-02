@@ -27,7 +27,7 @@ const uplinkReducer = (network, action) => {
   const shortChainId = chainId.substring(0, 9)
   debug(`uplinkReducer ${alias} set to ${shortChainId}`)
   replyResolve({ alias })
-  return networkModel.merge(network, nextNetwork)
+  return network.merge(nextNetwork)
 }
 const uplinkReply = (network, reply) => {
   const { originAction } = reply.getRequest().payload

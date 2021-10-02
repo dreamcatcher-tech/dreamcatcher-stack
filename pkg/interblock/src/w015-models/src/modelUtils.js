@@ -16,20 +16,11 @@ const standardize = (model) => {
   const modelWeakSet = new WeakSet()
   const objectToModelWeakMap = new WeakMap()
   const isModel = (test) => modelWeakSet.has(test)
-  const merge = (model, merge) => {
-    assert(isModel(model))
-    assert.strictEqual(typeof merge, 'object')
-    if (!Object.keys(merge).length) {
-      return model
-    } else {
-      return clone({ ...model, ...merge })
-    }
-  }
+
   const clone = (object) => {
     if (!object) {
       if (!defaultInstance) {
         defaultInstance = standardModel.create()
-        // TODO WARNING some models are async creators
       }
       return defaultInstance
     }
@@ -58,17 +49,18 @@ const standardize = (model) => {
       getProof,
       equals,
     }
-    const frozenInstance = defineFunctions(inflated, functions)
-    modelWeakSet.add(frozenInstance)
-    objectToModelWeakMap.set(object, frozenInstance)
-    return frozenInstance
+    defineFunctions(inflated, functions)
+    deepFreeze(inflated)
+
+    modelWeakSet.add(inflated)
+    objectToModelWeakMap.set(object, inflated)
+    return inflated
   }
 
   // TODO add produce function so clone isn't overloaded
   const standardModel = Object.freeze({
     ...model,
     create,
-    merge,
     clone,
     isModel,
   })
@@ -82,15 +74,9 @@ const closure = (schema, inflated, isModel) => {
     }
     return equal(inflated, other)
   }
-  let jsonString
   const serialize = () => {
     // TODO serialize quicker using schemas with https://www.npmjs.com/package/fast-json-stringify
-    // TODO model away serialize
-    if (!jsonString) {
-      // TODO ensure this check is sufficient for stringify
-      jsonString = stringify(inflated)
-    }
-    return jsonString
+    return stringify(inflated)
   }
   let cachedHash, cachedProof
   const _generateHashWithProof = () => {
@@ -250,8 +236,6 @@ const defineFunctions = (target, functions) => {
     }
   }
   Object.defineProperties(target, properties)
-  deepFreeze(target)
-  return target
 }
 
 const checkStructure = (model) => {

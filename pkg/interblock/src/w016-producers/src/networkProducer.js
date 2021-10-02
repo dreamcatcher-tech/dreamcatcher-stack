@@ -90,7 +90,7 @@ const ingestInterblocks = (network, interblocks = [], config) => {
       nextNetwork[alias] = channel
     }
   })
-  return networkModel.merge(network, nextNetwork)
+  return network.merge(nextNetwork)
   // TODO close all timed out connection attempts
 }
 
@@ -102,7 +102,7 @@ const respondReply = (network, address, originalLoopback) => {
 
   const channel = network[alias]
   const nextChannel = channelProducer.shiftTxRequest(channel, originalLoopback)
-  return networkModel.merge(network, { [alias]: nextChannel })
+  return network.merge({ [alias]: nextChannel })
 }
 
 const respondRejection = (network, request, reduceRejection) => {
@@ -131,7 +131,7 @@ const _respond = (network, request, reply) => {
   assert(!channel.replies[index])
   let nextChannel = channelProducer.txReply(channel, reply)
   assert(nextChannel.replies[index])
-  return networkModel.merge(network, { [alias]: nextChannel })
+  return network.merge({ [alias]: nextChannel })
 }
 
 const tx = (network, requests, replies) => {
@@ -174,7 +174,7 @@ const tx = (network, requests, replies) => {
     const reply = txReply.getReply()
     nextNetwork[alias] = channelProducer.txReply(channel, reply, index)
   })
-  return networkModel.merge(network, nextNetwork)
+  return network.merge(nextNetwork)
 }
 
 const _cloneArray = (toBeArray, cloneFunction) => {
@@ -195,7 +195,7 @@ const invalidateLocal = (network) => {
       nextNetwork[alias] = channelProducer.invalidate(network[alias])
     }
   }
-  return networkModel.merge(network, nextNetwork)
+  return network.merge(nextNetwork)
 }
 const reaper = (network) => {
   // TODO also handle timed out channels here - idle clogs system

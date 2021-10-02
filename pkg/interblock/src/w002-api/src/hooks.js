@@ -78,6 +78,8 @@ const _promise = (request) => {
     accumulator.splice(index, 1)
   }
   if (reply.type === '@@RESOLVE') {
+    // TODO should wait until end of run before resolving promises, else dev can
+    // alter the execution path based on a reply - must be repeatable each time.
     return reply.payload
   }
   assert.strictEqual(reply.type, '@@REJECT')
@@ -87,9 +89,24 @@ const all = (...promiseActions) => {
   // awaits multiple requests to multiple chains and or multiple effects to complete
   throw new Error('Promise.all() Not Implemented')
 }
+/**
+ * How to make multiple hooks that are concurrent and also survive being
+ * compiled by a bundler ?
+ *
+ * Each API function shall have a symbol attached to it, which gets used
+ * as a queue identifier.  Can be fetched out from sniffing the caller function ?
+ *
+ * Also, in pure contained environments, this is not needed ?
+ * Running uncontained means we are in control of the env ?
+ * So could have multiple hooks running, packing executions closer together.
+ * If devs want to run uncontained, then they need to manage this problem
+ * themselves.
+ *
+ */
 const _hookGlobal = async (originalAccumulator, salt) => {
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
   const start = Date.now()
+  // TODO make this be a queue, shared by all
   while (globalThis['@@interblock'].promises) {
     await new Promise(setImmediate)
     // TODO ensure we never have to wait more than one setImmediate loop ?
@@ -121,6 +138,7 @@ const _pushGlobalRequest = (request) => {
   const { requests, bareRequests } = globalThis['@@interblock'].promises
   const { type, payload, to } = request
   const bareRequest = { type, payload, to }
+  // TODO optimize by using only the '.@@ioRequestId for matching ?
   const isDuplicate = bareRequests.some((prior) => equal(bareRequest, prior))
   if (isDuplicate) {
     throw new Error(`Duplicate request made: ${type}`)

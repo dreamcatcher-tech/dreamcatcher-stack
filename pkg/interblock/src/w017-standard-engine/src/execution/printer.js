@@ -51,12 +51,12 @@ const interPrint = (interblock, msg, path, bg, fg) => {
   }
   return format(messages)
 }
-const blockPrint = (block, path, isNewChain, isDuplicate) => {
-  const header = headerPrint(block, path, isNewChain, isDuplicate)
+const blockPrint = (block, path, isNewChain, isDuplicate, options) => {
+  const header = headerPrint(block, path, isNewChain, isDuplicate, options)
   const messages = [header]
 
-  if (!isDuplicate) {
-    const networkLines = networkPrint(block.network)
+  if (!isDuplicate && !options.headersOnly) {
+    const networkLines = networkPrint(block.network, options)
     messages.push(...networkLines)
   }
   const text = print(messages)
@@ -76,20 +76,22 @@ const print = (messages) => {
   const formatted = columnify(messages, options)
   return formatted
 }
-const headerPrint = (block, path, isNewChain, isDuplicate) => {
+const headerPrint = (block, path, isNewChain, isDuplicate, options) => {
   const chainId = shrink(block.provenance.getAddress().getChainId())
   const height = chalk.green(block.provenance.height)
   const rawHash = block.getHash()
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
-  // const size = getSize(block)
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
   const header = { msg, height, path, chainId, hash }
+  if (options.size) {
+    header.size = getSize(block)
+  }
   if (isNewChain) {
     header.msg = chalk.red('NEW_CHAIN')
   }
   return header
 }
-const networkPrint = (network) => {
+const networkPrint = (network, options) => {
   const messages = []
   const aliases = network.getAliases()
   aliases.forEach((alias) => {
@@ -98,7 +100,6 @@ const networkPrint = (network) => {
     let height = '-'
     let chainId = grayUndefined
     let hash = grayUndefined
-    // const size = pad(prettyBytes(channel.serialize().length * 2), 12)
     if (address.isResolved()) {
       chainId = shrink(address.getChainId(), 'bgMagenta', 'gray')
     }
@@ -121,8 +122,11 @@ const networkPrint = (network) => {
       path: chalk.gray(alias),
       chainId,
       hash,
-      // size,
     }
+    if (options.size) {
+      channelHeader.size = pad(prettyBytes(channel.serialize().length * 2), 12)
+    }
+
     messages.push(channelHeader)
 
     // get the tx and remote.replies span, then order them

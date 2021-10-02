@@ -8,7 +8,7 @@ Debug.enable()
 chai.use(chaiAsPromised)
 
 describe('effector', () => {
-  test('ping single', async () => {
+  test.only('ping single', async () => {
     Debug.enable('*tests*')
     const start = Date.now()
     debug(`start`)
@@ -23,10 +23,20 @@ describe('effector', () => {
     assert.deepEqual(reply, payload)
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
-    debug(`blockcount: ${shell.metro.getBlockCount()}`)
     debug(`test time: ${Date.now() - start} ms`)
-    await shell.metro.settle()
 
+    await shell.metro.settle()
+    debug(`blockcount: ${shell.metro.getBlockCount()}`)
+
+    const secondStart = Date.now()
+    const secondReply = await shell.ping('.', payload)
+    debug(`second pong received`)
+    debug(`second ping RTT: ${Date.now() - secondStart} ms`)
+    debug(`second blockcount: ${shell.metro.getBlockCount()}`)
+    debug(`second test time: ${Date.now() - start} ms`)
+    // BUT this is bad since still testing xstate time, not pure execution
+    // also cold start includes compile costs for schemas
+    await shell.metro.settle()
     debug(`stop`)
     /**
      * 2020-05-11 736ms no crypto

@@ -13,7 +13,11 @@ import Debug from 'debug'
 
 const createTap = (prefix = 'interblock:blocktap') => {
   let isOn = false
-  const on = () => (isOn = true)
+  let options = {}
+  const on = (nextOptions = {}) => {
+    isOn = true
+    options = nextOptions
+  }
   const off = () => (isOn = false)
   const debugBase = Debug(prefix)
   const cache = {}
@@ -70,12 +74,15 @@ const createTap = (prefix = 'interblock:blocktap') => {
       return
     }
     const path = getPath(block, cache)
-    const formatted = blockPrint(block, path, isNewChain, isDuplicate)
+    const formatted = blockPrint(block, path, isNewChain, isDuplicate, options)
     const { lockStart, workStart } = lockTimes.get(block.getChainId())
     const lockTime = Date.now() - lockStart
     const workTime = Date.now() - workStart
     const timeText = isDuplicate ? `NOCHANGE time` : `BLOCK time`
     // debugBloc(timeText, `total: ${lockTime} ms work: ${workTime} ms`)
+    if (options.path && path !== options.path) {
+      return
+    }
     debugBloc(formatted)
   }
   let blockCount = 0

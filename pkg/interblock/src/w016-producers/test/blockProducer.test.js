@@ -1,10 +1,15 @@
-import chai, { assert } from 'chai/index.mjs'
+import { assert } from 'chai/index.mjs'
+import { List, Map } from 'immutable'
+import { produce, setAutoFreeze } from 'immer'
+import clone from 'lodash.clone'
 import { keypairModel, blockModel, dmzModel } from '../../w015-models'
 import { blockProducer, signatureProducer } from '../../w016-producers'
 import * as crypto from '../../w012-crypto'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:blockProducer')
 
 describe('blockProducer', () => {
-  describe('generateNext', () => {
+  describe('generateUnsigned', () => {
     test('false signing rejected', async () => {
       const block = blockModel.create()
       const keypairA = keypairModel.create('keypairA')
@@ -53,6 +58,115 @@ describe('blockProducer', () => {
       const duo = dmzModel.create({
         validators: { alice: keypair1.publicKey, bob: keypair2.publicKey },
       })
+    })
+  })
+  describe('big block production', () => {
+    // goal is to have constant time for block operations, regardless of how many children it has
+    test.only('batch 1000 spawns', async () => {
+      Debug.enable('*tests*')
+      // const init = blockModel.create()
+      // make object with 20,000 keys, which is design target
+      const big = {}
+      let i = 0
+      const count = 1000000
+      debug('start')
+      while (i < count) {
+        i++
+        big[`key-${i}`] = true
+      }
+      debug('create')
+      big.direct = true
+      debug('direct mutation: ')
+      const next = { ...big, test: true } //
+      debug('Object spread')
+
+      const arr = Object.keys(big)
+      debug('keys')
+      const arrSpread = [...arr] // 1ms - near instant
+      debug('array spread')
+
+      let j = arr.length
+      const whileLoop = []
+      while (j--) {
+        whileLoop[j] = arr[j]
+      }
+      debug(`while loop`)
+
+      const sliced = arr.slice()
+      debug('slice')
+
+      const arrFrozen = Object.freeze(arrSpread)
+      debug('frozen array')
+      const frozenObj = Object.freeze(next) // adds 33ms to the operation
+      debug('frozen object shallow') // ? if each key was an object too, deepfreeze expensive ?
+
+      arrSpread.find((item) => !item)
+      debug('worst case find')
+      const m = arrSpread[arrSpread.length - 1]
+      debug('array access')
+      const n = big['key-' + count]
+      debug('object access')
+      const assigned = Object.assign({}, big)
+      debug('Object.assign')
+      const shortAssign = Object.assign(big, { assign: true })
+      debug('Object.assign short')
+
+      const cloneObj = clone(big)
+      debug('lodash.clone(big)')
+      const loCloneArr = clone(arr)
+      debug('lodash.clone(arr)')
+
+      // immutable
+      const list = List(arr)
+      debug('immutable list')
+      const list2 = list.insert(10000, false)
+      debug('immutable list insert')
+      const list3 = list.push('something')
+      debug('immutable list push')
+
+      const map = Map(big)
+      debug('immutable map')
+      const map2 = map.set('meow', true)
+      debug('immutable map set')
+      const keys = map.keys()
+      debug('immutable map keys')
+      i = 0
+      const baseMap = Map()
+      while (i < count) {
+        i++
+        baseMap.set(`key-${i}`, true)
+      }
+      debug('immutable map create')
+      const mapInsert = map.set('key-10000', 'test')
+      assert(mapInsert.get('key-10000') === 'test')
+      debug('immutable map insert')
+
+      // //immer tests
+      // const immerNext = produce(big, (draft) => {
+      //   draft.immer = true
+      // })
+      // debug('immer update with freeze') // 5s!!
+      // const immerUnfrozen = produce(frozenObj, (draft) => {
+      //   draft.immer2 = true
+      // })
+      // debug('immer update without freeze') // 4s
+      // setAutoFreeze(false)
+      // const immerNoAuto = produce(frozenObj, (draft) => {
+      //   draft.immer3 = true
+      // })
+      // debug('immer update no auto') // 4s
+    })
+    test('big networkModel', () => {
+      // make a reducer that dispatches a large number of requests out ?
+      // exercise the time of every network model operation
+      // test clone times work as expected
+    })
+    test('block clone during add signature is constant time', async () => {
+      // generate a big block
+      // change the dmz or add a legit signature
+      // time the cloning
+      // do the same for the small block
+      // verify the clone time is the exact same
     })
   })
 })

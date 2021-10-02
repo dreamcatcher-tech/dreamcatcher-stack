@@ -17,7 +17,7 @@ const ingestInterblocks = (channel, interblocks) => {
   interblocks.sort((a, b) => a.provenance.height - b.provenance.height)
 
   interblocks.forEach((interblock) => {
-    channel = ingestInterblock(channel, interblock)
+    channel = ingestInterblockRaw(channel, interblock)
   })
   return channelModel.clone(channel)
 }

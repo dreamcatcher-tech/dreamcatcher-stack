@@ -30,7 +30,7 @@ const add = async (payload, datumTemplate) => {
   const muxed = muxTemplateWithFormData(datumTemplate, formData)
   const set = datum.actions.set(muxed)
   debug(`datum set action`, set)
-  // TODO set this in the state of the spawn, to reduce block count
+  // TODO set this in the state of the spawn, to reduce action count
   await interchain(set, name)
 }
 
@@ -57,7 +57,7 @@ const reducer = async (state, action) => {
       const { batch } = payload
       assert(Array.isArray(batch))
       const awaits = batch.map((payload) => add(payload, datumTemplate))
-      await Promise.all(awaits)
+      // await Promise.all(awaits)
       return state
     }
     case 'SET_TEMPLATE': {

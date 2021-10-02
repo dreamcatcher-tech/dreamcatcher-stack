@@ -5,7 +5,6 @@ import { metrologyFactory } from '../src/metrologyFactory'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:hooker')
-
 describe('hooker', () => {
   test('loopback cleared immediately', async () => {
     const base = await metrologyFactory()

@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import last from 'lodash.last'
+import { produce } from 'immer'
 import { standardize } from '../modelUtils'
 import { channelModel } from './channelModel'
 import { addressModel } from './addressModel'
@@ -8,6 +9,7 @@ import { rxRequestModel } from '../transients/rxRequestModel'
 import { rxReplyModel } from '../transients/rxReplyModel'
 import { reject } from '../../../w002-api'
 import Debug from 'debug'
+import { interblockModel } from '.'
 const debug = Debug('interblock:models:network')
 
 const schema = {
@@ -37,6 +39,7 @@ const networkModel = standardize({
   logicize(instance) {
     assert(!instance[undefined])
     const _aliases = Object.keys(instance)
+    Object.freeze(_aliases)
     assert(_aliases.includes('..'))
     assert(_aliases.includes('.'))
     assert(channelModel.isModel(instance['.']), 'channel invalid')
@@ -79,27 +82,47 @@ const networkModel = standardize({
       const action = loopback.rxReply() || loopback.rxRequest()
       return action
     }
-    const getAliases = () => Object.keys(instance)
-    const getResolvedAliases = () =>
-      getAliases().filter(
-        (alias) => instance[alias].address.isResolved() && alias !== '.@@io'
-      )
+    // TODO find why any op needs to get all aliases out anyway
+    const getAliases = () => _aliases
+    let _resolvedAliases
+    const getResolvedAliases = () => {
+      if (!_resolvedAliases) {
+        _resolvedAliases = getAliases().filter(
+          (alias) => alias !== '.@@io' && instance[alias].address.isResolved()
+        )
+      }
+      return _resolvedAliases
+    }
 
+    const aliasMap = new Map()
+    let aliasMapIndex = 0
     const getAlias = (address) => {
       // TODO return for self specially ? or is it never called ?
       assert(addressModel.isModel(address))
       assert(!address.isUnknown())
-
-      const alias = getAliases().find((key) =>
-        instance[key].address.equals(address)
-      )
-      return alias
+      const chainId = address.getChainId()
+      if (!aliasMap.has(chainId)) {
+        // TODO handle same address referred to twice as different aliases
+        while (aliasMapIndex < _aliases.length) {
+          const alias = _aliases[aliasMapIndex]
+          aliasMapIndex++
+          const aliasAddress = instance[alias].address
+          if (!aliasAddress.isUnknown()) {
+            const aliasChainId = aliasAddress.getChainId()
+            aliasMap.set(aliasChainId, alias)
+            if (chainId === aliasChainId) {
+              break
+            }
+          }
+        }
+      }
+      return aliasMap.get(chainId)
     }
     const getParent = () => instance['..']
     const includesInterblock = (interblock) => {
       // TODO handle provenance being deleted or reset ?
+      assert(interblockModel.isModel(interblock))
       const { provenance } = interblock
-      assert(provenanceModel.isModel(provenance))
       const alias = getAlias(provenance.getAddress())
       if (!alias) {
         return false
@@ -160,6 +183,20 @@ const networkModel = standardize({
       })
       return isNewChannels
     }
+
+    // TODO move to networkProducer ?
+    const merge = (toMerge) => {
+      assert.strictEqual(typeof toMerge, 'object')
+      if (!Object.keys(toMerge).length) {
+        return instance
+      }
+      const nextState = produce(instance, (draft) =>
+        // TODO immer seems quite slow in benchmarks - need to move off this solution
+        Object.assign(draft, toMerge)
+      )
+      return networkModel.clone(nextState)
+    }
+
     return {
       rxReply,
       rxRequest,
@@ -172,6 +209,7 @@ const networkModel = standardize({
       getResponse,
       txInterblockAliases,
       isNewChannels,
+      merge,
     }
   },
 })

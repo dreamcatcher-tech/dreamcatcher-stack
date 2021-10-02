@@ -66,8 +66,11 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   const nextNetwork = {}
   // TODO override generate nonce to use some predictable seed, like last block
   let channel = channelModel.create(address, './')
-  const childOriginProvenance = interblockModel.create(genesis)
-  channel = channelProducer.ingestInterblock(channel, childOriginProvenance)
+
+  // TODO why does this need to be here ?
+  // const childOriginProvenance = interblockModel.create(genesis)
+  // channel = channelProducer.ingestInterblock(channel, childOriginProvenance)
+
   channel = channelProducer.txRequest(channel, genesisRequest)
   if (network[alias]) {
     network[alias].getRequestIndices().forEach((index) => {
@@ -76,7 +79,7 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
     })
   }
   nextNetwork[alias] = channel
-  return networkModel.merge(network, nextNetwork)
+  return network.merge(nextNetwork)
 }
 
 export { spawn, spawnReducer, spawnReducerWithoutPromise }
