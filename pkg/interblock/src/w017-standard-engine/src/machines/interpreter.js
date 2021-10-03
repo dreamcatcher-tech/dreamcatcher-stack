@@ -19,7 +19,6 @@
  * Address: replies do not have their address included, so need to know if
  * channel is still availble to shift the request that caused this reply.
  */
-
 const definition = {
   id: 'interpreter',
   initial: 'idle',

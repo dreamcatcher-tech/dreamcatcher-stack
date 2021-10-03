@@ -1,10 +1,8 @@
 import assert from 'assert-fast'
 import last from 'lodash.last'
-import { produce } from 'immer'
 import { standardize } from '../modelUtils'
 import { channelModel } from './channelModel'
 import { addressModel } from './addressModel'
-import { provenanceModel } from './provenanceModel'
 import { rxRequestModel } from '../transients/rxRequestModel'
 import { rxReplyModel } from '../transients/rxReplyModel'
 import { reject } from '../../../w002-api'
@@ -190,11 +188,7 @@ const networkModel = standardize({
       if (!Object.keys(toMerge).length) {
         return instance
       }
-      const nextState = produce(instance, (draft) =>
-        // TODO immer seems quite slow in benchmarks - need to move off this solution
-        Object.assign(draft, toMerge)
-      )
-      return networkModel.clone(nextState)
+      return networkModel.clone({ ...instance, ...toMerge })
     }
 
     return {

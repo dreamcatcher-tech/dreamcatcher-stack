@@ -1,6 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { List, Map } from 'immutable'
-import { produce, setAutoFreeze } from 'immer'
+import { List, Map, Record } from 'immutable'
 import clone from 'lodash.clone'
 import { keypairModel, blockModel, dmzModel } from '../../w015-models'
 import { blockProducer, signatureProducer } from '../../w016-producers'
@@ -72,7 +71,7 @@ describe('blockProducer', () => {
       debug('start')
       while (i < count) {
         i++
-        big[`key-${i}`] = true
+        big[`key-${i}`] = { a: i }
       }
       debug('create')
       big.direct = true
@@ -139,7 +138,28 @@ describe('blockProducer', () => {
       debug('immutable map create')
       const mapInsert = map.set('key-10000', 'test')
       assert(mapInsert.get('key-10000') === 'test')
-      debug('immutable map insert')
+      debug('immutable map set')
+      const hashCode = mapInsert.hashCode()
+      debug('immutable map hashCode', hashCode)
+
+      const isEqual = map.equals(mapInsert)
+      assert(!isEqual)
+      debug('immutable map equals')
+      const isEqual2 = mapInsert.equals(map)
+      assert(!isEqual2)
+      debug('immutable map equals reverse')
+      const isEqual3 = map.equals(map)
+      assert(isEqual3)
+      debug('immutable map equals actually equal')
+
+      // const rlist = List()
+      // const r = Record({ a: 1, b: 2 })
+      // i = 0
+      // while (i < 1000000) {
+      //   i++
+      //   rlist.push(r({ a: `key-${i}` }))
+      // }
+      // debug('immutable record create 1M') // about 3s or 3x longer than raw
 
       // //immer tests
       // const immerNext = produce(big, (draft) => {

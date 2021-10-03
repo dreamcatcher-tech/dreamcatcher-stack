@@ -85,8 +85,15 @@ const _promise = (request) => {
   assert.strictEqual(reply.type, '@@REJECT')
   throw reply.payload
 }
-const all = (...promiseActions) => {
+const all = (promises) => {
   // awaits multiple requests to multiple chains and or multiple effects to complete
+  assert(Array.isArray(promises))
+  // check that all of them are hooked promises
+  // signal to pending that they all need to pass before we can make a new block ?
+  // basically the pending object needs to know when an 'all' is being awaited
+  // dmz should not begin any activity until any item has rejected, or all have resolved
+  // then the result needs to come back as an array
+
   throw new Error('Promise.all() Not Implemented')
 }
 /**
