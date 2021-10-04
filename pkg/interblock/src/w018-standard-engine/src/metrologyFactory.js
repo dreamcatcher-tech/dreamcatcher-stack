@@ -41,7 +41,7 @@ import {
 } from './services/consistencyFactory'
 import { createBase } from './execution/createBase'
 import { createTap } from './execution/tap'
-import { actions } from '../../w021-dmz-reducer'
+import { actions } from '../../w017-dmz-producer'
 import * as covenants from '../../w212-system-covenants'
 import { blockModel, interblockModel, addressModel } from '../../w015-models'
 import { piercerFactory } from './piercerFactory'

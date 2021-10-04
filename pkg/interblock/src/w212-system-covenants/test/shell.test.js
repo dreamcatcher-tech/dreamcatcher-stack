@@ -2,7 +2,7 @@ import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import posix from 'path-browserify'
 import { shell } from '..'
-import { metrologyFactory } from '../../w017-standard-engine'
+import { metrologyFactory } from '../../w018-standard-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:shell')
 chai.use(chaiAsPromised)

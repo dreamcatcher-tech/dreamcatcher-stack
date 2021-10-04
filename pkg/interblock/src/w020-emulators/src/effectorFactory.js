@@ -33,7 +33,7 @@
  *
  */
 import assert from 'assert-fast'
-import { metrologyFactory } from '../../w017-standard-engine'
+import { metrologyFactory } from '../../w018-standard-engine'
 import posix from 'path-browserify'
 import { covenantIdModel } from '../../w015-models'
 import { tcpTransportFactory } from './tcpTransportFactory'

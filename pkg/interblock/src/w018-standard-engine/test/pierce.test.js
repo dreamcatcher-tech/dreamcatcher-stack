@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '..'
 import { request } from '../../w002-api'
-import { actions } from '../../w021-dmz-reducer'
+import { actions } from '../../w017-dmz-producer'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pierce')
 Debug.enable()

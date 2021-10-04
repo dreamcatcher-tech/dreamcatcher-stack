@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 // const faker from 'faker/locale/en')
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
-import * as dmzReducer from '../../w021-dmz-reducer'
+import * as dmzReducer from '../../w017-dmz-producer'
 import { covenantIdModel } from '../../w015-models'
 import { interchain, useBlocks } from '../../w002-api'
 import Debug from 'debug'

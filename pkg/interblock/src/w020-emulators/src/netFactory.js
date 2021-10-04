@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { interchain } from '../../w002-api'
-import { actions } from '../../w021-dmz-reducer'
+import { actions } from '../../w017-dmz-producer'
 import { Machine, assign } from 'xstate'
 import { socketModel, covenantIdModel } from '../../w015-models'
 import {

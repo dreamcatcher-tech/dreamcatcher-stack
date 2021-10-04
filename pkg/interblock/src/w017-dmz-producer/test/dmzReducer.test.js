@@ -9,9 +9,8 @@ import {
   stateModel,
   covenantIdModel,
 } from '../../w015-models'
-import { networkProducer } from '../../w016-producers'
 import { actions } from '..'
-import { metrologyFactory } from '../../w017-standard-engine'
+import { metrologyFactory } from '../../w018-standard-engine'
 import { spawnReducer, spawn } from '../src/spawn'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')

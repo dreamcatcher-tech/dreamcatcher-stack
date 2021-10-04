@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { interchain, useBlocks } from '../../w002-api'
-import { actions, listChildren } from '../../w021-dmz-reducer'
+import { actions, listChildren } from '../../w017-dmz-producer'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { jest } from '@jest/globals'
 import Debug from 'debug'

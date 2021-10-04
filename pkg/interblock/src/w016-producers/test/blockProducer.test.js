@@ -67,7 +67,7 @@ describe('blockProducer', () => {
       // make object with 20,000 keys, which is design target
       const big = {}
       let i = 0
-      const count = 1000000
+      const count = 10000
       debug('start')
       while (i < count) {
         i++

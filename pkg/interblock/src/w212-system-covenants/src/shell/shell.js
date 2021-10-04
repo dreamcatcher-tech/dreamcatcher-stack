@@ -1,11 +1,11 @@
 import posix from 'path-browserify'
 import assert from 'assert-fast'
 import { covenantIdModel } from '../../../w015-models'
-import * as dmzReducer from '../../../w021-dmz-reducer'
+import * as dmzReducer from '../../../w017-dmz-producer'
 import { Machine, assign } from 'xstate'
 import { interchain, useBlocks } from '../../../w002-api'
 import { respond, translator } from '../../../w022-xstate-translator'
-import { listChildren } from '../../../w021-dmz-reducer'
+import { listChildren } from '../../../w017-dmz-producer'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:shell')
 const covenantId = covenantIdModel.create('shell')

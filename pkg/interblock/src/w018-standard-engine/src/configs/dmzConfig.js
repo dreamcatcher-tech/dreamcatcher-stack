@@ -6,7 +6,7 @@ import {
   reductionModel,
   addressModel,
 } from '../../../w015-models'
-import * as dmzReducer from '../../../w021-dmz-reducer'
+import * as dmzReducer from '../../../w017-dmz-producer'
 import { _hook as hook } from '../../../w002-api'
 import { dmzMachine } from '../machines'
 import { common } from './common'

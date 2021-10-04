@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import * as datum from './datum'
 import { interchain } from '../../w002-api'
-import * as dmzReducer from '../../w021-dmz-reducer'
+import * as dmzReducer from '../../w017-dmz-producer'
 import { covenantIdModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
