@@ -19,9 +19,9 @@ import { ramS3Factory } from './ramS3Factory'
 import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
+const _blank = integrityModel.create()
 const _addressFromChainId = (chainId) => {
-  const blank = integrityModel.create()
-  const integrity = integrityModel.clone({ ...blank, hash: chainId })
+  const integrity = integrityModel.clone({ ..._blank, hash: chainId })
   const address = addressModel.create(integrity)
   assert.strictEqual(address.getChainId(), chainId)
   return address

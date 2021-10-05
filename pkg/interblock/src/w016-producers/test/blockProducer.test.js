@@ -61,7 +61,7 @@ describe('blockProducer', () => {
   })
   describe('big block production', () => {
     // goal is to have constant time for block operations, regardless of how many children it has
-    test.only('batch 1000 spawns', async () => {
+    test.skip('batch 1000 spawns', async () => {
       Debug.enable('*tests*')
       // const init = blockModel.create()
       // make object with 20,000 keys, which is design target
