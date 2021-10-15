@@ -4,6 +4,7 @@ import { blockModel } from '../../../w015-models'
 import { toFunctions } from './consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:query')
+
 const queryFactory = (ioConsistency, block) => {
   assert(blockModel.isModel(block))
   let isQueryEnabled = true

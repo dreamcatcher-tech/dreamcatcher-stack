@@ -132,13 +132,7 @@ const generateHash = (schema, instance) => {
     }
     case 'Channel': {
       const remote = _pickRemote(instance)
-      const restOfChannelKeys = [
-        'systemRole',
-        'requestsLength',
-        'heavy',
-        'lineage',
-        'lineageTip',
-      ]
+      const restOfChannelKeys = ['systemRole', 'requestsLength', 'tip']
       const restOfChannel = _pick(instance, restOfChannelKeys)
       const properties = _pick(schema.properties, restOfChannelKeys)
       const { hash: proof } = hashFromSchema({ properties }, restOfChannel)
@@ -164,8 +158,7 @@ const _pickRemoteRaw = (instance) => {
     'address',
     'replies',
     'requests',
-    'heavyHeight',
-    'lineageHeight',
+    'precedent',
   ])
   const remote = remoteModel.clone(remotePick)
   return remote

@@ -118,18 +118,21 @@ const respondRequest = (network, request) => {
   return _respond(network, request, reply)
 }
 
-const _respond = (network, request, reply) => {
-  assert(rxRequestModel.isModel(request))
+const _respond = (network, rxRequest, reply) => {
+  assert(rxRequestModel.isModel(rxRequest))
   assert(continuationModel.isModel(reply))
-  const address = request.getAddress()
+  const address = rxRequest.getAddress()
   const alias = network.getAlias(address)
   const channel = network[alias]
   assert(channelModel.isModel(channel))
   assert(channel.address.equals(address))
-  assert(channel.rxRequest().equals(request))
-  const index = request.getIndex()
+  // TODO find a way to check if the request is legit for this channel
+  // or allow the fault, relying on the other end to pick it up
+  // might run the check at the end, or whenever parse the json
+  assert(channel.rxRequest().equals(rxRequest))
+  const index = rxRequest.getIndex()
   assert(!channel.replies[index])
-  let nextChannel = channelProducer.txReply(channel, reply)
+  const nextChannel = channelProducer.txReply(channel, reply)
   assert(nextChannel.replies[index])
   return network.merge({ [alias]: nextChannel })
 }
@@ -184,6 +187,7 @@ const _cloneArray = (toBeArray, cloneFunction) => {
   return toBeArray.map(cloneFunction)
 }
 const invalidateLocal = (network) => {
+  // TODO what is this even for ?
   const nextNetwork = {}
   const aliases = network.getAliases()
   for (const alias of aliases) {
@@ -231,7 +235,7 @@ const removeBufferPromise = (network, request) => {
   assert(replies[index].isPromise())
   delete replies[index]
   const nextChannel = channelModel.clone({ ...channel, replies })
-  const nextNetwork = networkModel.clone({ ...network, [alias]: nextChannel })
+  const nextNetwork = network.merge({ [alias]: nextChannel })
   return nextNetwork
 }
 const displaceLightWithHeavy = (interblocks) => {

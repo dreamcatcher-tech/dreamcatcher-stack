@@ -192,72 +192,55 @@ const proofSchema = {
   },
 }
 
-const remoteSchema = {
-  title: 'Remote',
-  // description: 'Slice of Channel state transmitted with a heavy Interblock',
+const turnoverSchema = {
+  title: 'Turnover',
+  // description: `
+  // Turnovers represent the new validator set being signed by the old validator set
+  // While these are not hashed directly, they are not malleable and can quickly be
+  // detected as corrupt as they must provide a path to the current provenance
+  // from the genesis block, which gives us the address of the chain.`,
+
+  // Must be a separate data structure, as this gets tacked onto the
+  // side of an interblock.  It proves the change of validators being affirmed by
+  // the previous validators.
+
   type: 'object',
   additionalProperties: false,
-  required: ['address', 'replies', 'requests', 'heavyHeight', 'lineageHeight'],
-  properties: {
-    address: addressSchema,
-    // TODO use a simpler raw queue underneath, wrapped in crypto, so ioQueues are the same
-    replies: {
-      type: 'object',
-      additionalProperties: false,
-      patternProperties: {
-        '[0-9]*': continuationSchema,
-      },
-    },
-    requests: {
-      type: 'object',
-      additionalProperties: false,
-      patternProperties: {
-        '[0-9]*': actionSchema,
-      },
-    },
-    heavyHeight: { type: 'integer', minimum: -1 },
-    lineageHeight: { type: 'integer', minimum: -1 },
-  },
-}
-
-const interblockSchema = {
-  title: 'Interblock',
-  // description: `The fundamental unit of inter chain communication.
-  // Contains provenance, a punched out DMZ, and a single transmit channel
-  // of the source chain.
-  // This must be an model, so as to ensure we do not leak info, rather
-  // than making it a special case of a BlockModel.
-  // This cannot import dmzModel directly, as it is a fundamental
-  // circular reference, as the outside depends on the inside.
-  // This can only be made from a validated block.
-
-  // This is the only place that needs punched out proofs.
-
-  // With no transmit key, an interblock is simply a provenance chain,
-  // which is needed to ensure lineage
-
-  // By placing interblock stream inside the transmission, each side of
-  // a connection can know what block of theirs the other side has processed.`,
-  type: 'object',
-  // TODO make all but provenance optional to save retransmit all the time
   required: ['provenance', 'proof', 'validators'],
-  additionalProperties: false,
   properties: {
     provenance: provenanceSchema,
     proof: proofSchema,
-    network: {
-      type: 'object',
-      additionalProperties: false,
-      minProperties: 0,
-      maxProperties: 1,
-      patternProperties: {
-        '(.*?)': remoteSchema,
-      },
-    },
     validators: validatorsSchema,
   },
 }
 
+const remoteSchema = {
+  title: 'Remote',
+  // description: 'Slice of Channel state transmitted with an Interblock.
+  // "precedent" is the blockhash of the interblock that came before this one,
+  // or if new, points to the genesis block.  This hashing provides a
+  // strong guarantees of untampered lines of transmission.
+  type: 'object',
+  additionalProperties: false,
+  required: ['address', 'replies', 'requests', 'precedent'],
+  properties: {
+    address: addressSchema,
+    replies: {
+      type: 'object',
+      // description: `Keys are of format blockheight_index`,
+      additionalProperties: false,
+      patternProperties: {
+        '[0-9]+_[0-9]+': continuationSchema,
+      },
+    },
+    requests: {
+      type: 'array',
+      uniqueItems: true,
+      items: actionSchema,
+    },
+    precedent: integritySchema,
+  },
+}
 const channelSchema = {
   title: 'Channel',
   // description: `Communication Queues.
@@ -273,45 +256,81 @@ const channelSchema = {
   // Receive = Sum( Interblock( Channel ) )
   // Interblocks  = Channel + Provenance
 
-  // 'provenance' contains a continuous chain all the way back to  the foreign genesis.
-
-  // The contents of the latest received channel is stored on 'remote'
+  // The latest received channel is always stripped and placed in a temporary
+  // structure in the dmz, for immediate processing.  All remote requests and
+  // replies are always processed every blockmaking cycle.
   // Replies are always processed before incoming requests.
-  // When a received reply has executed, the local transmit action is removed
-  // from the transmit queue.
+
+  // it is vital that all requests and replies follow a strict order, to
+  // guarantee reproducibility
 
   // The queues hold the index for their next actions within them:
-  // 1.  Next remote reply index is the smallest index of the transit queue
+  // 1.  Next remote reply index is the smallest index of the transmit queue
   //     for which there is a remote reply that is not a promise
   // 2.  Next remote request index is given by the local highest reply index
 
   // If systemRole === '.' then provenance checks are excused, as the
   // networkProducer.tx() function will flip outbound and inbound.  This is used
-  // in the self channel.
+  // in the loopback self channel.
 
   // Counter is required to know where the request counter is up to, which needs independent
   // tracking as the channel might be cleared completely, but we cannot reuse numbers until
-  // looparound at 32bit limit or similar`,
+  // looparound at 32bit limit or similar
+
+  // "rxRepliesTip" is here to allow a fast lookup, else worst case we
+  // may have to walk the entire chain of interblocks to affirm that the
+  // counter was correct.
+
+  // "tip" is the hash of the last interblock we received, which might be
+  // unknown
   type: 'object',
-  required: [
-    ...remoteSchema.required,
-    'systemRole',
-    'requestsLength',
-    'lineage', // hashes of provenances back to the last heavy block
-    'lineageTip', // provenances that are new to the chain - purged each new block
-  ],
+  required: [...remoteSchema.required, 'systemRole'],
   additionalProperties: false,
   properties: {
     ...remoteSchema.properties,
     systemRole: { enum: ['..', '.', './', 'UP_LINK', 'DOWN_LINK', 'PIERCE'] },
-    requestsLength: { type: 'integer', minimum: 0 }, // TODO remove this when interblock diffing enabled
-    heavy: interblockSchema, // last heavy interblock, in full
-    lineage: { type: 'array', uniqueItems: true, items: integritySchema },
-    lineageTip: {
-      type: 'array',
-      uniqueItems: true,
-      items: interblockSchema,
+    rxRepliesTip: {
+      type: 'string',
+      // description: Tracks where the remote channel inbound replies are `
+      // up to as a check against remote errors`,
+      pattern: '[0-9]+_[0-9]+',
     },
+    tip: integritySchema,
+    tipHeight: { type: 'integer', minimum: 0 },
+  },
+}
+const interblockSchema = {
+  title: 'Interblock',
+  // description: `The fundamental unit of inter chain communication.
+  // Contains provenance, a punched out DMZ, and one or more transmit channels
+  // of the source chain.
+  // This must be an model, so as to ensure we do not leak info, rather
+  // than making it a special case of a BlockModel.
+  // This cannot import dmzModel directly, as it is a fundamental
+  // circular reference, as the outside depends on the inside.
+  // This can only be made from a verified block.
+
+  // Interblocks and turnovers are the only place that need punched out proofs.
+
+  type: 'object',
+  additionalProperties: false,
+  required: ['provenance', 'proof', 'network'],
+  properties: {
+    provenance: provenanceSchema,
+    network: {
+      type: 'object',
+      additionalProperties: false,
+      minProperties: 1,
+      patternProperties: {
+        '(.*?)': remoteSchema,
+        // TODO restructure to use chainId as key, as saves transmission space,
+        // and can allow for more compact internal representation in the
+        // network model
+      },
+    },
+    proof: proofSchema,
+    // TODO handle special case of turnover occuring at same time as transmit ?
+    turnovers: { type: 'array', uniqueItems: true, items: turnoverSchema },
   },
 }
 
@@ -328,4 +347,5 @@ export {
   channelSchema,
   actionSchema,
   continuationSchema,
+  turnoverSchema,
 }

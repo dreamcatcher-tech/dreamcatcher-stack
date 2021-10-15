@@ -66,7 +66,6 @@ const lockModel = standardize({
     uuid = uuidCreator(),
     piercings = _defaultPiercings
   ) => {
-    assert(!block || blockModel.isModel(block))
     interblocks = interblocks.map(interblockModel.clone)
     piercings = refinePiercings(block, piercings)
     const timestamp = timestampModel.create()
@@ -84,10 +83,12 @@ const lockModel = standardize({
     const { requests, replies } = piercings
     assert.strictEqual(noDupes.requests.length, requests.length)
     assert.strictEqual(noDupes.replies.length, replies.length)
-    // TODO remove light blocks from lock - will be superseded when modelchains is implemented
+    if (block) {
+      assert(blockModel.isModel(block))
+    }
+    // assertPrecedentChain( block, interblocks )
     // assertUniqueHeights(interblocks)
     // TODO check piercings are sorted correctly
-    // TODO assert that if no block, cannot be any interblocks
     // TODO check all interblocks are valid in this block
     const isLocked = () => !timestamp.isExpired(expires)
     const isMatch = (lock) => lock.uuid === instance.uuid

@@ -7,6 +7,8 @@ import { addressModel } from './addressModel'
 
 const pendingModel = standardize({
   // TODO make model cleaner once util can handle OR in schemas
+  // TODO move to reference by blockheight and conflux count, not rx*
+  // as rx* are meant to be transient models, not permanently stored.
   schema: {
     title: 'Pending',
     // description: `Indicates chain is waiting for a promise to resolve

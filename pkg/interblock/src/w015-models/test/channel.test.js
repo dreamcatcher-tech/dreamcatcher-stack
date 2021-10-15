@@ -13,41 +13,20 @@ describe('channel', () => {
     test('create', () => {
       const channel = channelModel.create()
       assert(channel.address.isUnknown())
+      assert(channel.precedent.isUnknown())
+      assert(!channel.tip)
       const clone = channelModel.clone()
       assert(clone.address.isUnknown())
+      assert(clone.precedent.isUnknown())
+      assert(!clone.tip)
     })
-    test('blank returns no requests or replies', () => {
-      const tx = channelModel.create()
-      assert(!tx.rxReply())
-      assert(!tx.rxRequest())
-    })
-    test('disordered entries in requests array', () => {
-      const tx = channelModel.create()
-      const action = actionModel.create('action1')
-      const withJumble = channelModel.clone({
-        ...tx,
-        requests: { 0: action, 3: action, 2: action },
-      })
-      assert(withJumble)
-      assert.throws(() =>
-        channelModel.clone({
-          ...tx,
-          requests: { 0: action, [-1]: action, 2: action },
-        })
-      )
-      assert.throws(() =>
-        channelModel.clone({
-          ...tx,
-          requests: { 0: action, notNumber: action, 2: action },
-        })
-      )
-    })
-    test('includes known address', async () => {
-      const provenance = await provenanceModel.create()
+    test('includes known address', () => {
+      const provenance = provenanceModel.create()
       const address = provenance.getAddress()
       const channel = channelModel.create(address)
       assert(channel.address.equals(address))
     })
+    test.todo('loopback bans @@OPEN_CHILD action')
   })
   describe('clone', () => {
     test.todo('verify provenance holds proof for remote slice')
@@ -56,23 +35,6 @@ describe('channel', () => {
     test.todo('clone throws if replies but no address')
     test.todo('clone throws if replies do not match remote requests')
     test.todo('throw if loopback and contains banned actions')
-    test('throws on remote replies ahead of requests', () => {
-      const resolvedAddress = addressModel.create('test')
-      const channelBase = channelModel.create(resolvedAddress)
-      const request1 = actionModel.create('request1')
-      // TODO make a fake remote which replied out of sequence
-      // assert.throws(
-      //   () =>
-      //     channelModel.clone({
-      //       ...channelBase,
-      //       // remote: undefined,
-      //       requests: { 23: request1 },
-      //     }),
-      //   (err) => {
-      //     console.log(err)
-      //   }
-      // )
-    })
   })
   describe('rxRequest', () => {
     test.todo('undefined if address unknown and not loopback')

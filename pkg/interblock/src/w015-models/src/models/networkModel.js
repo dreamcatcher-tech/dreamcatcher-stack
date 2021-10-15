@@ -43,7 +43,6 @@ const networkModel = standardize({
     assert(channelModel.isModel(instance['.']), 'channel invalid')
     assert(instance['.'].systemRole === '.', `self not loopback channel`)
 
-    // TODO make this a completely fair scheduler using pseudo randomization
     const rxReply = () => {
       for (const alias of _aliases) {
         const channel = instance[alias]

@@ -12,16 +12,22 @@ import {
   blockModel,
   interblockModel,
   continuationModel,
+  txReplyModel,
+  Conflux,
 } from '../../w015-models'
 import { channelProducer } from '..'
-const { setAddress, txRequest, txReply, ingestInterblock, shiftTxRequest } =
+import Debug from 'debug'
+const debug = Debug('interblock:tests:producers:channel')
+Debug.enable('')
+
+const { setAddress, txRequest, txReply, ingestInterblocks, shiftTxRequest } =
   channelProducer
 
 describe('channelProducer', () => {
-  test('resolve address', async () => {
+  test('resolve address', () => {
     const tx = channelModel.create()
     assert(tx.address.isUnknown())
-    const provenance = await provenanceModel.create()
+    const provenance = provenanceModel.create()
     const address = provenance.getAddress()
     assert(!address.isUnknown())
     const resolved = setAddress(tx, address)
@@ -30,19 +36,10 @@ describe('channelProducer', () => {
   test('fails on invalid actions supplied', () => {
     const tx = channelModel.create()
     const type = 'testAction'
-    assert.throws(() => txRequest(tx, { type, payload: undefined }))
-    assert.throws(() => txRequest(tx, { type, payload: { test: 'test' } }))
     assert(txRequest(tx, actionModel.create(type)))
+    assert.throws(() => txRequest(tx, { type, payload: undefined }))
     assert(txRequest(tx, actionModel.create(type, { test: 'test' })))
-  })
-  test('request', () => {
-    let tx = channelModel.create()
-    const action = actionModel.create('action1')
-    tx = txRequest(tx, action)
-    assert(channelModel.isModel(tx))
-    assert(action.equals(tx.requests[0]))
-    assert.strictEqual(Object.keys(tx.requests).length, 1)
-    assert.strictEqual(tx.requestsLength, 1)
+    assert.throws(() => txRequest(tx, { type, payload: { test: 'test' } }))
   })
   test('duplicate actions throws', () => {
     let channel = channelModel.create()
@@ -50,60 +47,61 @@ describe('channelProducer', () => {
     channel = txRequest(channel, action)
     assert.throws(() => txRequest(channel, action))
   })
+  test('request', () => {
+    let tx = channelModel.create()
+    const action = actionModel.create('action1')
+    tx = txRequest(tx, action)
+    assert(channelModel.isModel(tx))
+    assert(action.equals(tx.requests[0]))
+    assert.strictEqual(tx.requests.length, 1)
+  })
   test('multiple actions requested', () => {
     let twoActions = channelModel.create()
     twoActions = txRequest(twoActions, actionModel.create('action1'))
     twoActions = txRequest(twoActions, actionModel.create('action2'))
-    assert.strictEqual(Object.keys(twoActions.requests).length, 2)
-    assert.strictEqual(twoActions.requestsLength, 2)
+    assert.strictEqual(twoActions.requests.length, 2)
 
     let many = channelModel.create()
     let count = 0
     Array(10)
       .fill(true)
       .forEach(() => (many = txRequest(many, actionModel.create(`${++count}`))))
-    assert.strictEqual(Object.keys(many.requests).length, 10)
-    assert.strictEqual(many.requestsLength, 10)
+    assert.strictEqual(many.requests.length, 10)
   })
-  test('resolve can update previous promises', async () => {
+  test('resolve can update previous promises', () => {
     let remote = channelModel.create(addressModel.create('TEST'))
     remote = txRequest(remote, actionModel.create('action1'))
     remote = txRequest(remote, actionModel.create('action2'))
     remote = txRequest(remote, actionModel.create('action3'))
+    const [interblock] = reflect(remote)
 
-    const resolveAction = continuationModel.create('@@RESOLVE')
-    const promiseAction = continuationModel.create('@@PROMISE')
-    const interblock = await reflect(remote)
     let local = channelModel.create(interblock.provenance.getAddress())
-    local = ingestInterblock(local, interblock)
-    local = txReply(local, promiseAction)
-    local = txReply(local, promiseAction)
-    local = txReply(local, promiseAction)
-    local = txReply(local, resolveAction, 0)
+    const [nextLocal] = ingestInterblocks(local, [interblock])
+    local = nextLocal
+    // need to get the conflux out ? create an array of rxRequest models?
+    const seq = `${interblock.getChainId()}_${interblock.provenance.height}_`
 
-    assert(local.replies[0].type === resolveAction.type)
-    assert(local.replies[1].type === promiseAction.type)
-    assert(local.replies[2].type === promiseAction.type)
+    local = txReply(local, txReplyModel.create('@@PROMISE', {}, seq + 0))
+    local = txReply(local, txReplyModel.create('@@PROMISE', {}, seq + 1))
+    local = txReply(local, txReplyModel.create('@@PROMISE', {}, seq + 2))
+    local = txReply(local, txReplyModel.create('@@RESOLVE', {}, seq + 0))
 
-    local = txReply(local, resolveAction, 2)
-    assert(local.replies[0].type === resolveAction.type)
-    assert(local.replies[1].type === promiseAction.type)
-    assert(local.replies[2].type === resolveAction.type)
+    assert(local.replies['0_0'].type === '@@RESOLVE')
+    assert(local.replies['0_1'].type === '@@PROMISE')
+    assert(local.replies['0_2'].type === '@@PROMISE')
 
-    assert.strictEqual(local.requestsLength, 0)
-    assert.strictEqual(remote.requestsLength, 3)
+    local = txReply(local, txReplyModel.create('@@RESOLVE', {}, seq + 2))
+    assert(local.replies['0_0'].type === '@@RESOLVE')
+    assert(local.replies['0_1'].type === '@@PROMISE')
+    assert(local.replies['0_2'].type === '@@RESOLVE')
+
+    assert.strictEqual(local.requests.length, 0)
+    assert.strictEqual(Object.keys(local.replies).length, 3)
   })
-
-  test('rxReply returns undefined if no remote yet', () => {
-    const action = actionModel.create('RX_REPLY_TEST')
-    const dummy = actionModel.create('DUMMY')
-    let request = channelModel.create()
-    request = channelProducer.txRequest(request, dummy)
-    request = channelProducer.txRequest(request, action)
-    assert(channelModel.isModel(request))
-    assert(!request.rxReply())
-  })
-  test.todo('txReply defaults to current rxRequest if no index supplied')
+  test.todo(
+    'txReply enforces replyKey correctness'
+    // make a txReply object with bogus height and index - should throw
+  )
   test.todo('receiving same interblock twice is ignored')
   test.todo('children are made with genesis provenance preloaded')
   test.todo('series of interblocks')
@@ -119,36 +117,70 @@ describe('channelProducer', () => {
     test.todo('detect corrupted validators')
     test.todo('negotiate channel reset ?')
     test.todo('reject if channel invalid')
+    test('throws on interblock replies ahead of requests', () => {
+      const resolvedAddress = addressModel.create('test')
+      const channelBase = channelModel.create(resolvedAddress)
+      const request1 = actionModel.create('request1')
+      // TODO make a fake remote which replied out of sequence
+      // assert.throws(
+      //   () =>
+      //     channelModel.clone({
+      //       ...channelBase,
+      //       // remote: undefined,
+      //       requests: { 23: request1 },
+      //     }),
+      //   (err) => {
+      //     console.log(err)
+      //   }
+      // )
+    })
   })
 
   describe('txReply', () => {
-    test('basic', async () => {
+    test('basic', () => {
       const action = actionModel.create('REMOTE_ACTION')
       let txChannel = channelModel.create(addressModel.create('TEST'))
       txChannel = txRequest(txChannel, action)
-      const txInterblock = await reflect(txChannel)
+      const [txInterblock] = reflect(txChannel)
 
       let rxChannel = channelModel.create()
       rxChannel = setAddress(rxChannel, txInterblock.provenance.getAddress())
-      rxChannel = ingestInterblock(rxChannel, txInterblock)
-      const remoteRequest = rxChannel.rxRequest()
-      assert(remoteRequest.type === action.type)
-      const reply = continuationModel.create('@@RESOLVE', {
-        test: 'payload',
-      })
-      assert(reply.isResolve())
+      const [nextRx, rxIngested] = ingestInterblocks(rxChannel, [txInterblock])
+      rxChannel = nextRx
+      assert.strictEqual(rxIngested.length, 1)
+      assert(rxIngested[0] === txInterblock)
+
+      const rxConflux = new Conflux(rxIngested)
+      assert.strictEqual(rxConflux.rxRequests.length, 1)
+      const request = rxConflux.rxRequests[0]
+      assert.strictEqual(request.type, action.type)
+      const { sequence } = request
+      const reply = txReplyModel.create('@@RESOLVE', { t: 'p' }, sequence)
       rxChannel = txReply(rxChannel, reply)
-      assert(!rxChannel.rxRequest())
+      assert(rxChannel.replies['0_0'].isResolve())
 
-      const rxInterblock = await reflect(rxChannel)
-      txChannel = setAddress(txChannel, rxInterblock.provenance.getAddress())
-      txChannel = ingestInterblock(txChannel, rxInterblock)
+      const [rxInterblock] = reflect(rxChannel)
+      // recreate but with known rx address now
+      txChannel = channelModel.create(rxInterblock.provenance.getAddress())
+      txChannel = txRequest(txChannel, action)
+      const [nextTx, txIngested] = ingestInterblocks(txChannel, [rxInterblock])
+      txChannel = nextTx
+      assert.strictEqual(txIngested.length, 1)
+      assert(txIngested[0] === rxInterblock)
 
-      const remoteReply = txChannel.rxReply()
-      assert.deepEqual(remoteReply.payload, reply.payload)
-      assert(isReplyFor(remoteReply, action))
-      txChannel = shiftTxRequest(txChannel)
-      assert(!txChannel.rxReply())
+      const txConflux = new Conflux(txIngested)
+      assert.strictEqual(txConflux.rxRequests.length, 0)
+      assert.throws(() => txConflux.rxReplies())
+      assert.strictEqual(txConflux.requiredBlockHeights.length, 1)
+      assert.strictEqual(txConflux.requiredBlockHeights[0], 0)
+      const [, txBlock] = reflect(txChannel)
+      txConflux.inductRequestBlocks([txBlock])
+
+      assert.strictEqual(txConflux.rxReplies.length, 1)
+      const rxReply = txConflux.rxReplies[0]
+
+      assert.deepEqual(rxReply.payload, reply.payload)
+      assert(isReplyFor(rxReply, action))
     })
     test.todo('promise only valid for current action')
     test.todo('gracefully ignores replies to requests removed from the tail')
@@ -233,12 +265,12 @@ describe('stress tests', () => {
   test.todo('benchmark with fake crypto')
   test.todo('wrap around at limits of integer')
 })
-const reflect = async (transmission) => {
+const reflect = (transmission) => {
   assert(channelModel.isModel(transmission))
   const network = networkModel.create({ transmission })
   const dmz = dmzModel.create({ network })
-  const block = await blockModel.create(dmz)
+  const block = blockModel.create(dmz)
   assert(block.isVerifiedBlock())
   const interblock = interblockModel.create(block, 'transmission')
-  return interblock
+  return [interblock, block]
 }

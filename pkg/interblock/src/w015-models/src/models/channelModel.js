@@ -1,13 +1,10 @@
 import assert from 'assert-fast'
 import last from 'lodash.last'
-import { rxRequestModel, rxReplyModel } from '../transients'
 import { standardize } from '../modelUtils'
 import { addressModel } from './addressModel'
-import { actionModel } from './actionModel'
 import { continuationModel } from './continuationModel'
 import { remoteModel } from './remoteModel'
 import { channelSchema } from '../schemas/modelSchemas'
-import { reject } from '../../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:models:channel')
 
@@ -20,139 +17,51 @@ const channelModel = standardize({
     const channel = {
       ...remote,
       systemRole,
-      requestsLength: 0,
-      lineage: [],
-      lineageTip: [],
     }
     return channelModel.clone(channel)
   },
   logicize(instance) {
-    // TODO check the provenance chain
     // TODO if reset address, must clear all remote requests, else promises break
     // TODO check no duplicate requests in channel - must be distiguishable
+    // TODO why does duplicate detection in the channel matter ? isReplyFor() ?
+    // TODO check that replies keys are always consequtive, and they match
+    // the temporaryInterblocks array.  Could only be disjoint if came before
+    // the current interblocks, else must be in order, and cannot be beyond
+    // The order must match the interblocks for keys, so can walk the conflux
     const {
       address,
-      systemRole,
-      requests,
       replies,
-      heavy,
-      lineageHeight,
-      heavyHeight,
-      lineage,
-      lineageTip, // TODO test lineage integrity
-      requestsLength,
+      requests,
+      precedent,
+      systemRole,
+      rxRepliesTip,
+      tip,
+      tipHeight,
     } = instance
     const isLoopback = systemRole === '.'
 
     if (address.isUnknown()) {
       assert.strictEqual(Object.keys(replies).length, 0)
+      assert.strictEqual(typeof tip, 'undefined')
+      assert.strictEqual(typeof tipHeight, 'undefined')
     }
     // TODO if this is pierce channel, ensure only requests are OOB effects ?
-    const remote = isLoopback
-      ? remoteModel.create(instance)
-      : heavy && heavy.getRemote()
-      ? heavy.getRemote()
-      : remoteModel.create()
-    assert(remote)
+
     if (isLoopback) {
       assert(address.isLoopback())
+      assert.strictEqual(typeof tip, 'undefined')
+      assert.strictEqual(typeof tipHeight, 'undefined')
+      assert(precedent.isUnknown())
       const banned = ['@@OPEN_CHILD']
       const outs = Object.values(requests)
-      const ins = Object.values(remote.requests)
       assert(outs.every(({ type }) => !banned.includes(type)))
-      assert(ins.every(({ type }) => !banned.includes(type)))
-    }
-    if (heavy) {
-      assert(heavy.getRemote() || heavyHeight === 0)
-      assert.strictEqual(heavy.provenance.height, heavyHeight)
-      assert(lineageHeight >= heavyHeight)
-    }
-    if (lineageTip.length) {
-      const { provenance } = last(lineageTip)
-      assert.strictEqual(provenance.height, lineageHeight)
-      assert(last(lineage).equals(provenance.reflectIntegrity()))
     }
 
-    assert(lineageTip.every((interblock) => !interblock.getRemote()))
-    _checkAllInts(requests)
-    _checkAllInts(replies)
-    // TODO check requests and replies map to remote correctly
-
-    // exit point from system to covenant
-    const rxRequest = (index) => {
-      if (address.isUnknown() && !isLoopback) {
-        return
-      }
-      if (address.isInvalid()) {
-        return
-      }
-      if (!Number.isInteger(index)) {
-        index = getNextReplyIndex()
-      }
-      const request = remote.requests[index]
-      if (request) {
-        assert(actionModel.isModel(request))
-        const { type, payload } = request
-        const rxRequest = rxRequestModel.create(type, payload, address, index)
-        debug(`rxRequest ${rxRequest.type}`)
-        return rxRequest
-      }
-    }
-    // exit point from system to covenant
-    const rxReplyIndex = () => {
-      if (address.isUnknown()) {
-        return
-      }
-      const replyIndices = _getSortedIndices(remote.replies)
-      let replyIndex = replyIndices.find((index) => {
-        const reply = remote.replies[index]
-        return !reply.isPromise() && requests[index]
-      })
-      if (!Number.isInteger(replyIndex) && address.isInvalid()) {
-        // next reply is the same index as the next request
-        const requestIndices = getRequestIndices()
-        for (const index of requestIndices) {
-          const reply = remote.replies[index]
-          if (!reply || reply.isPromise()) {
-            replyIndex = index
-            break
-          }
-        }
-      }
-      return replyIndex
+    if (tip) {
+      assert(!tip.isUnknown())
+      assert(tipHeight >= 0)
     }
 
-    const rxReply = () => {
-      const index = rxReplyIndex()
-      if (!Number.isInteger(index)) {
-        return
-      }
-      assert(index >= 0, `index must be whole number`)
-      assert(requests[index], `No request for: ${index}`)
-      let replyRaw
-      if (address.isInvalid()) {
-        replyRaw = reject(new Error(`Channel invalid`))
-      } else {
-        assert(remote.replies[index], `No reply for: ${index}`)
-        replyRaw = remote.replies[index]
-      }
-      const origin = requests[index]
-      const { type, payload } = replyRaw
-      const reply = rxReplyModel.create(type, payload, origin)
-      return reply
-    }
-    const getNextReplyIndex = () => {
-      // get lowest remote request index that is higher than reply index
-      const remoteRequestIndices = _getSortedIndices(remote.requests)
-      // remoteRequestIndices.reverse()
-      for (const index of remoteRequestIndices) {
-        if (!replies[index]) {
-          return index
-        }
-      }
-    }
-    const getRemoteRequestIndices = () => _getSortedIndices(remote.requests)
-    const getRemoteReplyIndices = () => _getSortedIndices(remote.replies)
     const isTxGreaterThan = (previous) => {
       assert(channelModel.isModel(previous))
       const isAddressChanged = !previous.address.equals(address)
@@ -162,20 +71,12 @@ const channelModel = standardize({
       return isAddressChanged || isReplies || isRequests || isPromises
     }
 
-    const getRemote = () => remote
     const getOutboundPairs = () =>
-      _getSortedIndices(requests).map((i) => [requests[i], remote.replies[i]])
+      _getSortedIndices(requests).map((i) => [requests[i], replies[i]])
     const getRequestIndices = () => _getSortedIndices(requests)
 
     return {
-      rxRequest,
-      rxReply,
-      rxReplyIndex,
-      getNextReplyIndex,
-      getRemoteRequestIndices,
-      getRemoteReplyIndices,
       isTxGreaterThan,
-      getRemote,
       getOutboundPairs,
       getRequestIndices,
     }
@@ -231,7 +132,6 @@ const _getSortedIndices = (obj) => {
   indices.sort((first, second) => first - second)
   return indices
 }
-const _checkAllInts = (obj) => _getSortedIndices(obj)
 const isHigherThan = (current, previous) => {
   if (!previous.length && !current.length) {
     return false

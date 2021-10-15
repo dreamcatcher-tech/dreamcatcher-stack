@@ -12,7 +12,7 @@ import {
   covenantIdModel,
   publicKeyModel,
 } from '../../../w015-models'
-import { lockProducer, blockProducer } from '../../../w016-producers'
+import { lockProducer } from '../../../w016-producers'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import { toCryptoFunctions as cryptoFn } from '../services/cryptoFactory'
 import Debug from 'debug'

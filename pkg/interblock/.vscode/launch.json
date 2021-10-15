@@ -6,6 +6,7 @@
       "request": "launch",
       "runtimeArgs": [
         "--experimental-vm-modules",
+        "--preserve-symlinks",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
@@ -22,11 +23,12 @@
       "request": "launch",
       "runtimeArgs": [
         "--experimental-vm-modules",
+        "--preserve-symlinks",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/w020-emulators/test/emulateAwsFactory.test.js"
+        "${workspaceRoot}/src/w020-emulators/test/emulateAwsFactory.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
@@ -38,11 +40,12 @@
       "request": "launch",
       "runtimeArgs": [
         "--experimental-vm-modules",
+        "--preserve-symlinks",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/w301-user-apps/test/crm.test.js"
+        "${workspaceRoot}/src/w301-user-apps/test/crm.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
@@ -54,11 +57,29 @@
       "request": "launch",
       "runtimeArgs": [
         "--experimental-vm-modules",
+        "--preserve-symlinks",
         "--inspect=9229",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/w212-system-covenants/test/shell.test.js"
+        "${workspaceRoot}/src/w212-system-covenants/test/shell.test.js"
+      ],
+      "skipFiles": ["<node_internals>/**/*.js"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "channelProducer.test",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--experimental-vm-modules",
+        "--preserve-symlinks",
+        "--inspect=9229",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "--testTimeout=9999999",
+        "${workspaceRoot}/src/w016-producers/test/channelProducer.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",

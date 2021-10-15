@@ -12,10 +12,12 @@ const proofModel = standardize({
       assert(block.network[channelName], `missing ${channelName}`)
       proof.network = block.network.getProof()
       proof.channel = block.network[channelName].getProof()
+    } else {
+      // TODO assert if no channelName, that we want validators
     }
     return proofModel.clone(proof)
   },
-  logicize(instance) {
+  logicize() {
     return {}
   },
 })

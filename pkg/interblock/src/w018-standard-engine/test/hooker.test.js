@@ -6,7 +6,8 @@ import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:hooker')
 describe('hooker', () => {
-  test('loopback cleared immediately', async () => {
+  jest.setTimeout(500)
+  test.only('loopback cleared immediately', async () => {
     const base = await metrologyFactory()
     base.enableLogging()
     await base.spawn('loop')

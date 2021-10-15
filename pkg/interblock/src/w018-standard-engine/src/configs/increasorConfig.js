@@ -145,7 +145,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const { lock } = event.data
         if (lock) {
           assert(lockModel.isModel(lock))
-          assert(lock.block, `Missing chain locked`)
+          assert(lock.block, `Chain has no blocks`)
           isLockAcquired = !!lock.block
         }
         debug(`isLockAcquired: `, isLockAcquired)

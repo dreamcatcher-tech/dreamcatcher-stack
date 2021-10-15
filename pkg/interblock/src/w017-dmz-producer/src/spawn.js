@@ -32,7 +32,7 @@ const spawnReducer = async (dmz, originAction) => {
   replyPromise() // allows spawnReducer to be reused by deploy
   return network
 }
-const spawnReducerWithoutPromise = async (dmz, originAction) => {
+const spawnReducerWithoutPromise = (dmz, originAction) => {
   assert(dmzModel.isModel(dmz))
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
@@ -66,11 +66,6 @@ const spawnReducerWithoutPromise = async (dmz, originAction) => {
   const nextNetwork = {}
   // TODO override generate nonce to use some predictable seed, like last block
   let channel = channelModel.create(address, './')
-
-  // TODO why does this need to be here ?
-  // const childOriginProvenance = interblockModel.create(genesis)
-  // channel = channelProducer.ingestInterblock(channel, childOriginProvenance)
-
   channel = channelProducer.txRequest(channel, genesisRequest)
   if (network[alias]) {
     network[alias].getRequestIndices().forEach((index) => {

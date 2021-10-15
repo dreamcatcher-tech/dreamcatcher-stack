@@ -109,9 +109,9 @@ describe('standard model', () => {
   })
   test('objects have no functions attached as enumerable properties', () => {
     const transmission = channelModel.create()
-    assert(transmission.getRemote())
+    assert(transmission.getRequestIndices())
     for (const key in transmission) {
-      if (key === 'getRemote') {
+      if (key === 'getRequestIndices') {
         assert.fail()
       }
     }
@@ -130,7 +130,7 @@ describe('standard model', () => {
   })
   test('array items are inflated', () => {
     const address = addressModel.create('TEST')
-    const pendingRequest = rxRequestModel.create('TEST', {}, address, 0)
+    const pendingRequest = rxRequestModel.create('TEST', {}, address, 0, 0)
     const extraRequest = actionModel.create('TEST')
     const reply = rxReplyModel.create(undefined, undefined, extraRequest)
     const pending = pendingModel.clone({

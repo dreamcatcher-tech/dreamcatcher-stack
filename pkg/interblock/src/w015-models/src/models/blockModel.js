@@ -53,7 +53,7 @@ const blockModel = standardize({
       const { address } = instance.network[alias]
       return instance.provenance.getAddress().equals(address)
     })
-    assert(!isLoop, `Loop detected`)
+    assert(!isLoop, `Loop detected - use loopback address instead`)
     const { provenance, ...spreadDmz } = instance
     const dmz = dmzModel.clone(spreadDmz)
     const hash = dmz.getHash()
@@ -99,6 +99,7 @@ const blockModel = standardize({
       const isVerifiedBlock = nextBlock.isVerifiedBlock()
       const isProvenance = provenance.isNextProvenance(nextBlock.provenance)
       // TODO check if forked lineage was applied if required
+      // TODO check that channels have been emptied, and correct precedent set
       return isBlock && isVerifiedBlock && isProvenance
     }
     const getChainId = () => provenance.getAddress().getChainId()

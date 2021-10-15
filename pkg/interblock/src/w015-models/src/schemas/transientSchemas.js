@@ -21,7 +21,7 @@ const rxRequestSchema = {
     type: { type: 'string' },
     payload: { type: 'object' },
     // TODO regex on format of sequence
-    sequence: { type: 'string', pattern: '' }, // chainId_index
+    sequence: { type: 'string', pattern: '' }, // chainId_height_index
   },
 }
 
@@ -35,13 +35,15 @@ const txReplySchema = {
     type: { type: 'string', enum: ['@@REJECT', '@@PROMISE', '@@RESOLVE'] },
     payload: { type: 'object' },
     request: {
-      // kept nested so closely resembles how the api constructs actions
-      description: `Sequence created in rxRequest`,
+      // description: `Sequence created in rxRequest
+      // We destroy the alias used when sending the request and use only the chainId.
+      // kept nested so closely resembles how the api constructs actions`,
       type: 'object',
-      required: ['sequence'], // we destroy who they sent it to
+      required: ['sequence'],
       additionalProperties: false,
       properties: {
-        sequence: { type: 'string', pattern: '' }, // chainId_index
+        sequence: { type: 'string', pattern: '' }, // TODO regex for chainId_height_index
+        // TODO investigate using alias, since now have blockheight so it is definite
       },
     },
   },
@@ -59,6 +61,7 @@ const rxReplySchema = {
     payload: { type: 'object' },
     request: {
       // description: `Covenants original request, without the 'to' field`,
+      // TODO add the to field, as we can retrieve this easily since have blockheight
       type: 'object',
       required: ['type', 'payload'],
       additionalProperties: false,

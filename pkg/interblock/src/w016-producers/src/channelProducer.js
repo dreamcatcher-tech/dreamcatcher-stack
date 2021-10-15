@@ -7,84 +7,109 @@ import {
   channelModel,
   interblockModel,
   actionModel,
-  continuationModel,
+  txReplyModel,
 } from '../../w015-models'
+
 const ingestInterblocks = (channel, interblocks) => {
   assert(channelModel.isModel(channel))
   assert(Array.isArray(interblocks))
   assert(interblocks.every(interblockModel.isModel))
   interblocks = [...interblocks]
   interblocks.sort((a, b) => a.provenance.height - b.provenance.height)
+  // TODO check they are consecutive ?
+  // TODO check the precedents match correctly ?
 
-  interblocks.forEach((interblock) => {
-    channel = ingestInterblockRaw(channel, interblock)
-  })
-  return channelModel.clone(channel)
+  const ingested = []
+  for (const interblock of interblocks) {
+    const currentChannel = channel
+    // BEWARE channel is a mutable object during this loop
+    channel = _ingestInterblock(channel, interblock)
+    if (channel === currentChannel) {
+      debug(`interblock not ingested`)
+      break
+    }
+    ingested.push(interblock)
+  }
+  return [channelModel.clone(channel), ingested]
 }
-const ingestInterblock = (channel, interblock) =>
-  channelModel.clone(ingestInterblockRaw(channel, interblock))
-const ingestInterblockRaw = (channel, interblock) => {
+
+const _ingestInterblock = (channel, interblock) => {
   // TODO do some logic on the channel counts, and if they match ours ?
   // check this transmission naturally extends the remote transmission ?
   // handle validator change in lineage
   debug('ingestInterblock')
-  // TODO if genesis or config change, set the validators
   assert(interblockModel.isModel(interblock))
   assert(channel.address.equals(interblock.provenance.getAddress()))
-  const { provenance } = interblock
+  const { provenance, turnovers } = interblock
   const integrity = provenance.reflectIntegrity()
   const remote = interblock.getRemote()
-  const light = interblock.getWithoutRemote()
 
-  const lineage = [...channel.lineage]
-  const lineageTip = [...channel.lineageTip]
-  let { lineageHeight, heavy, heavyHeight, replies } = channel
+  let { rxRepliesTip, tip, tipHeight } = channel
+  assert(_rxRepliesTipHeight(rxRepliesTip) <= provenance.height)
 
-  const pushLight = () => {
-    lineage.push(integrity)
-    lineageTip.push(light)
-    lineageHeight = provenance.height
-    debug(`ingested lineage: ${provenance.height}`)
+  if (tip && !remote.precedent.equals(tip)) {
+    return channel
   }
-  const pushHeavy = () => {
-    heavy = interblock
-    heavyHeight = provenance.height
-    assert(remote || provenance.address.isGenesis())
-    if (remote) {
-      const { requests } = remote
-      const remoteRequestsKeys = Object.keys(requests)
-      const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
-      replies = reducedReplies
-      debug(`ingested heavy: ${provenance.height}`)
-    }
-  }
-  const lastLineage = last(channel.lineageTip)
-  if (!lastLineage) {
+  if (remote.precedent.isUnknown()) {
+    debug(`precedent unknown`)
+    assert.strictEqual(typeof tip, 'undefined')
+    assert.strictEqual(typeof rxRepliesTip, 'undefined')
     if (provenance.address.isGenesis()) {
-      debug(`ingesting genesis`)
-      pushLight()
-      pushHeavy()
+      assert(!turnovers)
+    } else {
+      assert(Array.isArray(turnovers))
+      assert(turnovers.length)
+      const genesis = turnovers[0]
+      assert(genesis.provenance.address.isGenesis())
+      assert(genesis.provenance.getAddress().equals(channel.address))
+      // TODO handle validators changing at any point
     }
-  } else if (lastLineage.provenance.isNextProvenance(provenance)) {
-    pushLight()
   }
-  if (remote && heavy) {
-    if (provenance.height > heavy.provenance.height) {
-      if (lineage.some((parent) => parent.equals(integrity))) {
-        // if can access prior blocks easily, can avoid the 'lineage' key
-        pushHeavy()
+  rxRepliesTip = _getRxRepliesTip(rxRepliesTip, remote.replies)
+  tip = integrity
+  tipHeight = provenance.height
+  const nextChannel = {
+    ...channel,
+    tip,
+    tipHeight,
+  }
+  if (rxRepliesTip) {
+    nextChannel.rxRepliesTip = rxRepliesTip
+  }
+  return nextChannel
+}
+const _getRxRepliesTip = (rxRepliesTip, replies) => {
+  const keys = Object.keys(replies)
+  if (!keys.length) {
+    return rxRepliesTip
+  }
+  const parse = (key) => {
+    if (!key) {
+      return { height: -1, index: -1 }
+    }
+    const [sHeight, sIndex] = key.split('_')
+    return { height: parseInt(sHeight), index: parseInt(sIndex) }
+  }
+  let { height: mHeight, index: mIndex } = parse(rxRepliesTip)
+  for (const key of keys) {
+    const { height, index } = parse(key)
+    if (height >= mHeight) {
+      if (index > mIndex) {
+        mHeight = height
+        mIndex = index
       }
     }
   }
-  return {
-    ...channel,
-    lineage,
-    lineageTip,
-    lineageHeight,
-    heavy,
-    heavyHeight,
-    replies,
+  if (mHeight === -1) {
+    return rxRepliesTip
   }
+  return `${mHeight}_${mIndex}`
+}
+const _rxRepliesTipHeight = (rxRepliesTip) => {
+  if (!rxRepliesTip) {
+    return -1
+  }
+  return parseInt(rxRepliesTip.split('_').pop())
 }
 const ingestPierceInterblock = (channel, interblock) => {
   // special ingestion that avoids checks of previous blocks
@@ -121,52 +146,58 @@ const setAddress = (channel, address) => {
   return channelModel.clone({ ...channel, address })
 }
 
+// --------------- REMOVE LINEAGE ---------------
+
+// TODO check requests and replies map to remote correctly
+
 // entry point for covenant into system
 const txRequest = (channel, action) => {
   debug('txRequest')
   assert(actionModel.isModel(action), `must supply request object`)
   // TODO decide if should allow actions to initiate channels just by asking to talk to them
-  // may cause problems during promises if channel removed, then replayed
-  const requestActions = Object.values(channel.requests)
-  const isDuplicate = requestActions.some((request) => request.equals(action))
+  // TODO use immutable map to detect duplicates faster
+  let { requests } = channel
+  const isDuplicate = requests.some((request) => request.equals(action))
   if (isDuplicate) {
-    // TODO copy this logic in the model
-    const msg = `Duplicate request found: ${action.type}.  All requests must be distinguishable from each other`
+    // TODO move this logic into the channelModel
+    const msg =
+      `Duplicate request found: ${action.type}. ` +
+      `All requests must be distinguishable from each other else ` +
+      `isReplyFor( action ) will not work`
     throw new Error(msg)
   }
-  let { requestsLength, requests } = channel
-  requests = { ...requests, [requestsLength]: action }
-  // TODO remove requestsLength and simply use highest known index
-  requestsLength++
-  return channelModel.clone({ ...channel, requests, requestsLength })
+  requests = [...requests, action]
+  return channelModel.clone({ ...channel, requests })
 }
 
 // entry point for covenant into system
-const txReply = (channel, reply, replyIndex) => {
-  assert(continuationModel.isModel(reply), `must supply reply object`)
-  const nextReplyIndex = channel.getNextReplyIndex()
-  // TODO replies during promises needs to be deduplicated
-  replyIndex = Number.isInteger(replyIndex) ? replyIndex : nextReplyIndex
-  assert(Number.isInteger(replyIndex), `replyIndex not a number`)
-  const highestRequest = last(channel.getRemoteRequestIndices())
-  assert(Number.isInteger(highestRequest), `highestRequest not a number`)
-  const isInbounds = replyIndex >= 0 && replyIndex <= highestRequest
-  assert(isInbounds, `replyIndex out of bounds: ${replyIndex}`)
-  assert(channel.getRemote().requests[replyIndex], `no remote requests`)
+const txReply = (channel, txReply) => {
+  assert(channelModel.isModel(channel))
+  assert(txReplyModel.isModel(txReply), `must supply reply object`)
+  // TODO how to check that replies sequence is correct ? checked on
+  // other side only ?
+  const replyKey = txReply.getReplyKey()
+  if (channel.replies[replyKey]) {
+    assert.strictEqual(channel.replies[replyKey].type, '@@PROMISE')
+  }
 
   let { replies } = channel
-  const existingReply = replies[replyIndex]
-  const isTip = nextReplyIndex === replyIndex
-  if (existingReply && !existingReply.isPromise()) {
-    throw new Error(`Can only settle previous promises: ${replyIndex}`)
+  const existingReply = replies[replyKey]
+  if (existingReply) {
+    if (!existingReply.isPromise()) {
+      throw new Error(`Can only settle previous promises: ${replyKey}`)
+    }
   }
+  const isTip = _isTip(replyKey, replies)
+  const reply = txReply.getReply()
   if (reply.isPromise() && !isTip) {
-    throw new Error(`Can only promise for current action: ${replyIndex}`)
+    _isTip(replyKey, replies)
+    throw new Error(`Can only promise for tip action: ${replyKey}`)
   }
   if (!existingReply && !isTip) {
-    throw new Error(`Can only settle directly with tip: ${reply}`)
+    throw new Error(`Can only settle synchronously with tip: ${replyKey}`)
   }
-  replies = { ...replies, [replyIndex]: reply }
+  replies = { ...replies, [replyKey]: reply }
   return channelModel.clone({ ...channel, replies })
 }
 
@@ -206,9 +237,112 @@ const invalidate = (channel) => {
   const invalid = addressModel.create('INVALID')
   return setAddress(channel, invalid)
 }
+
+// exit point from system to covenant
+const rxRequest = (index) => {
+  if (address.isUnknown() && !isLoopback) {
+    return
+  }
+  if (address.isInvalid()) {
+    return
+  }
+  if (!Number.isInteger(index)) {
+    index = getNextReplyIndex()
+  }
+  const request = remote.requests[index]
+  if (request) {
+    assert(actionModel.isModel(request))
+    const { type, payload } = request
+    const rxRequest = rxRequestModel.create(type, payload, address, index)
+    debug(`rxRequest ${rxRequest.type}`)
+    return rxRequest
+  }
+}
+// exit point from system to covenant
+const rxReplyIndex = () => {
+  if (address.isUnknown()) {
+    return
+  }
+  const replyIndices = _getSortedIndices(remote.replies)
+  let replyIndex = replyIndices.find((index) => {
+    const reply = remote.replies[index]
+    return !reply.isPromise() && requests[index]
+  })
+  if (!Number.isInteger(replyIndex) && address.isInvalid()) {
+    // next reply is the same index as the next request
+    const requestIndices = getRequestIndices()
+    for (const index of requestIndices) {
+      const reply = remote.replies[index]
+      if (!reply || reply.isPromise()) {
+        replyIndex = index
+        break
+      }
+    }
+  }
+  return replyIndex
+}
+
+const rxReply = () => {
+  const index = rxReplyIndex()
+  if (!Number.isInteger(index)) {
+    return
+  }
+  assert(index >= 0, `index must be whole number`)
+  assert(requests[index], `No request for: ${index}`)
+  let replyRaw
+  if (address.isInvalid()) {
+    replyRaw = reject(new Error(`Channel invalid`))
+  } else {
+    assert(remote.replies[index], `No reply for: ${index}`)
+    replyRaw = remote.replies[index]
+  }
+  const origin = requests[index]
+  const { type, payload } = replyRaw
+  const reply = rxReplyModel.create(type, payload, origin)
+  return reply
+}
+const getNextReplyIndex = () => {
+  // get lowest remote request index that is higher than reply index
+  const remoteRequestIndices = _getSortedIndices(remote.requests)
+  // remoteRequestIndices.reverse()
+  for (const index of remoteRequestIndices) {
+    if (!replies[index]) {
+      return index
+    }
+  }
+}
+
+const _isTip = (replyKey, replies) => {
+  assert.strictEqual(typeof replyKey, 'string')
+  assert.strictEqual(typeof replies, 'object')
+  const keys = Object.keys(replies)
+  if (!keys.length) {
+    return true
+  }
+  let [maxHeight, maxIndex] = _splitParse(keys[0])
+  for (const key of keys) {
+    const [height, index] = _splitParse(key)
+    if (height > maxHeight || (height === maxHeight && index > maxIndex)) {
+      maxHeight = height
+      maxIndex = index
+    }
+  }
+  const [replyHeight, replyIndex] = _splitParse(replyKey)
+  if (replyHeight === maxHeight) {
+    return replyIndex === maxIndex + 1
+  }
+  if (replyHeight === maxHeight + 1) {
+    return replyIndex === 0
+  }
+  return false
+}
+const _splitParse = (replyKey) => {
+  const [height, index] = replyKey.split('_')
+  return [parseInt(height), parseInt(index)]
+}
+
 export {
   ingestInterblocks,
-  ingestInterblock,
   ingestPierceInterblock,
   setAddress,
   txRequest,

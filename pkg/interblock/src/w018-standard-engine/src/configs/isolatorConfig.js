@@ -29,7 +29,7 @@ const pierceKeypair = keypairModel.create(
 const isReduceable = ({ dmz }) => {
   // TODO check the time available, probably as a parallel transition
   assert(dmzModel.isModel(dmz))
-  const isReduceable = dmz.rx()
+  const isReduceable = dmz.rx() //
   debug(`isReduceable`, isReduceable && isReduceable.event.type)
   return !!isReduceable
 }
@@ -306,6 +306,8 @@ const createConfig = (isolation, consistency) => ({
     reduce: async ({ dmz, containerId }) => {
       assert(dmzModel.isModel(dmz))
       assert(dmz.rx())
+      // TODO make an action that selects either a conflux reply, a buffered
+      // request, or the next conflux request
       // TODO rename anvil to externalAction
       const { event: externalAction, channel } = dmz.rx()
       debug(`reduce: `, externalAction.type)

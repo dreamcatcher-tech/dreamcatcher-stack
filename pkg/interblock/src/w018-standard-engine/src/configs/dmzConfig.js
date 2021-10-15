@@ -6,7 +6,7 @@ import {
   reductionModel,
   addressModel,
 } from '../../../w015-models'
-import * as dmzReducer from '../../../w017-dmz-producer'
+import * as dmzProducer from '../../../w017-dmz-producer'
 import { _hook as hook } from '../../../w002-api'
 import { dmzMachine } from '../machines'
 import { common } from './common'
@@ -65,7 +65,7 @@ const config = {
       assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
       debug(`reduceSystem anvil: %o`, anvil.type)
       // TODO move to be same code as isolateFactory
-      const tick = () => dmzReducer.reducer(dmz, anvil)
+      const tick = () => dmzProducer.reducer(dmz, anvil)
       const accumulator = []
       const salt = `TODO` // TODO make salt depend on something else, like the io channel index
       const reduceResolve = await hook(tick, accumulator, salt)
