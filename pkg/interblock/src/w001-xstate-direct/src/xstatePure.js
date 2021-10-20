@@ -91,14 +91,15 @@ const pure = async (event, definition, config = {}) => {
     if (invoke) {
       debug(`asyncFunction name: %o`, node.invoke.src)
       const asyncFunction = config.services[invoke.src]
-      assert.strictEqual(typeof asyncFunction, 'function')
+      const msg = `missing function: ${invoke.src}`
+      assert.strictEqual(typeof asyncFunction, 'function', msg)
       try {
         const data = await asyncFunction(contextMgr.getContext(), event)
         event = { type: `done.invoke.${invoke.src}`, data }
         state = resolveTransition(state, event)
         return { state, event }
       } catch (data) {
-        console.log('error in invoke:', data) // TODO these errors are supposed to bubble up somewhere
+        // console.log('error in invoke:', data)
         debug(`invoke error: %o`, data.message)
         event = { type: `error.invoke.${invoke.src}`, data }
         state = resolveTransition(state, event)

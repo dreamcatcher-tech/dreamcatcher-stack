@@ -291,27 +291,6 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     return db.delPierce(toDeleteItems)
   }
 
-  const getLineage = async ({ provenance, height = 0 }) => {
-    debug(`getLineage from height: `, height)
-    assert(provenanceModel.isModel(provenance))
-    assert(Number.isInteger(height) && height >= 0)
-    assert(height < provenance.height)
-    const address = provenance.getAddress()
-    const blocks = []
-    // TODO allow multiple lineage paths - choose shortest
-    let shortestHeight
-    let nextProvenance = provenance
-    do {
-      shortestHeight = nextProvenance.getShortestHeight()
-      const block = await getBlock({ address, height: shortestHeight })
-      assert(blockModel.isModel(block))
-      blocks.push(block)
-      nextProvenance = block.provenance
-    } while (shortestHeight > height)
-    const lineage = blocks.map((block) => interblockModel.create(block))
-    return lineage
-  }
-
   const getIsAnyAffected = async (interblock) => {
     assert(interblockModel.isModel(interblock))
     const chainId = interblock.provenance.getAddress().getChainId()
@@ -421,6 +400,15 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     debug(`getBlock complete`)
     return block
   }
+  const getBlocks = async ({ address, heights }) => {
+    assert(addressModel.isModel(address))
+    assert(Array.isArray(heights))
+    assert(heights.every((height) => Number.isInteger(height) && height >= 0))
+    debug(`getBlocks heights.length: `, heights.length)
+    const awaits = heights.map((height) => getBlock({ address, height }))
+    const blocks = await Promise.all(awaits)
+    return blocks
+  }
 
   const _getBaseAddress = async () => {
     debug(`getBaseAddress`)
@@ -477,11 +465,11 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     putLockChain,
     putUnlockChain,
 
-    getLineage,
     getIsAnyAffected,
     getAffected,
     getIsPresent,
     getBlock,
+    getBlocks,
 
     putPoolInterblock,
     putPierceRequest,

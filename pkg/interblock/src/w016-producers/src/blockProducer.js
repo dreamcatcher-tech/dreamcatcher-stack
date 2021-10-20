@@ -16,12 +16,11 @@ const generateUnsigned = (nextDmz, block) => {
   const provenance = generateNextProvenance(nextDmz, block)
   return blockModel.clone({ ...nextDmz, provenance })
 }
-const generatePierceBlock = (pierceDmz, block) => {
-  const ioChannel = block.network['.@@io']
+const generatePierceBlock = (pierceDmz, targetBlock) => {
+  const ioChannel = targetBlock.network['.@@io']
   if (ioChannel) {
-    assert(ioChannel.heavy.provenance)
-    const parentProvenance = ioChannel.heavy.provenance
-    const provenance = generatePierceProvenance(pierceDmz, parentProvenance)
+    const { tipHeight, address } = ioChannel
+    const provenance = generatePierceProvenance(pierceDmz, address, tipHeight)
     return blockModel.clone({ ...pierceDmz, provenance })
   }
   return blockModel.create(pierceDmz)

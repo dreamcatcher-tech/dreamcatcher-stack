@@ -51,8 +51,7 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
   if (alias === '.' || alias === '..') {
     throw new Error(`Alias uses reserved name: ${alias}`)
   }
-  const channelUnused = !network[alias] || network[alias].address.isUnknown()
-  if (!channelUnused) {
+  if (network[alias]) {
     throw new Error(`childAlias exists: ${alias}`)
   }
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
@@ -64,15 +63,8 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
   const address = genesis.provenance.getAddress()
 
   const nextNetwork = {}
-  // TODO override generate nonce to use some predictable seed, like last block
   let channel = channelModel.create(address, './')
   channel = channelProducer.txRequest(channel, genesisRequest)
-  if (network[alias]) {
-    network[alias].getRequestIndices().forEach((index) => {
-      const action = network[alias].requests[index]
-      channel = channelProducer.txRequest(channel, action)
-    })
-  }
   nextNetwork[alias] = channel
   return network.merge(nextNetwork)
 }

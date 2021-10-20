@@ -58,14 +58,14 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
   const pierce = async (rawType, rawPayload) => {
     let { type, payload = {} } = request(rawType, rawPayload)
     assert(!payload['__@@ioSequence'])
-    const sequence = `${dispatchCounter++} ${id}`
-    debug(`pierce: %s id: %o`, type, sequence)
+    const ioSequence = `${dispatchCounter++} ${id}`
+    debug(`pierce: %s id: %o`, type, ioSequence)
 
-    payload = { ...payload, '__@@ioSequence': sequence }
+    payload = { ...payload, '__@@ioSequence': ioSequence }
     const chainId = address.getChainId()
     const txRequest = txRequestModel.create(type, payload, chainId)
     const { promise, callbacks } = generateDispatchPromise()
-    promises.set(sequence, callbacks)
+    promises.set(ioSequence, callbacks)
     const updatePending = async () => {
       if (pendingCount === 0) {
         const pendingSwitchingHigh = true
@@ -86,7 +86,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
     }
     updatePending()
     await consistency.putPierceRequest({ txRequest })
-    await sqsIncrease.push(address)
+    await sqsIncrease.pushDirect(address) // pushDirect to surface rejections
     return promise
   }
   const subscribers = new Set()

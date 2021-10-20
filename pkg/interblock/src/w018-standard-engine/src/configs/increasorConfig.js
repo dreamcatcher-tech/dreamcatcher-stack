@@ -121,14 +121,11 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         },
       }),
       assignTxInterblocks: assign({
-        txInterblocks: ({ block, lock }) => {
+        txInterblocks: ({ block }) => {
           debug(`txInterblocks`)
-          const previous = lock.block
           assert(blockModel.isModel(block))
-          assert(blockModel.isModel(previous))
           assert(!block.provenance.address.isGenesis())
-          const previousNetwork = previous.network
-          const txAliases = block.network.txInterblockAliases(previousNetwork)
+          const txAliases = block.network.txInterblockAliases()
           const interblocks = txAliases.map((alias) =>
             interblockModel.create(block, alias)
           )
@@ -213,7 +210,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const { network } = nextDmz
         assert(lock.block, 'increasor never makes a new chain')
         const previousNetwork = lock.block.network
-        const txChanged = network.txInterblockAliases(previousNetwork)
+        const txChanged = network.txInterblockAliases()
         const pierceChanged = _isPierceChanged(network, previousNetwork)
         const isDmzTransmitting = txChanged.length || pierceChanged
         debug(`isDmzTransmitting: ${isDmzTransmitting}`)
@@ -242,10 +239,10 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const lock = await consistency.putLockChain(address)
         return { lock }
       },
-      isolatedExecution: async ({ lock, cachedDmz }) => {
+      isolatedExecution: async ({ lock }) => {
         const execute = {
           type: 'EXECUTE_COVENANT',
-          payload: { lock, cachedDmz },
+          payload: { lock },
         }
         const { machine, config } = isolatorMachine
         const isolatedExecution = () => pure(execute, machine, config)

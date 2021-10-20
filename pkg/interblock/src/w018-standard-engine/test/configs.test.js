@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import * as configObj from '../src/configs'
+import * as configs from '../src/configs'
 
 describe('configs', () => {
   test('all config function names are present in the machines', () => {
@@ -26,7 +26,7 @@ describe('configs', () => {
     for (const name in machineArgs) {
       const args = machineArgs[name]
       const configName = name + `Config`
-      const { machine, config } = configObj[configName](...args)
+      const { machine, config } = configs[configName](...args)
       const json = JSON.stringify(machine)
       assert.deepEqual(missingKeys(config.actions, json), [], name)
       assert.deepEqual(missingKeys(config.guards, json), [], name)

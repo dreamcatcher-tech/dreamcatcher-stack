@@ -109,9 +109,9 @@ describe('standard model', () => {
   })
   test('objects have no functions attached as enumerable properties', () => {
     const transmission = channelModel.create()
-    assert(transmission.getRequestIndices())
+    assert(transmission.isTransmitting)
     for (const key in transmission) {
-      if (key === 'getRequestIndices') {
+      if (key === 'isTransmitting') {
         assert.fail()
       }
     }

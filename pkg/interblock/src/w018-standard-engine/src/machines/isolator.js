@@ -34,93 +34,131 @@ const definition = {
   context: {
     lock: undefined,
     dmz: undefined,
-    interblock: undefined,
+    interblocks: undefined,
     containerId: undefined,
-    isolation: () => 'isolation function',
+    isolation: () => 'isolated execution function',
     pierceDmz: undefined,
-    hasPierced: false,
+    pierceBlock: undefined,
+    rxIndex: 0,
+    rxAction: undefined,
   },
   strict: true,
   states: {
     idle: {
       on: {
         EXECUTE_COVENANT: {
-          target: 'isGenesis',
-          actions: ['assignLock', 'assignDmz'],
+          target: 'isPierceable',
+          actions: ['assignLock', 'assignDmz', 'assignInterblocks'],
         },
       },
     },
+    isPierceable: {
+      always: [
+        { target: 'pierce', cond: 'isPierceable' },
+        { target: 'isGenesis' },
+      ],
+    },
     isGenesis: {
       always: [
-        { target: 'attachParentLineage', cond: 'isGenesis' },
-        { target: 'isDmzChangeable' },
+        {
+          target: 'ingestInterblocks',
+          actions: 'connectToParent',
+          cond: 'isGenesis',
+        },
+        { target: 'ingestInterblocks' },
       ],
     },
-    attachParentLineage: {
-      entry: ['assignGenesisInterblock', 'connectToParent'],
-      invoke: {
-        src: 'fetchParentLineage',
-        // TODO handle lineage check fail ? or just throw
-        onDone: { target: 'isDmzChangeable', cond: 'verifyLineage' },
-      },
-      exit: 'ingestParentLineage',
-    },
-    isDmzChangeable: {
+    ingestInterblocks: {
       entry: 'ingestInterblocks',
-      always: [
-        { target: 'loadCovenant', cond: 'isDmzChangeable' },
-        { target: 'done' },
-      ],
+      always: 'prepareIsolation',
     },
-    loadCovenant: {
-      invoke: {
-        src: 'loadCovenant',
-        onDone: { target: 'isReduceable', actions: 'assignContainerId' },
-        onError: 'error',
+    prepareIsolation: {
+      type: 'parallel',
+      states: {
+        loadCovenant: {
+          initial: 'loadCovenant',
+          states: {
+            loadCovenant: {
+              invoke: {
+                src: 'loadCovenant',
+                onDone: { target: 'done', actions: 'assignContainerId' },
+              },
+            },
+            done: { type: 'final' },
+          },
+        },
+        fetchRequestBlocks: {
+          initial: 'isRequestBlocksRequired',
+          states: {
+            isRequestBlocksRequired: {
+              always: [
+                {
+                  target: 'fetchRequestBlocks',
+                  cond: 'isRequestBlocksRequired',
+                },
+                { target: 'done' },
+              ],
+            },
+            fetchRequestBlocks: {
+              invoke: {
+                src: 'fetchRequestBlocks',
+                onDone: { target: 'done', actions: 'inductRequestBlocks' },
+              },
+            },
+            done: { type: 'final' },
+          },
+        },
       },
+      onDone: { target: 'exhaust' },
     },
-    isReduceable: {
-      always: [
-        // check if the message system is enabled, enable if so
-        { target: 'reduce', cond: 'isReduceable' },
-        { target: 'pierce', cond: 'isPiercable' },
-        { target: 'isCovenantUnloadable' },
-        // disable the messaging system if it was enabled
-      ],
-    },
-    reduce: {
-      // TODO run repeatedly with timer, sending updates to parent each time
-      invoke: {
-        src: 'reduce',
-        onDone: { target: 'isReduceable', actions: 'updateDmz' },
-        onError: 'error',
+    exhaust: {
+      initial: 'isReduceable',
+      states: {
+        isReduceable: {
+          entry: 'selectAction',
+          always: [
+            // check if the isolation message system is enabled, enable if so
+            { target: 'reduce', cond: 'isReduceable' },
+            { target: 'done' },
+            // disable the messaging system if it was enabled
+          ],
+          exit: 'incrementRxIndex',
+        },
+        reduce: {
+          // TODO run repeatedly with timer, sending updates to parent each time
+          invoke: {
+            src: 'reduce',
+            onDone: { target: 'isReduceable', actions: 'updateDmz' },
+          },
+        },
+        done: { type: 'final' },
       },
+      onDone: 'isCovenantUnloadable',
     },
+
     pierce: {
       initial: 'generatePierceDmz',
       states: {
         generatePierceDmz: {
-          entry: ['assignHasPierced', 'generatePierceDmz'],
+          entry: ['generatePierceDmz', 'generatePierceBlock'],
+          always: 'isPierceChannelUnopened',
+          exit: 'pushPierceInterblock',
+        },
+        isPierceChannelUnopened: {
           always: [
-            { target: 'signPierceDmz', cond: 'isPierceDmzChanged' },
-            { target: 'signPierceDmz', cond: 'isPierceChannelUnopened' },
+            {
+              target: 'done',
+              cond: 'isPierceChannelUnopened',
+              actions: 'openPierceChannel',
+            },
             { target: 'done' },
           ],
-        },
-        signPierceDmz: {
-          invoke: {
-            src: 'signPierceDmz',
-            onDone: {
-              target: 'done',
-              actions: ['openPierceChannel', 'ingestPierceBlock'],
-            },
-          },
         },
         done: {
           type: 'final',
         },
       },
-      onDone: 'isReduceable',
+      onDone: 'isGenesis',
     },
     isCovenantUnloadable: {
       always: [

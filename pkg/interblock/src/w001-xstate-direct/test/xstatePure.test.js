@@ -1,7 +1,9 @@
-import { assert } from 'chai/index.mjs'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import Debug from 'debug'
 import { interpret, Machine, assign } from 'xstate'
 import { pure } from '..'
+chai.use(chaiAsPromised)
 
 const debug = Debug('interblock:tests:xstatePure')
 Debug.enable()
@@ -14,7 +16,11 @@ const definition = {
   states: {
     idle: {
       entry: 'hello',
-      on: { TICK: 'asyncCall', ERROR: 'errorAsyncCall' },
+      on: {
+        TICK: 'asyncCall',
+        ERROR: 'errorAsyncCall',
+        UNHANDLED: 'errorAsyncUnhandled',
+      },
     },
     asyncCall: {
       invoke: { src: 'asyncCall', onDone: 'process' },
@@ -24,6 +30,12 @@ const definition = {
         src: 'asyncError',
         onDone: { target: 'process', actions: 'bomb' },
         onError: { target: 'process', actions: 'logError' },
+      },
+    },
+    errorAsyncUnhandled: {
+      invoke: {
+        src: 'asyncError',
+        onDone: { target: 'process' },
       },
     },
     process: {
@@ -179,5 +191,12 @@ describe('baseline', () => {
     const result = await pure('ERROR', definition, config)
     debug(`test result: `, result)
     assert.strictEqual(result.message, 'asyncError')
+  })
+  test('pure xstate with unhandled error', async () => {
+    debug('')
+    debug('')
+    debug('')
+    debug('')
+    await assert.isRejected(pure('UNHANDLED', definition, config))
   })
 })

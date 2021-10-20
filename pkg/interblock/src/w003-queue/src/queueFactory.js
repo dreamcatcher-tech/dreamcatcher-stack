@@ -147,7 +147,7 @@ const sqsQueueFactory = (name, model) => {
    */
   const pushDirect = queue.push
   let _sqsProcessor = (action) => {
-    // push without waiting - this is the purpose of sqs queues
+    // push without waiting for the calculation is the purpose of sqs queues
     queue.push(action)
   }
 

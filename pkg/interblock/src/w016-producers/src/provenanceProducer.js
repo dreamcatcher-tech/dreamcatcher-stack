@@ -56,18 +56,15 @@ const addSignature = (provenance, signature) => {
   assert(!provenance.signatures.length, `temporarily single sign only`)
   return provenanceModel.clone({ ...provenance, signatures: [signature] })
 }
-const generatePierceProvenance = (pierceDmz, parentProvenance) => {
+const generatePierceProvenance = (pierceDmz, address, parentHeight) => {
   assert(dmzModel.isModel(pierceDmz))
-  assert(provenanceModel.isModel(parentProvenance))
-
-  // TODO assert validator is only the PIERCE key, and public key matches
-  // signs with a predetermined key, since no point invoking crypto on pierce
+  assert(addressModel.isModel(address))
+  assert(Number.isInteger(parentHeight))
+  assert(parentHeight >= 0)
 
   const dmzIntegrity = integrityModel.create(pierceDmz.getHash())
-  const parentIntegrity = parentProvenance.reflectIntegrity()
-  const lineage = { [parentProvenance.height]: parentIntegrity }
-  const address = parentProvenance.getAddress()
-  const height = parentProvenance.height + 1
+  const height = parentHeight + 1
+  const lineage = { 0: address.chainId }
   const nextProvenance = {
     dmzIntegrity,
     height,

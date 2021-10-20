@@ -12,6 +12,7 @@ import {
   txRequestModel,
   txReplyModel,
   configModel,
+  Conflux,
 } from '../../w015-models'
 import * as channelProducer from './channelProducer'
 import Debug from 'debug'
@@ -27,17 +28,20 @@ const debug = Debug('interblock:producers:network')
  * Requisite that this funcion is called once per blockmaking, as it purges lineage
  */
 const ingestInterblocks = (network, interblocks = [], config) => {
-  interblocks = _cloneArray(interblocks, interblockModel.clone) // TODO remove ?
+  assert(networkModel.isModel(network))
+  assert(Array.isArray(interblocks))
+  assert(interblocks.every(interblockModel.isModel))
   assert(configModel.isModel(config))
 
-  const perChainMap = displaceLightWithHeavy(interblocks)
+  const addressMap = _generateAddressMap(interblocks)
   const nextNetwork = {}
-  for (const address of perChainMap.keys()) {
+  const ingestedInterblocks = []
+  for (const address of addressMap.keys()) {
     const alias = network.getAlias(address)
     // TODO split handling opening public channel into seperate function call
     const isPublic = config.isPublicChannelOpen
-    const interblocks = Array.from(perChainMap.get(address).values())
-    const firstInterblock = interblocks[0]
+    const channelInterblocks = addressMap.get(address)
+    const firstInterblock = channelInterblocks[0]
     if (!alias && isPublic && firstInterblock.isConnectionAttempt()) {
       debug(`connection attempt accepted`)
       const name = `@@PUBLIC_${address.getChainId()}`
@@ -45,52 +49,23 @@ const ingestInterblocks = (network, interblocks = [], config) => {
       const accept = actionModel.create({ type: '@@ACCEPT' })
       const acceptChannel = channelModel.clone({
         ...blankChannel,
-        requests: { 0: accept },
+        requests: [accept],
       })
       nextNetwork[name] = acceptChannel
-    }
-    if (alias) {
+    } else if (alias) {
       let channel = nextNetwork[alias] || network[alias]
       assert(channelModel.isModel(channel))
-      channel = channelProducer.ingestInterblocks(channel, interblocks)
-      if (firstInterblock.isConnectionResponse()) {
-        // TODO assertion tests on state of channel - can be any of the interblocks in the array ?
-      }
-      if (!channel.heavy || channel.equals(network[alias])) {
-        continue
-      }
+      const [nextChannel, ingested] = channelProducer.ingestInterblocks(
+        channel,
+        channelInterblocks
+      )
+      channel = nextChannel
+      ingestedInterblocks.push(...ingested)
       nextNetwork[alias] = channel
     }
   }
 
-  network.getAliases().forEach((alias) => {
-    // trim lineageTip to only the last one from the previous block
-    const original = network[alias]
-    if (!original || !original.address.isResolved() || !original.heavy) {
-      return
-    }
-    let channel = nextNetwork[alias] || original
-
-    const purgeableTips = original.lineageTip.slice(0, -1)
-    const lineageTip = without(channel.lineageTip, ...purgeableTips)
-
-    // trim lineage to start with heavy, or lineageTip
-    const heavyIndex = channel.lineage.findIndex((integrity) =>
-      integrity.equals(channel.heavy.provenance.reflectIntegrity())
-    )
-    const lineageTipIndex = channel.lineage.findIndex((integrity) =>
-      integrity.equals(lineageTip[0].provenance.reflectIntegrity())
-    )
-    const minIndex = heavyIndex < lineageTipIndex ? heavyIndex : lineageTipIndex
-    assert(minIndex >= 0, `minIndex out of bounds`)
-    const lineage = channel.lineage.slice(minIndex)
-    // TODO try avoid clone and do purge at same time as ingest
-    channel = channelModel.clone({ ...channel, lineage, lineageTip })
-    if (!channel.equals(original)) {
-      nextNetwork[alias] = channel
-    }
-  })
-  return network.merge(nextNetwork)
+  return [network.merge(nextNetwork), new Conflux(ingestedInterblocks)]
   // TODO close all timed out connection attempts
 }
 
@@ -180,12 +155,6 @@ const tx = (network, requests, replies) => {
   return network.merge(nextNetwork)
 }
 
-const _cloneArray = (toBeArray, cloneFunction) => {
-  if (!Array.isArray(toBeArray)) {
-    toBeArray = [toBeArray]
-  }
-  return toBeArray.map(cloneFunction)
-}
 const invalidateLocal = (network) => {
   // TODO what is this even for ?
   const nextNetwork = {}
@@ -238,25 +207,18 @@ const removeBufferPromise = (network, request) => {
   const nextNetwork = network.merge({ [alias]: nextChannel })
   return nextNetwork
 }
-const displaceLightWithHeavy = (interblocks) => {
-  // TODO remove this function when remotechains is implemented
-  const perChainMap = new Map()
-  interblocks.forEach((interblock) => {
+const _generateAddressMap = (interblocks) => {
+  const chainMap = new Map()
+  for (const interblock of interblocks) {
     const address = interblock.provenance.getAddress()
-    if (!perChainMap.get(address)) {
-      perChainMap.set(address, new Map())
+    if (!chainMap.get(address)) {
+      chainMap.set(address, [])
     }
-    const displaced = perChainMap.get(address)
-    const height = interblock.provenance.height
-    if (displaced.has(height)) {
-      if (interblock.getOriginAlias()) {
-        displaced.set(height, interblock)
-      }
-    } else {
-      displaced.set(height, interblock)
-    }
-  })
-  return perChainMap
+    const channelInterblocks = chainMap.get(address)
+    channelInterblocks.push(interblock)
+    channelInterblocks.sort((a, b) => a.provenance.height - b.provenance.height)
+  }
+  return chainMap
 }
 export {
   ingestInterblocks,

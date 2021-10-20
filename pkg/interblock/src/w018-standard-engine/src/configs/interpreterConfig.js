@@ -21,34 +21,27 @@ const config = {
   actions: {
     assignExternalAction: assign({
       externalAction: (context, event) => {
-        const { externalAction } = event.payload
-        return externalAction
+        const { rxAction } = event.payload
+        return rxAction
       },
     }),
     assignDmz: assign({
       dmz: (context, event) => {
-        const { dmz, address } = event.payload
+        const { dmz } = event.payload
         assert(dmzModel.isModel(dmz))
-        assert(dmz.network.getAlias(address))
         return dmz
       },
-      initialPending: (context, event) => {
-        const { dmz } = event.payload
+      initialPending: ({ dmz }, event) => {
+        assert.strictEqual(dmz, event.payload.dmz)
         assert(dmzModel.isModel(dmz))
         return dmz.pending
       },
     }),
     assignAnvil: assign({
       anvil: (context, event) => {
-        const { externalAction, address } = event.payload
-        const anvil = externalAction
+        const { rxAction } = event.payload
+        const anvil = rxAction
         assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-        assert(addressModel.isModel(address))
-        if (rxRequestModel.isModel(anvil)) {
-          assert(anvil.getAddress().equals(address))
-        }
-        const chainId = address.isInvalid() ? 'INVALID' : address.getChainId()
-        debug(`interpreterConfig type: %o chainId: %o`, anvil.type, chainId)
         return anvil
       },
       address: (context, event) => {

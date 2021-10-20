@@ -86,8 +86,8 @@ const lockModel = standardize({
     if (block) {
       assert(blockModel.isModel(block))
     }
-    // assertPrecedentChain( block, interblocks )
-    // assertUniqueHeights(interblocks)
+    // TODO assertPrecedentChain( block, interblocks )
+    assertUniqueHeights(interblocks)
     // TODO check piercings are sorted correctly
     // TODO check all interblocks are valid in this block
     const isLocked = () => !timestamp.isExpired(expires)

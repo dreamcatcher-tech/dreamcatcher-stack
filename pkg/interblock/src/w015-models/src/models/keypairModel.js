@@ -17,7 +17,7 @@ const keypairModel = standardize({
       name: { type: 'string' },
       publicKey: publicKeyModel.schema,
       secretKey: {
-        type: 'string',
+        type: 'string', // TODO regex check based on algo in publicKey
       },
     },
   },

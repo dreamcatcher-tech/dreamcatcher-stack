@@ -28,9 +28,10 @@
  */
 
 export * as networkProducer from './src/networkProducer'
+export * as channelProducer from './src/channelProducer'
+export * as dmzProducer from './src/dmzProducer'
 export * as blockProducer from './src/blockProducer'
 export * as lockProducer from './src/lockProducer'
-export * as channelProducer from './src/channelProducer'
 export * as pendingProducer from './src/pendingProducer'
 export * as provenanceProducer from './src/provenanceProducer'
 export * as signatureProducer from './src/signatureProducer'

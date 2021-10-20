@@ -32,10 +32,10 @@ const definition = {
     interblock: undefined,
     lock: undefined,
     dmz: undefined,
-    nextBlock: undefined,
-    affectedAddresses: [],
     baseDmz: undefined,
     validators: undefined,
+    isPooled: false,
+    targetBlock: undefined,
   },
   strict: true,
   states: {
@@ -48,8 +48,7 @@ const definition = {
       },
     },
     done: {
-      entry: 'dumpAffected',
-      data: ({ affectedAddresses }) => affectedAddresses,
+      data: ({ isPooled }) => ({ isPooled }), // did this interblock get pooled
       type: 'final',
     },
     initializeStorage: {
@@ -109,56 +108,38 @@ const definition = {
       },
       onDone: [
         { target: 'done', cond: 'isInitialConditions' },
-        { target: 'poolInterblock' },
+        { target: 'processInterblock' },
       ],
     },
-    poolInterblock: {
+    processInterblock: {
       initial: 'isGenesis',
       states: {
         done: { type: 'final' },
         isGenesis: {
           always: [
             { target: 'birthChild', cond: 'isGenesis' },
-            { target: 'poolAffectedChains' },
+            { target: 'poolInterblock' },
           ],
         },
-        poolAffectedChains: {
-          initial: 'fetchAffectedAddresses',
+        poolInterblock: {
+          initial: 'fetchTargetBlock',
           states: {
-            fetchAffectedAddresses: {
-              invoke: {
-                src: 'fetchAffectedAddresses',
-                onDone: {
-                  target: 'isConnectionAttempt',
-                  actions: 'assignAffectedAddresses',
-                },
-              },
+            fetchTargetBlock: {
+              // TODO speed up for genesis as can avoid the db hit
+              invoke: { src: 'fetchTargetBlock', onDone: 'isPoolable' },
             },
-            isConnectionAttempt: {
+            isPoolable: {
+              entry: 'assignTargetBlock',
               always: [
-                {
-                  target: 'isConnectable',
-                  cond: 'isConnectionAttempt',
-                },
-                { target: 'storeInPools' },
+                // TODO check the signatures on the interblock
+                { target: 'done', cond: 'isTargetBlockMissing' },
+                { target: 'storeInPool', cond: 'isAddable' },
+                { target: 'storeInPool', cond: 'isConnectable' },
+                { target: 'done' },
               ],
             },
-            isConnectable: {
-              // TODO check if we hold this address first ?
-              invoke: {
-                src: 'isConnectable',
-                onDone: [
-                  {
-                    target: 'storeInPools',
-                    cond: 'isConnectable',
-                    actions: 'assignConnectionAttempt',
-                  },
-                  { target: 'storeInPools' },
-                ],
-              },
-            },
-            storeInPools: {
-              invoke: { src: 'storeInPools', onDone: { target: 'done' } },
+            storeInPool: {
+              invoke: { src: 'storeInPool', onDone: { target: 'done' } },
             },
             done: { type: 'final' },
           },
@@ -209,7 +190,7 @@ const definition = {
               },
             },
           },
-          onDone: 'poolAffectedChains',
+          onDone: 'poolInterblock',
         },
       },
       onDone: 'done',

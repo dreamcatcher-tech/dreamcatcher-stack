@@ -32,7 +32,8 @@ describe('pool', () => {
 
   describe('poolInterblock', () => {
     describe('birthChild', () => {
-      test('new child created from genesis', async () => {
+      test.only('new child created from genesis', async () => {
+        Debug.enable('*cfg:pool *cfg:isolator interblock:engine*')
         const base = await metrologyFactory('birthChild')
         await base.spawn('child')
         const baseState = base.getState()

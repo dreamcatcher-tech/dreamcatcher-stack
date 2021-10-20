@@ -111,31 +111,6 @@ const _rxRepliesTipHeight = (rxRepliesTip) => {
   }
   return parseInt(rxRepliesTip.split('_').pop())
 }
-const ingestPierceInterblock = (channel, interblock) => {
-  // special ingestion that avoids checks of previous blocks
-  // TODO try merge with existing ingestion
-  assert(interblockModel.isModel(interblock))
-  const { provenance } = interblock
-  assert(channel.address.equals(provenance.getAddress()))
-  const remote = interblock.getRemote()
-  assert(remote)
-  debug(`ingestPierceInterblock`)
-
-  const heavy = interblock
-  const heavyHeight = provenance.height
-  const lineageHeight = provenance.height
-  const { requests } = remote
-  const remoteRequestsKeys = Object.keys(requests)
-  const reducedReplies = _pick(channel.replies, remoteRequestsKeys)
-  const replies = reducedReplies
-  return channelModel.clone({
-    ...channel,
-    heavy,
-    heavyHeight,
-    lineageHeight,
-    replies,
-  })
-}
 const setAddress = (channel, address) => {
   assert(addressModel.isModel(address))
   assert(!address.isGenesis())
@@ -224,93 +199,12 @@ const shiftTxRequest = (channel, originalLoopback) => {
   delete requests[index]
   return channelModel.clone({ ...channel, replies, requests })
 }
-const _pick = (obj, keys) => {
-  const blank = {}
-  keys.forEach((key) => {
-    if (typeof obj[key] !== 'undefined') {
-      blank[key] = obj[key]
-    }
-  })
-  return blank
-}
 const invalidate = (channel) => {
   const invalid = addressModel.create('INVALID')
   return setAddress(channel, invalid)
 }
 
 // exit point from system to covenant
-const rxRequest = (index) => {
-  if (address.isUnknown() && !isLoopback) {
-    return
-  }
-  if (address.isInvalid()) {
-    return
-  }
-  if (!Number.isInteger(index)) {
-    index = getNextReplyIndex()
-  }
-  const request = remote.requests[index]
-  if (request) {
-    assert(actionModel.isModel(request))
-    const { type, payload } = request
-    const rxRequest = rxRequestModel.create(type, payload, address, index)
-    debug(`rxRequest ${rxRequest.type}`)
-    return rxRequest
-  }
-}
-// exit point from system to covenant
-const rxReplyIndex = () => {
-  if (address.isUnknown()) {
-    return
-  }
-  const replyIndices = _getSortedIndices(remote.replies)
-  let replyIndex = replyIndices.find((index) => {
-    const reply = remote.replies[index]
-    return !reply.isPromise() && requests[index]
-  })
-  if (!Number.isInteger(replyIndex) && address.isInvalid()) {
-    // next reply is the same index as the next request
-    const requestIndices = getRequestIndices()
-    for (const index of requestIndices) {
-      const reply = remote.replies[index]
-      if (!reply || reply.isPromise()) {
-        replyIndex = index
-        break
-      }
-    }
-  }
-  return replyIndex
-}
-
-const rxReply = () => {
-  const index = rxReplyIndex()
-  if (!Number.isInteger(index)) {
-    return
-  }
-  assert(index >= 0, `index must be whole number`)
-  assert(requests[index], `No request for: ${index}`)
-  let replyRaw
-  if (address.isInvalid()) {
-    replyRaw = reject(new Error(`Channel invalid`))
-  } else {
-    assert(remote.replies[index], `No reply for: ${index}`)
-    replyRaw = remote.replies[index]
-  }
-  const origin = requests[index]
-  const { type, payload } = replyRaw
-  const reply = rxReplyModel.create(type, payload, origin)
-  return reply
-}
-const getNextReplyIndex = () => {
-  // get lowest remote request index that is higher than reply index
-  const remoteRequestIndices = _getSortedIndices(remote.requests)
-  // remoteRequestIndices.reverse()
-  for (const index of remoteRequestIndices) {
-    if (!replies[index]) {
-      return index
-    }
-  }
-}
 
 const _isTip = (replyKey, replies) => {
   assert.strictEqual(typeof replyKey, 'string')
@@ -343,7 +237,6 @@ const _splitParse = (replyKey) => {
 
 export {
   ingestInterblocks,
-  ingestPierceInterblock,
   setAddress,
   txRequest,
   txReply,

@@ -10,6 +10,7 @@ import { stateModel } from './stateModel'
 import { configModel } from './configModel'
 import { validatorsModel } from './validatorsModel'
 import { pendingModel } from './pendingModel'
+import { piercingsModel } from './piercingsModel'
 
 const schema = {
   type: 'object',
@@ -41,6 +42,7 @@ const schema = {
     network: networkModel.schema,
     state: stateModel.schema,
     pending: pendingModel.schema,
+    piercings: piercingsModel.schema,
     // TODO add version ?
   },
 }
@@ -69,20 +71,11 @@ const dmzModel = standardize({
     // TODO verify that the buffers map to legit channels
     assert(pending.isBufferValid(network))
     assert(!network['.@@io'] || config.isPierced)
-    const rx = () => {
-      const reply = network.rxReply()
-      if (reply) {
-        return reply
-      }
-      if (!pending.getIsPending()) {
-        const bufferedRequest = pending.rxBufferedRequest(network)
-        if (bufferedRequest) {
-          return bufferedRequest
-        }
-      }
-      return network.rxRequest()
+    if (instance.piercings) {
+      assert(config.isPierced)
     }
-    return { rx }
+
+    return {}
   },
 })
 

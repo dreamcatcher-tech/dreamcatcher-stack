@@ -2,6 +2,7 @@ import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
 import { provenanceModel } from './provenanceModel'
 import { dmzModel } from './dmzModel'
+import { interblockModel } from './interblockModel'
 import { publicKeyModel } from './publicKeyModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:block')
@@ -104,6 +105,20 @@ const blockModel = standardize({
     }
     const getChainId = () => provenance.getAddress().getChainId()
     const getHeight = () => provenance.height
+    const isInterblockAddable = (interblock) => {
+      assert(interblockModel.isModel(interblock))
+      const address = interblock.getTargetAddress()
+      const channel = instance.network.getChannel(address)
+      if (!channel) {
+        return false
+      }
+      // TODO check against tip parameters fully
+      // TODO check turnovers
+      if (!Number.isInteger(channel.tipHeight)) {
+        return true
+      }
+      return channel.tipHeight < interblock.provenance.height
+    }
     return {
       isVerifiedBlock,
       getDmz,
@@ -111,6 +126,7 @@ const blockModel = standardize({
       isNextBlock,
       getChainId,
       getHeight,
+      isInterblockAddable,
     }
   },
 })

@@ -23,19 +23,9 @@ const poolConfig = (ioCrypto, ioConsistency) => {
   const crypto = cryptoFn(ioCrypto)
   const config = {
     actions: {
-      dumpAffected: assign({
-        affectedAddresses: ({ affectedAddresses, interblock }) => {
-          assert(Array.isArray(affectedAddresses))
-          assert(interblockModel.isModel(interblock))
-          if (!interblock.getOriginAlias()) {
-            // TODO move to state machine
-            return []
-          }
-          return [interblock.getTargetAddress()]
-        },
-      }),
       assignInterblock: assign({
         interblock: (context, event) => {
+          debug(`assignInterblock`)
           const interblock = event.payload
           assert(interblockModel.isModel(interblock))
           return interblock
@@ -43,6 +33,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       }),
       assignLock: assign({
         lock: (context, event) => {
+          debug(`assignLock`)
           assert(lockModel.isModel(event.data))
           return event.data
         },
@@ -76,6 +67,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       }),
       createBaseDmz: assign({
         baseDmz: ({ validators }) => {
+          debug(`createBaseDmz`)
           const covenantId = covenantIdModel.create('hyper')
           const root = addressModel.create('ROOT')
           const sealedRoot = channelModel.create(root)
@@ -101,21 +93,12 @@ const poolConfig = (ioCrypto, ioConsistency) => {
           return event.data
         },
       }),
-      assignAffectedAddresses: assign({
-        affectedAddresses: ({ affectedAddresses }, event) => {
-          debug(`assignAffectedAddresses`)
-          const affected = event.data
-          assert(Array.isArray(affected), `affected was not array`)
-          assert(Array.isArray(affectedAddresses), `not array`)
-          return [...affected, ...affectedAddresses]
-        },
-      }),
-      assignConnectionAttempt: assign({
-        affectedAddresses: ({ interblock, affectedAddresses }) => {
-          assert(Array.isArray(affectedAddresses))
-          assert(interblockModel.isModel(interblock))
-          const targetAddress = interblock.getTargetAddress()
-          return [...affectedAddresses, targetAddress]
+      assignTargetBlock: assign({
+        targetBlock: (context, event) => {
+          const { targetBlock } = event.data
+          debug(`assignTargetBlock`, targetBlock.provenance.height)
+          assert(!targetBlock || blockModel.isModel(targetBlock))
+          return targetBlock
         },
       }),
     },
@@ -151,10 +134,24 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         debug(`isBirthingCompleted: ${isBirthingCompleted}`)
         return isBirthingCompleted
       },
-      isConnectionAttempt: ({ interblock }) => interblock.isConnectionAttempt(),
-      isConnectable: (context, event) => event.data,
+      isTargetBlockMissing: ({ targetBlock }) => !targetBlock,
+      isAddable: ({ targetBlock, interblock }) => {
+        assert(blockModel.isModel(targetBlock))
+        assert(interblockModel.isModel(interblock))
+        return targetBlock.isInterblockAddable(interblock)
+      },
+      isConnectable: ({ targetBlock, interblock }) => {
+        assert(blockModel.isModel(targetBlock))
+        assert(interblockModel.isModel(interblock))
+        const isConnectable =
+          interblock.isConnectionAttempt() &&
+          targetBlock.config.isPublicChannelOpen
+        debug(`isConnectable: `, isConnectable)
+        return isConnectable
+      },
     },
     services: {
+      // always have to get the target block anyway, to see if this is valid
       isStorageEmpty: async () => {
         const blankAddress = undefined
         const firstBlock = await consistency.getBlock({
@@ -167,6 +164,8 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       checkIsOriginPresent: async ({ interblock }) => {
         // check the origin of the genesis interblock is hosted by us
         const address = interblock.provenance.getAddress()
+        // turn this into getLatest
+        // also confirm the validator matches, as we might host other blocks
         const isOriginPresent = await consistency.getIsPresent(address)
         debug(`checkIsOriginPresent: %O`, !!isOriginPresent)
         return !!isOriginPresent
@@ -203,39 +202,18 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         const lock = await consistency.putLockChain(address)
         return lock
       },
-      fetchAffectedAddresses: async ({ interblock }) => {
-        const affected = await consistency.getAffected(interblock)
-        if (interblock.isGenesisAttempt()) {
-          const genesis = interblock.extractGenesis()
-          assert(blockModel.isModel(genesis))
-          const genesisAddress = genesis.provenance.getAddress()
-          assert(affected.every((address) => !address.equals(genesisAddress)))
-          affected.push(genesisAddress)
-        }
-        debug(`fetchAffectedAddresses: ${affected.length}`)
-        return affected
-      },
-      isConnectable: async ({ interblock }) => {
+      fetchTargetBlock: async ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
         const address = interblock.getTargetAddress()
-        assert(address)
-        const latest = await consistency.getBlock({ address })
-        if (latest) {
-          assert(blockModel.isModel(latest))
-        }
-        const isConnectable = latest && latest.config.isPublicChannelOpen
-        debug(`isConnectable: `, isConnectable)
-        return isConnectable
+        const targetBlock = await consistency.getBlock({ address })
+        debug(`fetchTargetBlock complete`)
+        return { targetBlock }
       },
-      storeInPools: async ({ interblock, affectedAddresses }) => {
-        assert(Array.isArray(affectedAddresses))
+      storeInPool: async ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
-        debug(`storeInPools`)
-        await consistency.putPoolInterblock({
-          affectedAddresses,
-          interblock,
-        })
-        debug(`storeInPools completed on ${affectedAddresses.length} items`)
+        debug(`storeInPool`)
+        await consistency.putPoolInterblock({ interblock })
+        debug(`storeInPools completed`)
       },
     },
   }

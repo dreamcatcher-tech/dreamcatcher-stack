@@ -51,12 +51,12 @@ export class Conflux {
     assert(interblocks.every(interblockModel.isModel))
     this.#mapChainIds(interblocks)
     this.#parseChainMap()
-    this.#generateRequiredBlockHeights()
     Object.freeze(this)
   }
-  #generateRequiredBlockHeights() {}
   #parseChainMap() {
     // TODO generate iteration order of requests based on some seed
+    const uniqueBlockHeights = new Set()
+    // TODO make pierce channel get processed last - merely for tidyness
     for (const [, chain] of this.#chainMap) {
       for (const interblock of chain) {
         const address = interblock.provenance.getAddress()
@@ -91,10 +91,13 @@ export class Conflux {
           indices.push({ index, reply })
           indices.sort((a, b) => a.index - b.index)
         }
-        this.#requiredBlockHeights.push(...this.#requiredRequestsMap.keys())
-        this.#requiredBlockHeights.sort((a, b) => a - b)
+        for (const height of this.#requiredRequestsMap.keys()) {
+          uniqueBlockHeights.add(height)
+        }
       }
     }
+    this.#requiredBlockHeights.push(...uniqueBlockHeights)
+    this.#requiredBlockHeights.sort((a, b) => a - b)
   }
   #mapChainIds(interblocks) {
     for (const interblock of interblocks) {
@@ -121,6 +124,7 @@ export class Conflux {
     return this.#requiredBlockHeights
   }
   inductRequestBlocks(requestBlocks) {
+    assert(this.#requiredBlockHeights.length, `No request blocks required`)
     assert(Array.isArray(requestBlocks))
     assert(requestBlocks.length)
     assert(requestBlocks.every(blockModel.isModel))
@@ -161,8 +165,10 @@ export class Conflux {
   includes(interblock) {}
 
   get rxReplies() {
-    assert(this.#isReplyInflationComplete, `Replies have not been inflated`)
-
+    if (this.#requiredBlockHeights.length) {
+      assert(this.#isReplyInflationComplete, `Replies have not been inflated`)
+    }
+    Object.freeze(this.#rxReplies)
     return this.#rxReplies
   }
 }

@@ -80,12 +80,9 @@ const publicKeySchema = {
   additionalProperties: false,
   required: ['key', 'algorithm'],
   properties: {
-    key: {
-      type: 'string', // TODO format checks to set fixed length
-    },
-    algorithm: {
-      enum: ['tweetnacl', 'sodium', 'noble-secp256k1', '@@pierce'],
-    },
+    // TODO format checks to set fixed length based on algo
+    key: { type: 'string' },
+    algorithm: { enum: ['tweetnacl', 'sodium', 'noble-secp256k1', '@@pierce'] },
   },
 }
 
@@ -295,8 +292,13 @@ const channelSchema = {
       // up to as a check against remote errors`,
       pattern: '[0-9]+_[0-9]+',
     },
-    tip: integritySchema,
-    tipHeight: { type: 'integer', minimum: 0 },
+    tip: integritySchema, // TODO change to an array to minimize db hits
+    tipHeight: {
+      type: 'integer',
+      //   description: `Lets interblocks be added quickly by testing height.
+      // Later should be removed in favour of db lookups`,
+      minimum: 0,
+    },
   },
 }
 const interblockSchema = {

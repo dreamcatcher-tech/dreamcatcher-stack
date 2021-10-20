@@ -152,17 +152,11 @@ const networkModel = standardize({
       return reply
     }
 
-    const txInterblockAliases = (previous = networkModel.create()) => {
-      assert(networkModel.isModel(previous))
+    const txInterblockAliases = () => {
       const resolvedAliases = getResolvedAliases()
       const changedAliases = resolvedAliases.filter((alias) => {
         const channel = instance[alias]
-        const previousAlias = previous.getAlias(channel.address)
-        if (!previousAlias) {
-          return true
-        }
-        const previousChannel = previous[previousAlias]
-        return channel.isTxGreaterThan(previousChannel)
+        return channel.isTransmitting()
       })
       return changedAliases
     }
@@ -189,6 +183,14 @@ const networkModel = standardize({
       }
       return networkModel.clone({ ...instance, ...toMerge })
     }
+    const getChannel = (address) => {
+      assert(addressModel.isModel(address))
+      const alias = getAlias(address)
+      if (!alias) {
+        return
+      }
+      return instance[alias]
+    }
 
     return {
       rxReply,
@@ -203,6 +205,7 @@ const networkModel = standardize({
       txInterblockAliases,
       isNewChannels,
       merge,
+      getChannel,
     }
   },
 })

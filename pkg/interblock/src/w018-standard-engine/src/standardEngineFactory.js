@@ -56,14 +56,14 @@ const standardEngineFactory = () => {
     const debug = debugBase.extend('pooler')
     debug(`pooler`)
     assert(interblockModel.isModel(interblock))
-    const affectedAddresses = await ioPool.push(interblock)
-    assert(Array.isArray(affectedAddresses), `failed pool`)
-    debug(`affectedAddresses length: %o`, affectedAddresses.length)
-    const awaits = affectedAddresses.map((address) => sqsIncrease.push(address))
-    await Promise.all(awaits)
-    return affectedAddresses // sqsPool.push( interblock ) returns affectedAddresses
+    const { isPooled } = await ioPool.push(interblock)
+    assert.strictEqual(typeof isPooled, 'boolean', `failed pool`)
+    debug(`isPooled: %o`, isPooled)
+    if (isPooled) {
+      const address = interblock.getTargetAddress()
+      await sqsIncrease.push(address)
+    }
   }
-
   // TODO test behaviour independently, concurrent - maybe with dirty queues ?
   const increasor = (ioIncrease, sqsTransmit) => {
     const redrives = new Map()

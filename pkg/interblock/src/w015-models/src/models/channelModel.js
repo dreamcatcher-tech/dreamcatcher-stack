@@ -61,89 +61,11 @@ const channelModel = standardize({
       assert(!tip.isUnknown())
       assert(tipHeight >= 0)
     }
-
-    const isTxGreaterThan = (previous) => {
-      assert(channelModel.isModel(previous))
-      const isAddressChanged = !previous.address.equals(address)
-      const isReplies = isNewReplies(replies, previous.replies)
-      const isRequests = isNewActions(requests, previous.requests)
-      const isPromises = isNewPromiseSettled(replies, previous.replies)
-      return isAddressChanged || isReplies || isRequests || isPromises
-    }
-
-    const getOutboundPairs = () =>
-      _getSortedIndices(requests).map((i) => [requests[i], replies[i]])
-    const getRequestIndices = () => _getSortedIndices(requests)
+    const isTransmitting = () => requests.length || Object.keys(replies).length
 
     return {
-      isTxGreaterThan,
-      getOutboundPairs,
-      getRequestIndices,
+      isTransmitting,
     }
   },
 })
-const isNewPromiseSettled = (current, previous) => {
-  const currentIndices = _getSortedIndices(current)
-  const isPromiseSettled = currentIndices.some((index) => {
-    const currentAction = current[index]
-    const previousAction = previous[index]
-    if (!previousAction || !currentAction) {
-      return false
-    }
-    assert(continuationModel.isModel(currentAction))
-    assert(continuationModel.isModel(previousAction))
-    const settled = previousAction.isPromise() && !currentAction.isPromise()
-    return settled
-  })
-  return isPromiseSettled
-}
-const isNewReplies = (currentReplies, previousReplies) => {
-  const currentIndices = _getSortedIndices(currentReplies)
-  while (isTipPromise(currentIndices, currentReplies)) {
-    currentIndices.pop()
-  }
-  if (!currentIndices.length) {
-    return false
-  }
-  const previousIndices = _getSortedIndices(previousReplies)
-  const isNewActions = isHigherThan(currentIndices, previousIndices)
-  return isNewActions
-}
-const isTipPromise = (indicies, replies) => {
-  if (!indicies.length) {
-    return false
-  }
-  const index = last(indicies)
-  return replies[index].isPromise()
-}
-const isNewActions = (current, previous) => {
-  const currentIndices = _getSortedIndices(current)
-  const previousIndices = _getSortedIndices(previous)
-  const isNewActions = isHigherThan(currentIndices, previousIndices)
-  return isNewActions
-}
-const _getSortedIndices = (obj) => {
-  const indices = []
-  Object.keys(obj).forEach((key) => {
-    const number = parseInt(key)
-    assert(number >= 0, `Index out of bounds: ${number}`)
-    indices.push(number)
-  })
-  indices.sort((first, second) => first - second)
-  return indices
-}
-const isHigherThan = (current, previous) => {
-  if (!previous.length && !current.length) {
-    return false
-  }
-  if (!previous.length && current.length) {
-    return true
-  }
-  if (previous.length && !current.length) {
-    return false
-  }
-  const previousHighest = last(previous)
-  const currentHighest = last(current)
-  return currentHighest > previousHighest
-}
 export { channelModel }
