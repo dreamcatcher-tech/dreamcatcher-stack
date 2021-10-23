@@ -59,6 +59,7 @@ const rxReplySchema = {
   properties: {
     type: { type: 'string', enum: ['@@REJECT', '@@RESOLVE'] },
     payload: { type: 'object' },
+    // replace this with a sequence key of the request: height_index
     request: {
       // description: `Covenants original request, without the 'to' field`,
       // TODO add the to field, as we can retrieve this easily since have blockheight

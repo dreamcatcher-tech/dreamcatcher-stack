@@ -16,7 +16,6 @@ const debug = Debug('interblock:cfg:heart:dmz')
 
 const {
   transmit,
-  respondReply,
   assignResolve,
   isReply,
   assignRejection,
@@ -39,20 +38,18 @@ const config = {
     respondLoopbackRequest,
     assignResolve,
     transmit,
-    respondReply,
     assignRejection,
     respondRejection,
   },
   guards: {
-    isChannelUnavailable: ({ dmz, address }) => {
+    isChannelUnavailable: ({ dmz, anvil }) => {
       // TODO may merge with the autoResolve test if action is present ?
-      // TODO remove address once have address is replies
       assert(dmzModel.isModel(dmz))
-      assert(addressModel.isModel(address))
-      assert(!address.isUnknown(), `Address unknown`)
-      const alias = dmz.network.getAlias(address)
-      debug(`isChannelUnavailable: `, !alias)
-      return !alias
+      assert(rxRequestModel.isModel(anvil))
+      const address = anvil.getAddress()
+      const isChannelUnavailable = !dmz.network.getAlias(address)
+      debug(`isChannelUnavailable: `, isChannelUnavailable)
+      return isChannelUnavailable
     },
     isReply,
     isLoopbackResponseDone,
@@ -73,7 +70,7 @@ const config = {
       assert(reduceResolve, `System returned: ${reduceResolve}`)
       assert(!reduceResolve.isPending, `System can never raise pending`)
       const { requests, replies } = reduceResolve
-      debug(`reduceSystem tx: ${requests.length} rx: ${replies.length}`)
+      debug(`reduceSystem req: ${requests.length} rep: ${replies.length}`)
       return { reduceResolve }
     },
   },

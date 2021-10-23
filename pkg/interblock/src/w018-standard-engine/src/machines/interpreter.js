@@ -26,7 +26,6 @@ const definition = {
     isolatedTick: undefined, // function provided as initial context
     externalAction: undefined, // the initializing action
     anvil: undefined, // the current action being processed
-    address: undefined, // used to know which channel replies came from
     dmz: undefined,
     initialPending: undefined, // used to determine if lowered during execution, and if loopback requests came from buffer
     covenantAction: undefined,

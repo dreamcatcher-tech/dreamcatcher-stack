@@ -1,6 +1,4 @@
 import assert from 'assert-fast'
-import posix from 'path-browserify'
-import without from 'lodash.without'
 import {
   channelModel,
   continuationModel,
@@ -69,17 +67,6 @@ const ingestInterblocks = (network, interblocks = [], config) => {
   // TODO close all timed out connection attempts
 }
 
-const respondReply = (network, address, originalLoopback) => {
-  assert(addressModel.isModel(address))
-  assert(channelModel.isModel(originalLoopback))
-  const alias = network.getAlias(address)
-  debug(`respondReply alias: ${alias}`)
-
-  const channel = network[alias]
-  const nextChannel = channelProducer.shiftTxRequest(channel, originalLoopback)
-  return network.merge({ [alias]: nextChannel })
-}
-
 const respondRejection = (network, request, reduceRejection) => {
   debug('respondRejection %O', reduceRejection)
   const reply = continuationModel.create('@@REJECT', reduceRejection)
@@ -122,7 +109,6 @@ const tx = (network, requests, replies) => {
   requests.forEach((request) => {
     assert(txRequestModel.isModel(request))
     let { to } = request
-    to = posix.normalize(to)
     if (network['..'].address.isRoot() && to.startsWith('/')) {
       to = to.substring(1)
       to = to || '.'
@@ -142,15 +128,13 @@ const tx = (network, requests, replies) => {
   replies.forEach((txReply) => {
     assert(txReplyModel.isModel(txReply))
     const address = txReply.getAddress()
-    const index = txReply.getIndex()
     const alias = network.getAlias(address)
     if (!alias) {
       debug(`No alias found for: %O`, txReply)
       return
     }
     const channel = nextNetwork[alias] || network[alias]
-    const reply = txReply.getReply()
-    nextNetwork[alias] = channelProducer.txReply(channel, reply, index)
+    nextNetwork[alias] = channelProducer.txReply(channel, txReply)
   })
   return network.merge(nextNetwork)
 }
@@ -224,7 +208,6 @@ export {
   ingestInterblocks,
   respondRejection,
   respondRequest,
-  respondReply,
   tx,
   invalidateLocal,
   reaper,

@@ -16,7 +16,8 @@ const schema = {
   type: 'object',
   title: 'Dmz',
   //   description: `DMZ coordinates all the models in one place.
-  // Dmz is equivalent to CombineReducers in Redux.`,
+  // Dmz is equivalent to CombineReducers in Redux.
+  // "meta" is a state slice for use by the dmz to track outstanding promises`,
   required: [
     'validators', // interblock
     'encryption', // interblock
@@ -28,6 +29,7 @@ const schema = {
     'binaryIntegrity',
     'acl',
     'state',
+    'meta',
     'pending',
   ],
   additionalProperties: false,
@@ -41,6 +43,7 @@ const schema = {
     acl: aclModel.schema,
     network: networkModel.schema,
     state: stateModel.schema,
+    meta: stateModel.schema,
     pending: pendingModel.schema,
     piercings: piercingsModel.schema,
     // TODO add version ?
@@ -61,6 +64,7 @@ const dmzModel = standardize({
       acl: aclModel.clone(opts.acl),
       network: networkModel.clone(opts.network),
       state: stateModel.clone(opts.state),
+      meta: stateModel.clone({}), // not user alterable
       pending: pendingModel.create(), // cannot start a dmz as pending
     }
     return dmzModel.clone(dmz)

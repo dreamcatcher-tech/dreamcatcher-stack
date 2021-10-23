@@ -16,7 +16,7 @@ const deploy = (installer) => ({
   type: '@@DEPLOY',
   payload: { installer },
 })
-const deployReducer = async (dmz, action) => {
+const deployReducer = (dmz, action) => {
   const { installer } = action.payload
   // TODO assert there is only one deployment action, from parent, and after genesis
   // TODO check format of payload.installer against schema
@@ -40,7 +40,7 @@ const deployReducer = async (dmz, action) => {
     const genesisSeed = 'seed_' + installPath
     const spawnRequest = spawn(installPath, spawnOptions, [], genesisSeed)
     // promise is made within spawnReducer
-    const network = await spawnReducerWithoutPromise(dmz, spawnRequest)
+    const network = spawnReducerWithoutPromise(dmz, spawnRequest)
     // TODO make spawn not require dmz to be cloned like this
     dmz = dmzModel.clone({ ...dmz, network })
     const deployAction = deploy(topChildren[installPath])

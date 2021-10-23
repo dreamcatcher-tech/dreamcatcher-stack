@@ -100,27 +100,30 @@ const reducer = async (state, action) => {
       }
       const demuxed = demuxFormData(state, payload)
       state.formData = demuxed.formData
-      if (Object.keys(state.children).length) {
-        // TODO WARNING if have changed children in current block, will be stale
-        const latest = await useBlocks()
-        const children = dmzReducer.listChildren(latest)
-        for (const name in state.children) {
-          if (!children[name]) {
-            debug(`creating new child: `, name)
-            const setChild = actions.set({
-              ...demuxed.children[name],
-              ...state.children[name],
-            })
-            debug(`setChild`, setChild)
-            // TODO honour type somehow, if specify a collection ?
-            const covenantId = covenantIdModel.create('datum')
-            const spawn = dmzReducer.actions.spawn(name, { covenantId })
-            interchain(spawn)
-            await interchain(setChild, name)
-          }
-        }
-        // TODO remove deleted children
+      if (!Object.keys(state.children).length) {
+        return state
       }
+      // TODO WARNING if have changed children in current block, will be stale
+      const latest = await useBlocks()
+      const children = dmzReducer.listChildren(latest)
+      const awaits = []
+      for (const name in state.children) {
+        if (!children[name]) {
+          debug(`creating new child: `, name)
+          const setChild = actions.set({
+            ...demuxed.children[name],
+            ...state.children[name],
+          })
+          debug(`setChild`, setChild)
+          // TODO honour type somehow, if specify a collection ?
+          const covenantId = covenantIdModel.create('datum')
+          const spawn = dmzReducer.actions.spawn(name, { covenantId })
+          interchain(spawn)
+          awaits.push(interchain(setChild, name))
+        }
+      }
+      await Promise.all(awaits)
+      // TODO remove deleted children
       return state
     }
     default:

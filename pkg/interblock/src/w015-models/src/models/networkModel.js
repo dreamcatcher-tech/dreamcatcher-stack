@@ -43,36 +43,6 @@ const networkModel = standardize({
     assert(channelModel.isModel(instance['.']), 'channel invalid')
     assert(instance['.'].systemRole === '.', `self not loopback channel`)
 
-    const rxReply = () => {
-      for (const alias of _aliases) {
-        const channel = instance[alias]
-        let reply = channel.rxReply()
-        if (!reply) {
-          continue
-        }
-        if (channel.address.isInvalid()) {
-          assert.strictEqual(reply.type, '@@REJECT')
-          const error = new Error(`Path invalid: ${alias}`)
-          const rejection = reject(error, reply.request)
-          reply = rxReplyModel.clone(rejection)
-        }
-        // TODO find out if alias is used anywhere
-        return { alias, event: reply, channel }
-      }
-    }
-    const rxRequest = () => {
-      for (const alias of _aliases) {
-        const channel = instance[alias]
-        const request = channel.rxRequest()
-        if (!request) {
-          continue
-        }
-        assert(channel.address.isResolved() || channel.address.isLoopback())
-        // TODO find out if alias is used anywhere
-        return { alias, event: request, channel }
-      }
-    }
-
     const rxSelf = () => {
       // not included in rx() since it is always exhausted each run
       const loopback = instance['.']
@@ -116,32 +86,8 @@ const networkModel = standardize({
       return aliasMap.get(chainId)
     }
     const getParent = () => instance['..']
-    const includesInterblock = (interblock) => {
-      // TODO handle provenance being deleted or reset ?
-      assert(interblockModel.isModel(interblock))
-      const { provenance } = interblock
-      const alias = getAlias(provenance.getAddress())
-      if (!alias) {
-        return false
-      }
-      let lineageIncludes = false
-      const channel = instance[alias]
-      if (provenance.height <= channel.lineageHeight) {
-        lineageIncludes = true
-      }
-      if (provenance.height === channel.lineageHeight) {
-        const isTip = provenance.equals(last(channel.lineageTip).provenance)
-        assert(isTip)
-      }
-      const remote = interblock.getRemote()
-      if (remote && lineageIncludes) {
-        if (provenance.height === channel.heavy.provenance.height) {
-          assert(interblock.equals(channel.heavy))
-        }
-        return provenance.height <= channel.heavy.provenance.height
-      }
-      return lineageIncludes
-    }
+
+    // probably can delete this too
     const getResponse = (request) => {
       assert(rxRequestModel.isModel(request))
       const address = request.getAddress()
@@ -193,14 +139,11 @@ const networkModel = standardize({
     }
 
     return {
-      rxReply,
-      rxRequest,
       rxSelf,
       getAliases,
       getResolvedAliases,
       getAlias,
       getParent,
-      includesInterblock,
       getResponse,
       txInterblockAliases,
       isNewChannels,

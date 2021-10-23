@@ -42,7 +42,6 @@
     "lodash.last": "^3.0.0",
     "lodash.memoize": "^4.1.2",
     "lodash.random": "^3.2.0",
-    "lodash.without": "^4.4.0",
     "long": "^4.0.0",
     "noble-secp256k1": "^1.2.10",
     "node-object-hash": "^2.3.10",

@@ -59,6 +59,7 @@ const openChildReply = (network, reply) => {
       // TODO move to using network and action sequence to discover fullPath
       const alias = parent + '/' + child
       debug(`connecting to: `, alias)
+      // TODO run connect directly here
       interchain(connect(alias, chainId))
       break
     }

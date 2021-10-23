@@ -39,7 +39,7 @@ const actions = {
   getState,
 }
 
-const reducer = async (dmz, action) => {
+const reducer = (dmz, action) => {
   // TODO check the ACL each time ?
   debug(`reducer( ${action.type} )`)
   assert(dmzModel.isModel(dmz))
@@ -51,7 +51,7 @@ const reducer = async (dmz, action) => {
       pingReducer(action)
       break
     case '@@SPAWN':
-      network = await spawnReducer(dmz, action)
+      network = spawnReducer(dmz, action)
       break
     case '@@CONNECT':
       network = connectReducer(network, action)
@@ -72,7 +72,7 @@ const reducer = async (dmz, action) => {
       break
     case '@@INSTALL': // allows user to connect with recursive deployment calls
     case '@@DEPLOY':
-      network = await deployReducer(dmz, action)
+      network = deployReducer(dmz, action)
       break
     case '@@GET_CHAN':
       getChannelReducer(network, action)

@@ -1,10 +1,10 @@
 const definition = {
   id: 'interpreter.dmz',
-  initial: 'reduceSystem',
   context: {
     // TODO populate with all modified context variables
   },
   strict: true,
+  initial: 'reduceSystem',
   states: {
     reduceSystem: {
       invoke: {
@@ -20,14 +20,10 @@ const definition = {
     merge: {
       entry: ['mergeSystemState', 'transmit'],
       always: [
+        { target: 'done', cond: 'isReply' },
         { target: 'done', cond: 'isChannelUnavailable' },
-        { target: 'respondReply', cond: 'isReply' },
         { target: 'respondLoopbackRequest' },
       ],
-    },
-    respondReply: {
-      entry: 'respondReply',
-      always: 'done',
     },
     respondLoopbackRequest: {
       always: [

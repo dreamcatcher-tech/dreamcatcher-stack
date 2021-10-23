@@ -44,26 +44,12 @@ const config = {
         assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
         return anvil
       },
-      address: (context, event) => {
-        // TODO try replace with something that gets the address dynamically
-        const { address } = event.payload
-        assert(addressModel.isModel(address))
-        const isInvalid = address.isInvalid()
-        assert(address.isResolved() || address.isLoopback() || isInvalid)
-        return address
-      },
     }),
     loadSelfAnvil: assign({
       anvil: ({ dmz }) => {
         const anvil = dmz.network.rxSelf()
         debug(`loadSelfAnvil anvil: %o`, anvil.type)
         return anvil
-      },
-      address: ({ dmz }) => {
-        const selfAddress = dmz.network['.'].address
-        assert(selfAddress.isLoopback())
-        debug(`loadSelfAnvil selfAddress: %o`, selfAddress.getChainId())
-        return selfAddress
       },
     }),
     openPaths: assign({
@@ -126,14 +112,17 @@ const config = {
     },
   },
   services: {
+    // TODO split out exactly what pieces of context are used in each machine
     direct: async (context) => {
       debug(`direct machine`)
+      // const { covenantAction, dmz, anvil,reduceRejection,reduceResolve }
       const { machine, config } = directConfig(context)
       const nextContext = await pure('EXEC', machine, config)
       return nextContext
     },
     pending: async (context) => {
       debug(`pending machine`)
+      // const {covenantAction, dmz, anvil, reduceResolve, reduceRejection}
       const { machine, config } = pendingConfig(context)
       const nextContext = await pure('EXEC', machine, config)
       return nextContext
@@ -141,12 +130,14 @@ const config = {
     autoResolves: async (context) => {
       debug(`autoResolves machine`)
       // TODO move this synchronous machine to an action
+      // const {dmz, initialPending, isExternalPromise, externalAction}
       const { machine, config } = autoResolvesConfig(context)
       const nextContext = await pure('EXEC', machine, config)
       return nextContext
     },
     dmz: async (context) => {
       debug(`dmz machine`)
+      // const { dmz, reduceResolve, anvil}
       const { machine, config } = dmzConfig(context)
       const nextContext = await pure('EXEC', machine, config)
       return nextContext

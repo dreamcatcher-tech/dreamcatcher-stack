@@ -7,7 +7,9 @@ const genesisReducer = (network, action) => {
   // TODO check can only have come from parent, and must be the first action in the channel
   // auto respond will resolve this action
   // TODO wait for response from covenant, in case rejected
-  interchain('@@INIT') // covenant take your first breath
+
+  // TODO insert the action directly into the network, and store the request id
+  interchain('@@INIT') // covenant, take your first breath
 }
 const genesisReply = (action) => {
   const request = action.getRequest()

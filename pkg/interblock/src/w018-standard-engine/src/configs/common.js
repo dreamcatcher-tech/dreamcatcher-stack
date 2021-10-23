@@ -34,22 +34,6 @@ const common = (debug) => {
       return reductionModel.create(reduceResolve, anvil, dmz)
     },
   })
-  const respondReply = assign({
-    dmz: ({ dmz, address }) => {
-      assert(dmzModel.isModel(dmz))
-      const originalLoopback = dmz.network['.']
-      assert(channelModel.isModel(originalLoopback))
-      assert(addressModel.isModel(address))
-      const alias = dmz.network.getAlias(address)
-      debug('respondReply from: %o', alias)
-      const network = networkProducer.respondReply(
-        dmz.network,
-        address,
-        originalLoopback
-      )
-      return dmzModel.clone({ ...dmz, network })
-    },
-  })
   const assignRejection = assign({
     reduceRejection: ({ anvil }, event) => {
       if (rxReplyModel.isModel(anvil)) {
@@ -140,12 +124,11 @@ const common = (debug) => {
     return isReply
   }
   const respondLoopbackRequest = assign({
-    dmz: ({ initialPending, externalAction, dmz, address, anvil }) => {
+    dmz: ({ initialPending, externalAction, dmz, anvil }) => {
       debug('respondRequest')
       assert(pendingModel.isModel(initialPending))
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(anvil))
-      assert(anvil.getAddress().equals(address))
       const isFromBuffer = initialPending.getIsBuffered(anvil)
       const msg = `externalAction can only be responded to by auto resolvers`
       assert(!anvil.equals(externalAction) || isFromBuffer, msg)
@@ -182,7 +165,6 @@ const common = (debug) => {
     assignRejection,
     isReply,
     transmit,
-    respondReply,
     assignResolve,
     reduceCovenant,
     isLoopbackResponseDone,

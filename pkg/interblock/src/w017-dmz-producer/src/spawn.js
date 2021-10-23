@@ -26,9 +26,9 @@ const spawn = (alias, spawnOpts = {}, actions = []) => {
   return action
 }
 
-const spawnReducer = async (dmz, originAction) => {
+const spawnReducer = (dmz, originAction) => {
   assert(rxRequestModel.isModel(originAction))
-  const network = await spawnReducerWithoutPromise(dmz, originAction)
+  const network = spawnReducerWithoutPromise(dmz, originAction)
   replyPromise() // allows spawnReducer to be reused by deploy
   return network
 }
