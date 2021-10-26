@@ -12,12 +12,13 @@ const genesisReducer = (network, action) => {
   interchain('@@INIT') // covenant, take your first breath
 }
 const genesisReply = (action) => {
+  // TODO update whole reply to use dmz meta state
   const request = action.getRequest()
   // TODO lighten size of actions by storing origin in state ?
   const { genesis, alias, originAction } = request.payload
   const genesisModel = blockModel.clone(genesis)
   const payload = { alias, chainId: genesisModel.getChainId() }
-  if (originAction.sequence) {
+  if (originAction.identifier) {
     // TODO when would this ever be false ?
     replyResolve(payload, originAction)
   }

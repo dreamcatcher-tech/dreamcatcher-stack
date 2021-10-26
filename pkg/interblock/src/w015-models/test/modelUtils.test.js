@@ -131,8 +131,7 @@ describe('standard model', () => {
   test('array items are inflated', () => {
     const address = addressModel.create('TEST')
     const pendingRequest = rxRequestModel.create('TEST', {}, address, 0, 0)
-    const extraRequest = actionModel.create('TEST')
-    const reply = rxReplyModel.create(undefined, undefined, extraRequest)
+    const reply = rxReplyModel.create(undefined, undefined, address, 0, 0)
     const pending = pendingModel.clone({
       pendingRequest,
       replies: [reply],

@@ -48,11 +48,11 @@ describe('channelProducer', () => {
     assert(txRequest(tx, actionModel.create(type, { test: 'test' })))
     assert.throws(() => txRequest(tx, { type, payload: { test: 'test' } }))
   })
-  test('duplicate actions throws', () => {
+  test('duplicate action allowed', () => {
     let channel = channelModel.create()
     const action = actionModel.create('action1')
     channel = txRequest(channel, action)
-    assert.throws(() => txRequest(channel, action))
+    channel = txRequest(channel, action)
   })
   test('request', () => {
     let tx = channelModel.create()
@@ -197,7 +197,7 @@ describe('channelProducer', () => {
     // TODO allow remote to remove any of its requests
   })
   describe('loopback', () => {
-    test.only('basic', () => {
+    test('basic', () => {
       const loopbackAddress = addressModel.create('LOOPBACK')
       let loopback = channelModel.create(loopbackAddress, '.')
 

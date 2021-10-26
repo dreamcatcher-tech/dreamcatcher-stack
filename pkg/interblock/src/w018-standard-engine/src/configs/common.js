@@ -90,7 +90,7 @@ const common = (debug) => {
       isExternalPromise = replies.some(
         (txReply) =>
           txReply.getReply().isPromise() &&
-          txReply.request.sequence === externalAction.sequence
+          txReply.identifier === externalAction.identifier
       )
       debug(`transmit isExternalPromise`, isExternalPromise)
       return isExternalPromise
@@ -109,7 +109,7 @@ const common = (debug) => {
       isOriginPromise = replies.some(
         (txReply) =>
           txReply.getReply().isPromise() &&
-          txReply.request.sequence === pendingRequest.sequence
+          txReply.identifier === pendingRequest.identifier
       )
       debug(`transmit isOriginPromise`, isOriginPromise)
       return isOriginPromise

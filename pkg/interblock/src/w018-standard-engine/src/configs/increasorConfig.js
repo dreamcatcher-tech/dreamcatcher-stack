@@ -290,7 +290,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           const { type, payload } = action
           const address = nextLock.block.provenance.getAddress()
           const request = rxRequestModel.create(type, payload, address, index)
-          const { sequence } = request
+          const { identifier } = request
           let txReply
           try {
             const payload = await isolation.executeEffect({
@@ -299,9 +299,9 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
               timeout,
             })
             debug(`effects payload: `, payload)
-            txReply = txReplyModel.create('@@RESOLVE', payload, sequence)
+            txReply = txReplyModel.create('@@RESOLVE', payload, identifier)
           } catch (payload) {
-            txReply = txReplyModel.create('@@REJECT', payload, sequence)
+            txReply = txReplyModel.create('@@REJECT', payload, identifier)
           }
           await consistency.putPierceReply({ txReply })
           debug(`reply address:`, txReply.getAddress().getChainId())

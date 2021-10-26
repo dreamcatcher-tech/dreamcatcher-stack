@@ -22,7 +22,7 @@ describe('rxRequest', () => {
     assert(invalid.isInvalid())
     assert.throws(() => rxRequestModel.create('test', {}, invalid, 55, 20))
   })
-  test('loopback sequence returns correct address', () => {
+  test('loopback rxRequest returns correct address', () => {
     const address = addressModel.create('LOOPBACK')
     assert(address.isLoopback())
     assert(!address.isUnknown())

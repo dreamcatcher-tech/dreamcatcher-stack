@@ -22,8 +22,8 @@ const config = {
         assert(dmz.network.getAlias(externalAction.getAddress()))
         const response = dmz.network.getResponse(externalAction)
         assert(!response, `existing response: ${response && response.type}`)
-        const { sequence } = externalAction
-        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
+        const { identifier } = externalAction
+        const reply = txReplyModel.create('@@RESOLVE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [], [reply])
         return dmzModel.clone({ ...dmz, network })
       },
@@ -38,8 +38,8 @@ const config = {
         assert(rxRequestModel.isModel(pendingRequest))
         assert(dmz.network.getAlias(pendingRequest.getAddress()))
         debug(`settleOrigin`, pendingRequest)
-        const { sequence } = pendingRequest
-        const reply = txReplyModel.create('@@RESOLVE', {}, sequence)
+        const { identifier } = pendingRequest
+        const reply = txReplyModel.create('@@RESOLVE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [], [reply])
         return dmzModel.clone({ ...dmz, network })
       },

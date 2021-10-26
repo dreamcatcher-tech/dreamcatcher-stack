@@ -7,7 +7,7 @@ Debug.enable('*tests:crm *met*')
 
 describe.skip('crm', () => {
   describe('app deploy', () => {
-    test.only('deploys app', async () => {
+    test('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       shell.metro.enableLogging()

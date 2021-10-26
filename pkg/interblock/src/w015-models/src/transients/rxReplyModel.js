@@ -6,7 +6,12 @@ import { splitSequence } from './splitSequence'
 const rxReplyModel = standardize({
   schema: rxReplySchema,
   create(type = '@@RESOLVE', payload = {}, address, height, index) {
-    const identifier = `${address.getChainId()}_${height}_${index}`
+    let identifier
+    if (typeof address === 'string') {
+      identifier = address
+    } else {
+      identifier = `${address.getChainId()}_${height}_${index}`
+    }
     const rxReply = { type, payload, identifier }
     return rxReplyModel.clone(rxReply)
   },

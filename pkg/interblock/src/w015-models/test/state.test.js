@@ -21,8 +21,8 @@ describe('state', () => {
     assert.throws(() => stateModel.create({ missing: undefined }).serialize())
     assert.throws(() => stateModel.create({ n: { m: undefined } }).serialize())
   })
-  test.todo('logically wrong action sequences')
-  test.todo('sequence pattern wrong')
+  test.todo('logically wrong action identifiers')
+  test.todo('identifier pattern wrong')
   test.todo('state non serializable')
   test.todo('actions non serializable')
   describe('logicize', () => {

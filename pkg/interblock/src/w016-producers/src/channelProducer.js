@@ -34,6 +34,8 @@ const ingestInterblocks = (channel, interblocks) => {
 }
 
 const _ingestInterblock = (channel, interblock) => {
+  // TODO count all inbound promises
+  // TODO verify interblock replies are increasing
   // TODO do some logic on the channel counts, and if they match ours ?
   // check this transmission naturally extends the remote transmission ?
   // handle validator change in lineage
@@ -85,14 +87,19 @@ const _getRxRepliesTip = (rxRepliesTip, replies) => {
   }
   const parse = (key) => {
     if (!key) {
-      return { height: -1, index: -1 }
+      return [-1, -1]
     }
     const [sHeight, sIndex] = key.split('_')
-    return { height: parseInt(sHeight), index: parseInt(sIndex) }
+    const height = parseInt(sHeight)
+    const index = parseInt(sIndex)
+    return [height, index]
   }
-  let { height: mHeight, index: mIndex } = parse(rxRepliesTip)
+  // TODO check that they increment on rxRepliesTip
+  // OR that they settle an rxPromise
+  // AND log any promises into rxPromises
+  let [mHeight, mIndex] = parse(rxRepliesTip)
   for (const key of keys) {
-    const { height, index } = parse(key)
+    const [height, index] = parse(key)
     if (height >= mHeight) {
       if (index > mIndex) {
         mHeight = height

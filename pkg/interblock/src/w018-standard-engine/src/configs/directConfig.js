@@ -67,8 +67,8 @@ const config = {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
         assert(!covenantAction || anvil.equals(covenantAction))
-        const { sequence } = anvil
-        const promise = txReplyModel.create('@@PROMISE', {}, sequence)
+        const { identifier } = anvil
+        const promise = txReplyModel.create('@@PROMISE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [], [promise])
         debug(`promiseOriginRequest`, anvil.type)
         return dmzModel.clone({ ...dmz, network })

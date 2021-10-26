@@ -18,14 +18,14 @@ const _inflate = (action, defaultAction) => {
   if (_isReply(action.type)) {
     const { type, payload = {} } = action
     let { request } = action
-    let sequence
+    let identifier
     if (request) {
-      sequence = request.sequence
+      identifier = request.identifier
     } else {
       assert(rxRequestModel.isModel(defaultAction))
-      sequence = defaultAction.sequence
+      identifier = defaultAction.identifier
     }
-    return txReplyModel.create(type, payload, sequence)
+    return txReplyModel.create(type, payload, identifier)
   } else {
     const { type, payload = {}, to = '.' } = action
     return txRequestModel.create(type, payload, to)
@@ -86,16 +86,16 @@ const reductionModel = standardize({
     assert(requests.every(txRequestModel.isModel))
     assert(replies.every(txReplyModel.isModel))
     let promiseCount = 0
-    const sequenceSet = new Set()
+    const identifierSet = new Set()
     replies.forEach((txReply) => {
       // check the logic of the group of actions together
       if (txReply.getReply().isPromise()) {
         promiseCount++
       }
-      sequenceSet.add(txReply.request.sequence)
+      identifierSet.add(txReply.identifier)
     })
 
-    assert(sequenceSet.size === replies.length, `Duplicate sequence detected`)
+    assert(identifierSet.size === replies.length, `Duplicate identifier`)
     if (isPending) {
       assert.strictEqual(promiseCount, 0, `No promises allowed if pending`)
     } else {

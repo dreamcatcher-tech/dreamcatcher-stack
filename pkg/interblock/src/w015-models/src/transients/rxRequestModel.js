@@ -2,7 +2,6 @@ import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
 import { splitSequence } from './splitSequence'
 import { actionModel } from '../models'
-import { addressModel } from '../models'
 import { rxRequestSchema } from '../schemas/transientSchemas'
 
 const rxRequestModel = standardize({

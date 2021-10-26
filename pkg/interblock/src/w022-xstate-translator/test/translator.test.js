@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised'
 import { Machine } from 'xstate'
 import { send, sendParent, respond, translator } from '..'
 import { shell } from '../../w212-system-covenants'
-import { rxReplyModel, actionModel } from '../../w015-models'
+import { rxReplyModel, actionModel, addressModel } from '../../w015-models'
 import { _hook as hook, interchain } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:translator')
@@ -103,8 +103,8 @@ describe('translator', () => {
       assert.strictEqual(state.requests.length, 1)
       const [selfPing] = state.requests
       assert.strictEqual(selfPing.type, '@@PING')
-      const request = actionModel.create(selfPing.type, selfPing.payload)
-      const reply = rxReplyModel.create('@@RESOLVE', {}, request)
+      const address = addressModel.create('LOOPBACK')
+      const reply = rxReplyModel.create('@@RESOLVE', {}, address, 0, 0)
 
       state = await hook(() => shell.reducer(undefined, ping), [reply])
       assert(!state.isPending)

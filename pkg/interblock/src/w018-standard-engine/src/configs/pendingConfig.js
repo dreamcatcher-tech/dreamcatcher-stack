@@ -102,8 +102,8 @@ const config = {
         assert(rxRequestModel.isModel(covenantAction))
         assert.strictEqual(typeof reduceRejection, 'object')
         debug(`rejectOriginRequest`, anvil.type, reduceRejection)
-        const { sequence } = covenantAction
-        const reply = txReplyModel.create('@@REJECT', reduceRejection, sequence)
+        const { identifier: id } = covenantAction
+        const reply = txReplyModel.create('@@REJECT', reduceRejection, id)
         const network = networkProducer.tx(dmz.network, [], [reply])
         return dmzModel.clone({ ...dmz, network })
       },
@@ -113,8 +113,8 @@ const config = {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil))
         debug(`promiseanvil`, anvil.type)
-        const { sequence } = anvil
-        const promise = txReplyModel.create('@@PROMISE', {}, sequence)
+        const { identifier } = anvil
+        const promise = txReplyModel.create('@@PROMISE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [], [promise])
         return dmzModel.clone({ ...dmz, network })
       },
