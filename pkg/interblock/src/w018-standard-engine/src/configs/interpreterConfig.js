@@ -94,7 +94,8 @@ const config = {
   },
   guards: {
     isSelfExhausted: ({ dmz }) => {
-      const isSelfExhausted = !dmz.network.rxSelf()
+      assert(dmzModel.isModel(dmz))
+      const isSelfExhausted = !dmz.network.rxSelf() // up to here
       debug(`isSelfExhausted: ${isSelfExhausted}`)
       return isSelfExhausted
     },
@@ -111,6 +112,7 @@ const config = {
       return isPending
     },
   },
+  // TODO move to synchronous where possible, for speed ?
   services: {
     // TODO split out exactly what pieces of context are used in each machine
     direct: async (context) => {

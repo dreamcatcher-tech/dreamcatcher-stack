@@ -93,7 +93,10 @@
     "autoDetect": true,
     "env": {
       "type": "node",
-      "runner": "node"
+      "runner": "node",
+      "params": {
+        "runner": "--experimental-vm-modules --preserve-symlinks"
+      }
     }
   }
 }

@@ -62,54 +62,21 @@ const definition = {
       always: [
         {
           target: 'ingestInterblocks',
-          actions: 'connectToParent',
           cond: 'isGenesis',
+          actions: 'connectToParent',
         },
         { target: 'ingestInterblocks' },
       ],
     },
     ingestInterblocks: {
       entry: 'ingestInterblocks',
-      always: 'prepareIsolation',
+      always: 'loadCovenant',
     },
-    prepareIsolation: {
-      type: 'parallel',
-      states: {
-        loadCovenant: {
-          initial: 'loadCovenant',
-          states: {
-            loadCovenant: {
-              invoke: {
-                src: 'loadCovenant',
-                onDone: { target: 'done', actions: 'assignContainerId' },
-              },
-            },
-            done: { type: 'final' },
-          },
-        },
-        fetchRequestBlocks: {
-          initial: 'isRequestBlocksRequired',
-          states: {
-            isRequestBlocksRequired: {
-              always: [
-                {
-                  target: 'fetchRequestBlocks',
-                  cond: 'isRequestBlocksRequired',
-                },
-                { target: 'done' },
-              ],
-            },
-            fetchRequestBlocks: {
-              invoke: {
-                src: 'fetchRequestBlocks',
-                onDone: { target: 'done', actions: 'inductRequestBlocks' },
-              },
-            },
-            done: { type: 'final' },
-          },
-        },
+    loadCovenant: {
+      invoke: {
+        src: 'loadCovenant',
+        onDone: { target: 'exhaust', actions: 'assignContainerId' },
       },
-      onDone: { target: 'exhaust' },
     },
     exhaust: {
       initial: 'isReduceable',

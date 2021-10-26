@@ -286,6 +286,13 @@ const channelSchema = {
   properties: {
     ...remoteSchema.properties,
     systemRole: { enum: ['..', '.', './', 'UP_LINK', 'DOWN_LINK', 'PIERCE'] },
+    rxPromises: {
+      type: 'array',
+      // description: `tracks all the promises made to this channel`,
+      uniqueItems: true,
+      items: { type: 'string', pattern: '[0-9]+_[0-9]+' },
+      minItems: 1,
+    },
     rxRepliesTip: {
       type: 'string',
       // description: Tracks where the remote channel inbound replies are `
@@ -295,9 +302,10 @@ const channelSchema = {
     tip: integritySchema, // TODO change to an array to minimize db hits
     tipHeight: {
       type: 'integer',
-      //   description: `Lets interblocks be added quickly by testing height.
-      // Later should be removed in favour of db lookups`,
+      //   description: `Height of the tip.
+      // Lets interblocks be added quickly by testing height.`,
       minimum: 0,
+      multipleOf: 1,
     },
   },
 }

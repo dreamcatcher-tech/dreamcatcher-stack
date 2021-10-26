@@ -8,44 +8,34 @@ const txRequestSchema = {
     type: { type: 'string' },
     payload: { type: 'object' },
     to: { type: 'string' },
+    // when called directly in hooks,
+    // returns a chainId_height_index identifier
+    // which means direct calls must have a chainId already
+    // else mapping back cannot handle alias renames
   },
 }
-
 const rxRequestSchema = {
   title: `rxRequest`,
   // description: `System created inside ChannelModel`,
   type: 'object',
-  required: ['type', 'payload', 'sequence'], // we destroy who they sent it to
+  required: ['type', 'payload', 'identifier'],
   additionalProperties: false,
   properties: {
     type: { type: 'string' },
     payload: { type: 'object' },
-    // TODO regex on format of sequence
-    sequence: { type: 'string', pattern: '' }, // chainId_height_index
+    identifier: { type: 'string', pattern: '' }, // chainId_height_index
   },
 }
-
 const txReplySchema = {
   title: `txReply`,
   // description: `Covenant created`,
   type: 'object',
-  required: ['type', 'payload', 'request'],
+  required: ['type', 'payload', 'identifier'],
   additionalProperties: false,
   properties: {
     type: { type: 'string', enum: ['@@REJECT', '@@PROMISE', '@@RESOLVE'] },
     payload: { type: 'object' },
-    request: {
-      // description: `Sequence created in rxRequest
-      // We destroy the alias used when sending the request and use only the chainId.
-      // kept nested so closely resembles how the api constructs actions`,
-      type: 'object',
-      required: ['sequence'],
-      additionalProperties: false,
-      properties: {
-        sequence: { type: 'string', pattern: '' }, // TODO regex for chainId_height_index
-        // TODO investigate using alias, since now have blockheight so it is definite
-      },
-    },
+    identifier: { type: 'string', pattern: '' }, // chainId_height_index
   },
 }
 const rxReplySchema = {
@@ -54,23 +44,12 @@ const rxReplySchema = {
   // Create requires the sequence to be included.
   // @@PROMISE cannot ever be dispatched to a reducer, hence its exclusion from "type"`,
   type: 'object',
-  required: ['type', 'payload', 'request'],
+  required: ['type', 'payload', 'identifier'],
   additionalProperties: false,
   properties: {
     type: { type: 'string', enum: ['@@REJECT', '@@RESOLVE'] },
     payload: { type: 'object' },
-    // replace this with a sequence key of the request: height_index
-    request: {
-      // description: `Covenants original request, without the 'to' field`,
-      // TODO add the to field, as we can retrieve this easily since have blockheight
-      type: 'object',
-      required: ['type', 'payload'],
-      additionalProperties: false,
-      properties: {
-        type: { type: 'string' },
-        payload: { type: 'object' },
-      },
-    },
+    identifier: { type: 'string', pattern: '' }, // chainId_height_index
   },
 }
 

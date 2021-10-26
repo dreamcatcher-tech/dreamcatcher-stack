@@ -6,19 +6,16 @@ import { splitSequence } from './splitSequence'
 
 const txReplyModel = standardize({
   schema: txReplySchema,
-  create(type = '@@RESOLVE', payload = {}, sequence) {
-    // TODO may pass in txRequest model instead of sequence ?
-    assert.strictEqual(typeof payload, 'object')
-    const txReply = { type, payload, request: { sequence } }
+  create(type = '@@RESOLVE', payload = {}, identifier) {
+    const txReply = { type, payload, identifier }
     return txReplyModel.clone(txReply)
   },
 
   logicize(instance) {
-    const { type, payload, request } = instance
-    const { sequence } = request
-    const { address, height, index } = splitSequence(sequence)
+    const { type, payload, identifier } = instance
+    const { address, height, index } = splitSequence(identifier)
     const getAddress = () => address
-    const getHeight = () => height // TODO remove height and index getters ?
+    const getHeight = () => height
     const getIndex = () => index
     const getReplyKey = () => `${height}_${index}`
 

@@ -163,7 +163,7 @@ const createConfig = (isolation, consistency) => ({
         debug(`selectAction begin at rxIndex:`, rxIndex)
 
         if (rxIndex < conflux.rxReplies.length) {
-          debug(`selectAction reply`, rxIndex)
+          debug(`selectAction reply index:`, rxIndex)
           return conflux.rxReplies[rxIndex]
         }
 
@@ -177,7 +177,7 @@ const createConfig = (isolation, consistency) => ({
 
         const rxRequestsIndex = rxIndex - conflux.rxReplies.length
         if (rxRequestsIndex < conflux.rxRequests.length) {
-          debug(`selectAction request`, rxRequestsIndex)
+          debug(`selectAction request index:`, rxRequestsIndex)
           return conflux.rxRequests[rxRequestsIndex]
         }
         debug(`no action found`)
@@ -262,16 +262,6 @@ const createConfig = (isolation, consistency) => ({
       const containerId = await isolation.loadCovenant(lock.block)
       debug(`loadCovenant containerId: ${containerId.substring(0, 9)}`)
       return { containerId }
-    },
-    fetchRequestBlocks: async ({ lock, conflux }) => {
-      assert(lockModel.isModel(lock))
-      assert(conflux instanceof Conflux)
-      debug(`fetchRequestBlocks`)
-      const address = lock.block.provenance.getAddress()
-      const heights = conflux.requiredBlockHeights
-      const requestBlocks = await consistency.getBlocks({ address, heights })
-      debug(`fetchRequestBlocks done`, requestBlocks.length)
-      return { requestBlocks }
     },
     reduce: async ({ dmz, containerId, rxAction }) => {
       assert(dmzModel.isModel(dmz))

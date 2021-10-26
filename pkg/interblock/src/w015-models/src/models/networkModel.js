@@ -43,12 +43,6 @@ const networkModel = standardize({
     assert(channelModel.isModel(instance['.']), 'channel invalid')
     assert(instance['.'].systemRole === '.', `self not loopback channel`)
 
-    const rxSelf = () => {
-      // not included in rx() since it is always exhausted each run
-      const loopback = instance['.']
-      const action = loopback.rxReply() || loopback.rxRequest()
-      return action
-    }
     // TODO find why any op needs to get all aliases out anyway
     const getAliases = () => _aliases
     let _resolvedAliases
@@ -139,7 +133,6 @@ const networkModel = standardize({
     }
 
     return {
-      rxSelf,
       getAliases,
       getResolvedAliases,
       getAlias,

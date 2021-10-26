@@ -76,6 +76,11 @@ const inflateArray = (schema, instance) => {
     // TODO do proper check for number
     return instance
   }
+  if (schema.items.type === 'string') {
+    // TODO do proper check for string, including pattern checks
+    return instance
+  }
+
   const model = registry.get(schema.items.title)
   assert(model, `Arrays must be models`)
   // check the min and unique items props

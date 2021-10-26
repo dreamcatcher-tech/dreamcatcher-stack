@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import last from 'lodash.last'
 import Debug from 'debug'
 const debug = Debug('interblock:producers:channel')
 import {
@@ -8,6 +7,7 @@ import {
   interblockModel,
   actionModel,
   txReplyModel,
+  rxReplyModel,
 } from '../../w015-models'
 
 const ingestInterblocks = (channel, interblocks) => {
@@ -121,10 +121,6 @@ const setAddress = (channel, address) => {
   return channelModel.clone({ ...channel, address })
 }
 
-// --------------- REMOVE LINEAGE ---------------
-
-// TODO check requests and replies map to remote correctly
-
 // entry point for covenant into system
 const txRequest = (channel, action) => {
   debug('txRequest')
@@ -132,15 +128,6 @@ const txRequest = (channel, action) => {
   // TODO decide if should allow actions to initiate channels just by asking to talk to them
   // TODO use immutable map to detect duplicates faster
   let { requests } = channel
-  const isDuplicate = requests.some((request) => request.equals(action))
-  if (isDuplicate) {
-    // TODO move this logic into the channelModel
-    const msg =
-      `Duplicate request found: ${action.type}. ` +
-      `All requests must be distinguishable from each other else ` +
-      `isReplyFor( action ) will not work`
-    throw new Error(msg)
-  }
   requests = [...requests, action]
   return channelModel.clone({ ...channel, requests })
 }
@@ -149,8 +136,7 @@ const txRequest = (channel, action) => {
 const txReply = (channel, txReply) => {
   assert(channelModel.isModel(channel))
   assert(txReplyModel.isModel(txReply), `must supply reply object`)
-  // TODO how to check that replies sequence is correct ? checked on
-  // other side only ?
+  // TODO track txPromises so dev reducer cannot misbehave
   const replyKey = txReply.getReplyKey()
   if (channel.replies[replyKey]) {
     assert.strictEqual(channel.replies[replyKey].type, '@@PROMISE')
@@ -174,30 +160,6 @@ const txReply = (channel, txReply) => {
   }
   replies = { ...replies, [replyKey]: reply }
   return channelModel.clone({ ...channel, replies })
-}
-
-const shiftTxRequest = (channel, originalLoopback) => {
-  assert(channelModel.isModel(channel))
-  assert(channel.rxReply())
-  debug(`shiftTxRequest requestsLength: ${channel.requestsLength}`)
-  let index = channel.rxReplyIndex()
-  let { replies, requests } = channel
-  if (channel.address.isLoopback()) {
-    // loopback crossover is the only possible way the replies array may
-    // change during execution.
-    // originalLoopback is required to keep track of what things used to be
-    // TODO change to get original loopback out of the channel itself
-    assert(channelModel.isModel(originalLoopback))
-    assert(originalLoopback.address.isLoopback())
-    index = originalLoopback.rxReplyIndex()
-    assert(channel.replies[index], `loopback empty at ${index}`)
-    replies = { ...replies }
-    delete replies[index]
-  }
-  assert(channel.requests[index], `nothing to remove at ${index}`)
-  requests = { ...requests }
-  delete requests[index]
-  return channelModel.clone({ ...channel, replies, requests })
 }
 const invalidate = (channel) => {
   const invalid = addressModel.create('INVALID')
@@ -235,11 +197,85 @@ const _splitParse = (replyKey) => {
   return [parseInt(height), parseInt(index)]
 }
 
+const shiftLoopbackSettle = (loopback) => {
+  const rxReply = loopback.rxLoopbackSettle()
+  assert(rxReplyModel.isModel(rxReply))
+  let { rxPromises = [], ...rest } = loopback
+
+  const key = `${rxReply.getHeight()}_${rxReply.getIndex()}`
+  assert(rxPromises.includes(key))
+  rxPromises = rxPromises.filter((promisedKey) => promisedKey !== key)
+  if (rxPromises.length) {
+    rest.rxPromises = rxPromises
+  }
+  return channelModel.clone(rest)
+}
+
+const shiftLoopbackReply = (loopback) => {
+  assert(channelModel.isModel(loopback))
+  assert(loopback.isLoopback())
+  const nextLoopback = { ...loopback }
+  let { replies, rxPromises = [], rxRepliesTip, tipHeight } = loopback
+  if (!loopback.isLoopbackReplyPromised()) {
+    const rxReply = loopback.rxLoopbackReply()
+    assert(rxReplyModel.isModel(rxReply), `Must be a reply`)
+  }
+
+  const currentHeight = Number.isInteger(tipHeight) ? tipHeight + 1 : 0
+  const [rxHeight, rxIndex] = splitRxRepliesTip(rxRepliesTip)
+  assert(rxHeight <= currentHeight)
+  // need to test that the current rxRepliesTip points to a reply, not a request
+  if (rxHeight === currentHeight) {
+    rxRepliesTip = `${rxHeight}_${rxIndex + 1}`
+  } else {
+    rxRepliesTip = `${currentHeight}_${0}`
+  }
+  nextLoopback.rxRepliesTip = rxRepliesTip
+
+  if (loopback.isLoopbackReplyPromised()) {
+    const promise = replies[rxRepliesTip]
+    assert.strictEqual(promise.type, '@@PROMISE')
+    rxPromises.push(rxRepliesTip)
+    nextLoopback.rxPromises = rxPromises
+  }
+
+  return channelModel.clone(nextLoopback)
+  // TODO at the end of reduction, we want the loopback channel completely empty
+  // update tipheight so we always start afresh every cycle
+}
+const splitRxRepliesTip = (rxRepliesTip) => {
+  if (!rxRepliesTip) {
+    return [-1, -1]
+  }
+  assert.strictEqual(typeof rxRepliesTip, 'string')
+  const [sHeight, sIndex] = rxRepliesTip.split('_')
+  const height = Number.parseInt(sHeight)
+  const index = Number.parseInt(sIndex)
+  assert(height >= 0)
+  assert(index >= 0)
+  return [height, index]
+}
+const zeroLoopback = (channel) => {
+  // always increments the tipHeight by one
+  assert(channelModel.isModel(channel))
+  assert(channel.isLoopback())
+  assert(!channel.rxLoopback(), `Loopback not drained`)
+  const tipHeight = Number.isInteger(channel.tipHeight) ? tipHeight + 1 : 0
+  return channelModel.clone({
+    ...channel,
+    requests: [],
+    replies: {},
+    tipHeight,
+  })
+}
+
 export {
   ingestInterblocks,
   setAddress,
   txRequest,
   txReply,
-  shiftTxRequest,
   invalidate,
+  shiftLoopbackSettle,
+  shiftLoopbackReply,
+  zeroLoopback,
 }

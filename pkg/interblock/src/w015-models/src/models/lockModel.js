@@ -92,7 +92,7 @@ const lockModel = standardize({
     // TODO check all interblocks are valid in this block
     const isLocked = () => !timestamp.isExpired(expires)
     const isMatch = (lock) => lock.uuid === instance.uuid
-    const isPiercingsPresent = () => requests.length || replies.length
+    const isPiercingsPresent = () => !!requests.length || !!replies.length
     return {
       isLocked,
       isMatch,

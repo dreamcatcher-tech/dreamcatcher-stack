@@ -73,6 +73,7 @@ const promise = () => _txReply('@@PROMISE')
 const resolve = (payload, request) => _txReply('@@RESOLVE', payload, request)
 const reject = (error, request) => _txReply('@@REJECT', error, request)
 
+// TODO remove this function completely
 const isReplyFor = (reply, request) => {
   if (request && typeof request !== 'object') {
     return false

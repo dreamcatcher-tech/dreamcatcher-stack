@@ -11,17 +11,24 @@ import {
   dmzModel,
   blockModel,
   interblockModel,
-  continuationModel,
   txReplyModel,
   Conflux,
+  rxRequestModel,
+  rxReplyModel,
 } from '../../w015-models'
 import { channelProducer } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:producers:channel')
 Debug.enable('')
 
-const { setAddress, txRequest, txReply, ingestInterblocks, shiftTxRequest } =
-  channelProducer
+const {
+  setAddress,
+  txRequest,
+  txReply,
+  ingestInterblocks,
+  shiftLoopbackSettle,
+  shiftLoopbackReply,
+} = channelProducer
 
 describe('channelProducer', () => {
   test('resolve address', () => {
@@ -154,8 +161,8 @@ describe('channelProducer', () => {
       assert.strictEqual(rxConflux.rxRequests.length, 1)
       const request = rxConflux.rxRequests[0]
       assert.strictEqual(request.type, action.type)
-      const { sequence } = request
-      const reply = txReplyModel.create('@@RESOLVE', { t: 'p' }, sequence)
+      const { identifier } = request
+      const reply = txReplyModel.create('@@RESOLVE', { t: 'p' }, identifier)
       rxChannel = txReply(rxChannel, reply)
       assert(rxChannel.replies['0_0'].isResolve())
 
@@ -169,18 +176,11 @@ describe('channelProducer', () => {
       assert(txIngested[0] === rxInterblock)
 
       const txConflux = new Conflux(txIngested)
-      assert.strictEqual(txConflux.rxRequests.length, 0)
-      assert.throws(() => txConflux.rxReplies())
-      assert.strictEqual(txConflux.requiredBlockHeights.length, 1)
-      assert.strictEqual(txConflux.requiredBlockHeights[0], 0)
-      const [, txBlock] = reflect(txChannel)
-      txConflux.inductRequestBlocks([txBlock])
-
       assert.strictEqual(txConflux.rxReplies.length, 1)
-      const rxReply = txConflux.rxReplies[0]
+      assert.strictEqual(txConflux.rxRequests.length, 0)
 
+      const rxReply = txConflux.rxReplies[0]
       assert.deepEqual(rxReply.payload, reply.payload)
-      assert(isReplyFor(rxReply, action))
     })
     test.todo('promise only valid for current action')
     test.todo('gracefully ignores replies to requests removed from the tail')
@@ -197,6 +197,73 @@ describe('channelProducer', () => {
     // TODO allow remote to remove any of its requests
   })
   describe('loopback', () => {
+    test.only('basic', () => {
+      const loopbackAddress = addressModel.create('LOOPBACK')
+      let loopback = channelModel.create(loopbackAddress, '.')
+
+      // transmit two requests
+      const action1 = actionModel.create('LOOPBACK_ACTION_1')
+      const action2 = actionModel.create('LOOPBACK_ACTION_2')
+      const action3 = actionModel.create('LOOPBACK_ACTION_3')
+      loopback = txRequest(loopback, action1)
+      loopback = txRequest(loopback, action2)
+      loopback = txRequest(loopback, action3)
+      assert.strictEqual(loopback.requests.length, 3)
+      const rxReq1 = loopback.rxLoopbackRequest()
+      assert(rxReq1.equals(loopback.rxLoopbackRequest()))
+      assert(rxRequestModel.isModel(rxReq1))
+      assert.throws(() => shiftLoopbackReply(loopback))
+      assert.throws(() => shiftLoopbackSettle(loopback))
+
+      // transmit a reply to the first action
+      const { identifier } = rxReq1
+      assert.strictEqual(identifier, 'LOOPBACK_0_0')
+      const txRep1 = txReplyModel.create('@@RESOLVE', {}, identifier)
+      loopback = txReply(loopback, txRep1)
+      const rxRep1 = loopback.rxLoopbackReply()
+      assert(rxReplyModel.isModel(rxRep1))
+      assert.strictEqual(rxRep1.identifier, identifier)
+      assert.throws(() => txReply(loopback, txRep1))
+
+      // promise to respond later
+      loopback = shiftLoopbackReply(loopback)
+      const rxReq2 = loopback.rxLoopbackRequest()
+      assert.strictEqual(rxReq2.type, action2.type)
+      const txRep2 = txReplyModel.create('@@PROMISE', {}, rxReq2.identifier)
+      loopback = txReply(loopback, txRep2)
+      assert.throws(() => txReply(loopback, txRep2))
+      assert(rxReq2.equals(loopback.rxLoopbackRequest()))
+      assert(loopback.isLoopbackReplyPromised())
+      assert(!loopback.rxPromises)
+      loopback = shiftLoopbackReply(loopback)
+      assert.strictEqual(loopback.rxPromises.length, 1)
+      assert.strictEqual(loopback.rxPromises[0], '0_1')
+
+      // reject the final request
+      const rxReq3 = loopback.rxLoopbackRequest()
+      assert.strictEqual(rxReq3.type, action3.type)
+      const txRep3 = txReplyModel.create('@@REJECT', {}, rxReq3.identifier)
+      loopback = txReply(loopback, txRep3)
+      loopback = shiftLoopbackReply(loopback)
+      assert(loopback.isLoopbackExhausted())
+
+      // resolve the prior promise
+      const p = { promise: 'resolve' }
+      const txRep4 = txReplyModel.create('@@RESOLVE', p, rxReq2.identifier)
+      loopback = txReply(loopback, txRep4)
+      assert(!loopback.isLoopbackExhausted())
+      assert(!loopback.isLoopbackReplyPromised())
+      assert(!loopback.rxLoopbackReply())
+      assert(!loopback.rxLoopbackRequest())
+      const rxReq4 = loopback.rxLoopbackSettle()
+      assert.strictEqual(rxReq4.payload.promise, 'resolve')
+
+      loopback = shiftLoopbackSettle(loopback)
+      assert(loopback.isLoopbackExhausted())
+    })
+    test.todo('cannot reply twice to a request')
+    test.todo('cannot promise twice to a request')
+    test.todo('cannot resolve a promise twice')
     test.todo('no loopback allowed without systemRole set to LOOPBACK')
   })
 })

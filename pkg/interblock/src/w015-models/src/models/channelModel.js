@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
-import last from 'lodash.last'
 import { standardize } from '../modelUtils'
 import { addressModel } from './addressModel'
-import { continuationModel } from './continuationModel'
 import { remoteModel } from './remoteModel'
 import { channelSchema } from '../schemas/modelSchemas'
+import { rxReplyModel, rxRequestModel } from '../transients'
 import Debug from 'debug'
+import { continuationModel } from '.'
 const debug = Debug('interblock:models:channel')
 
 const channelModel = standardize({
@@ -34,12 +34,13 @@ const channelModel = standardize({
       requests,
       precedent,
       systemRole,
+      rxPromises,
       rxRepliesTip,
       tip,
       tipHeight,
     } = instance
-    const isLoopback = systemRole === '.'
-
+    const _isLoopback = systemRole === '.'
+    // TODO assert the order of rxPromises and txPromises is sequential
     if (address.isUnknown()) {
       assert.strictEqual(Object.keys(replies).length, 0)
       assert.strictEqual(typeof tip, 'undefined')
@@ -47,7 +48,8 @@ const channelModel = standardize({
     }
     // TODO if this is pierce channel, ensure only requests are OOB effects ?
 
-    if (isLoopback) {
+    if (_isLoopback) {
+      // TODO check rxRepliesTip matches what is in the reply object
       assert(address.isLoopback())
       assert.strictEqual(typeof tip, 'undefined')
       assert.strictEqual(typeof tipHeight, 'undefined')
@@ -62,9 +64,103 @@ const channelModel = standardize({
       assert(tipHeight >= 0)
     }
     const isTransmitting = () => requests.length || Object.keys(replies).length
+    const isLoopback = () => _isLoopback
+
+    const _splitKey = (key) => {
+      const [sHeight, sIndex] = key.split('_')
+      const height = Number.parseInt(sHeight)
+      const index = Number.parseInt(sIndex)
+      return [height, index]
+    }
+
+    const rxLoopbackSettle = () => {
+      let _rxPromises = rxPromises || []
+      for (const promisedKey of _rxPromises) {
+        const reply = replies[promisedKey]
+        if (reply) {
+          assert(continuationModel.isModel(reply))
+          if (!reply.isPromise()) {
+            const { type, payload } = reply
+            const [height, index] = _splitKey(promisedKey)
+            return rxReplyModel.create(type, payload, address, height, index)
+          }
+        }
+      }
+    }
+
+    const _nextCoords = () => {
+      let nextHeight = Number.isInteger(tipHeight) ? tipHeight + 1 : 0
+      let nextIndex = 0
+      if (typeof rxRepliesTip === 'string') {
+        const [height, index] = _splitKey(rxRepliesTip)
+        assert(height <= nextHeight)
+        if (height === nextHeight) {
+          nextIndex = index + 1
+        }
+      }
+      return [nextHeight, nextIndex]
+    }
+    const _rxLoopbackContinuation = () => {
+      if (Object.keys(replies).length) {
+        const [nextHeight, nextIndex] = _nextCoords()
+        // TODO assert no replies higher than this one are present
+        const key = `${nextHeight}_${nextIndex}`
+        if (replies[key]) {
+          const action = replies[key]
+          return [action, nextHeight, nextIndex]
+        }
+      }
+      return []
+    }
+    const rxLoopbackReply = () => {
+      const [action, height, index] = _rxLoopbackContinuation()
+      if (!action || action.type === '@@PROMISE') {
+        return
+      }
+      const { type, payload } = action
+      return rxReplyModel.create(type, payload, address, height, index)
+    }
+    const isLoopbackReplyPromised = () => {
+      const [action] = _rxLoopbackContinuation()
+      if (action && action.type === '@@PROMISE') {
+        return true
+      }
+      return false
+    }
+
+    const rxLoopbackRequest = () => {
+      assert(_isLoopback)
+      const [nextHeight, nextIndex] = _nextCoords()
+      if (requests[nextIndex]) {
+        const { type: t, payload: p } = requests[nextIndex]
+        return rxRequestModel.create(t, p, address, nextHeight, nextIndex)
+      }
+    }
+
+    const isLoopbackExhausted = () => {
+      if (rxLoopbackSettle()) {
+        return false
+      }
+      if (rxLoopbackReply()) {
+        return false
+      }
+      if (isLoopbackReplyPromised()) {
+        return false
+      }
+      if (rxLoopbackRequest()) {
+        return false
+      }
+      return true
+    }
 
     return {
       isTransmitting,
+      isLoopback,
+      rxLoopbackSettle,
+      rxLoopbackReply,
+      isLoopbackReplyPromised,
+      rxLoopbackRequest,
+      isLoopbackExhausted,
     }
   },
 })
