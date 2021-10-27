@@ -12,7 +12,7 @@ import { pendingMachine } from '../machines'
 import { assign } from 'xstate'
 import { common } from './common'
 import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart:pending')
+const debug = Debug('interblock:cfg:pending')
 const {
   transmit,
   assignResolve,

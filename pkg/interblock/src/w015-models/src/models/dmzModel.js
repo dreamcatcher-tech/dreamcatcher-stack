@@ -75,11 +75,19 @@ const dmzModel = standardize({
     // TODO verify that the buffers map to legit channels
     assert(pending.isBufferValid(network))
     assert(!network['.@@io'] || config.isPierced)
-    if (instance.piercings) {
-      assert(config.isPierced)
+    assert(!instance.piercings || config.isPierced)
+    const isTransmitting = () => {
+      const aliases = instance.network.getAliases()
+      for (const alias of aliases) {
+        const channel = instance.network[alias]
+        if (channel.isTransmitting()) {
+          return true
+        }
+      }
+      return false
     }
 
-    return {}
+    return { isTransmitting }
   },
 })
 

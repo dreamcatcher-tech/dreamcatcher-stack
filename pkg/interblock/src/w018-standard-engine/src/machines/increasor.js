@@ -27,6 +27,8 @@ const definition = {
     containerId: '',
     isRedriveRequired: false,
     cachedDmz: undefined,
+    turnoverHeights: [],
+    turnoverBlocks: {},
   },
   strict: true,
   states: {
@@ -97,11 +99,8 @@ const definition = {
             },
             signBlock: {
               invoke: {
-                src: 'signBlock', // TODO check if the signature is valid
-                onDone: {
-                  target: 'done',
-                  actions: 'assignBlock',
-                },
+                src: 'signBlock',
+                onDone: { target: 'done', actions: 'assignBlock' },
               },
             },
             done: { type: 'final' },
@@ -168,15 +167,20 @@ const definition = {
         },
       },
       onDone: [
-        {
-          target: 'done',
-          cond: 'isNewBlock',
-          actions: 'assignTxInterblocks',
-        },
+        { target: 'txInterblocks', cond: 'isNewBlock' },
         { target: 'done' },
       ],
     },
-
+    txInterblocks: {
+      entry: 'calculateTurnoverHeights',
+      invoke: {
+        src: 'fetchTurnoverBlocks',
+        onDone: {
+          target: 'done',
+          actions: ['assignTurnoverBlocks', 'assignTxInterblocks'],
+        },
+      },
+    },
     done: {
       data: ({ txInterblocks, isRedriveRequired }) => ({
         txInterblocks,

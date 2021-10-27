@@ -11,7 +11,7 @@ import { directMachine } from '../machines'
 import { assign } from 'xstate'
 import { common } from './common'
 import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart.direct')
+const debug = Debug('interblock:cfg:direct')
 
 const {
   transmit,

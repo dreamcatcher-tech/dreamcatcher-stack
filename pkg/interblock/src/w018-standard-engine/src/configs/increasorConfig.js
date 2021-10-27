@@ -9,6 +9,7 @@ import {
   interblockModel,
   rxRequestModel,
   txReplyModel,
+  turnoverModel,
 } from '../../../w015-models'
 import { blockProducer, lockProducer } from '../../../w016-producers'
 import { increasorMachine } from '../machines'
@@ -62,6 +63,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         nextDmz: (context, event) => {
           const { dmz } = event.data
           assert(dmzModel.isModel(dmz))
+          debug(`assignNextDmz`)
           return dmz
         },
       }),
@@ -77,6 +79,8 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         block: (context, event) => {
           const { nextBlock } = event.data
           assert(blockModel.isModel(nextBlock))
+          const short = nextBlock.getChainId().substring(0, 9)
+          debug(`assignBlock`, short, nextBlock.provenance.height)
           return nextBlock
         },
       }),
@@ -120,18 +124,55 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           return isRedriveRequired
         },
       }),
-      assignTxInterblocks: assign({
-        txInterblocks: ({ block }) => {
-          debug(`txInterblocks`)
+      calculateTurnoverHeights: assign({
+        turnoverHeights: ({ block }) => {
           assert(blockModel.isModel(block))
           assert(!block.provenance.address.isGenesis())
           const txAliases = block.network.txInterblockAliases()
-          const interblocks = txAliases.map((alias) =>
-            interblockModel.create(block, alias)
-          )
-          debug(`txInterblocks raw length: ${interblocks.length}`)
-          // always send a lineage block
-          interblocks.push(interblockModel.create(block))
+          debug(`calculateTurnoverHeights length:`, txAliases.length)
+          const heights = new Set()
+          for (const alias of txAliases) {
+            const channel = block.network[alias]
+            if (channel.precedent.isUnknown()) {
+              // TODO handle multiple turnover events in the chain
+              heights.add(0)
+            }
+          }
+          const turnoverHeights = [...heights]
+          assert.strictEqual(turnoverHeights.length, heights.size)
+          return turnoverHeights
+        },
+      }),
+      assignTurnoverBlocks: assign({
+        turnoverBlocks: (context, event) => {
+          const { turnoverBlocks } = event.data
+          assert(Array.isArray(turnoverBlocks))
+          assert(turnoverBlocks.every(blockModel.isModel))
+          debug(`assignTurnoverBlocks`)
+          const map = {}
+          for (const block of turnoverBlocks) {
+            map[block.provenance.height] = block
+          }
+          return map
+        },
+      }),
+      assignTxInterblocks: assign({
+        txInterblocks: ({ block, turnoverBlocks }) => {
+          assert(blockModel.isModel(block))
+          assert(!block.provenance.address.isGenesis())
+          assert(Object.values(turnoverBlocks).every(blockModel.isModel))
+          const txAliases = block.network.txInterblockAliases()
+          debug(`assignTxInterblocks length:`, txAliases.length)
+          const interblocks = txAliases.map((alias) => {
+            const channel = block.network[alias]
+            const turnovers = []
+            if (channel.precedent.isUnknown()) {
+              const turoverBlock = turnoverBlocks[0]
+              const turnover = turnoverModel.create(turoverBlock)
+              turnovers.push(turnover)
+            }
+            return interblockModel.create(block, alias, turnovers)
+          })
           return interblocks
         },
       }),
@@ -206,18 +247,14 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       isDmzTransmitting: ({ lock, nextDmz }) => {
         // outgoing changes detected
         assert(lockModel.isModel(lock))
-        assert(dmzModel.isModel(nextDmz))
-        const { network } = nextDmz
         assert(lock.block, 'increasor never makes a new chain')
-        const previousNetwork = lock.block.network
-        const txChanged = network.txInterblockAliases()
-        const pierceChanged = _isPierceChanged(network, previousNetwork)
-        const isDmzTransmitting = txChanged.length || pierceChanged
+        assert(dmzModel.isModel(nextDmz))
+        const isDmzTransmitting = nextDmz.isTransmitting()
         debug(`isDmzTransmitting: ${isDmzTransmitting}`)
         return isDmzTransmitting
       },
       isNewBlock: ({ block }) => {
-        const isNewBlock = !!block && blockModel.isModel(block)
+        const isNewBlock = blockModel.isModel(block)
         debug(`isNewBlock: ${isNewBlock}`)
         return isNewBlock
       },
@@ -225,7 +262,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       isEffectable: ({ block, containerId }) => {
         assert(blockModel.isModel(block))
         assert.strictEqual(typeof containerId, 'string')
-        const isEffectable = block.config.isPierced && containerId
+        const isEffectable = !!(block.config.isPierced && containerId)
         // TODO check for new effect actions in io channel
         debug(`isEffectable %o`, isEffectable)
         return isEffectable
@@ -314,7 +351,15 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         await isolation.unloadCovenant(containerId)
         return { effectsReplyCount: settlements.length }
       },
-
+      fetchTurnoverBlocks: async ({ block, turnoverHeights }) => {
+        assert(blockModel.isModel(block))
+        assert(Array.isArray(turnoverHeights))
+        assert(turnoverHeights.every(Number.isInteger))
+        const heights = turnoverHeights
+        const address = block.provenance.getAddress()
+        const turnoverBlocks = await consistency.getBlocks({ address, heights })
+        return { turnoverBlocks }
+      },
       unlockChain: async ({ nextLock }) => {
         assert(lockModel.isModel(nextLock))
         debug(`unlockChain`)

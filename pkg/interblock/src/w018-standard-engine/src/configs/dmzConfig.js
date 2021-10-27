@@ -12,7 +12,7 @@ import { dmzMachine } from '../machines'
 import { common } from './common'
 import { assign } from 'xstate'
 import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart:dmz')
+const debug = Debug('interblock:cfg:dmz')
 
 const {
   transmit,

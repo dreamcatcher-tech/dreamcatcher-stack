@@ -44,16 +44,16 @@ const definition = {
         },
       },
     },
-    loopback: {
-      always: [
-        { target: 'autoResolves', cond: 'isSelfExhausted' },
-        { target: 'interpret', actions: 'loadSelfAnvil' },
-      ],
-    },
     interpret: {
       always: [
         { target: 'interpretDmz', cond: 'isSystem' },
         { target: 'interpretCovenant' },
+      ],
+    },
+    loopback: {
+      always: [
+        { target: 'autoResolves', cond: 'isSelfExhausted' },
+        { target: 'interpret', actions: 'loadSelfAnvil' },
       ],
     },
     interpretDmz: {

@@ -26,6 +26,7 @@ const rxRequestModel = standardize({
     const getAddress = () => address
     const getHeight = () => height
     const getIndex = () => index
+    const getReplyKey = () => `${height}_${index}`
     const getRequest = () => {
       if (!request) {
         request = actionModel.create({ type, payload })
@@ -34,7 +35,7 @@ const rxRequestModel = standardize({
     }
     const isReply = () => false
 
-    return { getAddress, getHeight, getIndex, getRequest, isReply }
+    return { getAddress, getHeight, getIndex, getReplyKey, getRequest, isReply }
   },
 })
 

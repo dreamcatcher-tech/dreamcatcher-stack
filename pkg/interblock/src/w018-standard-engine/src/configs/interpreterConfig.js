@@ -15,7 +15,7 @@ import { autoResolvesConfig } from './autoResolvesConfig'
 import { dmzConfig } from './dmzConfig'
 import { assign } from 'xstate'
 import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart')
+const debug = Debug('interblock:cfg:interpreter')
 
 const config = {
   actions: {
@@ -82,8 +82,7 @@ const config = {
       // TODO move to being a test, not a live assertion
       debug(`assertLoopbackEmpty`)
       const loopback = dmz.network['.']
-      assert(!loopback.rxRequest())
-      assert(!loopback.rxReply())
+      assert(loopback.isLoopbackExhausted())
     },
     assignDirectMachine: assign((context, event) => {
       assert(!event.data.then)
@@ -93,18 +92,19 @@ const config = {
     }),
   },
   guards: {
-    isSelfExhausted: ({ dmz }) => {
-      assert(dmzModel.isModel(dmz))
-      const isSelfExhausted = !dmz.network.rxSelf() // up to here
-      debug(`isSelfExhausted: ${isSelfExhausted}`)
-      return isSelfExhausted
-    },
     isSystem: ({ anvil }) => {
       assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
       const isSystem =
         dmzReducer.isSystemReply(anvil) || dmzReducer.isSystemRequest(anvil)
       debug(`isSystem: ${isSystem}`)
       return isSystem
+    },
+    isSelfExhausted: ({ dmz }) => {
+      assert(dmzModel.isModel(dmz))
+      const loopback = dmz.network['.']
+      const isSelfExhausted = loopback.isLoopbackExhausted()
+      debug(`isSelfExhausted: ${isSelfExhausted}`)
+      return isSelfExhausted
     },
     isPending: ({ dmz }) => {
       const isPending = dmz.pending.getIsPending()
@@ -139,6 +139,7 @@ const config = {
     },
     dmz: async (context) => {
       debug(`dmz machine`)
+      // TODO move to sync action since no async anywhere ?
       // const { dmz, reduceResolve, anvil}
       const { machine, config } = dmzConfig(context)
       const nextContext = await pure('EXEC', machine, config)

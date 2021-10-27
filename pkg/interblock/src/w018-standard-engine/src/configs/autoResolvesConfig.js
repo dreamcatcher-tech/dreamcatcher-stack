@@ -10,7 +10,7 @@ import { networkProducer } from '../../../w016-producers'
 import { autoResolvesMachine } from '../machines'
 import { assign } from 'xstate'
 import Debug from 'debug'
-const debug = Debug('interblock:cfg:heart.autoResolves')
+const debug = Debug('interblock:cfg:autoResolves')
 
 const config = {
   actions: {
@@ -71,10 +71,10 @@ const config = {
       debug(`isStillPending`, isStillPending)
       return isStillPending
     },
-    isExternalActionTypeReply: ({ externalAction }) => {
-      const isExternalActionTypeReply = rxReplyModel.isModel(externalAction)
-      debug(`isExternalActionTypeReply`, isExternalActionTypeReply)
-      return isExternalActionTypeReply
+    isExternalActionReply: ({ externalAction }) => {
+      const isExternalActionReply = rxReplyModel.isModel(externalAction)
+      debug(`isExternalActionReply`, isExternalActionReply)
+      return isExternalActionReply
     },
     isChannelRemoved: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))
@@ -83,20 +83,6 @@ const config = {
       const isChannelRemoved = !dmz.network.getAlias(address)
       debug(`isChannelRemoved`, isChannelRemoved)
       return isChannelRemoved
-    },
-    isRequestRemoved: ({ dmz, externalAction }) => {
-      // loopback would have removed it, or dmz changes might have removed it
-      // dmz may have changed the channel address, then opened a new channel
-      // while weird, this is still legal.
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(externalAction))
-      const address = externalAction.getAddress()
-      const alias = dmz.network.getAlias(address)
-      const remote = dmz.network[alias].getRemote()
-      const index = externalAction.getIndex()
-      const isRequestRemoved = !remote.requests[index]
-      debug(`isRequestRemoved: `, isRequestRemoved)
-      return isRequestRemoved
     },
     isExternalRequestSettled: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))

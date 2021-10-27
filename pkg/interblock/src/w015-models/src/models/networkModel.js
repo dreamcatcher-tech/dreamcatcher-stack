@@ -81,14 +81,13 @@ const networkModel = standardize({
     }
     const getParent = () => instance['..']
 
-    // probably can delete this too
     const getResponse = (request) => {
       assert(rxRequestModel.isModel(request))
       const address = request.getAddress()
-      const index = request.getIndex()
       const alias = getAlias(address)
       assert(instance[alias])
-      const reply = instance[alias].replies[index]
+      const replyKey = request.getReplyKey()
+      const reply = instance[alias].replies[replyKey]
       return reply
     }
 

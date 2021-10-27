@@ -132,18 +132,8 @@ const removeProcessedPiercings = (block, { requests, replies }) => {
     return { requests, replies }
   }
   const ioChannel = block.network['.@@io']
-  const { requests: remoteRequests, replies: remoteReplies } =
-    ioChannel.getRemote() // TODO handle replies
-
-  const requestActions = Object.values(remoteRequests)
-  const replyActions = Object.values(remoteReplies)
-
-  requests = requests.filter(
-    (request) => !requestActions.some((compare) => compare.equals(request))
-  )
-  replies = replies.filter(
-    (reply) => !replyActions.some((compare) => compare.equals(reply))
-  )
+  // TODO on a transmitting block, remove piercings that have been replied to
+  // or those replies that have been ingested by rxRepliesTip
   return { requests, replies }
 }
 

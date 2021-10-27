@@ -238,19 +238,12 @@ const createConfig = (isolation, consistency) => ({
       return isPierceChannelUnopened
     },
     isCovenantEffectable: ({ lock, dmz }) => {
-      assert(lockModel.isModel(lock))
-      assert(dmzModel.isModel(dmz))
-      let prevIo = channelModel.create()
       // TODO merge this into channelModel so can reuse in increasorConfig
-      if (lock.block && lock.block.network['.@@io']) {
-        prevIo = lock.block.network['.@@io']
-      }
-      const nextIo = dmz.network['.@@io'] || prevIo
-      const nextIoIndices = nextIo
-        .getRequestIndices()
-        .filter((index) => !prevIo.requests[index])
-
-      const isCovenantEffectable = nextIoIndices.length
+      assert(lockModel.isModel(lock))
+      assert(lock.block)
+      assert(dmzModel.isModel(dmz))
+      const io = lock.block.network['.@@io']
+      const isCovenantEffectable = !!(io && io.requests.length)
       debug(`isCovenantEffectable`, isCovenantEffectable)
       return isCovenantEffectable
     },

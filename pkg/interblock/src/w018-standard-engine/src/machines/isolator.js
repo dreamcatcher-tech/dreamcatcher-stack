@@ -85,11 +85,14 @@ const definition = {
           entry: 'selectAction',
           always: [
             // check if the isolation message system is enabled, enable if so
-            { target: 'reduce', cond: 'isReduceable' },
+            {
+              target: 'reduce',
+              cond: 'isReduceable',
+              actions: 'incrementRxIndex',
+            },
             { target: 'done' },
             // disable the messaging system if it was enabled
           ],
-          exit: 'incrementRxIndex',
         },
         reduce: {
           // TODO run repeatedly with timer, sending updates to parent each time

@@ -32,9 +32,8 @@ const definition = {
     },
     resolveExternalAction: {
       always: [
-        { target: 'done', cond: 'isExternalActionTypeReply' },
+        { target: 'done', cond: 'isExternalActionReply' },
         { target: 'done', cond: 'isChannelRemoved' },
-        { target: 'done', cond: 'isRequestRemoved' },
         { target: 'done', cond: 'isExternalRequestSettled' },
         { target: 'done', cond: 'isTxExternalActionPromise' },
         { target: 'done', cond: 'isExternalRequestBuffered' },
