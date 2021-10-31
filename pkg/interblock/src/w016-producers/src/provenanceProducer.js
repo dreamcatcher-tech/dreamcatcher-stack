@@ -16,19 +16,18 @@ const generateNextProvenance = (nextDmz, block) => {
   assert(blockModel.isModel(block))
   assert(!nextDmz.equals(block.getDmz()), 'block dmz has not changed')
   // TODO check the dmz follows from the current one ?
-  // TODO handle no change to dmz but change in lineage
   // TODO put checks in that blocks without new transmissions cannot be created
-  // basically all lineage rules should be checked here
 
   const { provenance } = block
-  const isNewChannels = nextDmz.network.isNewChannels(block.network)
-  const lineage = {}
+  const isTransmitting = nextDmz.isTransmitting()
   const isGenesis = provenance.height === 0
-  if (isNewChannels && !isGenesis) {
+  const lineage = {}
+  if (isTransmitting && !isGenesis) {
     // TODO go back to the last validator change
     const hash = provenance.getAddress().getChainId()
     const genesis = integrityModel.create(hash)
-    lineage[0] = genesis
+    const genesisHeight = 0
+    lineage[genesisHeight] = genesis
   }
   const dmzIntegrity = integrityModel.create(nextDmz.getHash())
   const parentIntegrity = provenance.reflectIntegrity()

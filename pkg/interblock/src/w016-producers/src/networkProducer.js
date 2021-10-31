@@ -91,11 +91,12 @@ const _respond = (network, rxRequest, reply) => {
   // TODO find a way to check if the request is legit for this channel
   // or allow the fault, relying on the other end to pick it up
   // might run the check at the end, or whenever parse the json
-  assert(channel.rxRequest().equals(rxRequest))
-  const index = rxRequest.getIndex()
-  assert(!channel.replies[index])
-  const nextChannel = channelProducer.txReply(channel, reply)
-  assert(nextChannel.replies[index])
+  const replyKey = rxRequest.getReplyKey()
+  assert(!channel.replies[replyKey])
+  const { type, payload } = reply
+  const txReply = txReplyModel.create(type, payload, rxRequest.identifier)
+  const nextChannel = channelProducer.txReply(channel, txReply)
+  assert(nextChannel.replies[replyKey])
   return network.merge({ [alias]: nextChannel })
 }
 
@@ -158,21 +159,17 @@ const reaper = (network) => {
   // TODO also handle timed out channels here - idle clogs system
   const aliases = network.getAliases()
   let nextNetwork
-  let isDeleted = false
   for (const alias of aliases) {
     const channel = network[alias]
     if (channel.address.isInvalid()) {
-      assert(!channel.rxRequest())
-      if (!channel.rxReply()) {
-        isDeleted = true
-        if (!nextNetwork) {
-          nextNetwork = { ...network }
-        }
-        delete nextNetwork[alias]
+      assert(!channel.tip)
+      if (!nextNetwork) {
+        nextNetwork = { ...network }
       }
+      delete nextNetwork[alias]
     }
   }
-  if (isDeleted) {
+  if (nextNetwork) {
     return networkModel.clone(nextNetwork)
   }
   return network
@@ -204,6 +201,17 @@ const _generateAddressMap = (interblocks) => {
   }
   return chainMap
 }
+const zeroTransmissions = (network, precedent) => {
+  assert(networkModel.isModel(network))
+  const nextNetwork = {}
+  const aliases = network.getAliases()
+  for (const alias of aliases) {
+    const channel = network[alias]
+    const nextChannel = channelProducer.zeroTransmissions(channel, precedent)
+    nextNetwork[alias] = nextChannel
+  }
+  return network.merge(nextNetwork)
+}
 export {
   ingestInterblocks,
   respondRejection,
@@ -212,4 +220,5 @@ export {
   invalidateLocal,
   reaper,
   removeBufferPromise,
+  zeroTransmissions,
 }

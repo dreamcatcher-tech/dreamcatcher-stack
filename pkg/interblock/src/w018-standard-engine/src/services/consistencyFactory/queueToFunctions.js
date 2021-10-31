@@ -12,12 +12,6 @@ const fromFunctions = (consistencySource) => async (action) => {
       return consistencySource.putLockChain(action.payload)
     case 'UNLOCK':
       return consistencySource.putUnlockChain(action.payload)
-    case 'LINEAGE':
-      return consistencySource.getLineage(action.payload)
-    case 'ANY_AFFECTED':
-      return consistencySource.getIsAnyAffected(action.payload)
-    case 'AFFECTED':
-      return consistencySource.getAffected(action.payload)
     case 'IS_PRESENT':
       return consistencySource.getIsPresent(action.payload)
     case 'GET_BLOCK':
@@ -40,9 +34,6 @@ const toFunctions = (queue) => ({
   putPoolInterblock: (payload) => queue.push({ type: 'POOL', payload }),
   putLockChain: (payload) => queue.push({ type: 'LOCK', payload }),
   putUnlockChain: (payload) => queue.push({ type: 'UNLOCK', payload }),
-  getLineage: (payload) => queue.push({ type: 'LINEAGE', payload }),
-  getIsAnyAffected: (payload) => queue.push({ type: 'ANY_AFFECTED', payload }),
-  getAffected: (payload) => queue.push({ type: 'AFFECTED', payload }),
   getIsPresent: (payload) => queue.push({ type: 'IS_PRESENT', payload }),
   getBlock: (payload) => queue.push({ type: 'GET_BLOCK', payload }),
   getBlocks: (payload) => queue.push({ type: 'GET_BLOCKS', payload }),

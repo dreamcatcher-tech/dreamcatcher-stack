@@ -29,6 +29,7 @@ const createConfig = (isolation, consistency) => ({
         const { lock } = event.payload
         assert(lockModel.isModel(lock))
         assert(lock.block, `can only isolate for existing chains`)
+        debug(`assignLock`)
         return lock
       },
     }),
@@ -80,6 +81,19 @@ const createConfig = (isolation, consistency) => ({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
+    zeroTransmissions: assign({
+      dmz: ({ lock, dmz }) => {
+        assert(lockModel.isModel(lock))
+        assert(dmzModel.isModel(dmz))
+        debug(`zeroTransmissions`)
+        const precedent = lock.block.provenance.reflectIntegrity()
+        const network = networkProducer.zeroTransmissions(
+          dmz.network,
+          precedent
+        )
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
     assignContainerId: assign({
       containerId: (context, event) => {
         const { containerId } = event.data
@@ -106,11 +120,22 @@ const createConfig = (isolation, consistency) => ({
         return nextDmz
       },
     }),
+    zeroLoopback: assign({
+      dmz: ({ dmz }) => {
+        assert(dmzModel.isModel(dmz))
+        debug(`zeroLoopback`)
+        const loopback = channelProducer.zeroLoopback(dmz.network['.'])
+        return dmzModel.clone({
+          ...dmz,
+          network: { ...dmz.network, '.': loopback },
+        })
+      },
+    }),
     generatePierceDmz: assign({
       pierceDmz: ({ lock }) => {
         assert(lockModel.isModel(lock))
         assert(lock.isPiercingsPresent())
-        assert(lock.block) // ? is the block necessary ?
+        assert(lock.block)
         const { replies, requests } = lock.piercings
         debug(`generatePierceDmz`)
         return dmzProducer.generatePierceDmz(lock.block, replies, requests)

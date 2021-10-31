@@ -37,7 +37,9 @@ const ioQueueFactory = (name, model) => {
       setImmediate(() => resolve(result))
     } catch (e) {
       debug(`${name} rejected: %O %O`, envelope, e)
-      setImmediate(() => reject(e))
+      // else results in uncaught rejection errors, as sqs intentionally
+      // breaks from the current thread
+      throw e
     }
     loop()
     assert(_awaiting.has(envelope))

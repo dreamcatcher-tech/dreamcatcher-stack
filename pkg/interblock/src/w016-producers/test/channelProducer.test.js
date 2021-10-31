@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import random from 'lodash.random'
-import { request, isReplyFor } from '../../w002-api'
+import { request } from '../../w002-api'
 import {
   stateModel,
   channelModel,

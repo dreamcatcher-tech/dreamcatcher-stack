@@ -12,6 +12,7 @@ import {
 import { actions } from '..'
 import { metrologyFactory } from '../../w018-standard-engine'
 import { spawnReducer, spawn } from '../src/spawn'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
 Debug.enable()
@@ -22,7 +23,9 @@ describe('dmzReducer', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
-    test('spawn is implicitly awaited', async () => {
+    jest.setTimeout(300)
+    test.only('spawn is implicitly awaited', async () => {
+      Debug.enable('*met* *dmz* *cfg*')
       const reducer = async (state, action) => {
         debug(`reducer`, action)
         if (action.type === 'SPAWN') {

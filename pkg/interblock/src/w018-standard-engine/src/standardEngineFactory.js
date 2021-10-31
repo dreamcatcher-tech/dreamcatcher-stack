@@ -40,6 +40,7 @@ const standardEngineFactory = () => {
     // TODO split into multiple calls, so can push out earlier
     const transmissions = await ioTransmit.push(interblock)
     assert(transmissions.every(txModel.isModel), `failed transmitter`)
+    debug(`tramission lengths:`, transmissions.length)
     const awaits = transmissions.map((tx) => {
       const { interblock, socket } = tx
       if (socket.getIsInternal()) {
@@ -95,21 +96,11 @@ const standardEngineFactory = () => {
             if (isRedriveRequired) {
               redrives.set(chainId, true)
             }
-
-            let hx = 0
-            let lx = 0
-            for (const ib of txInterblocks) {
-              if (ib.getOriginAlias()) {
-                hx++
-              } else {
-                lx++
-              }
-            }
-            const ibs = `tx: ${txInterblocks.length} hx:${hx} lx:${lx}`
             if (!txInterblocks.length) {
               debug(`WASTED ioIncrease total: %i ms`, Date.now() - start)
             } else {
-              debug(`ioIncrease ${ibs} %i ms`, Date.now() - start)
+              const msg = `tx: ${txInterblocks.length}`
+              debug(`ioIncrease ${msg} %i ms`, Date.now() - start)
             }
           } while (redrives.get(chainId))
         })

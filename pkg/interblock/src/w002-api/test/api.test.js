@@ -1,29 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import { deserializeError } from 'serialize-error'
-import { isReplyFor, request, promise, resolve, reject } from '..'
-
+import { request, promise, resolve, reject } from '..'
 describe('api', () => {
-  describe('isReplyFor', () => {
-    test('no request check if is reply', () => {
-      const mockRequest = request('mock')
-      const mockReply = resolve()
-      const isReply = isReplyFor(mockReply)
-      assert(isReply)
-      const isNotReply = isReplyFor(mockReply, mockRequest)
-      assert(!isNotReply)
-
-      // TODO make a valid request reply pair
-    })
-    test('return false if undefined', () => assert(!isReplyFor()))
-    test('reply detected correctly', () => {
-      const reply = resolve()
-      assert(isReplyFor(reply))
-    })
-    test('promises are not a valid reply', () => {
-      const reply = promise()
-      assert(!isReplyFor(reply))
-    })
-  })
   describe('request', () => {
     test('action with "to" added', () => {
       const action = { type: 'PLAIN', payload: { test: 'data' } }

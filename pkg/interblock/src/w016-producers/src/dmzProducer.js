@@ -44,6 +44,12 @@ const _extractPierceDmz = (block) => {
   const baseDmz = dmzModel.create({ validators: { ['@@PIERCE']: publicKey } })
   const address = block.provenance.getAddress()
   let pierceChannel = channelModel.create(address, 'PIERCE')
+  if (block.network['.@@io']) {
+    const { tip } = block.network['.@@io']
+    if (tip) {
+      pierceChannel = channelModel.clone({ ...pierceChannel, precedent: tip })
+    }
+  }
   const network = baseDmz.network.merge({ '@@PIERCE_TARGET': pierceChannel })
   return dmzModel.clone({ ...baseDmz, network })
 }

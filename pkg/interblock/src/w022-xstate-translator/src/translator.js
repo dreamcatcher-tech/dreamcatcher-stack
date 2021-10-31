@@ -8,7 +8,6 @@ import {
   promise,
   resolve,
   reject,
-  isReplyFor,
   replyPromise,
   replyReject,
   replyResolve,

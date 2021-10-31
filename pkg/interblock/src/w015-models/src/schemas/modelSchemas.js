@@ -280,6 +280,7 @@ const channelSchema = {
 
   // "tip" is the hash of the last interblock we received, which might be
   // unknown
+
   type: 'object',
   required: [...remoteSchema.required, 'systemRole'],
   additionalProperties: false,

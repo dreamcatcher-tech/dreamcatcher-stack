@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import setImmediate from 'set-immediate-shim'
-import { request, promise, resolve, reject, isReplyFor } from './api'
+import { request, promise, resolve, reject } from './api'
 import Debug from 'debug'
 const debug = Debug('interblock:api:hooks')
 
@@ -54,6 +54,17 @@ const _promise = (request) => {
   const { type, payload, to, exec, inBand, query } = request
   assert(!exec || typeof exec === 'function')
   const bareRequest = { type, payload, to }
+
+  /**
+   * Must translate from aliases to chainIds.
+   * Pass in the full dmz, and map the 'to' field to an actual alias.
+   * rxReply could include the alias ?
+   * BUT also have to map back what the height of the reply was as well ?
+   * So can only use some kind of internal sequencing ?
+   * BUT this can be spoofed by the other side ?
+   * When we make the request, we can know what our replyKey will be ?
+   * When transmitting, ensure we haven't already sent out the request ?
+   */
 
   const reply = accumulator.find((reply) => isReplyFor(reply, bareRequest))
   if (!reply) {
@@ -161,11 +172,10 @@ const _pushGlobalReply = (reply) => {
   replies.push(reply)
 }
 const _incrementGlobalRequestId = () => {
-  const { salt } = globalThis['@@interblock'].promises
+  // TODO does this need to be globally unique ?
+  // if so, can chainId be used somehow ?
   const requestId = globalThis['@@interblock'].promises.requestId++
-  // TODO avoid needing a salt, or read it from the chain, or something not needing hash
-  // or at the salt at post processing step, in the interpreter
-  return `${requestId}_${salt}`
+  return `${requestId}`
 }
 const _assertGlobals = () => {
   assert(globalThis['@@interblock'])
@@ -240,10 +250,10 @@ const awaitPending = async (pending) => {
   }
   return { reduction, isPending, requests, replies }
 }
-const hook = async (tick, accumulator = [], salt = '_', queries = q) => {
+const hook = async (tick, accumulator = [], queries = q) => {
   assert.strictEqual(typeof tick, 'function')
   assert(Array.isArray(accumulator))
-  // TODO assert all are rxRequest models
+  // TODO assert all are rxReply models
   assert.strictEqual(typeof salt, 'string')
   assert.strictEqual(typeof queries, 'function')
 

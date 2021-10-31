@@ -51,8 +51,7 @@ const reducer = (dmz, action) => {
       pingReducer(action)
       break
     case '@@SPAWN':
-      network = spawnReducer(dmz, action)
-      break
+      return spawnReducer(dmz, action)
     case '@@CONNECT':
       network = connectReducer(network, action)
       break
@@ -100,8 +99,7 @@ const reducer = (dmz, action) => {
     default:
       throw new Error(`Unrecognized type: ${action.type}`)
   }
-
-  return { ...dmz, network }
+  return dmz
 }
 
 const rm = (id) => {
@@ -127,6 +125,23 @@ const systemTypes = [
   '@@GET_CHAN', // TODO may delete ?
   '@@CAT',
 ]
+
+const isSystemReply = (dmz, action) => {
+  assert(dmzModel.isModel(dmz))
+  if (!rxReplyModel.isModel(action)) {
+    assert(rxRequestModel.isModel(action))
+    return false
+  }
+  const { identifier } = action
+  const { meta } = dmz
+  let isSystemReply = false
+  if (meta[identifier]) {
+    isSystemReply = true
+  }
+  debug(`isSystemReply: ${isSystemReply} type: ${action.type}`)
+  return isSystemReply
+}
+
 const isSystemRequest = (request) => {
   if (!rxRequestModel.isModel(request)) {
     return false
@@ -134,23 +149,6 @@ const isSystemRequest = (request) => {
   const isSystemAction = systemTypes.includes(request.type)
   debug(`isSystemAction: ${isSystemAction} type: ${request.type}`)
   return isSystemAction
-}
-
-const systemReplyTypes = [
-  '@@INIT',
-  '@@GENESIS',
-  '@@UPLINK',
-  '@@OPEN_CHILD',
-  '@@DEPLOY',
-]
-const isSystemReply = (reply) => {
-  if (!rxReplyModel.isModel(reply)) {
-    return false
-  }
-  const request = reply.getRequest()
-  const isSystemReply = systemReplyTypes.includes(request.type)
-  debug(`isSystemReply: ${isSystemReply} type: ${request.type}`)
-  return isSystemReply
 }
 
 export { actions, reducer, isSystemRequest, isSystemReply, openPaths }

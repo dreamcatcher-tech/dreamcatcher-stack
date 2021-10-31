@@ -28,7 +28,8 @@ const rxReplyModel = standardize({
     const getAddress = () => address
     const getHeight = () => height
     const getIndex = () => index
-    return { isReply, getAddress, getHeight, getIndex }
+    const getReplyKey = () => `${height}_${index}`
+    return { isReply, getAddress, getHeight, getIndex, getReplyKey }
   },
 })
 

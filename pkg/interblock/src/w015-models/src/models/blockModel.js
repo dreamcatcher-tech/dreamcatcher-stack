@@ -107,7 +107,7 @@ const blockModel = standardize({
     const getHeight = () => provenance.height
     const isInterblockAddable = (interblock) => {
       assert(interblockModel.isModel(interblock))
-      const address = interblock.getTargetAddress()
+      const address = interblock.provenance.getAddress()
       const channel = instance.network.getChannel(address)
       if (!channel) {
         return false

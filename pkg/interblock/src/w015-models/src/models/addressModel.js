@@ -12,6 +12,7 @@ const addressModel = standardize({
     if (integrity === `GENESIS`) {
       // the source of randomness in genesis block creation
       status = `GENESIS_${crypto.generateNonce()}`
+      // TODO define these types in integrityModel too
       integrity = integrityModel.create('GENESIS')
     } else if (integrity === 'LOOPBACK') {
       status = 'LOOPBACK'

@@ -19,14 +19,6 @@ import { ramS3Factory } from './ramS3Factory'
 import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
-const _blank = integrityModel.create()
-const _addressFromChainId = (chainId) => {
-  const integrity = integrityModel.clone({ ..._blank, hash: chainId })
-  const address = addressModel.create(integrity)
-  assert.strictEqual(address.getChainId(), chainId)
-  return address
-}
-
 // TODO move all _db to own file, like s3
 const _dbChainsItemFromBlock = (block) => {
   const chainId = block.provenance.getAddress().getChainId()
@@ -40,34 +32,14 @@ const _dbChainsItemFromBlock = (block) => {
 const _dbPoolFromAddress = (targetAddress) => (interblock) =>
   _dbPoolItem(interblock, targetAddress)
 
-const _dbPoolItem = (interblock, targetAddress) => {
-  const chainId = targetAddress.getChainId()
-  const remote = interblock.getRemote()
-  const type = remote ? 'heavy' : 'light'
+const _dbPoolItem = (interblock) => {
+  const chainId = interblock.getTargetAddress().getChainId()
   const originChainId = interblock.provenance.getAddress().getChainId()
   const { height } = interblock.provenance
-  const originChainId_height_type = `${originChainId}_${height}_${type}`
+  const originChainId_height = `${originChainId}_${height}`
   const interblockHash = interblock.getHash()
   const isDeleted = false
-  return { chainId, originChainId_height_type, interblockHash, isDeleted }
-}
-
-const _dbSubscriptionFromBlock = (block) => (subscriptionAddress) => {
-  const chainId = subscriptionAddress.getChainId()
-  const targetChainId = block.provenance.getAddress().getChainId()
-  const alias = block.network.getAlias(subscriptionAddress)
-  const channel = block.network[alias]
-  assert(channel)
-  const { heavyHeight, lineageHeight } = channel
-  const { height } = block.provenance
-  const item = {
-    chainId,
-    targetChainId,
-    heavyHeight,
-    lineageHeight,
-    height,
-  }
-  return item
+  return { chainId, originChainId_height, interblockHash, isDeleted }
 }
 
 const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
@@ -78,38 +50,16 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
   const s3 = s3Factory(s3Base)
   const locks = new Map() // TODO ensure no orphans
 
-  const putPoolInterblock = async ({ affectedAddresses, interblock }) => {
-    // TODO ensure if address is not target, use light interblock
-    assert(affectedAddresses.every(addressModel.isModel))
+  const putPoolInterblock = async ({ interblock }) => {
     assert(interblockModel.isModel(interblock))
-    debug(`poolInterblocks for ${affectedAddresses.length} addresses`)
+    debug(`poolInterblock`)
     // TODO make a table so if this batch does not complete, no orphans
-    let isLightUsed, isHeavyUsed
-    const light = interblock.getWithoutRemote()
-    const poolItems = affectedAddresses.map((address) => {
-      // TODO move scavenging up to FSMs explicitly, and only in sqsRx
-      let interblockToPool = light
-      if (address.equals(interblock.getTargetAddress())) {
-        isHeavyUsed = true
-        interblockToPool = interblock
-      } else {
-        isLightUsed = true
-      }
-      return _dbPoolItem(interblockToPool, address)
-    })
-    debug(`poolItems count: %O`, poolItems.length)
-    const s3Awaits = []
-    if (isLightUsed) {
-      const s3Key = s3Keys.fromInterblock(light)
-      s3Awaits.push(s3.putInterblock(s3Key, light)) // TODO multithread
-    }
-    if (isHeavyUsed) {
-      const s3Key = s3Keys.fromInterblock(interblock)
-      s3Awaits.push(s3.putInterblock(s3Key, interblock)) // TODO multithread
-    }
-    await db.putPool(poolItems)
-    await Promise.all(s3Awaits)
-    debug(`poolInterblock complete for: ${affectedAddresses.length} addresses`)
+    const poolItem = _dbPoolItem(interblock)
+    const s3Key = s3Keys.fromInterblock(interblock)
+    const s3Await = s3.putInterblock(s3Key, interblock)
+    await db.putPool(poolItem)
+    await s3Await
+    debug(`poolInterblock complete`)
   }
 
   const putLockChain = async (address, expiryMs) => {
@@ -144,17 +94,19 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     debug(`interblock count: %O`, interblocks.length)
 
     const piercingsRaw = await db.queryPiercings(chainId)
-    const piercings = { requests: [], replies: [] }
+    const requests = []
+    const replies = []
     piercingsRaw.forEach(({ txRequest, txReply }) => {
       assert(!txRequest || !txReply)
       if (txRequest) {
-        piercings.requests.push(txRequest)
+        requests.push(txRequest)
       }
       if (txReply) {
-        piercings.replies.push(txReply)
+        replies.push(txReply)
       }
     })
-
+    const piercings = { requests, replies }
+    debug(`piercings requests: %o replies %o`, requests.length, replies.length)
     const lockInstance = lockModel.create(block, interblocks, uuid, piercings)
     assert(!locks.has(chainId))
     locks.set(chainId, lockInstance)
@@ -164,10 +116,10 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
 
   const putUnlockChain = async (incomingLock) => {
     // TODO assert the incomingLock is reconciled
-    debug(`putUnlockChain`)
     assert(lockModel.isModel(incomingLock))
+    assert(incomingLock.block, `cannot unlock without a block`)
     const { block } = incomingLock
-    assert(block, `cannot unlock without a block`)
+    debug(`putUnlockChain`)
     const address = block.provenance.getAddress()
     const chainId = address.getChainId()
     const isLockValid = await lock.isValid(chainId, incomingLock.uuid)
@@ -194,41 +146,13 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
       await db.putBlock(dbChainsItem)
       debug(`block added`)
 
-      const routePromise = _updateRouteTable(block, previous)
       const purgePromise = _purgePool(block, previousLock.interblocks)
       const piercePromise = _purgePiercings(block, previousLock.piercings)
-      await Promise.all([routePromise, purgePromise, piercePromise])
+      await Promise.all([purgePromise, piercePromise])
     }
     locks.delete(chainId)
     await lock.release(chainId, incomingLock.uuid)
     debug(`putUnlockChain complete`)
-  }
-  const _updateRouteTable = async (block, previous) => {
-    // need previous block so can ensure route table set correctly
-    assert(blockModel.isModel(block))
-    assert(!previous || blockModel.isModel(previous))
-    const previousAliases = previous ? previous.network.getAliases() : []
-    const previousResolvedAliases = previousAliases.filter((alias) =>
-      previous.network[alias].address.isResolved()
-    )
-    const blockResolvedAliases = block.network
-      .getAliases()
-      .filter((alias) => block.network[alias].address.isResolved())
-    const newAddresses = blockResolvedAliases
-      .filter((alias) => !previousResolvedAliases.includes(alias))
-      .map((alias) => block.network[alias].address)
-    const delAddresses = previousResolvedAliases
-      .filter((alias) => !blockResolvedAliases.includes(alias))
-      .map((alias) => block.network[alias].address)
-    const newChainIds = newAddresses.map((address) => address.getChainId())
-    debug(`_updateRouteTable newAddresses`, newChainIds)
-    const newItems = newAddresses.map(_dbSubscriptionFromBlock(block))
-    const delItems = delAddresses.map(_dbSubscriptionFromBlock(block))
-    await Promise.all([
-      db.putSubscriptions(newItems),
-      db.delSubscriptions(delItems),
-    ])
-    debug(`updateRouteTable complete`)
   }
 
   const _purgePool = async (block, interblocks) => {
@@ -240,85 +164,29 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
       .map((item) => ({ ...item, isDeleted: true }))
     await db.putPool(toDeleteMarked)
     debug(`_purgePool isDeleted marked`)
-    const orphans = await _findOrphans(toDelete)
-    debug(`_purgePool _findOrphans found: ${orphans.length}`)
-    const orphanS3Keys = orphans.map(s3Keys.fromInterblock)
-    await s3.deleteInterblocks(orphanS3Keys)
     const toDeleteItems = toDeleteMarked.map(
-      ({ chainId, originChainId_height_type }) => ({
+      ({ chainId, originChainId_height }) => ({
         chainId,
-        originChainId_height_type,
+        originChainId_height,
       })
     )
     await db.delPool(toDeleteItems)
     debug(`_purgePool complete`)
   }
 
-  const _findOrphans = async (toDelete) => {
-    const heavies = toDelete.filter((interblock) => interblock.getRemote())
-    const lights = toDelete.filter((interblock) => !interblock.getRemote())
-    const lightAwaits = lights.map(async (interblock) => {
-      const isAnyAffected = await getIsAnyAffected(interblock)
-      return isAnyAffected ? false : interblock
-    })
-    const lightOrphans = compact(await Promise.all(lightAwaits))
-    return [...lightOrphans, ...heavies]
-  }
-  const _purgePiercings = async (block, piercings) => {
+  const _purgePiercings = async (block, previousPiercings) => {
     // TODO check previous blocks up to some time limit
     // TODO if pierce lowered, remove all piercings
-    const ioChannel = block.network['.@@io']
-    if (!ioChannel) {
-      return
-    }
-    const { requests, replies } = ioChannel.getRemote()
-    const requestActions = Object.values(requests)
-    const replyActions = Object.values(replies)
-
-    const requestsToDelete = piercings.requests.filter((txRequest) =>
-      requestActions.some((compare) => txRequest.getRequest().equals(compare))
-    )
-    const repliesToDelete = piercings.replies.filter((txReply) =>
-      replyActions.some((compare) => txReply.getReply().equals(compare))
-    )
+    // TODO remove only the ingested piercings
     const chainId = block.getChainId()
-    const toDelete = [...requestsToDelete, ...repliesToDelete]
+    const { requests, replies } = previousPiercings
+    const toDelete = [...requests, ...replies]
     const toDeleteItems = toDelete.map((action) => {
       const hash = action.getHash()
       const item = { chainId, hash }
       return item
     })
     return db.delPierce(toDeleteItems)
-  }
-
-  const getIsAnyAffected = async (interblock) => {
-    assert(interblockModel.isModel(interblock))
-    const chainId = interblock.provenance.getAddress().getChainId()
-    const isSingle = true
-    // TODO use query to ensure no old interblocks pass this test
-    const affected = await db.queryAffected(chainId, isSingle)
-    return !!affected
-  }
-
-  const getAffected = async (interblock) => {
-    assert(interblockModel.isModel(interblock))
-    const chainId = interblock.provenance.getAddress().getChainId()
-    const { height } = interblock.provenance
-    // TODO move to a schema based query for heights
-    const allAffectedItems = await db.queryAffected(chainId)
-
-    const affectedByHeight = allAffectedItems.filter((item) => {
-      const { targetChainId, heavyHeight, lineageHeight } = item
-      const isHeavy = targetChainId.startsWith(targetChainId)
-      return isHeavy ? heavyHeight < height : lineageHeight < height
-    })
-    const affectedAddresses = affectedByHeight.map(({ targetChainId }) =>
-      _addressFromChainId(targetChainId)
-    )
-    const deduped = new Set(affectedAddresses)
-    debug(`dbQueryAffected items length: %O`, deduped.size)
-    const ret = Array.from(deduped)
-    return ret
   }
 
   const getSockets = async (address) => {
@@ -449,13 +317,10 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
   }
   const _interblocksToDelete = (block, interblocks) => {
     const toDelete = interblocks.filter((interblock) => {
-      const included = block.network.includesInterblock(interblock)
-      const isUsable = block.network.getAlias(
-        interblock.provenance.getAddress()
-      )
-      return included || !isUsable
+      return false
+      // TODO clean up when move to leveldb
     })
-    return toDelete
+    return interblocks
   }
   return {
     putSocket,
@@ -465,8 +330,6 @@ const consistencySourceFactory = (dynamoDb, s3Base, awsRequestId = 'CI') => {
     putLockChain,
     putUnlockChain,
 
-    getIsAnyAffected,
-    getAffected,
     getIsPresent,
     getBlock,
     getBlocks,

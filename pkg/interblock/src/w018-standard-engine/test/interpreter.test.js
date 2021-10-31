@@ -1,7 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { shell, hyper, probe } from '../../w212-system-covenants'
-import { isReplyFor } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:heart')
 Debug.enable()

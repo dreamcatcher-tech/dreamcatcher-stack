@@ -23,7 +23,6 @@ const channelModel = standardize({
   logicize(instance) {
     // TODO if reset address, must clear all remote requests, else promises break
     // TODO check no duplicate requests in channel - must be distiguishable
-    // TODO why does duplicate detection in the channel matter ? isReplyFor() ?
     // TODO check that replies keys are always consequtive, and they match
     // the temporaryInterblocks array.  Could only be disjoint if came before
     // the current interblocks, else must be in order, and cannot be beyond
@@ -52,18 +51,23 @@ const channelModel = standardize({
       // TODO check rxRepliesTip matches what is in the reply object
       assert(address.isLoopback())
       assert.strictEqual(typeof tip, 'undefined')
-      assert.strictEqual(typeof tipHeight, 'undefined')
       assert(precedent.isUnknown())
       const banned = ['@@OPEN_CHILD']
       const outs = Object.values(requests)
       assert(outs.every(({ type }) => !banned.includes(type)))
     }
+    if (Number.isInteger(tipHeight)) {
+      assert(tipHeight >= 0)
+      assert(_isLoopback || !tip.isUnknown())
+    }
 
     if (tip) {
+      assert(!_isLoopback)
       assert(!tip.isUnknown())
       assert(tipHeight >= 0)
     }
-    const isTransmitting = () => requests.length || Object.keys(replies).length
+    const isTransmitting = () =>
+      !!requests.length || !!Object.keys(replies).length
     const isLoopback = () => _isLoopback
 
     const _splitKey = (key) => {
@@ -152,15 +156,31 @@ const channelModel = standardize({
       }
       return true
     }
+    const rxLoopback = () => {
+      let rx
+      rx = rxLoopbackSettle()
+      if (rx) {
+        return rx
+      }
+      rx = rxLoopbackReply()
+      if (rx) {
+        return rx
+      }
+      rx = rxLoopbackRequest()
+      if (rx) {
+        return rx
+      }
+    }
 
     return {
       isTransmitting,
       isLoopback,
       rxLoopbackSettle,
       rxLoopbackReply,
-      isLoopbackReplyPromised,
       rxLoopbackRequest,
+      isLoopbackReplyPromised,
       isLoopbackExhausted,
+      rxLoopback,
     }
   },
 })

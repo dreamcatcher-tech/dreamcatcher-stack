@@ -8,6 +8,7 @@ import {
   actionModel,
   txReplyModel,
   rxReplyModel,
+  integrityModel,
 } from '../../w015-models'
 
 const ingestInterblocks = (channel, interblocks) => {
@@ -267,13 +268,41 @@ const zeroLoopback = (channel) => {
   assert(channelModel.isModel(channel))
   assert(channel.isLoopback())
   assert(!channel.rxLoopback(), `Loopback not drained`)
-  const tipHeight = Number.isInteger(channel.tipHeight) ? tipHeight + 1 : 0
+  let tipHeight = 0
+  if (Number.isInteger(channel.tipHeight)) {
+    tipHeight = channel.tipHeight + 1
+  }
   return channelModel.clone({
     ...channel,
     requests: [],
     replies: {},
     tipHeight,
   })
+}
+const zeroTransmissions = (channel, precedent) => {
+  assert(channelModel.isModel(channel))
+  assert(integrityModel.isModel(precedent))
+  if (!channel.isTransmitting()) {
+    return channel
+  }
+  return channelModel.clone({
+    ...channel,
+    replies: {},
+    requests: [],
+    precedent,
+  })
+}
+const shiftLoopback = (loopback) => {
+  assert(channelModel.isModel(loopback))
+  assert(loopback.isLoopback())
+  assert(!loopback.isLoopbackExhausted())
+  if (loopback.rxLoopbackSettle()) {
+    return shiftLoopbackSettle(loopback)
+  }
+  if (loopback.isLoopbackReplyPromised() || loopback.rxLoopbackReply()) {
+    return shiftLoopbackReply(loopback)
+  }
+  throw new Error(`shift only applies to settles, replies, and promises`)
 }
 
 export {
@@ -284,5 +313,7 @@ export {
   invalidate,
   shiftLoopbackSettle,
   shiftLoopbackReply,
+  shiftLoopback,
   zeroLoopback,
+  zeroTransmissions,
 }

@@ -23,6 +23,10 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
         if (!ioChannel) {
           return
         }
+        return
+        for (const [key, value] of promises) {
+        }
+
         const indices = ioChannel.getRemoteRequestIndices()
         indices.forEach((index) => {
           const request = ioChannel.getRemote().requests[index]

@@ -29,11 +29,14 @@ const spawn = (alias, spawnOpts = {}, actions = []) => {
 const spawnReducer = (dmz, originAction) => {
   assert(rxRequestModel.isModel(originAction))
   const network = spawnReducerWithoutPromise(dmz, originAction)
-  replyPromise() // allows spawnReducer to be reused by deploy
+  replyPromise() // allows spawnReducer to be reused by deploy reducer
+  const { identifier } = originAction
+  // TODO store identifier in meta state
   return network
 }
 const spawnReducerWithoutPromise = (dmz, originAction) => {
   assert(dmzModel.isModel(dmz))
+  assert(rxRequestModel.isModel(originAction))
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
   let { alias, spawnOpts } = originAction.payload
@@ -51,7 +54,8 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
   if (alias === '.' || alias === '..') {
     throw new Error(`Alias uses reserved name: ${alias}`)
   }
-  if (network[alias]) {
+  let channel = network[alias]
+  if (channel && !channel.address.isUnknown()) {
     throw new Error(`childAlias exists: ${alias}`)
   }
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
@@ -62,11 +66,28 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
   const genesisRequest = actionModel.create('@@GENESIS', payload)
   const address = genesis.provenance.getAddress()
 
-  const nextNetwork = {}
-  let channel = channelModel.create(address, './')
+  let preloadedRequests = []
+  if (!channel) {
+    channel = channelModel.create(address, './')
+  } else {
+    preloadedRequests = channel.requests
+    channel = channelModel.clone({ ...channel, requests: [] })
+    channel = channelProducer.setAddress(channel, address)
+  }
   channel = channelProducer.txRequest(channel, genesisRequest)
-  nextNetwork[alias] = channel
-  return network.merge(nextNetwork)
+  for (const request of preloadedRequests) {
+    channel = channelProducer.txRequest(channel, request)
+  }
+  const height = dmz.getCurrentHeight()
+  dmz = { ...dmz }
+  dmz.network = network.merge({ [alias]: channel })
+
+  const index = 0
+  const expectedReplyIdentifier = `${address.getChainId()}_${height}_${index}`
+  assert(!dmz.meta[expectedReplyIdentifier])
+  dmz.meta = { ...dmz.meta, [expectedReplyIdentifier]: originAction.identifier }
+
+  return dmzModel.clone(dmz)
 }
 
 export { spawn, spawnReducer, spawnReducerWithoutPromise }

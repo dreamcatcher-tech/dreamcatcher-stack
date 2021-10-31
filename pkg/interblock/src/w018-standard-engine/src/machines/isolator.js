@@ -63,13 +63,14 @@ const definition = {
         {
           target: 'ingestInterblocks',
           cond: 'isGenesis',
-          actions: 'connectToParent',
+          // TODO make connection happen in the parent itself
+          actions: ['connectToParent'],
         },
         { target: 'ingestInterblocks' },
       ],
     },
     ingestInterblocks: {
-      entry: 'ingestInterblocks',
+      entry: ['zeroTransmissions', 'ingestInterblocks'],
       always: 'loadCovenant',
     },
     loadCovenant: {
@@ -101,7 +102,7 @@ const definition = {
             onDone: { target: 'isReduceable', actions: 'updateDmz' },
           },
         },
-        done: { type: 'final' },
+        done: { type: 'final', entry: 'zeroLoopback' },
       },
       onDone: 'isCovenantUnloadable',
     },
@@ -147,6 +148,7 @@ const definition = {
     done: {
       // TODO tear down the isolation container, or close out promises
       // TODO stop if time has passed
+
       data: ({ dmz, containerId }) => ({ dmz, containerId }),
       type: 'final',
     },

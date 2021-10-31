@@ -13,14 +13,8 @@ import { assign } from 'xstate'
 import { common } from './common'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:pending')
-const {
-  transmit,
-  assignResolve,
-  respondReply,
-  reduceCovenant,
-  assignRejection,
-  mergeState,
-} = common(debug)
+const { transmit, assignResolve, reduceCovenant, assignRejection, mergeState } =
+  common(debug)
 const config = {
   actions: {
     bufferRequest: assign({
@@ -38,8 +32,7 @@ const config = {
         // add reply into the accumulator
         assert(dmzModel.isModel(dmz))
         assert(rxReplyModel.isModel(anvil))
-        const { type } = anvil.getRequest()
-        debug(`accumulateReply reply: %o request: %o`, anvil.type, type)
+        debug(`accumulateReply replyKey: %o`, anvil.getReplyKey())
         const pending = pendingProducer.pushReply(dmz.pending, anvil)
         return dmzModel.clone({ ...dmz, pending })
       },
@@ -129,7 +122,6 @@ const config = {
       },
     }),
     mergeState,
-    respondReply,
     assignResolve,
     transmit,
     assignRejection,

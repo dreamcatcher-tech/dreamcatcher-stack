@@ -6,7 +6,7 @@ import {
   addressModel,
   dmzModel,
 } from '../../../w015-models'
-import { networkProducer } from '../../../w016-producers'
+import { networkProducer, channelProducer } from '../../../w016-producers'
 import * as dmzReducer from '../../../w017-dmz-producer'
 import { interpreterMachine } from '../machines'
 import { directConfig } from './directConfig'
@@ -45,9 +45,20 @@ const config = {
         return anvil
       },
     }),
+    shiftLoopback: assign({
+      dmz: ({ dmz }) => {
+        assert(dmzModel.isModel(dmz))
+        const loopback = channelProducer.shiftLoopback(dmz.network['.'])
+        debug(`shiftLoopback`)
+        const network = dmz.network.merge({ '.': loopback })
+        return dmzModel.clone({ ...dmz, network })
+      },
+    }),
     loadSelfAnvil: assign({
       anvil: ({ dmz }) => {
-        const anvil = dmz.network.rxSelf()
+        assert(dmzModel.isModel(dmz))
+        const loopback = dmz.network['.']
+        const anvil = loopback.rxLoopback()
         debug(`loadSelfAnvil anvil: %o`, anvil.type)
         return anvil
       },
@@ -92,12 +103,20 @@ const config = {
     }),
   },
   guards: {
-    isSystem: ({ anvil }) => {
+    isSystem: ({ dmz, anvil }) => {
+      assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
       const isSystem =
-        dmzReducer.isSystemReply(anvil) || dmzReducer.isSystemRequest(anvil)
+        dmzReducer.isSystemReply(dmz, anvil) ||
+        dmzReducer.isSystemRequest(anvil)
       debug(`isSystem: ${isSystem}`)
       return isSystem
+    },
+    isSelfAnvil: ({ anvil }) => {
+      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+      const isSelfAnvil = anvil.getAddress().isLoopback()
+      debug(`isSelfAnvil`, isSelfAnvil)
+      return isSelfAnvil
     },
     isSelfExhausted: ({ dmz }) => {
       assert(dmzModel.isModel(dmz))

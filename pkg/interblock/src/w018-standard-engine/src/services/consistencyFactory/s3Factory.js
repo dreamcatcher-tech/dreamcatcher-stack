@@ -119,19 +119,18 @@ const s3Factory = (s3 = ramS3Factory()) => {
 
 const s3Keys = {
   fromInterblock: (interblock) => {
-    const interblockHash = interblock.getHash()
+    const hash = interblock.getHash()
     const originChainId = interblock.provenance.getAddress().getChainId()
     const { height } = interblock.provenance
-    const remote = interblock.getRemote()
-    const targetChainId = remote ? remote.address.getChainId() : '#LINEAGE'
-    const s3Key = `${originChainId}/${height}_${targetChainId}_${interblockHash}`
+    const targetChainId = interblock.getTargetAddress().getChainId()
+    const s3Key = `${originChainId}/${height}_${targetChainId}_${hash}`
     return s3Key
   },
 
   fromPoolItem: (poolItem) => {
-    const { chainId, originChainId_height_type, interblockHash } = poolItem
-    const [origin, height, type] = originChainId_height_type.split('_')
-    const target = type === 'light' ? '#LINEAGE' : chainId
+    const { chainId, originChainId_height, interblockHash } = poolItem
+    const [origin, height] = originChainId_height.split('_')
+    const target = chainId
     const key = `${origin}/${height}_${target}_${interblockHash}`
     return key
   },

@@ -96,9 +96,15 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       assignTargetBlock: assign({
         targetBlock: (context, event) => {
           const { targetBlock } = event.data
-          debug(`assignTargetBlock`, targetBlock.provenance.height)
+          debug(`assignTargetBlock height`, targetBlock.provenance.height)
           assert(!targetBlock || blockModel.isModel(targetBlock))
           return targetBlock
+        },
+      }),
+      assignIsPooled: assign({
+        isPooled: () => {
+          debug('isPooled', true)
+          return true
         },
       }),
     },
@@ -138,7 +144,9 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       isAddable: ({ targetBlock, interblock }) => {
         assert(blockModel.isModel(targetBlock))
         assert(interblockModel.isModel(interblock))
-        return targetBlock.isInterblockAddable(interblock)
+        const isAddable = targetBlock.isInterblockAddable(interblock)
+        debug(`isAddable`, isAddable)
+        return isAddable
       },
       isConnectable: ({ targetBlock, interblock }) => {
         assert(blockModel.isModel(targetBlock))
@@ -158,7 +166,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
           address: blankAddress,
         })
         const isStorageEmpty = !firstBlock
-        debug(`isStorageEmpty: ${isStorageEmpty}`)
+        debug(`isStorageEmpty service: ${isStorageEmpty}`)
         return { isStorageEmpty }
       },
       checkIsOriginPresent: async ({ interblock }) => {
@@ -213,7 +221,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         assert(interblockModel.isModel(interblock))
         debug(`storeInPool`)
         await consistency.putPoolInterblock({ interblock })
-        debug(`storeInPools completed`)
+        debug(`storeInPool completed`)
       },
     },
   }

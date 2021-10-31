@@ -107,13 +107,11 @@ const networkPrint = (network, options) => {
       chainId = shrink(address.getChainId(), 'bgBlack', 'gray')
       hash = ''
     }
-    const remote = channel.getRemote()
-    if (channel.heavy) {
-      const { provenance } = channel.heavy
-      const rawHash = provenance.getHash()
+    if (channel.tip) {
+      const rawHash = channel.tip.hash
       hash = chalk.dim(shrink(rawHash, 'bgWhite', 'magenta'))
-      const { lineageHeight, heavyHeight } = channel
-      height = chalk.magenta(heavyHeight + '.' + lineageHeight)
+      const { tipHeight } = channel
+      height = chalk.magenta(tipHeight)
     }
     const msg = chalk.magenta('  └── channel')
     const channelHeader = {
@@ -130,28 +128,24 @@ const networkPrint = (network, options) => {
     messages.push(channelHeader)
 
     // get the tx and remote.replies span, then order them
-    const tx = getIndexSpan(channel.requests, remote.replies)
-    tx.forEach((index) => {
-      const request = channel.requests[index]
-      const reply = remote.replies[index]
+    const tx = [...channel.requests]
+    tx.forEach((request, index) => {
       const msg = chalk.cyan('      └── tx:')
-      const chainId = request ? request.type : grayUndefined
-      const hash = chalk.gray(reply ? reply.type : grayUndefined)
+      const chainId = request.type
+      const hash = chalk.gray(grayUndefined)
       const height = chalk.cyan(index)
       const path = '' //chalk.dim('since: -4')
       // const size = request ? getSize(request) : grayUndefined
       const action = { msg, height, path, chainId, hash }
       messages.push(action)
     })
-    const rx = getIndexSpan(remote.requests, channel.replies)
-    rx.forEach((index) => {
-      const request = remote.requests[index]
-      const reply = channel.replies[index]
+    const rx = Object.values(channel.replies)
+    rx.forEach((txReply) => {
       const msg = chalk.yellow('      └── rx:')
-      const height = chalk.yellow(index)
+      const height = chalk.yellow(txReply.getReplyKey)
       const path = ''
-      const chainId = chalk.gray(request ? request.type : grayUndefined)
-      const hash = reply ? reply.type : grayUndefined
+      const chainId = chalk.gray(txReply.type)
+      const hash = grayUndefined
       // const size = reply ? getSize(reply) : grayUndefined // TODO sum size of req & rep
 
       const action = { msg, height, path, chainId, hash }
@@ -191,23 +185,4 @@ const format = (messages) => {
   return formatted
 }
 
-// TODO move these to use model functions ?
-const getIndexSpan = (requests, replies) => {
-  const req = _getSortedIndices(requests)
-  const rep = _getSortedIndices(replies)
-  const merge = [...req, ...rep]
-  const dedupe = new Set(merge)
-  const indices = Array.from(dedupe)
-  indices.sort((a, b) => a - b)
-  return indices
-}
-const _getSortedIndices = (obj) => {
-  const indices = []
-  Object.keys(obj).forEach((key) => {
-    const number = parseInt(key)
-    indices.push(number)
-  })
-  indices.sort((first, second) => first - second)
-  return indices
-}
 export { blockPrint, interPrint, headerPrint, networkPrint, print }

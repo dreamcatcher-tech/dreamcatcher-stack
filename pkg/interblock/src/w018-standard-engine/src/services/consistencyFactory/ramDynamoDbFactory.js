@@ -123,7 +123,7 @@ const ramDynamoDbFactory = () => {
 
 const rangeKeyMap = {
   dbChains: 'height',
-  dbPools: 'originChainId_height_type',
+  dbPools: 'originChainId_height',
   dbLocks: 'chainId',
   dbSockets: 'socketId',
   dbSubscribers: 'targetChainId',

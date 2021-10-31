@@ -1,6 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { blockModel } from '../../w015-models'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pool')
 Debug.enable()
@@ -32,7 +33,8 @@ describe('pool', () => {
 
   describe('poolInterblock', () => {
     describe('birthChild', () => {
-      test.only('new child created from genesis', async () => {
+      jest.setTimeout(300)
+      test('new child created from genesis', async () => {
         Debug.enable('*cfg:* *cfg:isolator interblock:engine* *cfg:heart*')
         const base = await metrologyFactory('birthChild')
         await base.spawn('child')

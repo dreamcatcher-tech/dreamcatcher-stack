@@ -73,32 +73,4 @@ const promise = () => _txReply('@@PROMISE')
 const resolve = (payload, request) => _txReply('@@RESOLVE', payload, request)
 const reject = (error, request) => _txReply('@@REJECT', error, request)
 
-// TODO remove this function completely
-const isReplyFor = (reply, request) => {
-  if (request && typeof request !== 'object') {
-    return false
-  }
-  if (_isNotReplyFormat(reply)) {
-    return false
-  }
-  if (reply.type === '@@PROMISE') {
-    return false // user should never see a promise
-  }
-  if (!request) {
-    return true
-  }
-  const { type, payload } = request
-  const repliedRequest = reply && reply.request
-  return (
-    repliedRequest &&
-    repliedRequest.type === type &&
-    equal(repliedRequest.payload, payload)
-  )
-}
-
-const _replyTypes = ['@@PROMISE', '@@RESOLVE', '@@REJECT']
-const _isNotReplyFormat = (reply) => {
-  return !reply || !reply.type || !_replyTypes.includes(reply.type)
-}
-
-export { request, promise, resolve, reject, isReplyFor }
+export { request, promise, resolve, reject }

@@ -1,6 +1,6 @@
 /**
- * Transmit supplies the special ability to contact other instances
- * through the resource of transmission.  The network handles external
+ * Transmit supplies the ability to contact other instances
+ * through the resource of network transmission.  The network handles external
  * addressing, so that virtual chain addresses can find physical
  * machine addresses.
  *
@@ -10,7 +10,7 @@
  *
  * What does transmit do?
  *    1. handshaking outbound
- *    1. pool interblocks internally, and send catchups
+ *    1. send interblocks to pool internally
  *    3. send interblocks externally, and send catchups, by looking up their socket info
  *    2. reject events because of blacklisted socket info or incorrect formats
  *    3. request retransmission of missing interblocks, while ignoring repeat requests
@@ -26,105 +26,31 @@ const definition = {
    * Basically, make some io calls, and then send some stuff or pool it
    *    interblock -> interblocks + socketInfo
    * Incoming types are:
-   *    light interblock from us
    *    targetted interblock from us,
    *      needing catchup
    *    targetted interblock for us,
    *      needing catchup
    *
-   * if light interblock, lookup who to send to, which may include us, and send it
-   * first check target
-   *    look up address of target, which may be multiple, ior internal, then send
-   *    check if catchups from source are needed
-   *      if we are the source, send lineage, making sure we deduplicate
-   * then treat as lineage, and see who needs it, except for target, then send
    */
   id: 'transmit',
   initial: 'idle',
   context: {
     interblock: undefined,
-    listeningTxs: [],
     targetTxs: [],
-    lineage: [],
-    lineageTxs: [],
-    transmissions: [],
   },
   strict: true,
   states: {
     idle: {
       on: {
         TRANSMIT_INTERBLOCK: {
-          target: 'isLineageInterblock',
+          target: 'fetchTargetSockets',
           actions: 'assignInterblock',
         },
       },
     },
     done: {
-      entry: ['removeListeningTxs', 'mergeTransmissions'],
-      data: ({ transmissions }) => transmissions,
+      data: ({ targetTxs }) => targetTxs,
       type: 'final',
-    },
-    isLineageInterblock: {
-      always: [
-        { target: 'fetchLineageSockets', cond: 'isLineageInterblock' },
-        { target: 'fetchTargetSockets' },
-      ],
-    },
-    fetchLineageSockets: {
-      initial: 'fetchBlock',
-      states: {
-        fetchBlock: {
-          invoke: {
-            src: 'fetchBlock',
-            onDone: [
-              {
-                target: 'fetchListeners',
-                actions: 'assignBlock',
-                cond: 'isBlockFetched',
-              },
-              { target: 'done' },
-            ],
-          },
-        },
-        done: { type: 'final' },
-        fetchListeners: {
-          type: 'parallel',
-          states: {
-            fetchRemoteListeners: {
-              initial: 'promise',
-              states: {
-                promise: {
-                  invoke: {
-                    src: 'fetchRemoteListeners',
-                    onDone: {
-                      target: 'done',
-                      actions: 'extendListeningTxs',
-                    },
-                  },
-                },
-                done: { type: 'final' },
-              },
-            },
-            fetchSelfListener: {
-              initial: 'promise',
-              states: {
-                promise: {
-                  invoke: {
-                    src: 'fetchSelfListener',
-                    onDone: {
-                      target: 'done',
-                      actions: 'extendListeningTxs',
-                    },
-                  },
-                },
-                done: { type: 'final' },
-              },
-            },
-          },
-          onDone: 'done',
-        },
-      },
-      onDone: 'done',
     },
     fetchTargetSockets: {
       type: 'parallel',
@@ -148,7 +74,7 @@ const definition = {
                   {
                     target: 'done',
                     cond: 'isOriginPresent',
-                    actions: 'extendGenesisAttempt',
+                    actions: 'extendSelfToGenesisAttempt',
                   },
                   { target: 'done' },
                 ],
@@ -179,6 +105,7 @@ const definition = {
           states: {
             promise: {
               invoke: {
+                // TODO reuse genesis check for isPresent
                 src: 'fetchSelfTarget',
                 onDone: {
                   target: 'done',
@@ -189,32 +116,8 @@ const definition = {
             done: { type: 'final' },
           },
         },
-        addLineage: {
-          initial: 'isLineageRequired',
-          states: {
-            isLineageRequired: {
-              always: [
-                {
-                  target: 'fetchLineageToGenesis',
-                  cond: 'isInitiatingAction',
-                },
-                { target: 'done' },
-              ],
-            },
-            fetchLineageToGenesis: {
-              invoke: {
-                src: 'fetchLineageToGenesis',
-                onDone: {
-                  target: 'done',
-                  actions: 'assignLineage',
-                },
-              },
-            },
-            done: { type: 'final' },
-          },
-        },
       },
-      onDone: { target: 'done', actions: 'extendLineageTxs' },
+      onDone: 'done',
     },
   },
 }

@@ -48,8 +48,8 @@ const networkModel = standardize({
     let _resolvedAliases
     const getResolvedAliases = () => {
       if (!_resolvedAliases) {
-        _resolvedAliases = getAliases().filter(
-          (alias) => alias !== '.@@io' && instance[alias].address.isResolved()
+        _resolvedAliases = _aliases.filter((alias) =>
+          instance[alias].address.isResolved()
         )
       }
       return _resolvedAliases
@@ -100,20 +100,6 @@ const networkModel = standardize({
       return changedAliases
     }
 
-    const isNewChannels = (previous = networkModel.create()) => {
-      // TODO ignore '.@@io' ?
-      assert(networkModel.isModel(previous))
-      const resolvedAliases = getResolvedAliases()
-      const isNewChannels = resolvedAliases.some((alias) => {
-        const { address } = instance[alias]
-        const previousAlias = previous.getAlias(address)
-        if (!previousAlias) {
-          return true
-        }
-      })
-      return isNewChannels
-    }
-
     // TODO move to networkProducer ?
     const merge = (toMerge) => {
       assert.strictEqual(typeof toMerge, 'object')
@@ -138,7 +124,6 @@ const networkModel = standardize({
       getParent,
       getResponse,
       txInterblockAliases,
-      isNewChannels,
       merge,
       getChannel,
     }

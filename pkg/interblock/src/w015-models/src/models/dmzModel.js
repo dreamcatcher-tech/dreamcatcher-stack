@@ -86,8 +86,13 @@ const dmzModel = standardize({
       }
       return false
     }
-
-    return { isTransmitting }
+    const getCurrentHeight = () => {
+      if (!Number.isInteger(network['.'].tipHeight)) {
+        return 0
+      }
+      return network['.'].tipHeight + 1
+    }
+    return { isTransmitting, getCurrentHeight }
   },
 })
 

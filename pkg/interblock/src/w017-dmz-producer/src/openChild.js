@@ -11,7 +11,6 @@ import {
   replyPromise,
   replyResolve,
   replyReject,
-  isReplyFor,
   effectInBand,
   interchain,
 } from '../../w002-api'

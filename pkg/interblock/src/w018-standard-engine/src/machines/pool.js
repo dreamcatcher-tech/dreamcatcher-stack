@@ -133,13 +133,17 @@ const definition = {
               always: [
                 // TODO check the signatures on the interblock
                 { target: 'done', cond: 'isTargetBlockMissing' },
+                { target: 'storeInPool', cond: 'isGenesis' },
                 { target: 'storeInPool', cond: 'isAddable' },
                 { target: 'storeInPool', cond: 'isConnectable' },
                 { target: 'done' },
               ],
             },
             storeInPool: {
-              invoke: { src: 'storeInPool', onDone: { target: 'done' } },
+              invoke: {
+                src: 'storeInPool',
+                onDone: { target: 'done', actions: 'assignIsPooled' },
+              },
             },
             done: { type: 'final' },
           },
@@ -178,12 +182,11 @@ const definition = {
               ],
             },
             mergeGenesis: {
-              entry: 'mergeGenesis',
+              entry: ['mergeGenesis', 'mergeBlockToLock'],
               always: 'unlockChain',
             },
             unlockChain: {
               // TODO use a renewable lock
-              entry: 'mergeBlockToLock',
               invoke: {
                 src: 'unlockChain',
                 onDone: 'done',

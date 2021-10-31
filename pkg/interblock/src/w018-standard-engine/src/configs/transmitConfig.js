@@ -3,7 +3,6 @@ import flatten from 'lodash.flatten'
 import { assign } from 'xstate'
 import {
   interblockModel,
-  blockModel,
   socketModel,
   txModel,
   addressModel,
@@ -20,160 +19,59 @@ const transmitConfig = (ioConsistency) => {
       assignInterblock: assign({
         interblock: (context, event) => {
           const interblock = event.payload
-          debug(`assignInterblock`)
           assert(interblockModel.isModel(interblock))
+          debug(`assignInterblock`)
           return interblock
-        },
-      }),
-      assignBlock: assign({
-        block: (context, event) => {
-          const { block } = event.data
-          assert(blockModel.isModel(block))
-          return block
-        },
-      }),
-      extendListeningTxs: assign({
-        listeningTxs: ({ interblock, listeningTxs }, event) => {
-          debug(`extendListeningTxs`)
-          const { sockets } = event.data
-          assert(sockets.every(socketModel.isModel))
-          const light = interblock.getWithoutRemote()
-          const ext = sockets.map((socket) => txModel.create(socket, light))
-          return [...listeningTxs, ...ext]
         },
       }),
       extendTargetTxs: assign({
         targetTxs: ({ interblock, targetTxs }, event) => {
-          debug(`extendTargetTxs`)
-          const sockets = event.data
+          assert(interblockModel.isModel(interblock))
+          assert(Array.isArray(targetTxs))
+          assert(targetTxs.every(txModel.isModel))
+          const { sockets } = event.data
+          assert(Array.isArray(sockets))
           assert(sockets.every(socketModel.isModel))
           const ext = sockets.map((socket) =>
             txModel.create(socket, interblock)
           )
-          return [...targetTxs, ...ext]
+          const extendedTargetTxs = [...targetTxs, ...ext]
+          debug(`extendTargetTxs length`, extendedTargetTxs.length)
+          return extendedTargetTxs
         },
       }),
-      assignLineage: assign({
-        lineage: (context, event) => event.data,
-      }),
-      extendLineageTxs: assign({
-        lineageTxs: ({ targetTxs, lineage }) => {
-          debug(`extendLineageTxs`)
-          assert(lineage.every(interblockModel.isModel))
-          assert(lineage.every((interblock) => !interblock.getTargetAddress()))
-          const lineageTxs = []
-          targetTxs.forEach((tx) => {
-            lineage.forEach((interblock) => {
-              assert(txModel.isModel(tx))
-              const { socket } = tx
-              assert(socketModel.isModel(socket))
-              lineageTxs.push(txModel.create(socket, interblock))
-            })
-          })
-          debug(`extendLineageTxs generated ${lineageTxs.length} extensions`)
-          return lineageTxs
-        },
-      }),
-      extendGenesisAttempt: assign({
+      extendSelfToGenesisAttempt: assign({
         targetTxs: ({ interblock, targetTxs }) => {
           assert(interblockModel.isModel(interblock))
           assert(interblock.isGenesisAttempt())
+          assert(Array.isArray(targetTxs))
           const selfTx = txModel.create(socketModel.create(), interblock)
           targetTxs = [...targetTxs, selfTx]
+          debug(`extendSelfToGenesisAttempt tx count:`, targetTxs.length)
           return targetTxs
         },
       }),
-      removeListeningTxs: assign({
-        // TODO merge with assignLineageSockets
-        listeningTxs: ({ listeningTxs, targetTxs }) => {
-          debug(`removeListeningTxs`)
-          const targetSockets = targetTxs.map(({ socket }) => socket)
-          const filtered = listeningTxs.filter(
-            ({ socket }) => !targetSockets.some((ts) => ts.equals(socket))
-          )
-          debug(`filter removed: ${targetSockets.length - filtered.length}`)
-          return filtered
-        },
-      }),
-      mergeTransmissions: assign({
-        transmissions: ({ listeningTxs, targetTxs, lineageTxs }) => [
-          ...listeningTxs,
-          ...lineageTxs,
-          ...targetTxs,
-        ],
-      }),
     },
     guards: {
-      isBlockFetched: (context, event) => blockModel.isModel(event.data.block),
-      isLineageInterblock: ({ interblock }) => !interblock.getRemote(),
-      isInitiatingAction: ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
-        const isResponse = interblock.isConnectionResponse()
-        const isResolve = interblock.isConnectionResolve()
-        const isDownlinkInit = interblock.isDownlinkInit()
-        const isUplinkInit = interblock.isUplinkInit()
-        return isResponse || isResolve || isDownlinkInit || isUplinkInit
+      isGenesisAttempt: ({ interblock }) => {
+        const isGenesisAttempt = interblock.isGenesisAttempt()
+        debug(`isGenesisAttempt`, isGenesisAttempt)
+        return isGenesisAttempt
       },
-      isGenesisAttempt: ({ interblock }) => interblock.isGenesisAttempt(),
-      isOriginPresent: (context, event) => event.data.isOriginPresent,
+      isOriginPresent: (context, event) => {
+        const isOriginPresent = !!event.data.isOriginPresent
+        debug(`isOriginPresent`, isOriginPresent)
+        return isOriginPresent
+      },
     },
     services: {
-      /**
-       * Stages:
-       *  1. map all sockets to lineage interblock
-       *  2. overwrite target sockets with heavy interblock
-       *  3. extend target sockets with catchup lineage
-       *  4. convert to (socket: interblock) pairs, for return.
-       */
-      fetchBlock: async ({ interblock }) => {
-        // TODO use broadcast table ?
-        assert(interblockModel.isModel(interblock))
-        const block = await consistency.getBlock(interblock.provenance)
-        assert(blockModel.isModel(block))
-        assert(block.provenance.equals(interblock.provenance))
-        debug(`fetchBlock height: ${block.provenance.height}`)
-        return { block }
-      },
-      fetchRemoteListeners: async ({ interblock, block }) => {
-        assert(interblockModel.isModel(interblock))
-        assert(!interblock.getRemote())
-        assert(blockModel.isModel(block))
-        const { network } = block
-        const awaits = network.getResolvedAliases().map((alias) => {
-          const { address } = network[alias]
-          const socketsPromise = consistency.getSockets(address)
-          return socketsPromise
-        })
-        const socketsAll = await Promise.all(awaits)
-        const flat = flatten(socketsAll)
-        const socketsSet = new Set(flat)
-        debug(`fetchListeningSockets length: ${socketsSet.size}`)
-        const sockets = Array.from(socketsSet)
-        assert(sockets.every(socketModel.isModel))
-        return { sockets }
-      },
-      fetchSelfListener: async ({ interblock, block }) => {
-        // TODO use broadcast table
-        assert(interblockModel.isModel(interblock))
-        assert(blockModel.isModel(block))
-        const { network } = block
-        const awaits = network.getResolvedAliases().map((alias) => {
-          const { address } = network[alias]
-          return consistency.getIsPresent(address)
-        })
-        const resolves = await Promise.all(awaits)
-        const isSelfListening = resolves.some((isPresent) => isPresent)
-        debug(`fetchSelfListener: ${isSelfListening}`)
-        const sockets = isSelfListening ? [socketModel.create()] : []
-        return { sockets }
-      },
       fetchRemoteTargets: async ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
         const toAddress = interblock.getTargetAddress()
         assert(addressModel.isModel(toAddress))
         const sockets = await consistency.getSockets(toAddress)
         debug(`fetchTargetSockets length: ${sockets.length}`)
-        return sockets
+        return { sockets }
       },
       fetchSelfTarget: async ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
@@ -181,25 +79,15 @@ const transmitConfig = (ioConsistency) => {
         assert(address)
         const isSelfTarget = await consistency.getIsPresent(address)
         debug(`fetchSelfTarget: ${isSelfTarget}`)
-        return isSelfTarget ? [socketModel.create()] : []
-      },
-      fetchLineageToGenesis: async ({ interblock }) => {
-        // TODO limit max number of lineages we will return
-        assert(interblockModel.isModel(interblock))
-        const height = 0
-        // TODO handle missing heavy too - need latest heavy
-        debug(`fetchLineage from height: ${height}`)
-        const { provenance } = interblock
-        const payload = { provenance, height }
-        const lineage = await consistency.getLineage(payload)
-        debug(`fetchLineage length: ${lineage.length}`)
-        return lineage
+        const sockets = isSelfTarget ? [socketModel.create()] : []
+        return { sockets }
       },
       isOriginPresent: async ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
         const address = interblock.provenance.getAddress()
+        // TODO check validators will be faster and safer
         const isOriginPresent = await consistency.getIsPresent(address)
-        debug(`isOriginPresent: `, isOriginPresent)
+        debug(`isOriginPresent service: `, !!isOriginPresent)
         return { isOriginPresent }
       },
     },

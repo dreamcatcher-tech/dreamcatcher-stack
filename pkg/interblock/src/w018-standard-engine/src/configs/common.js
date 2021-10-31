@@ -19,8 +19,7 @@ const common = (debug) => {
     assert(isReply || isRequest)
 
     const { state } = dmz
-    const acc = dmz.pending.getAccumulator()
-    const reduceResolve = await isolatedTick(state, covenantAction, acc)
+    const reduceResolve = await isolatedTick(state, covenantAction, dmz)
     assert(reduceResolve, `Covenant returned: ${reduceResolve}`)
     debug(`reduceCovenant result pending: `, reduceResolve.isPending)
     return { reduceResolve }

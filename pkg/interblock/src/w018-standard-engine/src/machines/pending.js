@@ -29,7 +29,6 @@ const definition = {
           actions: 'assignRejection',
         },
       },
-      exit: 'respondReply',
     },
     deduplicatePendingReplyTx: {
       entry: 'deduplicatePendingReplyTx',

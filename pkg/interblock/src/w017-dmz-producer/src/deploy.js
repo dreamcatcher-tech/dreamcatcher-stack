@@ -1,12 +1,7 @@
 import assert from 'assert-fast'
 import { rxReplyModel, dmzModel, covenantIdModel } from '../../w015-models'
 import { spawn, spawnReducerWithoutPromise } from './spawn'
-import {
-  interchain,
-  isReplyFor,
-  replyResolve,
-  replyPromise,
-} from '../../w002-api'
+import { interchain, replyResolve, replyPromise } from '../../w002-api'
 
 const install = (installer) => ({
   type: '@@INSTALL',
@@ -56,7 +51,7 @@ const deployReply = (network, reply) => {
   // TODO handle rejection of deployment
   assert(rxReplyModel.isModel(reply))
 
-  const aliases = network.getResolvedAliases()
+  const aliases = network.getResolvedAliases() // TODO WARNING this function now supplies .@@io in aliases
   let outstandingDeploy
   for (const alias of aliases) {
     const channel = network[alias]

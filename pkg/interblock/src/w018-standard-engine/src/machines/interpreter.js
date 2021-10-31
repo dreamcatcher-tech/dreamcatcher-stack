@@ -51,7 +51,21 @@ const definition = {
       ],
     },
     loopback: {
-      always: [
+      initial: 'isSelfAnvil',
+      states: {
+        isSelfAnvil: {
+          always: [
+            {
+              target: 'done',
+              cond: 'isSelfAnvil',
+              actions: 'shiftLoopback',
+            },
+            { target: 'done' },
+          ],
+        },
+        done: { type: 'final' },
+      },
+      onDone: [
         { target: 'autoResolves', cond: 'isSelfExhausted' },
         { target: 'interpret', actions: 'loadSelfAnvil' },
       ],

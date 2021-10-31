@@ -191,46 +191,18 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       },
       isProposer: () => true,
       isValidator: () => false,
-      isIncreasable: ({ cache, lock }) => {
+      isIncreasable: ({ lock }) => {
         assert(lockModel.isModel(lock))
         assert(lock.block)
         // TODO check if dmz config allows piercing too
-        // TODO be precise about whether a heavy in the pool can be enabled by lineage
-        const isHeavyPresent = lock.interblocks.some(
-          (i) => !!i.getOriginAlias()
-        )
-        const { requests, replies } = lock.piercings
-        const isPiercingsPresent = requests.length || replies.length
-        if (!isPiercingsPresent && !isHeavyPresent) {
+        const isPiercingsPresent = lock.isPiercingsPresent()
+        const isInterblocks = lock.interblocks.length
+        if (!isPiercingsPresent && !isInterblocks) {
           debug(`isIncreasable: `, false)
           return false
         }
-        const chainId = lock.block.getChainId()
-        if (!cache.has(chainId)) {
-          debug(`isIncreasable: `, true)
-          return true
-        }
-        // TODO check that the previous lock isn't modified in any way
-        const { lock: previousLock, nextDmz } = cache.get(chainId)
-        assert(lockModel.isModel(previousLock))
-        assert(previousLock.block)
-        assert(dmzModel.isModel(nextDmz))
-        const purgedPiercings = _purgePiercings(lock, previousLock)
-        const isPurgedRequestsPresent = purgedPiercings.requests.length
-        const isPurgedRepliesPresent = purgedPiercings.replies.length
-        if (isPurgedRequestsPresent || isPurgedRepliesPresent) {
-          debug(`isIncreasable: `, true)
-          return true
-        }
-
-        const purgedIbs = _purgeInterblocks(lock, nextDmz)
-        const isPurgedHeavyPresent = purgedIbs.some((i) => !!i.getOriginAlias())
-        if (isPurgedHeavyPresent) {
-          debug(`isIncreasable: `, true)
-          return true
-        }
-        debug(`isIncreasable: `, false)
-        return false
+        debug(`isIncreasable: `, true)
+        return true
       },
       isCacheEmpty: ({ cache, lock }) => {
         assert(lockModel.isModel(lock))

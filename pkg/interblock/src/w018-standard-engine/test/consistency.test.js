@@ -10,7 +10,7 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:consistency')
 Debug.enable()
 
-describe('awsConsistency', () => {
+describe('consistency', () => {
   const lockExpiresMs = 2
   const consistencySource = consistencySourceFactory()
   describe('putPoolInterblocks', () => {
@@ -76,8 +76,6 @@ describe('awsConsistency', () => {
     test.todo('unknown address rejected')
   })
   describe('latest', () => {})
-  describe('shortestLineage', () => {})
-  describe('fetchAffected', () => {})
   describe('socketsForAddress', () => {})
   describe('storeConnection', () => {})
   describe('block', () => {})
