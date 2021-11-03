@@ -15,6 +15,7 @@ const debug = Debug('interblock:cfg:direct')
 
 const {
   transmit,
+  assignReplayIdentifiers,
   respondReply,
   assignResolve,
   reduceCovenant,
@@ -32,7 +33,7 @@ const config = {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
         assert(!dmz.pending.getIsPending())
-        assert(!dmz.pending.getAccumulator().length)
+        assert(!dmz.pending.accumulator)
         debug(`assignDirectCovenantAction`, anvil.type)
         return anvil
       },
@@ -69,7 +70,7 @@ const config = {
         assert(!covenantAction || anvil.equals(covenantAction))
         const { identifier } = anvil
         const promise = txReplyModel.create('@@PROMISE', {}, identifier)
-        const network = networkProducer.tx(dmz.network, [], [promise])
+        const network = networkProducer.tx(dmz.network, [promise])
         debug(`promiseOriginRequest`, anvil.type)
         return dmzModel.clone({ ...dmz, network })
       },
@@ -98,6 +99,7 @@ const config = {
     }),
     assignResolve,
     transmit,
+    assignReplayIdentifiers,
     mergeState,
     respondReply,
     assignRejection,

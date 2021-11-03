@@ -72,19 +72,13 @@ const inflateArray = (schema, instance) => {
   assert(Array.isArray(instance))
   assert(schema.type === 'array')
   assert(schema.uniqueItems, `uniqueItems not set: ${schema.title}`)
-  if (schema.items.type === 'number') {
-    // TODO do proper check for number
-    return instance
+  if (registry.isRegistered(schema.items.title)) {
+    const model = registry.get(schema.items.title)
+    assert(model, `Arrays must be models`)
+    return instance.map(model.clone)
   }
-  if (schema.items.type === 'string') {
-    // TODO do proper check for string, including pattern checks
-    return instance
-  }
-
-  const model = registry.get(schema.items.title)
-  assert(model, `Arrays must be models`)
-  // check the min and unique items props
-  return instance.map(model.clone)
+  validate(schema, instance)
+  return instance
 }
 
 const assertKeysValidated = (schema, instance) => {

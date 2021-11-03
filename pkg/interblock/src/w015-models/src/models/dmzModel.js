@@ -73,7 +73,6 @@ const dmzModel = standardize({
     // TODO if isSideEffectCapable ensure the validators list is singular
     const { network, pending, config } = instance
     // TODO verify that the buffers map to legit channels
-    assert(pending.isBufferValid(network))
     assert(!network['.@@io'] || config.isPierced)
     assert(!instance.piercings || config.isPierced)
     const isTransmitting = () => {
@@ -88,7 +87,8 @@ const dmzModel = standardize({
     }
     const getCurrentHeight = () => {
       if (!Number.isInteger(network['.'].tipHeight)) {
-        return 0
+        // it is not possible to be running the accumulator at height 0
+        return 1
       }
       return network['.'].tipHeight + 1
     }

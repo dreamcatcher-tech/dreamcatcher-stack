@@ -165,15 +165,15 @@ const createConfig = (isolation, consistency) => ({
         assert(dmzModel.isModel(dmz))
         assert(blockModel.isModel(pierceBlock))
         debug(`openPierceChannel`)
-        const pAddress = pierceBlock.provenance.getAddress()
+        const ioAddress = pierceBlock.provenance.getAddress()
         let ioChannel =
-          dmz.network['.@@io'] || channelModel.create(pAddress, 'PIERCE')
+          dmz.network['.@@io'] || channelModel.create(ioAddress, 'PIERCE')
         if (ioChannel.address.isUnknown()) {
           debug(`address unknown`)
           // TODO ? is this ever the case ?
-          ioChannel = channelProducer.setAddress(ioChannel, pAddress)
+          ioChannel = channelProducer.setAddress(ioChannel, ioAddress)
         }
-        assert(ioChannel.address.equals(pAddress))
+        assert(ioChannel.address.equals(ioAddress))
         assert.strictEqual(ioChannel.systemRole, 'PIERCE')
         const network = dmz.network.merge({ '.@@io': ioChannel })
         return dmzModel.clone({ ...dmz, network })
@@ -287,9 +287,10 @@ const createConfig = (isolation, consistency) => ({
       assert(rxReplyModel.isModel(rxAction) || rxRequestModel.isModel(rxAction))
       // TODO rename anvil to externalAction
       debug(`reduce: `, rxAction.type)
-      const tickPayload = { containerId, timeout: 30000 }
-      const tick = (state, action, accumulator) =>
-        isolation.tick({ ...tickPayload, state, action, accumulator })
+      const accumulator = dmz.pending.getAccumulator()
+      const tickPayload = { containerId, timeout: 30000, accumulator }
+      const tick = (state, action) =>
+        isolation.tick({ ...tickPayload, state, action })
 
       const { machine, config } = interpreterConfig(tick)
       const action = { type: 'TICK', payload: { dmz, rxAction } }

@@ -6,7 +6,7 @@ import { integrityModel } from './integrityModel'
 
 const _defaultInstance = {
   address: addressModel.create(),
-  replies: {},
+  replies: {}, // TODO turn into array, to preserve order
   requests: [],
   precedent: integrityModel.create(),
 }

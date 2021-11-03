@@ -100,16 +100,17 @@ const _respond = (network, rxRequest, reply) => {
   return network.merge({ [alias]: nextChannel })
 }
 
-const tx = (network, requests, replies) => {
+const tx = (network, transmissions) => {
   assert(networkModel.isModel(network))
-  assert(Array.isArray(requests))
-  assert(Array.isArray(replies))
+  assert(Array.isArray(transmissions))
+  const requests = transmissions.filter(txRequestModel.isModel)
+  const replies = transmissions.filter(txReplyModel.isModel)
+  assert.strictEqual(transmissions.length, requests.length + replies.length)
 
   debug(`tx requests: ${requests.length} replies: ${replies.length}`)
   const nextNetwork = {}
-  requests.forEach((request) => {
-    assert(txRequestModel.isModel(request))
-    let { to } = request
+  for (const txRequest of requests) {
+    let { to } = txRequest
     if (network['..'].address.isRoot() && to.startsWith('/')) {
       to = to.substring(1)
       to = to || '.'
@@ -124,10 +125,9 @@ const tx = (network, requests, replies) => {
       channel = channelModel.create(address, systemRole)
       debug(`channel created with systemRole: ${systemRole}`)
     }
-    nextNetwork[to] = channelProducer.txRequest(channel, request.getRequest())
-  })
-  replies.forEach((txReply) => {
-    assert(txReplyModel.isModel(txReply))
+    nextNetwork[to] = channelProducer.txRequest(channel, txRequest.getRequest())
+  }
+  for (const txReply of replies) {
     const address = txReply.getAddress()
     const alias = network.getAlias(address)
     if (!alias) {
@@ -136,12 +136,14 @@ const tx = (network, requests, replies) => {
     }
     const channel = nextNetwork[alias] || network[alias]
     nextNetwork[alias] = channelProducer.txReply(channel, txReply)
-  })
+  }
   return network.merge(nextNetwork)
 }
 
 const invalidateLocal = (network) => {
   // TODO what is this even for ?
+  // supposed to be for detecting when openPaths has stalled
+  // but openPaths should do this work itself ?
   const nextNetwork = {}
   const aliases = network.getAliases()
   for (const alias of aliases) {

@@ -268,7 +268,8 @@ const zeroLoopback = (channel) => {
   assert(channelModel.isModel(channel))
   assert(channel.isLoopback())
   assert(!channel.rxLoopback(), `Loopback not drained`)
-  let tipHeight = 0
+  // current height can never be zero, as isolation cannot occur for block 0
+  let tipHeight = 1
   if (Number.isInteger(channel.tipHeight)) {
     tipHeight = channel.tipHeight + 1
   }

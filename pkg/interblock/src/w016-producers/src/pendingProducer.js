@@ -28,6 +28,14 @@ const pushReply = (pending, reply) => {
   assert(pendingModel.isModel(pending))
   assert(rxReplyModel.isModel(reply))
   assert(pending.getIsPending())
+  let accumulator = pending.getAccumulator()
+  accumulator = accumulator.map((tx) => {
+    if (tx.to && tx.identifier === reply.identifier) {
+      tx = { ...tx, reply }
+    }
+    return tx
+  })
+
   const replies = [...pending.replies, reply]
   return pendingModel.clone({ ...pending, replies })
 }

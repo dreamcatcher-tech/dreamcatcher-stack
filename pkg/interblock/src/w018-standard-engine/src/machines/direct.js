@@ -73,6 +73,7 @@ const definition = {
         raisePending: {
           entry: [
             'raisePending',
+            'assignReplayIdentifiers',
             'promiseOriginRequest',
             'assignInitialPending',
           ],

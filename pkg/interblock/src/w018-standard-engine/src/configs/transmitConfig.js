@@ -78,7 +78,7 @@ const transmitConfig = (ioConsistency) => {
         const address = interblock.getTargetAddress()
         assert(address)
         const isSelfTarget = await consistency.getIsPresent(address)
-        debug(`fetchSelfTarget: ${isSelfTarget}`)
+        debug(`fetchSelfTarget isSelfTarget: ${isSelfTarget}`)
         const sockets = isSelfTarget ? [socketModel.create()] : []
         return { sockets }
       },

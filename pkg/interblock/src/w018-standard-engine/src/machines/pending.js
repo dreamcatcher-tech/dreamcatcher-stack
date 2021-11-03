@@ -21,7 +21,7 @@ const definition = {
       invoke: {
         src: 'reduceCovenant',
         onDone: {
-          target: 'deduplicatePendingReplyTx',
+          target: 'transmit',
           actions: 'assignResolve',
         },
         onError: {
@@ -30,14 +30,14 @@ const definition = {
         },
       },
     },
-    deduplicatePendingReplyTx: {
-      entry: 'deduplicatePendingReplyTx',
-      always: 'transmit',
-    },
     transmit: {
-      entry: 'transmit', // TODO may accumulate tx too, to dedupe independently of changing channel structure
+      entry: 'transmit',
       always: [
-        { target: 'done', cond: 'isReductionPending' },
+        {
+          target: 'done',
+          cond: 'isReductionPending',
+          actions: 'assignReplayIdentifiers',
+        },
         { target: 'settlePending' },
       ],
     },

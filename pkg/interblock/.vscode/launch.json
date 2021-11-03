@@ -69,7 +69,7 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
-      "name": "channelProducer.test",
+      "name": "dmzReducer.test",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -79,7 +79,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/src/w016-producers/test/channelProducer.test.js"
+        "${workspaceRoot}/src/w017-dmz-producer/test/dmzReducer.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",

@@ -28,11 +28,9 @@ const spawn = (alias, spawnOpts = {}, actions = []) => {
 
 const spawnReducer = (dmz, originAction) => {
   assert(rxRequestModel.isModel(originAction))
-  const network = spawnReducerWithoutPromise(dmz, originAction)
+  const nextDmz = spawnReducerWithoutPromise(dmz, originAction)
   replyPromise() // allows spawnReducer to be reused by deploy reducer
-  const { identifier } = originAction
-  // TODO store identifier in meta state
-  return network
+  return nextDmz
 }
 const spawnReducerWithoutPromise = (dmz, originAction) => {
   assert(dmzModel.isModel(dmz))
@@ -73,6 +71,7 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
     preloadedRequests = channel.requests
     channel = channelModel.clone({ ...channel, requests: [] })
     channel = channelProducer.setAddress(channel, address)
+    // TODO reresolve the accumulator with identifiers
   }
   channel = channelProducer.txRequest(channel, genesisRequest)
   for (const request of preloadedRequests) {

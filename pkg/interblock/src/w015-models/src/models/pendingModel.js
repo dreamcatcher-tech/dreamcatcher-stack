@@ -1,9 +1,6 @@
 import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
 import { rxRequestModel, rxReplyModel } from '../transients'
-import { simpleArrayModel } from './simpleArrayModel'
-import { networkModel } from './networkModel'
-import { addressModel } from './addressModel'
 
 const pendingModel = standardize({
   // TODO make model cleaner once util can handle OR in schemas
@@ -19,77 +16,68 @@ const pendingModel = standardize({
     // can occur to networking and channels, and the request will still
     // be able to proceed.`,
     type: 'object',
-    required: ['replies', 'requests'],
+    required: [],
     additionalProperties: false,
     properties: {
       pendingRequest: rxRequestModel.schema,
-      replies: {
+      accumulator: {
         type: 'array',
-        // description: `Full replies, allowing the originating request to be lowered,
-        // and the remote side to lower the reply, without losing it from the accumulator`,
+        // description: `Full replies, in order, as well as request metadata
+        uniqueItems: true,
+        items: {
+          type: 'object',
+          required: ['type'],
+          properties: {
+            type: { type: 'string' },
+            to: { type: 'string' }, // TODO pattern for allowed alias names
+            reply: rxReplyModel.schema,
+            identifier: { type: 'string', pattern: '' }, // chainId_height_index
+          },
+        },
+      },
+      bufferedReplies: {
+        type: 'array',
         uniqueItems: true,
         items: rxReplyModel.schema,
+        // description: `when a reply is received from a request that
+        // was earlier than the pending set of requests, we buffer it here`
       },
-      requests: {
-        type: 'object',
-        additionalProperties: false,
+      bufferedRequests: {
+        type: 'array',
+        uniqueItems: true,
+        items: rxRequestModel.schema,
         // description: `chainIds mapped to indexes of requests.
         // If channel is not there when comes to processing time, then the
         // request is ignored`,
-        patternProperties: {
-          '(.*?)': simpleArrayModel.schema, // TODO use chainId regex
-        },
       },
     },
   },
   create() {
-    return pendingModel.clone({ replies: [], requests: {} })
+    return pendingModel.clone({})
   },
   logicize(instance) {
-    const { pendingRequest, replies, requests } = instance
-    // TODO be able to get replies that came from requests after the trigger ?
-    // but might be impossible as means order of ingestion now matters
-    // TODO assert accumulator has no duplicate request items inside the replies
+    // TODO use references to interblocks to store buffered requests
+    // and accumulations
+    const {
+      pendingRequest,
+      accumulator = [],
+      bufferedReplies = [],
+      bufferedRequests = [],
+    } = instance
     if (!pendingRequest) {
-      assert(!replies.length)
+      assert(!accumulator.length)
     }
     const getIsPending = () => !!pendingRequest
-    const isBufferValid = (network) => {
-      // TODO loop thru and ensure everything matches and is a promise
-
-      return true
-    }
-    const getAccumulator = () => replies
-    const rxBufferedRequest = (network) => {
-      assert(networkModel.isModel(network))
-      const chainIds = Object.keys(requests)
-      if (!chainIds.length) {
-        return
-      }
-      const chainId = chainIds[0]
-      const address = addressModel.create(chainId)
-      const alias = network.getAlias(address)
-      assert(alias)
-      const channel = network[alias]
-      assert(channel)
-      const index = requests[chainId][0]
-      assert(index >= 0)
-      const event = channel.rxRequest(index)
-      assert(rxRequestModel.isModel(event))
-      return { alias, event, channel }
+    const getAccumulator = () => accumulator
+    const rxBufferedRequest = () => {
+      return bufferedRequests[0]
     }
     const getIsBuffered = (request) => {
       assert(rxRequestModel.isModel(request))
-      const chainId = request.getAddress().getChainId()
-      const index = request.getIndex()
-      if (!requests[chainId]) {
-        return false
-      }
-      return requests[chainId].includes(index)
+      return request.equals(bufferedRequests[0])
     }
     return {
       getIsPending,
-      isBufferValid,
       getAccumulator,
       rxBufferedRequest,
       getIsBuffered,

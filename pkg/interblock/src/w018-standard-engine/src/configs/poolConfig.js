@@ -115,7 +115,9 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         return isStorageEmpty
       },
       isInitialConditions: ({ baseDmz }) => {
-        return !!baseDmz
+        const isInitialConditions = !!baseDmz
+        debug(`isInitialConditions`, isInitialConditions)
+        return isInitialConditions
       },
       isGenesis: ({ interblock }) => {
         assert(interblockModel.isModel(interblock))
@@ -188,7 +190,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
       unlockChain: async ({ lock }) => {
         assert(lockModel.isModel(lock))
-        debug(`unlockChain`)
+        debug(`unlockChain`, lock.block.getChainId().substring(0, 9))
         await consistency.putUnlockChain(lock)
         return
       },

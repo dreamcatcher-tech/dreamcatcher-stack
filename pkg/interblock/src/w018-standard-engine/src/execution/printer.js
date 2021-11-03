@@ -139,18 +139,18 @@ const networkPrint = (network, options) => {
       const action = { msg, height, path, chainId, hash }
       messages.push(action)
     })
-    const rx = Object.values(channel.replies)
-    rx.forEach((txReply) => {
+    for (const rxKey in channel.replies) {
+      const reply = channel.replies[rxKey]
       const msg = chalk.yellow('      └── rx:')
-      const height = chalk.yellow(txReply.getReplyKey)
+      const height = chalk.yellow(rxKey)
       const path = ''
-      const chainId = chalk.gray(txReply.type)
+      const chainId = chalk.gray(reply.type)
       const hash = grayUndefined
       // const size = reply ? getSize(reply) : grayUndefined // TODO sum size of req & rep
 
       const action = { msg, height, path, chainId, hash }
       messages.push(action)
-    })
+    }
     // use previous blocks to know when the counters in remotes altered
   })
   return messages

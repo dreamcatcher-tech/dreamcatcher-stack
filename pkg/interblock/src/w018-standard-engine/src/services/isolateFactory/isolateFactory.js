@@ -37,49 +37,43 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
     },
     // TODO unload covenant when finished
     // TODO intercept timestamp action and overwrite Date.now()
-    tick: async ({ containerId, state, action, accumulator = [], timeout }) => {
+    // TODO make accumulator be a model
+    tick: async ({ containerId, timeout, state, action, accumulator }) => {
       debug(`tick: %o action: %o`, containerId.substring(0, 9), action.type)
       const container = containers[containerId]
       assert(container, `No tick container for: ${containerId}`)
-      assert(!state || typeof state === 'object') // TODO allow anything as state
+      assert(!state || typeof state === 'object')
       assert(Array.isArray(accumulator))
       timeout = timeout || 30000
       assert(Number.isInteger(timeout) && timeout >= 0)
-      if (rxReplyModel.isModel(action)) {
-        assert(!accumulator.length)
-      } else {
-        assert(rxRequestModel.isModel(action))
-      }
+      assert(rxReplyModel.isModel(action) || rxRequestModel.isModel(action))
 
       // TODO test rejections propogate back thru queues
       // TODO move to a pure container wrapper, then to vm2 or similar
       const tick = () => container.covenant.reducer(state, action)
-      // TODO remove need for salt by relaxing duplicate check in channel
-      const salt = action.getHash() // TODO ensure reply actions salt uniquely
-
       const queryProcessor = queryFactory(ioConsistency, container.block)
       const queries = (query) => queryProcessor.query(query)
-      const result = await hook(tick, accumulator, salt, queries)
+      const result = await hook(tick, accumulator, queries)
       queryProcessor.disable()
       debug(`result`, result)
 
-      const { reduction, isPending, requests, replies } = result
+      const { reduction, isPending, transmissions } = result
       assert((reduction && !isPending) || (!reduction && isPending))
       assert.strictEqual(typeof isPending, 'boolean')
-      assert(Array.isArray(requests))
-      assert(Array.isArray(replies))
+      assert(Array.isArray(transmissions))
       if (isPending) {
-        assert(accumulator.length || requests.length)
+        // TODO reconcile to ensure something awaitable is still happening
+        assert(accumulator.length || transmissions.length)
       }
 
-      const mappedActions = requests.map((action) => {
+      const effectedActions = transmissions.map((action) => {
         const { to } = action
         if (to === '.@@io') {
           // TODO map effects to ids, so can be invoked by queue
           assert.strictEqual(typeof action.exec, 'function')
+          // TODO fix this as have deleted requestId :shrug:
           const requestId = action.payload['.@@ioRequestId']
           assert.strictEqual(typeof requestId, 'string')
-          assert(requestId.length > salt.length + 1)
           assert(!container.effects[requestId])
           container.effects[requestId] = action
           const { type, payload, to } = action
@@ -87,7 +81,7 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
         }
         return action
       })
-      return { reduction, isPending, requests: mappedActions, replies }
+      return { reduction, isPending, transmissions: effectedActions }
     },
     unloadCovenant: async (containerId) => {
       debug(`attempting to unload: %o`, containerId)

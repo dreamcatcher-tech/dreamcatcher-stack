@@ -1,15 +1,9 @@
 import assert from 'assert-fast'
-import equal from 'fast-deep-equal'
 import setImmediate from 'set-immediate-shim'
-import { request, promise, resolve, reject } from './api'
+import { request, promise, resolve, reject, isReplyType } from './api'
 import Debug from 'debug'
+import { dmzModel, rxReplyModel } from '../../w015-models'
 const debug = Debug('interblock:api:hooks')
-
-const _eternalPromise = new Promise(() => {
-  // this can never resolve, as we do not want to execute the reducer code past this point.
-})
-_eternalPromise.isEternal = true
-Object.freeze(_eternalPromise)
 
 // TODO error if promise called more than once
 const replyPromise = () => _pushGlobalReply(promise())
@@ -29,9 +23,8 @@ const effect = (type, fn, ...args) => {
   // TODO effects should change to being able to be possibly resolvable
   assert.strictEqual(typeof type, 'string')
   assert.strictEqual(typeof fn, 'function')
-  const requestId = _incrementGlobalRequestId()
 
-  const payload = { args, ['.@@ioRequestId']: requestId }
+  const payload = { args }
   const exec = () => fn(...args)
   return _promise({ type, payload, to: '.@@io', exec, inBand: false })
 }
@@ -47,150 +40,114 @@ const query = (type, payload) => {
   const query = _promise({ type, payload, inBand: true, query: true })
   return query
 }
-const _promise = (request) => {
-  debug(`_promise request.type: %o`, request.type)
-  const accumulator = _getGlobalAccumulator()
-  assert(Array.isArray(accumulator))
-  const { type, payload, to, exec, inBand, query } = request
+const _promise = (requestRaw) => {
+  debug(`_promise request.type: %o`, requestRaw.type)
+  const { type, payload, to, exec, inBand, query } = requestRaw
   assert(!exec || typeof exec === 'function')
-  const bareRequest = { type, payload, to }
+  const request = { type, payload, to }
 
-  /**
-   * Must translate from aliases to chainIds.
-   * Pass in the full dmz, and map the 'to' field to an actual alias.
-   * rxReply could include the alias ?
-   * BUT also have to map back what the height of the reply was as well ?
-   * So can only use some kind of internal sequencing ?
-   * BUT this can be spoofed by the other side ?
-   * When we make the request, we can know what our replyKey will be ?
-   * When transmitting, ensure we haven't already sent out the request ?
-   */
-
-  const reply = accumulator.find((reply) => isReplyFor(reply, bareRequest))
-  if (!reply) {
-    const promise = new Promise((resolve, reject) => {
-      bareRequest.resolve = resolve
-      bareRequest.reject = reject
-    })
-    if (exec) {
-      bareRequest.exec = exec
-      bareRequest.inBand = inBand
+  const [previousType, previousTo, reply] = _shiftAccumulator()
+  if (previousType) {
+    assert(!isReplyType(type))
+    assert.strictEqual(type, previousType, `Different request after replay`)
+    assert.strictEqual(to, previousTo, `Different request after replay`)
+    if (reply) {
+      assert(rxReplyModel.isModel(reply))
+      if (reply.type === '@@RESOLVE') {
+        return reply.payload
+      }
+      assert.strictEqual(reply.type, '@@REJECT')
+      throw reply.payload
     }
-    if (query) {
-      bareRequest.inBand = inBand
-      bareRequest.query = query
-    }
-    _pushGlobalRequest(bareRequest)
-    // TODO allow resolving of interchain promises between block boundaries
-    return promise
-  } else {
-    // clean but excessive since nonce handles matching
-    const index = accumulator.indexOf(reply)
-    accumulator.splice(index, 1)
+    return new Promise() // never resolve as already processed this request
   }
-  if (reply.type === '@@RESOLVE') {
-    // TODO should wait until end of run before resolving promises, else dev can
-    // alter the execution path based on a reply - must be repeatable each time.
-    return reply.payload
+  const promise = new Promise((resolve, reject) => {
+    // TODO allow direct resolving of interchain promises between block boundaries
+    request.resolve = resolve
+    request.reject = reject
+  })
+  if (exec) {
+    // TODO somehow handle inband promises without hook ever async waiting
+    request.exec = exec
+    request.inBand = inBand
   }
-  assert.strictEqual(reply.type, '@@REJECT')
-  throw reply.payload
-}
-const all = (promises) => {
-  // awaits multiple requests to multiple chains and or multiple effects to complete
-  assert(Array.isArray(promises))
-  // check that all of them are hooked promises
-  // signal to pending that they all need to pass before we can make a new block ?
-  // basically the pending object needs to know when an 'all' is being awaited
-  // dmz should not begin any activity until any item has rejected, or all have resolved
-  // then the result needs to come back as an array
-
-  throw new Error('Promise.all() Not Implemented')
+  if (query) {
+    request.inBand = inBand
+    request.query = query
+  }
+  _pushGlobalRequest(request)
+  return promise
 }
 /**
- * How to make multiple hooks that are concurrent and also survive being
- * compiled by a bundler ?
+ * TODO To make multiple hooks that are concurrent and do not rely on being
+ * the same piece of code as what the hooks function is calling,
+ * each API function shall have a symbol that it generated, and passes
+ * down as an arg, so when global is hooked, can be separated by symbol
+ * as a queue identifier, eliminating the need to wait for global.
  *
- * Each API function shall have a symbol attached to it, which gets used
- * as a queue identifier.  Can be fetched out from sniffing the caller function ?
- *
- * Also, in pure contained environments, this is not needed ?
- * Running uncontained means we are in control of the env ?
- * So could have multiple hooks running, packing executions closer together.
- * If devs want to run uncontained, then they need to manage this problem
- * themselves.
- *
+ * OR rely on running single threaded so we are always in charge of the global ?
  */
-const _hookGlobal = async (originalAccumulator, salt) => {
+const _hookGlobal = async (accumulator) => {
+  assert(Array.isArray(accumulator))
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
   const start = Date.now()
-  // TODO make this be a queue, shared by all
+  // TODO make this be a queue, shared by all, so zero event loops
   while (globalThis['@@interblock'].promises) {
     await new Promise(setImmediate)
-    // TODO ensure we never have to wait more than one setImmediate loop ?
   }
   const msg = `waited for global for ${Date.now() - start}ms`
   debug(msg)
   assert(!globalThis['@@interblock'].promises, msg)
-  const accumulator = [...originalAccumulator]
-  const requestId = 0
-  const promises = { accumulator, requests: [], replies: [], requestId, salt }
-  promises.bareRequests = []
+  accumulator = [...accumulator]
+  const promises = { accumulator, transmissions: [] }
   globalThis['@@interblock'].promises = promises
 }
 const _unhookGlobal = () => {
   _assertGlobals()
-  const { requests, replies } = globalThis['@@interblock'].promises
+  const { transmissions } = globalThis['@@interblock'].promises
   delete globalThis['@@interblock'].promises
-  return { requests, replies }
+  return { transmissions }
 }
-const _getGlobalAccumulator = () => {
+const _shiftAccumulator = () => {
   _assertGlobals()
-  const { accumulator } = globalThis['@@interblock'].promises
-  debug(`_getGlobalAccumulator`)
-  return accumulator
+  debug(`_shiftAccumulator`)
+  const { promises } = globalThis['@@interblock']
+  const { accumulator } = promises
+  if (!accumulator.length) {
+    return []
+  }
+  const { type, to, reply } = accumulator.shift()
+  return [type, to, reply]
 }
 const _pushGlobalRequest = (request) => {
-  // TODO detect change in request order somehow
   _assertGlobals()
-  const { requests, bareRequests } = globalThis['@@interblock'].promises
-  const { type, payload, to } = request
-  const bareRequest = { type, payload, to }
-  // TODO optimize by using only the '.@@ioRequestId for matching ?
-  const isDuplicate = bareRequests.some((prior) => equal(bareRequest, prior))
-  if (isDuplicate) {
-    throw new Error(`Duplicate request made: ${type}`)
-  }
   debug(`_pushGlobalRequest`, request.type)
-  requests.push(request)
-  bareRequests.push(bareRequest)
+  const { transmissions } = globalThis['@@interblock'].promises
+  transmissions.push(request)
 }
 const _pushGlobalReply = (reply) => {
   _assertGlobals()
-  const { replies } = globalThis['@@interblock'].promises
+  const [previousType] = _shiftAccumulator()
+  if (previousType) {
+    assert(isReplyType(previousType))
+    assert.strictEqual(reply.type, previousType, `Different reply after replay`)
+  }
+  const { transmissions } = globalThis['@@interblock'].promises
   debug(`_pushGlobalReply`, reply.type)
-  replies.push(reply)
-}
-const _incrementGlobalRequestId = () => {
-  // TODO does this need to be globally unique ?
-  // if so, can chainId be used somehow ?
-  const requestId = globalThis['@@interblock'].promises.requestId++
-  return `${requestId}`
+  transmissions.push(reply)
 }
 const _assertGlobals = () => {
   assert(globalThis['@@interblock'])
   assert(globalThis['@@interblock'].promises)
-  const { accumulator, requests, replies, requestId } =
-    globalThis['@@interblock'].promises
+  const { accumulator, transmissions } = globalThis['@@interblock'].promises
   assert(Array.isArray(accumulator))
-  assert(Array.isArray(requests))
-  assert(Array.isArray(replies))
-  assert(Number.isInteger(requestId) && requestId >= 0)
+  assert(Array.isArray(transmissions))
 }
 // and now for the tricky part...
-const execute = async (tick, accumulator = [], salt = 'unsalted') => {
-  debug(`hook salt:`, salt)
-  await _hookGlobal(accumulator, salt)
+const execute = async (tick, accumulator) => {
+  debug(`execute`)
+  assert(Array.isArray(accumulator))
+  await _hookGlobal(accumulator)
   let pending
   try {
     let reduction = tick()
@@ -198,7 +155,7 @@ const execute = async (tick, accumulator = [], salt = 'unsalted') => {
       throw new Error(`Must return object from tick: ${reduction}`)
     }
     const isPending = typeof reduction.then === 'function'
-    pending = { reduction, isPending, requests: [], replies: [] }
+    pending = { reduction, isPending, transmissions: [] }
   } catch (error) {
     debug(`error: `, error)
     _unhookGlobal()
@@ -207,9 +164,11 @@ const execute = async (tick, accumulator = [], salt = 'unsalted') => {
   if (pending.isPending) {
     pending = await awaitPending(pending)
   } else {
-    const { requests, replies } = _unhookGlobal()
-    pending.requests = requests
-    pending.replies = replies
+    const { transmissions } = _unhookGlobal()
+    pending.transmissions = transmissions
+  }
+  if (pending.isPending) {
+    delete pending.reduction
   }
   return pending
 }
@@ -233,9 +192,9 @@ const awaitPending = async (pending) => {
     throw e
   }
   const isStillPending = result === racecar
-  const { requests, replies } = _unhookGlobal()
+  const { transmissions } = _unhookGlobal()
 
-  if (isStillPending && !requests.length) {
+  if (isStillPending && !transmissions.length) {
     // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
     throw new Error(`Wrong type of promise - use "effectInBand(...)"`)
   }
@@ -248,24 +207,27 @@ const awaitPending = async (pending) => {
   } else {
     isPending = true
   }
-  return { reduction, isPending, requests, replies }
+  return { reduction, isPending, transmissions }
 }
 const hook = async (tick, accumulator = [], queries = q) => {
   assert.strictEqual(typeof tick, 'function')
   assert(Array.isArray(accumulator))
-  // TODO assert all are rxReply models
-  assert.strictEqual(typeof salt, 'string')
   assert.strictEqual(typeof queries, 'function')
 
-  const requests = []
-  const replies = []
-  let pending
-  let inbandPromises = []
-  accumulator = [...accumulator]
+  const pending = await execute(tick, accumulator) //?
+  return pending
+}
+const q = (...args) => {
+  throw new Error(`No query function for:`, args)
+}
+
+const inbandPromises = async () => {
+  // TODO migrate to new model of transmissions and accumulator
+  // may do at same time as making all hooked actions be synchronous
   // TODO might be faster rehook as soon as the first promise resolves
-  pending = await execute(tick, accumulator, salt)
+  let inbandPromises = []
+  const transmissions = []
   const skimPending = (pending) => {
-    replies.push(...pending.replies)
     requests.push(...pending.requests.filter((req) => !req.inBand))
     inbandPromises = pending.requests.filter((req) => req.inBand)
   }
@@ -285,14 +247,8 @@ const hook = async (tick, accumulator = [], queries = q) => {
     pending = await awaitPending(pending) // unhooks global
     skimPending(pending)
   }
-  if (pending.isPending) {
-    delete pending.reduction
-  }
-  return { ...pending, requests, replies }
 }
-const q = (...args) => {
-  throw new Error(`No query function for:`, args)
-}
+
 const settlePromises = (promises, results) => {
   for (const action of promises) {
     const result = results.shift()
@@ -340,7 +296,6 @@ export {
   effect,
   effectInBand,
   query,
-  all,
   // TODO move this out of the API
   hook as _hook, // system use only
 }

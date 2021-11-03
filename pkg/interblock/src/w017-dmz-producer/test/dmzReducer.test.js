@@ -23,14 +23,14 @@ describe('dmzReducer', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
-    jest.setTimeout(300)
+    jest.setTimeout(400)
     test.only('spawn is implicitly awaited', async () => {
-      Debug.enable('*met* *dmz* *cfg*')
+      Debug.enable('*met* *dmz* *cfg* *hooks')
       const reducer = async (state, action) => {
-        debug(`reducer`, action)
-        if (action.type === 'SPAWN') {
+        debug(`reducer %o`, action)
+        if (action.type === 'TEST_SPAWN') {
           interchain(actions.spawn('child1'))
-          await interchain('PING', {}, 'child1')
+          await interchain('PING', { test: 'ping' }, 'child1')
         }
         return {}
       }
@@ -38,7 +38,7 @@ describe('dmzReducer', () => {
       const hyper = { reducer, covenantId }
       const base = await metrologyFactory('multi', { hyper })
       base.enableLogging()
-      await base.pierce({ type: 'SPAWN' })
+      await base.pierce({ type: 'TEST_SPAWN' })
       await base.settle()
       const state = base.getState(1)
       const requests = state.network.child1.getRequestIndices()

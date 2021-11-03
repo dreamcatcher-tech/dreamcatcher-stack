@@ -195,13 +195,14 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         assert(lockModel.isModel(lock))
         assert(lock.block)
         // TODO check if dmz config allows piercing too
-        const isPiercingsPresent = lock.isPiercingsPresent()
+        const isPiercings = lock.isPiercingsPresent()
         const isInterblocks = lock.interblocks.length
-        if (!isPiercingsPresent && !isInterblocks) {
+        if (!isPiercings && !isInterblocks) {
           debug(`isIncreasable: `, false)
           return false
         }
-        debug(`isIncreasable: `, true)
+        debug(`isIncreasable isInterblocks: %o`, isInterblocks)
+        debug(`isIncreasable isPiercings: %o`, isPiercings)
         return true
       },
       isCacheEmpty: ({ cache, lock }) => {

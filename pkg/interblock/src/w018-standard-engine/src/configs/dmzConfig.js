@@ -4,14 +4,14 @@ import {
   rxRequestModel,
   dmzModel,
   reductionModel,
-  addressModel,
 } from '../../../w015-models'
-import * as dmzProducer from '../../../w017-dmz-producer'
 import { _hook as hook } from '../../../w002-api'
 import { dmzMachine } from '../machines'
 import { common } from './common'
 import { assign } from 'xstate'
 import Debug from 'debug'
+import { dmzProducer } from '../../../w016-producers'
+import * as dmzReducer from '../../../w017-dmz-producer'
 const debug = Debug('interblock:cfg:dmz')
 
 const {
@@ -38,6 +38,17 @@ const config = {
     respondLoopbackRequest,
     assignResolve,
     transmit,
+    resolveAccumulator: assign({
+      dmz: ({ dmz }) => {
+        assert(dmzModel.isModel(dmz))
+        if (!dmz.pending.getIsPending()) {
+          debug('resolveAccumulator not pending')
+          return dmz
+        }
+        debug(`resolveAccumulator`)
+        return dmzProducer.accumulate(dmz)
+      },
+    }),
     assignRejection,
     respondRejection,
   },
@@ -62,15 +73,13 @@ const config = {
       assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
       debug(`reduceSystem anvil: %o`, anvil.type)
       // TODO move to be same code as isolateFactory
-      const tick = () => dmzProducer.reducer(dmz, anvil)
-      const accumulator = []
-      const salt = `TODO` // TODO make salt depend on something else, like the io channel index
-      const reduceResolve = await hook(tick, accumulator, salt)
+      const tick = () => dmzReducer.reducer(dmz, anvil)
+      const reduceResolve = await hook(tick)
 
       assert(reduceResolve, `System returned: ${reduceResolve}`)
       assert(!reduceResolve.isPending, `System can never raise pending`)
-      const { requests, replies } = reduceResolve
-      debug(`reduceSystem req: ${requests.length} rep: ${replies.length}`)
+      const { transmissions } = reduceResolve
+      debug(`reduceSystem txs: ${transmissions.length}`)
       return { reduceResolve }
     },
   },

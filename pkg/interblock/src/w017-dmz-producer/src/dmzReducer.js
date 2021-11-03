@@ -81,7 +81,8 @@ const reducer = (dmz, action) => {
       break
     case '@@RESOLVE':
     case '@@REJECT':
-      switch (action.getRequest().type) {
+      // use meta to figure out what to do ?
+      switch (action.type) {
         case '@@GENESIS':
           genesisReply(action)
           break

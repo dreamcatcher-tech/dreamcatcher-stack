@@ -182,15 +182,15 @@ const hashFromSchema = (schema, instance) => {
   }
   const hashes = {}
   const { properties } = schema
-  Object.keys(instance).map((key) => {
-    const { title, type, patternProperties } = properties[key]
+  Object.keys(instance).forEach((key) => {
+    const { title, type, patternProperties, items } = properties[key]
     const slice = instance[key]
     if (registry.isRegistered(title)) {
       hashes[key] = slice.getHash()
       return
     }
     if (type === 'array') {
-      hashes[key] = hashArray(slice)
+      hashes[key] = hashArray(slice, items)
       return
     }
     if (patternProperties) {
@@ -203,8 +203,15 @@ const hashFromSchema = (schema, instance) => {
   return { hash: crypto.objectHash(hashes) }
 }
 
-const hashArray = (instance) =>
-  crypto.objectHash(instance.map((item) => item.getHash()))
+const hashArray = (instance, items) => {
+  if (registry.isRegistered(items.title)) {
+    const arrayOfHashes = instance.map((item) => {
+      return item.getHash()
+    })
+    return crypto.objectHash(arrayOfHashes)
+  }
+  return crypto.objectHash(instance)
+}
 
 const hashPattern = (instance) => {
   const proof = Object.keys(instance).map((key) =>

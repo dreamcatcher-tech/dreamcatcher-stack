@@ -1,18 +1,18 @@
 import assert from 'assert-fast'
 import {
-  channelModel,
-  addressModel,
   rxReplyModel,
   rxRequestModel,
   dmzModel,
   reductionModel,
   pendingModel,
 } from '../../../w015-models'
-import { networkProducer } from '../../../w016-producers'
+import { networkProducer, dmzProducer } from '../../../w016-producers'
 import { assign } from 'xstate'
 const common = (debug) => {
   const reduceCovenant = async ({ dmz, covenantAction, isolatedTick }) => {
     // TODO test the actions are allowed actions using the ACL
+    assert(dmzModel.isModel(dmz))
+
     debug(`reduceCovenant: %o`, covenantAction.type)
     const isReply = rxReplyModel.isModel(covenantAction)
     const isRequest = rxRequestModel.isModel(covenantAction)
@@ -63,11 +63,10 @@ const common = (debug) => {
     dmz: ({ dmz, reduceResolve }) => {
       assert(dmzModel.isModel(dmz))
       assert(reductionModel.isModel(reduceResolve))
-      const { requests, replies } = reduceResolve
-      debug('transmit req: %o rep %o', requests, replies)
+      const { transmissions } = reduceResolve
+      debug('transmit transmissions.length: %o', transmissions.length)
       // TODO check if moving channels around inside dmz can affect tx ?
-      // TODO deduplication before send, rather than relying on tx
-      const network = networkProducer.tx(dmz.network, requests, replies)
+      const network = networkProducer.tx(dmz.network, transmissions)
       return dmzModel.clone({ ...dmz, network })
     },
     isExternalPromise: ({
@@ -79,7 +78,7 @@ const common = (debug) => {
         return isExternalPromise
       }
       assert(reductionModel.isModel(reduceResolve))
-      const { replies } = reduceResolve
+      const replies = reduceResolve.getReplies()
       // TODO cleanup, since sometimes externalAction is an rxReply
       if (rxReplyModel.isModel(externalAction)) {
         debug(`transmit isExternalPromise`, false)
@@ -96,6 +95,7 @@ const common = (debug) => {
     },
     isOriginPromise: ({ isOriginPromise, initialPending, reduceResolve }) => {
       // TODO when would this ever occur ?
+      // if only allow interchain hooked functions, then cannot origin promise
       // TODO remove the origin promise each run to avoid this problem at all
       if (isOriginPromise || !initialPending.getIsPending()) {
         debug(`transmit isOriginPromise`, isOriginPromise)
@@ -103,7 +103,7 @@ const common = (debug) => {
       }
       assert(pendingModel.isModel(initialPending))
       assert(reductionModel.isModel(reduceResolve))
-      const { replies } = reduceResolve
+      const replies = reduceResolve.getReplies()
       const { pendingRequest } = initialPending
       isOriginPromise = replies.some(
         (txReply) =>
@@ -112,6 +112,16 @@ const common = (debug) => {
       )
       debug(`transmit isOriginPromise`, isOriginPromise)
       return isOriginPromise
+    },
+  })
+  const assignReplayIdentifiers = assign({
+    dmz: ({ reduceResolve, dmz }) => {
+      assert(reductionModel.isModel(reduceResolve))
+      assert(dmzModel.isModel(dmz))
+      assert(dmz.pending.getIsPending())
+      const { transmissions } = reduceResolve
+      debug(`assignReplayIdentifiers`, transmissions.length)
+      return dmzProducer.accumulate(dmz, transmissions)
     },
   })
   const isReply = ({ anvil }) => {
@@ -164,6 +174,7 @@ const common = (debug) => {
     assignRejection,
     isReply,
     transmit,
+    assignReplayIdentifiers,
     assignResolve,
     reduceCovenant,
     isLoopbackResponseDone,
@@ -172,4 +183,5 @@ const common = (debug) => {
     isAnvilNotLoopback,
   }
 }
+
 export { common }

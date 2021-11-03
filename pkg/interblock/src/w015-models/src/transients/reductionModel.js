@@ -39,52 +39,52 @@ const reductionModel = standardize({
   schema: {
     title: 'Reduction',
     type: 'object',
-    required: ['isPending', 'requests', 'replies'],
+    required: ['isPending'],
     additionalProperties: false,
     properties: {
       reduction: { type: 'object' },
       isPending: { type: 'boolean' },
-      requests: {
+      transmissions: {
         type: 'array',
         uniqueItems: true,
-        items: txRequestModel.schema,
-      },
-      replies: {
-        type: 'array',
-        uniqueItems: true,
-        items: txReplyModel.schema,
+        items: { oneOf: [txRequestModel.schema, txReplyModel.schema] },
       },
     },
   },
   create(reduceResolve, origin, dmz) {
     // TODO resolve circular reference problem
-    let { reduction, isPending, requests, replies, ...rest } = reduceResolve
+    let { reduction, isPending, transmissions, ...rest } = reduceResolve
     assert(!Object.keys(rest).length)
-    assert(Array.isArray(requests))
-    assert(Array.isArray(replies))
+    assert(Array.isArray(transmissions))
     assert(rxRequestModel.isModel(origin) || rxReplyModel.isModel(origin))
     const dmzModel = registry.get('Dmz')
     assert(dmzModel.isModel(dmz))
-    requests = requests.map((request) => _inflate(request, origin))
-    replies = replies.map((reply) => _inflate(reply, origin))
-    requests.forEach((txRequest) => {
+    transmissions = transmissions.map((request) => _inflate(request, origin))
+    transmissions.forEach((txRequest) => {
       if (txRequest.to === '.@@io') {
         assert(dmz.config.isPierced)
       }
     })
     // TODO check replies are to real actions
     // TODO reuse dmz models if this is for system state
-    const obj = { reduction, isPending, requests, replies }
+    const obj = { reduction, isPending, transmissions }
     if (!reduction) {
       delete obj.reduction
     }
     return reductionModel.clone(obj)
   },
   logicize(instance) {
-    const { reduction, isPending, requests, replies } = instance
+    const { reduction, isPending, transmissions } = instance
     assert((reduction && !isPending) || (!reduction && isPending))
-    assert(requests.every(txRequestModel.isModel))
-    assert(replies.every(txReplyModel.isModel))
+    const replies = transmissions.filter(txReplyModel.isModel)
+    const requests = transmissions.filter(txRequestModel.isModel)
+    assert.strictEqual(transmissions.length, requests.length + replies.length)
+    Object.freeze(replies)
+    Object.freeze(requests)
+
+    for (const tx of transmissions) {
+      assert(txRequestModel.isModel(tx) || txReplyModel.isModel(tx))
+    }
     let promiseCount = 0
     const identifierSet = new Set()
     replies.forEach((txReply) => {
@@ -102,7 +102,8 @@ const reductionModel = standardize({
       assert(promiseCount <= 1, `Max one promise allowed: ${promiseCount}`)
     }
     const getIsPending = () => isPending
-    return { getIsPending }
+    const getReplies = () => replies
+    return { getIsPending, getReplies }
   },
 })
 

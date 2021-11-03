@@ -13,8 +13,14 @@ import { assign } from 'xstate'
 import { common } from './common'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:pending')
-const { transmit, assignResolve, reduceCovenant, assignRejection, mergeState } =
-  common(debug)
+const {
+  transmit,
+  assignReplayIdentifiers,
+  assignResolve,
+  reduceCovenant,
+  assignRejection,
+  mergeState,
+} = common(debug)
 const config = {
   actions: {
     bufferRequest: assign({
@@ -50,44 +56,6 @@ const config = {
         return originRequest
       },
     }),
-    deduplicatePendingReplyTx: assign({
-      // TODO warn if during re-execution, new requests are made
-      // this could be apparent by not finding requests in channels ?
-      reduceResolve: ({ dmz, reduceResolve }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(reductionModel.isModel(reduceResolve))
-        let { requests, replies } = reduceResolve
-        const isRoot = dmz.network['..'].address.isRoot()
-        requests = requests.filter((txRequest) => {
-          assert(txRequestModel.isModel(txRequest))
-          const to = isRoot ? _dereference(txRequest.to) : txRequest.to
-          const channel = dmz.network[to]
-          if (!channel) {
-            return true
-          }
-          const request = txRequest.getRequest()
-          return !Object.values(channel.requests).some((existing) =>
-            request.equals(existing)
-          )
-        })
-        replies = replies.filter((txReply) => {
-          assert(txReplyModel.isModel(txReply))
-          const address = txReply.getAddress()
-          const index = txReply.getIndex()
-          const alias = dmz.network.getAlias(address)
-          if (!alias) {
-            return true
-          }
-          const existing = dmz.network[alias].replies[index]
-          return !txReply.getReply().equals(existing)
-        })
-        debug(
-          `deduplicatePendingReplyTx dedupes: `,
-          reduceResolve.requests.length - requests.length
-        )
-        return reductionModel.clone({ ...reduceResolve, requests, replies })
-      },
-    }),
     rejectOriginRequest: assign({
       dmz: ({ dmz, anvil, reduceRejection, covenantAction }) => {
         assert(dmzModel.isModel(dmz))
@@ -97,7 +65,7 @@ const config = {
         debug(`rejectOriginRequest`, anvil.type, reduceRejection)
         const { identifier: id } = covenantAction
         const reply = txReplyModel.create('@@REJECT', reduceRejection, id)
-        const network = networkProducer.tx(dmz.network, [], [reply])
+        const network = networkProducer.tx(dmz.network, [reply])
         return dmzModel.clone({ ...dmz, network })
       },
     }),
@@ -108,7 +76,7 @@ const config = {
         debug(`promiseanvil`, anvil.type)
         const { identifier } = anvil
         const promise = txReplyModel.create('@@PROMISE', {}, identifier)
-        const network = networkProducer.tx(dmz.network, [], [promise])
+        const network = networkProducer.tx(dmz.network, [promise])
         return dmzModel.clone({ ...dmz, network })
       },
     }),
@@ -124,6 +92,7 @@ const config = {
     mergeState,
     assignResolve,
     transmit,
+    assignReplayIdentifiers,
     assignRejection,
   },
   guards: {

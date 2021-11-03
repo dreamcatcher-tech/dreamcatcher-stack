@@ -24,7 +24,10 @@ const definition = {
         { target: 'done', cond: 'isChannelUnavailable' },
         { target: 'respondLoopbackRequest' },
       ],
+      // mergeSystemState is the only place address resolution can happen
+      exit: 'resolveAccumulator',
     },
+
     respondLoopbackRequest: {
       always: [
         { target: 'done', cond: 'isAnvilNotLoopback' },

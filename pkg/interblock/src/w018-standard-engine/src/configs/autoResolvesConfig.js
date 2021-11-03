@@ -24,7 +24,7 @@ const config = {
         assert(!response, `existing response: ${response && response.type}`)
         const { identifier } = externalAction
         const reply = txReplyModel.create('@@RESOLVE', {}, identifier)
-        const network = networkProducer.tx(dmz.network, [], [reply])
+        const network = networkProducer.tx(dmz.network, [reply])
         return dmzModel.clone({ ...dmz, network })
       },
     }),
@@ -40,7 +40,7 @@ const config = {
         debug(`settleOrigin`, pendingRequest)
         const { identifier } = pendingRequest
         const reply = txReplyModel.create('@@RESOLVE', {}, identifier)
-        const network = networkProducer.tx(dmz.network, [], [reply])
+        const network = networkProducer.tx(dmz.network, [reply])
         return dmzModel.clone({ ...dmz, network })
       },
     }),
