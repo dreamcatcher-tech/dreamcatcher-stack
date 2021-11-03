@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
+import { actionModel, continuationModel } from '.'
 import { standardize } from '../modelUtils'
-import { txReplyModel, txRequestModel } from '../transients'
 
 const schema = {
   title: 'Piercings',
@@ -9,15 +9,18 @@ const schema = {
   required: ['replies', 'requests'],
   additionalProperties: false,
   properties: {
+    replies: {
+      type: 'object',
+      // description: `Keys are of format blockheight_index`,
+      additionalProperties: false,
+      patternProperties: {
+        '[0-9]+_[0-9]+': continuationModel.schema,
+      },
+    },
     requests: {
       type: 'array',
       uniqueItems: true,
-      items: txRequestModel.schema,
-    },
-    replies: {
-      type: 'array',
-      uniqueItems: true,
-      items: txReplyModel.schema,
+      items: actionModel.schema,
     },
   },
 }
@@ -25,10 +28,8 @@ const schema = {
 const piercingsModel = standardize({
   schema,
   create(replies, requests) {
-    assert(Array.isArray(replies))
-    assert(Array.isArray(requests))
-    assert(replies.every(txReplyModel.isModel))
-    assert(requests.every(txRequestModel.isModel))
+    assert(Object.values(replies).every(continuationModel.isModel))
+    assert(requests.every(actionModel.isModel))
     const piercings = { replies, requests }
     return piercingsModel.clone(piercings)
   },

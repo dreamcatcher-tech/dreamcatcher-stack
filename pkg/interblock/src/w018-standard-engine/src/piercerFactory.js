@@ -1,7 +1,6 @@
 import assert from 'assert-fast'
 import { deserializeError } from 'serialize-error'
 import { v4 as uuid } from 'uuid'
-import setImmediate from 'set-immediate-shim'
 import { request } from '../../w002-api'
 import { txRequestModel } from '../../w015-models'
 import { toFunctions } from './services/consistencyFactory'
@@ -23,36 +22,37 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
         if (!ioChannel) {
           return
         }
-        return
-        for (const [key, value] of promises) {
+        if (block.piercings) {
+          const height = ioChannel.tipHeight
+          assert(Number.isInteger(height) && height >= 0)
+          block.piercings.requests.forEach((request, index) => {
+            const replyKey = `${height}_${index}`
+            for (const [ioSequence, callbacks] of promises) {
+              if (request.payload['__@@ioSequence'] === ioSequence) {
+                assert(ioSequence.endsWith(id))
+                callbacks.replyKey = replyKey
+              }
+            }
+          })
         }
-
-        const indices = ioChannel.getRemoteRequestIndices()
-        indices.forEach((index) => {
-          const request = ioChannel.getRemote().requests[index]
-          assert(request)
-          const { '__@@ioSequence': sequence } = request.payload
-          assert(sequence.endsWith(id))
-          if (!promises.has(sequence)) {
-            return
+        const { replies } = ioChannel
+        for (const [ioSequence, callbacks] of promises) {
+          if (callbacks.replyKey) {
+            const reply = replies[callbacks.replyKey]
+            if (!reply || reply.isPromise()) {
+              continue
+            }
+            const { resolve, reject } = callbacks
+            promises.delete(ioSequence)
+            if (reply.isResolve()) {
+              const { '__@@ioSequence': discard, ...payload } = reply.payload
+              assert.strictEqual(typeof payload, 'object')
+              resolve(payload)
+            } else {
+              reject(deserializeError(reply.payload))
+            }
           }
-          const callbacks = promises.get(sequence)
-          callbacks.pending.resolve()
-
-          const reply = ioChannel.replies[index]
-          if (!reply || reply.isPromise()) {
-            return
-          }
-          const { resolve, reject } = callbacks.settled
-          if (reply.isResolve()) {
-            const { '__@@ioSequence': discard, ...payload } = reply.payload
-            assert.strictEqual(typeof payload, 'object')
-            setImmediate(() => resolve(payload))
-          } else {
-            setImmediate(() => reject(deserializeError(reply.payload)))
-          }
-          promises.delete(sequence)
-        })
+        }
       }
     }
   })
@@ -102,12 +102,9 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
   return pierce
 }
 const generateDispatchPromise = () => {
-  const callbacks = {}
+  let callbacks = {}
   const promise = new Promise((resolve, reject) => {
-    callbacks.settled = { resolve, reject }
-  })
-  promise.pending = new Promise((resolve, reject) => {
-    callbacks.pending = { resolve, reject }
+    callbacks = { resolve, reject }
   })
   return { promise, callbacks }
 }

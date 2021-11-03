@@ -10,6 +10,7 @@ import {
   Conflux,
   rxReplyModel,
   rxRequestModel,
+  piercingsModel,
 } from '../../../w015-models'
 import {
   dmzProducer,
@@ -94,6 +95,15 @@ const createConfig = (isolation, consistency) => ({
         return dmzModel.clone({ ...dmz, network })
       },
     }),
+    blankPiercings: assign({
+      dmz: ({ dmz }) => {
+        assert(dmzModel.isModel(dmz))
+        debug(`blankPiercings`)
+        dmz = { ...dmz }
+        delete dmz.piercings
+        return dmzModel.clone(dmz)
+      },
+    }),
     assignContainerId: assign({
       containerId: (context, event) => {
         const { containerId } = event.data
@@ -158,6 +168,17 @@ const createConfig = (isolation, consistency) => ({
         assert(interblocks.every(interblockModel.isModel))
         const pierced = interblockModel.create(pierceBlock, '@@PIERCE_TARGET')
         return [...interblocks, pierced]
+      },
+    }),
+    injectReplayablePiercings: assign({
+      dmz: ({ dmz, pierceBlock }) => {
+        assert(dmzModel.isModel(dmz))
+        assert(blockModel.isModel(pierceBlock))
+        debug(`injectReplayablePiercings`)
+        const ioChannel = pierceBlock.network['@@PIERCE_TARGET']
+        const { replies, requests } = ioChannel
+        const piercings = piercingsModel.create(replies, requests)
+        return dmzModel.clone({ ...dmz, piercings })
       },
     }),
     openPierceChannel: assign({
@@ -287,10 +308,9 @@ const createConfig = (isolation, consistency) => ({
       assert(rxReplyModel.isModel(rxAction) || rxRequestModel.isModel(rxAction))
       // TODO rename anvil to externalAction
       debug(`reduce: `, rxAction.type)
-      const accumulator = dmz.pending.getAccumulator()
-      const tickPayload = { containerId, timeout: 30000, accumulator }
-      const tick = (state, action) =>
-        isolation.tick({ ...tickPayload, state, action })
+      const tickPayload = { containerId, timeout: 30000 }
+      const tick = (state, action, accumulator) =>
+        isolation.tick({ ...tickPayload, state, action, accumulator })
 
       const { machine, config } = interpreterConfig(tick)
       const action = { type: 'TICK', payload: { dmz, rxAction } }

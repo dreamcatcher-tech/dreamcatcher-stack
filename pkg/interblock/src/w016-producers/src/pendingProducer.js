@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import debug from 'debug'
 import {
   rxRequestModel,
   rxReplyModel,
@@ -29,22 +30,27 @@ const pushReply = (pending, reply) => {
   assert(rxReplyModel.isModel(reply))
   assert(pending.getIsPending())
   let accumulator = pending.getAccumulator()
+  let bufferedReplies = pending.getBufferedReplies()
+  let isSettlingReply = false
   accumulator = accumulator.map((tx) => {
     if (tx.to && tx.identifier === reply.identifier) {
       tx = { ...tx, reply }
+      assert(!isSettlingReply)
+      isSettlingReply = true
     }
     return tx
   })
-
-  const replies = [...pending.replies, reply]
-  return pendingModel.clone({ ...pending, replies })
+  if (!isSettlingReply) {
+    bufferedReplies = [...bufferedReplies, reply]
+  }
+  return pendingModel.clone({ ...pending, accumulator, bufferedReplies })
 }
 const settle = (pending) => {
   assert(pendingModel.isModel(pending))
   assert(pending.getIsPending())
   pending = { ...pending }
   delete pending.pendingRequest
-  pending.replies = []
+  pending.accumulator = []
   return pendingModel.clone(pending)
 }
 const shiftRequests = (pending, network) => {

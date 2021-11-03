@@ -69,6 +69,7 @@ const pendingModel = standardize({
     }
     const getIsPending = () => !!pendingRequest
     const getAccumulator = () => accumulator
+    const getBufferedReplies = () => bufferedReplies
     const rxBufferedRequest = () => {
       return bufferedRequests[0]
     }
@@ -79,6 +80,7 @@ const pendingModel = standardize({
     return {
       getIsPending,
       getAccumulator,
+      getBufferedReplies,
       rxBufferedRequest,
       getIsBuffered,
     }

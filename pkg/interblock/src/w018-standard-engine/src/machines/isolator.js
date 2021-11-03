@@ -53,6 +53,7 @@ const definition = {
       },
     },
     isPierceable: {
+      entry: 'blankPiercings',
       always: [
         { target: 'pierce', cond: 'isPierceable' },
         { target: 'isGenesis' },
@@ -111,9 +112,13 @@ const definition = {
       initial: 'generatePierceDmz',
       states: {
         generatePierceDmz: {
-          entry: ['generatePierceDmz', 'generatePierceBlock'],
+          entry: [
+            'generatePierceDmz',
+            'generatePierceBlock',
+            'pushPierceInterblock',
+            'injectReplayablePiercings',
+          ],
           always: 'isPierceChannelUnopened',
-          exit: 'pushPierceInterblock',
         },
         isPierceChannelUnopened: {
           always: [

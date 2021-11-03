@@ -59,7 +59,7 @@ const _promise = (requestRaw) => {
       assert.strictEqual(reply.type, '@@REJECT')
       throw reply.payload
     }
-    return new Promise() // never resolve as already processed this request
+    return new Promise(() => false) // never resolve as already processed this request
   }
   const promise = new Promise((resolve, reject) => {
     // TODO allow direct resolving of interchain promises between block boundaries
@@ -214,7 +214,7 @@ const hook = async (tick, accumulator = [], queries = q) => {
   assert(Array.isArray(accumulator))
   assert.strictEqual(typeof queries, 'function')
 
-  const pending = await execute(tick, accumulator) //?
+  const pending = await execute(tick, accumulator)
   return pending
 }
 const q = (...args) => {

@@ -3,10 +3,7 @@ import { interchain, _hook as hook } from '../../w002-api'
 import {
   dmzModel,
   rxRequestModel,
-  actionModel,
-  blockModel,
   addressModel,
-  stateModel,
   covenantIdModel,
 } from '../../w015-models'
 import { actions } from '..'
@@ -25,12 +22,13 @@ describe('dmzReducer', () => {
   describe('spawn', () => {
     jest.setTimeout(400)
     test.only('spawn is implicitly awaited', async () => {
-      Debug.enable('*met* *dmz* *cfg* *hooks')
+      Debug.enable('*met*')
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)
         if (action.type === 'TEST_SPAWN') {
           interchain(actions.spawn('child1'))
-          await interchain('PING', { test: 'ping' }, 'child1')
+          const result = await interchain('PING', { test: 'ping' }, 'child1')
+          debug(`result`, result)
         }
         return {}
       }
@@ -41,7 +39,7 @@ describe('dmzReducer', () => {
       await base.pierce({ type: 'TEST_SPAWN' })
       await base.settle()
       const state = base.getState(1)
-      const requests = state.network.child1.getRequestIndices()
+      const requests = state.network.child1.requests
       assert.strictEqual(requests.length, 2)
     })
     test('spawn uses hash for seeding inside action', async () => {
