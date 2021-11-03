@@ -84,7 +84,13 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
   const index = 0
   const expectedReplyIdentifier = `${address.getChainId()}_${height}_${index}`
   assert(!dmz.meta[expectedReplyIdentifier])
-  dmz.meta = { ...dmz.meta, [expectedReplyIdentifier]: originAction.identifier }
+  const meta = {
+    type: '@@GENESIS',
+    alias,
+    chainId: genesis.getChainId(),
+    originIdentifier: originAction.identifier,
+  }
+  dmz.meta = { ...dmz.meta, [expectedReplyIdentifier]: meta }
 
   return dmzModel.clone(dmz)
 }

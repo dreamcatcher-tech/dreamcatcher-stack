@@ -8,9 +8,10 @@ const debug = Debug('interblock:api:hooks')
 // TODO error if promise called more than once
 const replyPromise = () => _pushGlobalReply(promise())
 // TODO error if resolve against the same request more than once, which includes default action
-const replyResolve = (payload, request) =>
-  _pushGlobalReply(resolve(payload, request))
-const replyReject = (error, request) => _pushGlobalReply(reject(error, request))
+const replyResolve = (payload, identifier) =>
+  _pushGlobalReply(resolve(payload, identifier))
+const replyReject = (error, identifier) =>
+  _pushGlobalReply(reject(error, identifier))
 
 const interchain = (type, payload, to) => {
   // make an async call to another chain

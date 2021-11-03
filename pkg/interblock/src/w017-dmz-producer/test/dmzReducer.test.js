@@ -20,9 +20,7 @@ describe('dmzReducer', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
-    jest.setTimeout(400)
-    test.only('spawn is implicitly awaited', async () => {
-      Debug.enable('*met*')
+    test('spawn is implicitly awaited', async () => {
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)
         if (action.type === 'TEST_SPAWN') {
@@ -53,7 +51,7 @@ describe('dmzReducer', () => {
       }
       const result = await hook(tick)
 
-      const action = result.reduction.hashTest.requests[0]
+      const action = result.reduction.network.hashTest.requests[0]
       const hash = action.getHash()
       // TODO hard to test if the actual path used genesis other than stepping
     })

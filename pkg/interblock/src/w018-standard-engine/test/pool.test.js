@@ -33,23 +33,19 @@ describe('pool', () => {
 
   describe('poolInterblock', () => {
     describe('birthChild', () => {
-      jest.setTimeout(300)
       test('new child created from genesis', async () => {
-        Debug.enable('*cfg:* *cfg:isolator interblock:engine* *cfg:heart*')
         const base = await metrologyFactory('birthChild')
+        base.enableLogging()
         await base.spawn('child')
+        await base.settle()
         const baseState = base.getState()
         assert(blockModel.isModel(baseState))
         assert.strictEqual(baseState.provenance.height, 2)
         const childChannel = baseState.network.child
-        assert(childChannel.heavy)
-        assert.strictEqual(childChannel.lineageTip.length, 2)
-        assert(!childChannel.lineageTip[0].getRemote())
-        assert.strictEqual(childChannel.lineageHeight, 1)
-        assert.strictEqual(childChannel.heavyHeight, 1)
-        const remote = childChannel.getRemote()
-        assert.strictEqual(remote.lineageHeight, 1)
-        assert.strictEqual(remote.heavyHeight, 1)
+        assert.strictEqual(childChannel.tipHeight, 1)
+        assert(!childChannel.isTransmitting())
+        const block1Integrity = base.getState(1).provenance.reflectIntegrity()
+        assert.strictEqual(childChannel.precedent, block1Integrity)
 
         const { child } = base.getChildren()
         const childState = child.getState()
@@ -60,17 +56,9 @@ describe('pool', () => {
         assert(childChannel.address.equals(childState.provenance.getAddress()))
         const parent = childState.network['..']
         assert(parent.address.equals(baseState.provenance.getAddress()))
-        assert.strictEqual(
-          parent.lineageHeight + 1,
-          baseState.provenance.height
-        )
-        assert.strictEqual(parent.heavyHeight + 1, baseState.provenance.height)
-        const { lineage } = parent
-        const isLineageMatch = lineage.every((parent, index) =>
-          parent.equals(base.getState(index).provenance.reflectIntegrity())
-        )
-        assert(isLineageMatch)
-        await base.settle()
+        assert.strictEqual(parent.tipHeight + 1, baseState.provenance.height)
+        const { tip } = parent
+        assert(tip.equals(block1Integrity))
       })
     })
     describe('poolAffectedChains', () => {

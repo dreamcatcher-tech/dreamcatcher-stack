@@ -6,28 +6,25 @@ import { rxReplyModel } from './rxReplyModel'
 import { rxRequestModel } from './rxRequestModel'
 import { registry } from '../registry' // handles circular reference to dmzmodel
 
-const _inflate = (action, defaultAction) => {
-  if (!action) {
-    throw new Error(`Action cannot be interpreted: ${action}`)
+const _inflate = (tx, origin) => {
+  if (!tx) {
+    throw new Error(`Action cannot be interpreted: ${tx}`)
   }
-  if (typeof action === 'string') {
-    action = { type: action }
+  if (typeof tx === 'string') {
+    tx = { type: tx }
   }
-  assert(action.type, `Action must supply a type`)
+  assert(tx.type, `Action must supply a type`)
 
-  if (_isReply(action.type)) {
-    const { type, payload = {} } = action
-    let { request } = action
-    let identifier
-    if (request) {
-      identifier = request.identifier
-    } else {
-      assert(rxRequestModel.isModel(defaultAction))
-      identifier = defaultAction.identifier
+  if (_isReply(tx.type)) {
+    const { type, payload = {} } = tx
+    let identifier = tx.identifier
+    if (!identifier) {
+      assert(rxRequestModel.isModel(origin))
+      identifier = origin.identifier
     }
     return txReplyModel.create(type, payload, identifier)
   } else {
-    const { type, payload = {}, to = '.' } = action
+    const { type, payload = {}, to = '.' } = tx
     return txRequestModel.create(type, payload, to)
   }
 }
@@ -59,9 +56,9 @@ const reductionModel = standardize({
     assert(rxRequestModel.isModel(origin) || rxReplyModel.isModel(origin))
     const dmzModel = registry.get('Dmz')
     assert(dmzModel.isModel(dmz))
-    transmissions = transmissions.map((request) => _inflate(request, origin))
-    transmissions.forEach((txRequest) => {
-      if (txRequest.to === '.@@io') {
+    transmissions = transmissions.map((tx) => _inflate(tx, origin))
+    transmissions.forEach((tx) => {
+      if (tx.to === '.@@io') {
         assert(dmz.config.isPierced)
       }
     })

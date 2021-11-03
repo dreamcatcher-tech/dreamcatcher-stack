@@ -46,59 +46,63 @@ const reducer = (dmz, action) => {
   assert(rxReplyModel.isModel(action) || rxRequestModel.isModel(action))
   let { network } = dmz
 
-  switch (action.type) {
-    case '@@PING':
-      pingReducer(action)
-      break
-    case '@@SPAWN':
-      return spawnReducer(dmz, action)
-    case '@@CONNECT':
-      network = connectReducer(network, action)
-      break
-    case '@@UPLINK':
-      network = uplinkReducer(network, action)
-      break
-    case '@@GENESIS':
-      genesisReducer(network, action)
-      break
-    case '@@OPEN_CHILD':
-      openChildReducer(network, action)
-      break
-    case '@@INTRO':
-      break
-    case '@@ACCEPT':
-      // just default responding is enough to trigger lineage catchup
-      break
-    case '@@INSTALL': // allows user to connect with recursive deployment calls
-    case '@@DEPLOY':
-      network = deployReducer(dmz, action)
-      break
-    case '@@GET_CHAN':
-      getChannelReducer(network, action)
-      break
-    case '@@CAT':
-      getStateReducer(dmz)
-      break
-    case '@@RESOLVE':
-    case '@@REJECT':
-      // use meta to figure out what to do ?
-      switch (action.type) {
-        case '@@GENESIS':
-          genesisReply(action)
-          break
-        case '@@UPLINK':
-          uplinkReply(network, action)
-          break
-        case '@@OPEN_CHILD':
-          network = openChildReply(network, action)
-          break
-        case '@@DEPLOY':
-          deployReply(network, action)
-          break
-      }
-      break
-    default:
-      throw new Error(`Unrecognized type: ${action.type}`)
+  if (!isSystemReply(dmz, action)) {
+    switch (action.type) {
+      case '@@PING':
+        pingReducer(action)
+        break
+      case '@@SPAWN':
+        return spawnReducer(dmz, action)
+      case '@@CONNECT':
+        network = connectReducer(network, action)
+        break
+      case '@@UPLINK':
+        network = uplinkReducer(network, action)
+        break
+      case '@@GENESIS':
+        genesisReducer(network, action)
+        break
+      case '@@OPEN_CHILD':
+        openChildReducer(network, action)
+        break
+      case '@@INTRO':
+        break
+      case '@@ACCEPT':
+        // just default responding is enough to trigger lineage catchup
+        break
+      case '@@INSTALL': // allows user to connect with recursive deployment calls
+      case '@@DEPLOY':
+        network = deployReducer(dmz, action)
+        break
+      case '@@GET_CHAN':
+        getChannelReducer(network, action)
+        break
+      case '@@CAT':
+        getStateReducer(dmz)
+        break
+      default:
+        throw new Error(`Unrecognized type: ${action.type}`)
+    }
+  } else {
+    assert(dmz.meta[action.identifier])
+    const meta = dmz.meta[action.identifier]
+
+    switch (meta.type) {
+      case '@@GENESIS':
+        genesisReply(meta, action)
+        break
+      case '@@UPLINK':
+        uplinkReply(network, action)
+        break
+      case '@@OPEN_CHILD':
+        network = openChildReply(network, action)
+        break
+      case '@@DEPLOY':
+        deployReply(network, action)
+        break
+      default:
+        throw new Error(`Unrecognized type: ${action.type}`)
+    }
   }
   return dmz
 }

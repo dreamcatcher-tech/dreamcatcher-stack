@@ -40,13 +40,13 @@ const request = (type, payload = {}, to = '.') => {
   return request
 }
 
-const _txReply = (type = '@@RESOLVE', payload = {}, request) => {
+const _txReply = (type = '@@RESOLVE', payload = {}, identifier) => {
   switch (type) {
     case '@@PROMISE':
       if (Object.keys(payload).length) {
         throw new Error(`Promise payload must be empty`)
       }
-      if (request) {
+      if (identifier) {
         throw new Error(`can only promise to the current request - leave blank`)
       }
       break
@@ -65,15 +65,16 @@ const _txReply = (type = '@@RESOLVE', payload = {}, request) => {
   const reply = {
     type,
     payload,
-    request,
+    identifier,
   }
   // let thru empty request so can auto fill by system
   return reply
 }
 
 const promise = () => _txReply('@@PROMISE')
-const resolve = (payload, request) => _txReply('@@RESOLVE', payload, request)
-const reject = (error, request) => _txReply('@@REJECT', error, request)
+const resolve = (payload, identifier) =>
+  _txReply('@@RESOLVE', payload, identifier)
+const reject = (error, identifier) => _txReply('@@REJECT', error, identifier)
 const isReplyType = (type) =>
   ['@@RESOLVE', '@@REJECT', '@@PROMISE'].includes(type)
 export { request, promise, resolve, reject, isReplyType }
