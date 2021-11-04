@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { isReplyType } from '../../../w002-api'
 import { standardize } from '../modelUtils'
 import { txRequestModel } from './txRequestModel'
 import { txReplyModel } from './txReplyModel'
@@ -15,7 +16,7 @@ const _inflate = (tx, origin) => {
   }
   assert(tx.type, `Action must supply a type`)
 
-  if (_isReply(tx.type)) {
+  if (isReplyType(tx.type)) {
     const { type, payload = {} } = tx
     let identifier = tx.identifier
     if (!identifier) {
@@ -28,9 +29,6 @@ const _inflate = (tx, origin) => {
     return txRequestModel.create(type, payload, to)
   }
 }
-
-const _isReply = (type) =>
-  txReplyModel.schema.properties.type.enum.includes(type)
 
 const reductionModel = standardize({
   schema: {

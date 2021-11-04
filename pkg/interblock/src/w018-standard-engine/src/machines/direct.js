@@ -32,28 +32,29 @@ const definition = {
         },
         transmit: { entry: 'transmit', always: 'done' },
         reject: { entry: 'warnReplyRejection', always: 'done' }, // TODO hoist error to parent
-        done: { entry: 'respondReply', type: 'final' },
+        done: { type: 'final' },
       },
       onDone: 'done',
     },
     request: {
-      initial: 'isUnbufferedRequest',
+      initial: 'reduce',
       states: {
-        isUnbufferedRequest: {
-          always: [
-            { target: 'reduce', cond: 'isUnbufferedRequest' },
-            {
-              target: 'reduce',
-              actions: 'shiftBufferedRequest',
-            },
-          ],
-        },
         reduce: {
           invoke: {
             src: 'reduceCovenant',
-            onDone: { target: 'transmit', actions: 'assignResolve' },
+            onDone: { target: 'filterRePromise', actions: 'assignResolve' },
             onError: { target: 'reject', actions: 'assignRejection' },
           },
+        },
+        filterRePromise: {
+          always: [
+            {
+              target: 'transmit',
+              cond: 'isBufferedRequest',
+              actions: 'filterRePromise',
+            },
+            { target: 'transmit' },
+          ],
         },
         transmit: {
           entry: 'transmit',
@@ -65,9 +66,9 @@ const definition = {
         respondLoopbackRequest: {
           entry: 'mergeState',
           always: [
-            { target: 'done', cond: 'isAnvilNotLoopback' },
-            { target: 'done', cond: 'isLoopbackResponseDone' },
-            { target: 'done', actions: 'respondLoopbackRequest' },
+            { target: 'isBufferedRequest', cond: 'isAnvilNotLoopback' },
+            { target: 'isBufferedRequest', cond: 'isLoopbackResponseDone' },
+            { target: 'isBufferedRequest', actions: 'respondLoopbackRequest' },
           ],
         },
         raisePending: {
@@ -82,6 +83,16 @@ const definition = {
         reject: {
           entry: 'respondRejection',
           always: 'done',
+        },
+        isBufferedRequest: {
+          always: [
+            {
+              target: 'done',
+              cond: 'isBufferedRequest',
+              actions: 'shiftBufferedRequest',
+            },
+            { target: 'done' },
+          ],
         },
         done: { type: 'final' },
       },

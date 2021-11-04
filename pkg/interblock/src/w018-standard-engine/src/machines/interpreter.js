@@ -51,13 +51,13 @@ const definition = {
       ],
     },
     loopback: {
-      initial: 'isSelfAnvil',
+      initial: 'isLoopbackShiftable',
       states: {
-        isSelfAnvil: {
+        isLoopbackShiftable: {
           always: [
             {
               target: 'done',
-              cond: 'isSelfAnvil',
+              cond: 'isLoopbackShiftable',
               actions: 'shiftLoopback',
             },
             { target: 'done' },

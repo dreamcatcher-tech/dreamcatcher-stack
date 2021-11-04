@@ -18,12 +18,9 @@ const bufferRequest = (pending, request) => {
   assert(pendingModel.isModel(pending))
   assert(rxRequestModel.isModel(request))
   assert(pending.getIsPending())
-  const chainId = request.getAddress().getChainId()
-  const index = request.getIndex()
-  const requests = { ...pending.requests }
-  const indices = pending.requests[chainId] || []
-  requests[chainId] = [...indices, index]
-  return pendingModel.clone({ ...pending, requests })
+  let { bufferedRequests = [] } = pending
+  bufferedRequests = [...bufferedRequests, request]
+  return pendingModel.clone({ ...pending, bufferedRequests })
 }
 const pushReply = (pending, reply) => {
   assert(pendingModel.isModel(pending))
@@ -50,27 +47,22 @@ const settle = (pending) => {
   assert(pending.getIsPending())
   pending = { ...pending }
   delete pending.pendingRequest
-  pending.accumulator = []
+  delete pending.accumulator
   return pendingModel.clone(pending)
 }
-const shiftRequests = (pending, network) => {
+const shiftRequests = (pending) => {
   assert(pendingModel.isModel(pending))
-  assert(networkModel.isModel(network))
   assert(!pending.getIsPending())
-  assert(!pending.replies.length)
-  const { event } = pending.rxBufferedRequest(network)
-  assert(rxRequestModel.isModel(event))
-  const chainId = event.getAddress().getChainId()
-  const index = event.getIndex()
-  const [first, ...rest] = pending.requests[chainId]
-  assert.strictEqual(first, index)
-  const requests = { ...pending.requests }
-  if (!rest.length) {
-    delete requests[chainId]
-  } else {
-    requests[chainId] = rest
+  assert(!pending.accumulator)
+  const rxRequest = pending.rxBufferedRequest()
+  assert(rxRequestModel.isModel(rxRequest))
+  const [first, ...bufferedRequests] = pending.bufferedRequests
+  assert(first.equals(rxRequest))
+  const nextPending = { ...pending }
+  if (!bufferedRequests.length) {
+    delete nextPending.bufferedRequests
   }
-  return pendingModel.clone({ ...pending, requests })
+  return pendingModel.clone(nextPending)
 }
 
 export { raisePending, bufferRequest, pushReply, settle, shiftRequests }

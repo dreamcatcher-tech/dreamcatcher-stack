@@ -100,14 +100,14 @@ const _hookGlobal = async (accumulator) => {
   debug(msg)
   assert(!globalThis['@@interblock'].promises, msg)
   accumulator = [...accumulator]
-  const promises = { accumulator, transmissions: [] }
+  const promises = { accumulator, transmissions: [], isAnyUnsettled: false }
   globalThis['@@interblock'].promises = promises
 }
 const _unhookGlobal = () => {
   _assertGlobals()
-  const { transmissions } = globalThis['@@interblock'].promises
+  const { transmissions, isAnyUnsettled } = globalThis['@@interblock'].promises
   delete globalThis['@@interblock'].promises
-  return { transmissions }
+  return { transmissions, isAnyUnsettled }
 }
 const _shiftAccumulator = () => {
   _assertGlobals()
@@ -115,9 +115,13 @@ const _shiftAccumulator = () => {
   const { promises } = globalThis['@@interblock']
   const { accumulator } = promises
   if (!accumulator.length) {
+    promises.isAnyUnsettled = true
     return []
   }
   const { type, to, reply } = accumulator.shift()
+  if (!reply) {
+    promises.isAnyUnsettled = true
+  }
   return [type, to, reply]
 }
 const _pushGlobalRequest = (request) => {
@@ -140,12 +144,25 @@ const _pushGlobalReply = (reply) => {
 const _assertGlobals = () => {
   assert(globalThis['@@interblock'])
   assert(globalThis['@@interblock'].promises)
-  const { accumulator, transmissions } = globalThis['@@interblock'].promises
+  const { accumulator, transmissions, isAnyUnsettled } =
+    globalThis['@@interblock'].promises
   assert(Array.isArray(accumulator))
   assert(Array.isArray(transmissions))
+  assert.strictEqual(typeof isAnyUnsettled, 'boolean')
+}
+const hook = async (tick, accumulator = [], queries = q) => {
+  assert.strictEqual(typeof tick, 'function')
+  assert(Array.isArray(accumulator))
+  assert.strictEqual(typeof queries, 'function')
+
+  const pending = await execute(tick, accumulator, queries)
+  return pending
+}
+const q = (...args) => {
+  throw new Error(`No query function for:`, args)
 }
 // and now for the tricky part...
-const execute = async (tick, accumulator) => {
+const execute = async (tick, accumulator, queries) => {
   debug(`execute`)
   assert(Array.isArray(accumulator))
   await _hookGlobal(accumulator)
@@ -164,6 +181,7 @@ const execute = async (tick, accumulator) => {
   }
   if (pending.isPending) {
     pending = await awaitPending(pending)
+    pending = await inbandPromises(pending, accumulator, queries)
   } else {
     const { transmissions } = _unhookGlobal()
     pending.transmissions = transmissions
@@ -193,10 +211,10 @@ const awaitPending = async (pending) => {
     throw e
   }
   const isStillPending = result === racecar
-  const { transmissions } = _unhookGlobal()
+  const { transmissions, isAnyUnsettled } = _unhookGlobal()
 
-  if (isStillPending && !transmissions.length) {
-    // seems impossible to know if was a native promise, or our promise, until actions are exhausted by replies
+  // TODO test if the returned promise is one from hooks, reject otherwise
+  if (isStillPending && !isAnyUnsettled) {
     throw new Error(`Wrong type of promise - use "effectInBand(...)"`)
   }
   let isPending = false
@@ -210,27 +228,16 @@ const awaitPending = async (pending) => {
   }
   return { reduction, isPending, transmissions }
 }
-const hook = async (tick, accumulator = [], queries = q) => {
-  assert.strictEqual(typeof tick, 'function')
-  assert(Array.isArray(accumulator))
-  assert.strictEqual(typeof queries, 'function')
 
-  const pending = await execute(tick, accumulator)
-  return pending
-}
-const q = (...args) => {
-  throw new Error(`No query function for:`, args)
-}
-
-const inbandPromises = async () => {
+const inbandPromises = async (pending, accumulator, queries) => {
   // TODO migrate to new model of transmissions and accumulator
   // may do at same time as making all hooked actions be synchronous
   // TODO might be faster rehook as soon as the first promise resolves
   let inbandPromises = []
   const transmissions = []
   const skimPending = (pending) => {
-    requests.push(...pending.requests.filter((req) => !req.inBand))
-    inbandPromises = pending.requests.filter((req) => req.inBand)
+    transmissions.push(...pending.transmissions.filter((tx) => !tx.inBand))
+    inbandPromises = pending.transmissions.filter((req) => req.inBand)
   }
   skimPending(pending)
   while (inbandPromises.length) {
@@ -238,7 +245,7 @@ const inbandPromises = async () => {
     assert(isPending, `inband promises must be awaited`)
     const results = await awaitInbandPromises(inbandPromises, queries)
 
-    await _hookGlobal(accumulator, salt) // TODO increment the salt ?
+    await _hookGlobal(accumulator)
     try {
       settlePromises(inbandPromises, results)
     } catch (e) {
@@ -248,6 +255,7 @@ const inbandPromises = async () => {
     pending = await awaitPending(pending) // unhooks global
     skimPending(pending)
   }
+  return { ...pending, transmissions }
 }
 
 const settlePromises = (promises, results) => {

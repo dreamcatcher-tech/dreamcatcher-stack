@@ -36,6 +36,33 @@ describe('channel', () => {
     test.todo('clone throws if replies do not match remote requests')
     test.todo('throw if loopback and contains banned actions')
   })
+  describe.only('loopback', () => {
+    test.only('_nextCoords', () => {
+      let channel = channelModel.create(addressModel.create('LOOPBACK'), '.')
+      const [ih, ii] = channel._nextCoords()
+      assert.strictEqual(ih, 1)
+      assert.strictEqual(ii, 0)
+
+      channel = channelModel.clone({ ...channel, tipHeight: 1 })
+      const [fh, fi] = channel._nextCoords()
+      assert.strictEqual(fh, 2)
+      assert.strictEqual(fi, 0)
+
+      channel = channelModel.clone({ ...channel, rxRepliesTip: '2_0' })
+      const [rh, ri] = channel._nextCoords()
+      assert.strictEqual(rh, 2)
+      assert.strictEqual(ri, 1)
+
+      channel = channelModel.clone({ ...channel, rxRepliesTip: '2_1' })
+      const [lh, li] = channel._nextCoords()
+      assert.strictEqual(lh, 2)
+      assert.strictEqual(li, 2)
+
+      channel = channelModel.clone({ ...channel, rxRepliesTip: '3_1' })
+      assert.strictEqual(channel.tipHeight, 1)
+      assert.throws(channel._nextCoords)
+    })
+  })
   describe('rxRequest', () => {
     test.todo('undefined if address unknown and not loopback')
     test.todo('can specify index')

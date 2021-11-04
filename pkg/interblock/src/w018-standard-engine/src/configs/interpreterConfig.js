@@ -59,7 +59,7 @@ const config = {
         assert(dmzModel.isModel(dmz))
         const loopback = dmz.network['.']
         const anvil = loopback.rxLoopback()
-        debug(`loadSelfAnvil anvil: %o`, anvil.type)
+        debug(`loadSelfAnvil anvil: %o`, anvil.type, anvil.identifier)
         return anvil
       },
     }),
@@ -112,11 +112,15 @@ const config = {
       debug(`isSystem: ${isSystem}`)
       return isSystem
     },
-    isSelfAnvil: ({ anvil }) => {
+    isLoopbackShiftable: ({ dmz, anvil }) => {
+      assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
-      const isSelfAnvil = anvil.getAddress().isLoopback()
-      debug(`isSelfAnvil`, isSelfAnvil)
-      return isSelfAnvil
+      const isFromLoopback = anvil.getAddress().isLoopback()
+      const isReply = rxReplyModel.isModel(anvil)
+      const isPromised = dmz.network['.'].isLoopbackReplyPromised()
+      const isLoopbackShiftable = isFromLoopback && (isReply || isPromised)
+      debug(`isLoopbackShiftable`, isLoopbackShiftable)
+      return isLoopbackShiftable
     },
     isSelfExhausted: ({ dmz }) => {
       assert(dmzModel.isModel(dmz))

@@ -229,27 +229,22 @@ const shiftLoopbackReply = (loopback) => {
     assert(rxReplyModel.isModel(rxReply), `Must be a reply`)
   }
 
-  const currentHeight = Number.isInteger(tipHeight) ? tipHeight + 1 : 0
+  const currentHeight = Number.isInteger(tipHeight) ? tipHeight + 1 : 1
   const [rxHeight, rxIndex] = splitRxRepliesTip(rxRepliesTip)
   assert(rxHeight <= currentHeight)
-  // need to test that the current rxRepliesTip points to a reply, not a request
   if (rxHeight === currentHeight) {
     rxRepliesTip = `${rxHeight}_${rxIndex + 1}`
   } else {
     rxRepliesTip = `${currentHeight}_${0}`
   }
   nextLoopback.rxRepliesTip = rxRepliesTip
-
   if (loopback.isLoopbackReplyPromised()) {
     const promise = replies[rxRepliesTip]
     assert.strictEqual(promise.type, '@@PROMISE')
-    rxPromises.push(rxRepliesTip)
-    nextLoopback.rxPromises = rxPromises
+    nextLoopback.rxPromises = [...rxPromises, rxRepliesTip]
   }
 
   return channelModel.clone(nextLoopback)
-  // TODO at the end of reduction, we want the loopback channel completely empty
-  // update tipheight so we always start afresh every cycle
 }
 const splitRxRepliesTip = (rxRepliesTip) => {
   if (!rxRepliesTip) {

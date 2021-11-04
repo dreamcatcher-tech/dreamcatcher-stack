@@ -21,7 +21,9 @@ const config = {
         assert(rxRequestModel.isModel(externalAction))
         assert(dmz.network.getAlias(externalAction.getAddress()))
         const response = dmz.network.getResponse(externalAction)
-        assert(!response, `existing response: ${response && response.type}`)
+        if (response && response.type !== '@@PROMISE') {
+          assert(!response, `existing response: ${response && response.type}`)
+        }
         const { identifier } = externalAction
         const reply = txReplyModel.create('@@RESOLVE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [reply])

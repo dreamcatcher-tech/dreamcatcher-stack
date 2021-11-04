@@ -22,7 +22,7 @@ const definition = {
         src: 'reduceCovenant',
         onDone: {
           target: 'transmit',
-          actions: 'assignResolve',
+          actions: 'assignPendingResolve',
         },
         onError: {
           target: 'rejectPending',

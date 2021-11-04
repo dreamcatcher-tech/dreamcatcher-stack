@@ -21,7 +21,7 @@ describe('hooks', () => {
   test('nested hooks awaited', async () => {
     const result = await hook(nested(57, 10))
     assert.strictEqual(result.reduction.id, 57)
-    assert.strictEqual(result.requests.length, 10)
+    assert.strictEqual(result.transmissions.length, 10)
   })
   test('nested parallel hooks do not collide', async () => {
     // make many simultaneous calls, and ensure none of them throw an error, and all return correct data
@@ -38,14 +38,14 @@ describe('hooks', () => {
     await assert.isRejected(hook(() => true))
     await assert.isRejected(hook(() => 'string'))
   })
-  test('duplicate requests rejected in same call', async () => {
+  test('duplicate requests permitted in same call', async () => {
     const double = async () => {
       interchain('twin')
       interchain('twin')
       // TODO supply a response, and verify the second request gets a different response
       return {}
     }
-    await assert.isRejected(hook(double))
+    await hook(double)
   })
   test.todo('duplicate requests permitted in different calls')
 })

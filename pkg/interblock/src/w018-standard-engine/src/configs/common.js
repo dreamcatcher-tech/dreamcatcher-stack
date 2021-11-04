@@ -135,7 +135,7 @@ const common = (debug) => {
   }
   const respondLoopbackRequest = assign({
     dmz: ({ initialPending, externalAction, dmz, anvil }) => {
-      debug('respondRequest')
+      debug('respondLoopbackRequest')
       assert(pendingModel.isModel(initialPending))
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(anvil))
@@ -150,8 +150,10 @@ const common = (debug) => {
     assert(dmzModel.isModel(dmz))
     assert(rxRequestModel.isModel(anvil))
     assert(anvil.getAddress().isLoopback())
-
-    const isDone = !!dmz.network.getResponse(anvil)
+    const isFromBuffer = dmz.pending.getIsBuffered(anvil)
+    const reply = dmz.network.getResponse(anvil)
+    // TODO handle transmitting a promise from a buffered loopback request
+    const isDone = !!reply && !(isFromBuffer && reply.isPromise())
     debug(`isLoopbackResponseDone: %o anvil: %o`, isDone, anvil.type)
     return isDone
   }

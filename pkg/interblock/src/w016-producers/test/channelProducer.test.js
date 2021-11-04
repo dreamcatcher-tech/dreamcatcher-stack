@@ -197,7 +197,7 @@ describe('channelProducer', () => {
     // TODO allow remote to remove any of its requests
   })
   describe('loopback', () => {
-    test('basic', () => {
+    test.only('basic', () => {
       const loopbackAddress = addressModel.create('LOOPBACK')
       let loopback = channelModel.create(loopbackAddress, '.')
 
@@ -217,7 +217,7 @@ describe('channelProducer', () => {
 
       // transmit a reply to the first action
       const { identifier } = rxReq1
-      assert.strictEqual(identifier, 'LOOPBACK_0_0')
+      assert.strictEqual(identifier, 'LOOPBACK_1_0')
       const txRep1 = txReplyModel.create('@@RESOLVE', {}, identifier)
       loopback = txReply(loopback, txRep1)
       const rxRep1 = loopback.rxLoopbackReply()

@@ -134,18 +134,17 @@ describe('standard model', () => {
     const reply = rxReplyModel.create(undefined, undefined, address, 0, 0)
     const pending = pendingModel.clone({
       pendingRequest,
-      replies: [reply],
-      requests: {},
+      bufferedReplies: [reply],
     })
-    assert(Array.isArray(pending.replies))
-    assert.strictEqual(pending.replies.length, 1)
+    assert(Array.isArray(pending.bufferedReplies))
+    assert.strictEqual(pending.bufferedReplies.length, 1)
 
     const json = pending.serialize()
     assert.strictEqual(typeof json, 'string')
     const revived = pendingModel.clone(json)
     assert(revived.equals(pending))
-    assert.strictEqual(revived.replies.length, 1)
-    assert(revived.replies.every(rxReplyModel.isModel))
+    assert.strictEqual(revived.bufferedReplies.length, 1)
+    assert(revived.bufferedReplies.every(rxReplyModel.isModel))
   })
   test.todo('array items inside pattern properties are inflated')
   test.todo('isModel only returns true if the object is in the clone cache')

@@ -1,10 +1,11 @@
 import { assert } from 'chai/index.mjs'
-import { interchain, useBlocks } from '../../w002-api'
-import { actions, listChildren } from '../../w017-dmz-producer'
+import { interchain, replyResolve } from '../../w002-api'
+import { actions } from '../../w017-dmz-producer'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:hooker')
+
 describe('hooker', () => {
   jest.setTimeout(500)
   test('loopback cleared immediately', async () => {
@@ -32,6 +33,7 @@ describe('hooker', () => {
         interchain('PING')
         const awaitedPing = await interchain(actions.ping('test'))
         debug(`awaitedPing: `, awaitedPing)
+        replyResolve(awaitedPing)
       }
       return state
     }
@@ -39,6 +41,7 @@ describe('hooker', () => {
     const base = await metrologyFactory('self', { hyper })
     base.enableLogging()
     const isNotRejected = await base.pierce({ type: 'NONCE' })
+    assert.deepEqual(isNotRejected, { string: 'test' })
     await base.settle()
   })
   test.todo('awaiting on self alone rejects')

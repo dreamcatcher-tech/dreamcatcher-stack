@@ -16,7 +16,6 @@ const debug = Debug('interblock:cfg:direct')
 const {
   transmit,
   assignReplayIdentifiers,
-  respondReply,
   assignResolve,
   reduceCovenant,
   respondRejection,
@@ -82,26 +81,28 @@ const config = {
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(covenantAction))
         assert(dmz.pending.getIsBuffered(covenantAction))
-        const { alias, event, channel } = dmz.pending.rxBufferedRequest(
-          dmz.network
-        )
-        assert(dmz.network[alias].equals(channel))
-        assert(event.equals(covenantAction))
-        const index = covenantAction.getIndex()
-        assert(channel.replies[index].isPromise())
-        const network = networkProducer.removeBufferPromise(
-          dmz.network,
-          covenantAction
-        )
-        const pending = pendingProducer.shiftRequests(dmz.pending, dmz.network)
-        return dmzModel.clone({ ...dmz, pending, network })
+        const rxRequest = dmz.pending.rxBufferedRequest()
+        assert(rxRequestModel.isModel(rxRequest))
+        assert(rxRequest.equals(covenantAction))
+
+        const pending = pendingProducer.shiftRequests(dmz.pending)
+        return dmzModel.clone({ ...dmz, pending })
+      },
+    }),
+    filterRePromise: assign({
+      reduceResolve: ({ reduceResolve }) => {
+        assert(reductionModel.isModel(reduceResolve))
+        let { transmissions: txs } = reduceResolve
+        txs = txs.filter((tx) => !tx.isPromise())
+        const isRepromised = txs.length < reduceResolve.transmissions.length
+        debug(`filterRePromise remove tx promise:`, isRepromised)
+        return reductionModel.clone({ ...reduceResolve, transmissions: txs })
       },
     }),
     assignResolve,
     transmit,
     assignReplayIdentifiers,
     mergeState,
-    respondReply,
     assignRejection,
     respondRejection,
     respondLoopbackRequest,
@@ -126,14 +127,14 @@ const config = {
       debug(`isReply: %o`, isReply)
       return isReply
     },
-    isUnbufferedRequest: ({ dmz, covenantAction }) => {
+    isBufferedRequest: ({ dmz, covenantAction }) => {
       assert(dmzModel.isModel(dmz))
       assert(rxRequestModel.isModel(covenantAction))
       assert(dmzModel.isModel(dmz))
       const { pending } = dmz
-      const isUnbufferedRequest = !pending.getIsBuffered(covenantAction)
-      debug(`isUnbufferedRequest`, isUnbufferedRequest)
-      return isUnbufferedRequest
+      const isBufferedRequest = pending.getIsBuffered(covenantAction)
+      debug(`isBufferedRequest`, isBufferedRequest)
+      return isBufferedRequest
     },
     isAnvilNotLoopback,
     isLoopbackResponseDone,

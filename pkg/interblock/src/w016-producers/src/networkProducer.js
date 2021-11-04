@@ -74,7 +74,7 @@ const respondRejection = (network, request, reduceRejection) => {
 }
 
 const respondRequest = (network, request) => {
-  // no response has been given, and no throw, so respond with null payload
+  // no response has been given, and no throw, so respond with blank payload
   debug('respondRequest request: %o', request.type)
   const reply = continuationModel.create('@@RESOLVE')
   return _respond(network, request, reply)
@@ -83,16 +83,15 @@ const respondRequest = (network, request) => {
 const _respond = (network, rxRequest, reply) => {
   assert(rxRequestModel.isModel(rxRequest))
   assert(continuationModel.isModel(reply))
+  assert(!reply.isPromise())
   const address = rxRequest.getAddress()
   const alias = network.getAlias(address)
   const channel = network[alias]
   assert(channelModel.isModel(channel))
   assert(channel.address.equals(address))
-  // TODO find a way to check if the request is legit for this channel
-  // or allow the fault, relying on the other end to pick it up
-  // might run the check at the end, or whenever parse the json
   const replyKey = rxRequest.getReplyKey()
-  assert(!channel.replies[replyKey])
+  const existingReply = channel.replies[replyKey]
+  assert(!existingReply || existingReply.isPromise())
   const { type, payload } = reply
   const txReply = txReplyModel.create(type, payload, rxRequest.identifier)
   const nextChannel = channelProducer.txReply(channel, txReply)
@@ -176,20 +175,6 @@ const reaper = (network) => {
   }
   return network
 }
-const removeBufferPromise = (network, request) => {
-  assert(networkModel.isModel(network))
-  assert(rxRequestModel.isModel(request))
-  const index = request.getIndex()
-  const address = request.getAddress()
-  const alias = network.getAlias(address)
-  const channel = network[alias]
-  const replies = { ...channel.replies }
-  assert(replies[index].isPromise())
-  delete replies[index]
-  const nextChannel = channelModel.clone({ ...channel, replies })
-  const nextNetwork = network.merge({ [alias]: nextChannel })
-  return nextNetwork
-}
 const _generateAddressMap = (interblocks) => {
   const chainMap = new Map()
   for (const interblock of interblocks) {
@@ -221,6 +206,5 @@ export {
   tx,
   invalidateLocal,
   reaper,
-  removeBufferPromise,
   zeroTransmissions,
 }

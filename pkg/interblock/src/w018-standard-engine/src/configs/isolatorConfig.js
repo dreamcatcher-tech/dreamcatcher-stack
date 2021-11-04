@@ -111,17 +111,6 @@ const createConfig = (isolation, consistency) => ({
         return containerId
       },
     }),
-    inductRequestBlocks: assign({
-      conflux: ({ conflux }, event) => {
-        // TODO move conflux to be an immutable structure somehow
-        assert(conflux instanceof Conflux)
-        const { requestBlocks } = event.data
-        assert(Array.isArray(requestBlocks))
-        assert(requestBlocks.every(blockModel.isModel))
-        debug(`inductRequestBlocks`)
-        conflux.inductRequestBlocks(requestBlocks)
-      },
-    }),
     updateDmz: assign({
       dmz: (context, event) => {
         debug(`updateDmz`)
@@ -251,10 +240,6 @@ const createConfig = (isolation, consistency) => ({
       const isGenesis = block.provenance.address.isGenesis() && isNotRoot
       debug(`isGenesis: `, isGenesis)
       return isGenesis
-    },
-    isRequestBlocksRequired: ({ conflux }) => {
-      const isRequestBlocksRequired = !!conflux.requiredBlockHeights.length
-      debug(`isRequestBlocksRequired`, isRequestBlocksRequired)
     },
     isReduceable: ({ rxAction }) => {
       // TODO check the time available, probably as a parallel transition

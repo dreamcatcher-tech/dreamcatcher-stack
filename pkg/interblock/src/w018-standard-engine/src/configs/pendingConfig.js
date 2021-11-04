@@ -16,7 +16,6 @@ const debug = Debug('interblock:cfg:pending')
 const {
   transmit,
   assignReplayIdentifiers,
-  assignResolve,
   reduceCovenant,
   assignRejection,
   mergeState,
@@ -56,6 +55,15 @@ const config = {
         return originRequest
       },
     }),
+    assignPendingResolve: assign({
+      reduceResolve: ({ dmz, covenantAction }, event) => {
+        assert(dmzModel.isModel(dmz))
+        const { reduceResolve } = event.data
+        assert(reduceResolve)
+        debug(`assignResolve pending: %o`, reduceResolve.isPending)
+        return reductionModel.create(reduceResolve, covenantAction, dmz)
+      },
+    }),
     rejectOriginRequest: assign({
       dmz: ({ dmz, anvil, reduceRejection, covenantAction }) => {
         assert(dmzModel.isModel(dmz))
@@ -90,7 +98,6 @@ const config = {
       },
     }),
     mergeState,
-    assignResolve,
     transmit,
     assignReplayIdentifiers,
     assignRejection,

@@ -20,13 +20,12 @@ describe('queries', () => {
       debug(`query: `, query)
       return mockBlock
     }
-    const result = await hook(reducer, [], 'salt', queries)
-    const { isPending, requests, replies } = result
+    const result = await hook(reducer, [], queries)
+    const { isPending, transmissions } = result
     assert(!isPending, `not isPending`)
-    assert.strictEqual(requests.length, 2)
-    assert.strictEqual(replies.length, 0)
-    assert.strictEqual(requests[0].type, 'TEST1')
-    assert.strictEqual(requests[1].type, 'TEST2')
+    assert.strictEqual(transmissions.length, 2)
+    assert.strictEqual(transmissions[0].type, 'TEST1')
+    assert.strictEqual(transmissions[1].type, 'TEST2')
     assert.strictEqual(queryResult, mockBlock, 'block error')
   })
   test('query throws cause rejection', async () => {
@@ -42,7 +41,7 @@ describe('queries', () => {
     const queries = async (query) => {
       await Promise.reject('test rejection')
     }
-    await hook(reducer, [], 'salt', queries)
+    await hook(reducer, [], queries)
     assert(isThrown)
   })
 })

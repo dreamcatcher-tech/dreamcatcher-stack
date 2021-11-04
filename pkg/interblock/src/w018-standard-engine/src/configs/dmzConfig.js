@@ -45,7 +45,7 @@ const config = {
           debug('resolveAccumulator not pending')
           return dmz
         }
-        debug(`resolveAccumulator`)
+        debug(`resolveAccumulator is pending`)
         return dmzProducer.accumulate(dmz)
       },
     }),

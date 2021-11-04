@@ -93,7 +93,7 @@ const channelModel = standardize({
     }
 
     const _nextCoords = () => {
-      let nextHeight = Number.isInteger(tipHeight) ? tipHeight + 1 : 0
+      let nextHeight = Number.isInteger(tipHeight) ? tipHeight + 1 : 1
       let nextIndex = 0
       if (typeof rxRepliesTip === 'string') {
         const [height, index] = _splitKey(rxRepliesTip)
@@ -181,6 +181,7 @@ const channelModel = standardize({
       isLoopbackReplyPromised,
       isLoopbackExhausted,
       rxLoopback,
+      _nextCoords, // TODO move out to utils file
     }
   },
 })
