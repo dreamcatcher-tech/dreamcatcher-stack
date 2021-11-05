@@ -197,7 +197,7 @@ describe('channelProducer', () => {
     // TODO allow remote to remove any of its requests
   })
   describe('loopback', () => {
-    test.only('basic', () => {
+    test('basic', () => {
       const loopbackAddress = addressModel.create('LOOPBACK')
       let loopback = channelModel.create(loopbackAddress, '.')
 
@@ -237,7 +237,7 @@ describe('channelProducer', () => {
       assert(!loopback.rxPromises)
       loopback = shiftLoopbackReply(loopback)
       assert.strictEqual(loopback.rxPromises.length, 1)
-      assert.strictEqual(loopback.rxPromises[0], '0_1')
+      assert.strictEqual(loopback.rxPromises[0], '1_1')
 
       // reject the final request
       const rxReq3 = loopback.rxLoopbackRequest()

@@ -7,7 +7,6 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:hooker')
 
 describe('hooker', () => {
-  jest.setTimeout(500)
   test('loopback cleared immediately', async () => {
     const base = await metrologyFactory()
     base.enableLogging()

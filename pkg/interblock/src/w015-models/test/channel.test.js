@@ -36,8 +36,8 @@ describe('channel', () => {
     test.todo('clone throws if replies do not match remote requests')
     test.todo('throw if loopback and contains banned actions')
   })
-  describe.only('loopback', () => {
-    test.only('_nextCoords', () => {
+  describe('loopback', () => {
+    test('_nextCoords', () => {
       let channel = channelModel.create(addressModel.create('LOOPBACK'), '.')
       const [ih, ii] = channel._nextCoords()
       assert.strictEqual(ih, 1)

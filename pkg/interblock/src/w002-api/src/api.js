@@ -62,6 +62,9 @@ const _txReply = (type = '@@RESOLVE', payload = {}, identifier) => {
   if (typeof payload !== 'object') {
     throw new Error(`payload must be object: ${typeof payload}`)
   }
+  if (typeof identifier !== 'string' && typeof identifier !== 'undefined') {
+    throw new Error(`identifier must be string: ${typeof identifier}`)
+  }
   const reply = {
     type,
     payload,

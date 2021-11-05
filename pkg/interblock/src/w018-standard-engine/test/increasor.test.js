@@ -6,7 +6,7 @@ const debug = Debug('interblock:tests:increasor')
 Debug.enable()
 
 describe('increasor', () => {
-  test('no new block from lineage interblocks', async () => {
+  test('pools always empty after blocking', async () => {
     const { covenantId } = shell // shell responds to pings
     const base = await metrologyFactory('inc', { hyper: shell })
     await base.spawn('ping1', { covenantId })
@@ -38,14 +38,11 @@ describe('increasor', () => {
     assert.strictEqual(basePool.length, 0)
 
     // ping2 pool check
-    assert.strictEqual(ping2.getPool().length, 1)
+    assert.strictEqual(ping2.getPool().length, 0)
 
     // ping1 pool check
     const ping1Pool = ping1.getPool()
-    assert.strictEqual(ping1Pool.length, 3)
-    const [parentLight] = ping1Pool
-    assert(!parentLight.getRemote())
-    assert.strictEqual(parentLight.getChainId(), base.getChainId())
+    assert.strictEqual(ping1Pool.length, 0)
   })
   test('no changes after isolation leaves block untouched', async () => {
     const base = await metrologyFactory()
@@ -62,25 +59,8 @@ describe('increasor', () => {
     await base.spawn('child2')
     await base.settle()
     assert.strictEqual(base.getHeight(), 4)
-    const child2OperatingBlock = await base.getChildren().child2.getState(1)
-    const lineageParent = child2OperatingBlock.network['..']
-    assert.strictEqual(lineageParent.lineage.length, 2)
-  })
-  test('lineage and lineageTip is purged each new block', async () => {
-    const base = await metrologyFactory()
-    await base.spawn('child1')
-    await base.spawn('child2')
-    const child1Fresh = base.getState().network.child1
-    assert.strictEqual(child1Fresh.heavyHeight, 1)
-    assert.strictEqual(child1Fresh.lineageTip.length, 1)
-    assert.strictEqual(child1Fresh.lineage.length, 1)
-
-    await base.pierce(shell.actions.ping('child2'))
-    const { child1 } = base.getState().network
-    assert.strictEqual(child1.heavyHeight, 1)
-    assert.strictEqual(child1.lineageTip.length, 1)
-    assert.strictEqual(child1.lineage.length, 1)
-    await base.settle()
+    const { provenance } = base.getState()
+    assert.strictEqual(Object.keys(provenance.lineage).length, 2)
   })
   test.todo('config changes cause new block')
   test.todo('rename alias does not cause interblock')

@@ -129,7 +129,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           assert(blockModel.isModel(block))
           assert(!block.provenance.address.isGenesis())
           const txAliases = block.network.txInterblockAliases()
-          debug(`calculateTurnoverHeights length:`, txAliases.length)
+          debug(`calculateTurnoverHeights tx length:`, txAliases.length)
           const heights = new Set()
           for (const alias of txAliases) {
             const channel = block.network[alias]
@@ -139,6 +139,8 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
             }
           }
           const turnoverHeights = [...heights]
+          debug(`calculateTurnoverHeights count:`, turnoverHeights.length)
+
           assert.strictEqual(turnoverHeights.length, heights.size)
           return turnoverHeights
         },
@@ -148,7 +150,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           const { turnoverBlocks } = event.data
           assert(Array.isArray(turnoverBlocks))
           assert(turnoverBlocks.every(blockModel.isModel))
-          debug(`assignTurnoverBlocks`)
+          debug(`assignTurnoverBlocks:`, turnoverBlocks.length)
           const map = {}
           for (const block of turnoverBlocks) {
             map[block.provenance.height] = block

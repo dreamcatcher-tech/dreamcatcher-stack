@@ -40,18 +40,22 @@ describe('isolation', () => {
 
     const address = block1.provenance.getAddress()
     const payload = {}
-    const index = 0
-    const action1 = rxRequestModel.create('action12', payload, address, index)
-    const action2 = rxRequestModel.create('action2', payload, address, index)
+    const i = 0
+    const h = 0
+    const action1 = rxRequestModel.create('action1', payload, address, h, i)
+    const action2 = rxRequestModel.create('action2', payload, address, h, i)
+    const accumulator = []
     const tick1 = {
       containerId: await id1,
       state: {},
       action: action1,
+      accumulator,
     }
     const tick2 = {
       containerId: await id2,
       state: {},
       action: action2,
+      accumulator,
     }
     const r1Await = isolate.tick(tick1)
     const r2Await = isolate.tick(tick2)
@@ -88,8 +92,9 @@ describe('isolation', () => {
 
     const containerId = await isolate.loadCovenant(block1)
     const address = block1.provenance.getAddress()
+    const height = 0
     const index = 0
-    const action = rxRequestModel.create('action1', {}, address, index)
+    const action = rxRequestModel.create('action1', {}, address, height, index)
     const tick1 = {
       containerId,
       state: {},

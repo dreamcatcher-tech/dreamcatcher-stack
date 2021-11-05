@@ -1,8 +1,9 @@
 import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { shell, hyper, probe } from '../../w212-system-covenants'
+import { isReplyType } from '../../w002-api'
 import Debug from 'debug'
-const debug = Debug('interblock:tests:heart')
+const debug = Debug('interblock:tests:interpreter')
 Debug.enable()
 
 describe('interpreter', () => {
@@ -24,7 +25,7 @@ describe('interpreter', () => {
   test('error on reply should surface', async () => {
     const reducer = (state, action) => {
       debug(`reducer: `, action.type)
-      if (isReplyFor(action)) {
+      if (isReplyType(action.type)) {
         debug(`reply received`, action)
         throw new Error('testing no replies')
       }

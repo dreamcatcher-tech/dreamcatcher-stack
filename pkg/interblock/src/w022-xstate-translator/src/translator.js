@@ -10,6 +10,7 @@ import {
   reject,
   replyPromise,
   replyReject,
+  isReplyType,
   replyResolve,
   interchain,
 } from '../../w002-api'
@@ -61,7 +62,7 @@ const translator = (machine) => {
     }
     debug('translator reducer action: %O', action)
 
-    if (isReplyFor(action)) {
+    if (isReplyType(action.type)) {
       debug(`ignoring reply received: `, action)
       return xstate
       // TODO reject external replies, ignore loopback replies
@@ -152,7 +153,7 @@ const mapXstateToContinuation = (xstateAction, originAction) => {
     case '@@RESPOND':
       // TODO use the origin action
       debug(`@@RESPOND to: `, originAction.type)
-      replyResolve(xstateAction.data, originAction)
+      replyResolve(xstateAction.data, originAction.identifier)
       break
     default:
       if (xstateAction.type.startsWith('done.invoke.')) {

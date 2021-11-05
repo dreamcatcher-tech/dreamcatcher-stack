@@ -51,11 +51,14 @@ const interblockModel = standardize({
 
     let extractedGenesis
     const extractGenesis = () => {
-      if (!extractedGenesis) {
-        // TODO move to producers and handle minimal payload
-        const genesis = blockModel.clone(requests[0].payload.genesis)
-        assert(genesis.provenance.address.isGenesis())
-        extractedGenesis = genesis
+      if (requests[0] && requests[0].payload.genesis) {
+        if (!extractedGenesis) {
+          // TODO move to producers and handle minimal payload
+
+          const genesis = blockModel.clone(requests[0].payload.genesis)
+          assert(genesis.provenance.address.isGenesis())
+          extractedGenesis = genesis
+        }
       }
       return extractedGenesis
     }
