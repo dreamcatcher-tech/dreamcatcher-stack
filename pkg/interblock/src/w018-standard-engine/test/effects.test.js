@@ -29,7 +29,7 @@ describe('effects', () => {
     const { state } = base.getState()
     debug(`state:`, state)
   })
-  test('hooked promise effect', async () => {
+  test.only('hooked promise effect', async () => {
     const testData = { test: 'data' }
     const externalFunction = () => {
       debug(`externalFunction triggered`)

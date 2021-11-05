@@ -1,10 +1,10 @@
 import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '../src/metrologyFactory'
-import { blockModel } from '../../w015-models'
 import { shell } from '../../w212-system-covenants'
-import { request } from '../../w002-api'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:covenants')
+Debug.enable()
 
 describe('user covenants', () => {
   test('@@INIT', async () => {

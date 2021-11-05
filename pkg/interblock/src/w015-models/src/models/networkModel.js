@@ -43,13 +43,12 @@ const networkModel = standardize({
     assert(channelModel.isModel(instance['.']), 'channel invalid')
     assert(instance['.'].systemRole === '.', `self not loopback channel`)
 
-    // TODO find why any op needs to get all aliases out anyway
     const getAliases = () => _aliases
     let _resolvedAliases
     const getResolvedAliases = () => {
       if (!_resolvedAliases) {
-        _resolvedAliases = _aliases.filter((alias) =>
-          instance[alias].address.isResolved()
+        _resolvedAliases = _aliases.filter(
+          (alias) => instance[alias].address.isResolved() && alias !== '.@@io'
         )
       }
       return _resolvedAliases

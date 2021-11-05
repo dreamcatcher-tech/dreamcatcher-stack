@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import setImmediate from 'set-immediate-shim'
 import { request, promise, resolve, reject, isReplyType } from './api'
 import Debug from 'debug'
-import { dmzModel, rxReplyModel } from '../../w015-models'
+import { rxReplyModel } from '../../w015-models'
 const debug = Debug('interblock:api:hooks')
 
 // TODO error if promise called more than once
@@ -286,10 +286,10 @@ const awaitInbandPromises = async (promises, queries) => {
     assert.strictEqual(typeof exec, 'function')
     try {
       const payload = await exec()
-      return resolve(payload, action)
+      return resolve(payload, action.identifier)
     } catch (e) {
       debug(`error: `, e)
-      return reject(e, action)
+      return reject(e, action.identifier)
     }
   })
   const results = await Promise.all(awaits)

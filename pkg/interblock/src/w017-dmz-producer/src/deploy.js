@@ -51,7 +51,7 @@ const deployReply = (network, reply) => {
   // TODO handle rejection of deployment
   assert(rxReplyModel.isModel(reply))
 
-  const aliases = network.getResolvedAliases() // TODO WARNING this function now supplies .@@io in aliases
+  const aliases = network.getResolvedAliases()
   let outstandingDeploy
   for (const alias of aliases) {
     const channel = network[alias]

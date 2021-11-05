@@ -32,7 +32,7 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
       debug(`containerId: %o`, containerId.substring(0, 9))
       await Promise.resolve()
       const covenant = covenants[name]
-      containers[containerId] = { covenant, block, effects: {} }
+      containers[containerId] = { covenant, block, effects: [] }
       return containerId
     },
     // TODO unload covenant when finished
@@ -66,20 +66,17 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
         assert(accumulator.length || transmissions.length)
       }
 
-      const effectedActions = transmissions.map((action) => {
-        const { to } = action
+      const effectedActions = transmissions.map((tx) => {
+        const { to } = tx
         if (to === '.@@io') {
           // TODO map effects to ids, so can be invoked by queue
-          assert.strictEqual(typeof action.exec, 'function')
-          // TODO fix this as have deleted requestId :shrug:
-          const requestId = action.payload['.@@ioRequestId']
-          assert.strictEqual(typeof requestId, 'string')
-          assert(!container.effects[requestId])
-          container.effects[requestId] = action
-          const { type, payload, to } = action
+          assert.strictEqual(typeof tx.exec, 'function')
+          let { type, payload, to } = tx
+          payload = { ...payload, '@@effectId': container.effects.length }
+          container.effects.push(tx)
           return { type, payload, to }
         }
-        return action
+        return tx
       })
       return { reduction, isPending, transmissions: effectedActions }
     },

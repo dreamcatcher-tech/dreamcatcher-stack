@@ -14,7 +14,7 @@ const generatePierceDmz = (targetBlock, pierceReplies, pierceRequests) => {
   assert(Array.isArray(pierceReplies))
   assert(Array.isArray(pierceRequests))
   assert(pierceReplies.every(txReplyModel.isModel))
-  assert(pierceReplies.every(txRequestModel.isModel))
+  assert(pierceRequests.every(txRequestModel.isModel))
   if (targetBlock.network['.@@io']) {
     assert(targetBlock.network['.@@io'].address.isResolved())
   }
@@ -78,7 +78,15 @@ const accumulate = (dmz, transmissions = []) => {
   const requestsMap = _mapRequests(accumulator)
   accumulator = accumulator.map((tx) => {
     if (tx.to && !tx.identifier) {
-      const channel = dmz.network[tx.to]
+      let channel = dmz.network[tx.to]
+      if (dmz.network['..'].address.isRoot()) {
+        // TODO find how to reconcile with networkProducer.tx()
+        if (tx.to === '/') {
+          channel = dmz.network['.']
+        } else if (tx.to.startsWith('/')) {
+          channel = dmz.network[tx.to.slice(1)]
+        }
+      }
       if (channel) {
         const { address } = channel
         if (address.isResolved() || address.isLoopback()) {

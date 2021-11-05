@@ -6,7 +6,7 @@ import { ping, pingReducer } from './ping'
 import { spawn, spawnReducer } from './spawn'
 import { install, deploy, deployReducer, deployReply } from './deploy'
 import { getChannel, getChannelReducer } from './getChannel'
-import { genesisReducer, genesisReply } from './genesis'
+import { genesisReducer, genesisReply, initReply } from './genesis'
 import { getStateReducer, getState } from './getState'
 import { dmzModel, rxRequestModel, rxReplyModel } from '../../w015-models'
 import Debug from 'debug'
@@ -60,8 +60,7 @@ const reducer = (dmz, action) => {
         network = uplinkReducer(network, action)
         break
       case '@@GENESIS':
-        genesisReducer(network, action)
-        break
+        return genesisReducer(dmz, action)
       case '@@OPEN_CHILD':
         openChildReducer(network, action)
         break
@@ -85,9 +84,12 @@ const reducer = (dmz, action) => {
     }
   } else {
     assert(dmz.meta[action.identifier])
-    const meta = dmz.meta[action.identifier]
+    const { [action.identifier]: meta, ...rest } = dmz.meta
 
     switch (meta.type) {
+      case '@@INIT':
+        initReply(meta, action)
+        break
       case '@@GENESIS':
         genesisReply(meta, action)
         break
@@ -103,6 +105,7 @@ const reducer = (dmz, action) => {
       default:
         throw new Error(`Unrecognized type: ${action.type}`)
     }
+    return dmzModel.clone({ ...dmz, meta: rest })
   }
   return dmz
 }

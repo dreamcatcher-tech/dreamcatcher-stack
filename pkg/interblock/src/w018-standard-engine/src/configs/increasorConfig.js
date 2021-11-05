@@ -281,28 +281,25 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         assert(nextLock.block)
         assert(!nextLock.block.equals(lock.block))
         debug(`effects`)
-        // pull out the new IO channel requests
-        let prevIo = channelModel.create()
-        if (lock.block && lock.block.network['.@@io']) {
-          prevIo = lock.block.network['.@@io']
-        }
-        const nextIo = nextLock.block.network['.@@io'] || prevIo
-        const nextIoIndices = nextIo
-          .getRequestIndices()
-          .filter((index) => !prevIo.requests[index])
-        debug(`nextIoIndices: `, nextIoIndices)
+        const io = nextLock.block.network['.@@io']
+        assert(io && nextLock.block.config.isPierced)
         // TODO set container permissions to allow network access
         const timeout = 30000
-        const awaits = nextIoIndices.map(async (index) => {
-          const action = nextIo.requests[index]
-          assert(action && action.payload)
-          // TODO translate to be the indices of the .@@io channel directly
-          const effectId = action.payload['.@@ioRequestId']
-          assert.strictEqual(typeof effectId, 'string')
-          const { type, payload } = action
+        const awaits = io.requests.map(async (request, index) => {
+          const effectId = request.payload['@@effectId']
+          assert(Number.isInteger(effectId))
+          assert(effectId >= 0)
+          const { type, payload } = request
           const address = nextLock.block.provenance.getAddress()
-          const request = rxRequestModel.create(type, payload, address, index)
-          const { identifier } = request
+          const height = nextLock.block.provenance.height
+          const rxRequest = rxRequestModel.create(
+            type,
+            payload,
+            address,
+            height,
+            index
+          )
+          const { identifier } = rxRequest
           let txReply
           try {
             const payload = await isolation.executeEffect({

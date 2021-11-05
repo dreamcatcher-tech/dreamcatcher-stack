@@ -1,16 +1,29 @@
-import { interchain, replyResolve } from '../../w002-api'
-import { rxReplyModel } from '../../w015-models'
+import { interchain, replyPromise, replyResolve } from '../../w002-api'
+import { dmzModel, rxReplyModel } from '../../w015-models'
 import Debug from 'debug'
 import assert from 'assert-fast'
 const debug = Debug('interblock:dmz:genesis')
 
-const genesisReducer = (network, action) => {
+const genesisReducer = (dmz, action) => {
+  assert(dmzModel.isModel(dmz))
+  assert.strictEqual(action.type, '@@GENESIS')
+  interchain('@@INIT') // covenant, take your first breath
+  replyPromise()
+  const chainId = dmz.network['.'].address.getChainId()
+  const height = dmz.getCurrentHeight()
+  const index = 0
+  const expectedReplyIdentifier = `${chainId}_${height}_${index}`
+  const data = {
+    type: '@@INIT',
+    originIdentifier: action.identifier,
+  }
+  const meta = { ...dmz.meta, [expectedReplyIdentifier]: data }
+  return dmzModel.clone({ ...dmz, meta })
   // TODO check can only have come from parent, and must be the first action in the channel
   // auto respond will resolve this action
   // TODO wait for response from covenant, in case rejected
 
   // TODO insert the action directly into the network, and store the request id
-  interchain('@@INIT') // covenant, take your first breath
 }
 const genesisReply = (meta, reply) => {
   // TODO update whole reply to use dmz meta state
@@ -18,7 +31,15 @@ const genesisReply = (meta, reply) => {
   assert(rxReplyModel.isModel(reply))
 
   const { alias, chainId, originIdentifier } = meta
-  debug('reply received for @@GENESIS', alias, chainId, originIdentifier)
+  debug('reply received for @@GENESIS %O', meta)
   replyResolve({ alias, chainId }, originIdentifier)
 }
-export { genesisReducer, genesisReply }
+const initReply = (meta, reply) => {
+  assert.strictEqual(typeof meta, 'object')
+  assert(rxReplyModel.isModel(reply))
+  const { originIdentifier } = meta
+  // TODO handle rejection of @@INIT
+  debug('@@INIT reply received', originIdentifier)
+  replyResolve({}, originIdentifier)
+}
+export { genesisReducer, genesisReply, initReply }

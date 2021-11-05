@@ -234,7 +234,6 @@ const createConfig = (isolation, consistency) => ({
   guards: {
     isGenesis: ({ lock }) => {
       assert(lockModel.isModel(lock))
-      assert(lock.block)
       const { block } = lock
       const isNotRoot = !block.network['..'].address.isRoot()
       const isGenesis = block.provenance.address.isGenesis() && isNotRoot
@@ -271,9 +270,8 @@ const createConfig = (isolation, consistency) => ({
     isCovenantEffectable: ({ lock, dmz }) => {
       // TODO merge this into channelModel so can reuse in increasorConfig
       assert(lockModel.isModel(lock))
-      assert(lock.block)
       assert(dmzModel.isModel(dmz))
-      const io = lock.block.network['.@@io']
+      const io = dmz.network['.@@io']
       const isCovenantEffectable = !!(io && io.requests.length)
       debug(`isCovenantEffectable`, isCovenantEffectable)
       return isCovenantEffectable
