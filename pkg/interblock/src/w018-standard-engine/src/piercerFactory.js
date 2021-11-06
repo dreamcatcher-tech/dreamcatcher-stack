@@ -15,7 +15,8 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
   const consistency = toFunctions(ioConsistency)
   ioConsistency.subscribe(async (action, queuePromise) => {
     if (action.type === 'UNLOCK') {
-      // await queuePromise // TODO check if any faster ?
+      // await so if caller calls getState() they get at least this block
+      await queuePromise
       const { block } = action.payload
       if (block.getChainId() === address.getChainId()) {
         const ioChannel = block.network['.@@io']

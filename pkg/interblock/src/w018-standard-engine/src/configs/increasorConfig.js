@@ -37,28 +37,6 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           return lock
         },
       }),
-      reviveCache: assign({
-        cachedDmz: ({ cache, lock }) => {
-          assert(lockModel.isModel(lock))
-          assert(lock.block)
-          const chainId = lock.block.getChainId()
-          assert(cache.has(chainId))
-          const { nextDmz } = cache.get(chainId)
-          debug(`reviveCache.nextDmz`)
-          return nextDmz
-        },
-        lock: ({ cache, lock }) => {
-          const chainId = lock.block.getChainId()
-          assert(cache.has(chainId))
-          const { lock: previousLock, nextDmz } = cache.get(chainId)
-          assert(lock.block.equals(previousLock.block))
-          // purge the current lock against the old one and the old dmz
-          const interblocks = _purgeInterblocks(lock, nextDmz)
-          const piercings = _purgePiercings(lock, previousLock)
-          debug(`reviveCache.lock`)
-          return lockModel.clone({ ...lock, interblocks, piercings })
-        },
-      }),
       assignNextDmz: assign({
         nextDmz: (context, event) => {
           const { dmz } = event.data
@@ -94,25 +72,9 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           return nextLock
         },
       }),
-      clearCache: ({ lock, cache }) => {
-        // wipe out the cache as a block has just been made
-        assert(lockModel.isModel(lock))
-        assert(lock.block)
-        const chainId = lock.block.getChainId()
-        cache.delete(chainId)
-        debug(`clearCache: `, chainId.substring(0, 9))
-      },
       repeatLock: assign({
         nextLock: ({ lock }) => lock,
       }),
-      cachePartial: ({ cache, lock, nextDmz }) => {
-        assert(lockModel.isModel(lock))
-        assert(lock.block)
-        assert(dmzModel.isModel(nextDmz))
-        const chainId = lock.block.getChainId()
-        cache.set(chainId, { lock, nextDmz })
-        debug(`cachePartial: `, chainId.substring(0, 9))
-      },
       assignIsRedriveRequired: assign({
         isRedriveRequired: ({ isRedriveRequired: current }, event) => {
           assert(!current)
@@ -207,13 +169,6 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         debug(`isIncreasable isPiercings: %o`, isPiercings)
         return true
       },
-      isCacheEmpty: ({ cache, lock }) => {
-        assert(lockModel.isModel(lock))
-        assert(lock.block)
-        const isCacheEmpty = !cache.has(lock.block.getChainId())
-        debug(`isCacheEmpty: `, isCacheEmpty)
-        return isCacheEmpty
-      },
       isIsolationComplete: ({ nextDmz }) => {
         const isIsolationComplete = !!nextDmz
         debug(`isIsolationComplete: ${isIsolationComplete}`)
@@ -233,7 +188,6 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         debug(`isNewBlock: ${isNewBlock}`)
         return isNewBlock
       },
-      isNoNextDmz: ({ nextDmz }) => !nextDmz,
       isEffectable: ({ block, containerId }) => {
         assert(blockModel.isModel(block))
         assert.strictEqual(typeof containerId, 'string')
@@ -342,31 +296,6 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
     },
   }
   return { machine: increasorMachine, config }
-}
-const _purgePiercings = (lock, previousLock) => {
-  // leverage that piercings are always fully processed each cycle
-  const { requests: origReqs, replies: origReps } = lock.piercings
-  const { requests: prevReqs, replies: prevReps } = previousLock.piercings
-  const requests = origReqs.filter(
-    (txRequest) => !prevReqs.some((pr) => pr.equals(txRequest))
-  )
-  const replies = origReps.filter(
-    (txReply) => !prevReps.some((pr) => pr.equals(txReply))
-  )
-  return { requests, replies }
-}
-const _purgeInterblocks = (lock, cachedDmz) => {
-  // must compare with dmz, as lineage hole might be present
-  const { interblocks } = lock
-  return interblocks.filter((ib) => !cachedDmz.network.includesInterblock(ib))
-}
-const _isPierceChanged = (network, previous) => {
-  if (!network['.@@io']) {
-    return false
-  }
-  const ioChannel = network['.@@io']
-  const previousChannel = previous['.@@io'] || channelModel.create()
-  return ioChannel.isTxGreaterThan(previousChannel)
 }
 
 export { increasorConfig }

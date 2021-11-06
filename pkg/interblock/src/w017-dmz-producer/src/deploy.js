@@ -1,7 +1,14 @@
 import assert from 'assert-fast'
-import { rxReplyModel, dmzModel, covenantIdModel } from '../../w015-models'
-import { spawn, spawnReducerWithoutPromise } from './spawn'
+import {
+  rxReplyModel,
+  dmzModel,
+  covenantIdModel,
+  rxRequestModel,
+} from '../../w015-models'
+import { spawn, spawnRequester } from './spawn'
 import { interchain, replyResolve, replyPromise } from '../../w002-api'
+import Debug from 'debug'
+const debug = Debug('interblock:dmz:deploy')
 
 const install = (installer) => ({
   type: '@@INSTALL',
@@ -12,80 +19,79 @@ const deploy = (installer) => ({
   payload: { installer },
 })
 const deployReducer = (dmz, action) => {
+  assert(dmzModel.isModel(dmz))
+  assert(!dmz.meta.deploy)
+  assert(rxRequestModel.isModel(action))
+  assert(action.type === '@@DEPLOY' || action.type === '@@INSTALL')
   const { installer } = action.payload
   // TODO assert there is only one deployment action, from parent, and after genesis
   // TODO check format of payload.installer against schema
   // TODO check top level matches this current state
   // TODO clean up failed partial deployments ?
   // TODO ? allow specify state in the topmost chain ?
-
-  const { children: topChildren = {} } = installer
+  // TODO accomodate existing children already ? or throw ?
+  const { children: directChildren = {} } = installer
   // TODO try make promises that work on a specific action, so can run in parallel
-  for (const installPath in topChildren) {
+  const meta = { ...dmz.meta }
+  const height = dmz.getCurrentHeight()
+  if (Object.keys(directChildren).length) {
+    replyPromise()
+    meta.deploy = { originIdentifier: action.identifier }
+  }
+  for (const installPath in directChildren) {
     let {
       children,
       covenant,
       state = {},
       ...spawnOptions
-    } = topChildren[installPath]
+    } = directChildren[installPath]
     covenant = covenant || 'unity'
     const covenantId = covenantIdModel.create(covenant)
     spawnOptions = { ...spawnOptions, covenantId, state }
-    // TODO remove genesisSeed
-    const genesisSeed = 'seed_' + installPath
-    const spawnRequest = spawn(installPath, spawnOptions, [], genesisSeed)
-    // promise is made within spawnReducer
-    const network = spawnReducerWithoutPromise(dmz, spawnRequest)
-    // TODO make spawn not require dmz to be cloned like this
-    dmz = dmzModel.clone({ ...dmz, network })
-    const deployAction = deploy(topChildren[installPath])
+    const spawnRequest = spawn(installPath, spawnOptions)
+    const [nextDmz, spawnId, alias, chainId] = spawnRequester(dmz, spawnRequest)
+    assert(!meta[spawnId])
+    meta[spawnId] = { type: '@@DEPLOY_GENESIS', alias }
+    dmz = nextDmz
+    const secondRequestIndex = 1
+    const deployId = `${chainId}_${height}_${secondRequestIndex}`
+    const deployAction = deploy(directChildren[installPath])
     interchain(deployAction, installPath)
+    assert(!meta[deployId])
+    meta[deployId] = { type: '@@DEPLOY' }
+    assert(!meta.deploy[deployId])
+    meta.deploy[deployId] = alias
   }
-  if (Object.keys(topChildren).length) {
-    replyPromise()
-  }
-  return dmz.network
+  return dmzModel.clone({ ...dmz, meta })
 }
-
-const deployReply = (network, reply) => {
-  // TODO handle rejection of deployment
-  assert(rxReplyModel.isModel(reply))
-
-  const aliases = network.getResolvedAliases()
-  let outstandingDeploy
-  for (const alias of aliases) {
-    const channel = network[alias]
-    if (channel.systemRole !== './') {
-      continue // TODO block all activity until deploy completes
-    }
-    const deployRequest = channel.requests[1]
-    if (!deployRequest || deployRequest.type !== '@@DEPLOY') {
-      continue // deployment must have completed
-    }
-    if (outstandingDeploy) {
-      return
-    }
-    outstandingDeploy = deployRequest
-  }
-  const isReplyValid = isReplyFor(reply, outstandingDeploy)
-  assert(isReplyValid, `action was not round among any deploy replies`)
-
-  const parent = network['..']
-  // TODO compare against installer
-  // TODO move checks to be part of the model
-  let resolvedDeploy, resolvedInstall
-  for (const index of parent.getRemoteRequestIndices()) {
-    const request = parent.rxRequest(index)
-    if (request.type === '@@DEPLOY') {
-      assert(!resolvedInstall && !resolvedDeploy)
-      replyResolve({}, request)
-      resolvedDeploy = true
-    }
-    if (request.type === '@@INSTALL') {
-      assert(!resolvedInstall && !resolvedDeploy)
-      replyResolve({}, request)
-      resolvedInstall = true
-    }
-  }
+const deployGenesisReply = (meta, rxReply, dmz) => {
+  assert.strictEqual(typeof meta, 'object')
+  assert(rxReplyModel.isModel(rxReply))
+  assert(dmzModel.isModel(dmz))
+  debug(`deployGenesisReply`)
+  // TODO if this is rejected, rollback the whole operation
+  return dmz
 }
-export { install, deploy, deployReducer, deployReply }
+const deployReply = (meta, rxReply, dmz) => {
+  // TODO handle rejection of deployment, then roll back the whole operation
+  assert.strictEqual(typeof meta, 'object')
+  assert(rxReplyModel.isModel(rxReply))
+  assert(dmzModel.isModel(dmz))
+  const deploy = { ...dmz.meta.deploy }
+  debug(`deployReply for:`, deploy[rxReply.identifier])
+  assert(deploy[rxReply.identifier])
+  delete deploy[rxReply.identifier]
+
+  const { originIdentifier, ...rest } = deploy
+  assert.strictEqual(typeof originIdentifier, 'string')
+  if (!Object.keys(rest).length) {
+    debug(`deploy complete`)
+    replyResolve({}, originIdentifier)
+    const nextMeta = { ...dmz.meta }
+    delete nextMeta.deploy
+    return dmzModel.clone({ ...dmz, meta: nextMeta })
+  }
+  const nextMeta = { ...dmz.meta, deploy }
+  return dmzModel.clone({ ...dmz, meta: nextMeta })
+}
+export { install, deploy, deployReducer, deployReply, deployGenesisReply }

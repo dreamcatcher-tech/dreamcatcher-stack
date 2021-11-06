@@ -33,11 +33,10 @@ const ioQueueFactory = (name, model) => {
     assert(resolve && reject)
     try {
       const result = await _processor(action)
-      // setImmediate is required to take longer than the hooks take to await
-      setImmediate(() => resolve(result))
+      resolve(result) // calling resolve in a promise does not yield control
     } catch (e) {
       debug(`${name} rejected: %O %O`, envelope, e)
-      setImmediate(() => reject(e))
+      reject(e)
     }
     loop()
     assert(_awaiting.has(envelope))

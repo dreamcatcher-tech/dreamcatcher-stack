@@ -4,7 +4,13 @@ import { uplinkReducer, uplinkReply } from './uplink'
 import { connect, connectReducer } from './connect'
 import { ping, pingReducer } from './ping'
 import { spawn, spawnReducer } from './spawn'
-import { install, deploy, deployReducer, deployReply } from './deploy'
+import {
+  install,
+  deploy,
+  deployReducer,
+  deployReply,
+  deployGenesisReply,
+} from './deploy'
 import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer, genesisReply, initReply } from './genesis'
 import { getStateReducer, getState } from './getState'
@@ -69,10 +75,9 @@ const reducer = (dmz, action) => {
       case '@@ACCEPT':
         // just default responding is enough to trigger lineage catchup
         break
-      case '@@INSTALL': // allows user to connect with recursive deployment calls
+      case '@@INSTALL': // user can connect with recursive deployment calls
       case '@@DEPLOY':
-        network = deployReducer(dmz, action)
-        break
+        return deployReducer(dmz, action)
       case '@@GET_CHAN':
         getChannelReducer(network, action)
         break
@@ -84,7 +89,7 @@ const reducer = (dmz, action) => {
     }
   } else {
     assert(dmz.meta[action.identifier])
-    const { [action.identifier]: meta, ...rest } = dmz.meta
+    const { [action.identifier]: meta } = dmz.meta
 
     switch (meta.type) {
       case '@@INIT':
@@ -99,13 +104,18 @@ const reducer = (dmz, action) => {
       case '@@OPEN_CHILD':
         network = openChildReply(network, action)
         break
+      case '@@DEPLOY_GENESIS':
+        dmz = deployGenesisReply(meta, action, dmz)
+        break
       case '@@DEPLOY':
-        deployReply(network, action)
+        dmz = deployReply(meta, action, dmz)
         break
       default:
         throw new Error(`Unrecognized type: ${action.type}`)
     }
-    return dmzModel.clone({ ...dmz, meta: rest })
+    const nextMeta = { ...dmz.meta }
+    delete nextMeta[action.identifier]
+    dmz = dmzModel.clone({ ...dmz, meta: nextMeta })
   }
   return dmz
 }

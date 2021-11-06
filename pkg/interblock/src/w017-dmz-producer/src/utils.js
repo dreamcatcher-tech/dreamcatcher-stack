@@ -23,21 +23,13 @@ const autoAlias = (network, autoPrefix = 'file_') => {
 const getChannelParams = (network, alias) => {
   const channel = network[alias]
   assert(channelModel.isModel(channel), `Not channel: ${alias}`)
-  const { address, systemRole, lineageHeight, heavyHeight, heavy } = channel
+  const { address, systemRole, tipHeight, tip } = channel
   let chainId = address.isResolved() ? address.getChainId() : 'UNRESOLVED'
   chainId = address.isRoot() ? 'ROOT' : chainId
-  const params = {
-    systemRole,
-    chainId,
-    lineageHeight,
-    heavyHeight,
-  }
-  if (heavy) {
-    params.hash = heavy.provenance.reflectIntegrity().hash
-    const remoteName = heavy.getOriginAlias()
-    if (remoteName) {
-      params.remoteName = remoteName
-    }
+  const params = { systemRole, chainId }
+  if (tip) {
+    params.hash = tip.hash
+    params.height = tipHeight
   }
   return params
 }
@@ -49,15 +41,11 @@ const listChildren = (block) => {
   })
   const self = children['.']
   self.chainId = block.getChainId()
-  self.lineageHeight = block.getHeight()
-  self.heavyHeight = block.getHeight()
+  self.height = block.getHeight()
   self.hash = block.getHash()
   const parent = block.network.getParent()
   if (parent.address.isRoot()) {
     self.remoteName = '/'
-  } else if (parent.heavy) {
-    // heavy is not present in genesis blocks
-    self.remoteName = parent.heavy.getOriginAlias()
   }
   return children
 }

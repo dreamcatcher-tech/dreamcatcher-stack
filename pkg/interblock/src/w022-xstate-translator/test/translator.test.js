@@ -100,56 +100,57 @@ describe('translator', () => {
       let state
       state = await hook(() => shell.reducer(undefined, ping))
       assert(state.isPending)
-      assert.strictEqual(state.requests.length, 1)
-      const [selfPing] = state.requests
+      assert.strictEqual(state.transmissions.length, 1)
+      const [selfPing] = state.transmissions
       assert.strictEqual(selfPing.type, '@@PING')
       const address = addressModel.create('LOOPBACK')
       const reply = rxReplyModel.create('@@RESOLVE', {}, address, 0, 0)
-
-      state = await hook(() => shell.reducer(undefined, ping), [reply])
+      const { type, to } = selfPing
+      const acc = [{ type, to, reply }]
+      state = await hook(() => shell.reducer(undefined, ping), acc)
       assert(!state.isPending)
-      assert.strictEqual(state.requests.length, 1)
-      const [donePing] = state.requests
+      assert.strictEqual(state.transmissions.length, 1)
+      const [donePing] = state.transmissions
       assert.strictEqual(donePing.type, 'done.invoke.ping')
 
       state = await hook(() => shell.reducer(state.reduction, donePing))
       assert.strictEqual(state.reduction.value, 'idle')
-      assert.strictEqual(state.replies.length, 1)
-      assert.strictEqual(state.requests.length, 0)
-      const [pingResolve] = state.replies
+      assert.strictEqual(state.transmissions.length, 1)
+      const [pingResolve] = state.transmissions
       assert.strictEqual(pingResolve.type, '@@RESOLVE')
       assert.deepEqual(pingResolve.payload, {})
-      assert.deepEqual(pingResolve.request, ping)
     })
     test('remote ping', async () => {
       let state
       const pingRemote = shell.actions.ping('remote')
       state = await hook(() => shell.reducer(undefined, pingRemote))
-      assert.strictEqual(state.requests.length, 1)
-      const [remote] = state.requests
+      assert.strictEqual(state.transmissions.length, 1)
+      const [remote] = state.transmissions
       assert.strictEqual(remote.type, '@@PING')
       assert.strictEqual(remote.to, 'remote')
 
-      const { type, payload } = remote
       const replyPayload = { remoteReply: 'remoteReply' }
-      const action = actionModel.create({ type, payload })
-      const reply = rxReplyModel.create('@@RESOLVE', replyPayload, action)
-      const accumulator = [reply]
-      state = await hook(
-        () => shell.reducer(undefined, pingRemote),
-        accumulator
+      const address = addressModel.create('TEST ADDRESS')
+      const reply = rxReplyModel.create(
+        '@@RESOLVE',
+        replyPayload,
+        address,
+        0,
+        0
       )
-      assert.strictEqual(state.requests.length, 1)
-      const [doneInvoke] = state.requests
+      const { type, to } = remote
+      const acc = [{ type, to, reply }]
+      state = await hook(() => shell.reducer(undefined, pingRemote), acc)
+      assert.strictEqual(state.transmissions.length, 1)
+      const [doneInvoke] = state.transmissions
       assert.strictEqual(doneInvoke.type, 'done.invoke.ping')
 
       state = await hook(() => shell.reducer(state.reduction, doneInvoke))
       assert.strictEqual(state.reduction.value, 'idle')
-      assert.strictEqual(state.replies.length, 1)
-      const [resolve] = state.replies
+      assert.strictEqual(state.transmissions.length, 1)
+      const [resolve] = state.transmissions
       assert.strictEqual(resolve.type, '@@RESOLVE')
       assert.deepEqual(resolve.payload, replyPayload)
-      assert.deepEqual(resolve.request, pingRemote)
     })
     test.todo('cascaded ping')
     test.todo('rejecting ping')
@@ -176,24 +177,24 @@ describe('translator', () => {
     const execute = () => hook(tick, accumulator)
     result = await execute()
 
-    assert.strictEqual(result.requests.length, 1)
-    const [invoke] = result.requests
+    assert.strictEqual(result.transmissions.length, 1)
+    const [invoke] = result.transmissions
     assert.strictEqual(invoke.type, 'testInvokeSelf')
 
     debug(`sending first reply`)
-    const reply = createReply(invoke, `first reply`)
-    accumulator.push(reply)
+    const accReply1 = createAccumulation(invoke, `first reply`)
+    accumulator.push(accReply1)
     result = await execute()
 
-    assert.strictEqual(result.requests.length, 1)
-    const [secondInvoke] = result.requests
+    assert.strictEqual(result.transmissions.length, 1)
+    const [secondInvoke] = result.transmissions
     assert.strictEqual(secondInvoke.type, 'secondInvoke')
-    const reply2 = createReply(secondInvoke, `second reply`)
-    accumulator.push(reply2)
+    const accReply2 = createAccumulation(secondInvoke, `second reply`)
+    accumulator.push(accReply2)
     result = await execute()
 
-    assert.strictEqual(result.requests.length, 1)
-    const [doneInvoke] = result.requests
+    assert.strictEqual(result.transmissions.length, 1)
+    const [doneInvoke] = result.transmissions
     assert.strictEqual(doneInvoke.type, 'done.invoke.invoker')
     assert.strictEqual(result.reduction.value, 'testInvoke')
     assert(!result.isPending)
@@ -201,27 +202,25 @@ describe('translator', () => {
     result = await hook(finalTick)
 
     // assert the original promise was resolved
-    assert.strictEqual(result.replies.length, 1)
-    const [resolve] = result.replies
+    assert.strictEqual(result.transmissions.length, 1)
+    const [resolve] = result.transmissions
     assert.strictEqual(resolve.type, '@@RESOLVE')
-    assert.deepEqual(resolve.request, { type: 'INVOKE' })
-    assert.deepEqual(resolve.payload, reply2.payload)
+    assert.deepEqual(resolve.payload, accReply2.reply.payload)
   })
   test('instant services return', async () => {
     const reducer = translator(testMachine)
     const request = { type: 'INVOKE_INSTANT' }
 
     let nextState = await hook(() => reducer(undefined, request))
-    assert.strictEqual(nextState.requests.length, 1)
-    const [doneInvoke] = nextState.requests
+    assert.strictEqual(nextState.transmissions.length, 1)
+    const [doneInvoke] = nextState.transmissions
     assert.strictEqual(doneInvoke.type, 'done.invoke.instantInvoker')
 
     nextState = await hook(() => reducer(nextState.reduction, doneInvoke))
-    assert.strictEqual(nextState.replies.length, 1)
+    assert.strictEqual(nextState.transmissions.length, 1)
     assert.strictEqual(nextState.reduction.value, 'done')
-    const [resolve] = nextState.replies
+    const [resolve] = nextState.transmissions
     assert.strictEqual(resolve.type, '@@RESOLVE')
-    assert.deepEqual(resolve.request, request)
     assert.deepEqual(resolve.payload, { result: 'instantResponse' })
   })
   test('undefined response from service', async () => {
@@ -229,8 +228,8 @@ describe('translator', () => {
     const request = { type: 'INVOKE_UNDEFINED' }
     const nextState = await hook(() => reducer(undefined, request))
     debug(nextState)
-    assert.strictEqual(nextState.requests.length, 1)
-    const [doneInvoke] = nextState.requests
+    assert.strictEqual(nextState.transmissions.length, 1)
+    const [doneInvoke] = nextState.transmissions
     assert.strictEqual(doneInvoke.type, 'done.invoke.testInvokeUndefinedResult')
     assert.deepEqual(doneInvoke.payload, {})
   })
@@ -248,9 +247,9 @@ describe('translator', () => {
   test.todo('error if functions stored in context or actions')
 })
 
-const createReply = (raw, message) => {
-  const { type, payload } = raw
-  const action = actionModel.create({ type, payload })
-  const reply = rxReplyModel.create('@@RESOLVE', { message }, action)
-  return reply
+const createAccumulation = (raw, message) => {
+  const { type, to } = raw
+  const address = addressModel.create('TEST ' + type)
+  const reply = rxReplyModel.create('@@RESOLVE', { message }, address, 10, 10)
+  return { type, to, reply }
 }

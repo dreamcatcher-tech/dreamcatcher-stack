@@ -2,6 +2,7 @@ import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import posix from 'path-browserify'
 import { shell } from '..'
+import { jest } from '@jest/globals'
 import { metrologyFactory } from '../../w018-standard-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:shell')
@@ -31,6 +32,7 @@ describe('machine validation', () => {
       const base = await metrologyFactory('cd', { hyper: shell })
       await base.spawn('child1')
       base.enableLogging()
+
       const cd = shell.actions.cd('child1')
       const result = await base.pierce(cd)
       assert.strictEqual(result.absolutePath, '/child1')
@@ -225,9 +227,11 @@ describe('machine validation', () => {
           },
         },
       }
-      const overloads = { hyper: shell, test: covenant }
+      const overloads = { hyper: shell, dpkgTest: covenant }
       const blockchain = await metrologyFactory('install', overloads)
-      const publish = shell.actions.publish('test', covenant.installer)
+      blockchain.enableLogging()
+      Debug.enable('*met* *deploy *tests* ')
+      const publish = shell.actions.publish('dpkgTest', covenant.installer)
       const { dpkgPath } = await blockchain.pierce(publish)
       debug(`dpkgPath: `, dpkgPath)
       const install = shell.actions.install(dpkgPath, 'appTest')

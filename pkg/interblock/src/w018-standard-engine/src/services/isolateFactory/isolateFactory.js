@@ -31,7 +31,7 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
       debug(`loadCovenant %o from %o`, name, Object.keys(covenants))
       debug(`containerId: %o`, containerId.substring(0, 9))
       await Promise.resolve()
-      const covenant = covenants[name]
+      let covenant = covenants[name]
       containers[containerId] = { covenant, block, effects: [] }
       return containerId
     },
@@ -50,7 +50,13 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
 
       // TODO test rejections propogate back thru queues
       // TODO move to a pure container wrapper, then to vm2 or similar
-      const tick = () => container.covenant.reducer(state, action)
+      let { reducer } = container.covenant
+      if (!reducer) {
+        // TODO check that this is a multicovenant covenant
+        assert(container.covenant.covenants)
+        reducer = (state) => state
+      }
+      const tick = () => reducer(state, action)
       const queryProcessor = queryFactory(ioConsistency, container.block)
       const queries = (query) => queryProcessor.query(query)
       const result = await hook(tick, accumulator, queries)

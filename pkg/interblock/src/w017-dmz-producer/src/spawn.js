@@ -15,10 +15,10 @@ import { replyPromise } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:spawn')
 
-const spawn = (alias, spawnOpts = {}, actions = []) => {
+const spawn = (alias, spawnOpts = {}) => {
   const action = {
     type: '@@SPAWN',
-    payload: { alias, spawnOpts, actions },
+    payload: { alias, spawnOpts },
   }
   if (!alias) {
     delete action.payload.alias
@@ -26,18 +26,24 @@ const spawn = (alias, spawnOpts = {}, actions = []) => {
   return action
 }
 
-const spawnReducer = (dmz, originAction) => {
-  assert(rxRequestModel.isModel(originAction))
-  const nextDmz = spawnReducerWithoutPromise(dmz, originAction)
+const spawnReducer = (dmz, request) => {
+  assert(rxRequestModel.isModel(request))
+  const [nextDmz, id, alias, chainId] = spawnRequester(dmz, request)
   replyPromise() // allows spawnReducer to be reused by deploy reducer
-  return nextDmz
+  const originIdentifier = request.identifier
+  const subMeta = { type: '@@GENESIS', alias, chainId, originIdentifier }
+  const meta = { ...dmz.meta, [id]: subMeta }
+  return dmzModel.clone({ ...nextDmz, meta })
 }
-const spawnReducerWithoutPromise = (dmz, originAction) => {
+const spawnRequester = (dmz, originAction) => {
   assert(dmzModel.isModel(dmz))
-  assert(rxRequestModel.isModel(originAction))
+  assert.strictEqual(originAction.type, '@@SPAWN')
+  let { alias, spawnOpts } = originAction.payload
+  assert.strictEqual(typeof alias, 'string')
+  assert.strictEqual(typeof spawnOpts, 'object')
+
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
-  let { alias, spawnOpts } = originAction.payload
   const { network, validators } = dmz
   const covenantId = covenantIdModel.create('unity')
   const childDmz = dmzModel.create({
@@ -57,10 +63,9 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
     throw new Error(`childAlias exists: ${alias}`)
   }
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
-  // TODO use chain key for signing
 
   const genesis = blockModel.create(childDmz)
-  const payload = { genesis, alias, originAction }
+  const payload = { genesis, alias }
   const genesisRequest = actionModel.create('@@GENESIS', payload)
   const address = genesis.provenance.getAddress()
 
@@ -77,22 +82,15 @@ const spawnReducerWithoutPromise = (dmz, originAction) => {
   for (const request of preloadedRequests) {
     channel = channelProducer.txRequest(channel, request)
   }
-  const height = dmz.getCurrentHeight()
-  dmz = { ...dmz }
-  dmz.network = network.merge({ [alias]: channel })
+  const nextNetwork = network.merge({ [alias]: channel })
+  const nextDmz = dmzModel.clone({ ...dmz, network: nextNetwork })
 
+  const height = dmz.getCurrentHeight()
   const index = 0
   const expectedReplyIdentifier = `${address.getChainId()}_${height}_${index}`
   assert(!dmz.meta[expectedReplyIdentifier])
-  const meta = {
-    type: '@@GENESIS',
-    alias,
-    chainId: genesis.getChainId(),
-    originIdentifier: originAction.identifier,
-  }
-  dmz.meta = { ...dmz.meta, [expectedReplyIdentifier]: meta }
-
-  return dmzModel.clone(dmz)
+  const chainId = genesis.getChainId()
+  return [nextDmz, expectedReplyIdentifier, alias, chainId]
 }
 
-export { spawn, spawnReducer, spawnReducerWithoutPromise }
+export { spawn, spawnReducer, spawnRequester }

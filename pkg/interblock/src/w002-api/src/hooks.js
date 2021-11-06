@@ -45,23 +45,27 @@ const _promise = (requestRaw) => {
   debug(`_promise request.type: %o`, requestRaw.type)
   const { type, payload, to, exec, inBand, query } = requestRaw
   assert(!exec || typeof exec === 'function')
-  const request = { type, payload, to }
-
-  const [previousType, previousTo, reply] = _shiftAccumulator()
-  if (previousType) {
-    assert(!isReplyType(type))
-    assert.strictEqual(type, previousType, `Different request after replay`)
-    assert.strictEqual(to, previousTo, `Different request after replay`)
-    if (reply) {
-      assert(rxReplyModel.isModel(reply))
-      if (reply.type === '@@RESOLVE') {
-        return reply.payload
+  if (!inBand) {
+    // inband is removed from transmissions during inbandPromises()
+    // so will not show up in the accumulator
+    const [previousType, previousTo, reply] = _shiftAccumulator()
+    if (previousType) {
+      assert(!isReplyType(type))
+      assert.strictEqual(previousType, type, `${previousType} is now ${type}`)
+      assert.strictEqual(previousTo, to, `${previousTo} is now ${to}`)
+      if (reply) {
+        assert(rxReplyModel.isModel(reply))
+        if (reply.type === '@@RESOLVE') {
+          return reply.payload
+        }
+        assert.strictEqual(reply.type, '@@REJECT')
+        throw reply.payload
       }
-      assert.strictEqual(reply.type, '@@REJECT')
-      throw reply.payload
+      // never resolve as already processed this request
+      return new Promise(() => false)
     }
-    return new Promise(() => false) // never resolve as already processed this request
   }
+  const request = { type, payload, to }
   const promise = new Promise((resolve, reject) => {
     // TODO allow direct resolving of interchain promises between block boundaries
     request.resolve = resolve
@@ -212,9 +216,9 @@ const awaitPending = async (pending) => {
   }
   const isStillPending = result === racecar
   const { transmissions, isAnyUnsettled } = _unhookGlobal()
-
+  const isInband = transmissions.some((tx) => tx.inBand)
   // TODO test if the returned promise is one from hooks, reject otherwise
-  if (isStillPending && !isAnyUnsettled) {
+  if (isStillPending && !isAnyUnsettled && !isInband) {
     throw new Error(`Wrong type of promise - use "effectInBand(...)"`)
   }
   let isPending = false

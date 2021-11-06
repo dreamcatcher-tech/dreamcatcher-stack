@@ -18,7 +18,6 @@ const definition = {
   id: 'increasor',
   initial: 'idle',
   context: {
-    cache: new Map(),
     lock: undefined,
     nextLock: undefined,
     block: undefined,
@@ -26,7 +25,6 @@ const definition = {
     txInterblocks: [],
     containerId: '',
     isRedriveRequired: false,
-    cachedDmz: undefined,
     turnoverHeights: [],
     turnoverBlocks: {},
   },
@@ -65,14 +63,8 @@ const definition = {
           states: {
             isIncreasable: {
               always: [
-                { target: 'reviveCache', cond: 'isIncreasable' },
+                { target: 'isIsolationComplete', cond: 'isIncreasable' },
                 { target: 'done' },
-              ],
-            },
-            reviveCache: {
-              always: [
-                { target: 'isIsolationComplete', cond: 'isCacheEmpty' },
-                { target: 'isIsolationComplete', actions: 'reviveCache' },
               ],
             },
             isIsolationComplete: {
@@ -123,16 +115,13 @@ const definition = {
             {
               target: 'effects', // TODO transition to unlockChain when effects moved out
               cond: 'isNewBlock',
-              actions: ['reconcileLock', 'clearCache'],
+              actions: ['reconcileLock'],
             },
             { target: 'isNextDmz', actions: 'repeatLock' },
           ],
         },
         isNextDmz: {
-          always: [
-            { target: 'unlockChain', cond: 'isNoNextDmz' },
-            { target: 'unlockChain', actions: 'cachePartial' },
-          ],
+          always: [{ target: 'unlockChain' }],
         },
         effects: {
           initial: 'isEffectable',

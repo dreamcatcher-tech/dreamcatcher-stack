@@ -48,6 +48,9 @@ export class Conflux {
     const rxReplies = []
     for (const key in replies) {
       const { type, payload } = replies[key]
+      if (type === '@@PROMISE') {
+        continue
+      }
       const [sHeight, sIndex] = key.split('_')
       const height = parseInt(sHeight)
       const index = parseInt(sIndex)
@@ -121,7 +124,6 @@ export class Conflux {
       const last = thread[thread.length - 1]
       if (last) {
         // TODO may be duplicated with checks in channelProducer
-        assert.strictEqual(last.provenance.height, height + 1)
         assert(remote.precedent.equals(last.provenance.reflectIntegrity()))
         assert(address.equals(last.provenance.getAddress()))
       }
