@@ -34,8 +34,18 @@ const rxRequestModel = standardize({
       return request
     }
     const isReply = () => false
+    const getLogEntry = () =>
+      `${type} ${address.getChainId().substring(0, 9)} ${getReplyKey()}`
 
-    return { getAddress, getHeight, getIndex, getReplyKey, getRequest, isReply }
+    return {
+      getAddress,
+      getHeight,
+      getIndex,
+      getReplyKey,
+      getRequest,
+      isReply,
+      getLogEntry,
+    }
   },
 })
 

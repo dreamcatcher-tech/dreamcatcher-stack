@@ -17,7 +17,7 @@ const rxReplyModel = standardize({
   },
   logicize(instance) {
     // TODO reuse the same checks in rxRequest ??
-    const { identifier } = instance
+    const { type, identifier } = instance
     const { address, height, index } = splitSequence(identifier)
     assert(!address.isUnknown())
     assert(Number.isInteger(height))
@@ -29,7 +29,16 @@ const rxReplyModel = standardize({
     const getHeight = () => height
     const getIndex = () => index
     const getReplyKey = () => `${height}_${index}`
-    return { isReply, getAddress, getHeight, getIndex, getReplyKey }
+    const getLogEntry = () =>
+      `${type} ${address.getChainId().substring(0, 9)} ${getReplyKey()}`
+    return {
+      isReply,
+      getAddress,
+      getHeight,
+      getIndex,
+      getReplyKey,
+      getLogEntry,
+    }
   },
 })
 

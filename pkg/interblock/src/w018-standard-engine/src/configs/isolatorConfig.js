@@ -290,7 +290,7 @@ const createConfig = (isolation, consistency) => ({
       assert.strictEqual(typeof containerId, 'string')
       assert(rxReplyModel.isModel(rxAction) || rxRequestModel.isModel(rxAction))
       // TODO rename anvil to externalAction
-      debug(`reduce: `, rxAction.type)
+      debug(`reduce: `, rxAction.getLogEntry())
       const tickPayload = { containerId, timeout: 30000 }
       const tick = (state, action, accumulator) =>
         isolation.tick({ ...tickPayload, state, action, accumulator })

@@ -31,6 +31,7 @@ const pushReply = (pending, reply) => {
   let isSettlingReply = false
   accumulator = accumulator.map((tx) => {
     if (tx.to && tx.identifier === reply.identifier) {
+      assert(!tx.reply)
       tx = { ...tx, reply }
       assert(!isSettlingReply)
       isSettlingReply = true
