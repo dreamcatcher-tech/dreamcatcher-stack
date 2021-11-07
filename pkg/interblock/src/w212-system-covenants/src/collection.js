@@ -58,11 +58,12 @@ const reducer = async (state, action) => {
     case 'BATCH': {
       const { batch } = payload
       assert(Array.isArray(batch))
+
       for (const payload of batch) {
-        debug(`begin add`)
+        // does not work if save array of promises then await each
         await add(payload, datumTemplate)
-        debug(`add complete`)
       }
+
       return state
     }
     case 'SET_TEMPLATE': {

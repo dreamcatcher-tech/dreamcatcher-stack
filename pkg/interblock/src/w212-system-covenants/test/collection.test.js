@@ -92,7 +92,6 @@ describe('collection', () => {
 
     debug('batch adding two customers')
     shell.metro.enableLogging()
-    Debug.enable('*met* *tests* *cfg:isolator *collection')
 
     const customerData1 = { ...customerData, formData: { firstName: 'A' } }
     const customerData2 = { ...customerData, formData: { firstName: 'B' } }

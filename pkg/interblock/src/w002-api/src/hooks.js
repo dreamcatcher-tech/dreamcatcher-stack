@@ -41,6 +41,21 @@ const query = (type, payload) => {
   const query = _promise({ type, payload, inBand: true, query: true })
   return query
 }
+const all = async (promises) => {
+  /**
+   * Does not work with racecar based hook waiting.
+   * Will probably work with non promise based hooks.
+   * Non promise based hooks do not await anything.
+   */
+  assert(Array.isArray(promises))
+  const results = []
+  for (const promise of promises) {
+    assert(promise.then)
+    const result = await promise
+    results.push(result)
+  }
+  return results
+}
 const _promise = (requestRaw) => {
   debug(`_promise request.type: %o`, requestRaw.type)
   const { type, payload, to, exec, inBand, query } = requestRaw
@@ -309,6 +324,7 @@ export {
   effect,
   effectInBand,
   query,
+  all,
   // TODO move this out of the API
   hook as _hook, // system use only
 }
