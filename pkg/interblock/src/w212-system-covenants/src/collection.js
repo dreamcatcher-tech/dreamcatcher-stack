@@ -29,9 +29,11 @@ const add = async (payload, datumTemplate) => {
   }
   const muxed = muxTemplateWithFormData(datumTemplate, formData)
   const set = datum.actions.set(muxed)
-  debug(`datum set action`, set)
+  debug(`datum set action`, name)
   // TODO set this in the state of the spawn, to reduce action count
-  await interchain(set, name)
+  const result = await interchain(set, name)
+  debug(`add completed:`, name)
+  return result
 }
 
 // TODO allow collection to also store formData as tho it was a datum, without children spec
@@ -56,8 +58,11 @@ const reducer = async (state, action) => {
     case 'BATCH': {
       const { batch } = payload
       assert(Array.isArray(batch))
-      const awaits = batch.map((payload) => add(payload, datumTemplate))
-      // await Promise.all(awaits)
+      for (const payload of batch) {
+        debug(`begin add`)
+        await add(payload, datumTemplate)
+        debug(`add complete`)
+      }
       return state
     }
     case 'SET_TEMPLATE': {

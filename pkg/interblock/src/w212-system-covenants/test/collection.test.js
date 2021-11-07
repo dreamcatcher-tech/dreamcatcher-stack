@@ -55,8 +55,7 @@ describe('collection', () => {
 
     await shell.metro.settle()
   })
-  jest.setTimeout(800)
-  test.only('add two items concurrently to collection', async () => {
+  test('add two items concurrently to collection', async () => {
     const shell = await effectorFactory('c')
     await shell.add('col1', 'collection')
     const actions = await shell.actions('col1')
@@ -65,7 +64,6 @@ describe('collection', () => {
 
     debug('adding two customers concurrently')
     shell.metro.enableLogging()
-    Debug.enable('*met* *tests*')
 
     const customerData1 = { ...customerData, formData: { firstName: 'A' } }
     const customerData2 = { ...customerData, formData: { firstName: 'B' } }
@@ -84,6 +82,7 @@ describe('collection', () => {
 
     await shell.metro.settle()
   })
+
   test('batch add', async () => {
     const shell = await effectorFactory('c')
     await shell.add('col1', 'collection')
@@ -93,6 +92,8 @@ describe('collection', () => {
 
     debug('batch adding two customers')
     shell.metro.enableLogging()
+    Debug.enable('*met* *tests* *cfg:isolator *collection')
+
     const customerData1 = { ...customerData, formData: { firstName: 'A' } }
     const customerData2 = { ...customerData, formData: { firstName: 'B' } }
     const result = await actions.batch([customerData1, customerData2])

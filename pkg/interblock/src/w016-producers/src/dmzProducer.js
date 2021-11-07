@@ -75,7 +75,7 @@ const accumulate = (dmz, transmissions = []) => {
   }
 
   // then resolve the accumulator as best we can
-  const requestsMap = _mapRequests(accumulator)
+  const requestsMap = _mapUnIdentifiedRequests(accumulator)
   accumulator = accumulator.map((tx) => {
     if (tx.to && !tx.identifier) {
       let channel = dmz.network[tx.to]
@@ -107,10 +107,10 @@ const accumulate = (dmz, transmissions = []) => {
   return dmzModel.clone({ ...dmz, pending })
 }
 
-const _mapRequests = (accumulator) => {
+const _mapUnIdentifiedRequests = (accumulator) => {
   const toMap = new Map()
   for (const tx of accumulator) {
-    if (tx.to) {
+    if (tx.to && !tx.identifier) {
       const { to } = tx
       if (!toMap.has(to)) {
         toMap.set(to, [])
