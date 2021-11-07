@@ -8,9 +8,9 @@ describe('metrology', () => {
   describe('spawn', () => {
     test.skip('spawn many times', async () => {
       jest.setTimeout(100000)
-      Debug.enable('interblock:tests:metrology')
+      Debug.enable('*tests* *met*')
       const client = await metrologyFactory()
-      client.metro.enableLogging()
+      client.enableLogging()
       let count = 0
       const awaits = []
       const start = Date.now()

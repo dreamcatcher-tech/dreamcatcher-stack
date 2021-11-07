@@ -230,7 +230,6 @@ describe('machine validation', () => {
       const overloads = { hyper: shell, dpkgTest: covenant }
       const blockchain = await metrologyFactory('install', overloads)
       blockchain.enableLogging()
-      Debug.enable('*met* *deploy *tests* ')
       const publish = shell.actions.publish('dpkgTest', covenant.installer)
       const { dpkgPath } = await blockchain.pierce(publish)
       debug(`dpkgPath: `, dpkgPath)

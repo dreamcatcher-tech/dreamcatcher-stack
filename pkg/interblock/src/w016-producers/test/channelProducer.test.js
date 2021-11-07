@@ -19,7 +19,7 @@ import {
 import { channelProducer } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:producers:channel')
-Debug.enable('')
+Debug.enable()
 
 const {
   setAddress,
