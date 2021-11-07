@@ -39,7 +39,7 @@ const spawnRequester = (dmz, originAction) => {
   assert(dmzModel.isModel(dmz))
   assert.strictEqual(originAction.type, '@@SPAWN')
   let { alias, spawnOpts } = originAction.payload
-  assert.strictEqual(typeof alias, 'string')
+  assert(!alias || typeof alias === 'string')
   assert.strictEqual(typeof spawnOpts, 'object')
 
   // TODO reject if spawn requested while deploy is unresolved

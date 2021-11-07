@@ -36,6 +36,7 @@ const definition = {
         { target: 'done', cond: 'isChannelRemoved' },
         { target: 'done', cond: 'isExternalRequestSettled' },
         { target: 'done', cond: 'isTxExternalActionPromise' },
+        { target: 'done', cond: 'isExternalRequestFromBuffer' },
         { target: 'done', cond: 'isExternalRequestBuffered' },
         { target: 'done', actions: 'resolveExternalAction' },
       ],

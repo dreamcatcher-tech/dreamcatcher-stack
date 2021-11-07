@@ -204,7 +204,7 @@ const createConfig = (isolation, consistency) => ({
 
         const { pending } = dmz
         if (!pending.getIsPending()) {
-          const bufferedRequest = pending.rxBufferedRequest(dmz.network)
+          const bufferedRequest = pending.rxBufferedRequest()
           if (bufferedRequest) {
             return bufferedRequest
           }

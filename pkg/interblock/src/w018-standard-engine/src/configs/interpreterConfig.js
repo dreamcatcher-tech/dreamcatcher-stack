@@ -31,6 +31,12 @@ const config = {
         assert(dmzModel.isModel(dmz))
         return dmz
       },
+      initialDmz: ({ dmz }, event) => {
+        // TODO replace initial pending with initialDmz
+        assert.strictEqual(dmz, event.payload.dmz)
+        assert(dmzModel.isModel(dmz))
+        return dmz
+      },
       initialPending: ({ dmz }, event) => {
         assert.strictEqual(dmz, event.payload.dmz)
         assert(dmzModel.isModel(dmz))

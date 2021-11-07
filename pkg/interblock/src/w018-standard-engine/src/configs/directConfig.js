@@ -5,6 +5,7 @@ import {
   rxRequestModel,
   dmzModel,
   reductionModel,
+  txRequestModel,
 } from '../../../w015-models'
 import { networkProducer, pendingProducer } from '../../../w016-producers'
 import { directMachine } from '../machines'
@@ -90,10 +91,18 @@ const config = {
       },
     }),
     filterRePromise: assign({
-      reduceResolve: ({ reduceResolve }) => {
+      reduceResolve: ({ reduceResolve, covenantAction }) => {
         assert(reductionModel.isModel(reduceResolve))
+        assert(rxRequestModel.isModel(covenantAction))
         let { transmissions: txs } = reduceResolve
-        txs = txs.filter((tx) => !tx.isPromise())
+        txs = txs.filter((tx) => {
+          const isForCovenant = tx.identifier === covenantAction.identifier
+          if (txReplyModel.isModel(tx) && isForCovenant) {
+            return !tx.getReply().isPromise()
+          }
+          assert(txRequestModel.isModel(tx))
+          return true
+        })
         const isRepromised = txs.length < reduceResolve.transmissions.length
         debug(`filterRePromise remove tx promise:`, isRepromised)
         return reductionModel.clone({ ...reduceResolve, transmissions: txs })

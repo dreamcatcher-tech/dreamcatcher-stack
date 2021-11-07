@@ -16,7 +16,8 @@ const config = {
   actions: {
     resolveExternalAction: assign({
       dmz: ({ dmz, externalAction }) => {
-        debug('resolveExternalAction')
+        const replyKey = externalAction.getReplyKey()
+        debug('resolveExternalAction', externalAction.type, replyKey)
         assert(dmzModel.isModel(dmz))
         assert(rxRequestModel.isModel(externalAction))
         assert(dmz.network.getAlias(externalAction.getAddress()))
@@ -100,6 +101,14 @@ const config = {
       const isTxExternalActionPromise = !!isExternalPromise
       debug(`isTxExternalActionPromise`, isTxExternalActionPromise)
       return isTxExternalActionPromise
+    },
+    isExternalRequestFromBuffer: ({ initialDmz, externalAction }) => {
+      assert(dmzModel.isModel(initialDmz))
+      assert(rxRequestModel.isModel(externalAction))
+      const isExternalRequestFromBuffer =
+        initialDmz.pending.getIsBuffered(externalAction)
+      debug(`isExternalRequestFromBuffer`, isExternalRequestFromBuffer)
+      return isExternalRequestFromBuffer
     },
     isExternalRequestBuffered: ({ dmz, externalAction }) => {
       assert(dmzModel.isModel(dmz))

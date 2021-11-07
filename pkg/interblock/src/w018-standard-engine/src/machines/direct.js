@@ -72,13 +72,29 @@ const definition = {
           ],
         },
         raisePending: {
-          entry: [
-            'raisePending',
-            'assignReplayIdentifiers',
-            'promiseOriginRequest',
-            'assignInitialPending',
-          ],
-          always: 'done',
+          initial: 'isBufferedRequest',
+          states: {
+            isBufferedRequest: {
+              always: [
+                {
+                  target: 'raise',
+                  cond: 'isBufferedRequest',
+                  actions: 'shiftBufferedRequest',
+                },
+                { target: 'raise', actions: 'promiseOriginRequest' },
+              ],
+            },
+            raise: {
+              entry: [
+                'raisePending',
+                'assignReplayIdentifiers',
+                'assignInitialPending',
+              ],
+              always: 'done',
+            },
+            done: { type: 'final' },
+          },
+          onDone: 'done',
         },
         reject: {
           entry: 'respondRejection',

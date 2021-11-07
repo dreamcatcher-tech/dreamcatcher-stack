@@ -233,6 +233,10 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       let nextBlock = await getLatest(chainId)
       while (segments.length) {
         alias = segments.shift()
+        if (!nextBlock.network[alias]) {
+          debug(`getLatestFromPath non existent:`, path)
+          return
+        }
         assert(nextBlock.network[alias].address.isResolved())
         chainId = nextBlock.network[alias].address.getChainId()
         nextBlock = await getLatest(chainId)

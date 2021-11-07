@@ -1,8 +1,9 @@
 import { assert } from 'chai/index.mjs'
 import { effectorFactory } from '../../index.mjs'
+import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
-Debug.enable('*met* *tests*')
+Debug.enable()
 
 describe('collection', () => {
   const schema = {
@@ -54,7 +55,8 @@ describe('collection', () => {
 
     await shell.metro.settle()
   })
-  test('add two items concurrently to collection', async () => {
+  jest.setTimeout(800)
+  test.only('add two items concurrently to collection', async () => {
     const shell = await effectorFactory('c')
     await shell.add('col1', 'collection')
     const actions = await shell.actions('col1')
@@ -63,6 +65,8 @@ describe('collection', () => {
 
     debug('adding two customers concurrently')
     shell.metro.enableLogging()
+    Debug.enable('*met* *tests*')
+
     const customerData1 = { ...customerData, formData: { firstName: 'A' } }
     const customerData2 = { ...customerData, formData: { firstName: 'B' } }
     const await1 = actions.add(customerData1)

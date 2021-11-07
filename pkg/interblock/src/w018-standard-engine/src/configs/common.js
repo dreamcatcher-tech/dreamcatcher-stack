@@ -12,8 +12,8 @@ const common = (debug) => {
   const reduceCovenant = async ({ dmz, covenantAction, isolatedTick }) => {
     // TODO test the actions are allowed actions using the ACL
     assert(dmzModel.isModel(dmz))
-
-    debug(`reduceCovenant: %o`, covenantAction.type)
+    const replyKey = covenantAction.getReplyKey()
+    debug(`reduceCovenant: %o`, covenantAction.type, replyKey)
     const isReply = rxReplyModel.isModel(covenantAction)
     const isRequest = rxRequestModel.isModel(covenantAction)
     assert(isReply || isRequest)
