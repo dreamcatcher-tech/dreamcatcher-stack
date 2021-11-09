@@ -129,11 +129,11 @@ const config = {
       let { installer } = event.payload
       if (!Object.keys(installer).length) {
         debug(`making default installer`, name)
-        installer = { covenant: name }
+        installer = { covenant: 'app' }
       }
       if (!installer.covenant) {
         // TODO formalize how covenants and installers are specified
-        installer = { ...installer, covenant: name }
+        installer = { ...installer, covenant: 'app' }
       }
       debug(`publish: `, name)
       const covenantId = covenantIdModel.create('dpkg')
@@ -164,7 +164,7 @@ const config = {
       // TODO verify that all covenants in installer are available
       let { children, covenant, ...spawnOptions } = installer
       // TODO unify how covenants are referred to
-      covenant = covenant || 'unity'
+      covenant = 'app'
       debug(`installing with covenant: `, covenant)
       const covenantId = covenantIdModel.create(covenant)
       spawnOptions = { ...spawnOptions, covenantId }
@@ -172,7 +172,7 @@ const config = {
       const spawnAction = spawn(child, spawnOptions)
       interchain(spawnAction, absInstallDir)
 
-      debug(`begining install`)
+      debug(`beginning install`)
       const installAction = install(installer)
       const installResult = await interchain(installAction, absInstallPath)
       debug(`installResult: `, installResult)

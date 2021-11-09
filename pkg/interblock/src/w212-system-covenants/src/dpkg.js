@@ -26,6 +26,7 @@ const reducer = async (state, action) => {
       debug(`SET_INSTALL`)
     }
   }
+  return state
 }
 
 const actions = {

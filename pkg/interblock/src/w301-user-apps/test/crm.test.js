@@ -1,35 +1,36 @@
 import { assert } from 'chai/index.mjs'
+import { jest } from '@jest/globals'
 import { effectorFactory, awsFactory } from '../../w020-emulators'
 import { crm } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
-Debug.enable('*tests:crm *met*')
+Debug.enable('*tests:crm *met* *shell *deploy *isolator')
 
-describe.skip('crm', () => {
+describe('crm', () => {
+  jest.setTimeout(1500)
   describe('app deploy', () => {
-    test('deploys app', async () => {
+    test.only('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       shell.metro.enableLogging()
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
-      assert(shell.dpkgCrm)
       const installStart = Date.now()
       await shell.install(dpkgPath, 'crm')
 
-      assert(shell.crm)
       debug(`publish time: ${installStart - publishStart} ms`)
       debug(`install time: ${Date.now() - installStart} ms`)
-      debug(`blockcount: ${shell.getBlockCount()}`)
+      debug(`blockcount: ${shell.metro.getBlockCount()}`)
       const testTime = Date.now() - publishStart
       debug(`test time: ${testTime} ms`)
-      const blockRate = Math.floor(testTime / shell.getBlockCount())
+      const blockRate = Math.floor(testTime / shell.metro.getBlockCount())
       debug(`blockrate: ${blockRate}ms per block`)
 
-      const { state } = await shell.getLatestFromPath('/crm/about')
+      const { state } = await shell.metro.getLatestFromPath('/crm/about')
       assert(state.schema)
 
-      const newCustomer = await shell.crm.customers.add({ isTestData: true })
+      const crmActions = await shell.actions('/crm/customers')
+      const newCustomer = await crmActions.add()
       debug(`newCustomer`, newCustomer)
       await shell.settle()
       /**

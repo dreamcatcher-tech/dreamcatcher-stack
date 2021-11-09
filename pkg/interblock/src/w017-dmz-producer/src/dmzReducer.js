@@ -102,7 +102,7 @@ const reducer = (dmz, action) => {
         uplinkReply(network, action)
         break
       case '@@OPEN_CHILD':
-        network = openChildReply(network, action)
+        dmz = openChildReply(meta, action)
         break
       case '@@DEPLOY_GENESIS':
         dmz = deployGenesisReply(meta, action, dmz)

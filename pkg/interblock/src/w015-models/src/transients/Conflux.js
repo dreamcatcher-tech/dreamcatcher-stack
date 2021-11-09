@@ -106,8 +106,10 @@ export class Conflux {
         const address = interblock.provenance.getAddress()
         const { height } = interblock.provenance
         const { replies, requests } = interblock.getRemote()
-        this.#rxReplies = Conflux.generateRxReplies(replies, address)
-        this.#rxRequests = Conflux.generateRxRequests(requests, address, height)
+        const rxReplies = Conflux.generateRxReplies(replies, address)
+        const rxRequests = Conflux.generateRxRequests(requests, address, height)
+        this.#rxReplies.push(...rxReplies)
+        this.#rxRequests.push(...rxRequests)
       }
     }
   }

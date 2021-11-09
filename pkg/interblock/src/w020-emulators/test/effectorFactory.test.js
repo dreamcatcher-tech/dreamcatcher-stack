@@ -23,7 +23,7 @@ describe('effector', () => {
     assert.deepEqual(reply, payload)
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
-    debug(`test time: ${Date.now() - start} ms`)
+    debug(`total test time: ${Date.now() - start} ms`)
 
     await shell.metro.settle()
     debug(`blockcount: ${shell.metro.getBlockCount()}`)
@@ -33,7 +33,7 @@ describe('effector', () => {
     debug(`second pong received`)
     debug(`second ping RTT: ${Date.now() - secondStart} ms`)
     debug(`second blockcount: ${shell.metro.getBlockCount()}`)
-    debug(`second test time: ${Date.now() - start} ms`)
+    debug(`total test time: ${Date.now() - start} ms`)
     // BUT this is bad since still testing xstate time, not pure execution
     // also cold start includes compile costs for schemas
     await shell.metro.settle()
