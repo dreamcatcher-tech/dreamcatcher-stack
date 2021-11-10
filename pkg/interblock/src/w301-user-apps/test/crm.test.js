@@ -4,12 +4,11 @@ import { effectorFactory, awsFactory } from '../../w020-emulators'
 import { crm } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
-Debug.enable('*tests:crm *met* *shell *deploy *isolator')
+Debug.enable('*tests:crm ')
 
 describe('crm', () => {
-  jest.setTimeout(1500)
   describe('app deploy', () => {
-    test.only('deploys app', async () => {
+    test('deploys app', async () => {
       const publishStart = Date.now()
       const shell = await effectorFactory('crm')
       shell.metro.enableLogging()
@@ -30,9 +29,20 @@ describe('crm', () => {
       assert(state.schema)
 
       const crmActions = await shell.actions('/crm/customers')
-      const newCustomer = await crmActions.add()
-      debug(`newCustomer`, newCustomer)
-      await shell.settle()
+      const add1Start = Date.now()
+      const add1BlockCount = shell.metro.getBlockCount()
+      await crmActions.add({ formData: { custNo: 100, name: 'test name 1' } })
+      debug(`add first customer time: ${Date.now() - add1Start} ms`)
+      const add2BlockCount = shell.metro.getBlockCount()
+      debug(`add 1 block count: ${add2BlockCount - add1BlockCount}`)
+
+      const add2Start = Date.now()
+      await crmActions.add({ formData: { custNo: 101, name: 'test name 2' } })
+      debug(`add second customer time: ${Date.now() - add2Start} ms`)
+      const lastBlockCount = shell.metro.getBlockCount()
+      debug(`add 2 block count: ${lastBlockCount - add2BlockCount}`)
+
+      await shell.metro.settle()
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
        * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
@@ -42,13 +52,14 @@ describe('crm', () => {
        * 2021-01-28 183ms publish, 545ms install, blockcount 29 - cache partial dmz executions
        * 2021-02-04 176ms publish, 382ms install, blockcount 29, blockrate 19ms - remove immer, cache blank creates, reuse hashes for block and interblock
        * 2021-05-19 245ms publish, 524ms install, blockcount 27, blockrate 28ms - add queries to hooks, install uses a query instead of an action
+       * 2021-11-11 129ms publish, 252ms install, blockcount 27, blockrate 14ms add1 167ms, add1 count 18, add2 128ms, add2 count 13 - remove light lineage from protocol
        */
     })
     test.todo('can only add customer if provide valid data')
     test.todo('add customer with test data using .processes/addTestCustomer')
   })
   describe('list customers', () => {
-    test('list customers basic', async () => {
+    test.only('list customers basic', async () => {
       const shell = await effectorFactory('crm')
       const { dpkgPath } = await shell.publish(
         'dpkgCrm',

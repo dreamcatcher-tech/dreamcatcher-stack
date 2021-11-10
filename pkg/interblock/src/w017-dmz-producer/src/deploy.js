@@ -8,6 +8,7 @@ import {
 import { spawn, spawnRequester } from './spawn'
 import { interchain, replyResolve, replyPromise } from '../../w002-api'
 import Debug from 'debug'
+import { metaProducer } from '../../w016-producers'
 const debug = Debug('interblock:dmz:deploy')
 
 const install = (installer) => ({
@@ -32,12 +33,13 @@ const deployReducer = (dmz, action) => {
   // TODO accomodate existing children already ? or throw ?
   const { children: directChildren = {} } = installer
   // TODO try make promises that work on a specific action, so can run in parallel
-  const meta = { ...dmz.meta }
-  const height = dmz.getCurrentHeight()
-  if (Object.keys(directChildren).length) {
-    replyPromise()
-    meta.deploy = { originIdentifier: action.identifier }
+  if (!Object.keys(directChildren).length) {
+    return dmz
   }
+  replyPromise()
+  let { meta } = dmz
+  const deploySlice = { originIdentifier: action.identifier }
+  const height = dmz.getCurrentHeight()
   for (const installPath in directChildren) {
     let {
       children,
@@ -50,18 +52,20 @@ const deployReducer = (dmz, action) => {
     spawnOptions = { ...spawnOptions, covenantId, state }
     const spawnRequest = spawn(installPath, spawnOptions)
     const [nextDmz, spawnId, alias, chainId] = spawnRequester(dmz, spawnRequest)
-    assert(!meta[spawnId])
-    meta[spawnId] = { type: '@@DEPLOY_GENESIS', alias }
     dmz = nextDmz
+    assert(!meta.replies[spawnId])
+    const slice = { type: '@@DEPLOY_GENESIS', alias }
+    meta = metaProducer.withSlice(meta, spawnId, slice)
     const secondRequestIndex = 1
     const deployId = `${chainId}_${height}_${secondRequestIndex}`
     const deployAction = deploy(directChildren[installPath])
     interchain(deployAction, installPath)
-    assert(!meta[deployId])
-    meta[deployId] = { type: '@@DEPLOY' }
-    assert(!meta.deploy[deployId])
-    meta.deploy[deployId] = alias
+    assert(!meta.replies[deployId])
+    meta = metaProducer.withSlice(meta, deployId, { type: '@@DEPLOY' })
+    assert(!deploySlice[deployId])
+    deploySlice[deployId] = alias
   }
+  meta = { ...meta, deploy: deploySlice }
   return dmzModel.clone({ ...dmz, meta })
 }
 const deployGenesisReply = (meta, rxReply, dmz) => {

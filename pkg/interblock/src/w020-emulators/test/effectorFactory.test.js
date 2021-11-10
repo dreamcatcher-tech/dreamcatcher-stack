@@ -8,7 +8,7 @@ Debug.enable()
 chai.use(chaiAsPromised)
 
 describe('effector', () => {
-  test.only('ping single', async () => {
+  test('ping single', async () => {
     // Debug.enable('*tests*')
     const start = Date.now()
     debug(`start`)

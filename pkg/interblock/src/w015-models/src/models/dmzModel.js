@@ -7,6 +7,7 @@ import { aclModel } from './aclModel'
 import { binaryModel } from './binaryModel'
 import { networkModel } from './networkModel'
 import { stateModel } from './stateModel'
+import { metaModel } from './metaModel'
 import { configModel } from './configModel'
 import { validatorsModel } from './validatorsModel'
 import { pendingModel } from './pendingModel'
@@ -43,7 +44,7 @@ const schema = {
     acl: aclModel.schema,
     network: networkModel.schema,
     state: stateModel.schema,
-    meta: stateModel.schema,
+    meta: metaModel.schema,
     pending: pendingModel.schema,
     piercings: piercingsModel.schema,
     // TODO add version ?
@@ -64,7 +65,7 @@ const dmzModel = standardize({
       acl: aclModel.clone(opts.acl),
       network: networkModel.clone(opts.network),
       state: stateModel.clone(opts.state),
-      meta: stateModel.clone({}), // not user alterable
+      meta: metaModel.clone(opts.meta), // not user alterable
       pending: pendingModel.create(), // cannot start a dmz as pending
     }
     return dmzModel.clone(dmz)

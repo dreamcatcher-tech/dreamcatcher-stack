@@ -1,17 +1,25 @@
 import assert from 'assert-fast'
 import { replyResolve, replyReject } from '../../w002-api'
-import { networkModel, addressModel, channelModel } from '../../w015-models'
+import {
+  addressModel,
+  channelModel,
+  dmzModel,
+  rxRequestModel,
+  rxReplyModel,
+} from '../../w015-models'
 import { autoAlias } from './utils'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:uplink')
 
-const uplink = (chainId, originAction) => ({
+const uplink = (chainId) => ({
   type: '@@UPLINK',
-  payload: { chainId, originAction }, // TODO replace with generic promise hook
+  payload: { chainId }, // TODO replace with generic promise hook
 })
-const uplinkReducer = (network, action) => {
-  assert(networkModel.isModel(network))
-  const { chainId } = action.payload
+const uplinkReducer = (dmz, rxRequest) => {
+  assert(dmzModel.isModel(dmz))
+  assert(rxRequestModel.isModel(rxRequest))
+  const { network } = dmz
+  const { chainId } = rxRequest.payload
   assert(chainId) // TODO test against regex
   const address = addressModel.create(chainId)
   assert.strictEqual(address.getChainId(), chainId)
@@ -26,23 +34,28 @@ const uplinkReducer = (network, action) => {
   }
   const shortChainId = chainId.substring(0, 9)
   debug(`uplinkReducer ${alias} set to ${shortChainId}`)
-  replyResolve({ alias })
-  return network.merge(nextNetwork)
+  replyResolve()
+  return dmzModel.clone({ ...dmz, network: network.merge(nextNetwork) })
 }
-const uplinkReply = (network, reply) => {
-  const { originAction } = reply.getRequest().payload
-  switch (reply.type) {
+const uplinkReply = (slice, rxReply, dmz) => {
+  assert.strictEqual(typeof slice, 'object')
+  assert.strictEqual(slice.type, '@@UPLINK')
+  assert(rxReplyModel.isModel(rxReply))
+  assert(dmzModel.isModel(dmz))
+  const { chainId, origin } = slice
+  assert.strictEqual(typeof chainId, 'string')
+  assert.strictEqual(typeof origin, 'string')
+
+  switch (rxReply.type) {
     case '@@RESOLVE': {
-      const { child } = originAction.payload
-      debug('reply: ', child)
-      const chainId = network[child].address.getChainId()
+      debug('reply: ', chainId.substring(0, 9))
       const payload = { chainId }
-      replyResolve(payload, originAction)
+      replyResolve(payload, origin)
       break
     }
     case '@@REJECT':
-      debug('reject: ', reply)
-      replyReject(reply.payload, originAction)
+      debug('reject: ', rxReply)
+      replyReject(rxReply.payload, origin)
       break
   }
 }

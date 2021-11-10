@@ -30,6 +30,7 @@
 export * as networkProducer from './src/networkProducer'
 export * as channelProducer from './src/channelProducer'
 export * as dmzProducer from './src/dmzProducer'
+export * as metaProducer from './src/metaProducer'
 export * as blockProducer from './src/blockProducer'
 export * as lockProducer from './src/lockProducer'
 export * as pendingProducer from './src/pendingProducer'

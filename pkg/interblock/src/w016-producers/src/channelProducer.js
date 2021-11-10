@@ -163,7 +163,12 @@ const txReply = (channel, txReply) => {
     _isTip(replyKey, replies)
     throw new Error(`Can only promise for tip action: ${replyKey}`)
   }
-  if (!existingReply && !isTip) {
+  const isLoopbackPromise =
+    // TODO WARNING need to store txPromises so this works for others channels too
+    channel.address.isLoopback() &&
+    channel.rxPromises &&
+    channel.rxPromises.includes(replyKey)
+  if (!existingReply && !isTip && !isLoopbackPromise) {
     throw new Error(`Can only settle synchronously with tip: ${replyKey}`)
   }
   replies = { ...replies, [replyKey]: reply }

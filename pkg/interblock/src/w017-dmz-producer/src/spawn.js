@@ -3,13 +3,12 @@ import {
   blockModel,
   actionModel,
   channelModel,
-  interblockModel,
   networkModel,
   dmzModel,
   rxRequestModel,
   covenantIdModel,
 } from '../../w015-models'
-import { channelProducer } from '../../w016-producers'
+import { channelProducer, metaProducer } from '../../w016-producers'
 import { autoAlias } from './utils'
 import { replyPromise } from '../../w002-api'
 import Debug from 'debug'
@@ -28,11 +27,11 @@ const spawn = (alias, spawnOpts = {}) => {
 
 const spawnReducer = (dmz, request) => {
   assert(rxRequestModel.isModel(request))
-  const [nextDmz, id, alias, chainId] = spawnRequester(dmz, request)
+  const [nextDmz, identifier, alias, chainId] = spawnRequester(dmz, request)
   replyPromise() // allows spawnReducer to be reused by deploy reducer
   const originIdentifier = request.identifier
   const subMeta = { type: '@@GENESIS', alias, chainId, originIdentifier }
-  const meta = { ...dmz.meta, [id]: subMeta }
+  const meta = metaProducer.withSlice(dmz.meta, identifier, subMeta)
   return dmzModel.clone({ ...nextDmz, meta })
 }
 const spawnRequester = (dmz, originAction) => {

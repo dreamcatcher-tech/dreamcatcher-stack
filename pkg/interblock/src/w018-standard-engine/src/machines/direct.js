@@ -31,7 +31,7 @@ const definition = {
           ],
         },
         transmit: { entry: 'transmit', always: 'done' },
-        reject: { entry: 'warnReplyRejection', always: 'done' }, // TODO hoist error to parent
+        reject: { entry: 'warnReplyRejection', always: 'done' },
         done: { type: 'final' },
       },
       onDone: 'done',

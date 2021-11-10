@@ -140,9 +140,7 @@ const tx = (network, transmissions) => {
 }
 
 const invalidateLocal = (network) => {
-  // TODO what is this even for ?
-  // supposed to be for detecting when openPaths has stalled
-  // but openPaths should do this work itself ?
+  // TODO rename to unopenable path
   const nextNetwork = {}
   const aliases = network.getAliases()
   for (const alias of aliases) {
@@ -194,8 +192,10 @@ const zeroTransmissions = (network, precedent) => {
   const aliases = network.getAliases()
   for (const alias of aliases) {
     const channel = network[alias]
-    const nextChannel = channelProducer.zeroTransmissions(channel, precedent)
-    nextNetwork[alias] = nextChannel
+    if (!channel.address.isUnknown()) {
+      const nextChannel = channelProducer.zeroTransmissions(channel, precedent)
+      nextNetwork[alias] = nextChannel
+    }
   }
   return network.merge(nextNetwork)
 }

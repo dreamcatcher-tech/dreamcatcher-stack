@@ -73,8 +73,9 @@ const config = {
       dmz: ({ dmz }) => {
         assert(dmzModel.isModel(dmz))
         debug(`openPaths`)
-        const network = dmzReducer.openPaths(dmz.network)
-        return dmzModel.clone({ ...dmz, network })
+        dmz = dmzReducer.openPaths(dmz)
+        assert(dmzModel.isModel(dmz))
+        return dmz
       },
     }),
     invalidateLocalPaths: assign({

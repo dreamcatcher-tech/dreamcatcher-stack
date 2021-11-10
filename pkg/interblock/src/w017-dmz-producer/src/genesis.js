@@ -2,6 +2,7 @@ import { interchain, replyPromise, replyResolve } from '../../w002-api'
 import { dmzModel, rxReplyModel } from '../../w015-models'
 import Debug from 'debug'
 import assert from 'assert-fast'
+import { metaProducer } from '../../w016-producers'
 const debug = Debug('interblock:dmz:genesis')
 
 const genesisReducer = (dmz, action) => {
@@ -12,17 +13,16 @@ const genesisReducer = (dmz, action) => {
   const chainId = dmz.network['.'].address.getChainId()
   const height = dmz.getCurrentHeight()
   const index = 0
-  const expectedReplyIdentifier = `${chainId}_${height}_${index}`
-  const data = {
+  const replyIdentifier = `${chainId}_${height}_${index}`
+  const slice = {
     type: '@@INIT',
     originIdentifier: action.identifier,
   }
-  const meta = { ...dmz.meta, [expectedReplyIdentifier]: data }
+  const meta = metaProducer.withSlice(dmz.meta, replyIdentifier, slice)
   return dmzModel.clone({ ...dmz, meta })
   // TODO check can only have come from parent, and must be the first action in the channel
   // auto respond will resolve this action
   // TODO wait for response from covenant, in case rejected
-
   // TODO insert the action directly into the network, and store the request id
 }
 const genesisReply = (meta, reply) => {

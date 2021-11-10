@@ -41,6 +41,7 @@ const config = {
     warnReplyRejection: ({ reduceRejection }) => {
       // TODO reject all loopback actions and reject the external action
       debug(`warnReplyRejection`)
+      console.error(reduceRejection)
     },
     raisePending: assign({
       dmz: ({ dmz, anvil }) => {

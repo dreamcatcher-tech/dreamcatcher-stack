@@ -15,6 +15,7 @@ import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer, genesisReply, initReply } from './genesis'
 import { getStateReducer, getState } from './getState'
 import { dmzModel, rxRequestModel, rxReplyModel } from '../../w015-models'
+import { metaProducer } from '../../w016-producers'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz')
 /**
@@ -50,7 +51,6 @@ const reducer = (dmz, action) => {
   debug(`reducer( ${action.type} )`)
   assert(dmzModel.isModel(dmz))
   assert(rxReplyModel.isModel(action) || rxRequestModel.isModel(action))
-  let { network } = dmz
 
   if (!isSystemReply(dmz, action)) {
     switch (action.type) {
@@ -60,16 +60,13 @@ const reducer = (dmz, action) => {
       case '@@SPAWN':
         return spawnReducer(dmz, action)
       case '@@CONNECT':
-        network = connectReducer(network, action)
-        break
+        return connectReducer(dmz, action)
       case '@@UPLINK':
-        network = uplinkReducer(network, action)
-        break
+        return uplinkReducer(dmz, action)
       case '@@GENESIS':
         return genesisReducer(dmz, action)
       case '@@OPEN_CHILD':
-        openChildReducer(network, action)
-        break
+        return openChildReducer(dmz, action)
       case '@@INTRO':
         break
       case '@@ACCEPT':
@@ -79,7 +76,7 @@ const reducer = (dmz, action) => {
       case '@@DEPLOY':
         return deployReducer(dmz, action)
       case '@@GET_CHAN':
-        getChannelReducer(network, action)
+        getChannelReducer(dmz.network, action)
         break
       case '@@CAT':
         getStateReducer(dmz)
@@ -88,34 +85,30 @@ const reducer = (dmz, action) => {
         throw new Error(`Unrecognized type: ${action.type}`)
     }
   } else {
-    assert(dmz.meta[action.identifier])
-    const { [action.identifier]: meta } = dmz.meta
+    assert(dmz.meta.isAwaiting(action))
+    const metaSlice = dmz.meta.getMetaSlice(action)
+    const meta = metaProducer.withoutReply(dmz, action)
+    dmz = dmzModel.clone({ ...dmz, meta })
 
-    switch (meta.type) {
+    switch (metaSlice.type) {
       case '@@INIT':
-        initReply(meta, action)
+        initReply(metaSlice, action)
         break
       case '@@GENESIS':
-        genesisReply(meta, action)
+        genesisReply(metaSlice, action)
         break
       case '@@UPLINK':
-        uplinkReply(network, action)
+        uplinkReply(metaSlice, action, dmz)
         break
       case '@@OPEN_CHILD':
-        dmz = openChildReply(meta, action)
-        break
+        return openChildReply(metaSlice, action, dmz)
       case '@@DEPLOY_GENESIS':
-        dmz = deployGenesisReply(meta, action, dmz)
-        break
+        return deployGenesisReply(metaSlice, action, dmz)
       case '@@DEPLOY':
-        dmz = deployReply(meta, action, dmz)
-        break
+        return deployReply(metaSlice, action, dmz)
       default:
         throw new Error(`Unrecognized type: ${action.type}`)
     }
-    const nextMeta = { ...dmz.meta }
-    delete nextMeta[action.identifier]
-    dmz = dmzModel.clone({ ...dmz, meta: nextMeta })
   }
   return dmz
 }
@@ -150,12 +143,7 @@ const isSystemReply = (dmz, action) => {
     assert(rxRequestModel.isModel(action))
     return false
   }
-  const { identifier } = action
-  const { meta } = dmz
-  let isSystemReply = false
-  if (meta[identifier]) {
-    isSystemReply = true
-  }
+  const isSystemReply = dmz.meta.isAwaiting(action)
   debug(`isSystemReply: ${isSystemReply} type: ${action.type}`)
   return isSystemReply
 }

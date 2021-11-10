@@ -70,7 +70,7 @@ const print = (messages) => {
     config: {
       msg: { minWidth: 15, maxWidth: 15 },
       height: { minWidth: 8, maxWidth: 8 },
-      path: { minWidth: 18, maxWidth: 18 },
+      path: { minWidth: 36, maxWidth: 36 },
     },
   }
   const formatted = columnify(messages, options)

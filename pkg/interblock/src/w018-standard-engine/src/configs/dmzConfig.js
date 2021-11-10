@@ -51,6 +51,11 @@ const config = {
     }),
     assignRejection,
     respondRejection,
+    warnReplyRejection: ({ reduceRejection }) => {
+      // TODO reject all loopback actions and reject the external action
+      debug(`warnReplyRejection dmz`)
+      console.error(reduceRejection)
+    },
   },
   guards: {
     isChannelUnavailable: ({ dmz, anvil }) => {

@@ -104,23 +104,21 @@ const reducer = async (state, action) => {
         return state
       }
       // TODO WARNING if have changed children in current block, will be stale
-      const latest = await useBlocks()
-      const children = dmzReducer.listChildren(latest)
+      // TODO handle updating what the children should be
       const awaits = []
       for (const name in state.children) {
-        if (!children[name]) {
-          debug(`creating new child: `, name)
-          const setChild = actions.set({
-            ...demuxed.children[name],
-            ...state.children[name],
-          })
-          debug(`setChild`, setChild)
-          // TODO honour type somehow, if specify a collection ?
-          const covenantId = covenantIdModel.create('datum')
-          const spawn = dmzReducer.actions.spawn(name, { covenantId })
-          interchain(spawn)
-          awaits.push(interchain(setChild, name))
-        }
+        debug(`creating new child: `, name)
+        const setChild = actions.set({
+          ...demuxed.children[name],
+          ...state.children[name],
+        })
+        debug(`setChild`, setChild)
+        // TODO honour type somehow, if specify a collection ?
+        const covenantId = covenantIdModel.create('datum')
+        const spawn = dmzReducer.actions.spawn(name, { covenantId })
+        interchain(spawn)
+        const promise = interchain(setChild, name)
+        awaits.push(promise)
       }
       await Promise.all(awaits)
       // TODO remove deleted children
@@ -171,7 +169,11 @@ const validateFormData = (template, payload) => {
     throw new Error(`${template.schema.title} failed validation: ${errors}`)
   }
   for (const name in template.children) {
-    validateFormData(template.children[name], payload.children[name])
+    let data = { formData: {} }
+    if (payload.children && payload.children[name]) {
+      data = payload.children[name]
+    }
+    validateFormData(template.children[name], data)
   }
 }
 const _generateFakeData = (template, payload = {}) => {
@@ -243,9 +245,13 @@ const muxTemplateWithFormData = (template, payload) => {
   const result = { ...template, children: {} }
   result.formData = payload.formData
   for (const name in template.children) {
+    let data = { formData: {} }
+    if (payload.children && payload.children[name]) {
+      data = payload.children[name]
+    }
     result.children[name] = muxTemplateWithFormData(
       template.children[name],
-      payload.children[name]
+      data
     )
   }
   return result

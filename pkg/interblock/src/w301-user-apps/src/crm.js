@@ -12,8 +12,9 @@ const gps = {
   schema: {
     title: 'Service GPS',
     type: 'object',
+    description: `If no lat or long, then the location is not set yet`,
     additionalProperties: false,
-    required: ['latitude', 'longitude'],
+    required: [],
     properties: {
       latitude: { type: 'number', faker: 'address.latitude' },
       longitude: { type: 'number', faker: 'address.longitude' },
@@ -49,7 +50,7 @@ const installer = {
           schema: {
             title: 'Details',
             type: 'object',
-            required: ['custNo', 'name', 'isEmailVerified'],
+            required: ['custNo', 'name'],
             properties: {
               name: { title: 'Name', type: 'string', faker: 'name.findName' },
               mobile: {

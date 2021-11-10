@@ -14,8 +14,10 @@ const definition = {
       },
     },
     respondRejection: {
-      entry: 'respondRejection',
-      always: 'done',
+      always: [
+        { target: 'done', cond: 'isReply', actions: 'warnReplyRejection' },
+        { target: 'done', actions: 'respondRejection' },
+      ],
     },
     merge: {
       entry: ['mergeSystemState', 'transmit'],
