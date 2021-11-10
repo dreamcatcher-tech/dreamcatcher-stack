@@ -68,9 +68,9 @@ const queryFactory = (ioConsistency, block) => {
       }
       const { address, tipHeight: height } = childBlock.network[child]
       // TODO walk height based on root knowledge
-      // TODO WARNING might not walk correctly as height might not be updated ?
-      childBlock = await consistency.getBlock({ address, height })
-      debug(`fetched ${subpath} at height: ${height}`)
+      // TODO WARNING height always stale until have root mode implemented
+      childBlock = await consistency.getBlock({ address })
+      debug(`fetched ${subpath}`)
     }
     return childBlock // TODO honour height and count params
   }

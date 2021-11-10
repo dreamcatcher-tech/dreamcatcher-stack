@@ -8,9 +8,6 @@ const txReplyModel = standardize({
   schema: txReplySchema,
   create(type = '@@RESOLVE', payload = {}, identifier) {
     const txReply = { type, payload, identifier }
-    if (type === '@@REJECT') {
-      console.error(payload)
-    }
     return txReplyModel.clone(txReply)
   },
 

@@ -4,7 +4,7 @@ import { effectorFactory, awsFactory } from '../../w020-emulators'
 import { crm } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
-Debug.enable('*tests:crm ')
+Debug.enable()
 
 describe('crm', () => {
   describe('app deploy', () => {
@@ -59,18 +59,16 @@ describe('crm', () => {
     test.todo('add customer with test data using .processes/addTestCustomer')
   })
   describe('list customers', () => {
-    test.only('list customers basic', async () => {
+    test('list customers basic', async () => {
       const shell = await effectorFactory('crm')
-      const { dpkgPath } = await shell.publish(
-        'dpkgCrm',
-        crm.installer,
-        crm.covenantId
-      )
+      const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
-      assert(shell.dpkgCrm)
       await shell.install(dpkgPath, 'crm')
       shell.metro.enableLogging()
-      const newCustomer = await shell.crm.customers.add({ isTestData: true })
+      const crmActions = await shell.actions('/crm/customers')
+      const newCustomer = await crmActions.add({
+        formData: { custNo: 100, name: 'test name 1' },
+      })
       debug(`newCustomer`, newCustomer)
       const { children } = await shell.ls('crm/customers')
       debug(`customers: `, children)
@@ -79,7 +77,7 @@ describe('crm', () => {
       )
       assert.strictEqual(realCustomers.length, 1)
       debug(realCustomers)
-      await shell.settle()
+      await shell.metro.settle()
     })
   })
   describe('data import', () => {
