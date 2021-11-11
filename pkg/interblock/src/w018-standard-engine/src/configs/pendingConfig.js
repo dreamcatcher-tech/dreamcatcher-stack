@@ -111,6 +111,19 @@ const config = {
       debug(`isReply: %o`, isReply)
       return isReply
     },
+    isAwaiting: ({ dmz }) => {
+      assert(dmzModel.isModel(dmz))
+      const { pending } = dmz
+      let isAwaiting = false
+      for (const accumulation of pending.accumulator) {
+        if (accumulation.to && !accumulation.reply) {
+          isAwaiting = true
+          break
+        }
+      }
+      debug(`isAwaiting:`, isAwaiting)
+      return isAwaiting
+    },
     isReductionPending: ({ reduceResolve }) => {
       assert(reductionModel.isModel(reduceResolve))
       const isReductionPending = reduceResolve.getIsPending()

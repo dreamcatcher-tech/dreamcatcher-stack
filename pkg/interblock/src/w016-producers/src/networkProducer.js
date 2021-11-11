@@ -51,15 +51,16 @@ const ingestInterblocks = (network, interblocks = [], config) => {
       })
       nextNetwork[name] = acceptChannel
     } else if (alias) {
-      let channel = nextNetwork[alias] || network[alias]
+      const channel = nextNetwork[alias] || network[alias]
       assert(channelModel.isModel(channel))
       const [nextChannel, ingested] = channelProducer.ingestInterblocks(
         channel,
         channelInterblocks
       )
-      channel = nextChannel
       ingestedInterblocks.push(...ingested)
-      nextNetwork[alias] = channel
+      if (nextChannel !== channel) {
+        nextNetwork[alias] = nextChannel
+      }
     }
   }
 
@@ -192,7 +193,7 @@ const zeroTransmissions = (network, precedent) => {
   const aliases = network.getAliases()
   for (const alias of aliases) {
     const channel = network[alias]
-    if (!channel.address.isUnknown()) {
+    if (!channel.address.isUnknown() && channel.isTransmitting()) {
       const nextChannel = channelProducer.zeroTransmissions(channel, precedent)
       nextNetwork[alias] = nextChannel
     }

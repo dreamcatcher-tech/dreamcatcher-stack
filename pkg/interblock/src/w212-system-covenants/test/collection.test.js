@@ -93,9 +93,11 @@ describe('collection', () => {
     debug('batch adding two customers')
     shell.metro.enableLogging()
 
-    const customerData1 = { ...customerData, formData: { firstName: 'A' } }
-    const customerData2 = { ...customerData, formData: { firstName: 'B' } }
-    const result = await actions.batch([customerData1, customerData2])
+    const c1 = { ...customerData, formData: { custNo: 1, firstName: 'A' } }
+    const c2 = { ...customerData, formData: { custNo: 2, firstName: 'B' } }
+    const c3 = { ...customerData, formData: { custNo: 3, firstName: 'C' } }
+    const result = await actions.batch([c1, c2, c3])
+    await shell.metro.settle()
     debug('result', result)
     const { state: customer1 } = await shell.latest('col1/firstName-A')
     assert(customer1.formData.firstName)
@@ -104,8 +106,6 @@ describe('collection', () => {
 
     const { state: customer2 } = await shell.latest('col1/firstName-B')
     assert(customer2.formData.firstName)
-
-    await shell.metro.settle()
   })
   test.todo('collection with initial state already set')
   test.todo('reject add with key already assigned')

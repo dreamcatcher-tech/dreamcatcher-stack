@@ -8,7 +8,11 @@ const definition = {
   states: {
     isReply: {
       always: [
-        { target: 'reducePendingReply', cond: 'isReply' },
+        {
+          target: 'isAwaiting',
+          cond: 'isReply',
+          actions: 'accumulateReply',
+        },
         { target: 'bufferRequest' },
       ],
     },
@@ -16,8 +20,14 @@ const definition = {
       entry: ['bufferRequest', 'promiseAnvil'],
       always: 'done',
     },
+    isAwaiting: {
+      always: [
+        { target: 'done', cond: 'isAwaiting' },
+        { target: 'reducePendingReply' },
+      ],
+    },
     reducePendingReply: {
-      entry: ['accumulateReply', 'shiftCovenantAction'],
+      entry: 'shiftCovenantAction',
       invoke: {
         src: 'reduceCovenant',
         onDone: {
