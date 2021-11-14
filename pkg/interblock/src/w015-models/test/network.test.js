@@ -5,6 +5,7 @@ import * as snappy from 'snappy'
 import * as snappyjs from 'snappyjs'
 import flatstr from 'flatstr'
 import { Buffer } from 'buffer'
+import { stringify } from 'zipson'
 const debug = Debug('interblock:tests:network')
 
 describe('network', () => {
@@ -28,7 +29,7 @@ describe('network', () => {
     assert.strictEqual(aliases.length, 2)
     assert.strictEqual(network.getAliases().length, 2)
   })
-  test.only('large network', () => {
+  test.skip('large network', () => {
     Debug.enable('*tests*')
     let network = networkModel.create()
     let channel = channelModel.create()
@@ -68,6 +69,9 @@ describe('network', () => {
     start = Date.now()
     const compressed2 = snappyjs.compress(buf)
     debug(`snappyjs %o ms size: %o`, Date.now() - start, compressed2.length)
+    start = Date.now()
+    const compressed3 = stringify(network)
+    debug(`zipson %o ms size: %o`, Date.now() - start, compressed3.length)
   })
   test.todo('rxReply always selected before rxRequest')
   test.todo('rxReply( request ) throws if non existant channel in request')

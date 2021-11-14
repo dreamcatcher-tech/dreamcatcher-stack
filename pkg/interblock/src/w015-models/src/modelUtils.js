@@ -84,6 +84,7 @@ const closure = (schema, inflated, isModel) => {
      * fastJsonStringify takes 200ms
      * snappy compression in nodejs takes it down to 1MB in 9ms
      * snappyjs compression takes it down to 1MB is 72ms
+     * zipson down to 1.3MB in 134ms
      */
     // TODO strangely is 10x faster to use JSON.stringify() :shrug:
     // if (!stringify) {
