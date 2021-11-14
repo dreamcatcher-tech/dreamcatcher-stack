@@ -116,7 +116,9 @@ const config = {
       const { pending } = dmz
       let isAwaiting = false
       for (const accumulation of pending.accumulator) {
-        if (accumulation.to && !accumulation.reply) {
+        const { to, reply } = accumulation
+        if (to && !to === '.' && !reply) {
+          // do not skip if self, due to self stalling possibility
           isAwaiting = true
           break
         }
