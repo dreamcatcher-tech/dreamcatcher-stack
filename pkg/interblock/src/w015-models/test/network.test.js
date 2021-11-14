@@ -1,6 +1,10 @@
 import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
-import { networkModel, channelModel } from '..'
+import { networkModel, channelModel, addressModel } from '..'
+import * as snappy from 'snappy'
+import * as snappyjs from 'snappyjs'
+import flatstr from 'flatstr'
+import { Buffer } from 'buffer'
 const debug = Debug('interblock:tests:network')
 
 describe('network', () => {
@@ -24,7 +28,7 @@ describe('network', () => {
     assert.strictEqual(aliases.length, 2)
     assert.strictEqual(network.getAliases().length, 2)
   })
-  test.skip('large network', () => {
+  test.only('large network', () => {
     Debug.enable('*tests*')
     let network = networkModel.create()
     let channel = channelModel.create()
@@ -33,7 +37,8 @@ describe('network', () => {
     const next = {}
     for (let i = 0; i < count; i++) {
       const alias = `alias${i}`
-      channel = channelModel.create()
+      const address = addressModel.create('GENESIS')
+      channel = channelModel.create(address)
       // network = network.merge({ [alias]: channel })
       next[alias] = channel
     }
@@ -52,6 +57,17 @@ describe('network', () => {
     start = Date.now()
     const string = network.serialize()
     debug(`serialize: %o ms size: %o`, Date.now() - start, string.length)
+    start = Date.now()
+    flatstr(string)
+    debug(Buffer)
+    const buf = Buffer.from(string)
+    debug(`conversion time: %o ms`, Date.now() - start)
+    start = Date.now()
+    const compressed = snappy.compressSync(buf)
+    debug(`snappy %o ms size: %o`, Date.now() - start, compressed.length)
+    start = Date.now()
+    const compressed2 = snappyjs.compress(buf)
+    debug(`snappyjs %o ms size: %o`, Date.now() - start, compressed2.length)
   })
   test.todo('rxReply always selected before rxRequest')
   test.todo('rxReply( request ) throws if non existant channel in request')

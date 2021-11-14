@@ -1,9 +1,11 @@
 import assert from 'assert-fast'
-import stringify from 'fast-json-stable-stringify'
 import { modelInflator, precompileSchema } from './modelInflator'
 import { registry } from './registry'
 import * as crypto from '../../w012-crypto'
 import equal from 'fast-deep-equal'
+import flatstr from 'flatstr'
+import fastJson from 'fast-json-stringify'
+import jsonpack from 'jsonpack'
 import Debug from 'debug'
 const debug = Debug('interblock:models:utils')
 
@@ -73,9 +75,26 @@ const closure = (schema, inflated, isModel) => {
     }
     return equal(inflated, other)
   }
+  let stringify
   const serialize = () => {
-    // TODO serialize quicker using schemas with https://www.npmjs.com/package/fast-json-stringify
-    return stringify(inflated)
+    /**
+     * Tested on serializing a network object with 20,000 channels.
+     * JSON.stringify takes 23ms
+     * jsonpack takes 14s but takes 5MB down to 2MB
+     * fastJsonStringify takes 200ms
+     * snappy compression in nodejs takes it down to 1MB in 9ms
+     * snappyjs compression takes it down to 1MB is 72ms
+     */
+    // TODO strangely is 10x faster to use JSON.stringify() :shrug:
+    // if (!stringify) {
+    //   stringify = fastJson(schema)
+    // }
+    // const string = stringify(inflated)
+    // flatstr(string)
+    // return string
+    // const string = jsonpack.pack(inflated)
+    // return string
+    return JSON.stringify(inflated)
   }
   let cachedHash, cachedProof
   const _generateHashWithProof = () => {
