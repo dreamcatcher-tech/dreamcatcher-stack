@@ -8,10 +8,10 @@ const ajv = new Ajv({ allErrors: true, verbose: true })
 AjvFormats(ajv)
 
 const modelInflator = (schema, instance) => {
+  assert(schema.title, `only titled schemas can be inflated`)
   if (schema.title === 'State') {
     return { ...instance }
   }
-  assert(schema.title, `only titled schemas can be inflated`)
   if (schema.patternProperties) {
     return inflatePattern(schema, instance)
   }
@@ -37,7 +37,7 @@ const modelInflator = (schema, instance) => {
       inflated[key] = inflatePattern(properties[key], slice)
       return
     }
-    validate(properties[key], slice)
+    // validate(properties[key], slice)
     inflated[key] = slice
   })
   return inflated

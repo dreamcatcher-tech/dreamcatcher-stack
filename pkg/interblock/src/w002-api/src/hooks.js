@@ -112,10 +112,13 @@ const _hookGlobal = async (accumulator) => {
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
   const start = Date.now()
   // TODO make this be a queue, shared by all, so zero event loops
+  let delayCount = 0
   while (globalThis['@@interblock'].promises) {
     await new Promise(setImmediate)
+    delayCount++
   }
-  const msg = `waited for global for ${Date.now() - start}ms`
+  const delay = Date.now() - start
+  const msg = `waited for global for ${delay}ms and ${delayCount} loops`
   debug(msg)
   assert(!globalThis['@@interblock'].promises, msg)
   accumulator = [...accumulator]

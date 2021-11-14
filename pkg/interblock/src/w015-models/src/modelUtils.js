@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import memoize from 'lodash.memoize'
 import stringify from 'fast-json-stable-stringify'
 import { modelInflator, precompileSchema } from './modelInflator'
 import { registry } from './registry'
@@ -11,7 +10,7 @@ const debug = Debug('interblock:models:utils')
 const standardize = (model) => {
   checkStructure(model)
   precompileSchema(model.schema)
-  const create = memoizeCreate(model)
+  const create = model.create
   let defaultInstance
   const modelWeakSet = new WeakSet()
   const objectToModelWeakMap = new WeakMap()
@@ -152,7 +151,7 @@ const generateHash = (schema, instance) => {
     }
   }
 }
-const _pickRemoteRaw = (instance) => {
+const _pickRemote = (instance) => {
   const remoteModel = registry.get('Remote')
   const remotePick = _pick(instance, [
     'address',
@@ -163,7 +162,6 @@ const _pickRemoteRaw = (instance) => {
   const remote = remoteModel.clone(remotePick)
   return remote
 }
-const _pickRemote = memoize(_pickRemoteRaw)
 const _pick = (obj, keys) => {
   // much faster than lodash pick
   const blank = {}
@@ -249,15 +247,6 @@ const checkStructure = (model) => {
   const propertiesCount = Object.keys(model).length
   if (propertiesCount !== 3) {
     throw new Error(`Model: ${title} has ${propertiesCount} properties, not 3`)
-  }
-}
-const memoizeCreate = (model) => {
-  const memoized = memoize(model.create)
-  return (...args) => {
-    if (!args.length) {
-      return memoized(...args)
-    }
-    return model.create(...args)
   }
 }
 const deepFreeze = (o) => {

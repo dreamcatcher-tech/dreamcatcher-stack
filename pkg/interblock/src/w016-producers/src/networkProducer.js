@@ -198,7 +198,21 @@ const zeroTransmissions = (network, precedent) => {
       nextNetwork[alias] = nextChannel
     }
   }
-  return network.merge(nextNetwork)
+  network = network.merge(nextNetwork)
+  if (aliases.length > 100) {
+    network = { ...network }
+    let count = 0
+    for (const alias of aliases) {
+      if (!alias.startsWith('custNo-')) {
+        continue
+      }
+      if (count < 50) {
+        // delete network[alias]
+      }
+      count++
+    }
+  }
+  return networkModel.clone(network)
 }
 export {
   ingestInterblocks,

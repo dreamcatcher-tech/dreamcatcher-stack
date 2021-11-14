@@ -25,7 +25,7 @@ describe('hooker', () => {
   // if only request from pending is a request to self, then know it will never resolve
   // basically cannot raise pending, then request something to self
   test.todo('wait for all promises')
-  test('self requests during pending can buffer', async () => {
+  test.only('self requests during pending can buffer', async () => {
     const reducer = async (state, action) => {
       debug(`reducer`, action)
       if (action.type === 'NONCE') {

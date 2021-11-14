@@ -125,7 +125,9 @@ const reducer = async (state, action) => {
       return state
     }
     default:
-      throw new Error(`Unknown action: ${type}`)
+      debug(action)
+      // throw new Error(`Unknown action: ${type}`)
+      return state
   }
 }
 const _isTemplateIncluded = (payload) => {

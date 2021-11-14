@@ -61,11 +61,12 @@ const reducer = async (state, action) => {
 
       const awaits = []
       for (const payload of batch) {
-        // does not work if save array of promises then await each
         const promise = add(payload, datumTemplate)
         awaits.push(promise)
       }
-      // await Promise.all(awaits)
+      for (const promise of awaits) {
+        await promise
+      }
       return state
     }
     case 'SET_TEMPLATE': {
@@ -75,7 +76,8 @@ const reducer = async (state, action) => {
     }
     default:
       debug(action)
-      throw new Error(`Unknown action type: ${action.type}`)
+      // throw new Error(`Unknown action type: ${action.type}`)
+      return state
   }
 }
 const _checkOnlyFormData = (payload) => {

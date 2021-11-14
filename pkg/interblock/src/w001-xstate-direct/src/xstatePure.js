@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import memoize from 'lodash.memoize'
 import Debug from 'debug'
 const debug = Debug('interblock:xstate:pure')
 
@@ -27,7 +26,7 @@ const pure = async (event, definition, config = {}) => {
   const resolveParent = (state) => resolvePath(state).parent
   const resolveNode = (state) => resolvePath(state).node
   const resolvePath = (state) => {
-    const path = [...splitPathSpeedup(state.value)]
+    const path = [...splitPath(state.value)]
     let node = definition
     let parent, grandparent
     do {
@@ -181,7 +180,7 @@ const pure = async (event, definition, config = {}) => {
     }
     let { target } = transition
     if (!target.startsWith('.') && state.value.includes('.')) {
-      const path = [...splitPathSpeedup(state.value)]
+      const path = [...splitPath(state.value)]
       path.pop()
       if (isFinal(state)) {
         path.pop()
@@ -272,7 +271,7 @@ const pure = async (event, definition, config = {}) => {
     const { value } = state
     let { watchdog } = state
     if (watchdog > 500) {
-      throw new Error(`endless loop: ${watchdog}`)
+      // throw new Error(`endless loop: ${watchdog}`)
     }
     debug(`loop ${++watchdog} stateValue: %o`, value)
     state = { ...state, watchdog }
@@ -337,6 +336,6 @@ const pure = async (event, definition, config = {}) => {
 
   return settleState(state, event)
 }
-const splitPathSpeedup = memoize((path) => path.split('.'))
+const splitPath = (path) => path.split('.')
 
 export { pure }

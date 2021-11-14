@@ -126,7 +126,7 @@ const createConfig = (isolation, consistency) => ({
         const loopback = channelProducer.zeroLoopback(dmz.network['.'])
         return dmzModel.clone({
           ...dmz,
-          network: { ...dmz.network, '.': loopback },
+          network: dmz.network.merge({ '.': loopback }),
         })
       },
     }),

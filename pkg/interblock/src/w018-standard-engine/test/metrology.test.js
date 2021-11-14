@@ -6,15 +6,15 @@ const debug = Debug('interblock:tests:metrology')
 
 describe('metrology', () => {
   describe('spawn', () => {
+    jest.setTimeout(200000)
     test.skip('spawn many times', async () => {
-      jest.setTimeout(100000)
       Debug.enable('*tests* *met*')
       const client = await metrologyFactory()
-      client.enableLogging()
+      // client.enableLogging({ headersOnly: true, path: '/', size: true })
       let count = 0
       const awaits = []
       const start = Date.now()
-      while (count < 100) {
+      while (count < 1000) {
         const result = client.spawn()
         awaits.push(result)
         if (count % 10 === 0) {
