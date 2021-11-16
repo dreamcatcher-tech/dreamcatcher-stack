@@ -123,17 +123,6 @@ const closure = (schema, inflated, isModel) => {
 
 const generateHash = (schema, instance) => {
   switch (schema.title) {
-    case 'Action': {
-      if (instance.type === '@@GENESIS' && instance.payload.genesis) {
-        const { genesis } = instance.payload
-        const blockModel = registry.get('Block')
-        assert(blockModel.isModel(genesis))
-        const modified = { ...instance, payload: { ...instance.payload } }
-        modified.payload.genesis = genesis.getHash()
-        return hashFromSchema(schema, modified)
-      }
-      return hashFromSchema(schema, instance)
-    }
     case 'Integrity': {
       return { hash: instance.hash }
     }

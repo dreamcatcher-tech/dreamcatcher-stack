@@ -1,145 +1,203 @@
 import assert from 'assert-fast'
-import { ramDynamoDbFactory } from './ramDynamoDbFactory'
+import LevelUp from 'levelup'
 import Debug from 'debug'
+import {
+  blockModel,
+  interblockModel,
+  keypairModel,
+  txReplyModel,
+  txRequestModel,
+} from '../../../../w015-models'
 const debug = Debug('interblock:consistency:db')
+const types = ['blocks', 'interblocks', 'piercings', 'pool']
+const dbFactory = (leveldb) => {
+  assert(leveldb instanceof LevelUp)
+  assert(leveldb.isOperational())
 
-const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
-  let baseChainItem
-
-  const _dbGet = async (TableName, Key) => {
-    const params = {
-      TableName,
-      Key,
-      ConsistentRead: true,
-      ReturnConsumedCapacity: 'TOTAL',
+  const getBlock = async (chainId, height) => {
+    assert.strictEqual(typeof chainId, 'string')
+    assert(Number.isInteger(height))
+    assert(height >= 0)
+    const key = `${chainId}/blocks/${height}`
+    for await (const [keyBuffer, json] of leveldb.iterator({
+      limit: 1,
+      keys: false,
+      values: true,
+      gte: key,
+      lte: key + '~',
+    })) {
+      // TODO check hash matches
+      // TODO check that no other block exists at this height
+      const block = blockModel.clone(JSON.parse(json))
+      debug(`getBlock height: `, block.getHeight())
+      return block
     }
-    const result = await dynamodb.get(params).promise()
-    const { ConsumedCapacity, Item } = result
-    return Item
+  }
+  const putPool = async (interblock) => {
+    assert(interblockModel.isModel(interblock))
+    const targetChainId = interblock.getTargetAddress().getChainId()
+    const chainId = interblock.getChainId()
+    const { height } = interblock.provenance
+    const hash = interblock.getHash()
+    const key = `${targetChainId}/pool/${chainId}_${height}_${hash}`
+    await leveldb.put(key, interblock.serialize())
   }
 
-  const getBlock = (Key) => _dbGet('dbChains', Key)
-
-  const _dbPut = async (TableName, Items) => {
-    assert(TableName)
-    assert(Items)
-    if (!Array.isArray(Items)) {
-      Items = [Items]
-    }
-
-    const awaits = Items.map((Item) => {
-      const params = {
-        TableName,
-        Item,
-        ReturnConsumedCapacity: 'TOTAL',
-      }
-      return dynamodb.put(params).promise()
-    })
-    await Promise.all(awaits)
+  const putBlock = async (block) => {
+    const chainId = block.getChainId()
+    const height = block.getHeight()
+    const hash = block.getHash()
+    const string = block.serialize()
+    const key = `${chainId}/blocks/${height}_${hash}`
+    await leveldb.put(key, string)
+    debug(`putBlock`, chainId.substring(0, 9), height)
   }
-
-  const putPool = (items) => _dbPut('dbPools', items)
-
-  const putBlock = (item) => _dbPut('dbChains', item)
 
   // TODO use transactions to not add what is later deleted
   const putSubscriptions = (items) => _dbPut('dbSubscribers', items)
 
   const putSocket = async (item) => _dbPut('dbSockets', item)
 
-  const putKeypair = async (item) => _dbPut('dbCrypto', item)
+  const putKeypair = async (keypair) => {
+    debug(`putKeypair`)
+    assert(keypairModel.isModel(keypair))
+    const { key } = keypair.publicKey
+    await leveldb.put(`crypto/${key}`, keypair.serialize())
+  }
 
-  const putPierce = async (item) => _dbPut('dbPiercings', item)
-
-  const _dbDel = async (TableName, items) => {
-    assert(Array.isArray(items))
-    const awaits = items.map((Key) => {
-      const params = {
-        TableName,
-        Key,
-        ReturnConsumedCapacity: 'TOTAL',
-      }
-      // TODO use conditions to not delete newer things
-      return dynamodb.delete(params).promise()
-    })
-    await Promise.all(awaits)
+  const putPierceReply = async (chainId, txReply) => {
+    assert(txReplyModel.isModel(txReply))
+    debug(`putPierceReply`)
+    const key = `${chainId}/piercings/rep_${txReply.getHash()}`
+    // TODO get order by loosely trying to add the current tip count + 1
+    // doesn't matter if it collides
+    await leveldb.put(key, txReply.serialize())
+  }
+  const putPierceRequest = async (chainId, txRequest) => {
+    assert(txRequestModel.isModel(txRequest))
+    debug(`putPierceRequest`)
+    const key = `${chainId}/piercings/req_${txRequest.getHash()}`
+    // TODO get order by loosely trying to add the current tip count + 1
+    // doesn't matter if it collides
+    await leveldb.put(key, txRequest.serialize())
   }
 
   const delSubscriptions = (items) => _dbDel('dbSubscribers', items)
 
-  const delPool = (toDelete) => _dbDel('dbPools', toDelete)
-
-  const delPierce = (toDelete) => _dbDel('dbPiercings', toDelete)
-
-  const _dbQuery = async (TableName, chainId, isSingle) => {
-    const params = {
-      TableName,
-      KeyConditionExpression: 'chainId = :hkey',
-      ExpressionAttributeValues: { ':hkey': chainId },
-      ScanIndexForward: false,
-      ConsistentRead: true,
-      ReturnConsumedCapacity: 'TOTAL',
-    }
-    if (isSingle) {
-      params.Limit = 1
-    }
-    debug(`dbQuery: %O %O`, TableName, chainId)
-    const result = await dynamodb.query(params).promise()
-    const { ConsumedCapacity, Items } = result
-    // TODO handle query being too long for a single return
-    assert(Array.isArray(Items))
-    debug(`dbQuery items length: %O`, Items.length)
-    if (isSingle) {
-      return Items[0]
-    }
-    return Items
+  const delPool = async (chainId) => {
+    const gte = `${chainId}/pool/`
+    const lte = `${chainId}/pool/~`
+    await leveldb.clear({ gte, lte })
+    debug(`delPool complete`)
   }
 
-  // TODO move schema to support height filter in query
-  // TODO get only the highest targetChainId_height entry
-  // TODO check scavenging done correctly here
-  const queryAffected = (chainId, isSingle) =>
-    _dbQuery('dbSubscribers', chainId, isSingle)
-
-  const querySockets = (chainId) => _dbQuery('dbSockets', chainId)
-
-  const queryLatest = (chainId) => {
-    const isSingle = true
-    return _dbQuery('dbChains', chainId, isSingle)
+  const delPierce = async (chainId) => {
+    const gte = `${chainId}/piercings/`
+    const lte = `${chainId}/piercings/~`
+    await leveldb.clear({ gte, lte })
+    debug(`delPierce complete`)
   }
 
-  const queryPool = (chainId) => _dbQuery('dbPools', chainId)
+  const querySockets = (chainId) => {
+    /**
+     * Sockets map validator public keys to websocket ids.
+     * They are determined by looking up the turnover interblocks for a channel
+     * then looking up the mapping from validators to sockets.
+     * May enhance by doing an index so can do chainId to socket as well.
+     * But this might be stored in actual chains.
+     */
+    return []
+  }
 
-  const queryPiercings = (chainId) => _dbQuery('dbPiercings', chainId)
+  const queryLatest = async (chainId) => {
+    debug(`queryLatest %o`, chainId.substring(0, 9))
+    const gte = `${chainId}/blocks/`
+    const lte = `${chainId}/blocks/~`
+    for await (const [, json] of leveldb.iterator({
+      reverse: true,
+      limit: 1,
+      keys: false,
+      values: true,
+      gte,
+      lte,
+    })) {
+      const block = blockModel.clone(JSON.parse(json))
+      debug(`queryLatest height: `, block.getHeight())
+      return block
+    }
+    debug(`queryLatest nothing found`)
+  }
 
-  const _scanFirst = async (TableName) => {
-    const params = {
-      TableName,
-      ConsistentRead: true,
-      Limit: 1,
+  const queryPool = async (chainId) => {
+    debug(`queryPool`, chainId.substring(0, 9))
+    const gte = `${chainId}/pool/`
+    const lte = `${chainId}/pool/~`
+    const interblocks = []
+    for await (const [, json] of leveldb.iterator({
+      keys: false,
+      values: true,
+      gte,
+      lte,
+    })) {
+      const interblock = interblockModel.clone(JSON.parse(json))
+      interblocks.push(interblock)
     }
-    const result = await dynamodb.scan(params).promise()
-    const { ConsumedCapacity, Items } = result
-    assert(Array.isArray(Items))
-    if (Items.length) {
-      assert.strictEqual(Items.length, 1)
-      const [firstItem] = Items
-      return firstItem
+    debug(`queryPool count:`, interblocks.length)
+    return interblocks
+  }
+
+  const queryPiercings = async (chainId) => {
+    debug(`queryPiercings`, chainId.substring(0, 9))
+    const gte = `${chainId}/piercings/`
+    const lte = `${chainId}/piercings/~`
+    const requests = []
+    const replies = []
+    // TODO handle timestamps on piercings
+    for await (const [keyBuffer, json] of leveldb.iterator({
+      keys: true,
+      values: true,
+      gte,
+      lte,
+    })) {
+      const key = keyBuffer.toString()
+      if (key.startsWith(gte + `rep_`)) {
+        const txReply = txReplyModel.clone(JSON.parse(json))
+        replies.push(txReply)
+      } else {
+        assert(key.startsWith(gte + `req_`))
+        const txRequest = txRequestModel.clone(JSON.parse(json))
+        requests.push(txRequest)
+      }
     }
+    debug(`queryPiercings replies: %o`, replies.length)
+    debug(`queryPiercings requests: %o`, requests.length)
+    return { replies, requests }
   }
 
   const scanBaseChainId = async () => {
-    if (baseChainItem) {
-      // TODO move caching to consistency
-      return baseChainItem
+    for await (const [keyBuffer] of leveldb.iterator({
+      keys: true,
+      values: false,
+      limit: 1,
+    })) {
+      const key = keyBuffer.toString()
+      const [baseChainId] = key.split('/')
+      return baseChainId
     }
-    const result = await _scanFirst('dbChains')
-    if (result) {
-      baseChainItem = result
-    }
-    return baseChainItem
   }
-  const scanKeypair = async () => _scanFirst('dbCrypto')
+  const scanKeypair = async () => {
+    const gte = `crypto/`
+    const lte = `crypto/~`
+    for await (const [, json] of leveldb.iterator({
+      keys: false,
+      values: true,
+      limit: 1,
+      gte,
+      lte,
+    })) {
+      return keypairModel.clone(JSON.parse(json))
+    }
+  }
 
   return {
     putPool,
@@ -152,7 +210,6 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
 
     getBlock,
 
-    queryAffected,
     querySockets,
     queryLatest,
     queryPool,
@@ -162,7 +219,8 @@ const dbFactory = (dynamodb = ramDynamoDbFactory()) => {
     scanKeypair,
     putKeypair,
 
-    putPierce,
+    putPierceReply,
+    putPierceRequest,
     queryPiercings,
     delPierce,
   }

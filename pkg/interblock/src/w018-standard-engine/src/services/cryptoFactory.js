@@ -1,16 +1,17 @@
 import assert from 'assert-fast'
+import levelup from 'levelup'
+import memdown from 'memdown'
 import { cryptoCacher, keypairModel } from '../../../w015-models'
 import { signatureProducer } from '../../../w016-producers'
-import { ramDynamoDbFactory, dbFactory } from './consistencyFactory'
+import { dbFactory } from './consistencyFactory'
 import * as crypto from '../../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:services:crypto')
-const { cacheVerifyKeypair } = cryptoCacher
 
 // TODO reuse the same key if CI for deterministic blocks
-const cryptoSourceFactory = (dynamoDb, keyname = 'CI') => {
-  dynamoDb = dynamoDb || ramDynamoDbFactory()
-  const db = dbFactory(dynamoDb)
+const cryptoSourceFactory = (leveldb, keyname = 'CI') => {
+  leveldb = leveldb || levelup(memdown())
+  const db = dbFactory(leveldb)
   assert(typeof keyname === 'string')
   const sign = async (integrity) => {
     debug(`sign`)
@@ -28,26 +29,22 @@ const cryptoSourceFactory = (dynamoDb, keyname = 'CI') => {
     if (_keypair) {
       return _keypair
     }
-    const previous = await db.scanKeypair()
-    if (previous) {
-      const previousObj = JSON.parse(previous.keypairJson)
-      await cacheVerifyKeypair(previousObj)
-      _keypair = keypairModel.clone(previousObj)
+    const current = await db.scanKeypair()
+    if (current) {
+      _keypair = current
     } else {
-      const keypairRaw = await crypto.generateKeyPair()
+      const keypairRaw =
+        keyname === 'CI' ? crypto.ciKeypair : crypto.generateKeyPair()
       const keypairAttempt = keypairModel.create(keyname, keypairRaw)
-      const keypairJson = keypairAttempt.serialize()
-      await db.putKeypair({ keyname, keypairJson })
-      // rescan to ensure parallel threads have the same key
-      const { keypairJson: retrieved } = await db.scanKeypair()
+      await db.putKeypair(keypairAttempt)
+      // TODO rescan to ensure parallel threads have the same key
+      const retrieved = await db.scanKeypair()
       if (!retrieved) {
         throw new Error(`cannot store keypair`)
       }
-      const retrievedObj = JSON.parse(retrieved)
-      await cacheVerifyKeypair(retrievedObj)
-      _keypair = keypairModel.clone(retrievedObj)
+      _keypair = retrieved
       if (!_keypair.equals(keypairAttempt)) {
-        debug(`collision avoided for: `, keyname)
+        console.error(`collision avoided for: `, keyname)
       }
     }
     return _keypair
@@ -56,8 +53,8 @@ const cryptoSourceFactory = (dynamoDb, keyname = 'CI') => {
   return { sign, getValidatorEntry }
 }
 
-const cryptoFactory = (dynamoDb, keyname = 'CI') => {
-  const cryptoSource = cryptoSourceFactory(dynamoDb, keyname)
+const cryptoFactory = (leveldb, keyname = 'CI') => {
+  const cryptoSource = cryptoSourceFactory(leveldb, keyname)
   const cryptoProcessor = async (action) => {
     debug(`crypto: ${action.type}`)
     switch (action.type) {

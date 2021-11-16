@@ -18,6 +18,8 @@ const fromFunctions = (consistencySource) => async (action) => {
       return consistencySource.getBlock(action.payload)
     case 'GET_BLOCKS':
       return consistencySource.getBlocks(action.payload)
+    case 'BASE_ADDRESS':
+      return consistencySource.getBaseAddress()
     case 'PIERCE_REQ':
       return consistencySource.putPierceRequest(action.payload)
     case 'PIERCE_REP':
@@ -37,6 +39,7 @@ const toFunctions = (queue) => ({
   getIsPresent: (payload) => queue.push({ type: 'IS_PRESENT', payload }),
   getBlock: (payload) => queue.push({ type: 'GET_BLOCK', payload }),
   getBlocks: (payload) => queue.push({ type: 'GET_BLOCKS', payload }),
+  getBaseAddress: () => queue.push({ type: 'BASE_ADDRESS', payload: {} }),
   putPierceRequest: (payload) => queue.push({ type: 'PIERCE_REQ', payload }),
   putPierceReply: (payload) => queue.push({ type: 'PIERCE_REP', payload }),
 })

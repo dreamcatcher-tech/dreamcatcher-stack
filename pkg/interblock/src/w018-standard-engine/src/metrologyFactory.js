@@ -28,17 +28,14 @@
  */
 
 import assert from 'assert-fast'
+import levelup from 'levelup'
+import memdown from 'memdown'
 import posix from 'path-browserify'
 import last from 'lodash.last'
 import setImmediate from 'set-immediate-shim'
 import { standardEngineFactory } from './standardEngineFactory'
 import { isolateFactory } from './services/isolateFactory'
-import {
-  consistencyFactory,
-  ramDynamoDbFactory,
-  ramS3Factory,
-  s3Keys,
-} from './services/consistencyFactory'
+import { consistencyFactory, toFunctions } from './services/consistencyFactory'
 import { createBase } from './execution/createBase'
 import { createTap } from './execution/tap'
 import { actions } from '../../w017-dmz-producer'
@@ -70,43 +67,29 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
 
   const isolateProcessor = isolateFactory(ioConsistency, covenantOverloads)
   ioIsolate.setProcessor(isolateProcessor)
-  const ramDb = ramDynamoDbFactory()
-  const ramS3 = ramS3Factory()
-  ioConsistency.setProcessor(consistencyFactory(ramDb, ramS3, identifier))
+  const leveldb = levelup(memdown())
+  const consistencyProcessor = consistencyFactory(leveldb, identifier)
+  ioConsistency.setProcessor(consistencyProcessor)
+  const consistency = toFunctions(ioConsistency)
   const tap = enableLoggingWithTap(engine, identifier)
   const baseAddress = await createBase(ioConsistency, sqsPool)
 
   const metrology = (address, absolutePath) => {
     assert(addressModel.isModel(address))
 
-    const getState = (height) => {
+    const getBlock = (height) => {
       // a synchronous snapshot of the current state of storage
       // TODO pull straight from blocks ?
-      return _getBlock(address.getChainId(), height)
+      return getLatest(address, height)
     }
     const getContext = () => {
-      const block = getState()
+      const block = getBlock()
       return block.state.context
     }
-    const getLatest = async (chainId) => {
-      let latest, asyncLatest
-      const unsubscribe = subscribeBlockstream(chainId, (block) => {
-        latest = block
-        if (asyncLatest) {
-          asyncLatest(block)
-        }
-        // TODO handle rejection if we can never resolve the block
-      })
-      if (latest) {
-        unsubscribe()
-        return latest
-      }
-      return new Promise((resolve, reject) => {
-        asyncLatest = (block) => {
-          unsubscribe()
-          resolve(block)
-        }
-      })
+    const getLatest = async (address, height) => {
+      // TODO fetch from servers and seek out remote chains ?
+      const latest = await consistency.getBlock({ address, height })
+      return latest
     }
     const blockstreamSubscribers = new Map()
     const subscribeBlockstream = (chainId, callback) => {
@@ -145,46 +128,11 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
         }
       }
     })
-    const getChildren = () => {
-      // TODO remove this function completely
-      const block = getState()
-      const aliases = block.network.getAliases()
-      const children = {}
-      aliases.forEach((alias) => {
-        const channel = block.network[alias]
-        if (channel.systemRole === './') {
-          const { address } = channel
-          const isRoot = absolutePath === '/' // TODO remove this check by normalizing paths
-          const childAbsolutePath = isRoot ? alias : absolutePath + '/' + alias
-          children[alias] = metrology(address, childAbsolutePath) // TODO dispatch still goes to origin ?
-        }
-      })
-      return children
-    }
     const getAbsolutePath = () => absolutePath
-    const getChannels = () => {
-      const block = getState()
-      return block.network
-    }
     const getEngine = () => engine
     const getPersistence = () => ioConsistency.getProcessor().persistence
     const getChainId = () => address.getChainId()
     const getHeight = () => getState().provenance.height
-    const getPool = () => {
-      // a synchronous snapshot of the current state of storage
-      const { dbPools } = ramDb._getTables()
-      const chainId = address.getChainId()
-      const partition = dbPools[chainId]
-      const items = Object.values(partition)
-      const s3InterblockKeys = items.map(s3Keys.fromPoolItem)
-      const { wbinterbucket } = ramS3._getBuckets()
-      const interblocks = s3InterblockKeys.map((s3Key) => {
-        const jsonInterblock = wbinterbucket[s3Key]
-        assert(jsonInterblock)
-        return interblockModel.clone(jsonInterblock)
-      })
-      return interblocks
-    }
     const settle = async (enginePair) => {
       const queues = Object.values(engine)
       while (queues.some((q) => q.length() || q.awaitingLength())) {
@@ -229,8 +177,8 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       assert(height >= -1)
       const segments = _getPathSegments(path)
       let alias = segments.shift()
-      let chainId = baseAddress.getChainId()
-      let nextBlock = await getLatest(chainId)
+      let address = baseAddress
+      let nextBlock = await getLatest(address)
       while (segments.length) {
         alias = segments.shift()
         if (!nextBlock.network[alias]) {
@@ -238,8 +186,8 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
           return
         }
         assert(nextBlock.network[alias].address.isResolved())
-        chainId = nextBlock.network[alias].address.getChainId()
-        nextBlock = await getLatest(chainId)
+        address = nextBlock.network[alias].address
+        nextBlock = await getLatest(address)
       }
       if (height === -1 || height === nextBlock.getHeight()) {
         return nextBlock
@@ -250,51 +198,24 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
       // TODO fetch from other block producers
       return _getBlock(nextBlock.getChainId(), height)
     }
-    const _getBlock = (chainId, height) => {
-      if (typeof height !== 'undefined') {
-        assert(Number.isInteger(height))
-        assert(height >= -1)
-      }
-      const { dbChains } = ramDb._getTables()
-      const chain = dbChains[chainId] || {}
-      let blockItem
-      if (height === undefined) {
-        blockItem = last(Object.values(chain))
-      } else {
-        if (!chain[height]) {
-          throw new Error(`out of bounds: ${height} ${chain.length}`)
-        }
-        blockItem = chain[height]
-      }
-      if (blockItem) {
-        const s3Key = s3Keys.fromBlockItem(blockItem)
-        const { wbblockbucket } = ramS3._getBuckets()
-        const block = wbblockbucket[s3Key]
-        assert(blockModel.isModel(block))
-        return block
-      }
-    }
     return {
       pierce,
       spawn,
       subscribeBlockstream,
+      getBlock,
       getLatest,
       getLatestFromPath,
-      getState,
       getContext,
-      getChildren,
       getAbsolutePath,
-      getChannels,
       getEngine,
       getPersistence,
       getChainId,
       getHeight,
-      getPool,
       getCovenants,
       settle,
       enableLogging,
       disableLogging,
-      getBlockCount,
+      getBlockCount, // move to engine.stats
       getChainCount,
       getActionCreators,
     }

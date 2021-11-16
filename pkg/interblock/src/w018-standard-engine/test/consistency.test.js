@@ -1,8 +1,7 @@
 import { assert } from 'chai/index.mjs'
-import {
-  ramDynamoDbFactory,
-  consistencySourceFactory,
-} from '../src/services/consistencyFactory'
+import { consistencySourceFactory } from '../src/services/consistencyFactory'
+import levelup from 'levelup'
+import memdown from 'memdown'
 import { addressModel, blockModel, lockModel } from '../../w015-models'
 import { v4 } from 'uuid'
 import { integrityModel } from '../../w015-models'
@@ -15,7 +14,6 @@ describe('consistency', () => {
   const consistencySource = consistencySourceFactory()
   describe('putPoolInterblocks', () => {
     test.todo('duplicates discarded')
-    test.todo('light does not displace heavy')
   })
   describe('lockChain', () => {
     test('lock for undefined block', async () => {
@@ -37,11 +35,9 @@ describe('consistency', () => {
       const ramDelayMs = 10
       assert(delay < ramDelayMs)
     })
-    test.skip('lock is exclusive between consistency sources', async () => {
-      //TODO re-enable when have pure locking model built
+    test('lock is exclusive between consistency sources', async () => {
       const address = addressModel.create('TEST')
-      const db = ramDynamoDbFactory()
-      delete db._getTables // skip the ram db optimization
+      const db = levelup(memdown())
       const source1 = consistencySourceFactory(db)
       const source2 = consistencySourceFactory(db)
 
@@ -52,6 +48,7 @@ describe('consistency', () => {
     })
     test.todo('no attempt to unlock if expired')
     test('includes block', async () => {
+      Debug.enable('*lock*')
       const block = await blockModel.create()
       const address = block.provenance.getAddress()
       const lock = await consistencySource.putLockChain(address)

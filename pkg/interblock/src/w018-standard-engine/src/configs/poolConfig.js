@@ -163,11 +163,8 @@ const poolConfig = (ioCrypto, ioConsistency) => {
     services: {
       // always have to get the target block anyway, to see if this is valid
       isStorageEmpty: async () => {
-        const blankAddress = undefined
-        const firstBlock = await consistency.getBlock({
-          address: blankAddress,
-        })
-        const isStorageEmpty = !firstBlock
+        const baseAddress = await consistency.getBaseAddress()
+        const isStorageEmpty = !baseAddress
         debug(`isStorageEmpty service: ${isStorageEmpty}`)
         return { isStorageEmpty }
       },
@@ -192,7 +189,6 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         assert(lockModel.isModel(lock))
         debug(`unlockChain`, lock.block.getChainId().substring(0, 9))
         await consistency.putUnlockChain(lock)
-        return
       },
       fetchValidatorKey: async () => {
         debug(`fetchValidatorKey`)

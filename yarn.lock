@@ -5902,6 +5902,11 @@ level-js@^6.1.0:
     ltgt "^2.1.2"
     run-parallel-limit "^1.1.0"
 
+level-lock@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/level-lock/-/level-lock-1.0.1.tgz#4a70f92c1fd744f2246f9c75afa7e777e14cd2a8"
+  integrity sha1-SnD5LB/XRPIkb5x1r6fnd+FM0qg=
+
 level-supports@^2.0.1:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/level-supports/-/level-supports-2.1.0.tgz#9af908d853597ecd592293b2fad124375be79c5f"
@@ -6024,11 +6029,6 @@ lodash.clonedeep@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
   integrity sha1-4j8/nE+Pvd6HJSnBBxhXoIblzO8=
-
-lodash.compact@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/lodash.compact/-/lodash.compact-3.0.1.tgz#540ce3837745975807471e16b4a2ba21e7256ca5"
-  integrity sha1-VAzjg3dFl1gHRx4WtKK6IeclbKU=
 
 lodash.flatten@^4.4.0:
   version "4.4.0"

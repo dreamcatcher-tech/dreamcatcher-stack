@@ -1,39 +1,38 @@
+import levelup from 'levelup'
+import lock from 'level-lock' // TODO make work on AWS
+import assert from 'assert-fast'
 import Debug from 'debug'
-import { ramDynamoDbFactory } from './ramDynamoDbFactory'
 
 let instanceId = 0
 let ramLockId = 1
-const lockFactory = (dynamodb = ramDynamoDbFactory()) => {
+const locks = new Map()
+
+const lockFactory = (leveldb) => {
+  assert(leveldb instanceof levelup)
   const debug = Debug(`interblock:aws:lock:id-${instanceId++}`)
 
-  const locks = new Map()
-  const tryAcquire = async (chainId, awsRequestId, expiryMs) => {
-    debug(
-      `attempting to lock %o %o %o`,
-      chainId.substring(0, 16),
-      awsRequestId,
-      expiryMs
-    )
-    if (locks.has(chainId)) {
-      debug(`already locked to this thread: ${chainId}`)
+  const tryAcquire = async (chainId, lockPrefix, expiryMs) => {
+    const shortId = chainId.substring(0, 9)
+    debug(`attempting to lock %o %o %o`, shortId, lockPrefix, expiryMs)
+    const unlock = lock(leveldb, chainId, 'w')
+    if (!unlock) {
+      debug(`already locked to this thread: ${shortId}`)
       return
     }
-    if (dynamodb._getTables) {
-      const uuid = 'ramLockId-' + ramLockId++
-      const hardwareLock = {
-        uuid,
-        tryRelease() {
-          debug(`ram tryRelease for uuid: %o and chainId: %o`, uuid, chainId)
-        },
-      }
-      locks.set(chainId, hardwareLock)
-      return uuid
+    const uuid = 'ramLockId-' + ramLockId++
+    const hardwareLock = {
+      uuid,
+      tryRelease() {
+        debug(`ram tryRelease for uuid: %o and chainId: %o`, uuid, shortId)
+        unlock()
+      },
     }
+    locks.set(chainId, hardwareLock)
+    return uuid
   }
 
   const isValid = async (chainId, uuid) => {
     // TODO check lock has not expired
-    await Promise.resolve()
     if (!locks.has(chainId)) {
       debug(`unknown lock for ${chainId}`)
       return false

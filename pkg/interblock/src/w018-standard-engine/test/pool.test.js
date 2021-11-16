@@ -10,7 +10,7 @@ describe('pool', () => {
   describe('initializeStorage', () => {
     test('initial conditions creates new baseChain', async () => {
       const metrology = await metrologyFactory('A')
-      const block = metrology.getState()
+      const block = await metrology.getLatest()
       assert(blockModel.isModel(block))
       assert.strictEqual(block.provenance.height, 0)
       assert.strictEqual(block.network.getAliases().length, 2)
@@ -20,15 +20,14 @@ describe('pool', () => {
     test('two metrology bases have different addresses', async () => {
       const metrology1 = await metrologyFactory('B')
       const metrology2 = await metrologyFactory('C')
-      const block1 = metrology1.getState()
-      const block2 = metrology2.getState()
+      const block1 = await metrology1.getLatest()
+      const block2 = await metrology2.getLatest()
       const address1 = block1.provenance.getAddress()
       const address2 = block2.provenance.getAddress()
       assert.notStrictEqual(block1, block2)
       assert.notStrictEqual(address1, address2)
       assert.notStrictEqual(address1.getChainId(), address2.getChainId())
     })
-    test.todo('send lineage in all possible combinations and repetitions')
   })
 
   describe('poolInterblock', () => {
@@ -38,25 +37,25 @@ describe('pool', () => {
         base.enableLogging()
         await base.spawn('child')
         await base.settle()
-        const baseState = base.getState()
-        assert(blockModel.isModel(baseState))
-        assert.strictEqual(baseState.provenance.height, 2)
-        const childChannel = baseState.network.child
+        const baseBlock = await base.getLatest()
+        assert(blockModel.isModel(baseBlock))
+        assert.strictEqual(baseBlock.provenance.height, 2)
+        const childChannel = baseBlock.network.child
         assert.strictEqual(childChannel.tipHeight, 1)
         assert(!childChannel.isTransmitting())
-        const block1Integrity = base.getState(1).provenance.reflectIntegrity()
-        assert.strictEqual(childChannel.precedent, block1Integrity)
+        const block1 = await base.getBlock(1)
+        const block1Integrity = block1.provenance.reflectIntegrity()
+        assert(block1Integrity.equals(childChannel.precedent))
 
-        const { child } = base.getChildren()
-        const childState = child.getState()
-        assert.strictEqual(childState.provenance.height, 1)
-        assert.strictEqual(Object.keys(child.getChannels()).length, 2)
-        assert.strictEqual(Object.keys(base.getChannels()).length, 4)
-        assert.strictEqual(baseState.network.child.systemRole, './')
-        assert(childChannel.address.equals(childState.provenance.getAddress()))
-        const parent = childState.network['..']
-        assert(parent.address.equals(baseState.provenance.getAddress()))
-        assert.strictEqual(parent.tipHeight + 1, baseState.provenance.height)
+        const childBlock = await base.getLatestFromPath('/child')
+        assert.strictEqual(childBlock.provenance.height, 1)
+        assert.strictEqual(childBlock.network.getAliases().length, 2)
+        assert.strictEqual(baseBlock.network.getAliases().length, 4)
+        assert.strictEqual(baseBlock.network.child.systemRole, './')
+        assert(childChannel.address.equals(childBlock.provenance.getAddress()))
+        const parent = childBlock.network['..']
+        assert(parent.address.equals(baseBlock.provenance.getAddress()))
+        assert.strictEqual(parent.tipHeight + 1, baseBlock.provenance.height)
         const { tip } = parent
         assert(tip.equals(block1Integrity))
       })
