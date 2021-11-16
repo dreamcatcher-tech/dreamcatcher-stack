@@ -46,9 +46,9 @@ import Debug from 'debug'
 const debugBase = Debug('ib:met')
 
 let id = 0
-const metrologyFactory = async (identifier, covenantOverloads = {}) => {
+const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
   // TODO use metrology in streamProcessor
-  assert.strictEqual(typeof covenantOverloads, 'object')
+  assert.strictEqual(typeof covenants, 'object')
   identifier = identifier || `id-${id++}`
   const debug = debugBase.extend(`${identifier}`)
   const engine = standardEngineFactory()
@@ -65,9 +65,10 @@ const metrologyFactory = async (identifier, covenantOverloads = {}) => {
     ioIncrease,
   } = engine
 
-  const isolateProcessor = isolateFactory(ioConsistency, covenantOverloads)
+  const isolateProcessor = isolateFactory(ioConsistency, covenants)
   ioIsolate.setProcessor(isolateProcessor)
-  const leveldb = levelup(memdown())
+  leveldb = leveldb || levelup(memdown())
+  assert(leveldb.isOperational())
   const consistencyProcessor = consistencyFactory(leveldb, identifier)
   ioConsistency.setProcessor(consistencyProcessor)
   const consistency = toFunctions(ioConsistency)

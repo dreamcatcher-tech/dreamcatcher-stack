@@ -14,7 +14,7 @@ describe('hooker', () => {
     const pong = await base.pierce('PING')
     assert.strictEqual(pong.type, 'PONG')
     await base.settle()
-    const block = base.getState()
+    const block = await base.getLatest()
     assert.strictEqual(block.provenance.height, 3)
     const { requests, replies } = block.network['.']
     const length = (obj) => Object.keys(obj).length

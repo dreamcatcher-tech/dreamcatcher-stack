@@ -37,7 +37,7 @@ const modelInflator = (schema, instance) => {
       inflated[key] = inflatePattern(properties[key], slice)
       return
     }
-    // validate(properties[key], slice)
+    validate(properties[key], slice)
     inflated[key] = slice
   })
   return inflated

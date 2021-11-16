@@ -36,7 +36,7 @@ describe('dmzReducer', () => {
       base.enableLogging()
       await base.pierce({ type: 'TEST_SPAWN' })
       await base.settle()
-      const state = base.getState(1)
+      const state = await base.getBlock(1)
       const requests = state.network.child1.requests
       assert.strictEqual(requests.length, 2)
     })
