@@ -84,7 +84,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
       await db.delPool(chainId)
       // TODO remove only the ingested piercings
       // TODO if pierce lowered, remove all piercings
-      await db.delPierce(chainId)
+      await db.delPierce(chainId, previousLock.piercings)
     }
     await lockProvider.release(chainId, incomingLock.uuid)
     locks.delete(chainId)

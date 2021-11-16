@@ -48,7 +48,6 @@ describe('consistency', () => {
     })
     test.todo('no attempt to unlock if expired')
     test('includes block', async () => {
-      Debug.enable('*lock*')
       const block = await blockModel.create()
       const address = block.provenance.getAddress()
       const lock = await consistencySource.putLockChain(address)

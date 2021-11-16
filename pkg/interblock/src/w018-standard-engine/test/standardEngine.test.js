@@ -4,8 +4,9 @@ describe('standardEngine', () => {
   test('multiple increase requests successfully lock chain twice', async () => {
     const base = await metrologyFactory()
     const { sqsIncrease, ioConsistency } = base.getEngine()
-    assert.strictEqual(base.getHeight(), 0)
-    const address = base.getState().provenance.getAddress()
+    let baseBlock = await base.getLatest()
+    assert.strictEqual(baseBlock.getHeight(), 0)
+    const address = baseBlock.provenance.getAddress()
     let lockCount = 0
     let unlockCount = 0
     ioConsistency.subscribe((action) => {
@@ -24,7 +25,8 @@ describe('standardEngine', () => {
     assert.strictEqual(lockCount, unlockCount)
     assert.strictEqual(lockCount, 2)
     // TODO make compatible with runInBand
-    assert.strictEqual(base.getHeight(), 0)
+    baseBlock = await base.getLatest()
+    assert.strictEqual(baseBlock.getHeight(), 0)
   })
 
   test.todo(

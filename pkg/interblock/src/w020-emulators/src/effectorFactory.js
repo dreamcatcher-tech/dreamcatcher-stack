@@ -96,9 +96,6 @@ const effector = (metro) => {
     assert.strictEqual(typeof path, 'string', `path not string: ${path}`)
     const absPath = posix.resolve('/', path)
     debug(`latest`, absPath)
-    if (absPath === '/') {
-      return metro.getState(height)
-    }
     return metro.getLatestFromPath(absPath, height)
   }
   const context = () => metro.getContext()

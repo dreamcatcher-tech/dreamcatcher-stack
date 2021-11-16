@@ -25,7 +25,7 @@ const modelInflator = (schema, instance) => {
   Object.keys(instance).map((key) => {
     const { title, type, patternProperties } = properties[key]
     const slice = instance[key]
-    if (registry.isRegistered(title)) {
+    if (registry.isRegistered(title) && slice) {
       inflated[key] = registry.get(title).clone(slice)
       return
     }
@@ -71,7 +71,6 @@ const inflatePattern = (schema, instance) => {
 const inflateArray = (schema, instance) => {
   assert(Array.isArray(instance))
   assert(schema.type === 'array')
-  assert(schema.uniqueItems, `uniqueItems not set: ${schema.title}`)
   if (registry.isRegistered(schema.items.title)) {
     const model = registry.get(schema.items.title)
     assert(model, `Arrays must be models`)

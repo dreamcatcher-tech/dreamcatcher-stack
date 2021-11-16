@@ -83,8 +83,8 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
       // TODO pull straight from blocks ?
       return getLatest(address, height)
     }
-    const getContext = () => {
-      const block = getBlock()
+    const getContext = async () => {
+      const block = await getBlock()
       return block.state.context
     }
     const getLatest = async (address, height) => {
@@ -133,7 +133,6 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
     const getEngine = () => engine
     const getPersistence = () => ioConsistency.getProcessor().persistence
     const getChainId = () => address.getChainId()
-    const getHeight = () => getState().provenance.height
     const settle = async (enginePair) => {
       const queues = Object.values(engine)
       while (queues.some((q) => q.length() || q.awaitingLength())) {
@@ -197,7 +196,6 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
         // TODO subscribe, seek, or otherwise find if height insufficient
       }
       // TODO fetch from other block producers
-      return _getBlock(nextBlock.getChainId(), height)
     }
     return {
       pierce,
@@ -211,7 +209,6 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
       getEngine,
       getPersistence,
       getChainId,
-      getHeight,
       getCovenants,
       settle,
       enableLogging,

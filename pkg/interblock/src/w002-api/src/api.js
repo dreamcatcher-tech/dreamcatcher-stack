@@ -1,4 +1,3 @@
-import { serializeError } from 'serialize-error'
 /**
  * ACTION CREATORS FOR USE INSIDE COVENANTS
  *
@@ -54,7 +53,6 @@ const _txReply = (type = '@@RESOLVE', payload = {}, identifier) => {
       break
     case '@@REJECT':
       payload = typeof payload === 'string' ? new Error(payload) : payload
-      payload = serializeError(payload)
       break
     default:
       throw new Error(`Disallowed type: ${type}`)

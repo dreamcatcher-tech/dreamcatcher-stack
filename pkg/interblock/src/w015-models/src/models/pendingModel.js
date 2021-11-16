@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
 import { rxRequestModel, rxReplyModel } from '../transients'
+import { accumulationModel } from './accumulationModel'
 
 const pendingModel = standardize({
   // TODO make model cleaner once util can handle OR in schemas
@@ -23,17 +24,7 @@ const pendingModel = standardize({
       accumulator: {
         type: 'array',
         // description: `Full replies, in order, as well as request metadata
-        uniqueItems: true,
-        items: {
-          type: 'object',
-          required: ['type'],
-          properties: {
-            type: { type: 'string' },
-            to: { type: 'string' }, // TODO pattern for allowed alias names
-            reply: rxReplyModel.schema,
-            identifier: { type: 'string', pattern: '' }, // chainId_height_index
-          },
-        },
+        items: accumulationModel.schema,
       },
       bufferedReplies: {
         type: 'array',
@@ -66,6 +57,11 @@ const pendingModel = standardize({
     } = instance
     if (!pendingRequest) {
       assert(!accumulator.length)
+    }
+    for (const tx of accumulator) {
+      if (tx.reply) {
+        assert(rxReplyModel.isModel(tx.reply))
+      }
     }
     const getIsPending = () => !!pendingRequest
     const getAccumulator = () => accumulator

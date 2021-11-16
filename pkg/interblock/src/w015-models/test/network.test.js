@@ -30,7 +30,6 @@ describe('network', () => {
     assert.strictEqual(network.getAliases().length, 2)
   })
   test.skip('large network', () => {
-    Debug.enable('*tests*')
     let network = networkModel.create()
     let channel = channelModel.create()
     let start = Date.now()

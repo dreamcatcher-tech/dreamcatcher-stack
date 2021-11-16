@@ -91,11 +91,20 @@ const dbFactory = (leveldb) => {
     debug(`delPool complete`)
   }
 
-  const delPierce = async (chainId) => {
-    const gte = `${chainId}/piercings/`
-    const lte = `${chainId}/piercings/~`
-    await leveldb.clear({ gte, lte })
-    debug(`delPierce complete`)
+  const delPierce = async (chainId, piercings) => {
+    const { replies, requests } = piercings
+    assert(Array.isArray(replies))
+    assert(Array.isArray(requests))
+    const batch = leveldb.batch()
+    for (const reply of replies) {
+      batch.del(`${chainId}/piercings/rep_${reply.getHash()}`)
+    }
+    for (const request of requests) {
+      batch.del(`${chainId}/piercings/req_${request.getHash()}`)
+    }
+    await batch.write()
+    debug(`delPierce complete for %o replies`, replies.length)
+    debug(`delPierce complete for %o requests`, requests.length)
   }
 
   const querySockets = (chainId) => {

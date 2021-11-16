@@ -17,7 +17,8 @@ describe('pierce', () => {
 
     debug(`pings complete`)
     await base.settle()
-    const { replies } = base.getState().network['.@@io']
+    const baseBlock = await base.getLatest()
+    const { replies } = baseBlock.network['.@@io']
     assert.strictEqual(Object.keys(replies).length, 1)
     assert.strictEqual(replies['1_0'].type, '@@RESOLVE')
   })
@@ -42,8 +43,8 @@ describe('pierce', () => {
     const p1Promise = base.pierce(ping1)
     const p2Promise = base.pierce(ping2)
     await Promise.all([p1Promise, p2Promise])
-    const state = base.getState()
-    const io = state.network['.@@io']
+    const baseBlock = await base.getLatest()
+    const io = baseBlock.network['.@@io']
     assert.strictEqual(Object.keys(io.replies).length, 2)
     assert.strictEqual(io.replies['0_0'].payload.string, 'p1')
     assert.strictEqual(io.replies['0_1'].payload.string, 'p2')

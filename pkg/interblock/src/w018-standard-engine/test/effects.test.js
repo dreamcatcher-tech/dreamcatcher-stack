@@ -25,10 +25,10 @@ describe('effects', () => {
       base.pierce({ type: 'NONCE' }),
       'Wrong type of promise'
     )
-
-    const { state } = base.getState()
-    debug(`state:`, state)
+    const { state } = await base.getLatest()
+    assert(state)
   })
+
   test('hooked promise effect', async () => {
     const testData = { test: 'data' }
     const externalFunction = () => {
@@ -45,7 +45,7 @@ describe('effects', () => {
     const base = await metrologyFactory('effect', { hyper })
     base.enableLogging()
     await base.pierce({ type: 'NONCE' })
-    const { state } = base.getState()
+    const { state } = await base.getLatest()
     debug(`state:`, state)
     assert.deepEqual(state.reducerResult, testData)
   })
