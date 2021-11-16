@@ -81,6 +81,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
         await promise
       } catch (e) {
         // we care only about the promise being unsettled, not how it settled
+        console.log(e)
       }
       pendingCount--
       assert(pendingCount >= 0)
@@ -92,7 +93,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
     updatePending()
     await consistency.putPierceRequest({ txRequest })
     await sqsIncrease.pushDirect(address) // pushDirect to surface rejections
-    return promise
+    return await promise
   }
   const subscribers = new Set()
   pierce.subscribePending = (callback) => {
@@ -103,7 +104,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
   return pierce
 }
 const generateDispatchPromise = () => {
-  let callbacks = {}
+  let callbacks
   const promise = new Promise((resolve, reject) => {
     callbacks = { resolve, reject }
   })

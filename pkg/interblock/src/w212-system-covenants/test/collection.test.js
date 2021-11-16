@@ -90,15 +90,20 @@ describe('collection', () => {
     const namePath = ['firstName']
     await actions.setDatumTemplate({ namePath, schema, children })
 
-    debug('batch adding two customers')
+    debug('batch adding customers')
     shell.metro.enableLogging()
+    Debug.enable('*met* *collection')
 
     const c1 = { ...customerData, formData: { custNo: 1, firstName: 'A' } }
     const c2 = { ...customerData, formData: { custNo: 2, firstName: 'B' } }
     const c3 = { ...customerData, formData: { custNo: 3, firstName: 'C' } }
-    const result = await actions.batch([c1, c2, c3])
+    const result1 = await actions.batch([c1, c2, c3])
+    const c4 = { ...customerData, formData: { custNo: 4, firstName: 'D' } }
+    const c5 = { ...customerData, formData: { custNo: 5, firstName: 'E' } }
+    const c6 = { ...customerData, formData: { custNo: 6, firstName: 'F' } }
+    const result2 = await actions.batch([c4, c5, c6])
     await shell.metro.settle()
-    debug('result', result)
+    debug('result', result1)
     const { state: customer1 } = await shell.latest('col1/firstName-A')
     assert(customer1.formData.firstName)
     const { state: address } = await shell.latest('col1/firstName-A/address')

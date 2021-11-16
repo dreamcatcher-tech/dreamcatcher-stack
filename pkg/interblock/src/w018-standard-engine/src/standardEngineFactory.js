@@ -68,7 +68,7 @@ const standardEngineFactory = () => {
   // TODO test behaviour independently, concurrent - maybe with dirty queues ?
   const increasor = (ioIncrease, sqsTransmit) => {
     const redrives = new Map()
-    const locks = new Map()
+    const locks = new Map() // TODO delete this now have proper locking ?
     const debugIncreasor = debugBase.extend('increasor')
     const throttler = async (address) => {
       assert(addressModel.isModel(address))
