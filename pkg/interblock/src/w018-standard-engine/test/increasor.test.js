@@ -80,6 +80,14 @@ describe('increasor', () => {
     const { provenance } = baseBlock
     assert.strictEqual(Object.keys(provenance.lineage).length, 2)
   })
+  test('lexographic sorting of block height over 10', async () => {
+    const base = await metrologyFactory()
+    for (let i = 0; i < 10; i++) {
+      await base.pierce('PING')
+    }
+    const baseBlock = await base.getLatest()
+    assert.strictEqual(baseBlock.getHeight(), 10)
+  })
   test.todo('config changes cause new block')
   test.todo('rename alias does not cause interblock')
   test.todo('automatic promises')

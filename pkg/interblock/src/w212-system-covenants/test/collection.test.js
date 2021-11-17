@@ -91,8 +91,7 @@ describe('collection', () => {
     await actions.setDatumTemplate({ namePath, schema, children })
 
     debug('batch adding customers')
-    shell.metro.enableLogging()
-    Debug.enable('*met* *collection')
+    shell.metro.enableLogging({ headersOnly: true })
 
     const c1 = { ...customerData, formData: { custNo: 1, firstName: 'A' } }
     const c2 = { ...customerData, formData: { custNo: 2, firstName: 'B' } }

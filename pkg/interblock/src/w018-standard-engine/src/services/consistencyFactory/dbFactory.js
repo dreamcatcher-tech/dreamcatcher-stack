@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import LevelUp from 'levelup'
+import leftPad from 'pad-left'
 import Debug from 'debug'
 import {
   blockModel,
@@ -10,28 +11,59 @@ import {
 } from '../../../../w015-models'
 const debug = Debug('interblock:consistency:db')
 const types = ['blocks', 'interblocks', 'piercings', 'pool']
+const pad = (height) => {
+  assert(Number.isInteger(height))
+  // TODO handle bigger than 32bit heights
+  return leftPad(height, 10, '0')
+}
 const dbFactory = (leveldb) => {
   assert(leveldb instanceof LevelUp)
   assert(leveldb.isOperational())
+  const _cache = new Map()
+  const cacheLimit = 1000
+  const putCache = (key, object) => {
+    assert(!_cache.has(key))
+    _cache.set(key, object)
+    while (_cache.size > cacheLimit) {
+      _cache.delete(_cache.keys().next())
+    }
+  }
+  const getCache = (key) => {
+    const obj = _cache.get(key)
+    if (!obj) {
+      debug(`cache miss`, key)
+    }
+    return obj
+  }
+  const delCache = (key) => _cache.delete(key)
 
   const getBlock = async (chainId, height) => {
     assert.strictEqual(typeof chainId, 'string')
     assert(Number.isInteger(height))
     assert(height >= 0)
-    const key = `${chainId}/blocks/${height}`
-    for await (const [keyBuffer, json] of leveldb.iterator({
+    const gte = `${chainId}/blocks/${pad(height)}`
+    let key
+    for await (const [keyBuffer] of leveldb.iterator({
       limit: 1,
-      keys: false,
-      values: true,
-      gte: key,
-      lte: key + '~',
+      keys: true,
+      values: false,
+      gte,
+      lte: gte + '~',
     })) {
       // TODO check hash matches
       // TODO check that no other block exists at this height
-      const block = blockModel.clone(JSON.parse(json))
-      debug(`getBlock height: `, block.getHeight())
-      return block
+      key = keyBuffer.toString()
     }
+    if (!key) {
+      return
+    }
+    let block = getCache(key)
+    if (!block) {
+      const json = await leveldb.get(key)
+      block = blockModel.clone(JSON.parse(json))
+    }
+    debug(`getBlock height: `, block.getHeight())
+    return block
   }
   const putPool = async (interblock) => {
     assert(interblockModel.isModel(interblock))
@@ -39,25 +71,47 @@ const dbFactory = (leveldb) => {
     const chainId = interblock.getChainId()
     const { height } = interblock.provenance
     const hash = interblock.getHash()
-    const key = `${targetChainId}/pool/${chainId}_${height}_${hash}`
+    const key = `${targetChainId}/pool/${chainId}_${pad(height)}_${hash}`
     await leveldb.put(key, interblock.serialize())
+    putCache(key, interblock)
   }
-
   const putBlock = async (block) => {
     const chainId = block.getChainId()
     const height = block.getHeight()
     const hash = block.getHash()
     const string = block.serialize()
-    const key = `${chainId}/blocks/${height}_${hash}`
+    const key = `${chainId}/blocks/${pad(height)}_${hash}`
     await leveldb.put(key, string)
+    putCache(key, block)
     debug(`putBlock`, chainId.substring(0, 9), height)
   }
-
-  // TODO use transactions to not add what is later deleted
-  const putSubscriptions = (items) => _dbPut('dbSubscribers', items)
-
-  const putSocket = async (item) => _dbPut('dbSockets', item)
-
+  const queryLatest = async (chainId) => {
+    debug(`queryLatest %o`, chainId.substring(0, 9))
+    const gte = `${chainId}/blocks/`
+    const lte = `${chainId}/blocks/~`
+    let key
+    for await (const [keyBuffer] of leveldb.iterator({
+      reverse: true,
+      limit: 1,
+      keys: true,
+      values: false,
+      gte,
+      lte,
+    })) {
+      key = keyBuffer.toString()
+    }
+    if (!key) {
+      debug(`queryLatest nothing found`)
+      return
+    }
+    let block = getCache(key)
+    if (!block) {
+      const json = await leveldb.get(key)
+      block = blockModel.clone(JSON.parse(json))
+    }
+    debug(`queryLatest height: `, block.getHeight())
+    return block
+  }
   const putKeypair = async (keypair) => {
     debug(`putKeypair`)
     assert(keypairModel.isModel(keypair))
@@ -72,6 +126,7 @@ const dbFactory = (leveldb) => {
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
     await leveldb.put(key, txReply.serialize())
+    putCache(key, txReply)
   }
   const putPierceRequest = async (chainId, txRequest) => {
     assert(txRequestModel.isModel(txRequest))
@@ -80,15 +135,26 @@ const dbFactory = (leveldb) => {
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
     await leveldb.put(key, txRequest.serialize())
+    putCache(key, txRequest)
   }
-
-  const delSubscriptions = (items) => _dbDel('dbSubscribers', items)
 
   const delPool = async (chainId) => {
     const gte = `${chainId}/pool/`
     const lte = `${chainId}/pool/~`
-    await leveldb.clear({ gte, lte })
-    debug(`delPool complete`)
+    const keys = []
+    for await (const [keyBuffer] of leveldb.iterator({
+      keys: true,
+      values: false,
+      gte,
+      lte,
+    })) {
+      keys.push(keyBuffer.toString())
+    }
+    for (const key of keys) {
+      await leveldb.del(key)
+      delCache(key)
+    }
+    debug(`delPool complete for %o keys`, keys.length)
   }
 
   const delPierce = async (chainId, piercings) => {
@@ -96,13 +162,21 @@ const dbFactory = (leveldb) => {
     assert(Array.isArray(replies))
     assert(Array.isArray(requests))
     const batch = leveldb.batch()
+    const keys = []
     for (const reply of replies) {
-      batch.del(`${chainId}/piercings/rep_${reply.getHash()}`)
+      const key = `${chainId}/piercings/rep_${reply.getHash()}`
+      keys.push(key)
+      batch.del(key)
     }
     for (const request of requests) {
-      batch.del(`${chainId}/piercings/req_${request.getHash()}`)
+      const key = `${chainId}/piercings/req_${request.getHash()}`
+      keys.push(key)
+      batch.del(key)
     }
     await batch.write()
+    for (const key of keys) {
+      delCache(key)
+    }
     debug(`delPierce complete for %o replies`, replies.length)
     debug(`delPierce complete for %o requests`, requests.length)
   }
@@ -118,36 +192,31 @@ const dbFactory = (leveldb) => {
     return []
   }
 
-  const queryLatest = async (chainId) => {
-    debug(`queryLatest %o`, chainId.substring(0, 9))
-    const gte = `${chainId}/blocks/`
-    const lte = `${chainId}/blocks/~`
-    for await (const [, json] of leveldb.iterator({
-      reverse: true,
-      limit: 1,
-      keys: false,
-      values: true,
-      gte,
-      lte,
-    })) {
-      const block = blockModel.clone(JSON.parse(json))
-      debug(`queryLatest height: `, block.getHeight())
-      return block
-    }
-    debug(`queryLatest nothing found`)
-  }
-
   const queryPool = async (chainId) => {
     debug(`queryPool`, chainId.substring(0, 9))
     const gte = `${chainId}/pool/`
     const lte = `${chainId}/pool/~`
-    const interblocks = []
-    for await (const [, json] of leveldb.iterator({
-      keys: false,
-      values: true,
+    const keys = []
+    for await (const [keyBuffer] of leveldb.iterator({
+      keys: true,
+      values: false,
       gte,
       lte,
     })) {
+      keys.push(keyBuffer.toString())
+    }
+    const interblocks = []
+    const uncachedKeys = keys.filter((key) => {
+      const cached = getCache(key)
+      if (!cached) {
+        return true
+      }
+      interblocks.push(cached)
+    })
+    debug(`getMany`, uncachedKeys.length)
+    const jsons = await leveldb.getMany(uncachedKeys)
+    debug(`getMany done`)
+    for (const json of jsons) {
       const interblock = interblockModel.clone(JSON.parse(json))
       interblocks.push(interblock)
     }
@@ -162,13 +231,32 @@ const dbFactory = (leveldb) => {
     const requests = []
     const replies = []
     // TODO handle timestamps on piercings
-    for await (const [keyBuffer, json] of leveldb.iterator({
+    const keys = []
+    for await (const [keyBuffer] of leveldb.iterator({
       keys: true,
-      values: true,
+      values: false,
       gte,
       lte,
     })) {
-      const key = keyBuffer.toString()
+      keys.push(keyBuffer.toString())
+    }
+    const uncachedKeys = keys.filter((key) => {
+      const tx = getCache(key)
+      if (!tx) {
+        return true
+      }
+      if (key.startsWith(gte + `rep_`)) {
+        assert(txReplyModel.isModel(tx))
+        replies.push(tx)
+      } else {
+        assert(key.startsWith(gte + `req_`))
+        assert(txRequestModel.isModel(tx))
+        requests.push(tx)
+      }
+    })
+    const jsons = await leveldb.getMany(uncachedKeys)
+    for (const key of uncachedKeys) {
+      const json = jsons.shift()
       if (key.startsWith(gte + `rep_`)) {
         const txReply = txReplyModel.clone(JSON.parse(json))
         replies.push(txReply)
@@ -184,6 +272,7 @@ const dbFactory = (leveldb) => {
   }
 
   const scanBaseChainId = async () => {
+    debug('scanBaseChainId start')
     for await (const [keyBuffer] of leveldb.iterator({
       keys: true,
       values: false,
@@ -191,10 +280,12 @@ const dbFactory = (leveldb) => {
     })) {
       const key = keyBuffer.toString()
       const [baseChainId] = key.split('/')
+      debug('scanBaseChainId end')
       return baseChainId
     }
   }
   const scanKeypair = async () => {
+    debug('scanKeypair start')
     const gte = `crypto/`
     const lte = `crypto/~`
     for await (const [, json] of leveldb.iterator({
@@ -204,17 +295,16 @@ const dbFactory = (leveldb) => {
       gte,
       lte,
     })) {
-      return keypairModel.clone(JSON.parse(json))
+      const keypair = keypairModel.clone(JSON.parse(json))
+      debug('scanKeypair end')
+      return keypair
     }
   }
 
   return {
     putPool,
     putBlock,
-    putSubscriptions,
-    putSocket,
 
-    delSubscriptions,
     delPool,
 
     getBlock,

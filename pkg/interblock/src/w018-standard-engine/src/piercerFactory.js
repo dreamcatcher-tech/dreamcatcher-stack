@@ -81,7 +81,6 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
         await promise
       } catch (e) {
         // we care only about the promise being unsettled, not how it settled
-        console.log(e)
       }
       pendingCount--
       assert(pendingCount >= 0)
