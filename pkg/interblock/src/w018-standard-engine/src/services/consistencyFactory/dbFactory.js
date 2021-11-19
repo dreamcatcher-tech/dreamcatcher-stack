@@ -20,13 +20,24 @@ const dbFactory = (leveldb) => {
   assert(leveldb instanceof LevelUp)
   assert(leveldb.isOperational())
   const _cache = new Map()
-  const cacheLimit = 100
+  const _latestCache = new Map()
+  const cacheLimitMb = 100
+  let cacheSize = 0
   const putCache = (key, object) => {
     assert(!_cache.has(key))
     _cache.set(key, object)
-    while (_cache.size > cacheLimit) {
-      debug(`shrinking cache`)
-      _cache.delete(_cache.keys().next().value)
+    cacheSize += object.serialize().length
+    if (cacheSize > cacheLimitMb * 1024 * 1024) {
+      const dbg = debug.extend('cache')
+      dbg(`shrinking cache`)
+      const originalCacheSize = cacheSize
+      const entries = _cache.entries()
+      while (cacheSize > cacheLimitMb * 1024 * 1024) {
+        const [key, object] = entries.next().value
+        cacheSize -= object.serialize().length
+        _cache.delete(key)
+      }
+      dbg('cache size was:', originalCacheSize, 'now:', cacheSize)
     }
   }
   const getCache = (key) => {
@@ -83,7 +94,11 @@ const dbFactory = (leveldb) => {
     const string = block.serialize()
     const key = `${chainId}/blocks/${pad(height)}_${hash}`
     await leveldb.put(key, string)
-    putCache(key, block)
+    if (string.length > 200000) {
+      _latestCache.set(chainId, block)
+    } else {
+      putCache(key, block)
+    }
     debug(`putBlock`, chainId.substring(0, 9), height)
   }
   const queryLatest = async (chainId) => {
@@ -105,7 +120,19 @@ const dbFactory = (leveldb) => {
       debug(`queryLatest nothing found`)
       return
     }
-    let block = getCache(key)
+    let block = _latestCache.get(chainId)
+    if (block) {
+      const chainId = block.getChainId()
+      const { height } = block.provenance
+      const hash = block.getHash()
+      const nextKey = `${chainId}/blocks/${pad(height)}_${hash}`
+      if (key !== nextKey) {
+        block = undefined
+      }
+    }
+    if (!block) {
+      block = getCache(key)
+    }
     if (!block) {
       const json = await leveldb.get(key)
       block = blockModel.clone(JSON.parse(json))

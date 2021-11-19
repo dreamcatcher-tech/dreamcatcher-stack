@@ -86,6 +86,7 @@ const transmitConfig = (ioConsistency) => {
         assert(interblockModel.isModel(interblock))
         const address = interblock.provenance.getAddress()
         // TODO check validators will be faster and safer
+        // TODO cache this call
         const isOriginPresent = await consistency.getIsPresent(address)
         debug(`isOriginPresent service: `, !!isOriginPresent)
         return { isOriginPresent }
