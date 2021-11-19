@@ -20,7 +20,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
   }
   const off = () => (isOn = false)
   const debugBase = Debug(prefix)
-  const cache = {}
+  const cache = new Map()
 
   const debugTran = debugBase.extend('t')
   const interblockTransmit = (interblock) => {
@@ -62,15 +62,15 @@ const createTap = (prefix = 'interblock:blocktap') => {
   const debugBloc = debugBase.extend('b')
   const block = (block) => {
     assert(blockModel.isModel(block))
-    const chainIdRaw = block.provenance.getAddress().getChainId()
-    const isNewChain = !cache[chainIdRaw]
-    const isDuplicate =
-      cache[chainIdRaw] && cache[chainIdRaw].some((b) => b.equals(block))
-    insertBlock(block, cache)
-    if (!isOn) {
+    const chainId = block.provenance.getAddress().getChainId()
+    const latest = cache.get(chainId)
+    const isNewChain = !latest
+    const isDuplicate = latest && latest.equals(block)
+    if (isDuplicate) {
       return
     }
-    if (isDuplicate) {
+    insertBlock(block, cache)
+    if (!isOn) {
       return
     }
     const path = getPath(block, cache)
@@ -89,20 +89,23 @@ const createTap = (prefix = 'interblock:blocktap') => {
   let chainCount = 0
   const insertBlock = (block, cache) => {
     const chainId = block.provenance.getAddress().getChainId()
-    if (!cache[chainId]) {
-      cache[chainId] = []
+    const latest = cache.get(chainId)
+    if (!latest) {
+      cache.set(chainId, block)
       chainCount++ // TODO decrement on delete chain
+      blockCount++
+      return
     }
-    if (!cache[chainId].some((b) => b.equals(block))) {
-      cache[chainId].push(block)
+    if (!latest.equals(block)) {
+      assert(latest.getHeight() < block.getHeight())
+      cache.set(chainId, block)
       blockCount++
     }
   }
 
   const getPath = (block, cache) => {
-    block = last(cache[block.provenance.getAddress().getChainId()])
     const unknown = '(unknown)'
-    if (!block) {
+    if (!block || !cache.has(block.getChainId())) {
       return unknown
     }
     const path = []
@@ -110,17 +113,16 @@ const createTap = (prefix = 'interblock:blocktap') => {
     let loopCount = 0
     while (child && loopCount < 10) {
       loopCount++
-      const { address } = child.network['..']
-      if (address.isRoot()) {
+      const parentAddress = child.network['..'].address
+      if (parentAddress.isRoot()) {
         child = undefined
         path.unshift('')
-      } else if (address.isUnknown()) {
+      } else if (parentAddress.isUnknown()) {
         path.unshift(unknown)
         child = undefined
       } else {
-        const parentChainId = address.getChainId()
-        const parent = last(cache[parentChainId])
-        assert(blockModel.isModel(parent), `Hole in pedigree`)
+        const parent = cache.get(parentAddress.getChainId())
+        assert(parent, `Hole in pedigree`)
         const name = parent.network.getAlias(child.provenance.getAddress())
         path.unshift(name)
         child = parent
@@ -136,39 +138,6 @@ const createTap = (prefix = 'interblock:blocktap') => {
     }
     return concat
   }
-  const getLatest = (alias) => {
-    // TODO deal with a absolute path alias being provided
-    let latest
-    Object.values(cache).some((chainArray) => {
-      const block = last(chainArray)
-      const parentChannel = block.network['..']
-      if (parentChannel.address.isRoot() && alias === '/') {
-        assert(!latest)
-        latest = block
-        return true
-      }
-      const { heavy } = parentChannel
-      if (heavy && heavy.getOriginAlias() === alias) {
-        assert(!latest)
-        latest = block
-        return true
-      }
-    })
-    return latest
-  }
-  const printNetwork = (network, msg = 'NEEDLEBLOCK') => {
-    let alias = 'UNKNOWN'
-    if (network['..'].address.isRoot()) {
-      alias = '/'
-    } else if (network['..'].heavy) {
-      alias = network['..'].heavy.getOriginAlias()
-    }
-    const block = getLatest(alias)
-    const messages = [headerPrint(block, alias)]
-    messages[0].msg = msg //chalk.green(msg)
-    messages.push(...networkPrint(network))
-    return print(messages)
-  }
   const getBlockCount = () => blockCount
   const getChainCount = () => chainCount
   const tap = {
@@ -178,8 +147,6 @@ const createTap = (prefix = 'interblock:blocktap') => {
     block,
     interblockTransmit,
     interblockPool,
-    getLatest,
-    printNetwork,
     getBlockCount,
     getChainCount,
   }

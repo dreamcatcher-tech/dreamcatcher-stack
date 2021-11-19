@@ -66,7 +66,8 @@ const lockModel = standardize({
     uuid = uuidCreator(),
     piercings = _defaultPiercings
   ) => {
-    interblocks = interblocks.map(interblockModel.clone)
+    assert(interblocks.every(interblockModel.isModel))
+    interblocks = sortInterblocks(interblocks)
     piercings = refinePiercings(block, piercings)
     const timestamp = timestampModel.create()
     const expires = 2000
@@ -88,6 +89,7 @@ const lockModel = standardize({
     }
     // TODO assertPrecedentChain( block, interblocks )
     assertUniqueHeights(interblocks)
+    // TODO assert interblocks are sorted in height
     // TODO check piercings are sorted correctly
     // TODO check all interblocks are valid in this block
     const isLocked = () => !timestamp.isExpired(expires)
@@ -100,6 +102,14 @@ const lockModel = standardize({
     }
   },
 })
+const sortInterblocks = (interblocks) => {
+  interblocks = [...interblocks]
+  return interblocks.sort((a, b) => {
+    const aSeq = a.provenance.height
+    const bSeq = b.provenance.height
+    return aSeq - bSeq
+  })
+}
 const assertUniqueHeights = (interblocks) => {
   const identifiers = new Set()
   for (const interblock of interblocks) {

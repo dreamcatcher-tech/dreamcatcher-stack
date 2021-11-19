@@ -7,6 +7,7 @@ import { metrologyFactory } from '../../w018-standard-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:shell')
 chai.use(chaiAsPromised)
+Debug.enable()
 
 describe('machine validation', () => {
   describe('state machine', () => {

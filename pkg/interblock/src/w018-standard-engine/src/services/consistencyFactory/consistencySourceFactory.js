@@ -81,7 +81,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
       debug(`block added`)
       // TODO store interblocks included in the block
       // TODO do not delete unincluded interblocks
-      await db.delPool(chainId)
+      await db.delPool(chainId, previousLock.interblocks)
       // TODO remove only the ingested piercings
       // TODO if pierce lowered, remove all piercings
       await db.delPierce(chainId, previousLock.piercings)

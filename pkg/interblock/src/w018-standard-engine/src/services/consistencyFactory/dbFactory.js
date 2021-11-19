@@ -20,12 +20,13 @@ const dbFactory = (leveldb) => {
   assert(leveldb instanceof LevelUp)
   assert(leveldb.isOperational())
   const _cache = new Map()
-  const cacheLimit = 1000
+  const cacheLimit = 100
   const putCache = (key, object) => {
     assert(!_cache.has(key))
     _cache.set(key, object)
     while (_cache.size > cacheLimit) {
-      _cache.delete(_cache.keys().next())
+      debug(`shrinking cache`)
+      _cache.delete(_cache.keys().next().value)
     }
   }
   const getCache = (key) => {
@@ -138,20 +139,21 @@ const dbFactory = (leveldb) => {
     putCache(key, txRequest)
   }
 
-  const delPool = async (chainId) => {
-    const gte = `${chainId}/pool/`
-    const lte = `${chainId}/pool/~`
+  const delPool = async (chainId, interblocks) => {
+    // TODO check interblock was included in the block
+    assert(Array.isArray(interblocks))
+    const batch = leveldb.batch()
     const keys = []
-    for await (const [keyBuffer] of leveldb.iterator({
-      keys: true,
-      values: false,
-      gte,
-      lte,
-    })) {
-      keys.push(keyBuffer.toString())
+    for (const interblock of interblocks) {
+      const ibChainId = interblock.getChainId()
+      const { height } = interblock.provenance
+      const hash = interblock.getHash()
+      const key = `${chainId}/pool/${ibChainId}_${pad(height)}_${hash}`
+      batch.del(key)
+      keys.push(key)
     }
+    await batch.write()
     for (const key of keys) {
-      await leveldb.del(key)
       delCache(key)
     }
     debug(`delPool complete for %o keys`, keys.length)

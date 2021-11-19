@@ -33,6 +33,10 @@
  *
  */
 import assert from 'assert-fast'
+import levelup from 'levelup'
+import memdown from 'memdown'
+import leveljs from 'level-js'
+import LevelDOWN from 'leveldown'
 import { metrologyFactory } from '../../w018-standard-engine'
 import posix from 'path-browserify'
 import { covenantIdModel } from '../../w015-models'
@@ -43,21 +47,32 @@ import { socketFactory } from './socketFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:effector')
 
-const effectorFactory = async (identifier, covenantOverloads = {}) => {
-  assert(!covenantOverloads || typeof covenantOverloads === 'object')
+const effectorFactory = async (identifier, overloads = {}, dbPath) => {
+  assert(!overloads || typeof overloads === 'object')
   debug(`effectorFactory`)
-  covenantOverloads = _inflateOverloads(covenantOverloads)
+  overloads = _inflateOverloads(overloads)
   // start the net watcher, to reconcile hardware with chainware
   const gateway = {}
   const net = netFactory(gateway)
   const socket = socketFactory(gateway)
-  covenantOverloads = {
-    ...covenantOverloads,
+  overloads = {
+    ...overloads,
     net,
     socket,
     hyper: covenants.shell,
   }
-  const metrology = await metrologyFactory(identifier, covenantOverloads)
+  let leveldb
+  if (dbPath) {
+    if (dbPath === ':indexeddb:') {
+      leveldb = levelup(leveljs())
+    } else {
+      leveldb = levelup(LevelDOWN(dbPath))
+    }
+  } else {
+    leveldb = levelup(memdown())
+  }
+
+  const metrology = await metrologyFactory(identifier, overloads, leveldb)
   const shell = effector(metrology)
   shell.startNetworking = async () =>
     await shell.add('net', { covenantId: net.covenantId })
