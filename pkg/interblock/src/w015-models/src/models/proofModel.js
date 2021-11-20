@@ -7,13 +7,11 @@ const proofModel = standardize({
   schema: proofSchema,
   create(block, channelName) {
     assert(blockModel.isModel(block))
-    const proof = { block: block.getProof() }
+    const proof = { block: 'REMOVED' }
     if (channelName) {
       assert(block.network[channelName], `missing ${channelName}`)
-      proof.network = block.network.getProof()
-      proof.channel = block.network[channelName].getProof()
     } else {
-      // TODO assert if no channelName, that we want validators
+      // TODO assert if no channelName, that we want validators for turnovers
     }
     return proofModel.clone(proof)
   },

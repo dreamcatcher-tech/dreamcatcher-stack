@@ -36,7 +36,7 @@ const standardize = (model) => {
 
     const modelFunctions = model.logicize(inflated)
 
-    const { serialize, getHash, getProof, equals, getSize } = closure(
+    const { serialize, getHash, equals, getSize } = closure(
       model.schema,
       inflated,
       isModel
@@ -45,7 +45,6 @@ const standardize = (model) => {
       ...modelFunctions,
       serialize,
       getHash,
-      getProof,
       equals,
       getSize,
       getSymbol,
@@ -113,19 +112,8 @@ const closure = (schema, inflated, isModel) => {
       assert(cachedHash)
     }
     return cachedHash
-    // const { hash, proof } = generateHash(schema, inflated)
-    // return hash
   }
-  const getProof = () => {
-    if (!cachedProof) {
-      _generateHashWithProof()
-      assert(cachedProof)
-    }
-    return cachedProof
-    // const { hash, proof } = generateHash(schema, inflated)
-    // return proof
-  }
-  return { equals, serialize, getHash, getProof, getSize }
+  return { equals, serialize, getHash, getSize }
 }
 
 const generateHash = (schema, instance) => {
@@ -138,60 +126,15 @@ const generateHash = (schema, instance) => {
       return {
         // TODO check if hash is calculated correctly
         hash: instance.provenance.reflectIntegrity().hash,
-        proof: 'no proof needed',
       }
-    }
-    case 'Network': {
-      // TODO only do proof for the subset of transmitting channels
-      // hash all channels as tho transmit was off, so makes it easy to
-      // reuse the hash in the next block
-      // so whole network is always hashed as empty
-      const { hash, proof: networkChannels } = hashPattern(instance)
-      return { hash, proof: { networkChannels } }
-    }
-    case 'Channel': {
-      // TODO avoid proof if the channel is not transmitting
-      const remote = _pickRemote(instance)
-      const restOfChannelKeys = ['systemRole', 'requestsLength', 'tip']
-      const restOfChannel = _pick(instance, restOfChannelKeys)
-      const properties = _pick(schema.properties, restOfChannelKeys)
-      const { hash: proof } = hashFromSchema({ properties }, restOfChannel)
-      const hash = crypto.objectHash({ remote: remote.getHash(), proof })
-      return { hash, proof }
     }
     case 'State': {
       return { hash: crypto.objectHash(instance) }
     }
-    case 'SimpleArray': {
-      // TODO remove this when can handle pattern properties correctly
-      return { hash: crypto.objectHash(instance) }
-    }
-    // TODO lock, rx* do not need true hashing - can speed up by using stringify for them ?
     default: {
       return hashFromSchema(schema, instance)
     }
   }
-}
-const _pickRemote = (instance) => {
-  const remoteModel = registry.get('Remote')
-  const remotePick = _pick(instance, [
-    'address',
-    'replies',
-    'requests',
-    'precedent',
-  ])
-  const remote = remoteModel.clone(remotePick)
-  return remote
-}
-const _pick = (obj, keys) => {
-  // much faster than lodash pick
-  const blank = {}
-  keys.forEach((key) => {
-    if (typeof obj[key] !== 'undefined') {
-      blank[key] = obj[key]
-    }
-  })
-  return blank
 }
 
 const hashFromSchema = (schema, instance) => {
