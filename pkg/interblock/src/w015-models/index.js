@@ -73,7 +73,6 @@ import * as queues from './src/queues'
 import * as transients from './src/transients'
 
 import { registry } from './src/registry'
-import * as cryptoCacher from './src/cryptoCacher'
 
 registry.registerModels(models)
 registry.registerModels(queues)
@@ -82,4 +81,4 @@ registry.registerModels(transients)
 export * from './src/models'
 export * from './src/queues'
 export * from './src/transients'
-export { registry, cryptoCacher }
+export { registry }

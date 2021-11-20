@@ -14,10 +14,11 @@ const standardize = (model) => {
   precompileSchema(model.schema)
   const create = model.create
   let defaultInstance
-  const modelWeakSet = new WeakSet()
-  const objectToModelWeakMap = new WeakMap()
-  const isModel = (test) => modelWeakSet.has(test)
-
+  const { title } = model.schema
+  assert(title)
+  const id = Symbol(title)
+  const isModel = (test) => test && test.getSymbol && test.getSymbol() === id
+  const getSymbol = () => id
   const clone = (object) => {
     if (!object) {
       if (!defaultInstance) {
@@ -31,14 +32,11 @@ const standardize = (model) => {
     if (typeof object === 'string') {
       object = JSON.parse(object)
     }
-    if (objectToModelWeakMap.has(object)) {
-      return objectToModelWeakMap.get(object)
-    }
     const inflated = modelInflator(model.schema, object)
 
     const modelFunctions = model.logicize(inflated)
 
-    const { serialize, getHash, getProof, equals } = closure(
+    const { serialize, getHash, getProof, equals, getSize } = closure(
       model.schema,
       inflated,
       isModel
@@ -49,12 +47,12 @@ const standardize = (model) => {
       getHash,
       getProof,
       equals,
+      getSize,
+      getSymbol,
     }
     defineFunctions(inflated, functions)
     deepFreeze(inflated)
 
-    modelWeakSet.add(inflated)
-    objectToModelWeakMap.set(object, inflated)
     return inflated
   }
 
@@ -75,7 +73,11 @@ const closure = (schema, inflated, isModel) => {
     }
     return equal(inflated, other)
   }
-  let stringify
+  const getSize = () => {
+    assert(string, 'must call serialize() before size()')
+    return string.length
+  }
+  let string
   const serialize = () => {
     /**
      * Tested on serializing a network object with 20,000 channels.
@@ -95,7 +97,8 @@ const closure = (schema, inflated, isModel) => {
     // return string
     // const string = jsonpack.pack(inflated)
     // return string
-    return JSON.stringify(inflated)
+    string = JSON.stringify(inflated)
+    return string
   }
   let cachedHash, cachedProof
   const _generateHashWithProof = () => {
@@ -110,6 +113,8 @@ const closure = (schema, inflated, isModel) => {
       assert(cachedHash)
     }
     return cachedHash
+    // const { hash, proof } = generateHash(schema, inflated)
+    // return hash
   }
   const getProof = () => {
     if (!cachedProof) {
@@ -117,8 +122,10 @@ const closure = (schema, inflated, isModel) => {
       assert(cachedProof)
     }
     return cachedProof
+    // const { hash, proof } = generateHash(schema, inflated)
+    // return proof
   }
-  return { equals, serialize, getHash, getProof }
+  return { equals, serialize, getHash, getProof, getSize }
 }
 
 const generateHash = (schema, instance) => {
@@ -135,10 +142,15 @@ const generateHash = (schema, instance) => {
       }
     }
     case 'Network': {
+      // TODO only do proof for the subset of transmitting channels
+      // hash all channels as tho transmit was off, so makes it easy to
+      // reuse the hash in the next block
+      // so whole network is always hashed as empty
       const { hash, proof: networkChannels } = hashPattern(instance)
       return { hash, proof: { networkChannels } }
     }
     case 'Channel': {
+      // TODO avoid proof if the channel is not transmitting
       const remote = _pickRemote(instance)
       const restOfChannelKeys = ['systemRole', 'requestsLength', 'tip']
       const restOfChannel = _pick(instance, restOfChannelKeys)

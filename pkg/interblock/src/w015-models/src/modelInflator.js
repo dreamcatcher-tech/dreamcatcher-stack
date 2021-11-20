@@ -94,6 +94,7 @@ const assertKeysValidated = (schema, instance) => {
 
 const schemaMap = new Map()
 const validate = (schema, instance) => {
+  return
   assert(schema, `No schema supplied`)
   let validator = schemaMap.get(schema)
   if (!validator) {

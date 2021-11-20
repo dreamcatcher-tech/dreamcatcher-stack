@@ -64,9 +64,8 @@ describe('standard model', () => {
     assert(!i1.equals(i2))
     const s1 = i1.serialize()
     const s2 = i2.serialize()
-    const s1next = i1.serialize()
-    assert.strictEqual(s1, s1next)
     assert.notStrictEqual(s1, s2)
+    assert.strictEqual(s1, JSON.stringify(i1))
   })
   test('objects are immutable', () => {
     const integrity = integrityModel.create({ test: 'test' })

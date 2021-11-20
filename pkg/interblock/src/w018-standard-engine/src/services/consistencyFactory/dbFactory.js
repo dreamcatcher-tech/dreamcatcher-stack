@@ -16,38 +16,63 @@ const pad = (height) => {
   // TODO handle bigger than 32bit heights
   return leftPad(height, 10, '0')
 }
+
+class Cache {
+  #debug = Debug('interblock:consistency:db:cache')
+  #cache = new Map()
+  #total = 0
+  #limitMB = 100
+  constructor(limit, type) {
+    if (type) {
+      this.#debug = this.#debug.extend(type)
+    }
+    assert(Number.isInteger(limit))
+    assert(limit >= 0)
+    this.#limitMB = limit
+  }
+  put(key, model) {
+    assert(!this.#cache.has(key))
+    const size = model.getSize()
+    const value = { model, size }
+    this.#cache.set(key, value)
+    this.#total += size
+    if (this.#total > this.#limitMB * 1024 * 1024) {
+      this.#debug(`shrinking cache`)
+      const originalCacheSize = this.#total
+      const entries = this.#cache.entries()
+      while (this.#total > this.#limitMB * 1024 * 1024) {
+        const [key, value] = entries.next().value
+        this.#total -= value.size
+        this.#cache.delete(key)
+      }
+      this.#debug('cache size was:', originalCacheSize, 'now:', this.#total)
+    }
+  }
+  get(key) {
+    const value = this.#cache.get(key)
+    if (value) {
+      this.#cache.delete(key)
+      this.#cache.set(key, value)
+      return value.model
+    }
+    debug(`cache miss`, key)
+  }
+  del(key) {
+    if (!this.#cache.has(key)) {
+      return
+    }
+    const { size } = this.#cache.get(key)
+    this.#total -= size
+    this.#cache.delete(key)
+  }
+}
+
 const dbFactory = (leveldb) => {
   assert(leveldb instanceof LevelUp)
   assert(leveldb.isOperational())
-  const _cache = new Map()
-  const _latestCache = new Map()
   const cacheLimitMb = 100
-  let cacheSize = 0
-  const putCache = (key, object) => {
-    assert(!_cache.has(key))
-    _cache.set(key, object)
-    cacheSize += object.serialize().length
-    if (cacheSize > cacheLimitMb * 1024 * 1024) {
-      const dbg = debug.extend('cache')
-      dbg(`shrinking cache`)
-      const originalCacheSize = cacheSize
-      const entries = _cache.entries()
-      while (cacheSize > cacheLimitMb * 1024 * 1024) {
-        const [key, object] = entries.next().value
-        cacheSize -= object.serialize().length
-        _cache.delete(key)
-      }
-      dbg('cache size was:', originalCacheSize, 'now:', cacheSize)
-    }
-  }
-  const getCache = (key) => {
-    const obj = _cache.get(key)
-    if (!obj) {
-      debug(`cache miss`, key)
-    }
-    return obj
-  }
-  const delCache = (key) => _cache.delete(key)
+  const cache = new Cache(cacheLimitMb)
+  // TODO make separate caches for interblocks, blocks, piercings
 
   const getBlock = async (chainId, height) => {
     assert.strictEqual(typeof chainId, 'string')
@@ -69,7 +94,7 @@ const dbFactory = (leveldb) => {
     if (!key) {
       return
     }
-    let block = getCache(key)
+    let block = cache.get(key)
     if (!block) {
       const json = await leveldb.get(key)
       block = blockModel.clone(JSON.parse(json))
@@ -85,7 +110,7 @@ const dbFactory = (leveldb) => {
     const hash = interblock.getHash()
     const key = `${targetChainId}/pool/${chainId}_${pad(height)}_${hash}`
     await leveldb.put(key, interblock.serialize())
-    putCache(key, interblock)
+    cache.put(key, interblock)
   }
   const putBlock = async (block) => {
     const chainId = block.getChainId()
@@ -94,11 +119,7 @@ const dbFactory = (leveldb) => {
     const string = block.serialize()
     const key = `${chainId}/blocks/${pad(height)}_${hash}`
     await leveldb.put(key, string)
-    if (string.length > 200000) {
-      _latestCache.set(chainId, block)
-    } else {
-      putCache(key, block)
-    }
+    cache.put(key, block)
     debug(`putBlock`, chainId.substring(0, 9), height)
   }
   const queryLatest = async (chainId) => {
@@ -120,22 +141,11 @@ const dbFactory = (leveldb) => {
       debug(`queryLatest nothing found`)
       return
     }
-    let block = _latestCache.get(chainId)
-    if (block) {
-      const chainId = block.getChainId()
-      const { height } = block.provenance
-      const hash = block.getHash()
-      const nextKey = `${chainId}/blocks/${pad(height)}_${hash}`
-      if (key !== nextKey) {
-        block = undefined
-      }
-    }
-    if (!block) {
-      block = getCache(key)
-    }
+    let block = cache.get(key)
     if (!block) {
       const json = await leveldb.get(key)
       block = blockModel.clone(JSON.parse(json))
+      block.serialize()
     }
     debug(`queryLatest height: `, block.getHeight())
     return block
@@ -154,7 +164,7 @@ const dbFactory = (leveldb) => {
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
     await leveldb.put(key, txReply.serialize())
-    putCache(key, txReply)
+    cache.put(key, txReply)
   }
   const putPierceRequest = async (chainId, txRequest) => {
     assert(txRequestModel.isModel(txRequest))
@@ -163,7 +173,7 @@ const dbFactory = (leveldb) => {
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
     await leveldb.put(key, txRequest.serialize())
-    putCache(key, txRequest)
+    cache.put(key, txRequest)
   }
 
   const delPool = async (chainId, interblocks) => {
@@ -181,7 +191,7 @@ const dbFactory = (leveldb) => {
     }
     await batch.write()
     for (const key of keys) {
-      delCache(key)
+      cache.del(key)
     }
     debug(`delPool complete for %o keys`, keys.length)
   }
@@ -204,7 +214,7 @@ const dbFactory = (leveldb) => {
     }
     await batch.write()
     for (const key of keys) {
-      delCache(key)
+      cache.del(key)
     }
     debug(`delPierce complete for %o replies`, replies.length)
     debug(`delPierce complete for %o requests`, requests.length)
@@ -236,7 +246,7 @@ const dbFactory = (leveldb) => {
     }
     const interblocks = []
     const uncachedKeys = keys.filter((key) => {
-      const cached = getCache(key)
+      const cached = cache.get(key)
       if (!cached) {
         return true
       }
@@ -270,7 +280,7 @@ const dbFactory = (leveldb) => {
       keys.push(keyBuffer.toString())
     }
     const uncachedKeys = keys.filter((key) => {
-      const tx = getCache(key)
+      const tx = cache.get(key)
       if (!tx) {
         return true
       }

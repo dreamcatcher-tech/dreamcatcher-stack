@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import levelup from 'levelup'
 import memdown from 'memdown'
-import { cryptoCacher, keypairModel } from '../../../w015-models'
+import { keypairModel } from '../../../w015-models'
 import { signatureProducer } from '../../../w016-producers'
 import { dbFactory } from './consistencyFactory'
 import * as crypto from '../../../w012-crypto'

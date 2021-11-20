@@ -69,7 +69,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     if (isDuplicate) {
       return
     }
-    insertBlock(block, cache)
+    // insertBlock(block, cache)
     if (!isOn) {
       return
     }

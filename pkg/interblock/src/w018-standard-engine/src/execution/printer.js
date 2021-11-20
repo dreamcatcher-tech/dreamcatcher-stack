@@ -156,13 +156,8 @@ const networkPrint = (network, options) => {
   return messages
 }
 
-const sizeCache = new WeakMap()
 const getSize = (model) => {
-  if (sizeCache.has(model)) {
-    return sizeCache.get(model)
-  }
   const size = pad(prettyBytes(model.serialize().length * 2), 12)
-  sizeCache.set(model, size)
   return size
 }
 const shrink = (string = '', bg = 'bgGreen', fg = 'white') => {
