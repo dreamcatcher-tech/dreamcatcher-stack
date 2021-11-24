@@ -2,22 +2,26 @@ import assert from 'assert-fast'
 import Immutable from 'immutable'
 import { sha256 } from '@noble/hashes/lib/sha256.js'
 import { bytesToHex } from '@noble/hashes/lib/utils'
-
+const operations = ['add', 'remove', 'replace']
 export class MerkleArray {
   /**
-   * Manages a merkle tree to get rapid hash results from large arrays
-   * Compacts the array at the end, if needed.
-   * Only network has a compacting array.
+   * Manages a merkle tree to get rapid hash results from large arrays.
+   * Compacts the array at the end, if needed, to change the hash tree
+   * as little as possible.
+   * Network is the only slice that uses compaction, all else only ever
+   * increases.
+   * Fast enough to be used during the blocking process.
+   * Tracks diffs so that only changes need be written to the DB.
    */
   #base = Immutable.List()
   #adds = Immutable.List()
   #puts = Immutable.Map()
   #dels = Immutable.OrderedSet()
-  #merkle = Immutable.List() // will be a list of lists, one for each layer
+  #merkle = Immutable.List()
   constructor(base) {
     if (base) {
       assert(Array.isArray(base))
-      return this.pushBulk(base).merge()
+      return this.addBulk(base).merge()
     }
   }
   #clone() {
@@ -32,20 +36,20 @@ export class MerkleArray {
   #length() {
     return this.#base.size + this.#adds.size
   }
-  pushBulk(values) {
+  addBulk(values) {
     // spread operator causes max callstack exceeded above ~100k elements
     assert(Array.isArray(values))
     const next = this.#clone()
     next.#adds = next.#adds.concat(values)
     return next
   }
-  push(...values) {
+  add(...values) {
     assert(Array.isArray(values))
     const next = this.#clone()
     next.#adds = next.#adds.concat(values)
     return next
   }
-  del(index) {
+  remove(index) {
     assert(index < this.#length())
     assert(index >= 0)
     assert(!this.#dels.has(index))
@@ -54,7 +58,7 @@ export class MerkleArray {
     next.#puts = next.#puts.delete(index)
     return next
   }
-  update(index, value) {
+  replace(index, value) {
     assert(index < this.#length())
     assert(index >= 0)
     assert(value !== undefined)
@@ -89,8 +93,6 @@ export class MerkleArray {
     }
   }
   getCompactPlan() {
-    // return an array of index pairs [current, next]
-    // use this to update the luts
     const plan = []
     const nextBase = this.#base.concat(this.#adds)
     let cursor = nextBase.size
@@ -135,9 +137,10 @@ export class MerkleArray {
     for (const [to, from] of plan) {
       const value = next.get(from)
       // TODO allow withMutations somehow
-      next = next.del(from)
-      next = next.update(to, value)
+      next = next.remove(from)
+      next = next.replace(to, value)
     }
+    // TODO split dels into overs and unders to simplify compaction
     const isOverLength = next.#dels.last() >= next.#base.size
     if (isOverLength) {
       const isUnderLength = next.#dels.first() < next.#base.size
@@ -210,7 +213,6 @@ export class MerkleArray {
     }
     return sha256(value.toString())
   }
-  // static #
   #updateMerkleTree(dirtyUnsorted) {
     assert(this.#isClean(), 'cannot hash while dirty')
     assert(Array.isArray(dirtyUnsorted))
@@ -278,19 +280,55 @@ export class MerkleArray {
     assert(index < this.#base.size)
     assert(index >= 0)
     assert(this.#base.get(index))
-    // generate the merkle proof
+    // TODO generate the merkle proof
   }
   diff() {
-    // create a patch list that can be applied to #base
-    assert(this.#isClean())
+    assert(this.#isCompacted())
+    const ops = []
+    let index = this.#base.size
+    for (const value of this.#adds) {
+      ops.push({ op: 'add', path: [index], value })
+      index++
+    }
+    for (const delIndex of this.#dels) {
+      ops.push({ op: 'remove', path: [delIndex] })
+    }
+    for (const [putIndex, value] of this.#puts) {
+      ops.push({ op: 'replace', path: [putIndex], value })
+    }
+    return ops
   }
   #isClean() {
     return this.#isCompacted() && this.#isMerged()
   }
   patch(opsList) {
-    // take a list of operations, and apply them to this object
-    // return a new object that is already compacted
+    assert(Array.isArray(opsList))
     assert(this.#isClean(), 'cannot patch when dirty')
+    let next = this.#clone()
+    for (const { op, path, value } of opsList) {
+      assert(operations.includes(op))
+      assert(Array.isArray(path))
+      assert.strictEqual(path.length, 1)
+      switch (op) {
+        case 'add': {
+          assert(value !== undefined)
+          assert.strictEqual(path[0], next.#length())
+          next = next.add(value)
+          break
+        }
+        case 'remove': {
+          assert.strictEqual(value, undefined)
+          next = next.remove(path[0])
+          break
+        }
+        case 'replace': {
+          assert(value !== undefined)
+          next = next.replace(path[0], value)
+          break
+        }
+      }
+    }
+    return next.compact().merge()
   }
   serialize() {
     assert(this.#isClean(), 'cannot serialize when dirty')

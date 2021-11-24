@@ -7,12 +7,12 @@ const debug = Debug('interblock:tests:MerkleArray')
 describe('MerkleArray', () => {
   test('basic', () => {
     let ma = new MerkleArray()
-    ma = ma.push(false)
-    ma = ma.push(true)
-    ma = ma.del(1)
-    ma = ma.push(false)
+    ma = ma.add(false)
+    ma = ma.add(true)
+    ma = ma.remove(1)
+    ma = ma.add(false)
     let fork = ma
-    ma = ma.update(0, true)
+    ma = ma.replace(0, true)
     assert(ma.get(0))
     ma = ma.compact()
     ma = ma.merge()
@@ -20,12 +20,17 @@ describe('MerkleArray', () => {
 
     const hash = ma.hash()
     debug(hash)
-    fork = fork.compact().merge()
-    debug(fork.hash())
+    const origin = fork.compact().merge()
+    debug(origin.hash())
+    fork = origin.replace(0, false)
+    const diff = fork.diff()
+    const next = fork.merge()
+    const next2 = origin.patch(diff)
+    assert.deepStrictEqual(next.serialize(), next2.serialize())
   })
   test('random', () => {
     let index = 0
-    const count = 10
+    const count = 100
     while (index < count) {
       index++
       randomizer()
@@ -49,7 +54,7 @@ describe('MerkleArray', () => {
       switch (op) {
         case 'push':
           arr.push(r)
-          ma = ma.push(r)
+          ma = ma.add(r)
           addCount++
           break
         case 'del': {
@@ -58,13 +63,13 @@ describe('MerkleArray', () => {
             usedIndex = Math.floor(Math.random() * arr.length)
           }
           delete arr[usedIndex]
-          ma = ma.del(usedIndex)
+          ma = ma.remove(usedIndex)
           delCount++
           break
         }
         case 'put':
           arr[index] = r
-          ma = ma.update(index, r)
+          ma = ma.replace(index, r)
           break
       }
     }
@@ -111,7 +116,7 @@ describe('MerkleArray', () => {
       const alias = `alias${i}`
       const address = addressModel.create('GENESIS')
       channel = channelModel.create(address)
-      network = network.push({ [alias]: channel })
+      network = network.add({ [alias]: channel })
     }
     debug(`time to immutable push %o units: %o ms`, count, Date.now() - start)
     start = Date.now()
@@ -128,7 +133,7 @@ describe('MerkleArray', () => {
     debug(`time to create with base %o units: %o ms`, count, Date.now() - start)
     start = Date.now()
     network = new MerkleArray()
-    network = network.pushBulk(values)
+    network = network.addBulk(values)
     debug(`time to batch push %o units: %o ms`, count, Date.now() - start)
     start = Date.now()
     network = network.merge()
@@ -138,13 +143,13 @@ describe('MerkleArray', () => {
     assert.strictEqual(arr.length, count)
     debug(`time to serialize, then parse: %o ms`, Date.now() - start)
     start = Date.now()
-    network = network.push({ addOne: channel }).merge()
+    network = network.add({ addOne: channel }).merge()
     debug(`add one then merge time %o ms`, Date.now() - start)
     start = Date.now()
     const hash = network.hash()
     debug(`hash time: %o ms`, Date.now() - start)
     start = Date.now()
-    network = network.push({ addTwo: channel })
+    network = network.add({ addTwo: channel })
     network = network.merge()
     const hash2 = network.hash()
     assert(hash !== hash2, `${hash} !== ${hash2}`)
