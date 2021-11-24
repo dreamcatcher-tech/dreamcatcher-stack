@@ -52,7 +52,7 @@ const openChildReducer = (dmz, rxRequest) => {
     meta = metaProducer.withSlice(meta, identifier, slice)
     channel = channelProducer.txRequest(channel, connect)
     replyPromise()
-    const network = { ...dmz.network, [child]: channel }
+    const network = dmz.network.merge({ [child]: channel })
     dmz = dmzModel.clone({ ...dmz, network, meta })
   }
   return dmz

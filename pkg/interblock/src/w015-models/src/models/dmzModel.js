@@ -42,11 +42,11 @@ const schema = {
     binaryIntegrity: binaryModel.schema,
     timestamp: timestampModel.schema,
     acl: aclModel.schema,
-    network: networkModel.schema,
-    state: stateModel.schema,
-    meta: metaModel.schema,
-    pending: pendingModel.schema,
-    piercings: piercingsModel.schema,
+    network: networkModel.schema, // grows
+    state: stateModel.schema, // wildcard
+    meta: metaModel.schema, // high churn
+    pending: pendingModel.schema, // grows
+    piercings: piercingsModel.schema, // transient
     // TODO add version ?
   },
 }
@@ -65,7 +65,7 @@ const dmzModel = standardize({
       acl: aclModel.clone(opts.acl),
       network: networkModel.clone(opts.network),
       state: stateModel.clone(opts.state),
-      meta: metaModel.clone(opts.meta), // not user alterable
+      meta: metaModel.clone(opts.meta), // stores dmz state
       pending: pendingModel.create(), // cannot start a dmz as pending
     }
     return dmzModel.clone(dmz)

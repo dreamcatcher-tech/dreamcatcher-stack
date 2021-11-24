@@ -50,10 +50,7 @@ const blockModel = standardize({
     return block
   },
   logicize(instance) {
-    const isLoop = instance.network.getAliases().some((alias) => {
-      const { address } = instance.network[alias]
-      return instance.provenance.getAddress().equals(address)
-    })
+    const isLoop = instance.network.getChannel(instance.provenance.getAddress())
     assert(!isLoop, `Loop detected - use loopback address instead`)
     const { provenance, ...spreadDmz } = instance
     const dmz = dmzModel.clone(spreadDmz)

@@ -227,6 +227,8 @@ const remoteSchema = {
       // description: `Keys are of format blockheight_index`,
       additionalProperties: false,
       patternProperties: {
+        // TODO convert to array, for easy stable serializing
+        // sort the array by oldest replies first
         '[0-9]+_[0-9]+': continuationSchema,
       },
     },

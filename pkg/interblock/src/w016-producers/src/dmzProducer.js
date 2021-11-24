@@ -58,10 +58,7 @@ const accumulate = (dmz, transmissions = []) => {
   assert(dmzModel.isModel(dmz))
   assert(dmz.pending.getIsPending())
   assert(Array.isArray(transmissions))
-  // TODO move to ids for aliases, so we can handle renames
-  // TODO deduplication with common/assignReplayIdentifiers
-
-  // first, extend if transmissions
+  // first, extend if there are transmissions
   let accumulator = [...dmz.pending.getAccumulator()]
   for (const tx of transmissions) {
     if (txReplyModel.isModel(tx)) {
