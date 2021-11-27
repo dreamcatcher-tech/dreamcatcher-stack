@@ -1,5 +1,5 @@
-import { addressModel, channelModel } from '..'
-import { Network } from '../src/classes/Network'
+import { addressModel, channelModel } from '../..'
+import { Network } from '../../src/classes/Network'
 
 describe('Network', () => {
   test('large network', () => {

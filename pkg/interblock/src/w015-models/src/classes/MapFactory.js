@@ -55,42 +55,77 @@ const patternProperties = (schema) => {
   // behave like a map
   const { patternProperties } = schema
   assert.strictEqual(Object.keys(patternProperties).length, 1)
-  const [regex] = Object.keys(patternProperties).pop()
+  const regex = new RegExp(Object.keys(patternProperties).pop())
+
+  const backingArray = new MerkleArray()
   const SyntheticMap = class extends Base {
-    backingArray = new MerkleArray()
+    #backingArray = backingArray
     #map = Immutable.Map()
+    static create(map) {
+      const instance = new this(insidersOnly).setMany(map).merge()
+      return instance
+    }
+    setMany(map) {
+      // TODO use the bulkAdd method on MerkleArray with a bulkPut option
+      let next = this
+      for (const [key, value] of Object.entries(map)) {
+        next = next.set(key, value)
+      }
+      return next
+    }
     set(key, value) {
       assert(typeof key, 'string')
       assert(value !== undefined)
-      assert(regex.match(key), `key ${key} does not match ${regex}`)
+      assert(regex.test(key), `key ${key} does not match ${regex}`)
       const next = this.#clone()
-      let index = this.backingArray.size
+      let index = next.#backingArray.size
       if (next.#map.has(key)) {
         index = next.#map.get(key)
+        next.#backingArray = next.#backingArray.put(index, value)
+      } else {
+        next.#backingArray = next.#backingArray.add(value)
       }
-      next.backingArray = next.backingArray.set(index, value)
       return next
     }
     remove(key) {
       assert(typeof key, 'string')
       assert(this.#map.has(key))
       const next = this.#clone()
-      next.backingArray = next.backingArray.remove(this.#map.get(key))
+      next.#backingArray = next.#backingArray.remove(this.#map.get(key))
       return next
     }
     #clone() {
-      const next = new SyntheticMap()
-      next.backingArray = this.backingArray
+      const next = new this.constructor()
+      next.#backingArray = this.#backingArray
       next.#map = this.#map
+      return next
+    }
+    merge() {
+      const next = new this.constructor(
+        insidersOnly,
+        this.#backingArray.merge()
+      )
       return next
     }
     get(key) {
       if (this.#map.has(key)) {
-        return this.backingArray.get(this.#map.get(key))
+        return this.#backingArray.get(this.#map.get(key))
       }
     }
     has(key) {
       return this.#map.has(key)
+    }
+    toJS() {
+      const js = {}
+      for (const [key, index] of this.#map.entries()) {
+        const value = this.#backingArray.get(index)
+        if (value instanceof Base) {
+          js[key] = value.toJS()
+        } else {
+          js[key] = value
+        }
+      }
+      return js
     }
   }
   const className = schema.title || 'SyntheticMap'
@@ -208,11 +243,6 @@ const properties = (schema) => {
         }
       }
       return js
-    }
-    #clone() {
-      const next = new SyntheticObject()
-      next.#backingArray = this.#backingArray
-      return next
     }
     static _defineProperties() {
       let index = 0

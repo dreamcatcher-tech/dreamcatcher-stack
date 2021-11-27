@@ -3,10 +3,9 @@ import * as crypto from '../../../w012-crypto'
 import { keypairSchema } from '../schemas/privateSchemas'
 import { mixin } from './MapFactory'
 import { PublicKey } from '.'
-const AutoSchema = mixin(keypairSchema)
 
 const ciPublicKey = PublicKey.ci()
-export class Keypair extends AutoSchema {
+export class Keypair extends mixin(keypairSchema) {
   static create(name = 'CI', keypairRaw = crypto.ciKeypair, algorithm) {
     assert.strictEqual(typeof name, 'string')
     // TODO assert keypairRaw format

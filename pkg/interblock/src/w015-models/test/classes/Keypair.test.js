@@ -5,7 +5,7 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:Keypair')
 Debug.enable('*Keypair')
 
-describe.only('keypair', () => {
+describe('keypair', () => {
   const kp1 = crypto.generateKeyPair()
   const kp2 = crypto.generateKeyPair()
   test('verifies keys on load', async () => {
