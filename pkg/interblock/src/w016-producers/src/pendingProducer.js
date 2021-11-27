@@ -1,11 +1,6 @@
 import assert from 'assert-fast'
 import debug from 'debug'
-import {
-  rxRequestModel,
-  rxReplyModel,
-  pendingModel,
-  networkModel,
-} from '../../w015-models'
+import { rxRequestModel, rxReplyModel, pendingModel } from '../../w015-models'
 
 const raisePending = (pending, pendingRequest) => {
   assert(pendingModel.isModel(pending))

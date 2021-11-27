@@ -6,6 +6,7 @@ class Model {
 }
 
 // TODO merge this with Conflux ?
+// TODO assert that no channel has an identical hash during the hashing process ?
 export class Network extends Model {
   #channels = [] // stored on disk {alias,channel}
   #merkleTree = [] // kept to minimize hash cost

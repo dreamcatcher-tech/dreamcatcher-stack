@@ -39,6 +39,7 @@
     "fast-json-stable-stringify": "^2.1.0",
     "fast-json-stringify": "^2.7.12",
     "flatstr": "^1.0.12",
+    "immer": "^9.0.7",
     "immutable": "^4.0.0",
     "is-in-browser": "^2.0.0",
     "jsonpack": "^1.1.5",

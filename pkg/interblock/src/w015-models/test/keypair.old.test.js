@@ -3,9 +3,9 @@ import { keypairModel } from '..'
 import * as crypto from '../../w012-crypto'
 
 describe('keypair', () => {
-  test('verifies keys on load', async () => {
-    const kp1 = await crypto.generateKeyPair()
-    const kp2 = await crypto.generateKeyPair()
+  test('verifies keys on load', () => {
+    const kp1 = crypto.generateKeyPair()
+    const kp2 = crypto.generateKeyPair()
     const keypairDefault1 = keypairModel.create()
     const keypairDefault2 = keypairModel.create()
     const keypair1 = keypairModel.create('KP1', kp1)

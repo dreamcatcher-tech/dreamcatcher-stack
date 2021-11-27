@@ -3,6 +3,7 @@ import Immutable from 'immutable'
 import { sha256 } from '@noble/hashes/lib/sha256.js'
 import { bytesToHex } from '@noble/hashes/lib/utils'
 const operations = ['add', 'remove', 'replace']
+
 export class MerkleArray {
   /**
    * Manages a merkle tree to get rapid hash results from large arrays.
@@ -18,9 +19,15 @@ export class MerkleArray {
   #puts = Immutable.Map()
   #dels = Immutable.OrderedSet()
   #merkle = Immutable.List()
-  constructor(base) {
+  #flatTree = false
+  #noDeletions = false
+  #dirty = Immutable.List()
+  constructor(base, { flatTree = false, noDeletions = false } = {}) {
+    this.#flatTree = flatTree
+    this.#noDeletions = noDeletions
     if (base) {
       assert(Array.isArray(base))
+      assert(base.every((v) => v !== undefined))
       return this.addBulk(base).merge()
     }
   }
@@ -31,9 +38,12 @@ export class MerkleArray {
     clone.#puts = this.#puts
     clone.#dels = this.#dels
     clone.#merkle = this.#merkle
+    clone.#flatTree = this.#flatTree
+    clone.#noDeletions = this.#noDeletions
+    clone.#dirty = this.#dirty
     return clone
   }
-  #length() {
+  get size() {
     return this.#base.size + this.#adds.size
   }
   addBulk(values) {
@@ -50,7 +60,8 @@ export class MerkleArray {
     return next
   }
   remove(index) {
-    assert(index < this.#length())
+    assert(!this.#noDeletions, 'No deletions')
+    assert(index < this.size)
     assert(index >= 0)
     assert(!this.#dels.has(index))
     const next = this.#clone()
@@ -58,8 +69,8 @@ export class MerkleArray {
     next.#puts = next.#puts.delete(index)
     return next
   }
-  replace(index, value) {
-    assert(index < this.#length())
+  put(index, value) {
+    assert(index < this.size)
     assert(index >= 0)
     assert(value !== undefined)
     const next = this.#clone()
@@ -75,9 +86,9 @@ export class MerkleArray {
     return next
   }
   get(index) {
-    assert(index < this.#length())
+    assert(index < this.size)
     assert(index >= 0)
-    if (this.#dels.has(index)) {
+    if (this.#dels.size && this.#dels.has(index)) {
       return
     }
     if (index >= this.#base.size) {
@@ -112,10 +123,13 @@ export class MerkleArray {
     return plan
   }
   #isCompacted() {
+    if (this.#noDeletions) {
+      return true
+    }
     if (this.#dels.size && this.#adds.size) {
       return false
     }
-    const length = this.#length()
+    const length = this.size
     let cursor = length - this.#dels.size
     for (const index of this.#dels) {
       if (index !== cursor) {
@@ -138,7 +152,7 @@ export class MerkleArray {
       const value = next.get(from)
       // TODO allow withMutations somehow
       next = next.remove(from)
-      next = next.replace(to, value)
+      next = next.put(to, value)
     }
     // TODO split dels into overs and unders to simplify compaction
     const isOverLength = next.#dels.last() >= next.#base.size
@@ -195,40 +209,45 @@ export class MerkleArray {
     next.#dels = next.#dels.clear()
     next.#puts = next.#puts.clear()
     next.#adds = next.#adds.clear()
-    return next.#updateMerkleTree(dirty)
+    next.#dirty = Immutable.List(dirty)
+    return next
   }
-  static #hash(value) {
-    if (value instanceof Uint8Array) {
-      return sha256(value)
-    }
-    if (typeof value.getHash === 'function') {
-      const hash = value.getHash()
-      if (hash instanceof Uint8Array) {
-        return hash
-      }
-      return sha256(hash)
-    }
-    if (typeof value.serialize === 'function') {
-      return sha256(value.serialize())
-    }
-    return sha256(value.toString())
-  }
-  #updateMerkleTree(dirtyUnsorted) {
+  updateMerkleTree() {
     assert(this.#isClean(), 'cannot hash while dirty')
-    assert(Array.isArray(dirtyUnsorted))
+    assert(Immutable.List.isList(this.#dirty))
 
     const next = this.#clone()
     if (!next.#base.size) {
       next.#merkle = next.#merkle.clear()
       return next
     }
+    if (next.#flatTree) {
+      if (!this.#dirty.size) {
+        return next
+      }
+      // hash the whole array
+      // if items in the array have getHash(), use this
+      const h1b = sha256.create()
+      for (const element of this.#base) {
+        if (typeof element.hash === 'function') {
+          const hash = element.hash()
+          assert(hash instanceof Uint8Array)
+          h1b.update(hash)
+        } else {
+          assert(!Array.isArray(element))
+          assert(typeof element !== 'object')
+          h1b.update(Uint8Array.from(element))
+        }
+      }
+      const hash = h1b.digest()
+      next.#merkle = next.#merkle.set(0, Immutable.List([hash]))
+      return next
+    }
 
     next.#merkle = next.#merkle.withMutations((merkle) => {
       let lowerLayer = next.#base
       let layerIndex = 0
-      let dirty = dirtyUnsorted
-        .sort((a, b) => a - b)
-        .map((i) => Math.floor(i / 2))
+      let dirty = this.#dirty.sort().map((i) => Math.floor(i / 2))
       let layerSize = Math.ceil(next.#base.size / 2)
       do {
         let layer = merkle.get(layerIndex, Immutable.List())
@@ -269,11 +288,34 @@ export class MerkleArray {
     })
     return next
   }
+  static #hash(value) {
+    if (value instanceof Uint8Array) {
+      return sha256(value)
+    }
+    if (typeof value.getHash === 'function') {
+      const hash = value.getHash()
+      if (hash instanceof Uint8Array) {
+        return hash
+      }
+      return sha256(hash)
+    }
+    if (typeof value.serialize === 'function') {
+      return sha256(value.serialize())
+    }
+    return sha256(value.toString())
+  }
+  hashString() {
+    return bytesToHex(this.hash())
+  }
+
   hash() {
+    if (this.#dirty.size) {
+      throw new Error('Merkle tree is dirty')
+    }
     assert(this.#isClean(), 'cannot hash while dirty')
     const topLayer = this.#merkle.last()
     assert.strictEqual(topLayer.size, 1)
-    return bytesToHex(topLayer.get(0))
+    return topLayer.get(0)
   }
   proof(index) {
     assert(this.#isMerged(), 'can only proof after merge')
@@ -312,7 +354,7 @@ export class MerkleArray {
       switch (op) {
         case 'add': {
           assert(value !== undefined)
-          assert.strictEqual(path[0], next.#length())
+          assert.strictEqual(path[0], next.size)
           next = next.add(value)
           break
         }
@@ -323,17 +365,25 @@ export class MerkleArray {
         }
         case 'replace': {
           assert(value !== undefined)
-          next = next.replace(path[0], value)
+          next = next.put(path[0], value)
           break
         }
       }
     }
     return next.compact().merge()
   }
-  serialize() {
+  toArray() {
     assert(this.#isClean(), 'cannot serialize when dirty')
-    return JSON.stringify(this.#base.toArray())
+    return this.#base.toArray()
   }
+  equals(other) {
+    assert(this.#isClean(), 'cannot compare while dirty')
+    if (other instanceof MerkleArray) {
+      return this.#base.equals(other.#base)
+    }
+    return false
+  }
+
   _dumpInternals() {
     return {
       base: this.#base.toArray(),

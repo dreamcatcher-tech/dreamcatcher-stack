@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
-import { addressModel, channelModel } from '..'
-import { MerkleArray } from '../src/classes/MerkleArray'
+import { addressModel, channelModel } from '../..'
+import { MerkleArray } from '../../src/classes/MerkleArray'
 
 const debug = Debug('interblock:tests:MerkleArray')
 describe('MerkleArray', () => {

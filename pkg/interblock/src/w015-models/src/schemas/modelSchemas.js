@@ -308,7 +308,6 @@ const channelSchema = {
       //   description: `Height of the tip.
       // Lets interblocks be added quickly by testing height.`,
       minimum: 0,
-      multipleOf: 1,
     },
   },
 }
