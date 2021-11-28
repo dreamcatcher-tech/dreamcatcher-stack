@@ -56,14 +56,49 @@ const patternProperties = (schema) => {
   const { patternProperties } = schema
   assert.strictEqual(Object.keys(patternProperties).length, 1)
   const regex = new RegExp(Object.keys(patternProperties).pop())
-
+  const valueSchema = Object.values(patternProperties).pop()
+  const patName = valueSchema.title
+  const Class = Models[patName]
+  assert(Class, 'Can only use pattern properties with titled schema')
   const backingArray = new MerkleArray()
   const SyntheticMap = class extends Base {
     #backingArray = backingArray
     #map = Immutable.Map()
     static create(map) {
       const instance = new this(insidersOnly).setMany(map).merge()
+      if (typeof instance.assertLogic === 'function') {
+        instance.assertLogic()
+      }
       return instance
+    }
+    static restore(backingArray) {
+      assert(Array.isArray(backingArray))
+      backingArray = [...backingArray] // TODO use immutable here
+      const map = {}
+      for (const [key, value] of backingArray) {
+        map[key] = Class.restore(value)
+      }
+      const restored = new this(insidersOnly).setMany(map).merge()
+      if (typeof restored.assertLogic === 'function') {
+        restored.assertLogic()
+      }
+      return restored
+    }
+    constructor(LOCKED_CONSTRUCTOR, backingArray) {
+      super()
+      if (LOCKED_CONSTRUCTOR !== insidersOnly) {
+        throw new Error('Locked constructor - use static methods to instance')
+      }
+      if (backingArray) {
+        if (backingArray instanceof MerkleArray) {
+          this.#backingArray = backingArray
+        } else {
+          assert(Array.isArray(backingArray))
+          this.#backingArray = new MerkleArray(backingArray)
+        }
+        // TODO rebuild the map with key names
+      }
+      Object.freeze(this)
     }
     setMany(map) {
       // TODO use the bulkAdd method on MerkleArray with a bulkPut option
@@ -77,13 +112,15 @@ const patternProperties = (schema) => {
       assert(typeof key, 'string')
       assert(value !== undefined)
       assert(regex.test(key), `key ${key} does not match ${regex}`)
+      assert(value instanceof Class, `key ${key} not instance of ${patName} `)
+      const tuple = [key, value]
       const next = this.#clone()
-      let index = next.#backingArray.size
       if (next.#map.has(key)) {
-        index = next.#map.get(key)
-        next.#backingArray = next.#backingArray.put(index, value)
+        const index = next.#map.get(key)
+        next.#backingArray = next.#backingArray.put(index, tuple)
       } else {
-        next.#backingArray = next.#backingArray.add(value)
+        next.#map = next.#map.set(key, next.#backingArray.size)
+        next.#backingArray = next.#backingArray.add(tuple)
       }
       return next
     }
@@ -95,21 +132,21 @@ const patternProperties = (schema) => {
       return next
     }
     #clone() {
-      const next = new this.constructor()
+      const next = new this.constructor(insidersOnly)
       next.#backingArray = this.#backingArray
       next.#map = this.#map
       return next
     }
     merge() {
-      const next = new this.constructor(
-        insidersOnly,
-        this.#backingArray.merge()
-      )
+      const next = this.#clone()
+      next.#backingArray = next.#backingArray.merge()
       return next
     }
     get(key) {
       if (this.#map.has(key)) {
-        return this.#backingArray.get(this.#map.get(key))
+        const [storedKey, value] = this.#backingArray.get(this.#map.get(key))
+        assert.strictEqual(storedKey, key)
+        return value
       }
     }
     has(key) {
@@ -117,15 +154,29 @@ const patternProperties = (schema) => {
     }
     toJS() {
       const js = {}
-      for (const [key, index] of this.#map.entries()) {
-        const value = this.#backingArray.get(index)
-        if (value instanceof Base) {
-          js[key] = value.toJS()
-        } else {
-          js[key] = value
-        }
+      for (const [key, value] of this.entries()) {
+        js[key] = value.toJS()
       }
       return js
+    }
+    toArray() {
+      const array = this.#backingArray.toArray()
+      return array.map(([key, value]) => [key, value.toArray()])
+    }
+    entries() {
+      const keys = this.#map.keys()
+      return {
+        [Symbol.iterator]: () => ({
+          next: () => {
+            const { done, value: key } = keys.next()
+            if (done) {
+              return { done, value: undefined }
+            }
+            const value = this.get(key)
+            return { done, value: [key, value] }
+          },
+        }),
+      }
     }
   }
   const className = schema.title || 'SyntheticMap'
@@ -147,6 +198,9 @@ const properties = (schema) => {
     #backingArray = backingArray
     static create(params = {}) {
       const instance = new this(insidersOnly).update(params).merge()
+      if (typeof instance.assertLogic === 'function') {
+        instance.assertLogic()
+      }
       return instance
     }
     static restore(backingArray) {
@@ -179,7 +233,6 @@ const properties = (schema) => {
       }
       Object.freeze(this)
     }
-    get(index) {}
     update(obj) {
       assert.strictEqual(typeof obj, 'object')
       const entries = Object.entries(obj)

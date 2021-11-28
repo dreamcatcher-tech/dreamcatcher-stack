@@ -6,17 +6,21 @@ import { PublicKey } from '.'
 
 const ciPublicKey = PublicKey.ci()
 export class Keypair extends mixin(keypairSchema) {
-  static create(name = 'CI', keypairRaw = crypto.ciKeypair, algorithm) {
+  static create(name = 'CI', keypairRaw, algorithm) {
     assert.strictEqual(typeof name, 'string')
     // TODO assert keypairRaw format
     if (name !== 'CI' && keypairRaw === crypto.ciKeypair) {
       throw Error('using the CI keypair must use the name "CI"')
     }
-    if (name === 'CI' && keypairRaw !== crypto.ciKeypair) {
-      throw new Error('CI name is reserved for the CI keypair')
+    if (name === 'CI') {
+      if (keypairRaw && keypairRaw !== crypto.ciKeypair) {
+        throw new Error('CI name is reserved for the CI keypair')
+      }
+      keypairRaw = crypto.ciKeypair
     }
     let publicKey = ciPublicKey
     if (name !== 'CI') {
+      keypairRaw = keypairRaw || crypto.generateKeyPair()
       algorithm = algorithm || 'noble-secp256k1'
       assert.strictEqual(typeof algorithm, 'string')
       const params = { key: keypairRaw.publicKey, algorithm }
