@@ -5,6 +5,7 @@ import { addressSchema } from '../schemas/modelSchemas'
 import { mixin } from './MapFactory'
 
 const defaultIntegrity = Integrity.create()
+const testIntegrity = Integrity.create('TEST')
 export class Address extends mixin(addressSchema) {
   static create(integrity = defaultIntegrity) {
     let status = `UNKNOWN`
@@ -25,7 +26,7 @@ export class Address extends mixin(addressSchema) {
       integrity = defaultIntegrity
     } else if (typeof integrity === 'string') {
       if (integrity.startsWith('TEST')) {
-        // integrity = Integrity.create('TEST').hash // unsure where this used
+        integrity = testIntegrity.hash
       }
       const possibleIntegrity = Integrity.create(integrity)
       if (possibleIntegrity.hash.length === integrity.length) {

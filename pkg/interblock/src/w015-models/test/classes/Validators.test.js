@@ -2,7 +2,7 @@ import { Validators, Keypair } from '../../src/classes'
 import { ciKeypair } from '../../../w012-crypto'
 import { assert } from 'chai/index.mjs'
 
-describe.only('Validators', () => {
+describe('Validators', () => {
   const k1 = Keypair.create('K1')
   const k2 = Keypair.create('K2')
   test('ci', () => {

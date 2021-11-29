@@ -2,7 +2,7 @@ import { assert } from 'chai/index.mjs'
 import { Acl } from '../../src/classes'
 
 describe('acl', () => {
-  test.only('creates default', () => {
+  test('creates default', () => {
     const acl = Acl.create()
     assert(acl)
     const restored = Acl.restore(acl.toArray())

@@ -19,7 +19,7 @@ const networkSchema = {
 
 export class Network extends mixin(networkSchema) {
   #txs = Immutable.Set() // any channel that is transmitting
-
+  #addressMap = Immutable.Map()
   static create() {
     const params = {
       '..': Channel.create(Address.create(), '..'),
@@ -31,18 +31,25 @@ export class Network extends mixin(networkSchema) {
   set(alias, channel) {
     assert(channel instanceof Channel)
     const next = super.set(alias, channel)
+    if (this.has(alias)) {
+      const { address } = this.get(alias)
+      next.#addressMap = this.#addressMap.remove(address)
+    }
     next.#txs = this.#txs.remove(alias)
+    next.#addressMap = this.#addressMap.set(channel.address, alias)
     if (channel.isTransmitting()) {
       next.#txs = next.#txs.add(alias)
     }
     return next
   }
-  del(alias) {
+  remove(alias) {
     assert.strictEqual(typeof alias, 'string')
     assert(alias !== '.', `cannot delete self`)
     assert(alias !== '..', `cannot delete parent`)
-    const next = super.del(alias)
+    const next = super.remove(alias)
     next.#txs = this.#txs.remove(alias)
+    const { address } = next.get(alias)
+    next.#addressMap = this.#addressMap.delete(address)
     return next
   }
   rename(srcAlias, destAlias) {
@@ -58,10 +65,9 @@ export class Network extends mixin(networkSchema) {
     return next
   }
   getByAddress(address) {
-    assert(addressModel.isModel(address))
-    // if the lookup table doesn't have it, and the lookup table
-    // hasn't finished, then keep building the lookup table until
-    // and return the result
+    assert(address instanceof Address)
+    const alias = this.#addressMap.get(address)
+    return this.get(alias)
   }
   getTxs() {
     // return an object that has all the transmissions within it

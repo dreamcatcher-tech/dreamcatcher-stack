@@ -32,6 +32,16 @@ describe('network', () => {
     assert.throws(() => network.set('else', 'test'))
     assert.throws(() => network.set('else', { test: 'test' }))
   })
+  test('get by address', () => {
+    let network = Network.create()
+    const address = Address.create('TEST')
+    assert(!address.isUnknown())
+    const channel = Channel.create(address)
+    const alias = 'testAlias'
+    network = network.set(alias, channel)
+    assert.strictEqual(network.get(alias), channel)
+    assert.strictEqual(network.getByAddress(address), channel)
+  })
   test.skip('large network', () => {
     Debug.enable('*tests*')
     let network = Network.create()
