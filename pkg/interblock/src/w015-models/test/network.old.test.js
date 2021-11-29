@@ -33,8 +33,7 @@ describe('network', () => {
     Debug.enable('*tests*')
     let network = networkModel.create()
     let channel = channelModel.create()
-    let start = Date.now()
-    const count = 20000
+    const count = 200000
     const next = {}
     for (let i = 0; i < count; i++) {
       const alias = `alias${i}`
@@ -43,6 +42,7 @@ describe('network', () => {
       // network = network.merge({ [alias]: channel })
       next[alias] = channel
     }
+    let start = Date.now()
     network = network.merge(next)
     debug(`time to %o: %o ms`, count, Date.now() - start)
     start = Date.now()
@@ -60,7 +60,6 @@ describe('network', () => {
     debug(`serialize: %o ms size: %o`, Date.now() - start, string.length)
     start = Date.now()
     flatstr(string)
-    debug(Buffer)
     const buf = Buffer.from(string)
     debug(`conversion time: %o ms`, Date.now() - start)
     start = Date.now()

@@ -142,6 +142,17 @@ const patternProperties = (schema) => {
       next.#backingArray = next.#backingArray.merge()
       return next
     }
+    updateMerkleTree() {
+      const next = this.#clone()
+      next.#backingArray = next.#backingArray.updateMerkleTree()
+      return next
+    }
+    hash() {
+      return this.#backingArray.hash()
+    }
+    hashString() {
+      return this.#backingArray.hashString()
+    }
     get(key) {
       if (this.#map.has(key)) {
         const [storedKey, value] = this.#backingArray.get(this.#map.get(key))
@@ -177,6 +188,9 @@ const patternProperties = (schema) => {
           },
         }),
       }
+    }
+    get size() {
+      return this.#map.size
     }
   }
   const className = schema.title || 'SyntheticMap'
@@ -276,7 +290,9 @@ const properties = (schema) => {
       // pull them all out until always have js primitives
       const arr = this.#backingArray.toArray()
       for (const { index } of deepIndices) {
-        // assert(arr[index] instanceof SyntheticObject)
+        if (arr[index] === EMPTY) {
+          continue
+        }
         arr[index] = arr[index].toArray()
       }
       return arr

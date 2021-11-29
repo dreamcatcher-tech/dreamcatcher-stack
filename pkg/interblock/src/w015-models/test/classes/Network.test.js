@@ -1,38 +1,76 @@
-import { addressModel, channelModel } from '../..'
-import { Network } from '../../src/classes/Network'
+import { assert } from 'chai/index.mjs'
+import * as snappy from 'snappy'
+import * as snappyjs from 'snappyjs'
+import flatstr from 'flatstr'
+import { Buffer } from 'buffer'
+import { stringify } from 'zipson'
+import { Network, Channel, Address } from '../../src/classes'
 
-describe('Network', () => {
-  test('large network', () => {
-    let network = new Network()
-    let channel = channelModel.create()
-    let start = Date.now()
-    const count = 200
+import Debug from 'debug'
+const debug = Debug('interblock:tests:network')
+
+describe('network', () => {
+  test('creates default', () => {
+    const network = Network.create()
+    assert(network.get('..'))
+    assert(network.get('.'))
+    assert.strictEqual(network.size, 2)
+  })
+  test('cannot delete parent or self', () => {
+    const network = Network.create()
+    assert.throws(() => network.del('..'))
+    assert.throws(() => network.del('.'))
+  })
+  test('parent is unknown by default', () => {
+    const network = Network.create()
+    const parent = network.get('..')
+    assert(parent)
+    assert(parent.address.isUnknown())
+  })
+  test('can only set Channel instances', () => {
+    const network = Network.create()
+    assert.throws(() => network.set('else', 'test'))
+    assert.throws(() => network.set('else', { test: 'test' }))
+  })
+  test.skip('large network', () => {
+    Debug.enable('*tests*')
+    let network = Network.create()
+    let channel = Channel.create()
+    const count = 200000
     const next = {}
     for (let i = 0; i < count; i++) {
       const alias = `alias${i}`
-      const address = addressModel.create('GENESIS')
-      channel = channelModel.create(address)
+      const address = Address.create('GENESIS')
+      channel = Channel.create(address)
       // network = network.merge({ [alias]: channel })
       next[alias] = channel
     }
-    network = network.merge(next)
+    let start = Date.now()
+    network = network.setMany(next)
     debug(`time to %o: %o ms`, count, Date.now() - start)
     start = Date.now()
-    network = network.merge({ addOne: channel })
+    network = network.setMany({ addOne: channel })
     debug(`add one time %o ms`, Date.now() - start)
     start = Date.now()
-    const hash = network.getHash()
-    debug(`hash time: %o ms`, Date.now() - start)
-    network = network.merge({ addTwo: channel })
+    network = network.merge()
+    debug(`merge time %o ms`, Date.now() - start)
     start = Date.now()
-    const hash2 = network.getHash()
-    debug(`hash2 time: %o ms`, Date.now() - start)
+    network = network.updateMerkleTree()
+    const hash = network.hashString()
+    debug(`hash time: %o ms %o`, Date.now() - start, hash.substr(0, 10))
     start = Date.now()
-    const string = network.serialize()
-    debug(`serialize: %o ms size: %o`, Date.now() - start, string.length)
+    network = network.setMany({ addTwo: channel }).merge()
+    network = network.updateMerkleTree()
+    const hash2 = network.hashString()
+    debug(`hash2 time: %o ms %o`, Date.now() - start, hash2.substr(0, 10))
+    start = Date.now()
+    const array = network.toArray()
+    debug(`toArray: %o ms length: %o`, Date.now() - start, array.length)
+    start = Date.now()
+    const string = JSON.stringify(array)
+    debug(`stringify: %o ms size: %o`, Date.now() - start, string.length)
     start = Date.now()
     flatstr(string)
-    debug(Buffer)
     const buf = Buffer.from(string)
     debug(`conversion time: %o ms`, Date.now() - start)
     start = Date.now()
@@ -42,7 +80,10 @@ describe('Network', () => {
     const compressed2 = snappyjs.compress(buf)
     debug(`snappyjs %o ms size: %o`, Date.now() - start, compressed2.length)
     start = Date.now()
-    const compressed3 = stringify(network)
+    const compressed3 = stringify(array)
     debug(`zipson %o ms size: %o`, Date.now() - start, compressed3.length)
   })
+  test.todo('rxReply always selected before rxRequest')
+  test.todo('rxReply( request ) throws if non existant channel in request')
+  test.todo('empty string cannot be used as channel name')
 })

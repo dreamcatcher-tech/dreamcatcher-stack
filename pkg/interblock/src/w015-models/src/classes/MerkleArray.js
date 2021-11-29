@@ -206,10 +206,11 @@ export class MerkleArray {
       }
       base = base.setSize(base.size - next.#dels.size)
     })
-    next.#dels = next.#dels.clear()
-    next.#puts = next.#puts.clear()
+
     next.#adds = next.#adds.clear()
-    next.#dirty = Immutable.List(dirty)
+    next.#puts = next.#puts.clear()
+    next.#dels = next.#dels.clear()
+    next.#dirty = next.#dirty.concat(dirty)
     return next
   }
   updateMerkleTree() {
@@ -286,6 +287,7 @@ export class MerkleArray {
       } while (lowerLayer.size > 1)
       merkle.setSize(layerIndex) // knock the top off the christmas tree
     })
+    next.#dirty = next.#dirty.clear()
     return next
   }
   static #hash(value) {
@@ -310,7 +312,7 @@ export class MerkleArray {
 
   hash() {
     if (this.#dirty.size) {
-      throw new Error('Merkle tree is dirty')
+      throw new Error('Merkle tree is dirty - use updateMerkleTree first')
     }
     assert(this.#isClean(), 'cannot hash while dirty')
     const topLayer = this.#merkle.last()

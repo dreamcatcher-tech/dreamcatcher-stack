@@ -1,68 +1,48 @@
 import assert from 'assert-fast'
 import Immutable from 'immutable'
-import { channelModel, addressModel } from '../..'
-class Model {
-  #supersecret = 'supersecret'
-}
+import { channelSchema } from '../schemas/modelSchemas'
+import { mixin } from './MapFactory'
+import { Channel, Address } from '.'
 
 // TODO merge this with Conflux ?
 // TODO assert that no channel has an identical hash during the hashing process ?
-export class Network extends Model {
-  #channels = [] // stored on disk {alias,channel}
-  #merkleTree = [] // kept to minimize hash cost
-  #channelMap = Immutable.Map() // channel to channel index
-  #aliasMap = Immutable.Map() // alias -> channel index
-  #diffAdd = Immutable.Map() // channel index -> channel
-  #diffDel = Immutable.Map() // channel index deletions
-  #txs = Immutable.Map() // any channel that is transmitting
-  constructor(channels) {
-    super()
-    if (channels) {
-      // inflate everything
-      // assume this is pure JS
-      // check for collisions and sanity
+
+const networkSchema = {
+  title: 'Network',
+  // description: `All communication in and out of this blockchain.`,
+  type: 'object',
+  required: ['..', '.'],
+  additionalProperties: false,
+  minProperties: 2,
+  patternProperties: { '(.*?)': channelSchema },
+}
+
+export class Network extends mixin(networkSchema) {
+  #txs = Immutable.Set() // any channel that is transmitting
+
+  static create() {
+    const params = {
+      '..': Channel.create(Address.create(), '..'),
+      '.': Channel.createLoopback(),
     }
+    return super.create(params)
   }
-  #clone() {
-    const network = new Network()
-    network.#channels = this.#channels
-    // etc...
-    return network
-  }
-  equals(other) {
-    throw new Error('not implemented')
-  }
+
   set(alias, channel) {
-    assert.strictEqual(typeof alias, 'string')
-    assert(channelModel.isModel(channel))
-    assert(alias !== '.')
-    assert(alias !== '..')
-    assert(!this.#aliasMap.has(alias) || this.#diffDel.has(alias))
-
-    // keep tx tracker in sync after compaction has occured
-    // pull out tx before compaction occurs
-
-    const next = this.#clone()
-    if (next.#diffDel.has(alias)) {
-      next.#diffDel = next.#diffDel.delete(alias)
-      if (!channel.equals(next.#aliasMap.get(alias))) {
-        next.#diffAdd = next.#diffAdd.set(alias, channel)
-      }
+    assert(channel instanceof Channel)
+    const next = super.set(alias, channel)
+    next.#txs = this.#txs.remove(alias)
+    if (channel.isTransmitting()) {
+      next.#txs = next.#txs.add(alias)
     }
     return next
   }
   del(alias) {
     assert.strictEqual(typeof alias, 'string')
-    assert(alias !== '.')
-    assert(alias !== '..')
-
-    if (this.#diffAdd.has(alias)) {
-      const next = this.#clone()
-      next.#diffAdd = next.#diffAdd.delete(alias)
-      return next
-    }
-    const next = this.#clone()
-    next.#diffDel = this.#diffDel.set(alias)
+    assert(alias !== '.', `cannot delete self`)
+    assert(alias !== '..', `cannot delete parent`)
+    const next = super.del(alias)
+    next.#txs = this.#txs.remove(alias)
     return next
   }
   rename(srcAlias, destAlias) {
@@ -70,22 +50,12 @@ export class Network extends Model {
     assert.strictEqual(typeof srcAlias, 'string')
     assert.strictEqual(typeof destAlias, 'string')
     assert(srcAlias !== destAlias)
-    assert(this.get(srcAlias))
-    assert(!this.get(destAlias))
+    assert(this.has(srcAlias), `no srcAlias found: ${srcAlias}`)
+    assert(!this.has(destAlias), `destAlias exists: ${destAlias}`)
 
     const src = this.get(srcAlias)
-    let next = this.add(destAlias, src).del(srcAlias)
+    const next = this.set(destAlias, src).del(srcAlias)
     return next
-  }
-  get(alias) {
-    assert.strictEqual(typeof alias, 'string')
-    if (this.#diffAdd.has(alias)) {
-      return this.#diffAdd.get(alias)
-    }
-    if (this.#diffDel.has(alias)) {
-      return
-    }
-    return this.#aliasMap.get(alias)
   }
   getByAddress(address) {
     assert(addressModel.isModel(address))
@@ -93,26 +63,12 @@ export class Network extends Model {
     // hasn't finished, then keep building the lookup table until
     // and return the result
   }
-  getHash() {
-    // calculate the hash
-    // diff must have been squashed first
-    // all transmissions must have been drained
-    // compress the channels array
-  }
-  squash() {
-    // compact the channels array so all deletions are filled by adds
-    // merge the diffs into the main map and return a new instance
-  }
-  diff() {
-    // create a patch list that can be applied to #channels
-  }
-  patch(opsList) {
-    // take a list of operations, and apply them to this object
-  }
-  serialize() {
-    return JSON.stringify(this.#channels)
-  }
   getTxs() {
-    // returns list of channel indexes that are transmitting
+    // return an object that has all the transmissions within it
+    throw new Error()
+  }
+  blankTransmissions() {
+    // set all channels untransmitting
+    throw new Error()
   }
 }
