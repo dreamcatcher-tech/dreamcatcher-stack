@@ -302,7 +302,9 @@ const properties = (schema) => {
       for (const prop of props) {
         propMap[prop] = index++
         const property = schema.properties[prop]
-        if (property.type === 'object') {
+        if (property.type === 'object' && property.title) {
+          assert(Models[property.title])
+          // TODO handle generic objects being nested
           deepIndices.push({ index: propMap[prop], property })
         }
         Object.defineProperty(SyntheticObject.prototype, prop, {
