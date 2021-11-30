@@ -77,4 +77,7 @@ export class Network extends mixin(networkSchema) {
     // set all channels untransmitting
     throw new Error()
   }
+  isTransmitting() {
+    return !!this.#txs.size
+  }
 }

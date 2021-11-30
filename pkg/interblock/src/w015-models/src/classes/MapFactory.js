@@ -30,6 +30,7 @@
 
 import assert from 'assert-fast'
 import Immutable from 'immutable'
+import { freeze } from 'immer'
 import { MerkleArray } from './MerkleArray'
 import * as Models from '.'
 import Debug from 'debug'
@@ -42,6 +43,8 @@ export const mixin = (schema) => {
   // if normal properties, be an object with fixed props
   // if array, be a merklearray ?
   assert(!schema.properties || !schema.patternProperties, 'cannot have both')
+  const deepFreeze = true
+  freeze(schema, deepFreeze)
   if (schema.properties) {
     return properties(schema)
   }
@@ -64,6 +67,9 @@ const patternProperties = (schema) => {
   const SyntheticMap = class extends Base {
     #backingArray = backingArray
     #map = Immutable.Map()
+    static get schema() {
+      return schema
+    }
     static create(map) {
       const instance = new this(insidersOnly).setMany(map).merge()
       if (typeof instance.assertLogic === 'function') {
@@ -85,10 +91,10 @@ const patternProperties = (schema) => {
       return restored
     }
     constructor(LOCKED_CONSTRUCTOR, backingArray) {
-      super()
       if (LOCKED_CONSTRUCTOR !== insidersOnly) {
         throw new Error('Locked constructor - use static methods to instance')
       }
+      super()
       if (backingArray) {
         if (backingArray instanceof MerkleArray) {
           this.#backingArray = backingArray
@@ -140,11 +146,6 @@ const patternProperties = (schema) => {
     merge() {
       const next = this.#clone()
       next.#backingArray = next.#backingArray.merge()
-      return next
-    }
-    updateMerkleTree() {
-      const next = this.#clone()
-      next.#backingArray = next.#backingArray.updateMerkleTree()
       return next
     }
     hash() {
@@ -210,6 +211,9 @@ const properties = (schema) => {
   const backingArray = new MerkleArray(emptyArray, merkleOptions)
   const SyntheticObject = class extends Base {
     #backingArray = backingArray
+    static get schema() {
+      return schema
+    }
     static create(params = {}) {
       const instance = new this(insidersOnly).update(params).merge()
       if (typeof instance.assertLogic === 'function') {
@@ -258,6 +262,7 @@ const properties = (schema) => {
       for (const [propertyName, value] of entries) {
         assert(Number.isInteger(propMap[propertyName]), `${propertyName}`)
         assert(value !== undefined)
+        // TODO do type checking based on the schema, particularly if deep
         debug(`set`, propertyName, value)
         const index = propMap[propertyName]
         // TODO use withMutations for speed
@@ -319,7 +324,7 @@ const properties = (schema) => {
         propMap[prop] = index++
         const property = schema.properties[prop]
         if (property.type === 'object' && property.title) {
-          assert(Models[property.title])
+          assert(Models[property.title], `Missing: ${property.title}`)
           // TODO handle generic objects being nested
           deepIndices.push({ index: propMap[prop], property })
         }

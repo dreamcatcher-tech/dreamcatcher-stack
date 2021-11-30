@@ -1,7 +1,6 @@
 import { mixin } from './MapFactory'
-import { ciKeypair } from '../../../w012-crypto'
 
-const aclSchema = {
+const schema = {
   type: 'object',
   title: 'Acl',
   //   description: `Access control list, power rating, alias table, and chargeout rates
@@ -24,7 +23,8 @@ const aclSchema = {
     costs: { type: 'object' },
   },
 }
-export class Acl extends mixin(aclSchema) {
+export class Acl extends mixin(schema) {
+  static schema = schema
   static create() {
     const params = {
       groups: {

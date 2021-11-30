@@ -1,74 +1,74 @@
 import { assert } from 'chai/index.mjs'
-import { dmzModel, provenanceModel, blockModel, keypairModel } from '..'
-import * as crypto from '../../w012-crypto'
+import { Dmz, Provenance, Block, Keypair } from '../../src/classes'
+import * as crypto from '../../../w012-crypto'
 
-describe('block', () => {
+describe.only('block', () => {
   describe('instantiation', () => {
-    test('default is verified genesis', () => {
-      const defaultBlock = blockModel.create()
+    test.only('default is verified genesis', () => {
+      const defaultBlock = Block.create()
       assert(defaultBlock.provenance.address.isGenesis())
       assert(defaultBlock.isVerifiedBlock())
     })
     test('default serialization', () => {
-      const defaultBlock = blockModel.create()
+      const defaultBlock = Block.create()
       const json = defaultBlock.serialize()
       assert.strictEqual(typeof json, 'string')
-      const clone = blockModel.clone(json)
+      const clone = Block.clone(json)
       assert(defaultBlock.equals(clone))
     })
     test('custom key isVerifiedBlock', () => {
       const rawKeys = crypto.generateKeyPair()
-      const keypair = keypairModel.create('CUSTOM-KEY', rawKeys)
-      const dmz = dmzModel.create({
+      const keypair = Keypair.create('CUSTOM-KEY', rawKeys)
+      const dmz = Dmz.create({
         validators: keypair.getValidatorEntry(),
       })
-      const defaultBlock = blockModel.create(dmz)
+      const defaultBlock = Block.create(dmz)
       assert(defaultBlock.isVerifiedBlock())
     })
     test('genesis has no signature checks', () => {
       const kp = crypto.generateKeyPair()
-      const different = keypairModel.create('FOREIGN_VALIDATOR', kp)
-      const child = dmzModel.create({
+      const different = Keypair.create('FOREIGN_VALIDATOR', kp)
+      const child = Dmz.create({
         validators: different.getValidatorEntry(),
       })
-      const block = blockModel.create(child)
+      const block = Block.create(child)
       assert(block.isVerifiedBlock())
     })
     test('generate unique genesis by default', () => {
-      const dmz = dmzModel.create()
-      const block = blockModel.create(dmz)
-      const clone = blockModel.clone(block)
+      const dmz = Dmz.create()
+      const block = Block.create(dmz)
+      const clone = Block.clone(block)
       assert(clone.equals(block))
-      assert(blockModel.isModel(clone))
-      const second = blockModel.create(dmz)
+      assert(Block.isModel(clone))
+      const second = Block.create(dmz)
       assert(!second.equals(block))
       assert(block.getHash() !== second.getHash())
       assert(block.getChainId() !== second.getChainId())
     })
     test('check of provenance passes', () => {
-      const dmz = dmzModel.create()
-      const provenance = provenanceModel.create(dmz)
-      const block = blockModel.clone({ ...dmz, provenance })
+      const dmz = Dmz.create()
+      const provenance = Provenance.create(dmz)
+      const block = Block.clone({ ...dmz, provenance })
       assert(block.isVerifiedBlock())
 
-      const dmzClone = dmzModel.clone(dmz.serialize())
-      const provenanceClone = provenanceModel.clone(provenance.serialize())
-      const clone = blockModel.clone({
+      const dmzClone = Dmz.clone(dmz.serialize())
+      const provenanceClone = Provenance.clone(provenance.serialize())
+      const clone = Block.clone({
         ...dmzClone,
         provenance: provenanceClone,
       })
       assert(clone.isVerifiedBlock())
     })
     test('validation throws if provenance does not match', () => {
-      const dmz1 = dmzModel.create()
-      const dmz2 = dmzModel.create({ config: { isPierced: true } })
+      const dmz1 = Dmz.create()
+      const dmz2 = Dmz.create({ config: { isPierced: true } })
       assert(!dmz1.equals(dmz2))
 
-      const b1 = blockModel.create(dmz1)
-      const b2 = blockModel.create(dmz2)
+      const b1 = Block.create(dmz1)
+      const b2 = Block.create(dmz2)
 
       assert.throws(() =>
-        blockModel.clone({
+        Block.clone({
           ...b1,
           provenance: b2.provenance,
         })

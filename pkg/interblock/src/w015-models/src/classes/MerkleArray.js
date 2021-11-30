@@ -213,7 +213,7 @@ export class MerkleArray {
     next.#dirty = next.#dirty.concat(dirty)
     return next
   }
-  updateMerkleTree() {
+  #updateMerkleTree() {
     assert(this.#isClean(), 'cannot hash while dirty')
     assert(Immutable.List.isList(this.#dirty))
 
@@ -312,7 +312,7 @@ export class MerkleArray {
 
   hash() {
     if (this.#dirty.size) {
-      throw new Error('Merkle tree is dirty - use updateMerkleTree first')
+      this.#updateMerkleTree()
     }
     assert(this.#isClean(), 'cannot hash while dirty')
     const topLayer = this.#merkle.last()

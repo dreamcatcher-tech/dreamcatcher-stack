@@ -1,10 +1,11 @@
 import { assert } from 'chai/index.mjs'
-import Debug from 'debug'
 import { addressModel, channelModel } from '../..'
 import { MerkleArray } from '../../src/classes/MerkleArray'
-
+import Debug from 'debug'
 const debug = Debug('interblock:tests:MerkleArray')
-describe('MerkleArray', () => {
+
+describe.only('MerkleArray', () => {
+  Debug.enable('*tests*')
   test('basic', () => {
     let ma = new MerkleArray()
     ma = ma.add(false)
@@ -12,11 +13,11 @@ describe('MerkleArray', () => {
     ma = ma.remove(1)
     ma = ma.add(false)
     let fork = ma
-    ma = ma.replace(0, true)
+    ma = ma.put(0, true)
     assert(ma.get(0))
     ma = ma.compact()
     ma = ma.merge()
-    debug(ma.serialize())
+    debug(ma.toArray())
 
     const hash = ma.hash()
     debug(hash)
@@ -69,7 +70,7 @@ describe('MerkleArray', () => {
         }
         case 'put':
           arr[index] = r
-          ma = ma.replace(index, r)
+          ma = ma.put(index, r)
           break
       }
     }
@@ -139,7 +140,7 @@ describe('MerkleArray', () => {
     network = network.merge()
     debug(`time to merge: %o ms`, Date.now() - start)
     start = Date.now()
-    const arr = JSON.parse(network.serialize())
+    const arr = JSON.parse(JSON.stringify(network.toArray()))
     assert.strictEqual(arr.length, count)
     debug(`time to serialize, then parse: %o ms`, Date.now() - start)
     start = Date.now()
