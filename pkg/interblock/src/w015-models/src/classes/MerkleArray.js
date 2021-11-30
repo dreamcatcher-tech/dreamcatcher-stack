@@ -2,6 +2,8 @@ import assert from 'assert-fast'
 import Immutable from 'immutable'
 import { sha256 } from '@noble/hashes/lib/sha256.js'
 import { bytesToHex } from '@noble/hashes/lib/utils'
+import Debug from 'debug'
+const debug = Debug('interblock:classes:MerkleArray')
 const operations = ['add', 'remove', 'replace']
 
 export class MerkleArray {
@@ -21,7 +23,7 @@ export class MerkleArray {
   #merkle = Immutable.List()
   #flatTree = false
   #noDeletions = false
-  #dirty = Immutable.List()
+  #dirty = Immutable.Set()
   constructor(base, { flatTree = false, noDeletions = false } = {}) {
     this.#flatTree = flatTree
     this.#noDeletions = noDeletions
@@ -193,10 +195,13 @@ export class MerkleArray {
     const next = this.#clone()
     const dirty = []
     next.#base = next.#base.withMutations((base) => {
-      for (let i = base.size; i < base.size + next.#adds.size; i++) {
+      const nextSize = next.#base.size + next.#adds.size - next.#dels.size
+      for (let i = base.size; i < nextSize; i++) {
         dirty.push(i)
       }
+      debug(`nextSize`, nextSize)
       base = base.concat(next.#adds)
+      debug(`after concat: `, base.size)
       for (const [putIndex, value] of next.#puts.entries()) {
         assert(putIndex < base.size - next.#dels.size)
         base = base.set(putIndex, value)
@@ -205,90 +210,90 @@ export class MerkleArray {
         }
       }
       base = base.setSize(base.size - next.#dels.size)
+      debug(`final size:`, base.size)
     })
 
+    next.#dirty = next.#dirty.subtract(next.#dels)
+    next.#dirty = next.#dirty.concat(dirty)
     next.#adds = next.#adds.clear()
     next.#puts = next.#puts.clear()
     next.#dels = next.#dels.clear()
-    next.#dirty = next.#dirty.concat(dirty)
     return next
   }
   #updateMerkleTree() {
     assert(this.#isClean(), 'cannot hash while dirty')
-    assert(Immutable.List.isList(this.#dirty))
+    assert(Immutable.Set.isSet(this.#dirty))
 
-    const next = this.#clone()
-    if (!next.#base.size) {
-      next.#merkle = next.#merkle.clear()
-      return next
+    if (!this.#base.size) {
+      this.#merkle = this.#merkle.clear()
+      this.#dirty = this.#dirty.clear()
     }
-    if (next.#flatTree) {
-      if (!this.#dirty.size) {
-        return next
-      }
-      // hash the whole array
-      // if items in the array have getHash(), use this
-      const h1b = sha256.create()
+    if (!this.#dirty.size) {
+      return
+    }
+    if (this.#flatTree) {
+      const hasher = sha256.create()
       for (const element of this.#base) {
         if (typeof element.hash === 'function') {
           const hash = element.hash()
           assert(hash instanceof Uint8Array)
-          h1b.update(hash)
+          hasher.update(hash)
         } else {
           assert(!Array.isArray(element))
           assert(typeof element !== 'object')
-          h1b.update(Uint8Array.from(element))
+          hasher.update(Uint8Array.from(element))
         }
       }
-      const hash = h1b.digest()
-      next.#merkle = next.#merkle.set(0, Immutable.List([hash]))
-      return next
-    }
-
-    next.#merkle = next.#merkle.withMutations((merkle) => {
-      let lowerLayer = next.#base
-      let layerIndex = 0
-      let dirty = this.#dirty.sort().map((i) => Math.floor(i / 2))
-      let layerSize = Math.ceil(next.#base.size / 2)
-      do {
-        let layer = merkle.get(layerIndex, Immutable.List())
-        let nextDirty = []
-        if (layer.size > layerSize) {
-          layer = layer.setSize(layerSize)
-        }
-        dirty.forEach((dirtyIndex, index) => {
-          if (dirty[index + 1] === dirtyIndex) {
-            // lookahead avoids using a 4x slower Set to deduplicate
-            return
+      const hash = hasher.digest()
+      this.#merkle = this.#merkle.set(0, Immutable.List([hash]))
+    } else {
+      this.#merkle = this.#merkle.withMutations((merkle) => {
+        let lowerLayer = this.#base
+        let layerIndex = 0
+        let dirty = this.#dirty
+          .sort()
+          .map((i) => Math.floor(i / 2))
+          .toArray()
+        let layerSize = Math.ceil(this.#base.size / 2)
+        do {
+          let layer = merkle.get(layerIndex, Immutable.List())
+          let nextDirty = []
+          if (layer.size > layerSize) {
+            layer = layer.setSize(layerSize)
           }
-          let left = lowerLayer.get(dirtyIndex * 2)
-          let right = lowerLayer.get(dirtyIndex * 2 + 1)
-          if (layerIndex === 0) {
-            left = MerkleArray.#hash(left)
-            if (typeof right !== 'undefined') {
-              right = MerkleArray.#hash(right)
+          dirty.forEach((dirtyIndex, index) => {
+            if (dirty[index + 1] === dirtyIndex) {
+              // lookahead avoids using a 4x slower Set to deduplicate
+              return
             }
-          }
-          if (right === undefined) {
-            right = Uint8Array.from([])
-          }
-          const mergedArray = new Uint8Array(left.length + right.length)
-          mergedArray.set(left)
-          mergedArray.set(right, left.length)
-          const hash = MerkleArray.#hash(mergedArray)
-          layer = layer.set(dirtyIndex, hash)
-          nextDirty.push(Math.floor(dirtyIndex / 2))
-        })
-        merkle.set(layerIndex, layer)
-        lowerLayer = layer
-        layerIndex++
-        dirty = nextDirty
-        layerSize = Math.ceil(layerSize / 2)
-      } while (lowerLayer.size > 1)
-      merkle.setSize(layerIndex) // knock the top off the christmas tree
-    })
-    next.#dirty = next.#dirty.clear()
-    return next
+            let left = lowerLayer.get(dirtyIndex * 2)
+            let right = lowerLayer.get(dirtyIndex * 2 + 1)
+            if (layerIndex === 0) {
+              left = MerkleArray.#hash(left)
+              if (typeof right !== 'undefined') {
+                right = MerkleArray.#hash(right)
+              }
+            }
+            if (right === undefined) {
+              right = Uint8Array.from([])
+            }
+            const mergedArray = new Uint8Array(left.length + right.length)
+            mergedArray.set(left)
+            mergedArray.set(right, left.length)
+            const hash = MerkleArray.#hash(mergedArray)
+            layer = layer.set(dirtyIndex, hash)
+            nextDirty.push(Math.floor(dirtyIndex / 2))
+          })
+          merkle.set(layerIndex, layer)
+          lowerLayer = layer
+          layerIndex++
+          dirty = nextDirty
+          layerSize = Math.ceil(layerSize / 2)
+        } while (lowerLayer.size > 1)
+        merkle.setSize(layerIndex) // knock the top off the christmas tree
+      })
+    }
+    this.#dirty = this.#dirty.clear()
   }
   static #hash(value) {
     if (value instanceof Uint8Array) {
@@ -309,7 +314,6 @@ export class MerkleArray {
   hashString() {
     return bytesToHex(this.hash())
   }
-
   hash() {
     if (this.#dirty.size) {
       this.#updateMerkleTree()

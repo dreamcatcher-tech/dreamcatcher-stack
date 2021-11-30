@@ -19,15 +19,15 @@ describe.only('MerkleArray', () => {
     ma = ma.merge()
     debug(ma.toArray())
 
-    const hash = ma.hash()
-    debug(hash)
+    const hash = ma.hashString()
+    debug(`hash`, hash)
     const origin = fork.compact().merge()
-    debug(origin.hash())
-    fork = origin.replace(0, false)
+    debug(`origin.hashString()`, origin.hashString())
+    fork = origin.put(0, false)
     const diff = fork.diff()
     const next = fork.merge()
     const next2 = origin.patch(diff)
-    assert.deepStrictEqual(next.serialize(), next2.serialize())
+    assert.deepStrictEqual(next.toArray(), next2.toArray())
   })
   test('random', () => {
     let index = 0
@@ -50,7 +50,6 @@ describe.only('MerkleArray', () => {
     for (let i = 0; i < 100; i++) {
       const r = Math.random()
       const op = r < 0.3 ? 'push' : r < 0.6 ? 'del' : 'put'
-      debug(op, i)
       const index = Math.floor(Math.random() * arr.length)
       switch (op) {
         case 'push':
@@ -103,8 +102,8 @@ describe.only('MerkleArray', () => {
     )
     ma = ma.compact()
     ma = ma.merge()
-    debug(ma.hash())
-    const result = JSON.parse(ma.serialize())
+    debug(`hash %o`, ma.hashString().substr(0, 9))
+    const result = JSON.parse(JSON.stringify(ma.toArray()))
     const trimmed = arr.filter((v) => v !== undefined)
     assert.deepStrictEqual(result, trimmed)
   }
@@ -157,7 +156,7 @@ describe.only('MerkleArray', () => {
     assert.strictEqual(hash.length, hash2.length)
     debug(`hash2 time: %o ms`, Date.now() - start)
     start = Date.now()
-    const string = network.serialize()
+    const string = JSON.stringify(network.toArray())
     debug(`serialize: %o ms size: %o`, Date.now() - start, string.length)
   })
   test.todo('hash is same after reinflate')
