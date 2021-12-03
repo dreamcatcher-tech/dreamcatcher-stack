@@ -1,8 +1,8 @@
 import assert from 'assert-fast'
-import * as crypto from '../../../w012-crypto'
-import { standardize } from '../modelUtils'
+import * as crypto from '../../../../w012-crypto'
+import { standardize } from '../../modelUtils'
 import { publicKeyModel } from './publicKeyModel'
-import { integrityModel } from './integrityModel'
+import { integrityModel } from '../integrityModel'
 import { signatureModel } from './signatureModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:keypair')

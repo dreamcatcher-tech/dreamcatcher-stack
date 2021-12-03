@@ -19,6 +19,10 @@ export class Integrity extends mixin(integritySchema) {
       const hash = bytesToHex(sha256(content))
       return super.create({ hash, algorithm: 'sha256' })
     }
+    if (typeof content.hashString === 'function') {
+      const hash = content.hashString() // TODO regex format
+      return super.create({ hash, algorithm: 'sha256' })
+    }
     assert(typeof content === 'object', `Must supply object: ${content}`)
     const integrity = {
       hash: crypto.objectHash(content),
@@ -35,5 +39,6 @@ export class Integrity extends mixin(integritySchema) {
   }
   assertLogic() {
     // TODO check the format of the hash string using regex
+    const arr = this.toArray()
   }
 }

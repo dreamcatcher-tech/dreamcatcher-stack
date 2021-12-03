@@ -234,14 +234,26 @@ export class MerkleArray {
     if (this.#flatTree) {
       const hasher = sha256.create()
       for (const element of this.#base) {
+        if (typeof element === 'symbol') {
+          continue
+        }
         if (typeof element.hash === 'function') {
           const hash = element.hash()
           assert(hash instanceof Uint8Array)
           hasher.update(hash)
+        } else if (Array.isArray(element)) {
+          // only arrays in schemas are all of the same type
+          const array = element.map((e) => {
+            if (typeof e.hash === 'function') {
+              return e.hash()
+            }
+            return e
+          })
+          const string = JSON.stringify(array)
+          hasher.update(Uint8Array.from(string))
         } else {
-          assert(!Array.isArray(element))
-          assert(typeof element !== 'object')
-          hasher.update(Uint8Array.from(element))
+          const string = JSON.stringify(element)
+          hasher.update(Uint8Array.from(string))
         }
       }
       const hash = hasher.digest()
@@ -383,7 +395,8 @@ export class MerkleArray {
     return this.#base.toArray()
   }
   equals(other) {
-    assert(this.#isClean(), 'cannot compare while dirty')
+    assert(this.#isClean(), 'cannot compare this while dirty')
+    assert(other.#isClean(), 'cannot compare other while dirty')
     if (other instanceof MerkleArray) {
       return this.#base.equals(other.#base)
     }

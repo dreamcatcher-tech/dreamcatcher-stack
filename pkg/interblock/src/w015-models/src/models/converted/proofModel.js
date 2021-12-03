@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
-import { standardize } from '../modelUtils'
-import { proofSchema } from '../schemas/modelSchemas'
-import { blockModel } from './blockModel'
+import { standardize } from '../../modelUtils'
+import { proofSchema } from '../../schemas/modelSchemas'
+import { blockModel } from '../blockModel'
 
 const proofModel = standardize({
   schema: proofSchema,

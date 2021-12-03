@@ -1,50 +1,52 @@
 import { assert } from 'chai/index.mjs'
 import {
-  dmzModel,
-  actionModel,
-  networkModel,
-  interblockModel,
-  blockModel,
-  channelModel,
-  addressModel,
-  integrityModel,
-} from '..'
+  Action,
+  Address,
+  Block,
+  Channel,
+  Dmz,
+  Integrity,
+  Interblock,
+  Network,
+} from '../../src/classes'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:Interblock')
+Debug.enable('*:Interblock')
 
 const createBlockWithEffects = (actionType = 'INTERBLOCK_TEST') => {
-  const address = addressModel.create('TEST')
-  const blank = channelModel.create(address)
-  const request = actionModel.create(actionType)
-  const precedent = integrityModel.create('FAKE_PRECEDENT')
-  const channel = channelModel.clone({
-    ...blank,
-    requests: [request],
-    precedent,
-  })
-  const network = networkModel.create({ effects: channel })
+  const address = Address.create('TEST')
+  const blank = Channel.create(address)
+  const request = Action.create(actionType)
+  const precedent = Integrity.create('FAKE_PRECEDENT')
+  const channel = blank.update({ requests: [request], precedent })
+  const network = Network.create({ effects: channel })
   const opts = { network }
-  const dmz = dmzModel.create(opts)
-  const validatedBlock = blockModel.create(dmz)
+  const dmz = Dmz.create(opts)
+  const validatedBlock = Block.create(dmz)
   return validatedBlock
 }
 
 describe('interblock', () => {
   describe('create', () => {
-    test('create', () => {
+    test.only('create', () => {
       const block = createBlockWithEffects()
-      const interblock = interblockModel.create(block, 'effects')
+      const interblock = Interblock.create(block, 'effects')
       assert(interblock)
-      const clone = interblockModel.clone(interblock)
-      assert(clone.equals(interblock))
-      assert.throws(interblockModel.clone)
+      const restore = Interblock.restore(interblock.toArray())
+      assert(restore.deepEquals(interblock))
+      const json = JSON.parse(JSON.stringify(interblock.toArray()))
+      const fromJson = Interblock.restore(json)
+      assert.deepEqual(fromJson.toJS(), interblock.toJS())
+      assert.deepEqual(fromJson.toArray(), interblock.toArray())
     })
     test('interblock must have validated block and alias', () => {
       const block = createBlockWithEffects()
-      assert.throws(() => interblockModel.create())
-      assert.throws(() => interblockModel.create(block))
-      assert(interblockModel.create(block, 'effects'))
+      assert.throws(() => Interblock.create())
+      assert.throws(() => Interblock.create(block))
+      assert(Interblock.create(block, 'effects'))
       const genesis = blockModel.create()
-      assert.throws(() => interblockModel.create(genesis))
-      assert.throws(() => interblockModel.create(genesis, 'not present'))
+      assert.throws(() => Interblock.create(genesis))
+      assert.throws(() => Interblock.create(genesis, 'not present'))
     })
     test.todo('throws if no valid address to send to')
     test.todo(
@@ -61,15 +63,15 @@ describe('interblock', () => {
   test.skip('interblock transmit channel tamper detection', () => {
     const type = 'TAMPER'
     const block = createBlockWithEffects(type)
-    const interblock = interblockModel.create(block, 'effects')
+    const interblock = Interblock.create(block, 'effects')
     const tamper = JSON.parse(JSON.stringify(interblock))
-    const clone = interblockModel.clone(tamper)
+    const clone = Interblock.clone(tamper)
     assert(clone)
     assert.strictEqual(tamper.network.effects.requests[0].type, type)
     console.log(tamper.network.effects)
     tamper.network.effects.requests[0].type = 'TAMP'
     console.log(tamper.network.effects)
-    assert.throws(() => interblockModel.clone(tamper))
+    assert.throws(() => Interblock.clone(tamper))
   })
   test.todo('includes')
   test.todo('reject if replies not monotonic ? or promises ?')
@@ -79,7 +81,7 @@ describe('interblock', () => {
   test('speed', () => {
     const block = createBlockWithEffects('NO_CACHE')
     const start = Date.now()
-    const interblock = interblockModel.create(block, 'effects')
+    const interblock = Interblock.create(block, 'effects')
     assert(interblock.network.effects)
     interblock.getRemote()
     const elapsed = Date.now() - start

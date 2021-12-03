@@ -6,7 +6,7 @@ import { remoteModel } from './remoteModel'
 import { interblockSchema } from '../schemas/modelSchemas'
 import { proofModel } from './proofModel'
 import Debug from 'debug'
-import { turnoverModel } from './turnoverModel'
+import { turnoverModel } from './converted/turnoverModel'
 const debug = Debug('interblock:models:interblock')
 
 const interblockModel = standardize({

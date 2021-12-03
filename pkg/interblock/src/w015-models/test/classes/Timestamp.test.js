@@ -1,10 +1,10 @@
 import { assert } from 'chai/index.mjs'
-import { timestampModel } from '..'
+import { Timestamp } from '../../src/classes'
 describe('timestamp', () => {
   test('create', () => {
-    const now = timestampModel.create()
+    const now = Timestamp.create()
     assert(now)
-    const clone = timestampModel.clone()
+    const clone = Timestamp.restore(now.toArray())
     assert(clone)
 
     const isExpired = now.isExpired(1000)

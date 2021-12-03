@@ -1,7 +1,7 @@
 import { actionSchema } from '../schemas/modelSchemas'
 import { mixin } from './MapFactory'
 export class Action extends mixin(actionSchema) {
-  create(action, payload = {}) {
+  static create(action, payload = {}) {
     if (typeof action === 'undefined') {
       throw new Error(`Actions cannot be undefined`)
     }

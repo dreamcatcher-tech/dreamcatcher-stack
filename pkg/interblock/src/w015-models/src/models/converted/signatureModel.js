@@ -1,6 +1,6 @@
-import * as crypto from '../../../w012-crypto'
-import { standardize } from '../modelUtils'
-import { signatureSchema } from '../schemas/modelSchemas'
+import * as crypto from '../../../../w012-crypto'
+import { standardize } from '../../modelUtils'
+import { signatureSchema } from '../../schemas/modelSchemas'
 
 const signatureModel = standardize({
   schema: signatureSchema,

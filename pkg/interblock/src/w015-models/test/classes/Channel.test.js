@@ -1,29 +1,38 @@
 import { assert } from 'chai/index.mjs'
-import { actionModel, addressModel, channelModel, provenanceModel } from '..'
+import { Action, Channel, Continuation } from '../../src/classes'
 
 describe('channel', () => {
   describe('create', () => {
     test('create speed', () => {
-      const precompileFlush = channelModel.create()
+      const precompileFlush = Channel.create()
       const start = Date.now()
-      channelModel.create()
+      Channel.create()
       const elapsed = Date.now() - start
       assert(elapsed < 3, elapsed)
     })
-    test('create', () => {
-      const channel = channelModel.create()
+    test.only('create', () => {
+      const channel = Channel.create()
       assert(channel.address.isUnknown())
       assert(channel.precedent.isUnknown())
       assert(!channel.tip)
-      const clone = channelModel.clone()
-      assert(clone.address.isUnknown())
-      assert(clone.precedent.isUnknown())
-      assert(!clone.tip)
+      const restored = Channel.restore(channel.toArray())
+      assert(restored.address.isUnknown())
+      assert(restored.precedent.isUnknown())
+      assert(!restored.tip)
+      assert(restored.deepEquals(channel))
+
+      const action = Action.create('TEST_ACTION')
+      const reply = Continuation.create()
+      const array = channel.toArray()
+      array[3] = [action.toArray()]
+      const deepRestore = Channel.restore(array)
+      console.log(deepRestore.toArray())
+      assert(deepRestore.requests.every((a) => a instanceof Action))
     })
     test('includes known address', () => {
       const provenance = provenanceModel.create()
       const address = provenance.getAddress()
-      const channel = channelModel.create(address)
+      const channel = Channel.create(address)
       assert(channel.address.equals(address))
     })
     test.todo('loopback bans @@OPEN_CHILD action')
@@ -38,27 +47,27 @@ describe('channel', () => {
   })
   describe('loopback', () => {
     test('_nextCoords', () => {
-      let channel = channelModel.create(addressModel.create('LOOPBACK'), '.')
+      let channel = Channel.create(addressModel.create('LOOPBACK'), '.')
       const [ih, ii] = channel._nextCoords()
       assert.strictEqual(ih, 1)
       assert.strictEqual(ii, 0)
 
-      channel = channelModel.clone({ ...channel, tipHeight: 1 })
+      channel = Channel.clone({ ...channel, tipHeight: 1 })
       const [fh, fi] = channel._nextCoords()
       assert.strictEqual(fh, 2)
       assert.strictEqual(fi, 0)
 
-      channel = channelModel.clone({ ...channel, rxRepliesTip: '2_0' })
+      channel = Channel.clone({ ...channel, rxRepliesTip: '2_0' })
       const [rh, ri] = channel._nextCoords()
       assert.strictEqual(rh, 2)
       assert.strictEqual(ri, 1)
 
-      channel = channelModel.clone({ ...channel, rxRepliesTip: '2_1' })
+      channel = Channel.clone({ ...channel, rxRepliesTip: '2_1' })
       const [lh, li] = channel._nextCoords()
       assert.strictEqual(lh, 2)
       assert.strictEqual(li, 2)
 
-      channel = channelModel.clone({ ...channel, rxRepliesTip: '3_1' })
+      channel = Channel.clone({ ...channel, rxRepliesTip: '3_1' })
       assert.strictEqual(channel.tipHeight, 1)
       assert.throws(channel._nextCoords)
     })

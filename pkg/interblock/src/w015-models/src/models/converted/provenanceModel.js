@@ -1,9 +1,9 @@
 import assert from 'assert-fast'
-import { standardize } from '../modelUtils'
-import { provenanceSchema } from '../schemas/modelSchemas'
-import { integrityModel } from '.'
-import { addressModel } from '.'
-import { dmzModel } from '.'
+import { standardize } from '../../modelUtils'
+import { provenanceSchema } from '../../schemas/modelSchemas'
+import { integrityModel } from '..'
+import { addressModel } from '..'
+import { dmzModel } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:models:provenance')
 

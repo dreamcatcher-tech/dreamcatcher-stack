@@ -33,6 +33,7 @@ import Immutable from 'immutable'
 import { freeze } from 'immer'
 import { MerkleArray } from './MerkleArray'
 import * as Models from '.'
+import equals from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:MapFactory')
 
@@ -79,8 +80,8 @@ const patternProperties = (schema) => {
     }
     static restore(backingArray) {
       assert(Array.isArray(backingArray))
-      backingArray = [...backingArray] // TODO use immutable here
       const map = {}
+      // TODO use immutable here
       for (const [key, value] of backingArray) {
         map[key] = Class.restore(value)
       }
@@ -223,8 +224,12 @@ const properties = (schema) => {
     }
     static restore(backingArray) {
       assert(Array.isArray(backingArray))
-      backingArray = [...backingArray] // TODO use immutable here
+      // JSON.stringify converts symbol to null
+      backingArray = backingArray.map((v) => (v === null ? EMPTY : v))
       for (const { index, property } of deepIndices) {
+        if (backingArray[index] === EMPTY) {
+          continue
+        }
         const Class = Models[property.title] || SyntheticObject
         assert(Class, `${property.title} not found`)
         backingArray[index] = Class.restore(backingArray[index])
@@ -261,10 +266,13 @@ const properties = (schema) => {
       let nextBackingArray = this.#backingArray
       for (const [propertyName, value] of entries) {
         assert(Number.isInteger(propMap[propertyName]), `${propertyName}`)
-        assert(value !== undefined)
+        assert(value !== undefined, `${propertyName}`)
         // TODO do type checking based on the schema, particularly if deep
         debug(`set`, propertyName, value)
         const index = propMap[propertyName]
+
+        // TODO if it is a deep property, we need to create a new backing array
+
         // TODO use withMutations for speed
         nextBackingArray = nextBackingArray.put(index, value)
       }
@@ -276,7 +284,15 @@ const properties = (schema) => {
       }
       return this.#backingArray.equals(other.#backingArray)
     }
-    deepEquals(other) {}
+    deepEquals(other) {
+      if (!(other instanceof this.constructor)) {
+        return false
+      }
+      if (!this.#backingArray.equals(other.#backingArray)) {
+        return equals(this.toArray(), other.toArray())
+      }
+      return false
+    }
     merge() {
       const next = new this.constructor(
         insidersOnly,
@@ -294,7 +310,7 @@ const properties = (schema) => {
       // TODO using the schema, know which elements a classes
       // pull them all out until always have js primitives
       const arr = this.#backingArray.toArray()
-      for (const { index } of deepIndices) {
+      for (const { index, property } of deepIndices) {
         if (arr[index] === EMPTY) {
           continue
         }
@@ -315,6 +331,18 @@ const properties = (schema) => {
         } else {
           js[prop] = value
         }
+      }
+      return js
+    }
+    spread() {
+      const js = {}
+      for (const [prop] of Object.entries(schema.properties)) {
+        const index = propMap[prop]
+        const value = this.#backingArray.get(index)
+        if (value === EMPTY) {
+          continue
+        }
+        js[prop] = value
       }
       return js
     }

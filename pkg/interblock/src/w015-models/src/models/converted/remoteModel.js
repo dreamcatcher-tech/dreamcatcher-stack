@@ -1,8 +1,8 @@
 import assert from 'assert-fast'
-import { standardize } from '../modelUtils'
-import { remoteSchema } from '../schemas/modelSchemas'
-import { addressModel } from './addressModel'
-import { integrityModel } from './integrityModel'
+import { standardize } from '../../modelUtils'
+import { remoteSchema } from '../../schemas/modelSchemas'
+import { addressModel } from '../addressModel'
+import { integrityModel } from '../integrityModel'
 
 const _defaultInstance = {
   address: addressModel.create(),

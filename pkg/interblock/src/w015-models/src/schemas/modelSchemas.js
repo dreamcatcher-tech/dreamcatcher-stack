@@ -326,20 +326,11 @@ const interblockSchema = {
 
   type: 'object',
   additionalProperties: false,
-  required: ['provenance', 'proof', 'network'],
+  required: ['provenance', 'proof', 'transmission'],
   properties: {
     provenance: provenanceSchema,
-    network: {
-      type: 'object',
-      additionalProperties: false,
-      minProperties: 1,
-      patternProperties: {
-        '(.*?)': remoteSchema,
-        // TODO restructure to use chainId as key, as saves transmission space,
-        // and can allow for more compact internal representation in the
-        // network model
-      },
-    },
+    // TODO handle multiple transmissions in one interblock
+    transmission: remoteSchema,
     proof: proofSchema,
     // TODO handle special case of turnover occuring at same time as transmit ?
     turnovers: { type: 'array', uniqueItems: true, items: turnoverSchema },

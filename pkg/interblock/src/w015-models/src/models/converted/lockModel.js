@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
 import { v4 as uuidCreator } from 'uuid'
-import { standardize } from '../modelUtils'
+import { standardize } from '../../modelUtils'
 import { timestampModel } from './timestampModel'
-import { blockModel } from './blockModel'
-import { interblockModel } from './interblockModel'
-import { txReplyModel } from '../transients/txReplyModel'
-import { txRequestModel } from '../transients/txRequestModel'
+import { blockModel } from '../blockModel'
+import { interblockModel } from '../interblockModel'
+import { txReplyModel } from '../../transients/txReplyModel'
+import { txRequestModel } from '../../transients/txRequestModel'
 import Debug from 'debug'
 const debug = Debug('interblock:models:lock')
 
@@ -54,9 +54,6 @@ const schema = {
   },
 }
 
-// TODO let lock have two blocks, for when child immediately has its parent address burned in
-// might use a flag to ask to refresh the lock
-// or have a separate function on storage, to refresh the lock
 const _defaultPiercings = { requests: [], replies: [] }
 const lockModel = standardize({
   schema,

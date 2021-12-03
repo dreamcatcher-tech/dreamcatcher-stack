@@ -1,5 +1,5 @@
-import { standardize } from '../modelUtils'
-import { validatorsSchema } from '../schemas/modelSchemas'
+import { standardize } from '../../modelUtils'
+import { validatorsSchema } from '../../schemas/modelSchemas'
 import { keypairModel } from './keypairModel'
 
 const validatorsModel = standardize({

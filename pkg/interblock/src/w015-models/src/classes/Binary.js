@@ -14,7 +14,7 @@ const schema = {
 }
 
 export class Binary extends mixin(schema) {
-  create(integrity = Integrity.create(), size = 0) {
+  static create(integrity = Integrity.create(), size = 0) {
     return super.create({ integrity, size })
   }
 }

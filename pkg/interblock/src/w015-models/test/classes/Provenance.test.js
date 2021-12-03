@@ -1,52 +1,50 @@
 import { assert } from 'chai/index.mjs'
-import { integrityModel, dmzModel, provenanceModel } from '../index'
+import debug from 'debug'
+import { Dmz, Integrity, Provenance } from '../../src/classes'
 
 describe('provenance', () => {
   test('creates default model', () => {
-    const provenance = provenanceModel.create()
+    const provenance = Provenance.create()
     assert(provenance)
-    const json = provenance.serialize()
-    assert(typeof json === 'string')
-    const clone = provenanceModel.clone(json)
-    assert(clone)
-    assert(typeof clone.getAddress === 'function')
+    const array = provenance.toArray()
+    const restore = Provenance.restore(array)
+    assert(restore)
+    assert(typeof restore.getAddress === 'function')
   })
   test('checks own integrity', () => {
-    const provenance = provenanceModel.create()
-    const clone = provenanceModel.clone(provenance.serialize())
-    const degraded = {
-      ...clone,
-      integrity: integrityModel.create({ test: 'test' }),
-    }
-    assert(provenanceModel.clone(clone))
-    assert.throws(() => provenanceModel.clone(degraded))
+    const provenance = Provenance.create()
+    const arr = provenance.toArray()
+    const degraded = [...arr]
+    degraded[3] = Integrity.create({ test: 'test' }).toArray()
+    assert(Provenance.restore(arr))
+    assert.throws(() => Provenance.restore(degraded))
   })
   test('randomness inside genesis', () => {
-    const dmz = dmzModel.create()
-    const g1 = provenanceModel.create(dmz)
-    const g2 = provenanceModel.create(dmz)
+    const dmz = Dmz.create()
+    const g1 = Provenance.create(dmz)
+    const g2 = Provenance.create(dmz)
     assert(!g1.equals(g2))
   })
   test('genesis address is stable', async () => {
-    const g = provenanceModel.create()
+    const g = Provenance.create()
     const a1 = g.getAddress()
     const a2 = g.getAddress()
     assert(a1.equals(a2))
+    assert.strictEqual(a1, a2)
   })
   test('reflects own integrity', () => {
-    const prov = provenanceModel.create()
-    const ref = prov.reflectIntegrity()
-    const pure = integrityModel.create(prov)
-    assert(pure.equals(ref))
+    const prov = Provenance.create()
+    const reflected = prov.reflectIntegrity()
+    const pure = Integrity.create(prov)
+    assert(pure.equals(reflected))
   })
   test('cannot fork from the future', () => {
-    const dmz = dmzModel.create()
-    const parent = provenanceModel.create(dmz)
+    const dmz = Dmz.create()
+    const parent = Provenance.create(dmz)
     assert.strictEqual(Object.keys(parent.lineage).length, 0)
     const parentHash = parent.reflectIntegrity()
     const forkedLineage = { 0: parentHash }
-
-    const inheritFromFuture = () => provenanceModel.create(dmz, forkedLineage)
+    const inheritFromFuture = () => Provenance.create(dmz, forkedLineage)
     assert.throws(inheritFromFuture)
   })
   test.todo('remove chainId as part of lineage')

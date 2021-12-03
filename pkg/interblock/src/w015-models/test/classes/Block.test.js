@@ -1,23 +1,26 @@
 import { assert } from 'chai/index.mjs'
 import { Dmz, Provenance, Block, Keypair } from '../../src/classes'
 import * as crypto from '../../../w012-crypto'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:Block')
+Debug.enable('interblock:tests:Block')
 
-describe.only('block', () => {
+describe('block', () => {
   describe('instantiation', () => {
-    test.only('default is verified genesis', () => {
+    test('default is verified genesis', () => {
       const defaultBlock = Block.create()
       assert(defaultBlock.provenance.address.isGenesis())
       assert(defaultBlock.isVerifiedBlock())
     })
     test('default serialization', () => {
       const defaultBlock = Block.create()
-      const json = defaultBlock.serialize()
+      const json = JSON.stringify(defaultBlock.toArray(), null, 2)
       assert.strictEqual(typeof json, 'string')
-      const clone = Block.clone(json)
-      assert(defaultBlock.equals(clone))
+      const clone = Block.restore(JSON.parse(json))
+      assert.deepEqual(defaultBlock.toArray(), clone.toArray())
     })
+    const rawKeys = crypto.generateKeyPair()
     test('custom key isVerifiedBlock', () => {
-      const rawKeys = crypto.generateKeyPair()
       const keypair = Keypair.create('CUSTOM-KEY', rawKeys)
       const dmz = Dmz.create({
         validators: keypair.getValidatorEntry(),

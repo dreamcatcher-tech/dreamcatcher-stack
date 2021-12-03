@@ -1,5 +1,5 @@
 const txRequestSchema = {
-  title: `txRequest`,
+  title: `TxRequest`,
   // description: `Covenant created`,
   type: 'object',
   required: ['type', 'payload', 'to'],
@@ -15,7 +15,7 @@ const txRequestSchema = {
   },
 }
 const rxRequestSchema = {
-  title: `rxRequest`,
+  title: `RxRequest`,
   // description: `System created inside ChannelModel`,
   type: 'object',
   required: ['type', 'payload', 'identifier'],
@@ -27,7 +27,7 @@ const rxRequestSchema = {
   },
 }
 const txReplySchema = {
-  title: `txReply`,
+  title: `TxReply`,
   // description: `Covenant created`,
   type: 'object',
   required: ['type', 'payload', 'identifier'],
@@ -39,7 +39,7 @@ const txReplySchema = {
   },
 }
 const rxReplySchema = {
-  title: `rxReply`,
+  title: `RxReply`,
   //   description: `System created.
   // Create requires the sequence to be included.
   // @@PROMISE cannot ever be dispatched to a reducer, hence its exclusion from "type"`,

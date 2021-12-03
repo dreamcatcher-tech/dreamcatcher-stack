@@ -1,25 +1,33 @@
 import { assert } from 'chai/index.mjs'
-import { stateModel } from '..'
+import { State } from '../../src/classes'
 
 // TODO add in the covenant api tools, and make some actions
 
 describe('state', () => {
   describe('create', () => {
     test('default', () => {
-      const state = stateModel.create()
+      const state = State.create()
       assert(state)
     })
     test.todo('create with actions but no defaultAction passes')
   })
-  test('clone', () => {
-    const s1 = stateModel.clone()
-    const s2 = stateModel.create()
+  test('equality', () => {
+    const s1 = State.create()
+    const s2 = State.create()
     assert(s1.equals(s2))
+    const s3 = State.create({ some: 'object' })
+    const s4 = State.create({ some: 'object' })
+    assert(s3.equals(s4))
+    const s5 = State.create({ some: 'object' })
+    const s6 = State.create({ some: 'different object' })
+    assert(!s5.equals(s6))
   })
   test('no undefined state keys during serialize', () => {
-    assert(stateModel.create({ not: 'missing' }).serialize())
-    assert.throws(() => stateModel.create({ missing: undefined }).serialize())
-    assert.throws(() => stateModel.create({ n: { m: undefined } }).serialize())
+    assert(State.create({ not: 'missing' }).toArray())
+    assert.throws(() => State.create({ missing: undefined }))
+    assert.throws(() => State.create({ n: { m: undefined } }))
+    assert.throws(() => State.create(null))
+    assert(State.create({ n: { m: null } }))
   })
   test.todo('logically wrong action identifiers')
   test.todo('identifier pattern wrong')

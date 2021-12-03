@@ -1,5 +1,5 @@
-import { standardize } from '../modelUtils'
-import { publicKeySchema } from '../schemas/modelSchemas'
+import { standardize } from '../../modelUtils'
+import { publicKeySchema } from '../../schemas/modelSchemas'
 
 const publicKeyModel = standardize({
   schema: publicKeySchema,

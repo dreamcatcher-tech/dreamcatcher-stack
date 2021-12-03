@@ -1,5 +1,7 @@
 import assert from 'assert-fast'
 import { produceWithPatches, freeze } from 'immer'
+import equals from 'fast-deep-equal'
+
 const schema = {
   title: 'State',
   //   description: `The result of running a covenant is stored here.
@@ -37,9 +39,25 @@ const deepFreeze = true
 freeze(schema, deepFreeze)
 const insidersOnly = Symbol()
 
+const assertNoUndefined = (obj, path = '/') => {
+  if (obj === undefined) {
+    throw new Error(`undefined value at ${path}`)
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    for (const key of Object.keys(obj)) {
+      assertNoUndefined(obj[key], `${path}/${key}`)
+    }
+  }
+}
+
 export class State {
   static get schema() {
     return schema
+  }
+  static restore(backingArray) {
+    assert(Array.isArray(backingArray))
+    assert.strictEqual(backingArray.length, 1)
+    return State.create(backingArray[0])
   }
   static create(base) {
     return new State(insidersOnly, base)
@@ -49,20 +67,31 @@ export class State {
   #diffFor = this.#next
   #lastDiff
   #lastMerge
-  constructor(LOCKED_CONSTRUCTOR, base) {
+  constructor(LOCKED_CONSTRUCTOR, base = {}) {
     if (LOCKED_CONSTRUCTOR !== insidersOnly) {
       throw new Error('Locked constructor - use State.create()')
     }
-    if (base) {
-      assert.strictEqual(typeof base, 'object')
-      const deepFreeze = true
-      freeze(base, deepFreeze)
-      this.#base = base
+    assert.strictEqual(typeof base, 'object')
+    const deepFreeze = true
+    freeze(base, deepFreeze)
+    this.#base = base
+    this.assertLogic()
+  }
+  assertLogic() {
+    // TODO ensure no functions attempted to be stored ? or just blank them between blocks ?
+    assert.strictEqual(typeof this.#base, 'object')
+    assert(this.#base !== null)
+    assertNoUndefined(this.#base)
+  }
+  equals(other) {
+    if (!other || !(other instanceof State)) {
+      return false
     }
+    return equals(this.#base, other.#base)
   }
   merge() {
     this.diff()
-    return new State(this.#base)
+    return new State(insidersOnly, this.#base)
   }
   update(updatedState) {
     const next = this.#clone()
@@ -101,5 +130,8 @@ export class State {
     this.#lastMerge = nextState
     this.#diffFor = this.#next
     return patches
+  }
+  toArray() {
+    return [this.#base]
   }
 }

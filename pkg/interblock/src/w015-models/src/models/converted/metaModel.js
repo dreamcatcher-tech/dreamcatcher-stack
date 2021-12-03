@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
-import { standardize } from '../modelUtils'
-import { rxReplyModel } from '../transients'
+import { standardize } from '../../modelUtils'
+import { rxReplyModel } from '../../transients'
 
 // TODO move to array model so can compute diffs and hashes faster
 const schema = {

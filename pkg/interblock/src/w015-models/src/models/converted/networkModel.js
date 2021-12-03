@@ -1,13 +1,13 @@
 import assert from 'assert-fast'
 import last from 'lodash.last'
-import { standardize } from '../modelUtils'
-import { channelModel } from './channelModel'
-import { addressModel } from './addressModel'
-import { rxRequestModel } from '../transients/rxRequestModel'
-import { rxReplyModel } from '../transients/rxReplyModel'
-import { reject } from '../../../w002-api'
+import { standardize } from '../../modelUtils'
+import { channelModel } from '../channelModel'
+import { addressModel } from '../addressModel'
+import { rxRequestModel } from '../../transients/rxRequestModel'
+import { rxReplyModel } from '../../transients/rxReplyModel'
+import { reject } from '../../../../w002-api'
 import Debug from 'debug'
-import { interblockModel } from '.'
+import { interblockModel } from '..'
 const debug = Debug('interblock:models:network')
 
 const schema = {

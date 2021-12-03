@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import Immutable from 'immutable'
 import { channelSchema } from '../schemas/modelSchemas'
 import { mixin } from './MapFactory'
-import { Channel, Address } from '.'
+import { Channel, Address, RxRequest } from '.'
 
 // TODO merge this with Conflux ?
 // TODO assert that no channel has an identical hash during the hashing process ?
@@ -20,14 +20,28 @@ const networkSchema = {
 export class Network extends mixin(networkSchema) {
   #txs = Immutable.Set() // any channel that is transmitting
   #addressMap = Immutable.Map()
-  static create() {
+  static create(channels = {}) {
+    assert(!channels['.'])
+    assert(!channels['..'])
     const params = {
       '..': Channel.create(Address.create(), '..'),
       '.': Channel.createLoopback(),
+      ...channels,
     }
     return super.create(params)
   }
-
+  assertLogic() {
+    assert(!this.has(undefined))
+    assert(this.has('..'))
+    assert(this.has('.'))
+    assert(this.get('.') instanceof Channel, 'channel invalid')
+    assert(this.get('.').systemRole === '.', `self not loopback channel`)
+    assert(this.get('..').systemRole === '..', `parent role invalid`)
+  }
+  getResolvedAliases() {
+    // build up this map at restore, and keep in sync with changes
+    throw new Error('TODO')
+  }
   set(alias, channel) {
     assert(channel instanceof Channel)
     const next = super.set(alias, channel)
@@ -66,6 +80,7 @@ export class Network extends mixin(networkSchema) {
   }
   getByAddress(address) {
     assert(address instanceof Address)
+    // TODO handle same address referred to twice as different aliases
     const alias = this.#addressMap.get(address)
     return this.get(alias)
   }
@@ -79,5 +94,18 @@ export class Network extends mixin(networkSchema) {
   }
   isTransmitting() {
     return !!this.#txs.size
+  }
+  getParent() {
+    return this.get('..')
+  }
+
+  getResponse(request) {
+    assert(request instanceof RxRequest)
+    const address = request.getAddress()
+    const channel = this.getByAddress(address)
+    assert(channel, `no channel found for address: ${address}`)
+    const replyKey = request.getReplyKey()
+    const reply = channel.replies.get(replyKey)
+    return reply
   }
 }

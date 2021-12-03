@@ -1,7 +1,8 @@
 import { mixin } from './MapFactory'
 import { provenanceSchema } from '../schemas/modelSchemas'
-import { Provenance, Dmz, Interblock } from '.'
+import { Provenance, Dmz, Interblock, Validators } from '.'
 import assert from 'assert-fast'
+import debug from 'debug'
 
 const blockSchema = {
   ...Dmz.schema,
@@ -15,7 +16,11 @@ const blockSchema = {
   },
 }
 const checkSignatures = (validators, provenance) => {
-  const requiredPublicKeys = Object.values(validators)
+  assert(validators instanceof Validators)
+  const requiredPublicKeys = []
+  for (const [name, publicKey] of validators.entries()) {
+    requiredPublicKeys.push(publicKey)
+  }
 
   const isPierce =
     requiredPublicKeys[0].algorithm === '@@pierce' &&
@@ -42,18 +47,18 @@ export class Block extends mixin(blockSchema) {
     assert.strictEqual(typeof forkedLineages, 'object')
     const provenance = Provenance.create(dmz, forkedLineages)
     // TODO make block be derived from Dmz
-    const block = super.create({ ...dmz, provenance })
+    const block = super.create({ ...dmz.spread(), provenance })
     return block
   }
   assertLogic() {
-    const isLoop = this.network.getChannel(this.provenance.getAddress())
+    const address = this.provenance.getAddress()
+    const isLoop = this.network.getByAddress(address)
     assert(!isLoop, `Loop detected - use loopback address instead`)
-    const { provenance, ...spreadDmz } = this
+    const { provenance, ...spreadDmz } = this.spread()
     const dmz = Dmz.create(spreadDmz)
-    const hash = dmz.getHash()
-    assert(hash === provenance.dmzIntegrity.hash)
-    const { validators } = dmz
-    const { isOnlyRequired } = checkSignatures(validators, provenance)
+    const hash = dmz.hashString()
+    assert.strictEqual(hash, provenance.dmzIntegrity.hash)
+    const { isOnlyRequired } = checkSignatures(dmz.validators, provenance)
     if (!isOnlyRequired) {
       throw new Error('Invalid signatures detected on block')
     }

@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
-import { actionModel, continuationModel } from '.'
-import { standardize } from '../modelUtils'
+import { actionModel, continuationModel } from '..'
+import { standardize } from '../../modelUtils'
 
 const schema = {
   title: 'Piercings',

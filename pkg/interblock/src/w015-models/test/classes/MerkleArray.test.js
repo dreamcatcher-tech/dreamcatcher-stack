@@ -4,8 +4,7 @@ import { MerkleArray } from '../../src/classes/MerkleArray'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:MerkleArray')
 
-describe.only('MerkleArray', () => {
-  Debug.enable('*tests*')
+describe('MerkleArray', () => {
   test('basic', () => {
     let ma = new MerkleArray()
     ma = ma.add(false)

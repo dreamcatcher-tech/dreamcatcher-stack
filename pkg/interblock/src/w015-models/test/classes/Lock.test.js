@@ -1,18 +1,25 @@
 import { assert } from 'chai/index.mjs'
-import { lockModel } from '..'
+import { Lock } from '../../src/classes'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:Lock')
 
-describe('lock', () => {
+describe.only('lock', () => {
   test('creates', () => {
-    const lock = lockModel.create()
+    const lock = Lock.create()
     assert(lock && lock.isLocked() && !lock.block)
-    const clone = lockModel.clone(lock)
-    assert(clone.equals(lock))
-    const fromJson = lockModel.clone(clone.serialize())
-    assert(fromJson.equals(clone) && fromJson.isLocked())
+    const restored = Lock.restore(lock.toArray())
+    debug(restored.toJS())
+    debug(lock.toJS())
+    assert(restored.deepEquals(lock))
+    assert(restored.isLocked())
   })
   test('lock expiration', () => {
-    const lock = lockModel.create()
-    const expired = lockModel.clone({ ...lock, expires: 0 })
+    const lock = Lock.create()
+    assert.strictEqual(lock.expires, 2000)
+    const array = lock.toArray()
+    array[1] = 0
+    const expired = Lock.restore(array)
+    assert.strictEqual(expired.expires, 0)
     assert(!expired.isLocked())
   })
   test.todo('no duplicate piercings allowed in creation')
