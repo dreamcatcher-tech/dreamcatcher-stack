@@ -1,5 +1,8 @@
 import { assert } from 'chai/index.mjs'
 import { Action, Channel, Continuation } from '../../src/classes'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:Channel')
+Debug.enable('*:Channel')
 
 describe('channel', () => {
   describe('create', () => {
@@ -15,7 +18,8 @@ describe('channel', () => {
       assert(channel.address.isUnknown())
       assert(channel.precedent.isUnknown())
       assert(!channel.tip)
-      const restored = Channel.restore(channel.toArray())
+      const arr = channel.toArray()
+      const restored = Channel.restore(arr)
       assert(restored.address.isUnknown())
       assert(restored.precedent.isUnknown())
       assert(!restored.tip)
@@ -24,9 +28,9 @@ describe('channel', () => {
       const action = Action.create('TEST_ACTION')
       const reply = Continuation.create()
       const array = channel.toArray()
+      debug(action)
       array[3] = [action.toArray()]
       const deepRestore = Channel.restore(array)
-      console.log(deepRestore.toArray())
       assert(deepRestore.requests.every((a) => a instanceof Action))
     })
     test('includes known address', () => {

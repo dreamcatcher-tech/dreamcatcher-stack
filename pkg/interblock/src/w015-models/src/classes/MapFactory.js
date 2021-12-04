@@ -115,6 +115,10 @@ const patternProperties = (schema) => {
       }
       return next
     }
+    update(map) {
+      // TODO rename
+      return this.setMany(map)
+    }
     set(key, value) {
       assert(typeof key, 'string')
       assert(value !== undefined)
@@ -204,9 +208,8 @@ const properties = (schema) => {
   assert(schema.properties)
   const propMap = {}
 
-  const props = Object.keys(schema.properties)
-  props.sort()
-  const deepIndices = []
+  const props = Object.keys(schema.properties).sort()
+  const deepIndices = new Map()
   const merkleOptions = { noCompaction: true, flatTree: true }
   const emptyArray = props.map(() => EMPTY)
   const backingArray = new MerkleArray(emptyArray, merkleOptions)
@@ -226,13 +229,21 @@ const properties = (schema) => {
       assert(Array.isArray(backingArray))
       // JSON.stringify converts symbol to null
       backingArray = backingArray.map((v) => (v === null ? EMPTY : v))
-      for (const { index, property } of deepIndices) {
+      for (const [index, schema] of deepIndices.entries()) {
         if (backingArray[index] === EMPTY) {
           continue
         }
-        const Class = Models[property.title] || SyntheticObject
-        assert(Class, `${property.title} not found`)
-        backingArray[index] = Class.restore(backingArray[index])
+        const Class = getClassForSchema(schema)
+        assert(Class, `${schema.title} not found`)
+        let value = backingArray[index]
+        if (schema.type === 'array') {
+          assert(Array.isArray(value))
+          value = value.map((v) => Class.restore(v))
+        } else {
+          assert.strictEqual(schema.type, 'object')
+          value = Class.restore(value)
+        }
+        backingArray[index] = value
       }
       const restored = new this(insidersOnly, backingArray)
       // TODO check the schema matches against the restored data
@@ -264,17 +275,20 @@ const properties = (schema) => {
       }
 
       let nextBackingArray = this.#backingArray
-      for (const [propertyName, value] of entries) {
+      for (let [propertyName, nextValue] of entries) {
         assert(Number.isInteger(propMap[propertyName]), `${propertyName}`)
-        assert(value !== undefined, `${propertyName}`)
+        assert(nextValue !== undefined, `${propertyName}`)
         // TODO do type checking based on the schema, particularly if deep
-        debug(`set`, propertyName, value)
-        const index = propMap[propertyName]
+        debug(`set`, propertyName, nextValue)
+        const arrayIndex = propMap[propertyName]
 
-        // TODO if it is a deep property, we need to create a new backing array
-
+        if (deepIndices.has(arrayIndex)) {
+          const schema = deepIndices.get(arrayIndex)
+          const currentValue = nextBackingArray.get(arrayIndex)
+          nextValue = deepValue(schema, currentValue, nextValue)
+        }
         // TODO use withMutations for speed
-        nextBackingArray = nextBackingArray.put(index, value)
+        nextBackingArray = nextBackingArray.put(arrayIndex, nextValue)
       }
       return new this.constructor(insidersOnly, nextBackingArray)
     }
@@ -310,11 +324,20 @@ const properties = (schema) => {
       // TODO using the schema, know which elements a classes
       // pull them all out until always have js primitives
       const arr = this.#backingArray.toArray()
-      for (const { index, property } of deepIndices) {
+      for (const [index, property] of deepIndices.entries()) {
         if (arr[index] === EMPTY) {
           continue
         }
-        arr[index] = arr[index].toArray()
+        switch (property.type) {
+          case 'object': {
+            arr[index] = arr[index].toArray()
+            break
+          }
+          case 'array': {
+            arr[index] = arr[index].map((v) => v.toArray())
+            break
+          }
+        }
       }
       return arr
     }
@@ -328,6 +351,8 @@ const properties = (schema) => {
         }
         if (value instanceof Base) {
           js[prop] = value.toJS()
+        } else if (Array.isArray(value)) {
+          js[prop] = value.map((v) => v.toJS())
         } else {
           js[prop] = value
         }
@@ -351,10 +376,15 @@ const properties = (schema) => {
       for (const prop of props) {
         propMap[prop] = index++
         const property = schema.properties[prop]
-        if (property.type === 'object' && property.title) {
-          assert(Models[property.title], `Missing: ${property.title}`)
-          // TODO handle generic objects being nested
-          deepIndices.push({ index: propMap[prop], property })
+        if (property.type === 'object') {
+          if (property.title) {
+            assert(Models[property.title], `Missing: ${property.title}`)
+          }
+          if (property.properties || property.patternProperties) {
+            deepIndices.set(propMap[prop], property)
+          }
+        } else if (property.type === 'array') {
+          deepIndices.set(propMap[prop], property)
         }
         Object.defineProperty(SyntheticObject.prototype, prop, {
           enumerable: true,
@@ -375,4 +405,64 @@ const properties = (schema) => {
   Object.defineProperty(SyntheticObject, 'name', { value: className })
 
   return SyntheticObject
+}
+
+const deepValue = (schema, currentValue, nextValue) => {
+  if (schema.type === 'array') {
+    assert(schema.items)
+    if (schema.items.type === 'object') {
+      const Class = getClassForSchema(schema.items)
+      assert(Class)
+      assert(nextValue.every((v) => v instanceof Class))
+      return nextValue
+    } else {
+      // restriction is arbitrary based on what schema features are used
+      assert.strictEqual(schema.items.type, 'string')
+      // TODO check the string formats are honoured
+      assert(nextValue.every((s) => typeof s === 'string'))
+      return nextValue
+    }
+  } else {
+    assert.strictEqual(schema.type, 'object')
+    if (!schema.properties && !schema.patternProperties) {
+      assert.strictEqual(typeof nextValue, 'object')
+      return nextValue
+    }
+    const Class = getClassForSchema(schema)
+    assert(Class)
+    if (nextValue instanceof Class) {
+      return nextValue
+    } else if (currentValue === EMPTY) {
+      currentValue = new Class(insidersOnly)
+    }
+    const ret = currentValue.update(nextValue)
+    return ret
+  }
+}
+
+const classMap = new Map()
+const getClassForSchema = (schema) => {
+  assert.strictEqual(typeof schema, 'object')
+  if (classMap.has(schema)) {
+    return classMap.get(schema)
+  }
+  let Class
+  if (schema.type === 'object') {
+    if (schema.title) {
+      Class = Models[schema.title]
+      assert(Class, `${schema.title} not found`)
+    } else if (schema.patternProperties) {
+      Class = patternProperties(schema)
+    } else {
+      Class = properties(schema)
+    }
+  } else {
+    assert.strictEqual(schema.type, 'array')
+    assert(schema.items)
+    assert(schema.items.type !== 'array')
+    Class = getClassForSchema(schema.items)
+  }
+  assert(Class, `${schema.title} not found`)
+  classMap.set(schema, Class)
+  return Class
 }
