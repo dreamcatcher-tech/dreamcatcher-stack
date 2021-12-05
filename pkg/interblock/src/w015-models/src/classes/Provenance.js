@@ -19,7 +19,7 @@ export class Provenance extends mixin(provenanceSchema) {
       address: Address.create('GENESIS'),
       lineage: forkedLineage,
     }
-    const integrity = Integrity.create(provenance)
+    const integrity = generateIntegrity(provenance)
     const signatures = []
 
     return super.create({ ...provenance, integrity, signatures })
@@ -39,16 +39,6 @@ export class Provenance extends mixin(provenanceSchema) {
       assert(this.signatures.length <= 1, `single signer only`)
       assert(this.#lineageKeys.length)
     }
-
-    const _selfIntegrity = () => {
-      const check = {}
-      // TODO remove order of keys being important
-      const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
-      checkKeys.forEach((key) => (check[key] = this[key]))
-      const integrity = Integrity.create(check)
-      const selfIntegrity = integrity.equals(this.integrity)
-      return selfIntegrity
-    }
     const _signatureIntegrity = () => {
       if (this.address.isGenesis()) {
         return signatures.length === 0
@@ -58,14 +48,14 @@ export class Provenance extends mixin(provenanceSchema) {
         // TODO check order the signatures is alphabetical / stable
       )
     }
-    if (!_selfIntegrity()) {
+    this.#reflectedIntegrity = generateIntegrity(this)
+    if (!this.integrity.equals(this.#reflectedIntegrity)) {
       throw new Error('Self integrity degraded - refusing to instantiate')
     }
     if (!_signatureIntegrity()) {
       _signatureIntegrity()
       throw new Error('Signature degraded - refusing to instantiate')
     }
-    this.#reflectedIntegrity = Integrity.create(this)
     this.#address = this.address
     if (this.height === 0) {
       assert(this.address.isGenesis())
@@ -93,4 +83,20 @@ export class Provenance extends mixin(provenanceSchema) {
     assert(shortest >= 0 && shortest < this.height)
     return shortest
   }
+}
+
+const generateIntegrity = (obj) => {
+  const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
+  const check = {}
+  for (const key of checkKeys) {
+    check[key] = obj[key]
+  }
+  check.dmzIntegrity = check.dmzIntegrity.hashString()
+  check.address = check.address.hashString()
+  check.lineage = { ...check.lineage }
+  for (const key of Object.keys(check.lineage)) {
+    check.lineage[key] = check.lineage[key].hashString()
+  }
+  const integrity = Integrity.create(check)
+  return integrity
 }

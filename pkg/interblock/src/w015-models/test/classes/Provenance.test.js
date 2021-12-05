@@ -32,12 +32,6 @@ describe('provenance', () => {
     assert(a1.equals(a2))
     assert.strictEqual(a1, a2)
   })
-  test('reflects own integrity', () => {
-    const prov = Provenance.create()
-    const reflected = prov.reflectIntegrity()
-    const pure = Integrity.create(prov)
-    assert(pure.equals(reflected))
-  })
   test('cannot fork from the future', () => {
     const dmz = Dmz.create()
     const parent = Provenance.create(dmz)

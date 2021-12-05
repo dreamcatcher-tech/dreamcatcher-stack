@@ -1,11 +1,11 @@
 import { assert } from 'chai/index.mjs'
-import { Action, Channel, Continuation } from '../../src/classes'
+import { Action, Channel, Continuation, Provenance } from '../../src/classes'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
 Debug.enable('*:Channel')
 
 describe('channel', () => {
-  describe('create', () => {
+  describe.only('create', () => {
     test('create speed', () => {
       const precompileFlush = Channel.create()
       const start = Date.now()
@@ -13,7 +13,7 @@ describe('channel', () => {
       const elapsed = Date.now() - start
       assert(elapsed < 3, elapsed)
     })
-    test.only('create', () => {
+    test('create', () => {
       const channel = Channel.create()
       assert(channel.address.isUnknown())
       assert(channel.precedent.isUnknown())
@@ -39,7 +39,7 @@ describe('channel', () => {
       }
     })
     test('includes known address', () => {
-      const provenance = provenanceModel.create()
+      const provenance = Provenance.create()
       const address = provenance.getAddress()
       const channel = Channel.create(address)
       assert(channel.address.equals(address))
