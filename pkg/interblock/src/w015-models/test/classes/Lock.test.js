@@ -3,7 +3,7 @@ import { Lock } from '../../src/classes'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Lock')
 
-describe.only('lock', () => {
+describe('lock', () => {
   test('creates', () => {
     const lock = Lock.create()
     assert(lock && lock.isLocked() && !lock.block)

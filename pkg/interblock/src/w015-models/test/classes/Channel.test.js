@@ -5,7 +5,7 @@ const debug = Debug('interblock:tests:Channel')
 Debug.enable('*:Channel')
 
 describe('channel', () => {
-  describe.only('create', () => {
+  describe('create', () => {
     test('create speed', () => {
       const precompileFlush = Channel.create()
       const start = Date.now()
@@ -42,7 +42,7 @@ describe('channel', () => {
       const provenance = Provenance.create()
       const address = provenance.getAddress()
       const channel = Channel.create(address)
-      assert(channel.address.equals(address))
+      assert(channel.address.deepEquals(address))
     })
     test.todo('loopback bans @@OPEN_CHILD action')
   })
