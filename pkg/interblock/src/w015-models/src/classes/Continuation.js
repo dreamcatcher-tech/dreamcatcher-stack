@@ -3,7 +3,7 @@ import { serializeError } from 'serialize-error'
 import { continuationSchema } from '../schemas/modelSchemas'
 import { mixin } from './MapFactory'
 export class Continuation extends mixin(continuationSchema) {
-  create(type = '@@RESOLVE', payload = {}) {
+  static create(type = '@@RESOLVE', payload = {}) {
     if (type === '@@REJECT') {
       payload = serializeError(payload)
     }

@@ -2,7 +2,7 @@ import { assert } from 'chai/index.mjs'
 import { Action, Channel, Continuation } from '../../src/classes'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
-Debug.enable('*:Channel')
+Debug.enable('*:Channel *MapFactory')
 
 describe('channel', () => {
   describe('create', () => {
@@ -28,10 +28,15 @@ describe('channel', () => {
       const action = Action.create('TEST_ACTION')
       const reply = Continuation.create()
       const array = channel.toArray()
-      debug(action)
       array[3] = [action.toArray()]
+
       const deepRestore = Channel.restore(array)
       assert(deepRestore.requests.every((a) => a instanceof Action))
+      const withReply = deepRestore.update({ replies: { '0_3': reply } })
+      debug(Object.keys(withReply))
+      const replies = Object.values(withReply.replies)
+      assert.strictEqual(replies.length, 1)
+      assert(replies.every((r) => r instanceof Continuation))
     })
     test('includes known address', () => {
       const provenance = provenanceModel.create()

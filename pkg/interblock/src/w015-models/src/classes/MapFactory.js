@@ -308,10 +308,24 @@ const properties = (schema) => {
       return false
     }
     merge() {
-      const next = new this.constructor(
-        insidersOnly,
-        this.#backingArray.merge()
-      )
+      let backingArray = this.#backingArray
+      for (const [index, property] of deepIndices.entries()) {
+        let deepValue = backingArray.get(index)
+        if (deepValue === EMPTY) {
+          continue
+        }
+        if (property.type === 'object') {
+          deepValue = deepMerge(deepValue)
+        } else {
+          assert.strictEqual(property.type, 'array')
+          const array = backingArray.get(index)
+          assert(Array.isArray(array))
+          deepValue = array.map((v) => deepMerge(v))
+        }
+        backingArray = backingArray.put(index, deepValue)
+      }
+
+      const next = new this.constructor(insidersOnly, backingArray.merge())
       return next
     }
     hash() {
@@ -328,15 +342,11 @@ const properties = (schema) => {
         if (arr[index] === EMPTY) {
           continue
         }
-        switch (property.type) {
-          case 'object': {
-            arr[index] = arr[index].toArray()
-            break
-          }
-          case 'array': {
-            arr[index] = arr[index].map((v) => v.toArray())
-            break
-          }
+        if (property.type === 'object') {
+          arr[index] = arr[index].toArray()
+        } else {
+          assert.strictEqual(property.type, 'array')
+          arr[index] = arr[index].map((v) => v.toArray())
         }
       }
       return arr
@@ -386,7 +396,7 @@ const properties = (schema) => {
         } else if (property.type === 'array') {
           deepIndices.set(propMap[prop], property)
         }
-        Object.defineProperty(SyntheticObject.prototype, prop, {
+        Object.defineProperty(this.prototype, prop, {
           enumerable: true,
           get() {
             const value = this.#backingArray.get(propMap[prop])
@@ -405,6 +415,14 @@ const properties = (schema) => {
   Object.defineProperty(SyntheticObject, 'name', { value: className })
 
   return SyntheticObject
+}
+
+const deepMerge = (value) => {
+  debug(`deepMerge`, value)
+  if (value instanceof Base) {
+    return value.merge()
+  }
+  return value
 }
 
 const deepValue = (schema, currentValue, nextValue) => {
