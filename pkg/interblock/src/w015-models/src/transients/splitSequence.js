@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { addressModel } from '../models/addressModel'
+import { Address } from '../classes'
 
 const splitSequence = (sequence) => {
   assert(typeof sequence === 'string')
@@ -9,9 +9,9 @@ const splitSequence = (sequence) => {
   const index = parseInt(sIndex)
   let address
   if (chainId === 'LOOPBACK') {
-    address = addressModel.create('LOOPBACK')
+    address = Address.create('LOOPBACK')
   } else {
-    address = addressModel.create(chainId)
+    address = Address.create(chainId)
     assert(address.isResolved())
   }
   return { address, height, index }

@@ -1,18 +1,23 @@
 import { assert } from 'chai/index.mjs'
-import { addressModel, rxRequestModel, integrityModel } from '..'
+import { Address, Integrity, RxRequest } from '../../src/classes'
 
-describe('rxRequest', () => {
+describe.only('rxRequest', () => {
   test('addresses are identical', () => {
-    const knownIntegrity = integrityModel.create('test address')
-    const address = addressModel.create(knownIntegrity)
+    const knownIntegrity = Integrity.create('test address')
+    const address = Address.create(knownIntegrity)
     assert(!address.isLoopback())
     assert(!address.isUnknown())
-    const request = rxRequestModel.create('test', {}, address, 55, 20)
+    const request = RxRequest.create('test', {}, address, 55, 20)
     const requestAddress = request.getAddress()
+    console.log(requestAddress)
+    assert(requestAddress instanceof Address)
     assert(!requestAddress.isLoopback())
     assert(!requestAddress.isUnknown())
     assert(!requestAddress.isInvalid())
-    assert(address.equals(requestAddress))
+    console.log(request.identifier)
+    console.log(address.toJS())
+    console.log(requestAddress.toJS())
+    assert(address.deepEquals(requestAddress))
   })
   test('unknown or invalid addresses are not allowed', () => {
     const unknown = addressModel.create()

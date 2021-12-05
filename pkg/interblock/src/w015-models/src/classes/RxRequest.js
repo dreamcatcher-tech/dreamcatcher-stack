@@ -6,6 +6,9 @@ import { mixin } from './MapFactory'
 
 export class RxRequest extends mixin(rxRequestSchema) {
   #request
+  #address
+  #height
+  #index
   static create(type, payload, address, height, index) {
     // TODO make this creation args less like passing in an interblock directly
     const identifier = `${address.getChainId()}_${height}_${index}`
@@ -13,8 +16,11 @@ export class RxRequest extends mixin(rxRequestSchema) {
     return super.create(rxRequest)
   }
   assertLogic() {
-    const { type, payload, identifier } = this
+    const { identifier } = this
     const { address, height, index } = splitSequence(identifier)
+    this.#address = address
+    this.#height = height
+    this.#index = index
     assert(!address.isUnknown())
     assert(Number.isInteger(height))
     assert(height >= 0)
@@ -23,16 +29,16 @@ export class RxRequest extends mixin(rxRequestSchema) {
   }
   // TODO extend from RxReply
   getAddress() {
-    return this.address
+    return this.#address
   }
   getHeight() {
-    return this.height
+    return this.#height
   }
   getIndex() {
-    return this.index
+    return this.#index
   }
   getReplyKey() {
-    return `${this.height}_${this.index}`
+    return `${this.#height}_${this.#index}`
   }
   getRequest() {
     if (!this.#request) {
@@ -45,8 +51,8 @@ export class RxRequest extends mixin(rxRequestSchema) {
     return false
   }
   getLogEntry() {
-    const { type, address } = this
-    const chainId = address.getChainId()
+    const { type } = this
+    const chainId = this.#address.getChainId()
     return `${type} ${chainId.substring(0, 9)} ${this.getReplyKey()}`
   }
 }
