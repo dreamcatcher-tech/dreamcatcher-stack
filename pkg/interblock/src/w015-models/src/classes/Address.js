@@ -32,10 +32,7 @@ export class Address extends mixin(addressSchema) {
       if (possibleIntegrity.hash.length === integrity.length) {
         // TODO use a regex tester for chainIds
         const hash = integrity
-        integrity = Integrity.create({
-          ...possibleIntegrity,
-          hash,
-        })
+        integrity = Integrity.create(hash)
         status = 'RESOLVED'
       } else {
         integrity = possibleIntegrity

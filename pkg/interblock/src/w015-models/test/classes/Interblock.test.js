@@ -28,7 +28,7 @@ const createBlockWithEffects = (actionType = 'INTERBLOCK_TEST') => {
 
 describe('interblock', () => {
   describe('create', () => {
-    test.only('create', () => {
+    test('create', () => {
       const block = createBlockWithEffects()
       const interblock = Interblock.create(block, 'effects')
       assert(interblock)
