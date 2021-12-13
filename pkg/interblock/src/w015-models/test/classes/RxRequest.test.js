@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import { Address, Integrity, RxRequest } from '../../src/classes'
 
-describe.only('rxRequest', () => {
+describe('rxRequest', () => {
   test('addresses are identical', () => {
     const knownIntegrity = Integrity.create('test address')
     const address = Address.create(knownIntegrity)

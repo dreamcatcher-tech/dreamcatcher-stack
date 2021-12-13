@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { standardize } from '../../modelUtils'
 import { rxRequestModel, rxReplyModel } from '../../transients'
-import { accumulationModel } from '../accumulationModel'
+import { accumulationModel } from './accumulationModel'
 
 const pendingModel = standardize({
   // TODO make model cleaner once util can handle OR in schemas

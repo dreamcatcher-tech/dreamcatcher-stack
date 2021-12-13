@@ -41,4 +41,7 @@ export class Integrity extends mixin(integritySchema) {
     // TODO check the format of the hash string using regex
     const arr = this.toArray()
   }
+  hashString() {
+    return this.hash
+  }
 }

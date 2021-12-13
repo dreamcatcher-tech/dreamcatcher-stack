@@ -328,7 +328,7 @@ const properties = (schema) => {
       const next = new this.constructor(insidersOnly, backingArray.merge())
       return next
     }
-    hash() {
+    hashRaw() {
       return this.#backingArray.hash()
     }
     hashString() {
@@ -396,6 +396,7 @@ const properties = (schema) => {
         } else if (property.type === 'array') {
           deepIndices.set(propMap[prop], property)
         }
+        assert.strictEqual(typeof this.prototype[prop], 'undefined', `${prop}`)
         Object.defineProperty(this.prototype, prop, {
           enumerable: true,
           get() {

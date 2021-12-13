@@ -1,52 +1,52 @@
 import { assert } from 'chai/index.mjs'
-import { integrityModel } from '../../w015-models'
+import { Integrity } from '../../src/classes'
 
 describe('integrity', () => {
   test('stable hashing when object keys shuffle', () => {
     const forward = { one: 1, two: 2 }
     const reverse = { two: 2, one: 1 }
-    const fi = integrityModel.create(forward)
-    const ri = integrityModel.create(reverse)
+    const fi = Integrity.create(forward)
+    const ri = Integrity.create(reverse)
     assert(fi.equals(ri))
   })
   test('no params returns unknown integrity', () => {
-    const unknown = integrityModel.create()
+    const unknown = Integrity.create()
     assert(unknown.isUnknown())
-    const clone = integrityModel.clone()
+    const clone = Integrity.restore(unknown.toArray())
     assert(clone.isUnknown())
   })
   test('strings hash too', () => {
     // TODO might make some tests easier if sugared to accept strings ?
-    const fromString = integrityModel.create('string')
+    const fromString = Integrity.create('string')
     assert(!fromString.isUnknown())
-    const obj = integrityModel.create({ random: 'object' })
+    const obj = Integrity.create({ random: 'object' })
     assert(!obj.isUnknown())
   })
   test('check passes for equivalent objects', () => {
-    const obj = integrityModel.create({ random: 'object' })
+    const obj = Integrity.create({ random: 'object' })
     assert(!obj.isIntegrityMatch({ not: 'same' }))
     assert(obj.isIntegrityMatch({ random: 'object' }))
   })
   test('handles null keys', () => {
     const mockBlock = { top: null, fart: null }
-    const mock = integrityModel.create(mockBlock)
+    const mock = Integrity.create(mockBlock)
     assert(mock)
   })
   test('handles two undefined keys', () => {
     const mockBlock = { top: undefined, bottom: undefined }
-    const mock = integrityModel.create(mockBlock)
+    const mock = Integrity.create(mockBlock)
     assert(mock)
   })
   test('handles empty objects', () => {
-    const integrity = integrityModel.create({})
+    const integrity = Integrity.create({})
     assert(integrity && !integrity.isUnknown())
-    const duplicate = integrityModel.create({})
+    const duplicate = Integrity.create({})
     assert(duplicate.equals(integrity))
     assert(integrity.isIntegrityMatch({}))
   })
   test(`getHash returns the stored hash`, () => {
-    const integrity = integrityModel.create('test hash')
-    assert.strictEqual(integrity.hash, integrity.getHash())
+    const integrity = Integrity.create('test hash')
+    assert.strictEqual(integrity.hash, integrity.hashString())
   })
   test.todo('detects tampered proof')
   test.todo('detects tampered nested proof')

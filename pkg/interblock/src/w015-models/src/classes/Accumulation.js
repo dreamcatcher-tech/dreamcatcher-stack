@@ -1,6 +1,5 @@
 import { mixin } from './MapFactory'
 import { RxReply } from '.'
-import { ciKeypair } from '../../../w012-crypto'
 const schema = {
   type: 'object',
   title: 'Accumulation',

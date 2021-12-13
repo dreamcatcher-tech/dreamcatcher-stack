@@ -1,5 +1,5 @@
-import { standardize } from '../modelUtils'
-import { rxReplyModel } from '../transients' // TODO move transients to perm
+import { standardize } from '../../modelUtils'
+import { rxReplyModel } from '../../transients' // TODO move transients to perm
 
 const accumulationModel = standardize({
   schema: {
