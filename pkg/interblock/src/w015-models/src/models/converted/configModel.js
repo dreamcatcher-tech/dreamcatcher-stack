@@ -1,4 +1,4 @@
-import { standardize } from '../modelUtils'
+import { standardize } from '../../modelUtils'
 
 const schema = {
   title: 'Config',

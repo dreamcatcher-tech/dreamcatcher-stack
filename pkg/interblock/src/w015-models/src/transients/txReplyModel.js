@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
-import { continuationModel } from '../models/continuationModel'
+import { continuationModel } from '../models/converted/continuationModel'
 import { txReplySchema } from '../schemas/transientSchemas'
 import { splitSequence } from './splitSequence'
 

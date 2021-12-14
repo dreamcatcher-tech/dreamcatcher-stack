@@ -39,7 +39,7 @@ const deepFreeze = true
 freeze(schema, deepFreeze)
 const insidersOnly = Symbol()
 
-const assertNoUndefined = (obj, path = '/') => {
+export const assertNoUndefined = (obj, path = '/') => {
   if (obj === undefined) {
     throw new Error(`undefined value at ${path}`)
   }

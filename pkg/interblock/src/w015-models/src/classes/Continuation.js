@@ -4,7 +4,7 @@ import { continuationSchema } from '../schemas/modelSchemas'
 import { mixin } from './MapFactory'
 export class Continuation extends mixin(continuationSchema) {
   static create(type = '@@RESOLVE', payload = {}) {
-    if (type === '@@REJECT') {
+    if (type === '@@REJECT' && payload instanceof Error) {
       payload = serializeError(payload)
     }
     return super.create({ type, payload })

@@ -1,4 +1,4 @@
-import { standardize } from '../modelUtils'
+import { standardize } from '../../modelUtils'
 import { integrityModel } from './integrityModel'
 
 const covenantIdModel = standardize({

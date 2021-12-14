@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
-import { standardize } from '../modelUtils'
+import { standardize } from '../../modelUtils'
 import { addressModel } from './addressModel'
 import { remoteModel } from './remoteModel'
-import { channelSchema } from '../schemas/modelSchemas'
-import { rxReplyModel, rxRequestModel } from '../transients'
+import { channelSchema } from '../../schemas/modelSchemas'
+import { rxReplyModel, rxRequestModel } from '../../transients'
 import Debug from 'debug'
-import { continuationModel } from '.'
+import { continuationModel } from '..'
 const debug = Debug('interblock:models:channel')
 
 const channelModel = standardize({

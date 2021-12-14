@@ -1,5 +1,5 @@
-import { standardize } from '../modelUtils'
-import { actionSchema } from '../schemas/modelSchemas'
+import { standardize } from '../../modelUtils'
+import { actionSchema } from '../../schemas/modelSchemas'
 
 const actionModel = standardize({
   schema: actionSchema,

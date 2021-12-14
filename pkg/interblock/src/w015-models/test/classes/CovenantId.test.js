@@ -1,10 +1,10 @@
 import { assert } from 'chai/index.mjs'
-import { covenantIdModel } from '..'
+import { CovenantId } from '../../src/classes'
 describe('covenantId', () => {
   test('makes integrity out of name', () => {
-    const covenantId = covenantIdModel.create('rhubarb')
+    const covenantId = CovenantId.create('rhubarb')
     assert(covenantId)
-    const blank = covenantIdModel.create()
+    const blank = CovenantId.create()
     assert(blank)
   })
 })

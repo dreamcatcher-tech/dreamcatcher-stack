@@ -8,6 +8,10 @@ const defaultIntegrity = Integrity.create()
 const testIntegrity = Integrity.create('TEST')
 export class Address extends mixin(addressSchema) {
   static create(integrity = defaultIntegrity) {
+    if (typeof integrity !== 'string') {
+      assert(integrity instanceof Integrity, `Wrong type: ${typeof integrity}`)
+    }
+
     let status = `UNKNOWN`
     // TODO do not use integrityModel if one of the predetermined types
     if (integrity === `GENESIS`) {

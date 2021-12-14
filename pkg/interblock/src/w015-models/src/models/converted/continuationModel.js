@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { serializeError } from 'serialize-error'
-import { standardize } from '../modelUtils'
-import { continuationSchema } from '../schemas/modelSchemas'
+import { standardize } from '../../modelUtils'
+import { continuationSchema } from '../../schemas/modelSchemas'
 
 const continuationModel = standardize({
   schema: continuationSchema,

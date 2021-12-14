@@ -286,17 +286,31 @@ const properties = (schema) => {
           const schema = deepIndices.get(arrayIndex)
           const currentValue = nextBackingArray.get(arrayIndex)
           nextValue = deepValue(schema, currentValue, nextValue)
+        } else {
+          const propertySchema = schema.properties[propertyName]
+          if (propertySchema.type === 'object') {
+            assert.strictEqual(typeof nextValue, 'object')
+          } else if (propertySchema.type === 'string') {
+            assert.strictEqual(typeof nextValue, 'string')
+          } else if (propertySchema.type === 'integer') {
+            assert(Number.isInteger(nextValue))
+            const { minimum } = typeof propertySchema
+            if (typeof minimum !== 'undefined') {
+              assert(nextValue >= minimum, `minimum was: ${minimum}`)
+            }
+          } else if (propertySchema.enum) {
+            const _enum = propertySchema.enum
+            assert(_enum.includes(nextValue), `${_enum}`)
+          } else if (propertySchema.type === 'boolean') {
+            assert.strictEqual(typeof nextValue, 'boolean')
+          } else {
+            throw new Error(`invalid schema type ${propertySchema.type}`)
+          }
         }
         // TODO use withMutations for speed
         nextBackingArray = nextBackingArray.put(arrayIndex, nextValue)
       }
       return new this.constructor(insidersOnly, nextBackingArray)
-    }
-    equals(other) {
-      if (!(other instanceof this.constructor)) {
-        return false
-      }
-      return this.#backingArray.equals(other.#backingArray)
     }
     deepEquals(other) {
       if (!(other instanceof this.constructor)) {

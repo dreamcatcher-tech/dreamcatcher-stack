@@ -1,8 +1,8 @@
 import assert from 'assert-fast'
-import * as crypto from '../../../w012-crypto'
-import { standardize } from '../modelUtils'
+import * as crypto from '../../../../w012-crypto'
+import { standardize } from '../../modelUtils'
 import { integrityModel } from './integrityModel'
-import { addressSchema } from '../schemas/modelSchemas'
+import { addressSchema } from '../../schemas/modelSchemas'
 
 const addressModel = standardize({
   schema: addressSchema,

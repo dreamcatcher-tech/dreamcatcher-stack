@@ -1,5 +1,6 @@
 import { actionSchema } from '../schemas/modelSchemas'
 import { mixin } from './MapFactory'
+import { assertNoUndefined } from './State'
 export class Action extends mixin(actionSchema) {
   static create(action, payload = {}) {
     if (typeof action === 'undefined') {
@@ -11,6 +12,7 @@ export class Action extends mixin(actionSchema) {
     if (!action.payload) {
       action = { ...action, payload: {} }
     }
+    assertNoUndefined(action.payload)
     return super.create(action)
   }
 }

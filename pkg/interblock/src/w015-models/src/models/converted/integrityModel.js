@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
-import * as crypto from '../../../w012-crypto'
-import { standardize } from '../modelUtils'
-import { integritySchema } from '../schemas/modelSchemas'
+import * as crypto from '../../../../w012-crypto'
+import { standardize } from '../../modelUtils'
+import { integritySchema } from '../../schemas/modelSchemas'
 import Debug from 'debug'
 const debug = Debug('interblock:models:integrity')
 

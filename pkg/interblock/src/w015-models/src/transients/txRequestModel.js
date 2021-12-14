@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
-import { actionModel } from '../models/actionModel'
+import { actionModel } from '../models/converted/actionModel'
 import { txRequestSchema } from '../schemas/transientSchemas'
 import posix from 'path-browserify'
 

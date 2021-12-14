@@ -30,6 +30,10 @@ export class Integrity extends mixin(integritySchema) {
     }
     return super.create(integrity)
   }
+  assertLogic() {
+    // TODO check the format of the hash string using regex
+    const arr = this.toArray()
+  }
   isUnknown() {
     return this.hash === 'UNKNOWN'
   }
@@ -37,11 +41,8 @@ export class Integrity extends mixin(integritySchema) {
     const copy = Integrity.create(content)
     return copy.hash === this.hash
   }
-  assertLogic() {
-    // TODO check the format of the hash string using regex
-    const arr = this.toArray()
-  }
   hashString() {
+    // overrides the prototype function
     return this.hash
   }
 }

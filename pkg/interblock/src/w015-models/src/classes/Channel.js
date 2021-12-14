@@ -2,6 +2,8 @@ import assert from 'assert-fast'
 import { RxRequest, RxReply, Continuation, Address, Remote } from '.'
 import { channelSchema } from '../schemas/modelSchemas'
 import { mixin } from './MapFactory'
+import Debug from 'debug'
+const debug = Debug('interblock:models:channel')
 
 let loopback
 export class Channel extends mixin(channelSchema) {

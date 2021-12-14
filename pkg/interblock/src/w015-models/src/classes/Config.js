@@ -22,7 +22,7 @@ const schema = {
           items: { type: 'string', format: 'regex' },
         },
         asyncTimeoutMs: {
-          type: 'number',
+          type: 'integer',
           // description: '0 means no timeout allowed',
           minimum: 0,
         },

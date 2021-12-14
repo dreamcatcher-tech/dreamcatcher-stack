@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
-import { continuationModel } from './continuationModel'
+import { continuationModel } from './converted/continuationModel'
 import { blockModel } from './blockModel'
 import { remoteModel } from './remoteModel'
 import { interblockSchema } from '../schemas/modelSchemas'

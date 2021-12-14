@@ -1,9 +1,9 @@
 import { assert } from 'chai/index.mjs'
-import { binaryModel } from '..'
+import { Binary } from '../../src/classes'
 
 describe('binary', () => {
   test('creates default', () => {
-    const bin = binaryModel.create()
+    const bin = Binary.create()
     assert(bin && bin.integrity.isUnknown() && bin.size === 0)
   })
 })
