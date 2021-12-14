@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { standardize } from '../../modelUtils'
 import { proofModel } from '../proofModel'
-import { blockModel } from '../blockModel'
+import { blockModel } from './blockModel'
 import { turnoverSchema } from '../../schemas/modelSchemas'
 import Debug from 'debug'
 const debug = Debug('interblock:models:turnover')

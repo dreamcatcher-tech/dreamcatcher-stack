@@ -1,12 +1,12 @@
 import assert from 'assert-fast'
-import { standardize } from '../modelUtils'
-import { continuationModel } from './converted/continuationModel'
+import { standardize } from '../../modelUtils'
+import { continuationModel } from './continuationModel'
 import { blockModel } from './blockModel'
 import { remoteModel } from './remoteModel'
-import { interblockSchema } from '../schemas/modelSchemas'
+import { interblockSchema } from '../../schemas/modelSchemas'
 import { proofModel } from './proofModel'
 import Debug from 'debug'
-import { turnoverModel } from './converted/turnoverModel'
+import { turnoverModel } from './turnoverModel'
 const debug = Debug('interblock:models:interblock')
 
 const interblockModel = standardize({

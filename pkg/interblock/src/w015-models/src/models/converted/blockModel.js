@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { standardize } from '../modelUtils'
+import { standardize } from '../../modelUtils'
 import { provenanceModel } from './provenanceModel'
 import { dmzModel } from './dmzModel'
 import { interblockModel } from './interblockModel'

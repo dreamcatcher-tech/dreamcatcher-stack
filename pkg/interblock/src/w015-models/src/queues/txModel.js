@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { standardize } from '../modelUtils'
-import { interblockModel } from '../models/interblockModel'
+import { interblockModel } from '../models/converted/interblockModel'
 import { socketModel } from './socketModel'
 
 const txModel = standardize({
