@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Block, Proof, Remote, Turnover } from '.'
+import { Block, Continuation, Proof, Remote, Turnover } from '.'
 import { interblockSchema } from '../schemas/modelSchemas'
 import { mixin } from '../MapFactory'
 import Debug from 'debug'
@@ -95,7 +95,7 @@ export class Interblock extends mixin(interblockSchema) {
     }
     const resolve = replies[0]
     if (resolve) {
-      assert(continuationModel.isModel(resolve))
+      assert(resolve instanceof Continuation)
       return resolve.isResolve()
     }
   }

@@ -1,12 +1,6 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
-import {
-  actionModel,
-  rxRequestModel,
-  rxReplyModel,
-  dmzModel,
-  metaModel,
-} from '../../w015-models'
+import { Action, RxRequest, RxReply, Dmz, Meta } from '../../w015-models'
 import { channelProducer, metaProducer } from '../../w016-producers'
 import {
   replyPromise,
@@ -27,8 +21,8 @@ const openChild = (child, parent, fullPath) => ({
   payload: { child, parent, fullPath },
 })
 const openChildReducer = (dmz, rxRequest) => {
-  assert(dmzModel.isModel(dmz))
-  assert(rxRequestModel.isModel(rxRequest))
+  assert(dmz instanceof Dmz)
+  assert(rxRequest instanceof RxRequest)
   let { meta } = dmz
   const { child, parent, fullPath } = rxRequest.payload
   assert.strictEqual(typeof child, 'string')
@@ -42,7 +36,7 @@ const openChildReducer = (dmz, rxRequest) => {
     replyReject(new Error(`Alias found, but is not child: ${child}`))
   } else {
     const requestingChainId = rxRequest.getAddress().getChainId()
-    const connect = actionModel.create(uplink(requestingChainId))
+    const connect = Action.create(uplink(requestingChainId))
     // TODO who handles ACL for opening child ?
     const chainId = channel.address.getChainId()
     const height = dmz.getCurrentHeight()
@@ -53,14 +47,14 @@ const openChildReducer = (dmz, rxRequest) => {
     channel = channelProducer.txRequest(channel, connect)
     replyPromise()
     const network = dmz.network.merge({ [child]: channel })
-    dmz = dmzModel.clone({ ...dmz, network, meta })
+    dmz = Dmz.clone({ ...dmz, network, meta })
   }
   return dmz
 }
 const openChildReply = (slice, reply, dmz) => {
   assert.strictEqual(typeof slice, 'object')
-  assert(rxReplyModel.isModel(reply))
-  assert(dmzModel.isModel(dmz))
+  assert(reply instanceof RxReply)
+  assert(dmz instanceof Dmz)
   const { child, segment, fullPath } = slice
   assert.strictEqual(typeof fullPath, 'string')
   switch (reply.type) {
@@ -86,7 +80,7 @@ const openChildReply = (slice, reply, dmz) => {
       assert.strictEqual(normalized, fullPath)
       const channel = channelProducer.invalidate(dmz.network[fullPath])
       const network = dmz.network.merge({ [fullPath]: channel })
-      return dmzModel.clone({ ...dmz, network })
+      return Dmz.clone({ ...dmz, network })
     }
     default:
       throw new Error(`Invalid action type: ${reply.type}`)
@@ -95,7 +89,7 @@ const openChildReply = (slice, reply, dmz) => {
 const openPaths = (dmz) => {
   // TODO if we have a subpath, should jump ahead to that
   // eg: for /a/b/c/d we might have /a/b already, so should use that first
-  assert(dmzModel.isModel(dmz))
+  assert(dmz instanceof Dmz)
   let { network } = dmz
   const nextNetwork = {}
   const aliases = network.getAliases()
@@ -134,7 +128,7 @@ const openPaths = (dmz) => {
         const isUnresolvedSeg = segChannel.address.isResolved()
         assert(isUnresolvedSeg, `unresolved parent attempted: ${segment}`)
         debug('sending open action from parent: %o to %o', segment, child)
-        const open = actionModel.create(openChild(child, segment, fullPath))
+        const open = Action.create(openChild(child, segment, fullPath))
         nextNetwork[segment] = channelProducer.txRequest(segChannel, open)
         const chainId = segChannel.address.getChainId()
         const height = dmz.getCurrentHeight()
@@ -147,12 +141,12 @@ const openPaths = (dmz) => {
     })
   }
   network = network.merge(nextNetwork)
-  return dmzModel.clone({ ...dmz, network, meta })
+  return Dmz.clone({ ...dmz, network, meta })
 }
 const _isAwaitingOpen = (meta, segment) => {
   // TODO WARNING must consider all paths that are its parent too
   // WARNING consider rejected path as awaiting also ?
-  assert(metaModel.isModel(meta))
+  assert(meta instanceof Meta)
   assert.strictEqual(typeof segment, 'string')
   for (const slice of Object.values(meta.replies)) {
     if (slice.segment === segment) {

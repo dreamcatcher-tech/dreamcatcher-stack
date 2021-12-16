@@ -176,7 +176,7 @@ describe('blockProducer', () => {
       // })
       // debug('immer update no auto') // 4s
     })
-    test('big networkModel', () => {
+    test('big Network', () => {
       // make a reducer that dispatches a large number of requests out ?
       // exercise the time of every network model operation
       // test clone times work as expected

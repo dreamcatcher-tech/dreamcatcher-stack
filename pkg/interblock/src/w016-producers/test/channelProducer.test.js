@@ -57,7 +57,7 @@ describe('channelProducer', () => {
     let tx = Channel.create()
     const action = Action.create('action1')
     tx = txRequest(tx, action)
-    assert(Channel.isModel(tx))
+    assert(tx instanceof Channel)
     assert(action.equals(tx.requests[0]))
     assert.strictEqual(tx.requests.length, 1)
   })
@@ -210,7 +210,7 @@ describe('channelProducer', () => {
       assert.strictEqual(loopback.requests.length, 3)
       const rxReq1 = loopback.rxLoopbackRequest()
       assert(rxReq1.equals(loopback.rxLoopbackRequest()))
-      assert(RxRequest.isModel(rxReq1))
+      assert(rxReq1 instanceof RxRequest)
       assert.throws(() => shiftLoopbackReply(loopback))
       assert.throws(() => shiftLoopbackSettle(loopback))
 
@@ -220,7 +220,7 @@ describe('channelProducer', () => {
       const txRep1 = TxReply.create('@@RESOLVE', {}, identifier)
       loopback = txReply(loopback, txRep1)
       const rxRep1 = loopback.rxLoopbackReply()
-      assert(RxReply.isModel(rxRep1))
+      assert(rxRep1 instanceof RxReply)
       assert.strictEqual(rxRep1.identifier, identifier)
       assert.throws(() => txReply(loopback, txRep1))
 
@@ -332,7 +332,7 @@ describe('stress tests', () => {
   test.todo('wrap around at limits of integer')
 })
 const reflect = (transmission) => {
-  assert(Channel.isModel(transmission))
+  assert(transmission instanceof Channel)
   const network = Network.create({ transmission })
   const dmz = Dmz.create({ network })
   const block = Block.create(dmz)

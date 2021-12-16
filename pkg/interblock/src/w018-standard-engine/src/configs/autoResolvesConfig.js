@@ -1,11 +1,5 @@
 import assert from 'assert-fast'
-import {
-  txReplyModel,
-  rxReplyModel,
-  rxRequestModel,
-  dmzModel,
-  pendingModel,
-} from '../../../w015-models'
+import { TxReply, RxReply, RxRequest, Dmz, Pending } from '../../../w015-models'
 import { networkProducer } from '../../../w016-producers'
 import { autoResolvesMachine } from '../machines'
 import { assign } from 'xstate'
@@ -18,78 +12,78 @@ const config = {
       dmz: ({ dmz, externalAction }) => {
         const replyKey = externalAction.getReplyKey()
         debug('resolveExternalAction', externalAction.type, replyKey)
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(externalAction))
+        assert(dmz instanceof Dmz)
+        assert(externalAction instanceof RxRequest)
         assert(dmz.network.getAlias(externalAction.getAddress()))
         const response = dmz.network.getResponse(externalAction)
         if (response && response.type !== '@@PROMISE') {
           assert(!response, `existing response: ${response && response.type}`)
         }
         const { identifier } = externalAction
-        const reply = txReplyModel.create('@@RESOLVE', {}, identifier)
+        const reply = TxReply.create('@@RESOLVE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [reply])
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     settleOrigin: assign({
       dmz: ({ initialPending, dmz }) => {
-        assert(pendingModel.isModel(initialPending))
+        assert(initialPending instanceof Pending)
         assert(initialPending.getIsPending())
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(!dmz.pending.getIsPending())
         const { pendingRequest } = initialPending
-        assert(rxRequestModel.isModel(pendingRequest))
+        assert(pendingRequest instanceof RxRequest)
         assert(dmz.network.getAlias(pendingRequest.getAddress()))
         debug(`settleOrigin`, pendingRequest)
         const { identifier } = pendingRequest
-        const reply = txReplyModel.create('@@RESOLVE', {}, identifier)
+        const reply = TxReply.create('@@RESOLVE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [reply])
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
   },
   guards: {
     isNotPending: ({ initialPending }) => {
-      assert(pendingModel.isModel(initialPending))
+      assert(initialPending instanceof Pending)
       const isNotPending = !initialPending.getIsPending()
       debug(`isNotPending`, isNotPending)
       return isNotPending
     },
     isOriginSettled: ({ initialPending, dmz }) => {
       // if rejection, or resolve, return true
-      assert(pendingModel.isModel(initialPending))
-      assert(dmzModel.isModel(dmz))
+      assert(initialPending instanceof Pending)
+      assert(dmz instanceof Dmz)
       const { pendingRequest } = initialPending
-      assert(rxRequestModel.isModel(pendingRequest))
+      assert(pendingRequest instanceof RxRequest)
       const reply = dmz.network.getResponse(pendingRequest)
       const isOriginSettled = reply && !reply.isPromise()
       debug(`isOriginSettled`, isOriginSettled)
       return isOriginSettled
     },
     isStillPending: ({ initialPending, dmz }) => {
-      assert(pendingModel.isModel(initialPending))
-      assert(dmzModel.isModel(dmz))
+      assert(initialPending instanceof Pending)
+      assert(dmz instanceof Dmz)
       const isStillPending =
         initialPending.getIsPending() && dmz.pending.getIsPending()
       debug(`isStillPending`, isStillPending)
       return isStillPending
     },
     isExternalActionReply: ({ externalAction }) => {
-      const isExternalActionReply = rxReplyModel.isModel(externalAction)
+      const isExternalActionReply = externalAction instanceof RxReply
       debug(`isExternalActionReply`, isExternalActionReply)
       return isExternalActionReply
     },
     isChannelRemoved: ({ dmz, externalAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(externalAction))
+      assert(dmz instanceof Dmz)
+      assert(externalAction instanceof RxRequest)
       const address = externalAction.getAddress()
       const isChannelRemoved = !dmz.network.getAlias(address)
       debug(`isChannelRemoved`, isChannelRemoved)
       return isChannelRemoved
     },
     isExternalRequestSettled: ({ dmz, externalAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(externalAction))
+      assert(dmz instanceof Dmz)
+      assert(externalAction instanceof RxRequest)
       const reply = dmz.network.getResponse(externalAction)
       const isExternalRequestSettled = reply && !reply.isPromise()
       const { type } = externalAction
@@ -103,16 +97,16 @@ const config = {
       return isTxExternalActionPromise
     },
     isExternalRequestFromBuffer: ({ initialDmz, externalAction }) => {
-      assert(dmzModel.isModel(initialDmz))
-      assert(rxRequestModel.isModel(externalAction))
+      assert(initialDmz instanceof Dmz)
+      assert(externalAction instanceof RxRequest)
       const isExternalRequestFromBuffer =
         initialDmz.pending.getIsBuffered(externalAction)
       debug(`isExternalRequestFromBuffer`, isExternalRequestFromBuffer)
       return isExternalRequestFromBuffer
     },
     isExternalRequestBuffered: ({ dmz, externalAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(externalAction))
+      assert(dmz instanceof Dmz)
+      assert(externalAction instanceof RxRequest)
       const isExternalRequestBuffered =
         dmz.pending.getIsBuffered(externalAction)
       debug(`isExternalRequestBuffered`, isExternalRequestBuffered)

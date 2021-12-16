@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import { deserializeError } from 'serialize-error'
 import { v4 as uuid } from 'uuid'
 import { request } from '../../w002-api'
-import { txRequestModel } from '../../w015-models'
+import { TxRequest } from '../../w015-models'
 import { toFunctions } from './services/consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:piercerFactory')
@@ -68,7 +68,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
 
     payload = { ...payload, '__@@ioSequence': ioSequence }
     const chainId = address.getChainId()
-    const txRequest = txRequestModel.create(type, payload, chainId)
+    const txRequest = TxRequest.create(type, payload, chainId)
     const { promise, callbacks } = generateDispatchPromise()
     promises.set(ioSequence, callbacks)
     const updatePending = async () => {

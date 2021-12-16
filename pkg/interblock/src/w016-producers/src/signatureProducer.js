@@ -1,13 +1,13 @@
 import assert from 'assert-fast'
-import { signatureModel, integrityModel, keypairModel } from '../../w015-models'
+import { Signature, Integrity, Keypair } from '../../w015-models'
 import * as crypto from '../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:producers:signature')
 
 const sign = async (integrity, keypair) => {
-  assert(integrityModel.isModel(integrity))
+  assert(integrity instanceof Integrity)
   assert(!integrity.isUnknown())
-  assert(keypairModel.isModel(keypair))
+  assert(keypair instanceof Keypair)
   debug(`sign`)
   const { hash } = integrity
   const { secretKey, publicKey } = keypair
@@ -18,7 +18,7 @@ const sign = async (integrity, keypair) => {
     publicKey.key
   )
   // TODO find a cleaner way to use publicKey objects, and publicKey strings in crypto
-  const model = signatureModel.clone({ publicKey, integrity, seal })
+  const model = Signature.clone({ publicKey, integrity, seal })
   debug(`sign complete`)
   return model
 }

@@ -4,10 +4,10 @@ import leftPad from 'pad-left'
 import Debug from 'debug'
 import {
   Block,
-  interblockModel,
-  keypairModel,
-  txReplyModel,
-  txRequestModel,
+  Interblock,
+  Keypair,
+  TxReply,
+  TxRequest,
 } from '../../../../w015-models'
 const debug = Debug('interblock:consistency:db')
 const types = ['blocks', 'interblocks', 'piercings', 'pool']
@@ -103,7 +103,7 @@ const dbFactory = (leveldb) => {
     return block
   }
   const putPool = async (interblock) => {
-    assert(interblockModel.isModel(interblock))
+    assert(interblock instanceof Interblock)
     const targetChainId = interblock.getTargetAddress().getChainId()
     const chainId = interblock.getChainId()
     const { height } = interblock.provenance
@@ -152,13 +152,13 @@ const dbFactory = (leveldb) => {
   }
   const putKeypair = async (keypair) => {
     debug(`putKeypair`)
-    assert(keypairModel.isModel(keypair))
+    assert(keypair instanceof Keypair)
     const { key } = keypair.publicKey
     await leveldb.put(`crypto/${key}`, keypair.serialize())
   }
 
   const putPierceReply = async (chainId, txReply) => {
-    assert(txReplyModel.isModel(txReply))
+    assert(txReply instanceof TxReply)
     debug(`putPierceReply`)
     const key = `${chainId}/piercings/rep_${txReply.getHash()}`
     // TODO get order by loosely trying to add the current tip count + 1
@@ -167,7 +167,7 @@ const dbFactory = (leveldb) => {
     cache.put(key, txReply)
   }
   const putPierceRequest = async (chainId, txRequest) => {
-    assert(txRequestModel.isModel(txRequest))
+    assert(txRequest instanceof TxRequest)
     debug(`putPierceRequest`)
     const key = `${chainId}/piercings/req_${txRequest.getHash()}`
     // TODO get order by loosely trying to add the current tip count + 1
@@ -256,7 +256,7 @@ const dbFactory = (leveldb) => {
     const jsons = await leveldb.getMany(uncachedKeys)
     debug(`getMany done`)
     for (const json of jsons) {
-      const interblock = interblockModel.clone(JSON.parse(json))
+      const interblock = Interblock.clone(JSON.parse(json))
       interblocks.push(interblock)
     }
     debug(`queryPool count:`, interblocks.length)
@@ -285,11 +285,11 @@ const dbFactory = (leveldb) => {
         return true
       }
       if (key.startsWith(gte + `rep_`)) {
-        assert(txReplyModel.isModel(tx))
+        assert(tx instanceof TxReply)
         replies.push(tx)
       } else {
         assert(key.startsWith(gte + `req_`))
-        assert(txRequestModel.isModel(tx))
+        assert(tx instanceof TxRequest)
         requests.push(tx)
       }
     })
@@ -297,11 +297,11 @@ const dbFactory = (leveldb) => {
     for (const key of uncachedKeys) {
       const json = jsons.shift()
       if (key.startsWith(gte + `rep_`)) {
-        const txReply = txReplyModel.clone(JSON.parse(json))
+        const txReply = TxReply.clone(JSON.parse(json))
         replies.push(txReply)
       } else {
         assert(key.startsWith(gte + `req_`))
-        const txRequest = txRequestModel.clone(JSON.parse(json))
+        const txRequest = TxRequest.clone(JSON.parse(json))
         requests.push(txRequest)
       }
     }
@@ -334,7 +334,7 @@ const dbFactory = (leveldb) => {
       gte,
       lte,
     })) {
-      const keypair = keypairModel.clone(JSON.parse(json))
+      const keypair = Keypair.clone(JSON.parse(json))
       debug('scanKeypair end')
       return keypair
     }

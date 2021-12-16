@@ -1,11 +1,6 @@
 import assert from 'assert-fast'
 import { pure } from '../../../w001-xstate-direct'
-import {
-  rxReplyModel,
-  rxRequestModel,
-  addressModel,
-  dmzModel,
-} from '../../../w015-models'
+import { RxReply, RxRequest, Address, Dmz } from '../../../w015-models'
 import { networkProducer, channelProducer } from '../../../w016-producers'
 import * as dmzReducer from '../../../w017-dmz-producer'
 import { interpreterMachine } from '../machines'
@@ -28,18 +23,18 @@ const config = {
     assignDmz: assign({
       dmz: (context, event) => {
         const { dmz } = event.payload
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         return dmz
       },
       initialDmz: ({ dmz }, event) => {
         // TODO replace initial pending with initialDmz
         assert.strictEqual(dmz, event.payload.dmz)
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         return dmz
       },
       initialPending: ({ dmz }, event) => {
         assert.strictEqual(dmz, event.payload.dmz)
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         return dmz.pending
       },
     }),
@@ -47,22 +42,22 @@ const config = {
       anvil: (context, event) => {
         const { rxAction } = event.payload
         const anvil = rxAction
-        assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+        assert(anvil instanceof RxRequest || anvil instanceof RxReply)
         return anvil
       },
     }),
     shiftLoopback: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         const loopback = channelProducer.shiftLoopback(dmz.network['.'])
         debug(`shiftLoopback`)
         const network = dmz.network.merge({ '.': loopback })
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     loadSelfAnvil: assign({
       anvil: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         const loopback = dmz.network['.']
         const anvil = loopback.rxLoopback()
         debug(`loadSelfAnvil anvil: %o`, anvil.type, anvil.identifier)
@@ -71,29 +66,29 @@ const config = {
     }),
     openPaths: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         debug(`openPaths`)
         dmz = dmzReducer.openPaths(dmz)
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         return dmz
       },
     }),
     invalidateLocalPaths: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         debug('invalidateLocalPaths')
         const network = networkProducer.invalidateLocal(dmz.network)
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     removeEmptyInvalidChannels: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         const network = networkProducer.reaper(dmz.network)
         const startCount = Object.keys(dmz.network).length
         const endCount = Object.keys(network).length
         debug(`removeEmptyInvalidChannels removed: ${startCount - endCount}`)
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     assertLoopbackEmpty: ({ dmz }) => {
@@ -111,8 +106,8 @@ const config = {
   },
   guards: {
     isSystem: ({ dmz, anvil }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+      assert(dmz instanceof Dmz)
+      assert(anvil instanceof RxRequest || anvil instanceof RxReply)
       const isSystem =
         dmzReducer.isSystemReply(dmz, anvil) ||
         dmzReducer.isSystemRequest(anvil)
@@ -120,17 +115,17 @@ const config = {
       return isSystem
     },
     isLoopbackShiftable: ({ dmz, anvil }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+      assert(dmz instanceof Dmz)
+      assert(anvil instanceof RxRequest || anvil instanceof RxReply)
       const isFromLoopback = anvil.getAddress().isLoopback()
-      const isReply = rxReplyModel.isModel(anvil)
+      const isReply = anvil instanceof RxReply
       const isPromised = dmz.network['.'].isLoopbackReplyPromised()
       const isLoopbackShiftable = isFromLoopback && (isReply || isPromised)
       debug(`isLoopbackShiftable`, isLoopbackShiftable)
       return isLoopbackShiftable
     },
     isSelfExhausted: ({ dmz }) => {
-      assert(dmzModel.isModel(dmz))
+      assert(dmz instanceof Dmz)
       const loopback = dmz.network['.']
       const isSelfExhausted = loopback.isLoopbackExhausted()
       debug(`isSelfExhausted: ${isSelfExhausted}`)

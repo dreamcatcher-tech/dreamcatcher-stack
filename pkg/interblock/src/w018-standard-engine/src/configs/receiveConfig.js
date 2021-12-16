@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { assign } from 'xstate'
-import { txModel, Block, interblockModel } from '../../../w015-models'
+import { txModel, Block, Interblock } from '../../../w015-models'
 import { receiveMachine } from '../machines'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import Debug from 'debug'
@@ -59,7 +59,7 @@ const receiveConfig = (ioConsistency) => {
       },
       isConnectable: async ({ interblock }) => {
         // TODO merge with same function in poolConfig
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const address = interblock.getTargetAddress()
         assert(address)
         const latest = await consistency.getBlock({ address })

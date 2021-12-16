@@ -16,7 +16,7 @@ const txRequestSchema = {
 }
 const rxRequestSchema = {
   title: `RxRequest`,
-  // description: `System created inside ChannelModel`,
+  // description: `System created inside Channel`,
   type: 'object',
   required: ['type', 'payload', 'identifier'],
   additionalProperties: false,

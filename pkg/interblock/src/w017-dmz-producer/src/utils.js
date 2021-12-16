@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import pad from 'pad-left'
-import { Block, channelModel } from '../../w015-models'
+import { Block, Channel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:utils')
 
@@ -22,7 +22,7 @@ const autoAlias = (network, autoPrefix = 'file_') => {
 }
 const getChannelParams = (network, alias) => {
   const channel = network[alias]
-  assert(channelModel.isModel(channel), `Not channel: ${alias}`)
+  assert(channel instanceof Channel, `Not channel: ${alias}`)
   const { address, systemRole, tipHeight, tip } = channel
   let chainId = address.isResolved() ? address.getChainId() : 'UNRESOLVED'
   chainId = address.isRoot() ? 'ROOT' : chainId

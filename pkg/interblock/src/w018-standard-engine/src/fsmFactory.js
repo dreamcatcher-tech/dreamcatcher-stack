@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { ioQueueFactory } from '../../w003-queue'
-import { interblockModel, addressModel, txModel } from '../../w015-models'
+import { Interblock, Address, txModel } from '../../w015-models'
 import { isolateFactory } from './services/isolateFactory'
 import { cryptoFactory } from './services/cryptoFactory'
 import { consistencyFactory } from './services/consistencyFactory'
@@ -14,10 +14,10 @@ const fsmFactory = () => {
   const ioIsolate = ioQueueFactory('ioIsolate')
   const ioCrypto = ioQueueFactory('ioCrypto')
   const ioConsistency = ioQueueFactory('ioConsistency')
-  const ioPool = ioQueueFactory('ioPool', interblockModel)
-  const ioIncrease = ioQueueFactory('ioIncrease', addressModel)
+  const ioPool = ioQueueFactory('ioPool', Interblock)
+  const ioIncrease = ioQueueFactory('ioIncrease', Address)
   const ioReceive = ioQueueFactory('ioReceive', txModel)
-  const ioTransmit = ioQueueFactory('ioTransmit', interblockModel)
+  const ioTransmit = ioQueueFactory('ioTransmit', Interblock)
 
   ioCrypto.setProcessor(cryptoFactory())
   ioConsistency.setProcessor(consistencyFactory())
@@ -25,7 +25,7 @@ const fsmFactory = () => {
 
   const pool = poolConfig(ioCrypto, ioConsistency)
   const poolProcessor = async (payload) => {
-    assert(interblockModel.isModel(payload))
+    assert(payload instanceof Interblock)
     const action = { type: 'POOL_INTERBLOCK', payload }
     const { machine, config } = pool
     const result = await pure(action, machine, config)
@@ -35,7 +35,7 @@ const fsmFactory = () => {
 
   const increasor = increasorConfig(ioCrypto, ioConsistency, ioIsolate)
   const ioIncreaseProcessor = async (payload) => {
-    assert(addressModel.isModel(payload))
+    assert(Address.isModel(payload))
     const action = { type: 'INCREASE_CHAIN', payload }
     const { machine, config } = increasor
     const result = await pure(action, machine, config)
@@ -55,7 +55,7 @@ const fsmFactory = () => {
 
   const transmitter = transmitConfig(ioConsistency)
   const ioTransmitProcessor = async (payload) => {
-    assert(interblockModel.isModel(payload))
+    assert(payload instanceof Interblock)
     const action = { type: 'TRANSMIT_INTERBLOCK', payload }
     const { machine, config } = transmitter
     const result = await pure(action, machine, config)

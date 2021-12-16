@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised'
 import { Machine } from 'xstate'
 import { send, sendParent, respond, translator } from '..'
 import { shell } from '../../w212-system-covenants'
-import { rxReplyModel, actionModel, addressModel } from '../../w015-models'
+import { RxReply, Action, Address } from '../../w015-models'
 import { _hook as hook, interchain } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:translator')
@@ -103,8 +103,8 @@ describe('translator', () => {
       assert.strictEqual(state.transmissions.length, 1)
       const [selfPing] = state.transmissions
       assert.strictEqual(selfPing.type, '@@PING')
-      const address = addressModel.create('LOOPBACK')
-      const reply = rxReplyModel.create('@@RESOLVE', {}, address, 0, 0)
+      const address = Address.create('LOOPBACK')
+      const reply = RxReply.create('@@RESOLVE', {}, address, 0, 0)
       const { type, to } = selfPing
       const acc = [{ type, to, reply }]
       state = await hook(() => shell.reducer(undefined, ping), acc)
@@ -130,14 +130,8 @@ describe('translator', () => {
       assert.strictEqual(remote.to, 'remote')
 
       const replyPayload = { remoteReply: 'remoteReply' }
-      const address = addressModel.create('TEST ADDRESS')
-      const reply = rxReplyModel.create(
-        '@@RESOLVE',
-        replyPayload,
-        address,
-        0,
-        0
-      )
+      const address = Address.create('TEST ADDRESS')
+      const reply = RxReply.create('@@RESOLVE', replyPayload, address, 0, 0)
       const { type, to } = remote
       const acc = [{ type, to, reply }]
       state = await hook(() => shell.reducer(undefined, pingRemote), acc)
@@ -249,7 +243,7 @@ describe('translator', () => {
 
 const createAccumulation = (raw, message) => {
   const { type, to } = raw
-  const address = addressModel.create('TEST ' + type)
-  const reply = rxReplyModel.create('@@RESOLVE', { message }, address, 10, 10)
+  const address = Address.create('TEST ' + type)
+  const reply = RxReply.create('@@RESOLVE', { message }, address, 10, 10)
   return { type, to, reply }
 }

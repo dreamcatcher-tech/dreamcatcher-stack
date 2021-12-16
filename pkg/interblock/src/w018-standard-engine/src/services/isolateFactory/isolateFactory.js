@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { _hook as hook } from '../../../../w002-api'
-import { Block, rxReplyModel, rxRequestModel } from '../../../../w015-models'
+import { Block, RxReply, RxRequest } from '../../../../w015-models'
 import * as systemCovenants from '../../../../w212-system-covenants'
 import * as appCovenants from '../../../../w301-user-apps'
 import { queryFactory } from '../queryFactory'
@@ -42,7 +42,7 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
       assert(Array.isArray(accumulator))
       timeout = timeout || 30000
       assert(Number.isInteger(timeout) && timeout >= 0)
-      assert(rxReplyModel.isModel(action) || rxRequestModel.isModel(action))
+      assert(action instanceof RxReply || action instanceof RxRequest)
 
       // TODO test rejections propogate back thru queues
       // TODO move to a pure container wrapper, then to vm2 or similar

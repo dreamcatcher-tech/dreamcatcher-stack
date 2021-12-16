@@ -2,14 +2,14 @@ import assert from 'assert-fast'
 import { assign } from 'xstate'
 import { pure } from '../../../w001-xstate-direct'
 import {
-  channelModel,
-  interblockModel,
+  Channel,
+  Interblock,
   Block,
-  dmzModel,
-  lockModel,
+  Dmz,
+  Lock,
   Conflux,
-  rxReplyModel,
-  rxRequestModel,
+  RxReply,
+  RxRequest,
   piercingsModel,
 } from '../../../w015-models'
 import {
@@ -28,7 +28,7 @@ const createConfig = (isolation, consistency) => ({
     assignLock: assign({
       lock: (context, event) => {
         const { lock } = event.payload
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         assert(lock.block, `can only isolate for existing chains`)
         debug(`assignLock`)
         return lock
@@ -36,7 +36,7 @@ const createConfig = (isolation, consistency) => ({
     }),
     assignDmz: assign({
       dmz: ({ lock }) => {
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         assert(lock.block)
         debug(`assignDmz using lock`)
         const dmz = lock.block.getDmz()
@@ -45,7 +45,7 @@ const createConfig = (isolation, consistency) => ({
     }),
     assignInterblocks: assign({
       interblocks: ({ lock }) => {
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         debug(`assignInterblocks`, lock.interblocks.length)
         return lock.interblocks
       },
@@ -54,22 +54,22 @@ const createConfig = (isolation, consistency) => ({
       debug(`ingestInterblocks`)
       assert.strictEqual(typeof context.conflux, 'undefined')
       const { dmz, interblocks } = context
-      assert(dmzModel.isModel(dmz))
+      assert(dmz instanceof Dmz)
       assert(Array.isArray(interblocks))
-      assert(interblocks.every(interblockModel.isModel))
+      assert(interblocks.every((v) => v instanceof Interblock))
       const { config } = dmz
       const [network, conflux] = networkProducer.ingestInterblocks(
         dmz.network,
         interblocks,
         config
       )
-      return { ...context, dmz: dmzModel.clone({ ...dmz, network }), conflux }
+      return { ...context, dmz: Dmz.clone({ ...dmz, network }), conflux }
     }),
     connectToParent: assign({
       dmz: ({ dmz, interblocks }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(Array.isArray(interblocks))
-        assert(interblocks.every(interblockModel.isModel))
+        assert(interblocks.every((v) => v instanceof Interblock))
         assert(dmz.network['..'].address.isUnknown(), `Target connected`)
         debug(`connectToParent`)
 
@@ -79,29 +79,29 @@ const createConfig = (isolation, consistency) => ({
         let parent = dmz.network['..']
         parent = channelProducer.setAddress(parent, address)
         const network = dmz.network.merge({ '..': parent })
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     zeroTransmissions: assign({
       dmz: ({ lock, dmz }) => {
-        assert(lockModel.isModel(lock))
-        assert(dmzModel.isModel(dmz))
+        assert(lock instanceof Lock)
+        assert(dmz instanceof Dmz)
         debug(`zeroTransmissions`)
         const precedent = lock.block.provenance.reflectIntegrity()
         const network = networkProducer.zeroTransmissions(
           dmz.network,
           precedent
         )
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     blankPiercings: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         debug(`blankPiercings`)
         dmz = { ...dmz }
         delete dmz.piercings
-        return dmzModel.clone(dmz)
+        return Dmz.clone(dmz)
       },
     }),
     assignContainerId: assign({
@@ -115,16 +115,16 @@ const createConfig = (isolation, consistency) => ({
       dmz: (context, event) => {
         debug(`updateDmz`)
         const { nextDmz } = event.data
-        assert(dmzModel.isModel(nextDmz))
+        assert(nextDmz instanceof Dmz)
         return nextDmz
       },
     }),
     zeroLoopback: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         debug(`zeroLoopback`)
         const loopback = channelProducer.zeroLoopback(dmz.network['.'])
-        return dmzModel.clone({
+        return Dmz.clone({
           ...dmz,
           network: dmz.network.merge({ '.': loopback }),
         })
@@ -132,7 +132,7 @@ const createConfig = (isolation, consistency) => ({
     }),
     generatePierceDmz: assign({
       pierceDmz: ({ lock }) => {
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         assert(lock.isPiercingsPresent())
         assert(lock.block)
         const { replies, requests } = lock.piercings
@@ -142,8 +142,8 @@ const createConfig = (isolation, consistency) => ({
     }),
     generatePierceBlock: assign({
       pierceBlock: ({ lock, pierceDmz }) => {
-        assert(lockModel.isModel(lock))
-        assert(dmzModel.isModel(pierceDmz))
+        assert(lock instanceof Lock)
+        assert(pierceDmz instanceof Dmz)
         assert(lock.block)
         const { block } = lock
         const pierceBlock = blockProducer.generatePierceBlock(pierceDmz, block)
@@ -154,30 +154,30 @@ const createConfig = (isolation, consistency) => ({
     pushPierceInterblock: assign({
       interblocks: ({ interblocks, pierceBlock }) => {
         assert(Array.isArray(interblocks))
-        assert(interblocks.every(interblockModel.isModel))
-        const pierced = interblockModel.create(pierceBlock, '@@PIERCE_TARGET')
+        assert(interblocks.every((v) => v instanceof Interblock))
+        const pierced = Interblock.create(pierceBlock, '@@PIERCE_TARGET')
         return [...interblocks, pierced]
       },
     }),
     injectReplayablePiercings: assign({
       dmz: ({ dmz, pierceBlock }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(pierceBlock instanceof Block)
         debug(`injectReplayablePiercings`)
         const ioChannel = pierceBlock.network['@@PIERCE_TARGET']
         const { replies, requests } = ioChannel
         const piercings = piercingsModel.create(replies, requests)
-        return dmzModel.clone({ ...dmz, piercings })
+        return Dmz.clone({ ...dmz, piercings })
       },
     }),
     openPierceChannel: assign({
       dmz: ({ dmz, pierceBlock }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(pierceBlock instanceof Block)
         debug(`openPierceChannel`)
         const ioAddress = pierceBlock.provenance.getAddress()
         let ioChannel =
-          dmz.network['.@@io'] || channelModel.create(ioAddress, 'PIERCE')
+          dmz.network['.@@io'] || Channel.create(ioAddress, 'PIERCE')
         if (ioChannel.address.isUnknown()) {
           debug(`address unknown`)
           // TODO ? is this ever the case ?
@@ -186,12 +186,12 @@ const createConfig = (isolation, consistency) => ({
         assert(ioChannel.address.equals(ioAddress))
         assert.strictEqual(ioChannel.systemRole, 'PIERCE')
         const network = dmz.network.merge({ '.@@io': ioChannel })
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     selectAction: assign({
       rxAction: ({ dmz, conflux, rxIndex }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(conflux instanceof Conflux)
         assert(Number.isInteger(rxIndex))
         assert(rxIndex >= 0)
@@ -233,7 +233,7 @@ const createConfig = (isolation, consistency) => ({
   },
   guards: {
     isGenesis: ({ lock }) => {
-      assert(lockModel.isModel(lock))
+      assert(lock instanceof Lock)
       const { block } = lock
       const isNotRoot = !block.network['..'].address.isRoot()
       const isGenesis = block.provenance.address.isGenesis() && isNotRoot
@@ -243,24 +243,22 @@ const createConfig = (isolation, consistency) => ({
     isReduceable: ({ rxAction }) => {
       // TODO check the time available, probably as a parallel transition
       if (rxAction) {
-        assert(
-          rxReplyModel.isModel(rxAction) || rxRequestModel.isModel(rxAction)
-        )
+        assert(rxAction instanceof RxReply || rxAction instanceof RxRequest)
       }
       const isReduceable = !!rxAction
       debug(`isReduceable`, isReduceable)
       return isReduceable
     },
     isPierceable: ({ lock, dmz }) => {
-      assert(lockModel.isModel(lock))
-      assert(dmzModel.isModel(dmz))
+      assert(lock instanceof Lock)
+      assert(dmz instanceof Dmz)
       // ! config might have changed during reduction
       const isPiercable = dmz.config.isPierced && lock.isPiercingsPresent()
       debug(`isPiercable: %O`, isPiercable)
       return isPiercable
     },
     isPierceChannelUnopened: ({ dmz }) => {
-      assert(dmzModel.isModel(dmz))
+      assert(dmz instanceof Dmz)
       const ioChannel = dmz.network['.@@io']
       const isPierceChannelUnopened =
         !ioChannel || !ioChannel.address.isResolved()
@@ -268,9 +266,9 @@ const createConfig = (isolation, consistency) => ({
       return isPierceChannelUnopened
     },
     isCovenantEffectable: ({ lock, dmz }) => {
-      // TODO merge this into channelModel so can reuse in increasorConfig
-      assert(lockModel.isModel(lock))
-      assert(dmzModel.isModel(dmz))
+      // TODO merge this into Channel so can reuse in increasorConfig
+      assert(lock instanceof Lock)
+      assert(dmz instanceof Dmz)
       const io = dmz.network['.@@io']
       const isCovenantEffectable = !!(io && io.requests.length)
       debug(`isCovenantEffectable`, isCovenantEffectable)
@@ -280,15 +278,15 @@ const createConfig = (isolation, consistency) => ({
   services: {
     loadCovenant: async ({ lock }) => {
       // TODO handle reusing containers that are already loaded from previous blocks
-      assert(lockModel.isModel(lock))
+      assert(lock instanceof Lock)
       const containerId = await isolation.loadCovenant(lock.block)
       debug(`loadCovenant containerId: ${containerId.substring(0, 9)}`)
       return { containerId }
     },
     reduce: async ({ dmz, containerId, rxAction }) => {
-      assert(dmzModel.isModel(dmz))
+      assert(dmz instanceof Dmz)
       assert.strictEqual(typeof containerId, 'string')
-      assert(rxReplyModel.isModel(rxAction) || rxRequestModel.isModel(rxAction))
+      assert(rxAction instanceof RxReply || rxAction instanceof RxRequest)
       // TODO rename anvil to externalAction
       debug(`reduce: `, rxAction.getLogEntry())
       const tickPayload = { containerId, timeout: 30000 }
@@ -298,7 +296,7 @@ const createConfig = (isolation, consistency) => ({
       const { machine, config } = interpreterConfig(tick)
       const action = { type: 'TICK', payload: { dmz, rxAction } }
       const nextDmz = await pure(action, machine, config)
-      assert(dmzModel.isModel(nextDmz))
+      assert(nextDmz instanceof Dmz)
       return { nextDmz }
     },
     unloadCovenant: async ({ containerId }) => {

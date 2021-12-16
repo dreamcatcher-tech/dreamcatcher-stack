@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
 import {
   Block,
-  actionModel,
-  channelModel,
-  networkModel,
-  dmzModel,
-  rxRequestModel,
+  Action,
+  Channel,
+  Network,
+  Dmz,
+  RxRequest,
   covenantIdModel,
 } from '../../w015-models'
 import { channelProducer, metaProducer } from '../../w016-producers'
@@ -26,16 +26,16 @@ const spawn = (alias, spawnOpts = {}) => {
 }
 
 const spawnReducer = (dmz, request) => {
-  assert(rxRequestModel.isModel(request))
+  assert(request instanceof RxRequest)
   const [nextDmz, identifier, alias, chainId] = spawnRequester(dmz, request)
   replyPromise() // allows spawnReducer to be reused by deploy reducer
   const originIdentifier = request.identifier
   const subMeta = { type: '@@GENESIS', alias, chainId, originIdentifier }
   const meta = metaProducer.withSlice(dmz.meta, identifier, subMeta)
-  return dmzModel.clone({ ...nextDmz, meta })
+  return Dmz.clone({ ...nextDmz, meta })
 }
 const spawnRequester = (dmz, originAction) => {
-  assert(dmzModel.isModel(dmz))
+  assert(dmz instanceof Dmz)
   assert.strictEqual(originAction.type, '@@SPAWN')
   let { alias, spawnOpts } = originAction.payload
   assert(!alias || typeof alias === 'string')
@@ -45,8 +45,8 @@ const spawnRequester = (dmz, originAction) => {
   // may reject any actions other than cancel deploy while deploying ?
   const { network, validators } = dmz
   const covenantId = covenantIdModel.create('unity')
-  const childDmz = dmzModel.create({
-    network: networkModel.create(),
+  const childDmz = Dmz.create({
+    network: Network.create(),
     covenantId,
     ...spawnOpts,
     validators,
@@ -65,15 +65,15 @@ const spawnRequester = (dmz, originAction) => {
 
   const genesis = Block.create(childDmz)
   const payload = { genesis, alias }
-  const genesisRequest = actionModel.create('@@GENESIS', payload)
+  const genesisRequest = Action.create('@@GENESIS', payload)
   const address = genesis.provenance.getAddress()
 
   let preloadedRequests = []
   if (!channel) {
-    channel = channelModel.create(address, './')
+    channel = Channel.create(address, './')
   } else {
     preloadedRequests = channel.requests
-    channel = channelModel.clone({ ...channel, requests: [] })
+    channel = Channel.clone({ ...channel, requests: [] })
     channel = channelProducer.setAddress(channel, address)
     // TODO reresolve the accumulator with identifiers
   }
@@ -82,7 +82,7 @@ const spawnRequester = (dmz, originAction) => {
     channel = channelProducer.txRequest(channel, request)
   }
   const nextNetwork = network.merge({ [alias]: channel })
-  const nextDmz = dmzModel.clone({ ...dmz, network: nextNetwork })
+  const nextDmz = Dmz.clone({ ...dmz, network: nextNetwork })
 
   const height = dmz.getCurrentHeight()
   const index = 0

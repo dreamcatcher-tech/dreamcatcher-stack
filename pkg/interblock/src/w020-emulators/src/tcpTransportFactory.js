@@ -10,7 +10,7 @@
  *
  */
 import assert from 'assert-fast'
-import { Block, interblockModel } from '../../w015-models'
+import { Block, Interblock } from '../../w015-models'
 import WebSocket from 'ws'
 import Debug from 'debug'
 const debug = Debug('interblock:transport')

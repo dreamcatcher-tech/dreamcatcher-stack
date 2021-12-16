@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { replyResolve } from '../../w002-api'
-import { rxRequestModel } from '../../w015-models'
+import { RxRequest } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:ping')
 
@@ -11,7 +11,7 @@ const ping = (payload = {}) => {
   return { type: '@@PING', payload }
 }
 const pingReducer = (request) => {
-  assert(rxRequestModel.isModel(request))
+  assert(request instanceof RxRequest)
   assert.strictEqual(request.type, '@@PING')
   const { payload } = request
   debug(`ping: %O`, payload)

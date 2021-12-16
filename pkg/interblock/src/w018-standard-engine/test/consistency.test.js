@@ -2,9 +2,9 @@ import { assert } from 'chai/index.mjs'
 import { consistencySourceFactory } from '../src/services/consistencyFactory'
 import levelup from 'levelup'
 import memdown from 'memdown'
-import { addressModel, Block, lockModel } from '../../w015-models'
+import { Address, Block, Lock } from '../../w015-models'
 import { v4 } from 'uuid'
-import { integrityModel } from '../../w015-models'
+import { Integrity } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:consistency')
 Debug.enable()
@@ -17,14 +17,14 @@ describe('consistency', () => {
   })
   describe('lockChain', () => {
     test('lock for undefined block', async () => {
-      const address = addressModel.create('TEST')
+      const address = Address.create('TEST')
       const lock = await consistencySource.putLockChain(address, lockExpiresMs)
       assert(lock)
     })
     test.todo('failed lock can be claimed after expiry')
     test('lock cached', async () => {
-      const integrity = integrityModel.create(v4())
-      const address = addressModel.create(integrity)
+      const integrity = Integrity.create(v4())
+      const address = Address.create(integrity)
       const lock = await consistencySource.putLockChain(address, lockExpiresMs)
       assert(lock)
       const start = Date.now()
@@ -36,7 +36,7 @@ describe('consistency', () => {
       assert(delay < ramDelayMs)
     })
     test('lock is exclusive between consistency sources', async () => {
-      const address = addressModel.create('TEST')
+      const address = Address.create('TEST')
       const db = levelup(memdown())
       const source1 = consistencySourceFactory(db)
       const source2 = consistencySourceFactory(db)
@@ -53,7 +53,7 @@ describe('consistency', () => {
       const lock = await consistencySource.putLockChain(address)
       assert(lock)
       assert(!lock.block)
-      const incomingLock = lockModel.clone({ ...lock, block })
+      const incomingLock = Lock.clone({ ...lock, block })
       await consistencySource.putUnlockChain(incomingLock)
       const nextLock = await consistencySource.putLockChain(address)
       assert(nextLock)
@@ -64,7 +64,7 @@ describe('consistency', () => {
   describe('unlockChain', () => {})
   describe('isPresent', () => {
     test('non existent chainId', async () => {
-      const address = addressModel.create('TEST')
+      const address = Address.create('TEST')
       const isPresent = await consistencySource.getIsPresent(address)
       assert(!isPresent)
     })

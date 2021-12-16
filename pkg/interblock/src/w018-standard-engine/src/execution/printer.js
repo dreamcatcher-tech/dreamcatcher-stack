@@ -3,11 +3,11 @@ import chalk from 'ansi-colors-browserify'
 import pad from 'pad-left'
 import prettyBytes from 'pretty-bytes'
 import columnify from 'columnify'
-import { interblockModel } from '../../../w015-models'
+import { Interblock } from '../../../w015-models'
 const grayUndefined = chalk.gray('undefined')
 
 const interPrint = (interblock, msg, path, bg, fg) => {
-  assert(interblockModel.isModel(interblock))
+  assert(interblock instanceof Interblock)
   msg = msg || 'INTERBLOCK'
   path = path || '(unknown)'
   bg = bg || 'bgYellow'

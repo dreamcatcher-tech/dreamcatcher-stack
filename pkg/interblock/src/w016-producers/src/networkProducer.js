@@ -1,15 +1,15 @@
 import assert from 'assert-fast'
 import {
-  channelModel,
-  continuationModel,
-  actionModel,
-  networkModel,
-  interblockModel,
-  addressModel,
-  rxRequestModel,
-  txRequestModel,
-  txReplyModel,
-  configModel,
+  Channel,
+  Continuation,
+  Action,
+  Network,
+  Interblock,
+  Address,
+  RxRequest,
+  TxRequest,
+  TxReply,
+  Config,
   Conflux,
 } from '../../w015-models'
 import * as channelProducer from './channelProducer'
@@ -26,10 +26,10 @@ const debug = Debug('interblock:producers:network')
  * Requisite that this funcion is called once per blockmaking, as it purges lineage
  */
 const ingestInterblocks = (network, interblocks = [], config) => {
-  assert(networkModel.isModel(network))
+  assert(network instanceof Network)
   assert(Array.isArray(interblocks))
-  assert(interblocks.every(interblockModel.isModel))
-  assert(configModel.isModel(config))
+  assert(interblocks.every((v) => v instanceof Interblock))
+  assert(Config.isModel(config))
 
   const addressMap = _generateAddressMap(interblocks)
   const nextNetwork = {}
@@ -43,16 +43,16 @@ const ingestInterblocks = (network, interblocks = [], config) => {
     if (!alias && isPublic && firstInterblock.isConnectionAttempt()) {
       debug(`connection attempt accepted`)
       const name = `@@PUBLIC_${address.getChainId()}`
-      const blankChannel = channelModel.create(address)
-      const accept = actionModel.create({ type: '@@ACCEPT' })
-      const acceptChannel = channelModel.clone({
+      const blankChannel = Channel.create(address)
+      const accept = Action.create({ type: '@@ACCEPT' })
+      const acceptChannel = Channel.clone({
         ...blankChannel,
         requests: [accept],
       })
       nextNetwork[name] = acceptChannel
     } else if (alias) {
       const channel = nextNetwork[alias] || network[alias]
-      assert(channelModel.isModel(channel))
+      assert(channel instanceof Channel)
       const [nextChannel, ingested] = channelProducer.ingestInterblocks(
         channel,
         channelInterblocks
@@ -70,41 +70,41 @@ const ingestInterblocks = (network, interblocks = [], config) => {
 
 const respondRejection = (network, request, reduceRejection) => {
   debug('respondRejection %O', reduceRejection)
-  const reply = continuationModel.create('@@REJECT', reduceRejection)
+  const reply = Continuation.create('@@REJECT', reduceRejection)
   return _respond(network, request, reply)
 }
 
 const respondRequest = (network, request) => {
   // no response has been given, and no throw, so respond with blank payload
   debug('respondRequest request: %o', request.type)
-  const reply = continuationModel.create('@@RESOLVE')
+  const reply = Continuation.create('@@RESOLVE')
   return _respond(network, request, reply)
 }
 
 const _respond = (network, rxRequest, reply) => {
-  assert(rxRequestModel.isModel(rxRequest))
-  assert(continuationModel.isModel(reply))
+  assert(rxRequest instanceof RxRequest)
+  assert(reply instanceof Continuation)
   assert(!reply.isPromise())
   const address = rxRequest.getAddress()
   const alias = network.getAlias(address)
   const channel = network[alias]
-  assert(channelModel.isModel(channel))
+  assert(channel instanceof Channel)
   assert(channel.address.equals(address))
   const replyKey = rxRequest.getReplyKey()
   const existingReply = channel.replies[replyKey]
   assert(!existingReply || existingReply.isPromise())
   const { type, payload } = reply
-  const txReply = txReplyModel.create(type, payload, rxRequest.identifier)
+  const txReply = TxReply.create(type, payload, rxRequest.identifier)
   const nextChannel = channelProducer.txReply(channel, txReply)
   assert(nextChannel.replies[replyKey])
   return network.merge({ [alias]: nextChannel })
 }
 
 const tx = (network, transmissions) => {
-  assert(networkModel.isModel(network))
+  assert(network instanceof Network)
   assert(Array.isArray(transmissions))
-  const requests = transmissions.filter(txRequestModel.isModel)
-  const replies = transmissions.filter(txReplyModel.isModel)
+  const requests = transmissions.filter((v) => v instanceof TxRequest)
+  const replies = transmissions.filter(TxReply.isModel)
   assert.strictEqual(transmissions.length, requests.length + replies.length)
 
   debug(`tx requests: ${requests.length} replies: ${replies.length}`)
@@ -121,8 +121,8 @@ const tx = (network, transmissions) => {
       // TODO handle children ?  if no pathing or starts with ./ ?
       // TODO maybe do path opening here, working backwards
       const systemRole = to === '.@@io' ? 'PIERCE' : 'DOWN_LINK'
-      const address = addressModel.create()
-      channel = channelModel.create(address, systemRole)
+      const address = Address.create()
+      channel = Channel.create(address, systemRole)
       debug(`channel created with systemRole: ${systemRole}`)
     }
     nextNetwork[to] = channelProducer.txRequest(channel, txRequest.getRequest())
@@ -170,7 +170,7 @@ const reaper = (network) => {
     }
   }
   if (nextNetwork) {
-    return networkModel.clone(nextNetwork)
+    return Network.clone(nextNetwork)
   }
   return network
 }
@@ -188,7 +188,7 @@ const _generateAddressMap = (interblocks) => {
   return chainMap
 }
 const zeroTransmissions = (network, precedent) => {
-  assert(networkModel.isModel(network))
+  assert(network instanceof Network)
   const nextNetwork = {}
   const aliases = network.getAliases()
   for (const alias of aliases) {
@@ -212,7 +212,7 @@ const zeroTransmissions = (network, precedent) => {
       count++
     }
   }
-  return networkModel.clone(network)
+  return Network.clone(network)
 }
 export {
   ingestInterblocks,

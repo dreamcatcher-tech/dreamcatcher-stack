@@ -1,14 +1,14 @@
 import assert from 'assert-fast'
 import { assign } from 'xstate'
 import {
-  channelModel,
-  lockModel,
-  addressModel,
-  dmzModel,
+  Channel,
+  Lock,
+  Address,
+  Dmz,
   Block,
-  interblockModel,
-  rxRequestModel,
-  txReplyModel,
+  Interblock,
+  RxRequest,
+  TxReply,
   turnoverModel,
 } from '../../../w015-models'
 import { blockProducer, lockProducer } from '../../../w016-producers'
@@ -33,14 +33,14 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         lock: (context, event) => {
           debug(`assignLock`)
           const { lock } = event.data
-          assert(lockModel.isModel(lock))
+          assert(lock instanceof Lock)
           return lock
         },
       }),
       assignNextDmz: assign({
         nextDmz: (context, event) => {
           const { dmz } = event.data
-          assert(dmzModel.isModel(dmz))
+          assert(dmz instanceof Dmz)
           debug(`assignNextDmz`)
           return dmz
         },
@@ -65,7 +65,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       reconcileLock: assign({
         nextLock: ({ lock, block }) => {
           // TODO remove reconciliation completely
-          assert(lockModel.isModel(lock))
+          assert(lock instanceof Lock)
           assert(block instanceof Block)
           debug(`reconcileLock`)
           const nextLock = lockProducer.reconcile(lock, block)
@@ -135,7 +135,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
               const turnover = turnoverModel.create(turoverBlock)
               turnovers.push(turnover)
             }
-            return interblockModel.create(block, alias, turnovers)
+            return Interblock.create(block, alias, turnovers)
           })
           return interblocks
         },
@@ -146,7 +146,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         let isLockAcquired = false
         const { lock } = event.data
         if (lock) {
-          assert(lockModel.isModel(lock))
+          assert(lock instanceof Lock)
           assert(lock.block, `Chain has no blocks`)
           isLockAcquired = !!lock.block
         }
@@ -156,7 +156,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       isProposer: () => true,
       isValidator: () => false,
       isIncreasable: ({ lock }) => {
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         assert(lock.block)
         // TODO check if dmz config allows piercing too
         const isPiercings = lock.isPiercingsPresent()
@@ -176,9 +176,9 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       },
       isDmzTransmitting: ({ lock, nextDmz }) => {
         // outgoing changes detected
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         assert(lock.block, 'increasor never makes a new chain')
-        assert(dmzModel.isModel(nextDmz))
+        assert(nextDmz instanceof Dmz)
         const isDmzTransmitting = nextDmz.isTransmitting()
         debug(`isDmzTransmitting: ${isDmzTransmitting}`)
         return isDmzTransmitting
@@ -201,7 +201,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
       lockChain: async (context, event) => {
         const address = event.payload
         debug(`lockChain ${address.getChainId().substring(0, 9)}`)
-        assert(addressModel.isModel(address))
+        assert(address instanceof Address)
         const lock = await consistency.putLockChain(address)
         return { lock }
       },
@@ -214,14 +214,14 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         const isolatedExecution = () => pure(execute, machine, config)
         const { dmz, containerId } = await isolatedExecution()
 
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         return { dmz, containerId }
       },
       signBlock: async ({ lock, nextDmz }) => {
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         const { block } = lock
         assert(block)
-        assert(dmzModel.isModel(nextDmz))
+        assert(nextDmz instanceof Dmz)
         debug(`signBlock`)
 
         const unsignedBlock = blockProducer.generateUnsigned(nextDmz, block)
@@ -246,7 +246,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           const { type, payload } = request
           const address = nextLock.block.provenance.getAddress()
           const height = nextLock.block.provenance.height
-          const rxRequest = rxRequestModel.create(
+          const rxRequest = RxRequest.create(
             type,
             payload,
             address,
@@ -262,9 +262,9 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
               timeout,
             })
             debug(`effects payload: `, payload)
-            txReply = txReplyModel.create('@@RESOLVE', payload, identifier)
+            txReply = TxReply.create('@@RESOLVE', payload, identifier)
           } catch (payload) {
-            txReply = txReplyModel.create('@@REJECT', payload, identifier)
+            txReply = TxReply.create('@@REJECT', payload, identifier)
           }
           await consistency.putPierceReply({ txReply })
           debug(`reply address:`, txReply.getAddress().getChainId())
@@ -287,7 +287,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         return { turnoverBlocks }
       },
       unlockChain: async ({ nextLock }) => {
-        assert(lockModel.isModel(nextLock))
+        assert(nextLock instanceof Lock)
         debug(`unlockChain`)
         // TODO handle unlock rejection
         await consistency.putUnlockChain(nextLock)

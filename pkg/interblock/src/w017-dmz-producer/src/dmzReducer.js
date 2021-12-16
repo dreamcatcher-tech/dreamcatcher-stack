@@ -14,7 +14,7 @@ import {
 import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer, genesisReply, initReply } from './genesis'
 import { getStateReducer, getState } from './getState'
-import { dmzModel, rxRequestModel, rxReplyModel } from '../../w015-models'
+import { Dmz, RxRequest, RxReply } from '../../w015-models'
 import { metaProducer } from '../../w016-producers'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz')
@@ -49,8 +49,8 @@ const actions = {
 const reducer = (dmz, action) => {
   // TODO check the ACL each time ?
   debug(`reducer( ${action.type} )`)
-  assert(dmzModel.isModel(dmz))
-  assert(rxReplyModel.isModel(action) || rxRequestModel.isModel(action))
+  assert(dmz instanceof Dmz)
+  assert(action instanceof RxReply || action instanceof RxRequest)
 
   if (!isSystemReply(dmz, action)) {
     switch (action.type) {
@@ -88,7 +88,7 @@ const reducer = (dmz, action) => {
     assert(dmz.meta.isAwaiting(action))
     const metaSlice = dmz.meta.getMetaSlice(action)
     const meta = metaProducer.withoutReply(dmz, action)
-    dmz = dmzModel.clone({ ...dmz, meta })
+    dmz = Dmz.clone({ ...dmz, meta })
 
     switch (metaSlice.type) {
       case '@@INIT':
@@ -138,9 +138,9 @@ const systemTypes = [
 ]
 
 const isSystemReply = (dmz, action) => {
-  assert(dmzModel.isModel(dmz))
-  if (!rxReplyModel.isModel(action)) {
-    assert(rxRequestModel.isModel(action))
+  assert(dmz instanceof Dmz)
+  if (!(action instanceof RxReply)) {
+    assert(action instanceof RxRequest)
     return false
   }
   const isSystemReply = dmz.meta.isAwaiting(action)
@@ -149,7 +149,7 @@ const isSystemReply = (dmz, action) => {
 }
 
 const isSystemRequest = (request) => {
-  if (!rxRequestModel.isModel(request)) {
+  if (!(request instanceof RxRequest)) {
     return false
   }
   const isSystemAction = systemTypes.includes(request.type)

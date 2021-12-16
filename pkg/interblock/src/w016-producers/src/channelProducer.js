@@ -2,19 +2,19 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 const debug = Debug('interblock:producers:channel')
 import {
-  addressModel,
-  channelModel,
-  interblockModel,
-  actionModel,
-  txReplyModel,
-  rxReplyModel,
-  integrityModel,
+  Address,
+  Channel,
+  Interblock,
+  Action,
+  TxReply,
+  RxReply,
+  Integrity,
 } from '../../w015-models'
 
 const ingestInterblocks = (channel, interblocks) => {
-  assert(channelModel.isModel(channel))
+  assert(channel instanceof Channel)
   assert(Array.isArray(interblocks))
-  assert(interblocks.every(interblockModel.isModel))
+  assert(interblocks.every((v) => v instanceof Interblock))
   interblocks = [...interblocks]
   interblocks.sort((a, b) => a.provenance.height - b.provenance.height)
   // TODO check they are consecutive ?
@@ -31,7 +31,7 @@ const ingestInterblocks = (channel, interblocks) => {
     }
     ingested.push(interblock)
   }
-  return [channelModel.clone(channel), ingested]
+  return [Channel.clone(channel), ingested]
 }
 
 const _ingestInterblock = (channel, interblock) => {
@@ -41,7 +41,7 @@ const _ingestInterblock = (channel, interblock) => {
   // check this transmission naturally extends the remote transmission ?
   // handle validator change in lineage
   debug('ingestInterblock')
-  assert(interblockModel.isModel(interblock))
+  assert(interblock instanceof Interblock)
   assert(channel.address.equals(interblock.provenance.getAddress()))
   const { provenance, turnovers } = interblock
   const integrity = provenance.reflectIntegrity()
@@ -120,30 +120,30 @@ const _rxRepliesTipHeight = (rxRepliesTip) => {
   return parseInt(rxRepliesTip.split('_').pop())
 }
 const setAddress = (channel, address) => {
-  assert(addressModel.isModel(address))
+  assert(address instanceof Address)
   assert(!address.isGenesis())
   if (channel.address.equals(address)) {
     return channel
   }
   // TODO if changing address, flush all channels
-  return channelModel.clone({ ...channel, address })
+  return Channel.clone({ ...channel, address })
 }
 
 // entry point for covenant into system
 const txRequest = (channel, action) => {
   debug('txRequest')
-  assert(actionModel.isModel(action), `must supply request object`)
+  assert(action instanceof Action, `must supply request object`)
   // TODO decide if should allow actions to initiate channels just by asking to talk to them
   // TODO use immutable map to detect duplicates faster
   let { requests } = channel
   requests = [...requests, action]
-  return channelModel.clone({ ...channel, requests })
+  return Channel.clone({ ...channel, requests })
 }
 
 // entry point for covenant into system
 const txReply = (channel, txReply) => {
-  assert(channelModel.isModel(channel))
-  assert(txReplyModel.isModel(txReply), `must supply reply object`)
+  assert(channel instanceof Channel)
+  assert(txReply instanceof TxReply, `must supply reply object`)
   // TODO track txPromises so dev reducer cannot misbehave
   const replyKey = txReply.getReplyKey()
   if (channel.replies[replyKey]) {
@@ -172,10 +172,10 @@ const txReply = (channel, txReply) => {
     throw new Error(`Can only settle synchronously with tip: ${replyKey}`)
   }
   replies = { ...replies, [replyKey]: reply }
-  return channelModel.clone({ ...channel, replies })
+  return Channel.clone({ ...channel, replies })
 }
 const invalidate = (channel) => {
-  const invalid = addressModel.create('INVALID')
+  const invalid = Address.create('INVALID')
   return setAddress(channel, invalid)
 }
 
@@ -212,7 +212,7 @@ const _splitParse = (replyKey) => {
 
 const shiftLoopbackSettle = (loopback) => {
   const rxReply = loopback.rxLoopbackSettle()
-  assert(rxReplyModel.isModel(rxReply))
+  assert(rxReply instanceof RxReply)
   let { rxPromises = [], ...rest } = loopback
 
   const key = `${rxReply.getHeight()}_${rxReply.getIndex()}`
@@ -221,17 +221,17 @@ const shiftLoopbackSettle = (loopback) => {
   if (rxPromises.length) {
     rest.rxPromises = rxPromises
   }
-  return channelModel.clone(rest)
+  return Channel.clone(rest)
 }
 
 const shiftLoopbackReply = (loopback) => {
-  assert(channelModel.isModel(loopback))
+  assert(loopback instanceof Channel)
   assert(loopback.isLoopback())
   const nextLoopback = { ...loopback }
   let { replies, rxPromises = [], rxRepliesTip, tipHeight } = loopback
   if (!loopback.isLoopbackReplyPromised()) {
     const rxReply = loopback.rxLoopbackReply()
-    assert(rxReplyModel.isModel(rxReply), `Must be a reply`)
+    assert(rxReply instanceof RxReply, `Must be a reply`)
   }
 
   const currentHeight = Number.isInteger(tipHeight) ? tipHeight + 1 : 1
@@ -249,7 +249,7 @@ const shiftLoopbackReply = (loopback) => {
     nextLoopback.rxPromises = [...rxPromises, rxRepliesTip]
   }
 
-  return channelModel.clone(nextLoopback)
+  return Channel.clone(nextLoopback)
 }
 const splitRxRepliesTip = (rxRepliesTip) => {
   if (!rxRepliesTip) {
@@ -265,7 +265,7 @@ const splitRxRepliesTip = (rxRepliesTip) => {
 }
 const zeroLoopback = (channel) => {
   // always increments the tipHeight by one
-  assert(channelModel.isModel(channel))
+  assert(channel instanceof Channel)
   assert(channel.isLoopback())
   assert(!channel.rxLoopback(), `Loopback not drained`)
   // current height can never be zero, as isolation cannot occur for block 0
@@ -273,7 +273,7 @@ const zeroLoopback = (channel) => {
   if (Number.isInteger(channel.tipHeight)) {
     tipHeight = channel.tipHeight + 1
   }
-  return channelModel.clone({
+  return Channel.clone({
     ...channel,
     requests: [],
     replies: {},
@@ -281,12 +281,12 @@ const zeroLoopback = (channel) => {
   })
 }
 const zeroTransmissions = (channel, precedent) => {
-  assert(channelModel.isModel(channel))
-  assert(integrityModel.isModel(precedent))
+  assert(channel instanceof Channel)
+  assert(precedent instanceof Integrity)
   if (!channel.isTransmitting()) {
     return channel
   }
-  return channelModel.clone({
+  return Channel.clone({
     ...channel,
     replies: {},
     requests: [],
@@ -294,7 +294,7 @@ const zeroTransmissions = (channel, precedent) => {
   })
 }
 const shiftLoopback = (loopback) => {
-  assert(channelModel.isModel(loopback))
+  assert(loopback instanceof Channel)
   assert(loopback.isLoopback())
   assert(!loopback.isLoopbackExhausted())
   if (loopback.rxLoopbackSettle()) {

@@ -33,9 +33,9 @@ describe('api', () => {
     })
   })
   describe('model compatibility', () => {
-    test.todo('request => txRequestModel')
-    test.todo('promise => txReplyModel')
-    test.todo('resolve => txReplyModel')
-    test.todo('reject => txReplyModel')
+    test.todo('request => TxRequest')
+    test.todo('promise => TxReply')
+    test.todo('resolve => TxReply')
+    test.todo('reject => TxReply')
   })
 })

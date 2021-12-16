@@ -31,7 +31,6 @@ import assert from 'assert-fast'
 import levelup from 'levelup'
 import memdown from 'memdown'
 import posix from 'path-browserify'
-import last from 'lodash.last'
 import setImmediate from 'set-immediate-shim'
 import { standardEngineFactory } from './standardEngineFactory'
 import { isolateFactory } from './services/isolateFactory'
@@ -40,7 +39,7 @@ import { createBase } from './execution/createBase'
 import { createTap } from './execution/tap'
 import { actions } from '../../w017-dmz-producer'
 import * as covenants from '../../w212-system-covenants'
-import { Block, interblockModel, addressModel } from '../../w015-models'
+import { Block, Interblock, Address } from '../../w015-models'
 import { piercerFactory } from './piercerFactory'
 import Debug from 'debug'
 const debugBase = Debug('ib:met')
@@ -76,7 +75,7 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
   const baseAddress = await createBase(ioConsistency, sqsPool)
 
   const metrology = (address, absolutePath) => {
-    assert(addressModel.isModel(address))
+    assert(address instanceof Address)
 
     const getBlock = (height) => {
       // a synchronous snapshot of the current state of storage

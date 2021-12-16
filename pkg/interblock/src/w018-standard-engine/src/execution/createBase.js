@@ -1,4 +1,4 @@
-import { Block, interblockModel } from '../../../w015-models'
+import { Block, Interblock } from '../../../w015-models'
 
 const createBase = async (ioConsistency, sqsPool) => {
   const baseAddressPromise = tapConsistency(ioConsistency)
@@ -7,7 +7,7 @@ const createBase = async (ioConsistency, sqsPool) => {
   return baseAddress
 }
 const triggerIgnition = (sqsPool) => {
-  const igniter = interblockModel.clone(prebuiltInterblock)
+  const igniter = Interblock.clone(prebuiltInterblock)
   sqsPool.push(igniter)
 }
 

@@ -13,11 +13,11 @@ export class Address extends mixin(addressSchema) {
     }
 
     let status = `UNKNOWN`
-    // TODO do not use integrityModel if one of the predetermined types
+    // TODO do not use Integrity if one of the predetermined types
     if (integrity === `GENESIS`) {
       // the source of randomness in genesis block creation
       status = `GENESIS_${crypto.generateNonce()}`
-      // TODO define these types in integrityModel too
+      // TODO define these types in Integrity too
       integrity = defaultIntegrity
     } else if (integrity === 'LOOPBACK') {
       status = 'LOOPBACK'

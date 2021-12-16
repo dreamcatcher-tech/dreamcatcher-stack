@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
 import {
   Block,
-  channelModel,
-  dmzModel,
-  publicKeyModel,
-  txReplyModel,
-  txRequestModel,
+  Channel,
+  Dmz,
+  PublicKey,
+  TxReply,
+  TxRequest,
 } from '../../w015-models'
 import { channelProducer } from '..'
 
@@ -13,8 +13,8 @@ const generatePierceDmz = (targetBlock, pierceReplies, pierceRequests) => {
   assert(targetBlock instanceof Block)
   assert(Array.isArray(pierceReplies))
   assert(Array.isArray(pierceRequests))
-  assert(pierceReplies.every(txReplyModel.isModel))
-  assert(pierceRequests.every(txRequestModel.isModel))
+  assert(pierceReplies.every((v) => v instanceof TxReply))
+  assert(pierceRequests.every((v) => v instanceof TxRequest))
   if (targetBlock.network['.@@io']) {
     assert(targetBlock.network['.@@io'].address.isResolved())
   }
@@ -34,38 +34,38 @@ const generatePierceDmz = (targetBlock, pierceReplies, pierceRequests) => {
   }
 
   const network = pierceDmz.network.merge({ '@@PIERCE_TARGET': txChannel })
-  return dmzModel.clone({ ...pierceDmz, network })
+  return Dmz.clone({ ...pierceDmz, network })
 }
 
 const _extractPierceDmz = (block) => {
   const algorithm = '@@pierce'
   const key = '@@PIERCE_PUBLIC_KEY'
-  const publicKey = publicKeyModel.clone({ key, algorithm })
-  const baseDmz = dmzModel.create({ validators: { ['@@PIERCE']: publicKey } })
+  const publicKey = PublicKey.clone({ key, algorithm })
+  const baseDmz = Dmz.create({ validators: { ['@@PIERCE']: publicKey } })
   const address = block.provenance.getAddress()
-  let pierceChannel = channelModel.create(address, 'PIERCE')
+  let pierceChannel = Channel.create(address, 'PIERCE')
   if (block.network['.@@io']) {
     const { tip } = block.network['.@@io']
     if (tip) {
-      pierceChannel = channelModel.clone({ ...pierceChannel, precedent: tip })
+      pierceChannel = Channel.clone({ ...pierceChannel, precedent: tip })
     }
   }
   const network = baseDmz.network.merge({ '@@PIERCE_TARGET': pierceChannel })
-  return dmzModel.clone({ ...baseDmz, network })
+  return Dmz.clone({ ...baseDmz, network })
 }
 
 const accumulate = (dmz, transmissions = []) => {
-  assert(dmzModel.isModel(dmz))
+  assert(dmz instanceof Dmz)
   assert(dmz.pending.getIsPending())
   assert(Array.isArray(transmissions))
   // first, extend if there are transmissions
   let accumulator = [...dmz.pending.getAccumulator()]
   for (const tx of transmissions) {
-    if (txReplyModel.isModel(tx)) {
+    if (tx instanceof TxReply) {
       const { type, identifier } = tx
       accumulator.push({ type, identifier })
     } else {
-      assert(txRequestModel.isModel(tx))
+      assert(tx instanceof TxRequest)
       const { type, to } = tx
       accumulator.push({ type, to })
     }
@@ -101,7 +101,7 @@ const accumulate = (dmz, transmissions = []) => {
     return tx
   })
   const pending = { ...dmz.pending, accumulator }
-  return dmzModel.clone({ ...dmz, pending })
+  return Dmz.clone({ ...dmz, pending })
 }
 
 const _mapUnIdentifiedRequests = (accumulator) => {

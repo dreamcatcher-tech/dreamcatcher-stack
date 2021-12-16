@@ -3,16 +3,16 @@
 // must supply parentProvenance
 import assert from 'assert-fast'
 import {
-  dmzModel,
-  provenanceModel,
-  integrityModel,
-  addressModel,
+  Dmz,
+  Provenance,
+  Integrity,
+  Address,
   Block,
-  signatureModel,
+  Signature,
 } from '../../w015-models'
 
 const generateNextProvenance = (nextDmz, block) => {
-  assert(dmzModel.isModel(nextDmz))
+  assert(nextDmz instanceof Dmz)
   assert(block instanceof Block)
   assert(!nextDmz.equals(block.getDmz()), 'block dmz has not changed')
   // TODO check the dmz follows from the current one ?
@@ -25,11 +25,11 @@ const generateNextProvenance = (nextDmz, block) => {
   if (isTransmitting && !isGenesis) {
     // TODO go back to the last validator change
     const hash = provenance.getAddress().getChainId()
-    const genesis = integrityModel.create(hash)
+    const genesis = Integrity.create(hash)
     const genesisHeight = 0
     lineage[genesisHeight] = genesis
   }
-  const dmzIntegrity = integrityModel.create(nextDmz.getHash())
+  const dmzIntegrity = Integrity.create(nextDmz.getHash())
   const parentIntegrity = provenance.reflectIntegrity()
   lineage[provenance.height] = parentIntegrity
   const address = provenance.getAddress()
@@ -40,9 +40,9 @@ const generateNextProvenance = (nextDmz, block) => {
     address,
     lineage,
   }
-  const integrity = integrityModel.create(nextProvenance)
+  const integrity = Integrity.create(nextProvenance)
   const signatures = []
-  const unsigned = provenanceModel.clone({
+  const unsigned = Provenance.clone({
     ...nextProvenance,
     integrity,
     signatures,
@@ -50,18 +50,18 @@ const generateNextProvenance = (nextDmz, block) => {
   return unsigned
 }
 const addSignature = (provenance, signature) => {
-  assert(provenanceModel.isModel(provenance))
-  assert(signatureModel.isModel(signature))
+  assert(provenance instanceof Provenance)
+  assert(signature instanceof Signature)
   assert(!provenance.signatures.length, `temporarily single sign only`)
-  return provenanceModel.clone({ ...provenance, signatures: [signature] })
+  return Provenance.clone({ ...provenance, signatures: [signature] })
 }
 const generatePierceProvenance = (pierceDmz, address, parentHeight) => {
-  assert(dmzModel.isModel(pierceDmz))
-  assert(addressModel.isModel(address))
+  assert(pierceDmz instanceof Dmz)
+  assert(address instanceof Address)
   assert(Number.isInteger(parentHeight))
   assert(parentHeight >= 0)
 
-  const dmzIntegrity = integrityModel.create(pierceDmz.getHash())
+  const dmzIntegrity = Integrity.create(pierceDmz.getHash())
   const height = parentHeight + 1
   const lineage = { 0: address.chainId }
   const nextProvenance = {
@@ -70,9 +70,9 @@ const generatePierceProvenance = (pierceDmz, address, parentHeight) => {
     address,
     lineage,
   }
-  const integrity = integrityModel.create(nextProvenance)
+  const integrity = Integrity.create(nextProvenance)
   const signatures = []
-  return provenanceModel.clone({
+  return Provenance.clone({
     ...nextProvenance,
     integrity,
     signatures,

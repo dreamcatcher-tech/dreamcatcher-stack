@@ -2,12 +2,7 @@ import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import { ioQueueFactory } from '../../w003-queue'
 import { isolateFactory, toFunctions } from '../src/services/isolateFactory'
-import {
-  rxRequestModel,
-  covenantIdModel,
-  dmzModel,
-  Block,
-} from '../../w015-models'
+import { RxRequest, covenantIdModel, Dmz, Block } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:isolate')
 chai.use(chaiAsPromised)
@@ -25,9 +20,9 @@ describe('isolation', () => {
       reducer2: { reducer: reducer2 },
     }
     let covenantId = covenantIdModel.create('reducer1')
-    const block1 = Block.create(dmzModel.create({ covenantId }))
+    const block1 = Block.create(Dmz.create({ covenantId }))
     covenantId = covenantIdModel.create('reducer2')
-    const block2 = Block.create(dmzModel.create({ covenantId }))
+    const block2 = Block.create(Dmz.create({ covenantId }))
 
     const fakeConsistency = ioQueueFactory('fakeConsistency')
     const isolateProcessor = isolateFactory(fakeConsistency, covenantMap)
@@ -42,8 +37,8 @@ describe('isolation', () => {
     const payload = {}
     const i = 0
     const h = 0
-    const action1 = rxRequestModel.create('action1', payload, address, h, i)
-    const action2 = rxRequestModel.create('action2', payload, address, h, i)
+    const action1 = RxRequest.create('action1', payload, address, h, i)
+    const action2 = RxRequest.create('action2', payload, address, h, i)
     const accumulator = []
     const tick1 = {
       containerId: await id1,
@@ -82,7 +77,7 @@ describe('isolation', () => {
       reducer1: { reducer: reducerThrower },
     }
     let covenantId = covenantIdModel.create('reducer1')
-    const block1 = Block.create(dmzModel.create({ covenantId }))
+    const block1 = Block.create(Dmz.create({ covenantId }))
 
     const fakeConsistency = ioQueueFactory('fakeConsistency')
     const isolateProcessor = isolateFactory(fakeConsistency, covenantMap)
@@ -94,7 +89,7 @@ describe('isolation', () => {
     const address = block1.provenance.getAddress()
     const height = 0
     const index = 0
-    const action = rxRequestModel.create('action1', {}, address, height, index)
+    const action = RxRequest.create('action1', {}, address, height, index)
     const tick1 = {
       containerId,
       state: {},

@@ -318,7 +318,7 @@ const interblockSchema = {
   // of the source chain.
   // This must be an model, so as to ensure we do not leak info, rather
   // than making it a special case of a Block.
-  // This cannot import dmzModel directly, as it is a fundamental
+  // This cannot import Dmz directly, as it is a fundamental
   // circular reference, as the outside depends on the inside.
   // This can only be made from a verified block.
 

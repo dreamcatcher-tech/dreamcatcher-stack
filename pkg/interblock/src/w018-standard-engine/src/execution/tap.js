@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import last from 'lodash.last'
 import {
   blockPrint,
   interPrint,
@@ -7,7 +6,7 @@ import {
   networkPrint,
   print,
 } from './printer'
-import { Block, interblockModel } from '../../../w015-models'
+import { Block, Interblock } from '../../../w015-models'
 import { setTap } from '../../../w004-needle'
 import Debug from 'debug'
 
@@ -41,7 +40,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
   }
 
   const interblockPrint = (interblock) => {
-    assert(interblockModel.isModel(interblock))
+    assert(interblock instanceof Interblock)
     let msg = msg //chalk.yellow('LIGHT')
     // let forPath = chalk.gray(getPath(interblock, cache))
     let forPath = getPath(interblock, cache)

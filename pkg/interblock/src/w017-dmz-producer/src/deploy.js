@@ -1,10 +1,5 @@
 import assert from 'assert-fast'
-import {
-  rxReplyModel,
-  dmzModel,
-  covenantIdModel,
-  rxRequestModel,
-} from '../../w015-models'
+import { RxReply, Dmz, covenantIdModel, RxRequest } from '../../w015-models'
 import { spawn, spawnRequester } from './spawn'
 import { interchain, replyResolve, replyPromise } from '../../w002-api'
 import Debug from 'debug'
@@ -20,9 +15,9 @@ const deploy = (installer) => ({
   payload: { installer },
 })
 const deployReducer = (dmz, action) => {
-  assert(dmzModel.isModel(dmz))
+  assert(dmz instanceof Dmz)
   assert(!dmz.meta.deploy)
-  assert(rxRequestModel.isModel(action))
+  assert(action instanceof RxRequest)
   assert(action.type === '@@DEPLOY' || action.type === '@@INSTALL')
   const { installer } = action.payload
   // TODO assert there is only one deployment action, from parent, and after genesis
@@ -66,12 +61,12 @@ const deployReducer = (dmz, action) => {
     deploySlice[deployId] = alias
   }
   meta = { ...meta, deploy: deploySlice }
-  return dmzModel.clone({ ...dmz, meta })
+  return Dmz.clone({ ...dmz, meta })
 }
 const deployGenesisReply = (meta, rxReply, dmz) => {
   assert.strictEqual(typeof meta, 'object')
-  assert(rxReplyModel.isModel(rxReply))
-  assert(dmzModel.isModel(dmz))
+  assert(rxReply instanceof RxReply)
+  assert(dmz instanceof Dmz)
   debug(`deployGenesisReply`)
   // TODO if this is rejected, rollback the whole operation
   return dmz
@@ -79,8 +74,8 @@ const deployGenesisReply = (meta, rxReply, dmz) => {
 const deployReply = (meta, rxReply, dmz) => {
   // TODO handle rejection of deployment, then roll back the whole operation
   assert.strictEqual(typeof meta, 'object')
-  assert(rxReplyModel.isModel(rxReply))
-  assert(dmzModel.isModel(dmz))
+  assert(rxReply instanceof RxReply)
+  assert(dmz instanceof Dmz)
   const deploy = { ...dmz.meta.deploy }
   debug(`deployReply for:`, deploy[rxReply.identifier])
   assert(deploy[rxReply.identifier])
@@ -93,9 +88,9 @@ const deployReply = (meta, rxReply, dmz) => {
     replyResolve({}, originIdentifier)
     const nextMeta = { ...dmz.meta }
     delete nextMeta.deploy
-    return dmzModel.clone({ ...dmz, meta: nextMeta })
+    return Dmz.clone({ ...dmz, meta: nextMeta })
   }
   const nextMeta = { ...dmz.meta, deploy }
-  return dmzModel.clone({ ...dmz, meta: nextMeta })
+  return Dmz.clone({ ...dmz, meta: nextMeta })
 }
 export { install, deploy, deployReducer, deployReply, deployGenesisReply }

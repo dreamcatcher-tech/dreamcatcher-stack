@@ -1,10 +1,5 @@
 import assert from 'assert-fast'
-import {
-  rxReplyModel,
-  rxRequestModel,
-  dmzModel,
-  reductionModel,
-} from '../../../w015-models'
+import { RxReply, RxRequest, Dmz, reductionModel } from '../../../w015-models'
 import { _hook as hook } from '../../../w002-api'
 import { dmzMachine } from '../machines'
 import { common } from './common'
@@ -29,10 +24,10 @@ const config = {
   actions: {
     mergeSystemState: assign({
       dmz: ({ dmz, reduceResolve }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(reductionModel.isModel(reduceResolve))
         debug('mergeSystemState')
-        return dmzModel.clone(reduceResolve.reduction)
+        return Dmz.clone(reduceResolve.reduction)
       },
     }),
     respondLoopbackRequest,
@@ -40,7 +35,7 @@ const config = {
     transmit,
     resolveAccumulator: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         if (!dmz.pending.getIsPending()) {
           debug('resolveAccumulator not pending')
           return dmz
@@ -60,8 +55,8 @@ const config = {
   guards: {
     isChannelUnavailable: ({ dmz, anvil }) => {
       // TODO may merge with the autoResolve test if action is present ?
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil))
+      assert(dmz instanceof Dmz)
+      assert(anvil instanceof RxRequest)
       const address = anvil.getAddress()
       const isChannelUnavailable = !dmz.network.getAlias(address)
       debug(`isChannelUnavailable: `, isChannelUnavailable)
@@ -74,8 +69,8 @@ const config = {
   services: {
     // TODO move this to synchronous as soon as genesis is synchronous
     reduceSystem: async ({ dmz, anvil }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+      assert(dmz instanceof Dmz)
+      assert(anvil instanceof RxRequest || anvil instanceof RxReply)
       debug(`reduceSystem anvil: %o`, anvil.type)
       // TODO move to be same code as isolateFactory
       const tick = () => dmzReducer.reducer(dmz, anvil)

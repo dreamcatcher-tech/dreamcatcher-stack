@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
 import {
-  txReplyModel,
-  rxReplyModel,
-  rxRequestModel,
-  dmzModel,
+  TxReply,
+  RxReply,
+  RxRequest,
+  Dmz,
   reductionModel,
-  txRequestModel,
+  TxRequest,
 } from '../../../w015-models'
 import { networkProducer, pendingProducer } from '../../../w016-producers'
 import { pendingMachine } from '../machines'
@@ -25,39 +25,39 @@ const config = {
     bufferRequest: assign({
       dmz: ({ dmz, anvil }) => {
         // if a request came in and we are pending, put it on buffer
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxRequest)
         debug(`bufferRequest: `, anvil.type)
         const pending = pendingProducer.bufferRequest(dmz.pending, anvil)
-        return dmzModel.clone({ ...dmz, pending })
+        return Dmz.clone({ ...dmz, pending })
       },
     }),
     accumulateReply: assign({
       dmz: ({ dmz, anvil }) => {
         // add reply into the accumulator
-        assert(dmzModel.isModel(dmz))
-        assert(rxReplyModel.isModel(anvil))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxReply)
         debug(`accumulateReply replyKey: %o`, anvil.getReplyKey())
         const pending = pendingProducer.pushReply(dmz.pending, anvil)
-        return dmzModel.clone({ ...dmz, pending })
+        return Dmz.clone({ ...dmz, pending })
       },
     }),
     shiftCovenantAction: assign({
       covenantAction: ({ dmz, anvil }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxReplyModel.isModel(anvil))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxReply)
         const { pending } = dmz
         assert(pending.getIsPending())
 
         const originRequest = pending.pendingRequest
-        assert(rxRequestModel.isModel(originRequest))
+        assert(originRequest instanceof RxRequest)
         debug(`shiftCovenantAction: %o`, originRequest.type)
         return originRequest
       },
     }),
     assignPendingResolve: assign({
       reduceResolve: ({ dmz, covenantAction }, event) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         const { reduceResolve } = event.data
         assert(reduceResolve)
         debug(`assignResolve pending: %o`, reduceResolve.isPending)
@@ -66,35 +66,35 @@ const config = {
     }),
     rejectOriginRequest: assign({
       dmz: ({ dmz, anvil, reduceRejection, covenantAction }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxReplyModel.isModel(anvil))
-        assert(rxRequestModel.isModel(covenantAction))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxReply)
+        assert(covenantAction instanceof RxRequest)
         assert.strictEqual(typeof reduceRejection, 'object')
         debug(`rejectOriginRequest`, anvil.type, reduceRejection)
         const { identifier: id } = covenantAction
-        const reply = txReplyModel.create('@@REJECT', reduceRejection, id)
+        const reply = TxReply.create('@@REJECT', reduceRejection, id)
         const network = networkProducer.tx(dmz.network, [reply])
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     promiseAnvil: assign({
       dmz: ({ dmz, anvil }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxRequest)
         debug(`promiseanvil`, anvil.type)
         const { identifier } = anvil
-        const promise = txReplyModel.create('@@PROMISE', {}, identifier)
+        const promise = TxReply.create('@@PROMISE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [promise])
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
     }),
     settlePending: assign({
       dmz: ({ dmz }) => {
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(dmz.pending.getIsPending())
         debug(`settlePending`)
         const pending = pendingProducer.settle(dmz.pending)
-        return dmzModel.clone({ ...dmz, pending })
+        return Dmz.clone({ ...dmz, pending })
       },
     }),
     mergeState,
@@ -104,15 +104,15 @@ const config = {
   },
   guards: {
     isReply: ({ anvil }) => {
-      const isReply = rxReplyModel.isModel(anvil)
+      const isReply = anvil instanceof RxReply
       if (!isReply) {
-        assert(rxRequestModel.isModel(anvil))
+        assert(anvil instanceof RxRequest)
       }
       debug(`isReply: %o`, isReply)
       return isReply
     },
     isAwaiting: ({ dmz }) => {
-      assert(dmzModel.isModel(dmz))
+      assert(dmz instanceof Dmz)
       const { pending } = dmz
       let isAwaiting = false
       for (const accumulation of pending.accumulator) {

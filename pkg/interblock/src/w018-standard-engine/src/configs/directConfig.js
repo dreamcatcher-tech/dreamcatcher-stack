@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
 import {
-  txReplyModel,
-  rxReplyModel,
-  rxRequestModel,
-  dmzModel,
+  TxReply,
+  RxReply,
+  RxRequest,
+  Dmz,
   reductionModel,
-  txRequestModel,
+  TxRequest,
 } from '../../../w015-models'
 import { networkProducer, pendingProducer } from '../../../w016-producers'
 import { directMachine } from '../machines'
@@ -30,8 +30,8 @@ const config = {
   actions: {
     assignDirectCovenantAction: assign({
       covenantAction: ({ dmz, anvil }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil) || rxReplyModel.isModel(anvil))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxRequest || anvil instanceof RxReply)
         assert(!dmz.pending.getIsPending())
         assert(!dmz.pending.accumulator)
         debug(`assignDirectCovenantAction`, anvil.type)
@@ -45,12 +45,12 @@ const config = {
     },
     raisePending: assign({
       dmz: ({ dmz, anvil }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxRequest)
         assert(!dmz.pending.getIsPending())
         debug(`raisePending`, anvil.type)
         const pending = pendingProducer.raisePending(dmz.pending, anvil)
-        return dmzModel.clone({ ...dmz, pending })
+        return Dmz.clone({ ...dmz, pending })
       },
     }),
     assignInitialPending: assign({
@@ -58,7 +58,7 @@ const config = {
         // TODO this probably breaks other things in weird undiscovered ways
         // as it isn't supposed to change during execution
         // but this handles if a promise raises and lowers in a single interpreter cycle
-        assert(dmzModel.isModel(dmz))
+        assert(dmz instanceof Dmz)
         assert(dmz.pending.getIsPending())
         debug(`assignInitialPending`)
         return dmz.pending
@@ -66,42 +66,42 @@ const config = {
     }),
     promiseOriginRequest: assign({
       dmz: ({ dmz, anvil, covenantAction }) => {
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(anvil))
+        assert(dmz instanceof Dmz)
+        assert(anvil instanceof RxRequest)
         assert(!covenantAction || anvil.equals(covenantAction))
         const { identifier } = anvil
-        const promise = txReplyModel.create('@@PROMISE', {}, identifier)
+        const promise = TxReply.create('@@PROMISE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [promise])
         debug(`promiseOriginRequest`, anvil.type)
-        return dmzModel.clone({ ...dmz, network })
+        return Dmz.clone({ ...dmz, network })
       },
       isExternalPromise: () => true,
     }),
     shiftBufferedRequest: assign({
       dmz: ({ dmz, covenantAction }) => {
         debug(`shiftBufferedRequest`, covenantAction.type)
-        assert(dmzModel.isModel(dmz))
-        assert(rxRequestModel.isModel(covenantAction))
+        assert(dmz instanceof Dmz)
+        assert(covenantAction instanceof RxRequest)
         assert(dmz.pending.getIsBuffered(covenantAction))
         const rxRequest = dmz.pending.rxBufferedRequest()
-        assert(rxRequestModel.isModel(rxRequest))
+        assert(rxRequest instanceof RxRequest)
         assert(rxRequest.equals(covenantAction))
 
         const pending = pendingProducer.shiftRequests(dmz.pending)
-        return dmzModel.clone({ ...dmz, pending })
+        return Dmz.clone({ ...dmz, pending })
       },
     }),
     filterRePromise: assign({
       reduceResolve: ({ reduceResolve, covenantAction }) => {
         assert(reductionModel.isModel(reduceResolve))
-        assert(rxRequestModel.isModel(covenantAction))
+        assert(covenantAction instanceof RxRequest)
         let { transmissions: txs } = reduceResolve
         txs = txs.filter((tx) => {
           const isForCovenant = tx.identifier === covenantAction.identifier
-          if (txReplyModel.isModel(tx) && isForCovenant) {
+          if (tx instanceof TxReply && isForCovenant) {
             return !tx.getReply().isPromise()
           }
-          assert(txRequestModel.isModel(tx))
+          assert(tx instanceof TxRequest)
           return true
         })
         const isRepromised = txs.length < reduceResolve.transmissions.length
@@ -130,17 +130,17 @@ const config = {
       return isReductionPending
     },
     isReply: ({ anvil }) => {
-      const isReply = rxReplyModel.isModel(anvil)
+      const isReply = anvil instanceof RxReply
       if (!isReply) {
-        assert(rxRequestModel.isModel(anvil))
+        assert(anvil instanceof RxRequest)
       }
       debug(`isReply: %o`, isReply)
       return isReply
     },
     isBufferedRequest: ({ dmz, covenantAction }) => {
-      assert(dmzModel.isModel(dmz))
-      assert(rxRequestModel.isModel(covenantAction))
-      assert(dmzModel.isModel(dmz))
+      assert(dmz instanceof Dmz)
+      assert(covenantAction instanceof RxRequest)
+      assert(dmz instanceof Dmz)
       const { pending } = dmz
       const isBufferedRequest = pending.getIsBuffered(covenantAction)
       debug(`isBufferedRequest`, isBufferedRequest)

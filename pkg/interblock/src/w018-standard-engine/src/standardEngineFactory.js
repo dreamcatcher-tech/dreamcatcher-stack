@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { sqsQueueFactory } from '../../w003-queue'
-import { interblockModel, addressModel, txModel } from '../../w015-models'
+import { Interblock, Address, txModel } from '../../w015-models'
 import { fsmFactory } from './fsmFactory'
 import Debug from 'debug'
 const debugBase = Debug('interblock:engine')
@@ -36,7 +36,7 @@ const standardEngineFactory = () => {
   const transmitter = (ioTransmit, sqsTx, sqsPool) => async (interblock) => {
     const debug = debugBase.extend('transmitter')
     debug(`transmitter`)
-    assert(interblockModel.isModel(interblock))
+    assert(interblock instanceof Interblock)
     // TODO split into multiple calls, so can push out earlier
     const transmissions = await ioTransmit.push(interblock)
     assert(transmissions.every(txModel.isModel), `failed transmitter`)
@@ -56,7 +56,7 @@ const standardEngineFactory = () => {
   const pooler = (ioPool, sqsIncrease) => async (interblock) => {
     const debug = debugBase.extend('pooler')
     debug(`pooler`)
-    assert(interblockModel.isModel(interblock))
+    assert(interblock instanceof Interblock)
     const { isPooled } = await ioPool.push(interblock)
     assert.strictEqual(typeof isPooled, 'boolean', `failed pool`)
     debug(`isPooled: %o`, isPooled)
@@ -71,7 +71,7 @@ const standardEngineFactory = () => {
     const locks = new Map() // TODO delete this now have proper locking ?
     const debugIncreasor = debugBase.extend('increasor')
     const throttler = async (address) => {
-      assert(addressModel.isModel(address))
+      assert(address instanceof Address)
       const chainId = address.getChainId()
       if (!locks.has(chainId)) {
         locks.set(chainId, true)
@@ -85,7 +85,7 @@ const standardEngineFactory = () => {
             const txStart = Date.now()
             const { txInterblocks, isRedriveRequired } = result
             assert(Array.isArray(txInterblocks))
-            assert(txInterblocks.every(interblockModel.isModel))
+            assert(txInterblocks.every((v) => v instanceof Interblock))
             assert.strictEqual(typeof isRedriveRequired, 'boolean')
             const awaits = txInterblocks.map((interblock) =>
               sqsTransmit.push(interblock)
@@ -144,9 +144,9 @@ const standardEngineFactory = () => {
 
   const sqsTx = sqsQueueFactory('sqsTx', txModel)
   const sqsRx = sqsQueueFactory('sqsRx', txModel)
-  const sqsTransmit = sqsQueueFactory('sqsTransmit', interblockModel)
-  const sqsPool = sqsQueueFactory('sqsPool', interblockModel)
-  const sqsIncrease = sqsQueueFactory('sqsIncrease', addressModel)
+  const sqsTransmit = sqsQueueFactory('sqsTransmit', Interblock)
+  const sqsPool = sqsQueueFactory('sqsPool', Interblock)
+  const sqsIncrease = sqsQueueFactory('sqsIncrease', Address)
   const sqsQueues = { sqsTx, sqsRx, sqsTransmit, sqsPool, sqsIncrease }
 
   sqsRx.setProcessor(receiver(ioReceive, sqsPool, sqsTransmit))

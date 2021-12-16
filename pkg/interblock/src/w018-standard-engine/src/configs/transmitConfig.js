@@ -1,12 +1,7 @@
 import assert from 'assert-fast'
 import flatten from 'lodash.flatten'
 import { assign } from 'xstate'
-import {
-  interblockModel,
-  socketModel,
-  txModel,
-  addressModel,
-} from '../../../w015-models'
+import { Interblock, socketModel, txModel, Address } from '../../../w015-models'
 import { transmitMachine } from '../machines'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import Debug from 'debug'
@@ -19,14 +14,14 @@ const transmitConfig = (ioConsistency) => {
       assignInterblock: assign({
         interblock: (context, event) => {
           const interblock = event.payload
-          assert(interblockModel.isModel(interblock))
+          assert(interblock instanceof Interblock)
           debug(`assignInterblock`)
           return interblock
         },
       }),
       extendTargetTxs: assign({
         targetTxs: ({ interblock, targetTxs }, event) => {
-          assert(interblockModel.isModel(interblock))
+          assert(interblock instanceof Interblock)
           assert(Array.isArray(targetTxs))
           assert(targetTxs.every(txModel.isModel))
           const { sockets } = event.data
@@ -42,7 +37,7 @@ const transmitConfig = (ioConsistency) => {
       }),
       extendSelfToGenesisAttempt: assign({
         targetTxs: ({ interblock, targetTxs }) => {
-          assert(interblockModel.isModel(interblock))
+          assert(interblock instanceof Interblock)
           assert(interblock.isGenesisAttempt())
           assert(Array.isArray(targetTxs))
           const selfTx = txModel.create(socketModel.create(), interblock)
@@ -66,15 +61,15 @@ const transmitConfig = (ioConsistency) => {
     },
     services: {
       fetchRemoteTargets: async ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const toAddress = interblock.getTargetAddress()
-        assert(addressModel.isModel(toAddress))
+        assert(Address.isModel(toAddress))
         const sockets = await consistency.getSockets(toAddress)
         debug(`fetchTargetSockets length: ${sockets.length}`)
         return { sockets }
       },
       fetchSelfTarget: async ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const address = interblock.getTargetAddress()
         assert(address)
         const isSelfTarget = await consistency.getIsPresent(address)
@@ -83,7 +78,7 @@ const transmitConfig = (ioConsistency) => {
         return { sockets }
       },
       isOriginPresent: async ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const address = interblock.provenance.getAddress()
         // TODO check validators will be faster and safer
         // TODO cache this call

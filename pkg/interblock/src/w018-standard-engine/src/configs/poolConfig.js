@@ -2,15 +2,15 @@ import assert from 'assert-fast'
 import { assign } from 'xstate'
 import { poolMachine } from '../machines'
 import {
-  channelModel,
-  networkModel,
+  Channel,
+  Network,
   Block,
-  lockModel,
-  interblockModel,
-  addressModel,
-  dmzModel,
+  Lock,
+  Interblock,
+  Address,
+  Dmz,
   covenantIdModel,
-  publicKeyModel,
+  PublicKey,
 } from '../../../w015-models'
 import { lockProducer } from '../../../w016-producers'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
@@ -27,28 +27,28 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         interblock: (context, event) => {
           debug(`assignInterblock`)
           const interblock = event.payload
-          assert(interblockModel.isModel(interblock))
+          assert(interblock instanceof Interblock)
           return interblock
         },
       }),
       assignLock: assign({
         lock: (context, event) => {
           debug(`assignLock`)
-          assert(lockModel.isModel(event.data))
+          assert(Lock.isModel(event.data))
           return event.data
         },
       }),
       mergeGenesis: assign({
         nextBlock: ({ interblock }) => {
           debug(`mergeGenesis`)
-          assert(interblockModel.isModel(interblock))
+          assert(interblock instanceof Interblock)
           const nextBlock = interblock.extractGenesis()
           return nextBlock
         },
       }),
       mergeBlockToLock: assign({
         lock: ({ lock, nextBlock }) => {
-          assert(lockModel.isModel(lock))
+          assert(lock instanceof Lock)
           assert(nextBlock instanceof Block)
           debug(`mergeBlockToLock increased: ${!nextBlock.equals(lock.block)}`)
           const nextLock = lockProducer.reconcile(lock, nextBlock)
@@ -69,13 +69,10 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         baseDmz: ({ validators }) => {
           debug(`createBaseDmz`)
           const covenantId = covenantIdModel.create('hyper')
-          const root = addressModel.create('ROOT')
-          const sealedRoot = channelModel.create(root)
-          const sealedParent = {
-            ...networkModel.create(),
-            '..': sealedRoot,
-          }
-          const dmz = dmzModel.create({
+          const root = Address.create('ROOT')
+          const sealedRoot = Channel.create(root)
+          const sealedParent = Network.create().update({ '..': sealedRoot })
+          const dmz = Dmz.create({
             covenantId,
             validators,
             network: sealedParent,
@@ -89,7 +86,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         validators: (context, event) => {
           debug(`assignValidatorKey: %o`, event.data)
           const result = Object.values(event.data)[0]
-          assert(publicKeyModel.isModel(result))
+          assert(result instanceof PublicKey)
           return event.data
         },
       }),
@@ -120,7 +117,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         return isInitialConditions
       },
       isGenesis: ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const isGenesis = interblock.isGenesisAttempt()
         debug(`isGenesis: ${isGenesis}`)
         return isGenesis
@@ -132,12 +129,12 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         return isOriginPresent
       },
       isLockFailed: (context, event) => {
-        const isLockFailed = !event.data && !lockModel.isModel(event.data)
+        const isLockFailed = !event.data && !(event.data instanceof Lock)
         debug(`isLockFailed: ${isLockFailed}`)
         return isLockFailed
       },
       isBirthingCompleted: ({ lock }) => {
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         const isBirthingCompleted = !!lock.block
         debug(`isBirthingCompleted: ${isBirthingCompleted}`)
         return isBirthingCompleted
@@ -145,14 +142,14 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       isTargetBlockMissing: ({ targetBlock }) => !targetBlock,
       isAddable: ({ targetBlock, interblock }) => {
         assert(targetBlock instanceof Block)
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const isAddable = targetBlock.isInterblockAddable(interblock)
         debug(`isAddable`, isAddable)
         return isAddable
       },
       isConnectable: ({ targetBlock, interblock }) => {
         assert(targetBlock instanceof Block)
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const isConnectable =
           interblock.isConnectionAttempt() &&
           targetBlock.config.isPublicChannelOpen
@@ -178,7 +175,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         return !!isOriginPresent
       },
       lockChildChain: async ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const address = interblock.extractGenesis().provenance.getAddress()
         // TODO split out to allow lockChain to be reused for init
         const lock = await consistency.putLockChain(address)
@@ -186,7 +183,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         return lock
       },
       unlockChain: async ({ lock }) => {
-        assert(lockModel.isModel(lock))
+        assert(lock instanceof Lock)
         debug(`unlockChain`, lock.block.getChainId().substring(0, 9))
         await consistency.putUnlockChain(lock)
       },
@@ -198,7 +195,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       signBlock: async ({ baseDmz }) => {
         // TODO replace with dedicated startup process
         debug(`signBlock`)
-        assert(dmzModel.isModel(baseDmz))
+        assert(baseDmz instanceof Dmz)
         const block = Block.create(baseDmz)
         return block
       },
@@ -209,14 +206,14 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         return lock
       },
       fetchTargetBlock: async ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         const address = interblock.getTargetAddress()
         const targetBlock = await consistency.getBlock({ address })
         debug(`fetchTargetBlock complete`)
         return { targetBlock }
       },
       storeInPool: async ({ interblock }) => {
-        assert(interblockModel.isModel(interblock))
+        assert(interblock instanceof Interblock)
         debug(`storeInPool`)
         await consistency.putPoolInterblock({ interblock })
         debug(`storeInPool completed`)

@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import levelup from 'levelup'
 import memdown from 'memdown'
-import { keypairModel } from '../../../w015-models'
+import { Keypair } from '../../../w015-models'
 import { signatureProducer } from '../../../w016-producers'
 import { dbFactory } from './consistencyFactory'
 import * as crypto from '../../../w012-crypto'
@@ -35,7 +35,7 @@ const cryptoSourceFactory = (leveldb, keyname = 'CI') => {
     } else {
       const keypairRaw =
         keyname === 'CI' ? crypto.ciKeypair : crypto.generateKeyPair()
-      const keypairAttempt = keypairModel.create(keyname, keypairRaw)
+      const keypairAttempt = Keypair.create(keyname, keypairRaw)
       await db.putKeypair(keypairAttempt)
       // TODO rescan to ensure parallel threads have the same key
       const retrieved = await db.scanKeypair()

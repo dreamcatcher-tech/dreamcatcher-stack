@@ -1,11 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { interchain, _hook as hook } from '../../w002-api'
-import {
-  dmzModel,
-  rxRequestModel,
-  addressModel,
-  covenantIdModel,
-} from '../../w015-models'
+import { Dmz, RxRequest, Address, covenantIdModel } from '../../w015-models'
 import { actions } from '..'
 import { metrologyFactory } from '../../w018-standard-engine'
 import { spawnReducer, spawn } from '../src/spawn'
@@ -41,10 +36,10 @@ describe('dmzReducer', () => {
       assert.strictEqual(requests.length, 2)
     })
     test('spawn uses hash for seeding inside action', async () => {
-      const dmz = dmzModel.create()
+      const dmz = Dmz.create()
       const { type, payload } = spawn('hashTest')
-      const address = addressModel.create('LOOPBACK')
-      const request = rxRequestModel.create(type, payload, address, 0, 0)
+      const address = Address.create('LOOPBACK')
+      const request = RxRequest.create(type, payload, address, 0, 0)
       const tick = () => {
         const result = spawnReducer(dmz, request)
         return result

@@ -1,12 +1,12 @@
 import assert from 'assert-fast'
 import {
-  addressModel,
-  lockModel,
+  Address,
+  Lock,
   Block,
   socketModel,
-  interblockModel,
-  txRequestModel,
-  txReplyModel,
+  Interblock,
+  TxRequest,
+  TxReply,
 } from '../../../../w015-models'
 import levelup from 'levelup'
 import memdown from 'memdown'
@@ -24,14 +24,14 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
   let baseAddress
 
   const putPoolInterblock = async ({ interblock }) => {
-    assert(interblockModel.isModel(interblock))
+    assert(interblock instanceof Interblock)
     debug(`poolInterblock`)
     await db.putPool(interblock)
     debug(`poolInterblock complete`)
   }
 
   const putLockChain = async (address, expiryMs) => {
-    assert(addressModel.isModel(address))
+    assert(address instanceof Address)
     const chainId = address.getChainId()
     const shortId = chainId.substring(0, 9)
     const uuid = await lockProvider.tryAcquire(chainId, lockPrefix, expiryMs)
@@ -47,7 +47,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     const piercings = await db.queryPiercings(chainId)
     debug(`piercings replies: %o`, piercings.replies.length)
     debug(`piercings requests: %o`, piercings.requests.length)
-    const lock = lockModel.create(latest, interblocks, uuid, piercings)
+    const lock = Lock.create(latest, interblocks, uuid, piercings)
     locks.set(chainId, lock)
     debug(`lock complete: %O`, lock.uuid)
     return lock
@@ -55,7 +55,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
 
   const putUnlockChain = async (incomingLock) => {
     // TODO assert the incomingLock is reconciled
-    assert(lockModel.isModel(incomingLock))
+    assert(incomingLock instanceof Lock)
     assert(incomingLock.block, `cannot unlock without a block`)
     const { block } = incomingLock
     debug(`putUnlockChain`)
@@ -92,7 +92,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
   }
 
   const getSockets = async (address) => {
-    assert(addressModel.isModel(address))
+    assert(address instanceof Address)
     const chainId = address.getChainId()
     debug(`getSockets for: %O`, chainId)
     const socketItems = await db.querySockets(chainId)
@@ -114,7 +114,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
 
   const putSocket = async ({ address, socket }) => {
     debug(`putSocket`)
-    assert(addressModel.isModel(address))
+    assert(address instanceof Address)
     assert(socketModel.isModel(socket))
     const chainId = address.getChainId()
     const socketId = socket.id
@@ -144,7 +144,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     if (!address) {
       address = await getBaseAddress()
     }
-    assert(addressModel.isModel(address))
+    assert(address instanceof Address)
     const chainId = address.getChainId()
     const shortId = chainId.substring(0, 9)
     debug(`getBlock for %o height: %o`, shortId, height)
@@ -166,7 +166,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     return block
   }
   const getBlocks = async ({ address, heights }) => {
-    assert(addressModel.isModel(address))
+    assert(address instanceof Address)
     assert(Array.isArray(heights))
     assert(heights.every((height) => Number.isInteger(height) && height >= 0))
     debug(`getBlocks heights.length: `, heights.length)
@@ -184,7 +184,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     if (!baseChainId) {
       return
     }
-    const address = addressModel.create(baseChainId)
+    const address = Address.create(baseChainId)
     assert.strictEqual(baseChainId, address.getChainId())
     baseAddress = address
     debug(`getBaseAddress: ${address.getChainId()}`)
@@ -192,7 +192,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
   }
 
   const putPierceReply = async ({ txReply }) => {
-    assert(txReplyModel.isModel(txReply))
+    assert(txReply instanceof TxReply)
     const address = txReply.getAddress()
     assert(address.isResolved())
     const chainId = address.getChainId()
@@ -201,8 +201,8 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     await db.putPierceReply(chainId, txReply)
   }
   const putPierceRequest = async ({ txRequest }) => {
-    assert(txRequestModel.isModel(txRequest))
-    const address = addressModel.create(txRequest.to)
+    assert(txRequest instanceof TxRequest)
+    const address = Address.create(txRequest.to)
     assert(address.isResolved())
     const chainId = address.getChainId()
     debug(`putPierceRequest %o %o`, chainId.substring(0, 9), txRequest)
