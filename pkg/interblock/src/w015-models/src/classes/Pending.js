@@ -1,4 +1,4 @@
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import { Accumulation, RxReply, RxRequest } from '.'
 import assert from 'assert-fast'
 const schema = {

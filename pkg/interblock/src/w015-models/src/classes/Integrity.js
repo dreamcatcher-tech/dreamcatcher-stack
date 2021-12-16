@@ -3,7 +3,7 @@ import { sha256 } from '@noble/hashes/lib/sha256.js'
 import { bytesToHex } from '@noble/hashes/lib/utils'
 import * as crypto from '../../../w012-crypto'
 import { integritySchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 
 export class Integrity extends mixin(integritySchema) {
   static create(content) {
@@ -19,11 +19,11 @@ export class Integrity extends mixin(integritySchema) {
       const hash = bytesToHex(sha256(content))
       return super.create({ hash, algorithm: 'sha256' })
     }
+    assert(typeof content === 'object', `Must supply object: ${content}`)
     if (typeof content.hashString === 'function') {
       const hash = content.hashString() // TODO regex format
       return super.create({ hash, algorithm: 'sha256' })
     }
-    assert(typeof content === 'object', `Must supply object: ${content}`)
     const integrity = {
       hash: crypto.objectHash(content),
       algorithm: 'sha256',

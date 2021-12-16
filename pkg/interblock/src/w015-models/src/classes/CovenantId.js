@@ -1,5 +1,5 @@
 import { Integrity } from '.'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 const schema = {
   title: 'CovenantId',
   //     description: `Covenants are how behaviour is introduced to the system.

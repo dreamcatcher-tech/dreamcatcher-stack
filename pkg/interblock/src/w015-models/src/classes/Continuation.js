@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { serializeError } from 'serialize-error'
 import { continuationSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 export class Continuation extends mixin(continuationSchema) {
   static create(type = '@@RESOLVE', payload = {}) {
     if (type === '@@REJECT' && payload instanceof Error) {

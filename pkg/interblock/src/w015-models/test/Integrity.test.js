@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Integrity } from '../../src/classes'
+import { Integrity } from '..'
 
 describe('integrity', () => {
   test('stable hashing when object keys shuffle', () => {
@@ -7,7 +7,7 @@ describe('integrity', () => {
     const reverse = { two: 2, one: 1 }
     const fi = Integrity.create(forward)
     const ri = Integrity.create(reverse)
-    assert(fi.equals(ri))
+    assert(fi.deepEquals(ri))
   })
   test('no params returns unknown integrity', () => {
     const unknown = Integrity.create()
@@ -41,7 +41,7 @@ describe('integrity', () => {
     const integrity = Integrity.create({})
     assert(integrity && !integrity.isUnknown())
     const duplicate = Integrity.create({})
-    assert(duplicate.equals(integrity))
+    assert(duplicate.deepEquals(integrity))
     assert(integrity.isIntegrityMatch({}))
   })
   test(`getHash returns the stored hash`, () => {

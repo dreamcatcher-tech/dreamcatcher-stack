@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
-import { addressModel, channelModel } from '../..'
-import { MerkleArray } from '../../src/classes/MerkleArray'
+import { MerkleArray } from '../src/MerkleArray'
 import Debug from 'debug'
+import { Address, Channel } from '..'
 const debug = Debug('interblock:tests:MerkleArray')
 
 describe('MerkleArray', () => {
@@ -108,22 +108,21 @@ describe('MerkleArray', () => {
   }
   test('large values', () => {
     let network = new MerkleArray()
-    let channel = channelModel.create()
+    let channel = Channel.create()
     let start = Date.now()
     const count = 61
     for (let i = 0; i < count; i++) {
       const alias = `alias${i}`
-      const address = addressModel.create('GENESIS')
-      channel = channelModel.create(address)
+      const address = Address.create('GENESIS')
+      channel = Channel.create(address)
       network = network.add({ [alias]: channel })
     }
     debug(`time to immutable push %o units: %o ms`, count, Date.now() - start)
     start = Date.now()
     const values = []
     for (let i = 0; i < count; i++) {
-      const alias = `alias${i}`
-      const address = addressModel.create('GENESIS')
-      channel = channelModel.create(address)
+      const address = Address.create('GENESIS')
+      channel = Channel.create(address)
       values.push(channel)
     }
     debug(`time to create raw %o units: %o ms`, count, Date.now() - start)

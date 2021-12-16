@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Signature } from '../../src/classes'
+import { Signature } from '..'
 
 describe('signature', () => {
   test('throws on create attempts', () => {

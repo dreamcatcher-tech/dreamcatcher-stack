@@ -1,8 +1,7 @@
 import { assert } from 'chai/index.mjs'
-import { Dmz } from '../../src/classes'
+import { Dmz } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Dmz')
-Debug.enable('interblock:tests*')
 
 describe('dmz', () => {
   test('create defaults', () => {
@@ -21,7 +20,7 @@ describe('dmz', () => {
     })
     assert.deepEqual(same1, same2)
     assert.deepEqual(same1.toArray(), same2.toArray())
-    assert(same1.equals(same2))
+    assert(same1.deepEquals(same2))
 
     const different = Dmz.create()
     assert.notDeepEqual(same1.toArray(), different.toArray())

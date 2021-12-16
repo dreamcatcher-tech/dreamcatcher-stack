@@ -1,5 +1,5 @@
 import { validatorsSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import { Keypair, PublicKey } from '.'
 import assert from 'assert-fast'
 

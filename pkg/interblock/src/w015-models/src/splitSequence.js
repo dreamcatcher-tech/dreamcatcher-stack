@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Address } from '../classes'
+import { Address } from '..'
 
 const splitSequence = (identifier) => {
   assert.strictEqual(typeof identifier, 'string')

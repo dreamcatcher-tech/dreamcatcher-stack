@@ -32,7 +32,7 @@ import assert from 'assert-fast'
 import Immutable from 'immutable'
 import { freeze } from 'immer'
 import { MerkleArray } from './MerkleArray'
-import * as Models from '.'
+import * as Models from '..'
 import equals from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:MapFactory')
@@ -61,8 +61,8 @@ const patternProperties = (schema) => {
   assert.strictEqual(Object.keys(patternProperties).length, 1)
   const regex = new RegExp(Object.keys(patternProperties).pop())
   const valueSchema = Object.values(patternProperties).pop()
-  const patName = valueSchema.title
-  const Class = Models[patName]
+  const patternName = valueSchema.title
+  const Class = Models[patternName]
   assert(Class, 'Can only use pattern properties with titled schema')
   const backingArray = new MerkleArray()
   const SyntheticMap = class extends Base {
@@ -123,7 +123,10 @@ const patternProperties = (schema) => {
       assert(typeof key, 'string')
       assert(value !== undefined)
       assert(regex.test(key), `key ${key} does not match ${regex}`)
-      assert(value instanceof Class, `key ${key} not instance of ${patName} `)
+      assert(
+        value instanceof Class,
+        `key ${key} not instance of ${patternName} `
+      )
       const tuple = [key, value]
       const next = this.#clone()
       if (next.#map.has(key)) {
@@ -160,6 +163,7 @@ const patternProperties = (schema) => {
       return this.#backingArray.hashString()
     }
     get(key) {
+      assert.strictEqual(typeof key, 'string', `key ${key} is not a string`)
       if (this.#map.has(key)) {
         const [storedKey, value] = this.#backingArray.get(this.#map.get(key))
         assert.strictEqual(storedKey, key)
@@ -177,6 +181,15 @@ const patternProperties = (schema) => {
       return js
     }
     toArray() {
+      /**
+       * Tested on serializing a network object with 20,000 channels.
+       * JSON.stringify takes 23ms
+       * jsonpack takes 14s but takes 5MB down to 2MB
+       * fastJsonStringify takes 200ms
+       * snappy compression in nodejs takes it down to 1MB in 9ms
+       * snappyjs compression takes it down to 1MB is 72ms
+       * zipson down to 1.3MB in 134ms
+       */
       const array = this.#backingArray.toArray()
       return array.map(([key, value]) => [key, value.toArray()])
     }
@@ -231,6 +244,9 @@ const properties = (schema) => {
       backingArray = backingArray.map((v) => (v === null ? EMPTY : v))
       for (const [index, schema] of deepIndices.entries()) {
         if (backingArray[index] === EMPTY) {
+          continue
+        }
+        if (schema.type === 'array' && schema.items.type === 'string') {
           continue
         }
         const Class = getClassForSchema(schema)
@@ -319,7 +335,7 @@ const properties = (schema) => {
       if (!this.#backingArray.equals(other.#backingArray)) {
         return equals(this.toArray(), other.toArray())
       }
-      return false
+      return true
     }
     merge() {
       let backingArray = this.#backingArray
@@ -360,7 +376,12 @@ const properties = (schema) => {
           arr[index] = arr[index].toArray()
         } else {
           assert.strictEqual(property.type, 'array')
-          arr[index] = arr[index].map((v) => v.toArray())
+          arr[index] = arr[index].map((v) => {
+            if (typeof v.toArray === 'function') {
+              return v.toArray()
+            }
+            return v
+          })
         }
       }
       return arr
@@ -376,7 +397,12 @@ const properties = (schema) => {
         if (value instanceof Base) {
           js[prop] = value.toJS()
         } else if (Array.isArray(value)) {
-          js[prop] = value.map((v) => v.toJS())
+          js[prop] = value.map((v) => {
+            if (typeof v.toJS === 'function') {
+              return v.toJS()
+            }
+            return v
+          })
         } else {
           js[prop] = value
         }
@@ -403,8 +429,11 @@ const properties = (schema) => {
         if (property.type === 'object') {
           if (property.title) {
             assert(Models[property.title], `Missing: ${property.title}`)
-          }
-          if (property.properties || property.patternProperties) {
+            if (property.title !== 'State') {
+              assert(property.properties || property.patternProperties)
+            }
+            deepIndices.set(propMap[prop], property)
+          } else if (property.patternProperties) {
             deepIndices.set(propMap[prop], property)
           }
         } else if (property.type === 'array') {
@@ -422,6 +451,7 @@ const properties = (schema) => {
           },
         })
       }
+      Object.freeze(this.prototype)
     }
   }
   SyntheticObject._defineProperties()

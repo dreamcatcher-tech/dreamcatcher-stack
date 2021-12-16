@@ -8,10 +8,9 @@ import {
   Integrity,
   Interblock,
   Network,
-} from '../../src/classes'
+} from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Interblock')
-Debug.enable('*:Interblock')
 
 const createBlockWithEffects = (actionType = 'INTERBLOCK_TEST') => {
   const address = Address.create('TEST')
@@ -44,7 +43,7 @@ describe('interblock', () => {
       assert.throws(() => Interblock.create())
       assert.throws(() => Interblock.create(block))
       assert(Interblock.create(block, 'effects'))
-      const genesis = blockModel.create()
+      const genesis = Block.create()
       assert.throws(() => Interblock.create(genesis))
       assert.throws(() => Interblock.create(genesis, 'not present'))
     })
@@ -82,9 +81,9 @@ describe('interblock', () => {
     const block = createBlockWithEffects('NO_CACHE')
     const start = Date.now()
     const interblock = Interblock.create(block, 'effects')
-    assert(interblock.network.effects)
-    interblock.getRemote()
+    assert(interblock.transmission)
     const elapsed = Date.now() - start
+    debug(`speed was: ${elapsed}`)
     assert(elapsed <= 3, `speed was: ${elapsed}`)
   })
 })

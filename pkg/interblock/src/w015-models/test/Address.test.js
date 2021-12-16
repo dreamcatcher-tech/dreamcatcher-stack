@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Address, Integrity } from '../../src/classes'
+import { Address, Integrity } from '..'
 
 describe('address', () => {
   test('no params makes unknown address', () => {

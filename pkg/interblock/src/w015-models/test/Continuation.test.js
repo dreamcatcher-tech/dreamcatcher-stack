@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Continuation } from '../../src/classes'
+import { Continuation } from '..'
 describe('continuation', () => {
   test('promise cannot have payload', () => {
     const resolve = Continuation.create('@@RESOLVE', {

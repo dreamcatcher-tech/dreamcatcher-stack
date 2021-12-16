@@ -1,7 +1,7 @@
 import { Timestamp, Block, Interblock, TxRequest, TxReply } from '.'
 import { v4 } from 'uuid'
 
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import assert from 'assert-fast'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:Lock')

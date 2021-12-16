@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Address, Integrity, RxRequest } from '../../src/classes'
+import { Address, Integrity, RxRequest } from '..'
 
 describe('rxRequest', () => {
   test('addresses are identical', () => {

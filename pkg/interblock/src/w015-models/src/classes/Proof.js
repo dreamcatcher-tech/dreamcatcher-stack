@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { Block } from '.'
 import { proofSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 export class Proof extends mixin(proofSchema) {
   static create(block, channelName) {
     assert(block instanceof Block)

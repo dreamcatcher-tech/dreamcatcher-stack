@@ -103,7 +103,7 @@
   "wallaby": {
     "autoDetect": true,
     "tests": [
-      "**/*.test.js",
+      "src/w015*/**/*.test.js",
       "!package.test.js"
     ],
     "env": {

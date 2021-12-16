@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { RxRequest, RxReply, Continuation, Address, Remote } from '.'
 import { channelSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:models:channel')
 
@@ -97,11 +97,11 @@ export class Channel extends mixin(channelSchema) {
     }
   }
 
-  #nextCoords() {
+  _nextCoords() {
     // TODO move out to utils file
     let nextHeight = Number.isInteger(this.tipHeight) ? this.tipHeight + 1 : 1
     let nextIndex = 0
-    if (typeof rxRepliesTip === 'string') {
+    if (typeof this.rxRepliesTip === 'string') {
       const [height, index] = Channel.#splitKey(this.rxRepliesTip)
       assert(height <= nextHeight)
       if (height === nextHeight) {
@@ -112,7 +112,7 @@ export class Channel extends mixin(channelSchema) {
   }
   #rxLoopbackContinuation() {
     if (Object.keys(this.replies).length) {
-      const [nextHeight, nextIndex] = this.#nextCoords()
+      const [nextHeight, nextIndex] = this._nextCoords()
       // TODO assert no replies higher than this one are present
       const key = `${nextHeight}_${nextIndex}`
       if (this.replies[key]) {
@@ -140,7 +140,7 @@ export class Channel extends mixin(channelSchema) {
 
   rxLoopbackRequest() {
     assert(this.isLoopback())
-    const [nextHeight, nextIndex] = this.#nextCoords()
+    const [nextHeight, nextIndex] = this._nextCoords()
     if (this.requests[nextIndex]) {
       const { type: t, payload: p } = this.requests[nextIndex]
       return RxRequest.create(t, p, this.address, nextHeight, nextIndex)

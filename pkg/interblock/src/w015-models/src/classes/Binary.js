@@ -1,4 +1,4 @@
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import { Integrity } from '.'
 
 const schema = {

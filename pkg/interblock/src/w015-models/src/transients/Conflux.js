@@ -1,12 +1,13 @@
 import assert from 'assert-fast'
-import {
-  continuationModel,
-  actionModel,
-  interblockModel,
-  addressModel,
-} from '../models'
-import { rxReplyModel, rxRequestModel } from '.'
 import Debug from 'debug'
+import {
+  Action,
+  Address,
+  Continuation,
+  Interblock,
+  RxReply,
+  RxRequest,
+} from '../..'
 const debug = Debug('interblock:models:Conflux')
 /**
  * ? Produce the Conflux at the same time as ingestInterblocks
@@ -43,8 +44,8 @@ export class Conflux {
   #chainMap = new Map()
   static generateRxReplies = (replies, address) => {
     assert.strictEqual(typeof replies, 'object')
-    assert(Object.values(replies).every(continuationModel.isModel))
-    assert(addressModel.isModel(address))
+    assert(Object.values(replies).every((v) => v instanceof Continuation))
+    assert(address instanceof Address)
     const rxReplies = []
     for (const key in replies) {
       const { type, payload } = replies[key]
@@ -54,7 +55,7 @@ export class Conflux {
       const [sHeight, sIndex] = key.split('_')
       const height = parseInt(sHeight)
       const index = parseInt(sIndex)
-      const rxReply = rxReplyModel.create(type, payload, address, height, index)
+      const rxReply = RxReply.create(type, payload, address, height, index)
       rxReplies.push(rxReply)
     }
     rxReplies.sort((a, b) => {
@@ -68,20 +69,14 @@ export class Conflux {
   }
   static generateRxRequests = (requests, address, height) => {
     assert(Array.isArray(requests))
-    assert(requests.every(actionModel.isModel))
-    assert(addressModel.isModel(address))
+    assert(requests.every((v) => v instanceof Action))
+    assert(address instanceof Address)
     assert(Number.isInteger(height))
     assert(height >= 0)
     const rxRequests = []
     let index = 0
     for (const { type, payload } of requests) {
-      const rxRequest = rxRequestModel.create(
-        type,
-        payload,
-        address,
-        height,
-        index
-      )
+      const rxRequest = RxRequest.create(type, payload, address, height, index)
       rxRequests.push(rxRequest)
       index++
     }
@@ -91,7 +86,7 @@ export class Conflux {
   static schema = { title: 'Conflux' } // TODO remove need for registry
   constructor(interblocks) {
     assert(Array.isArray(interblocks))
-    assert(interblocks.every(interblockModel.isModel))
+    assert(interblocks.every((v) => v instanceof Interblock))
     this.#mapChainIds(interblocks)
     this.#generateRx()
     Object.freeze(this.#rxRequests)

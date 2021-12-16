@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import * as crypto from '../../../w012-crypto'
 import { Integrity } from '.'
 import { addressSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 
 const defaultIntegrity = Integrity.create()
 const testIntegrity = Integrity.create('TEST')

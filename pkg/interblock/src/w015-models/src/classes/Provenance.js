@@ -1,17 +1,24 @@
 import assert from 'assert-fast'
 import { Dmz, Integrity, Address } from '.'
 import { provenanceSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
+import Debug from 'debug'
+const debug = Debug('interblock:classes:Provenance')
 
 export class Provenance extends mixin(provenanceSchema) {
   #address
   #reflectedIntegrity
   #lineageKeys
+  #getLineageKeys() {
+    if (!this.#lineageKeys) {
+      this.#lineageKeys = Object.keys(this.lineage).map((i) => parseInt(i))
+    }
+    return this.#lineageKeys
+  }
   static create(dmz = Dmz.create(), forkedLineage = {}) {
     assert(dmz instanceof Dmz)
     assert(dmz.hashString(), 'Dmz must be ready for hashing')
     assert.strictEqual(typeof forkedLineage, 'object')
-    // TODO handle raw Uint8Array
     const dmzIntegrity = Integrity.create(dmz)
     const provenance = {
       dmzIntegrity,
@@ -29,15 +36,19 @@ export class Provenance extends mixin(provenanceSchema) {
     if (this.dmzIntegrity.isUnknown()) {
       throw new Error(`Dmz integrity unknown: ${this.dmzIntegrity.hash}`)
     }
-    this.#lineageKeys = Object.keys(this.lineage).map((i) => parseInt(i))
     // later, will allow foreign chains as prefixes to the provenance index
-    const notFuture = this.#lineageKeys.every((i) => i >= 0 && i < this.height)
+    const lineageKeys = this.#getLineageKeys()
+    const notFuture = lineageKeys.every((i) => i >= 0 && i < this.height)
     assert(notFuture, `fork is from the future`)
     if (this.height === 0) {
       assert(this.address.isGenesis())
     } else {
       assert(this.signatures.length <= 1, `single signer only`)
-      assert(this.#lineageKeys.length)
+      assert(lineageKeys.length)
+    }
+    const reflectedIntegrity = this.reflectIntegrity()
+    if (!this.integrity.deepEquals(reflectedIntegrity)) {
+      throw new Error('Self integrity degraded - refusing to instantiate')
     }
     const _signatureIntegrity = () => {
       if (this.address.isGenesis()) {
@@ -48,25 +59,25 @@ export class Provenance extends mixin(provenanceSchema) {
         // TODO check order the signatures is alphabetical / stable
       )
     }
-    this.#reflectedIntegrity = generateIntegrity(this)
-    if (!this.integrity.equals(this.#reflectedIntegrity)) {
-      throw new Error('Self integrity degraded - refusing to instantiate')
-    }
     if (!_signatureIntegrity()) {
       _signatureIntegrity()
       throw new Error('Signature degraded - refusing to instantiate')
     }
-    this.#address = this.address
-    if (this.height === 0) {
-      assert(this.address.isGenesis())
-      this.#address = Address.create(this.#reflectedIntegrity)
-    }
   }
   getAddress() {
+    if (!this.#address) {
+      this.#address = this.address
+      if (this.height === 0) {
+        this.#address = Address.create(this.reflectIntegrity())
+      }
+    }
     return this.#address
   }
   // TODO generate reflectedIntegrity and address lazily
   reflectIntegrity() {
+    if (!this.#reflectedIntegrity) {
+      this.#reflectedIntegrity = generateIntegrity(this)
+    }
     return this.#reflectedIntegrity
   }
   isNextProvenance(child) {
@@ -77,7 +88,7 @@ export class Provenance extends mixin(provenanceSchema) {
     return isParent && isHigher
   }
   getShortestHeight() {
-    const ints = [...this.#lineageKeys]
+    const ints = [...this.#getLineageKeys()]
     ints.sort((a, b) => a - b)
     const shortest = ints.shift()
     assert(shortest >= 0 && shortest < this.height)

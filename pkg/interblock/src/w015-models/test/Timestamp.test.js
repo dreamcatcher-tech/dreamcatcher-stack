@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Timestamp } from '../../src/classes'
+import { Timestamp } from '..'
 describe('timestamp', () => {
   test('create', () => {
     const now = Timestamp.create()

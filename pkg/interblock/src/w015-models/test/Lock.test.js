@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Lock } from '../../src/classes'
+import { Lock } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Lock')
 

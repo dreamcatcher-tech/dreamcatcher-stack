@@ -1,9 +1,8 @@
 import { assert } from 'chai/index.mjs'
-import { Keypair } from '../../src/classes'
-import * as crypto from '../../../w012-crypto'
+import { Keypair } from '..'
+import * as crypto from '../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Keypair')
-Debug.enable('*Keypair')
 
 describe('keypair', () => {
   const kp1 = crypto.generateKeyPair()
@@ -20,9 +19,9 @@ describe('keypair', () => {
     assert.throws(() => (keypair1.added = 5))
 
     assert.strictEqual(keypairDefault1.name, 'CI')
-    assert(keypairDefault1.equals(keypairDefault2))
-    assert(!keypair1.equals(keypair2))
-    assert(!keypairDefault1.equals(keypair1))
+    assert(keypairDefault1.deepEquals(keypairDefault2))
+    assert(!keypair1.deepEquals(keypair2))
+    assert(!keypairDefault1.deepEquals(keypair1))
 
     const kp1Arr = keypair1.toArray()
     const kp2Arr = keypair2.toArray()
@@ -36,7 +35,7 @@ describe('keypair', () => {
   test('default create is same each time', () => {
     const s1 = Keypair.create()
     const s2 = Keypair.create()
-    assert(s1.equals(s2))
+    assert(s1.deepEquals(s2))
     const c1 = Keypair.restore(s1.toArray())
     const c2 = Keypair.restore(s2.toArray())
     assert.deepEqual(c1.toArray(), c2.toArray())

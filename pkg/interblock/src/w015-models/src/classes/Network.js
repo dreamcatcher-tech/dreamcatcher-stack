@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import Immutable from 'immutable'
 import { channelSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import { Channel, Address, RxRequest } from '.'
 
 // TODO merge this with Conflux ?
@@ -47,10 +47,15 @@ export class Network extends mixin(networkSchema) {
     const next = super.set(alias, channel)
     if (this.has(alias)) {
       const { address } = this.get(alias)
-      next.#addressMap = this.#addressMap.remove(address)
+      if (!address.isUnknown()) {
+        next.#addressMap = this.#addressMap.remove(address.getChainId())
+      }
     }
     next.#txs = this.#txs.remove(alias)
-    next.#addressMap = this.#addressMap.set(channel.address, alias)
+    if (!channel.address.isUnknown()) {
+      const chainId = channel.address.getChainId()
+      next.#addressMap = this.#addressMap.set(chainId, alias)
+    }
     if (channel.isTransmitting()) {
       next.#txs = next.#txs.add(alias)
     }
@@ -63,7 +68,9 @@ export class Network extends mixin(networkSchema) {
     const next = super.remove(alias)
     next.#txs = this.#txs.remove(alias)
     const { address } = next.get(alias)
-    next.#addressMap = this.#addressMap.delete(address)
+    if (!address.isUnknown()) {
+      next.#addressMap = this.#addressMap.delete(address.getChainId())
+    }
     return next
   }
   rename(srcAlias, destAlias) {
@@ -78,10 +85,16 @@ export class Network extends mixin(networkSchema) {
     const next = this.set(destAlias, src).del(srcAlias)
     return next
   }
+  hasByAddress(address) {
+    assert(address instanceof Address)
+    assert(address.isResolved())
+    return this.#addressMap.has(address.getChainId())
+  }
   getByAddress(address) {
     assert(address instanceof Address)
+    assert(address.isResolved())
     // TODO handle same address referred to twice as different aliases
-    const alias = this.#addressMap.get(address)
+    const alias = this.#addressMap.get(address.getChainId())
     return this.get(alias)
   }
   getTxs() {

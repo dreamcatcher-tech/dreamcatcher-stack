@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import setImmediate from 'set-immediate-shim'
 import { request, promise, resolve, reject, isReplyType } from './api'
 import Debug from 'debug'
-import { rxReplyModel } from '../../w015-models'
+import { RxReply } from '../../w015-models' // TODO remove this import somehow
 const debug = Debug('interblock:api:hooks')
 
 // TODO error if promise called more than once
@@ -69,7 +69,8 @@ const _promise = (requestRaw) => {
       assert.strictEqual(previousType, type, `${previousType} is now ${type}`)
       assert.strictEqual(previousTo, to, `${previousTo} is now ${to}`)
       if (reply) {
-        assert(rxReplyModel.isModel(reply))
+        // TODO remove this reference, or hoist hooks higher
+        assert(reply instanceof RxReply)
         if (reply.type === '@@RESOLVE') {
           return reply.payload
         }

@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Action, Channel, Continuation, Provenance } from '../../src/classes'
+import { Action, Address, Channel, Continuation, Provenance } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
 Debug.enable('*:Channel')
@@ -56,27 +56,27 @@ describe('channel', () => {
   })
   describe('loopback', () => {
     test('_nextCoords', () => {
-      let channel = Channel.create(addressModel.create('LOOPBACK'), '.')
+      let channel = Channel.create(Address.create('LOOPBACK'), '.')
       const [ih, ii] = channel._nextCoords()
       assert.strictEqual(ih, 1)
       assert.strictEqual(ii, 0)
 
-      channel = Channel.clone({ ...channel, tipHeight: 1 })
+      channel = channel.update({ tipHeight: 1 })
       const [fh, fi] = channel._nextCoords()
       assert.strictEqual(fh, 2)
       assert.strictEqual(fi, 0)
 
-      channel = Channel.clone({ ...channel, rxRepliesTip: '2_0' })
+      channel = channel.update({ rxRepliesTip: '2_0' })
       const [rh, ri] = channel._nextCoords()
       assert.strictEqual(rh, 2)
       assert.strictEqual(ri, 1)
 
-      channel = Channel.clone({ ...channel, rxRepliesTip: '2_1' })
+      channel = channel.update({ rxRepliesTip: '2_1' })
       const [lh, li] = channel._nextCoords()
       assert.strictEqual(lh, 2)
       assert.strictEqual(li, 2)
 
-      channel = Channel.clone({ ...channel, rxRepliesTip: '3_1' })
+      channel = channel.update({ rxRepliesTip: '3_1' })
       assert.strictEqual(channel.tipHeight, 1)
       assert.throws(channel._nextCoords)
     })

@@ -1,11 +1,24 @@
 import assert from 'assert-fast'
 import * as crypto from '../../../w012-crypto'
-import { keypairSchema } from '../schemas/privateSchemas'
-import { mixin } from './MapFactory'
+import { publicKeySchema } from '../schemas/modelSchemas'
+import { mixin } from '../MapFactory'
 import { PublicKey } from '.'
-
+const schema = {
+  title: 'Keypair',
+  description: 'public private key pair',
+  type: 'object',
+  additionalProperties: false,
+  required: ['name', 'publicKey', 'secretKey'],
+  properties: {
+    name: { type: 'string' },
+    publicKey: publicKeySchema,
+    secretKey: {
+      type: 'string', // TODO regex check based on algo in publicKey
+    },
+  },
+}
 const ciPublicKey = PublicKey.ci()
-export class Keypair extends mixin(keypairSchema) {
+export class Keypair extends mixin(schema) {
   static create(name = 'CI', keypairRaw, algorithm) {
     assert.strictEqual(typeof name, 'string')
     // TODO assert keypairRaw format

@@ -68,17 +68,6 @@
  *      modelCreators used to make subtypes
  */
 
-import * as models from './src/models'
-import * as queues from './src/queues'
-import * as transients from './src/transients'
-
-import { registry } from './src/registry'
-
-registry.registerModels(models)
-registry.registerModels(queues)
-registry.registerModels(transients)
-
-export * from './src/models'
-export * from './src/queues'
+export * from './src/classes'
+// export * from './src/queues'
 export * from './src/transients'
-export { registry }

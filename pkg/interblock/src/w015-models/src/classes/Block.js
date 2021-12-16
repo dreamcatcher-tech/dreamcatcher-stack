@@ -1,4 +1,4 @@
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import { provenanceSchema } from '../schemas/modelSchemas'
 import { Provenance, Dmz, Interblock, Validators } from '.'
 import assert from 'assert-fast'
@@ -15,29 +15,6 @@ const blockSchema = {
     provenance: provenanceSchema,
   },
 }
-const checkSignatures = (validators, provenance) => {
-  assert(validators instanceof Validators)
-  const requiredPublicKeys = []
-  for (const [name, publicKey] of validators.entries()) {
-    requiredPublicKeys.push(publicKey)
-  }
-
-  const isPierce =
-    requiredPublicKeys[0].algorithm === '@@pierce' &&
-    requiredPublicKeys.length === 1 &&
-    !provenance.signatures.length
-
-  const providedPublicKeys = provenance.signatures.map(
-    (signature) => signature.publicKey
-  )
-  const isAllRequired = requiredPublicKeys.every((key) =>
-    providedPublicKeys.some((providedKey) => providedKey.equals(key))
-  )
-  const isOnlyRequired = providedPublicKeys.every((key) =>
-    requiredPublicKeys.some((requiredKey) => requiredKey.equals(key))
-  )
-  return { isPierce, isAllRequired, isOnlyRequired }
-}
 const defaultDmz = Dmz.create()
 export class Block extends mixin(blockSchema) {
   static create(dmz = defaultDmz, forkedLineages = {}) {
@@ -50,14 +27,18 @@ export class Block extends mixin(blockSchema) {
     const block = super.create({ ...dmz.spread(), provenance })
     return block
   }
+  static clone(params) {
+    // TODO try remove need for this method
+    return super.create(params)
+  }
   assertLogic() {
     const address = this.provenance.getAddress()
-    const isLoop = this.network.getByAddress(address)
+    const isLoop = this.network.hasByAddress(address)
     assert(!isLoop, `Loop detected - use loopback address instead`)
     const { provenance, ...spreadDmz } = this.spread()
     const dmz = Dmz.create(spreadDmz)
     const hash = dmz.hashString()
-    assert.strictEqual(hash, provenance.dmzIntegrity.hash)
+    assert.strictEqual(hash, provenance.dmzIntegrity.hash, `hash mismatch`)
     const { isOnlyRequired } = checkSignatures(dmz.validators, provenance)
     if (!isOnlyRequired) {
       throw new Error('Invalid signatures detected on block')
@@ -123,4 +104,27 @@ export class Block extends mixin(blockSchema) {
     }
     return channel.tipHeight < interblock.provenance.height
   }
+}
+const checkSignatures = (validators, provenance) => {
+  assert(validators instanceof Validators)
+  const requiredPublicKeys = []
+  for (const [name, publicKey] of validators.entries()) {
+    requiredPublicKeys.push(publicKey)
+  }
+
+  const isPierce =
+    requiredPublicKeys[0].algorithm === '@@pierce' &&
+    requiredPublicKeys.length === 1 &&
+    !provenance.signatures.length
+
+  const providedPublicKeys = provenance.signatures.map(
+    (signature) => signature.publicKey
+  )
+  const isAllRequired = requiredPublicKeys.every((key) =>
+    providedPublicKeys.some((providedKey) => providedKey.equals(key))
+  )
+  const isOnlyRequired = providedPublicKeys.every((key) =>
+    requiredPublicKeys.some((requiredKey) => requiredKey.equals(key))
+  )
+  return { isPierce, isAllRequired, isOnlyRequired }
 }

@@ -237,8 +237,8 @@ export class MerkleArray {
         if (typeof element === 'symbol') {
           continue
         }
-        if (typeof element.hash === 'function') {
-          const hash = element.hash()
+        if (typeof element.hashRaw === 'function') {
+          const hash = element.hashRaw()
           assert(hash instanceof Uint8Array)
           hasher.update(hash)
         } else if (Array.isArray(element)) {

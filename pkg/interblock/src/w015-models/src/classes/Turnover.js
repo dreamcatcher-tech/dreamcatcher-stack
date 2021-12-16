@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { Block, Proof } from '.'
 import { turnoverSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 export class Turnover extends mixin(turnoverSchema) {
   static create(block) {
     assert(block instanceof Block)

@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { Block, Proof, Remote, Turnover } from '.'
 import { interblockSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:Interblock')
 

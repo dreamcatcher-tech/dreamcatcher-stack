@@ -1,5 +1,5 @@
 import { signatureSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 export class Signature extends mixin(signatureSchema) {
   static create() {
     throw new Error(`Only Keypair can create Signatures`)

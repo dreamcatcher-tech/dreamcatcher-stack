@@ -14,7 +14,7 @@ import {
   Pending,
   Piercings,
 } from '.'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 const schema = {
   type: 'object',
   title: 'Dmz',
@@ -70,7 +70,8 @@ const defaultParams = {
 export class Dmz extends mixin(schema) {
   static create(params = {}) {
     assert.strictEqual(typeof params, 'object')
-    const fullParams = { ...defaultParams, ...params }
+    const timestamp = Timestamp.create()
+    const fullParams = { ...defaultParams, timestamp, ...params }
     return super.create(fullParams)
   }
   assertLogic() {

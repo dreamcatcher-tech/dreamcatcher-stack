@@ -1,4 +1,4 @@
-import { Conflux } from '../..'
+import { Conflux } from '..'
 import Debug from 'debug'
 import { assert } from 'chai/index.mjs'
 

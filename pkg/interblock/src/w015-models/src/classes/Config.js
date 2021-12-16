@@ -1,4 +1,4 @@
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 
 const schema = {
   title: 'Config',

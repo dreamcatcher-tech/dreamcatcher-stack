@@ -4,7 +4,7 @@ import * as snappyjs from 'snappyjs'
 import flatstr from 'flatstr'
 import { Buffer } from 'buffer'
 import { stringify } from 'zipson'
-import { Network, Channel, Address } from '../../src/classes'
+import { Network, Channel, Address } from '..'
 
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')

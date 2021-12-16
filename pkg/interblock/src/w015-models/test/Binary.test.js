@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Binary } from '../../src/classes'
+import { Binary } from '..'
 
 describe('binary', () => {
   test('creates default', () => {

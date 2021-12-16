@@ -1,6 +1,2 @@
-export * from './rxReplyModel'
-export * from './rxRequestModel'
-export * from './txReplyModel'
-export * from './txRequestModel'
-export * from './reductionModel'
+export * from './Reduction'
 export * from './Conflux'

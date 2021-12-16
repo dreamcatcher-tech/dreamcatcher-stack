@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { RxReply } from '.'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 const schema = {
   title: 'Meta',
   type: 'object',

@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { rxReplySchema } from '../schemas/transientSchemas'
-import { mixin } from './MapFactory'
-import { splitSequence } from '../transients/splitSequence'
+import { mixin } from '../MapFactory'
+import { splitSequence } from '../splitSequence'
 
 export class RxReply extends mixin(rxReplySchema) {
   static create(type = '@@RESOLVE', payload = {}, address, height, index) {

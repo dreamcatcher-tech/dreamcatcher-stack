@@ -1,5 +1,5 @@
 import { actionSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 import { assertNoUndefined } from './State'
 export class Action extends mixin(actionSchema) {
   static create(action, payload = {}) {

@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Action } from '../../src/classes'
+import { Action } from '..'
 
 describe('acl', () => {
   test('throws on blank creation', () => {

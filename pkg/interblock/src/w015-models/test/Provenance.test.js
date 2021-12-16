@@ -1,6 +1,7 @@
 import { assert } from 'chai/index.mjs'
-import debug from 'debug'
-import { Dmz, Integrity, Provenance } from '../../src/classes'
+import Debug from 'debug'
+import { Dmz, Integrity, Provenance } from '..'
+Debug.enable('*Provenance')
 
 describe('provenance', () => {
   test('creates default model', () => {
@@ -23,13 +24,13 @@ describe('provenance', () => {
     const dmz = Dmz.create()
     const g1 = Provenance.create(dmz)
     const g2 = Provenance.create(dmz)
-    assert(!g1.equals(g2))
+    assert(!g1.deepEquals(g2))
   })
   test('genesis address is stable', async () => {
     const g = Provenance.create()
     const a1 = g.getAddress()
     const a2 = g.getAddress()
-    assert(a1.equals(a2))
+    assert(a1.deepEquals(a2))
     assert.strictEqual(a1, a2)
   })
   test('cannot fork from the future', () => {

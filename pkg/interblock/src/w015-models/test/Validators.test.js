@@ -1,5 +1,5 @@
-import { Validators, Keypair } from '../../src/classes'
-import { ciKeypair } from '../../../w012-crypto'
+import { Validators, Keypair } from '..'
+import { ciKeypair } from '../../w012-crypto'
 import { assert } from 'chai/index.mjs'
 
 describe('Validators', () => {

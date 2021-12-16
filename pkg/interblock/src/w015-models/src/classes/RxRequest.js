@@ -1,8 +1,8 @@
 import assert from 'assert-fast'
-import { splitSequence } from '../transients/splitSequence'
+import { splitSequence } from '../splitSequence'
 import { Action } from '.'
 import { rxRequestSchema } from '../schemas/transientSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 
 export class RxRequest extends mixin(rxRequestSchema) {
   #request

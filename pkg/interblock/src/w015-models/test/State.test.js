@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { State } from '../../src/classes'
+import { State } from '..'
 
 // TODO add in the covenant api tools, and make some actions
 

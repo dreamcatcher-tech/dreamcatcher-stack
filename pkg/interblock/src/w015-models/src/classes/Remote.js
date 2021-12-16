@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { Integrity, Address } from '.'
 import { remoteSchema } from '../schemas/modelSchemas'
-import { mixin } from './MapFactory'
+import { mixin } from '../MapFactory'
 
 const defaultParams = {
   address: Address.create(),
