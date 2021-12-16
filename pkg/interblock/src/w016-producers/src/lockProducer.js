@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { lockModel, blockModel } from '../../w015-models'
+import { lockModel, Block } from '../../w015-models'
 /**
  * Given a lock and a block, return a new lock with the pool reconciled,
  * as the latest block may already contain some of the interblock pool,
@@ -11,7 +11,7 @@ import { lockModel, blockModel } from '../../w015-models'
  */
 const reconcile = (lock, block) => {
   assert(lockModel.isModel(lock))
-  assert(blockModel.isModel(block))
+  assert(block instanceof Block)
   const piercings = { requests: [], replies: [] }
   const interblocks = []
   return lockModel.clone({ ...lock, block, piercings, interblocks })

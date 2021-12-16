@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import {
-  blockModel,
+  Block,
   channelModel,
   dmzModel,
   publicKeyModel,
@@ -10,7 +10,7 @@ import {
 import { channelProducer } from '..'
 
 const generatePierceDmz = (targetBlock, pierceReplies, pierceRequests) => {
-  assert(blockModel.isModel(targetBlock))
+  assert(targetBlock instanceof Block)
   assert(Array.isArray(pierceReplies))
   assert(Array.isArray(pierceRequests))
   assert(pierceReplies.every(txReplyModel.isModel))

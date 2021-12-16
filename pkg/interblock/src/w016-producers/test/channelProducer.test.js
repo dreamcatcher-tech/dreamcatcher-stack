@@ -1,23 +1,22 @@
 import { assert } from 'chai/index.mjs'
 import random from 'lodash.random'
 import { request } from '../../w002-api'
-import {
-  stateModel,
-  channelModel,
-  provenanceModel,
-  actionModel,
-  addressModel,
-  networkModel,
-  dmzModel,
-  blockModel,
-  interblockModel,
-  txReplyModel,
-  Conflux,
-  rxRequestModel,
-  rxReplyModel,
-} from '../../w015-models'
 import { channelProducer } from '..'
 import Debug from 'debug'
+import {
+  Action,
+  Address,
+  Block,
+  Channel,
+  Conflux,
+  Dmz,
+  Interblock,
+  Network,
+  Provenance,
+  RxReply,
+  RxRequest,
+  TxReply,
+} from '../../w015-models'
 const debug = Debug('interblock:tests:producers:channel')
 Debug.enable()
 
@@ -32,72 +31,72 @@ const {
 
 describe('channelProducer', () => {
   test('resolve address', () => {
-    const tx = channelModel.create()
+    const tx = Channel.create()
     assert(tx.address.isUnknown())
-    const provenance = provenanceModel.create()
+    const provenance = Provenance.create()
     const address = provenance.getAddress()
     assert(!address.isUnknown())
     const resolved = setAddress(tx, address)
     assert(!resolved.address.isUnknown())
   })
   test('fails on invalid actions supplied', () => {
-    const tx = channelModel.create()
+    const tx = Channel.create()
     const type = 'testAction'
-    assert(txRequest(tx, actionModel.create(type)))
+    assert(txRequest(tx, Action.create(type)))
     assert.throws(() => txRequest(tx, { type, payload: undefined }))
-    assert(txRequest(tx, actionModel.create(type, { test: 'test' })))
+    assert(txRequest(tx, Action.create(type, { test: 'test' })))
     assert.throws(() => txRequest(tx, { type, payload: { test: 'test' } }))
   })
   test('duplicate action allowed', () => {
-    let channel = channelModel.create()
-    const action = actionModel.create('action1')
+    let channel = Channel.create()
+    const action = Action.create('action1')
     channel = txRequest(channel, action)
     channel = txRequest(channel, action)
   })
   test('request', () => {
-    let tx = channelModel.create()
-    const action = actionModel.create('action1')
+    let tx = Channel.create()
+    const action = Action.create('action1')
     tx = txRequest(tx, action)
-    assert(channelModel.isModel(tx))
+    assert(Channel.isModel(tx))
     assert(action.equals(tx.requests[0]))
     assert.strictEqual(tx.requests.length, 1)
   })
   test('multiple actions requested', () => {
-    let twoActions = channelModel.create()
-    twoActions = txRequest(twoActions, actionModel.create('action1'))
-    twoActions = txRequest(twoActions, actionModel.create('action2'))
+    let twoActions = Channel.create()
+    twoActions = txRequest(twoActions, Action.create('action1'))
+    twoActions = txRequest(twoActions, Action.create('action2'))
     assert.strictEqual(twoActions.requests.length, 2)
 
-    let many = channelModel.create()
+    let many = Channel.create()
     let count = 0
     Array(10)
       .fill(true)
-      .forEach(() => (many = txRequest(many, actionModel.create(`${++count}`))))
+      .forEach(() => (many = txRequest(many, Action.create(`${++count}`))))
     assert.strictEqual(many.requests.length, 10)
   })
   test('resolve can update previous promises', () => {
-    let remote = channelModel.create(addressModel.create('TEST'))
-    remote = txRequest(remote, actionModel.create('action1'))
-    remote = txRequest(remote, actionModel.create('action2'))
-    remote = txRequest(remote, actionModel.create('action3'))
+    let remote = Channel.create(Address.create('TEST'))
+    remote = txRequest(remote, Action.create('action1'))
+    remote = txRequest(remote, Action.create('action2'))
+    remote = txRequest(remote, Action.create('action3'))
     const [interblock] = reflect(remote)
 
-    let local = channelModel.create(interblock.provenance.getAddress())
+    let local = Channel.create(interblock.provenance.getAddress())
     const [nextLocal] = ingestInterblocks(local, [interblock])
     local = nextLocal
     // need to get the conflux out ? create an array of rxRequest models?
     const seq = `${interblock.getChainId()}_${interblock.provenance.height}_`
 
-    local = txReply(local, txReplyModel.create('@@PROMISE', {}, seq + 0))
-    local = txReply(local, txReplyModel.create('@@PROMISE', {}, seq + 1))
-    local = txReply(local, txReplyModel.create('@@PROMISE', {}, seq + 2))
-    local = txReply(local, txReplyModel.create('@@RESOLVE', {}, seq + 0))
+    local = txReply(local, TxReply.create('@@PROMISE', {}, seq + 0))
+    local = txReply(local, TxReply.create('@@PROMISE', {}, seq + 1))
+    local = txReply(local, TxReply.create('@@PROMISE', {}, seq + 2))
+    local = txReply(local, TxReply.create('@@RESOLVE', {}, seq + 0))
 
     assert(local.replies['0_0'].type === '@@RESOLVE')
     assert(local.replies['0_1'].type === '@@PROMISE')
     assert(local.replies['0_2'].type === '@@PROMISE')
 
-    local = txReply(local, txReplyModel.create('@@RESOLVE', {}, seq + 2))
+    local = txReply(local, TxReply.create('@@RESOLVE', {}, seq + 2))
     assert(local.replies['0_0'].type === '@@RESOLVE')
     assert(local.replies['0_1'].type === '@@PROMISE')
     assert(local.replies['0_2'].type === '@@RESOLVE')
@@ -125,13 +124,13 @@ describe('channelProducer', () => {
     test.todo('negotiate channel reset ?')
     test.todo('reject if channel invalid')
     test('throws on interblock replies ahead of requests', () => {
-      const resolvedAddress = addressModel.create('test')
-      const channelBase = channelModel.create(resolvedAddress)
-      const request1 = actionModel.create('request1')
+      const resolvedAddress = Address.create('test')
+      const channelBase = Channel.create(resolvedAddress)
+      const request1 = Action.create('request1')
       // TODO make a fake remote which replied out of sequence
       // assert.throws(
       //   () =>
-      //     channelModel.clone({
+      //     Channel.clone({
       //       ...channelBase,
       //       // remote: undefined,
       //       requests: { 23: request1 },
@@ -145,12 +144,12 @@ describe('channelProducer', () => {
 
   describe('txReply', () => {
     test('basic', () => {
-      const action = actionModel.create('REMOTE_ACTION')
-      let txChannel = channelModel.create(addressModel.create('TEST'))
+      const action = Action.create('REMOTE_ACTION')
+      let txChannel = Channel.create(Address.create('TEST'))
       txChannel = txRequest(txChannel, action)
       const [txInterblock] = reflect(txChannel)
 
-      let rxChannel = channelModel.create()
+      let rxChannel = Channel.create()
       rxChannel = setAddress(rxChannel, txInterblock.provenance.getAddress())
       const [nextRx, rxIngested] = ingestInterblocks(rxChannel, [txInterblock])
       rxChannel = nextRx
@@ -162,13 +161,13 @@ describe('channelProducer', () => {
       const request = rxConflux.rxRequests[0]
       assert.strictEqual(request.type, action.type)
       const { identifier } = request
-      const reply = txReplyModel.create('@@RESOLVE', { t: 'p' }, identifier)
+      const reply = TxReply.create('@@RESOLVE', { t: 'p' }, identifier)
       rxChannel = txReply(rxChannel, reply)
       assert(rxChannel.replies['0_0'].isResolve())
 
       const [rxInterblock] = reflect(rxChannel)
       // recreate but with known rx address now
-      txChannel = channelModel.create(rxInterblock.provenance.getAddress())
+      txChannel = Channel.create(rxInterblock.provenance.getAddress())
       txChannel = txRequest(txChannel, action)
       const [nextTx, txIngested] = ingestInterblocks(txChannel, [rxInterblock])
       txChannel = nextTx
@@ -198,30 +197,30 @@ describe('channelProducer', () => {
   })
   describe('loopback', () => {
     test('basic', () => {
-      const loopbackAddress = addressModel.create('LOOPBACK')
-      let loopback = channelModel.create(loopbackAddress, '.')
+      const loopbackAddress = Address.create('LOOPBACK')
+      let loopback = Channel.create(loopbackAddress, '.')
 
       // transmit two requests
-      const action1 = actionModel.create('LOOPBACK_ACTION_1')
-      const action2 = actionModel.create('LOOPBACK_ACTION_2')
-      const action3 = actionModel.create('LOOPBACK_ACTION_3')
+      const action1 = Action.create('LOOPBACK_ACTION_1')
+      const action2 = Action.create('LOOPBACK_ACTION_2')
+      const action3 = Action.create('LOOPBACK_ACTION_3')
       loopback = txRequest(loopback, action1)
       loopback = txRequest(loopback, action2)
       loopback = txRequest(loopback, action3)
       assert.strictEqual(loopback.requests.length, 3)
       const rxReq1 = loopback.rxLoopbackRequest()
       assert(rxReq1.equals(loopback.rxLoopbackRequest()))
-      assert(rxRequestModel.isModel(rxReq1))
+      assert(RxRequest.isModel(rxReq1))
       assert.throws(() => shiftLoopbackReply(loopback))
       assert.throws(() => shiftLoopbackSettle(loopback))
 
       // transmit a reply to the first action
       const { identifier } = rxReq1
       assert.strictEqual(identifier, 'LOOPBACK_1_0')
-      const txRep1 = txReplyModel.create('@@RESOLVE', {}, identifier)
+      const txRep1 = TxReply.create('@@RESOLVE', {}, identifier)
       loopback = txReply(loopback, txRep1)
       const rxRep1 = loopback.rxLoopbackReply()
-      assert(rxReplyModel.isModel(rxRep1))
+      assert(RxReply.isModel(rxRep1))
       assert.strictEqual(rxRep1.identifier, identifier)
       assert.throws(() => txReply(loopback, txRep1))
 
@@ -229,7 +228,7 @@ describe('channelProducer', () => {
       loopback = shiftLoopbackReply(loopback)
       const rxReq2 = loopback.rxLoopbackRequest()
       assert.strictEqual(rxReq2.type, action2.type)
-      const txRep2 = txReplyModel.create('@@PROMISE', {}, rxReq2.identifier)
+      const txRep2 = TxReply.create('@@PROMISE', {}, rxReq2.identifier)
       loopback = txReply(loopback, txRep2)
       assert.throws(() => txReply(loopback, txRep2))
       assert(rxReq2.equals(loopback.rxLoopbackRequest()))
@@ -242,14 +241,14 @@ describe('channelProducer', () => {
       // reject the final request
       const rxReq3 = loopback.rxLoopbackRequest()
       assert.strictEqual(rxReq3.type, action3.type)
-      const txRep3 = txReplyModel.create('@@REJECT', {}, rxReq3.identifier)
+      const txRep3 = TxReply.create('@@REJECT', {}, rxReq3.identifier)
       loopback = txReply(loopback, txRep3)
       loopback = shiftLoopbackReply(loopback)
       assert(loopback.isLoopbackExhausted())
 
       // resolve the prior promise
       const p = { promise: 'resolve' }
-      const txRep4 = txReplyModel.create('@@RESOLVE', p, rxReq2.identifier)
+      const txRep4 = TxReply.create('@@RESOLVE', p, rxReq2.identifier)
       loopback = txReply(loopback, txRep4)
       assert(!loopback.isLoopbackExhausted())
       assert(!loopback.isLoopbackReplyPromised())
@@ -333,11 +332,10 @@ describe('stress tests', () => {
   test.todo('wrap around at limits of integer')
 })
 const reflect = (transmission) => {
-  assert(channelModel.isModel(transmission))
-  const network = networkModel.create({ transmission })
-  const dmz = dmzModel.create({ network })
-  const block = blockModel.create(dmz)
+  assert(Channel.isModel(transmission))
+  const network = Network.create({ transmission })
+  const dmz = Dmz.create({ network })
+  const block = Block.create(dmz)
   assert(block.isVerifiedBlock())
-  const interblock = interblockModel.create(block, 'transmission')
   return [interblock, block]
 }

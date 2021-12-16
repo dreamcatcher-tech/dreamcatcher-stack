@@ -3,7 +3,7 @@ import LevelUp from 'levelup'
 import leftPad from 'pad-left'
 import Debug from 'debug'
 import {
-  blockModel,
+  Block,
   interblockModel,
   keypairModel,
   txReplyModel,
@@ -97,7 +97,7 @@ const dbFactory = (leveldb) => {
     let block = cache.get(key)
     if (!block) {
       const json = await leveldb.get(key)
-      block = blockModel.clone(JSON.parse(json))
+      block = Block.clone(JSON.parse(json))
     }
     debug(`getBlock height: `, block.getHeight())
     return block
@@ -144,7 +144,7 @@ const dbFactory = (leveldb) => {
     let block = cache.get(key)
     if (!block) {
       const json = await leveldb.get(key)
-      block = blockModel.clone(JSON.parse(json))
+      block = Block.clone(JSON.parse(json))
       block.serialize()
     }
     debug(`queryLatest height: `, block.getHeight())

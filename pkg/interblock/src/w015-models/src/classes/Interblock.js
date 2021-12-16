@@ -45,7 +45,7 @@ export class Interblock extends mixin(interblockSchema) {
       if (!extractedGenesis) {
         // TODO move to producers and handle minimal payload
 
-        const genesis = blockModel.clone(requests[0].payload.genesis)
+        const genesis = Block.clone(requests[0].payload.genesis)
         assert(genesis.provenance.address.isGenesis())
         extractedGenesis = genesis
       }

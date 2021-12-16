@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { assign } from 'xstate'
-import { txModel, blockModel, interblockModel } from '../../../w015-models'
+import { txModel, Block, interblockModel } from '../../../w015-models'
 import { receiveMachine } from '../machines'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import Debug from 'debug'
@@ -64,7 +64,7 @@ const receiveConfig = (ioConsistency) => {
         assert(address)
         const latest = await consistency.getBlock({ address })
         if (latest) {
-          assert(blockModel.isModel(latest))
+          assert(latest instanceof Block)
         }
         const isConnectable = latest && latest.config.isPublicChannelOpen
         debug(`isConnectable: `, isConnectable)

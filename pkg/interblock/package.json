@@ -104,6 +104,7 @@
     "autoDetect": true,
     "tests": [
       "src/w015*/**/*.test.js",
+      "src/w016*/**/*.test.js",
       "!package.test.js"
     ],
     "env": {

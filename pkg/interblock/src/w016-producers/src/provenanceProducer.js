@@ -7,13 +7,13 @@ import {
   provenanceModel,
   integrityModel,
   addressModel,
-  blockModel,
+  Block,
   signatureModel,
 } from '../../w015-models'
 
 const generateNextProvenance = (nextDmz, block) => {
   assert(dmzModel.isModel(nextDmz))
-  assert(blockModel.isModel(block))
+  assert(block instanceof Block)
   assert(!nextDmz.equals(block.getDmz()), 'block dmz has not changed')
   // TODO check the dmz follows from the current one ?
   // TODO put checks in that blocks without new transmissions cannot be created

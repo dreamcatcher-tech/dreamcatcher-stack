@@ -4,7 +4,7 @@ import { pure } from '../../../w001-xstate-direct'
 import {
   channelModel,
   interblockModel,
-  blockModel,
+  Block,
   dmzModel,
   lockModel,
   Conflux,
@@ -162,7 +162,7 @@ const createConfig = (isolation, consistency) => ({
     injectReplayablePiercings: assign({
       dmz: ({ dmz, pierceBlock }) => {
         assert(dmzModel.isModel(dmz))
-        assert(blockModel.isModel(pierceBlock))
+        assert(pierceBlock instanceof Block)
         debug(`injectReplayablePiercings`)
         const ioChannel = pierceBlock.network['@@PIERCE_TARGET']
         const { replies, requests } = ioChannel
@@ -173,7 +173,7 @@ const createConfig = (isolation, consistency) => ({
     openPierceChannel: assign({
       dmz: ({ dmz, pierceBlock }) => {
         assert(dmzModel.isModel(dmz))
-        assert(blockModel.isModel(pierceBlock))
+        assert(pierceBlock instanceof Block)
         debug(`openPierceChannel`)
         const ioAddress = pierceBlock.provenance.getAddress()
         let ioChannel =

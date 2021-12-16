@@ -6,7 +6,7 @@ import {
   rxRequestModel,
   covenantIdModel,
   dmzModel,
-  blockModel,
+  Block,
 } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:isolate')
@@ -25,9 +25,9 @@ describe('isolation', () => {
       reducer2: { reducer: reducer2 },
     }
     let covenantId = covenantIdModel.create('reducer1')
-    const block1 = await blockModel.create(dmzModel.create({ covenantId }))
+    const block1 = Block.create(dmzModel.create({ covenantId }))
     covenantId = covenantIdModel.create('reducer2')
-    const block2 = await blockModel.create(dmzModel.create({ covenantId }))
+    const block2 = Block.create(dmzModel.create({ covenantId }))
 
     const fakeConsistency = ioQueueFactory('fakeConsistency')
     const isolateProcessor = isolateFactory(fakeConsistency, covenantMap)
@@ -82,7 +82,7 @@ describe('isolation', () => {
       reducer1: { reducer: reducerThrower },
     }
     let covenantId = covenantIdModel.create('reducer1')
-    const block1 = await blockModel.create(dmzModel.create({ covenantId }))
+    const block1 = Block.create(dmzModel.create({ covenantId }))
 
     const fakeConsistency = ioQueueFactory('fakeConsistency')
     const isolateProcessor = isolateFactory(fakeConsistency, covenantMap)

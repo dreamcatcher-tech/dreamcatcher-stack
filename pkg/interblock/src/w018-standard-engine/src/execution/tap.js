@@ -7,7 +7,7 @@ import {
   networkPrint,
   print,
 } from './printer'
-import { blockModel, interblockModel } from '../../../w015-models'
+import { Block, interblockModel } from '../../../w015-models'
 import { setTap } from '../../../w004-needle'
 import Debug from 'debug'
 
@@ -61,7 +61,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
 
   const debugBloc = debugBase.extend('b')
   const block = (block) => {
-    assert(blockModel.isModel(block))
+    assert(block instanceof Block)
     const chainId = block.provenance.getAddress().getChainId()
     const latest = cache.get(chainId)
     const isNewChain = !latest

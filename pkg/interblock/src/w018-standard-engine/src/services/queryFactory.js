@@ -1,12 +1,12 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
-import { blockModel } from '../../../w015-models'
+import { Block } from '../../../w015-models'
 import { toFunctions } from './consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:query')
 
 const queryFactory = (ioConsistency, block) => {
-  assert(blockModel.isModel(block))
+  assert(block instanceof Block)
   let isQueryEnabled = true
   const consistency = toFunctions(ioConsistency)
   const query = (query) => {

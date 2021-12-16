@@ -1,10 +1,6 @@
 import assert from 'assert-fast'
 import { _hook as hook } from '../../../../w002-api'
-import {
-  blockModel,
-  rxReplyModel,
-  rxRequestModel,
-} from '../../../../w015-models'
+import { Block, rxReplyModel, rxRequestModel } from '../../../../w015-models'
 import * as systemCovenants from '../../../../w212-system-covenants'
 import * as appCovenants from '../../../../w301-user-apps'
 import { queryFactory } from '../queryFactory'
@@ -21,7 +17,7 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
   const covenants = _mergeCovenants(preloadedCovenants)
   return {
     loadCovenant: async (block) => {
-      assert(blockModel.isModel(block))
+      assert(block instanceof Block)
       const { covenantId } = block
       const containerId = block.provenance.reflectIntegrity().hash
       const { name } = covenantId

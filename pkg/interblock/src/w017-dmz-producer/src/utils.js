@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import pad from 'pad-left'
-import { blockModel, channelModel } from '../../w015-models'
+import { Block, channelModel } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:utils')
 
@@ -34,7 +34,7 @@ const getChannelParams = (network, alias) => {
   return params
 }
 const listChildren = (block) => {
-  assert(blockModel.isModel(block))
+  assert(block instanceof Block)
   const children = {}
   block.network.getAliases().forEach((alias) => {
     children[alias] = getChannelParams(block.network, alias)

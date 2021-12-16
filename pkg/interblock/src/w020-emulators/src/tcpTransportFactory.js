@@ -10,15 +10,12 @@
  *
  */
 import assert from 'assert-fast'
-import { blockModel, interblockModel } from '../../w015-models'
+import { Block, interblockModel } from '../../w015-models'
 import WebSocket from 'ws'
 import Debug from 'debug'
 const debug = Debug('interblock:transport')
 
 const tcpTransportFactory = (url) => {
-  // const dummyBlock = await blockModel.create()
-  // const igniter = interblockModel.create(dummyBlock)
-
   let ws
   const connect = async () => {
     assert(!ws) // TODO graceful shutdown

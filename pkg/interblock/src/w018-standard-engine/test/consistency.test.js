@@ -2,7 +2,7 @@ import { assert } from 'chai/index.mjs'
 import { consistencySourceFactory } from '../src/services/consistencyFactory'
 import levelup from 'levelup'
 import memdown from 'memdown'
-import { addressModel, blockModel, lockModel } from '../../w015-models'
+import { addressModel, Block, lockModel } from '../../w015-models'
 import { v4 } from 'uuid'
 import { integrityModel } from '../../w015-models'
 import Debug from 'debug'
@@ -48,7 +48,7 @@ describe('consistency', () => {
     })
     test.todo('no attempt to unlock if expired')
     test('includes block', async () => {
-      const block = await blockModel.create()
+      const block = Block.create()
       const address = block.provenance.getAddress()
       const lock = await consistencySource.putLockChain(address)
       assert(lock)

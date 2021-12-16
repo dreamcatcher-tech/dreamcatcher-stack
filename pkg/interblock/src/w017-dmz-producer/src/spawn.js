@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import {
-  blockModel,
+  Block,
   actionModel,
   channelModel,
   networkModel,
@@ -63,7 +63,7 @@ const spawnRequester = (dmz, originAction) => {
   }
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
 
-  const genesis = blockModel.create(childDmz)
+  const genesis = Block.create(childDmz)
   const payload = { genesis, alias }
   const genesisRequest = actionModel.create('@@GENESIS', payload)
   const address = genesis.provenance.getAddress()

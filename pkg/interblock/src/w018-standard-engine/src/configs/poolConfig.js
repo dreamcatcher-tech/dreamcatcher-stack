@@ -4,7 +4,7 @@ import { poolMachine } from '../machines'
 import {
   channelModel,
   networkModel,
-  blockModel,
+  Block,
   lockModel,
   interblockModel,
   addressModel,
@@ -49,7 +49,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       mergeBlockToLock: assign({
         lock: ({ lock, nextBlock }) => {
           assert(lockModel.isModel(lock))
-          assert(blockModel.isModel(nextBlock))
+          assert(nextBlock instanceof Block)
           debug(`mergeBlockToLock increased: ${!nextBlock.equals(lock.block)}`)
           const nextLock = lockProducer.reconcile(lock, nextBlock)
           return nextLock
@@ -57,7 +57,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       }),
       assignGeneratedBlock: assign({
         nextBlock: (context, event) => {
-          assert(blockModel.isModel(event.data))
+          assert(event.data instanceof Block)
           debug(`assignGeneratedBlock`)
           return event.data
         },
@@ -97,7 +97,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         targetBlock: (context, event) => {
           const { targetBlock } = event.data
           debug(`assignTargetBlock height`, targetBlock.provenance.height)
-          assert(!targetBlock || blockModel.isModel(targetBlock))
+          assert(!targetBlock || targetBlock instanceof Block)
           return targetBlock
         },
       }),
@@ -144,14 +144,14 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
       isTargetBlockMissing: ({ targetBlock }) => !targetBlock,
       isAddable: ({ targetBlock, interblock }) => {
-        assert(blockModel.isModel(targetBlock))
+        assert(targetBlock instanceof Block)
         assert(interblockModel.isModel(interblock))
         const isAddable = targetBlock.isInterblockAddable(interblock)
         debug(`isAddable`, isAddable)
         return isAddable
       },
       isConnectable: ({ targetBlock, interblock }) => {
-        assert(blockModel.isModel(targetBlock))
+        assert(targetBlock instanceof Block)
         assert(interblockModel.isModel(interblock))
         const isConnectable =
           interblock.isConnectionAttempt() &&
@@ -199,7 +199,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         // TODO replace with dedicated startup process
         debug(`signBlock`)
         assert(dmzModel.isModel(baseDmz))
-        const block = blockModel.create(baseDmz)
+        const block = Block.create(baseDmz)
         return block
       },
       lockBaseChain: async ({ nextBlock }) => {

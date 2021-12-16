@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import {
   addressModel,
   lockModel,
-  blockModel,
+  Block,
   socketModel,
   interblockModel,
   txRequestModel,
@@ -159,7 +159,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     if (!block) {
       return
     }
-    assert(blockModel.isModel(block))
+    assert(block instanceof Block)
     assert(address.equals(block.provenance.getAddress()))
     assert.strictEqual(block.provenance.height, height)
     debug(`getBlock complete`, height)

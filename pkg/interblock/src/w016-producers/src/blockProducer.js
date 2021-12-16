@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { dmzModel, blockModel } from '../../w015-models'
+import { Block, Dmz } from '../../w015-models'
 import {
   generateNextProvenance,
   addSignature,
@@ -8,21 +8,21 @@ import {
 
 const assemble = (unsignedBlock, signature) => {
   const provenance = addSignature(unsignedBlock.provenance, signature)
-  return blockModel.clone({ ...unsignedBlock, provenance })
+  return Block.clone({ ...unsignedBlock, provenance })
 }
 const generateUnsigned = (nextDmz, block) => {
-  assert(dmzModel.isModel(nextDmz))
-  assert(blockModel.isModel(block))
+  assert(nextDmz instanceof Dmz)
+  assert(block instanceof Block)
   const provenance = generateNextProvenance(nextDmz, block)
-  return blockModel.clone({ ...nextDmz, provenance })
+  return Block.clone({ ...nextDmz, provenance })
 }
 const generatePierceBlock = (pierceDmz, targetBlock) => {
   const ioChannel = targetBlock.network['.@@io']
   if (ioChannel) {
     const { tipHeight, address } = ioChannel
     const provenance = generatePierceProvenance(pierceDmz, address, tipHeight)
-    return blockModel.clone({ ...pierceDmz, provenance })
+    return Block.clone({ ...pierceDmz, provenance })
   }
-  return blockModel.create(pierceDmz)
+  return Block.create(pierceDmz)
 }
 export { assemble, generateUnsigned, generatePierceBlock }

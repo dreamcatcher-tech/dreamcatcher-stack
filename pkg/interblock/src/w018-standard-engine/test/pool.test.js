@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '../src/metrologyFactory'
-import { blockModel } from '../../w015-models'
+import { Block } from '../../w015-models'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pool')
@@ -11,7 +11,7 @@ describe('pool', () => {
     test('initial conditions creates new baseChain', async () => {
       const metrology = await metrologyFactory('A')
       const block = await metrology.getLatest()
-      assert(blockModel.isModel(block))
+      assert(block instanceof Block)
       assert.strictEqual(block.provenance.height, 0)
       assert.strictEqual(block.network.getAliases().length, 2)
       assert(block.network['..'].address.isRoot())
@@ -38,7 +38,7 @@ describe('pool', () => {
         await base.spawn('child')
         await base.settle()
         const baseBlock = await base.getLatest()
-        assert(blockModel.isModel(baseBlock))
+        assert(baseBlock instanceof Block)
         assert.strictEqual(baseBlock.provenance.height, 2)
         const childChannel = baseBlock.network.child
         assert.strictEqual(childChannel.tipHeight, 1)

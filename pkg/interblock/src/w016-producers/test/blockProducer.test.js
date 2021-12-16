@@ -1,19 +1,19 @@
 import { assert } from 'chai/index.mjs'
 import { List, Map, Record } from 'immutable'
 import clone from 'lodash.clone'
-import { keypairModel, blockModel, dmzModel } from '../../w015-models'
 import { blockProducer, signatureProducer } from '../../w016-producers'
 import * as crypto from '../../w012-crypto'
 import Debug from 'debug'
+import { Block, Dmz, Keypair } from '../../w015-models'
 const debug = Debug('interblock:tests:blockProducer')
 
 describe('blockProducer', () => {
   describe('generateUnsigned', () => {
     test('false signing rejected', async () => {
-      const block = blockModel.create()
-      const keypairA = keypairModel.create('keypairA')
-      const keypairB = keypairModel.create('keypairB')
-      const dmz = dmzModel.create({
+      const block = Block.create()
+      const keypairA = Keypair.create('keypairA')
+      const keypairB = Keypair.create('keypairB')
+      const dmz = Dmz.create({
         state: { test: 'changedState' },
         validators: keypairA.getValidatorEntry(),
       })
@@ -31,30 +31,30 @@ describe('blockProducer', () => {
     })
     test('throws if no dmz or block provided', () => {
       assert.throws(blockProducer.generateUnsigned)
-      const dmz = dmzModel.create()
+      const dmz = Dmz.create()
       assert.throws(() => blockProducer.generateUnsigned(dmz))
     })
     test('no duplicates created', () => {
-      const block = blockModel.create()
+      const block = Block.create()
       const dmz = block.getDmz()
       assert.throws(() => blockProducer.generateUnsigned(dmz, block))
     })
     test('pass serialize test', () => {
-      const block = blockModel.create()
+      const block = Block.create()
       const state = { test: 'state' }
-      const nextDmz = dmzModel.clone({ ...block.getDmz(), state })
+      const nextDmz = Dmz.clone({ ...block.getDmz(), state })
       const nextBlock = blockProducer.generateUnsigned(nextDmz, block)
       const json = nextBlock.serialize()
       assert.strictEqual(typeof json, 'string')
-      const clone = blockModel.clone(json)
+      const clone = Block.clone(json)
       assert(clone.equals(nextBlock))
     })
     test.skip('dual validator signing', () => {
       const kp1 = crypto.generateKeyPair()
       const kp2 = crypto.generateKeyPair()
-      const keypair1 = keypairModel.create('CI1', kp1)
-      const keypair2 = keypairModel.create('CI2', kp2)
-      const duo = dmzModel.create({
+      const keypair1 = Keypair.create('CI1', kp1)
+      const keypair2 = Keypair.create('CI2', kp2)
+      const duo = Dmz.create({
         validators: { alice: keypair1.publicKey, bob: keypair2.publicKey },
       })
     })
@@ -63,7 +63,7 @@ describe('blockProducer', () => {
     // goal is to have constant time for block operations, regardless of how many children it has
     test.skip('batch 1000 spawns', async () => {
       Debug.enable('*tests*')
-      // const init = blockModel.create()
+      // const init = Block.create()
       // make object with 20,000 keys, which is design target
       const big = {}
       let i = 0
