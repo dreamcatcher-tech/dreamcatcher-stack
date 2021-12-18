@@ -9,7 +9,7 @@ import {
   Interblock,
   Address,
   Dmz,
-  covenantIdModel,
+  CovenantId,
   PublicKey,
 } from '../../../w015-models'
 import { lockProducer } from '../../../w016-producers'
@@ -68,7 +68,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       createBaseDmz: assign({
         baseDmz: ({ validators }) => {
           debug(`createBaseDmz`)
-          const covenantId = covenantIdModel.create('hyper')
+          const covenantId = CovenantId.create('hyper')
           const root = Address.create('ROOT')
           const sealedRoot = Channel.create(root)
           const sealedParent = Network.create().update({ '..': sealedRoot })

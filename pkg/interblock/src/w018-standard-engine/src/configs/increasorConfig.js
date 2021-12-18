@@ -9,7 +9,7 @@ import {
   Interblock,
   RxRequest,
   TxReply,
-  turnoverModel,
+  Turnover,
 } from '../../../w015-models'
 import { blockProducer, lockProducer } from '../../../w016-producers'
 import { increasorMachine } from '../machines'
@@ -132,7 +132,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
             const turnovers = []
             if (channel.precedent.isUnknown()) {
               const turoverBlock = turnoverBlocks[0]
-              const turnover = turnoverModel.create(turoverBlock)
+              const turnover = Turnover.create(turoverBlock)
               turnovers.push(turnover)
             }
             return Interblock.create(block, alias, turnovers)

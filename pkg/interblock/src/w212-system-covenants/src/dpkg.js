@@ -10,8 +10,8 @@
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:dpkg')
 import { replyResolve } from '../../w002-api'
-import { covenantIdModel } from '../../w015-models'
-const covenantId = covenantIdModel.create('dpkg')
+import { CovenantId } from '../../w015-models'
+const covenantId = CovenantId.create('dpkg')
 
 const reducer = async (state, action) => {
   // TODO verify the state against schema

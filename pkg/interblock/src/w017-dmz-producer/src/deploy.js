@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { RxReply, Dmz, covenantIdModel, RxRequest } from '../../w015-models'
+import { RxReply, Dmz, CovenantId, RxRequest } from '../../w015-models'
 import { spawn, spawnRequester } from './spawn'
 import { interchain, replyResolve, replyPromise } from '../../w002-api'
 import Debug from 'debug'
@@ -43,7 +43,7 @@ const deployReducer = (dmz, action) => {
       ...spawnOptions
     } = directChildren[installPath]
     covenant = covenant || 'unity'
-    const covenantId = covenantIdModel.create(covenant)
+    const covenantId = CovenantId.create(covenant)
     spawnOptions = { ...spawnOptions, covenantId, state }
     const spawnRequest = spawn(installPath, spawnOptions)
     const [nextDmz, spawnId, alias, chainId] = spawnRequester(dmz, spawnRequest)

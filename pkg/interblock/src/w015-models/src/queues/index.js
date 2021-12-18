@@ -1,2 +1,2 @@
-export * from './txModel'
-export * from './socketModel'
+export * from './Socket'
+export * from './Tx'

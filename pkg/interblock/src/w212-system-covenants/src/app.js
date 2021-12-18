@@ -3,11 +3,11 @@
  * Created by the installer based on a dpkg
  */
 
-import { covenantIdModel } from '../../w015-models'
+import { CovenantId } from '../../w015-models'
 
 const reducer = (state = {}) => {
   return state
 }
-const covenantId = covenantIdModel.create('app')
+const covenantId = CovenantId.create('app')
 
 export { reducer, covenantId }

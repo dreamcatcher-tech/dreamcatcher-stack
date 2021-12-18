@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { sqsQueueFactory } from '../../w003-queue'
-import { Interblock, Address, txModel } from '../../w015-models'
+import { Interblock, Address, Tx } from '../../w015-models'
 import { fsmFactory } from './fsmFactory'
 import Debug from 'debug'
 const debugBase = Debug('interblock:engine')
@@ -17,7 +17,7 @@ const standardEngineFactory = () => {
   const receiver = (ioReceive, sqsPool, sqsTransmit) => async (tx) => {
     const debug = debugBase.extend('receiver')
     debug(`receiver`)
-    assert(txModel.isModel(tx))
+    assert(tx instanceof Tx)
     const { interblock } = tx
     const { isPoolable, isCatchupable } = await ioReceive.push(tx)
     assert(typeof isPoolable === 'boolean')
@@ -39,7 +39,7 @@ const standardEngineFactory = () => {
     assert(interblock instanceof Interblock)
     // TODO split into multiple calls, so can push out earlier
     const transmissions = await ioTransmit.push(interblock)
-    assert(transmissions.every(txModel.isModel), `failed transmitter`)
+    assert(transmissions.every((v) => v instanceof Tx))
     debug(`tramission lengths:`, transmissions.length)
     const awaits = transmissions.map((tx) => {
       const { interblock, socket } = tx
@@ -142,8 +142,8 @@ const standardEngineFactory = () => {
     ioTransmit,
   } = fsm
 
-  const sqsTx = sqsQueueFactory('sqsTx', txModel)
-  const sqsRx = sqsQueueFactory('sqsRx', txModel)
+  const sqsTx = sqsQueueFactory('sqsTx', Tx)
+  const sqsRx = sqsQueueFactory('sqsRx', Tx)
   const sqsTransmit = sqsQueueFactory('sqsTransmit', Interblock)
   const sqsPool = sqsQueueFactory('sqsPool', Interblock)
   const sqsIncrease = sqsQueueFactory('sqsIncrease', Address)

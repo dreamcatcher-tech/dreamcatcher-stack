@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { actions } from '../../w017-dmz-producer'
 import { Machine, assign } from 'xstate'
-import { socketModel, covenantIdModel } from '../../w015-models'
+import { Socket, CovenantId } from '../../w015-models'
 import { tcpTransportFactory } from './tcpTransportFactory'
 import { effect, interchain } from '../../w002-api'
 import {
@@ -184,7 +184,7 @@ const socketFactory = (gateway) => {
   const schemas = {}
 
   const reducer = translator(machine)
-  const covenantId = covenantIdModel.create('socket')
+  const covenantId = CovenantId.create('socket')
   return { actions, schemas, reducer, covenantId }
 }
 

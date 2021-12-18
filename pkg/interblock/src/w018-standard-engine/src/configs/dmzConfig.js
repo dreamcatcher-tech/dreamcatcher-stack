@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { RxReply, RxRequest, Dmz, reductionModel } from '../../../w015-models'
+import { RxReply, RxRequest, Dmz, Reduction } from '../../../w015-models'
 import { _hook as hook } from '../../../w002-api'
 import { dmzMachine } from '../machines'
 import { common } from './common'
@@ -25,7 +25,7 @@ const config = {
     mergeSystemState: assign({
       dmz: ({ dmz, reduceResolve }) => {
         assert(dmz instanceof Dmz)
-        assert(reductionModel.isModel(reduceResolve))
+        assert(reduceResolve instanceof Reduction)
         debug('mergeSystemState')
         return Dmz.clone(reduceResolve.reduction)
       },

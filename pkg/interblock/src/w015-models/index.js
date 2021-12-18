@@ -69,5 +69,5 @@
  */
 
 export * from './src/classes'
-// export * from './src/queues'
+export * from './src/queues'
 export * from './src/transients'

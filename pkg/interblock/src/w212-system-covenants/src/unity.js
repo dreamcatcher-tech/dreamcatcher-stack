@@ -1,8 +1,8 @@
-import { covenantIdModel } from '../../w015-models'
+import { CovenantId } from '../../w015-models'
 
 const reducer = (state = {}) => {
   return state
 }
-const covenantId = covenantIdModel.create('unity')
+const covenantId = CovenantId.create('unity')
 
 export { reducer, covenantId }

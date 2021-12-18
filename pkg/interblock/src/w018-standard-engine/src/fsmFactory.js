@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { ioQueueFactory } from '../../w003-queue'
-import { Interblock, Address, txModel } from '../../w015-models'
+import { Interblock, Address, Tx } from '../../w015-models'
 import { isolateFactory } from './services/isolateFactory'
 import { cryptoFactory } from './services/cryptoFactory'
 import { consistencyFactory } from './services/consistencyFactory'
@@ -16,7 +16,7 @@ const fsmFactory = () => {
   const ioConsistency = ioQueueFactory('ioConsistency')
   const ioPool = ioQueueFactory('ioPool', Interblock)
   const ioIncrease = ioQueueFactory('ioIncrease', Address)
-  const ioReceive = ioQueueFactory('ioReceive', txModel)
+  const ioReceive = ioQueueFactory('ioReceive', Tx)
   const ioTransmit = ioQueueFactory('ioTransmit', Interblock)
 
   ioCrypto.setProcessor(cryptoFactory())
@@ -45,7 +45,7 @@ const fsmFactory = () => {
 
   const receiver = receiveConfig(ioConsistency)
   const ioReceiveProcessor = async (payload) => {
-    assert(txModel.isModel(payload))
+    assert(payload instanceof Tx)
     const action = { type: 'RECEIVE_INTERBLOCK', payload }
     const { machine, config } = receiver
     const result = await pure(action, machine, config)

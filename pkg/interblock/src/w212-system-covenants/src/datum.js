@@ -3,7 +3,7 @@ import assert from 'assert-fast'
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
 import * as dmzReducer from '../../w017-dmz-producer'
-import { covenantIdModel } from '../../w015-models'
+import { CovenantId } from '../../w015-models'
 import { interchain, useBlocks } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:datum')
@@ -114,7 +114,7 @@ const reducer = async (state, action) => {
         })
         debug(`setChild`, setChild)
         // TODO honour type somehow, if specify a collection ?
-        const covenantId = covenantIdModel.create('datum')
+        const covenantId = CovenantId.create('datum')
         const spawn = dmzReducer.actions.spawn(name, { covenantId })
         interchain(spawn)
         const promise = interchain(setChild, name)
@@ -265,7 +265,7 @@ const actions = {
   unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
   setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
 }
-const covenantId = covenantIdModel.create('datum')
+const covenantId = CovenantId.create('datum')
 
 export {
   actions,

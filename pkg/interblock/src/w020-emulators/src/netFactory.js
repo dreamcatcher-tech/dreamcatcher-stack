@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import { interchain } from '../../w002-api'
 import { actions } from '../../w017-dmz-producer'
 import { Machine, assign } from 'xstate'
-import { socketModel, covenantIdModel } from '../../w015-models'
+import { Socket, CovenantId } from '../../w015-models'
 import {
   respond,
   send,
@@ -21,7 +21,7 @@ const netFactory = (gateway) => {
       addTransport: async (context, event) => {
         debug(`event: %o`, event)
         const { url } = event.payload
-        const covenantId = covenantIdModel.create('socket')
+        const covenantId = CovenantId.create('socket')
         const config = { isPierced: true }
         const result = await interchain(spawn(url, { covenantId, config }))
         return result
@@ -100,7 +100,7 @@ const netFactory = (gateway) => {
       required: ['url'],
       properties: {
         url: { type: 'url' },
-        type: socketModel.schema.properties.type,
+        type: Socket.schema.properties.type,
         name: { type: 'string' },
       },
     },
@@ -111,7 +111,7 @@ const netFactory = (gateway) => {
   }
 
   const reducer = translator(machine)
-  const covenantId = covenantIdModel.create('net')
+  const covenantId = CovenantId.create('net')
   return { actions, schemas, reducer, covenantId }
 }
 export { netFactory }

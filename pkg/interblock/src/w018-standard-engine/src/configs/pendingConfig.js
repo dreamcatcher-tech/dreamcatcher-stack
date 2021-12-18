@@ -4,7 +4,7 @@ import {
   RxReply,
   RxRequest,
   Dmz,
-  reductionModel,
+  Reduction,
   TxRequest,
 } from '../../../w015-models'
 import { networkProducer, pendingProducer } from '../../../w016-producers'
@@ -61,7 +61,7 @@ const config = {
         const { reduceResolve } = event.data
         assert(reduceResolve)
         debug(`assignResolve pending: %o`, reduceResolve.isPending)
-        return reductionModel.create(reduceResolve, covenantAction, dmz)
+        return Reduction.create(reduceResolve, covenantAction, dmz)
       },
     }),
     rejectOriginRequest: assign({
@@ -127,7 +127,7 @@ const config = {
       return isAwaiting
     },
     isReductionPending: ({ reduceResolve }) => {
-      assert(reductionModel.isModel(reduceResolve))
+      assert(reduceResolve instanceof Reduction)
       const isReductionPending = reduceResolve.getIsPending()
       debug(`isReductionPending`, isReductionPending)
       return isReductionPending

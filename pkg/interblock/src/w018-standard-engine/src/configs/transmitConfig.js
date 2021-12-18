@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import flatten from 'lodash.flatten'
 import { assign } from 'xstate'
-import { Interblock, socketModel, txModel, Address } from '../../../w015-models'
+import { Interblock, Socket, Tx, Address } from '../../../w015-models'
 import { transmitMachine } from '../machines'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import Debug from 'debug'
@@ -23,13 +23,11 @@ const transmitConfig = (ioConsistency) => {
         targetTxs: ({ interblock, targetTxs }, event) => {
           assert(interblock instanceof Interblock)
           assert(Array.isArray(targetTxs))
-          assert(targetTxs.every(txModel.isModel))
+          assert(targetTxs.every((v) => v instanceof Tx))
           const { sockets } = event.data
           assert(Array.isArray(sockets))
-          assert(sockets.every(socketModel.isModel))
-          const ext = sockets.map((socket) =>
-            txModel.create(socket, interblock)
-          )
+          assert(sockets.every((v) => v instanceof Socket))
+          const ext = sockets.map((socket) => Tx.create(socket, interblock))
           const extendedTargetTxs = [...targetTxs, ...ext]
           debug(`extendTargetTxs length`, extendedTargetTxs.length)
           return extendedTargetTxs
@@ -40,7 +38,7 @@ const transmitConfig = (ioConsistency) => {
           assert(interblock instanceof Interblock)
           assert(interblock.isGenesisAttempt())
           assert(Array.isArray(targetTxs))
-          const selfTx = txModel.create(socketModel.create(), interblock)
+          const selfTx = Tx.create(Socket.create(), interblock)
           targetTxs = [...targetTxs, selfTx]
           debug(`extendSelfToGenesisAttempt tx count:`, targetTxs.length)
           return targetTxs
@@ -74,7 +72,7 @@ const transmitConfig = (ioConsistency) => {
         assert(address)
         const isSelfTarget = await consistency.getIsPresent(address)
         debug(`fetchSelfTarget isSelfTarget: ${isSelfTarget}`)
-        const sockets = isSelfTarget ? [socketModel.create()] : []
+        const sockets = isSelfTarget ? [Socket.create()] : []
         return { sockets }
       },
       isOriginPresent: async ({ interblock }) => {

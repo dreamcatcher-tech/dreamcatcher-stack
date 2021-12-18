@@ -3,7 +3,7 @@ import {
   Address,
   Lock,
   Block,
-  socketModel,
+  Socket,
   Interblock,
   TxRequest,
   TxReply,
@@ -106,7 +106,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     assert(socketItems.every((item) => typeof item === 'object'))
     const sockets = socketItems.map(({ socketJson }) => {
       assert(socketJson)
-      return socketModel.clone(socketJson)
+      return Socket.clone(socketJson)
     })
     debug(`getSockets length: ${sockets.length}`)
     return sockets
@@ -115,7 +115,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
   const putSocket = async ({ address, socket }) => {
     debug(`putSocket`)
     assert(address instanceof Address)
-    assert(socketModel.isModel(socket))
+    assert(socket instanceof Socket)
     const chainId = address.getChainId()
     const socketId = socket.id
     const updatedTime = parseInt(Date.now() / 1000) // used to expire item
@@ -128,7 +128,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
   }
 
   const delSocket = async (socket) => {
-    assert(socketModel.isModel(socket))
+    assert(socket instanceof Socket)
     debug(`delSocket %o`, socket.id)
 
     // read the cleanup table to get the address mappings

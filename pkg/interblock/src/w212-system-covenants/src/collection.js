@@ -2,10 +2,10 @@ import assert from 'assert-fast'
 import * as datum from './datum'
 import { interchain } from '../../w002-api'
 import * as dmzReducer from '../../w017-dmz-producer'
-import { covenantIdModel } from '../../w015-models'
+import { CovenantId } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
-const covenantId = covenantIdModel.create('collection')
+const covenantId = CovenantId.create('collection')
 
 const {
   convertToTemplate,

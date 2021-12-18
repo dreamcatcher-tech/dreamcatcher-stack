@@ -10,7 +10,7 @@ import {
   Conflux,
   RxReply,
   RxRequest,
-  piercingsModel,
+  Piercings,
 } from '../../../w015-models'
 import {
   dmzProducer,
@@ -166,7 +166,7 @@ const createConfig = (isolation, consistency) => ({
         debug(`injectReplayablePiercings`)
         const ioChannel = pierceBlock.network['@@PIERCE_TARGET']
         const { replies, requests } = ioChannel
-        const piercings = piercingsModel.create(replies, requests)
+        const piercings = Piercings.create(replies, requests)
         return Dmz.clone({ ...dmz, piercings })
       },
     }),

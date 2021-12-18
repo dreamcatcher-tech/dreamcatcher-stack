@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { assign } from 'xstate'
-import { txModel, Block, Interblock } from '../../../w015-models'
+import { Tx, Block, Interblock } from '../../../w015-models'
 import { receiveMachine } from '../machines'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
 import Debug from 'debug'
@@ -13,14 +13,14 @@ const receiveConfig = (ioConsistency) => {
       assignInterblock: assign({
         interblock: (context, event) => {
           const tx = event.payload
-          assert(txModel.isModel(tx))
+          assert(tx instanceof Tx)
           return tx.interblock
         },
       }),
       assignSocket: assign({
         socket: (context, event) => {
           const tx = event.payload
-          assert(txModel.isModel(tx))
+          assert(tx instanceof Tx)
           return tx.socket
         },
       }),

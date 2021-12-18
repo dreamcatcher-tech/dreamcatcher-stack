@@ -6,7 +6,7 @@ import {
   Network,
   Dmz,
   RxRequest,
-  covenantIdModel,
+  CovenantId,
 } from '../../w015-models'
 import { channelProducer, metaProducer } from '../../w016-producers'
 import { autoAlias } from './utils'
@@ -44,7 +44,7 @@ const spawnRequester = (dmz, originAction) => {
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
   const { network, validators } = dmz
-  const covenantId = covenantIdModel.create('unity')
+  const covenantId = CovenantId.create('unity')
   const childDmz = Dmz.create({
     network: Network.create(),
     covenantId,

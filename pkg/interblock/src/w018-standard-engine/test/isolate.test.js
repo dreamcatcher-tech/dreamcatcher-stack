@@ -2,7 +2,7 @@ import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import { ioQueueFactory } from '../../w003-queue'
 import { isolateFactory, toFunctions } from '../src/services/isolateFactory'
-import { RxRequest, covenantIdModel, Dmz, Block } from '../../w015-models'
+import { RxRequest, CovenantId, Dmz, Block } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:isolate')
 chai.use(chaiAsPromised)
@@ -19,9 +19,9 @@ describe('isolation', () => {
       reducer1: { reducer: reducer1 },
       reducer2: { reducer: reducer2 },
     }
-    let covenantId = covenantIdModel.create('reducer1')
+    let covenantId = CovenantId.create('reducer1')
     const block1 = Block.create(Dmz.create({ covenantId }))
-    covenantId = covenantIdModel.create('reducer2')
+    covenantId = CovenantId.create('reducer2')
     const block2 = Block.create(Dmz.create({ covenantId }))
 
     const fakeConsistency = ioQueueFactory('fakeConsistency')
@@ -76,7 +76,7 @@ describe('isolation', () => {
     const covenantMap = {
       reducer1: { reducer: reducerThrower },
     }
-    let covenantId = covenantIdModel.create('reducer1')
+    let covenantId = CovenantId.create('reducer1')
     const block1 = Block.create(Dmz.create({ covenantId }))
 
     const fakeConsistency = ioQueueFactory('fakeConsistency')

@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { interchain, _hook as hook } from '../../w002-api'
-import { Dmz, RxRequest, Address, covenantIdModel } from '../../w015-models'
+import { Dmz, RxRequest, Address, CovenantId } from '../../w015-models'
 import { actions } from '..'
 import { metrologyFactory } from '../../w018-standard-engine'
 import { spawnReducer, spawn } from '../src/spawn'
@@ -25,7 +25,7 @@ describe('dmzReducer', () => {
         }
         return {}
       }
-      const covenantId = covenantIdModel.create('hyper')
+      const covenantId = CovenantId.create('hyper')
       const hyper = { reducer, covenantId }
       const base = await metrologyFactory('multi', { hyper })
       base.enableLogging()

@@ -3,7 +3,7 @@ import {
   RxReply,
   RxRequest,
   Dmz,
-  reductionModel,
+  Reduction,
   Pending,
 } from '../../../w015-models'
 import { networkProducer, dmzProducer } from '../../../w016-producers'
@@ -31,7 +31,7 @@ const common = (debug) => {
       const { reduceResolve } = event.data
       assert(reduceResolve)
       debug(`assignResolve pending: %o`, reduceResolve.isPending)
-      return reductionModel.create(reduceResolve, anvil, dmz)
+      return Reduction.create(reduceResolve, anvil, dmz)
     },
   })
   const assignRejection = assign({
@@ -63,7 +63,7 @@ const common = (debug) => {
   const transmit = assign({
     dmz: ({ dmz, reduceResolve }) => {
       assert(dmz instanceof Dmz)
-      assert(reductionModel.isModel(reduceResolve))
+      assert(reduceResolve instanceof Reduction)
       const { transmissions } = reduceResolve
       debug('transmit transmissions.length: %o', transmissions.length)
       // TODO check if moving channels around inside dmz can affect tx ?
@@ -78,7 +78,7 @@ const common = (debug) => {
       if (isExternalPromise) {
         return isExternalPromise
       }
-      assert(reductionModel.isModel(reduceResolve))
+      assert(reduceResolve instanceof Reduction)
       const replies = reduceResolve.getReplies()
       // TODO cleanup, since sometimes externalAction is an rxReply
       if (externalAction instanceof RxReply) {
@@ -103,7 +103,7 @@ const common = (debug) => {
         return isOriginPromise
       }
       assert(initialPending instanceof Pending)
-      assert(reductionModel.isModel(reduceResolve))
+      assert(reduceResolve instanceof Reduction)
       const replies = reduceResolve.getReplies()
       const { pendingRequest } = initialPending
       isOriginPromise = replies.some(
@@ -117,7 +117,7 @@ const common = (debug) => {
   })
   const assignReplayIdentifiers = assign({
     dmz: ({ reduceResolve, dmz }) => {
-      assert(reductionModel.isModel(reduceResolve))
+      assert(reduceResolve instanceof Reduction)
       assert(dmz instanceof Dmz)
       assert(dmz.pending.getIsPending())
       const { transmissions } = reduceResolve
@@ -160,7 +160,7 @@ const common = (debug) => {
   const mergeState = assign({
     dmz: ({ dmz, reduceResolve }) => {
       assert(dmz instanceof Dmz)
-      assert(reductionModel.isModel(reduceResolve))
+      assert(reduceResolve instanceof Reduction)
       debug(`mergeState`)
       return Dmz.clone({ ...dmz, state: reduceResolve.reduction })
     },

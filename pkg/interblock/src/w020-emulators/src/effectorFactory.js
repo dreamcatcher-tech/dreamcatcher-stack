@@ -39,7 +39,7 @@ import leveljs from 'level-js'
 import LevelDOWN from 'leveldown'
 import { metrologyFactory } from '../../w018-standard-engine'
 import posix from 'path-browserify'
-import { covenantIdModel } from '../../w015-models'
+import { CovenantId } from '../../w015-models'
 import { tcpTransportFactory } from './tcpTransportFactory'
 import * as covenants from '../../w212-system-covenants'
 import { netFactory } from './netFactory'
@@ -137,12 +137,7 @@ const _inflateOverloads = (overloads) => {
       covenant = { ...covenant, covenantId: { name: key } }
     }
     const { name, version, language, integrity } = covenant.covenantId
-    covenant.covenantId = covenantIdModel.create(
-      name,
-      version,
-      language,
-      integrity
-    )
+    covenant.covenantId = CovenantId.create(name, version, language, integrity)
     if (covenant.covenants) {
       const covenants = _inflateOverloads(covenant.covenants)
       covenant.covenants = covenants

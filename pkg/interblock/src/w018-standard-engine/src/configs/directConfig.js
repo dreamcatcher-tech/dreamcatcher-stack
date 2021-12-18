@@ -4,7 +4,7 @@ import {
   RxReply,
   RxRequest,
   Dmz,
-  reductionModel,
+  Reduction,
   TxRequest,
 } from '../../../w015-models'
 import { networkProducer, pendingProducer } from '../../../w016-producers'
@@ -93,7 +93,7 @@ const config = {
     }),
     filterRePromise: assign({
       reduceResolve: ({ reduceResolve, covenantAction }) => {
-        assert(reductionModel.isModel(reduceResolve))
+        assert(reduceResolve instanceof Reduction)
         assert(covenantAction instanceof RxRequest)
         let { transmissions: txs } = reduceResolve
         txs = txs.filter((tx) => {
@@ -106,7 +106,7 @@ const config = {
         })
         const isRepromised = txs.length < reduceResolve.transmissions.length
         debug(`filterRePromise remove tx promise:`, isRepromised)
-        return reductionModel.clone({ ...reduceResolve, transmissions: txs })
+        return Reduction.clone({ ...reduceResolve, transmissions: txs })
       },
     }),
     assignResolve,
@@ -124,7 +124,7 @@ const config = {
       return isPending
     },
     isReductionPending: ({ reduceResolve }) => {
-      assert(reductionModel.isModel(reduceResolve))
+      assert(reduceResolve instanceof Reduction)
       const isReductionPending = reduceResolve.getIsPending()
       debug(`isReductionPending`, isReductionPending)
       return isReductionPending

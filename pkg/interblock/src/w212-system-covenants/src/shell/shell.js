@@ -1,6 +1,6 @@
 import posix from 'path-browserify'
 import assert from 'assert-fast'
-import { covenantIdModel } from '../../../w015-models'
+import { CovenantId } from '../../../w015-models'
 import * as dmzReducer from '../../../w017-dmz-producer'
 import { Machine, assign } from 'xstate'
 import { interchain, useBlocks } from '../../../w002-api'
@@ -8,7 +8,7 @@ import { respond, translator } from '../../../w022-xstate-translator'
 import { listChildren } from '../../../w017-dmz-producer'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:shell')
-const covenantId = covenantIdModel.create('shell')
+const covenantId = CovenantId.create('shell')
 const { ping, spawn, connect, install } = dmzReducer.actions
 
 const config = {
@@ -68,7 +68,7 @@ const config = {
       debug(`addActor: %O to: %O`, name, to)
       if (typeof spawnOptions === 'string') {
         // TODO unify how covenants are referred to
-        const covenantId = covenantIdModel.create(spawnOptions)
+        const covenantId = CovenantId.create(spawnOptions)
         spawnOptions = { covenantId }
       }
       assert.strictEqual(typeof spawnOptions, 'object')
@@ -136,7 +136,7 @@ const config = {
         installer = { ...installer, covenant: 'app' }
       }
       debug(`publish: `, name)
-      const covenantId = covenantIdModel.create('dpkg')
+      const covenantId = CovenantId.create('dpkg')
       const state = { installer }
       // TODO add registry in 'to' field, rather than using shell as reg
       await interchain(spawn(name, { covenantId, state }))
@@ -166,7 +166,7 @@ const config = {
       // TODO unify how covenants are referred to
       covenant = 'app'
       debug(`installing with covenant: `, covenant)
-      const covenantId = covenantIdModel.create(covenant)
+      const covenantId = CovenantId.create(covenant)
       spawnOptions = { ...spawnOptions, covenantId }
       const child = posix.basename(absInstallPath)
       const spawnAction = spawn(child, spawnOptions)
