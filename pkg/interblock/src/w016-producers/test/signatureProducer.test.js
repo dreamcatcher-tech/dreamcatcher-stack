@@ -10,29 +10,23 @@ describe('signatureProducer', () => {
     assert(keypair.secretKey !== keypairTamper.secretKey)
 
     const sig = await signatureProducer.sign(integrity, keypair)
-    const json = sig.serialize()
-    assert.strictEqual(typeof json, 'string')
+    const clone = JSON.parse(JSON.stringify(sig.toArray()))
+    assert(Signature.restore(clone))
 
-    const clone = JSON.parse(json)
-    assert(Signature.clone(clone))
+    const degradedI = sig
+      .update({ integrity: Integrity.create({ degraded: 'degraded' }) })
+      .merge()
+      .toArray()
+    assert.throws(() => Signature.restore(degradedI), 'Could not verify')
 
-    const degradedIntegrity = {
-      ...clone,
-      integrity: Integrity.create({ degraded: 'degraded' }),
-    }
-    assert.throws(() => Signature.clone(degradedIntegrity))
-
-    const degradedPubkey = {
-      ...clone,
-      publicKey: keypairTamper.publicKey,
-    }
-    assert.throws(() => Signature.clone(degradedPubkey))
+    const degradedP = sig
+      .update({ publicKey: keypairTamper.publicKey })
+      .merge()
+      .toArray()
+    assert.throws(() => Signature.restore(degradedP), 'Could not verify')
 
     const { seal } = await signatureProducer.sign(integrity, keypairTamper)
-    const degradedSeal = {
-      ...clone,
-      seal,
-    }
-    assert.throws(() => Signature.clone(degradedSeal))
+    const degradedS = sig.update({ seal }).merge().toArray()
+    assert.throws(() => Signature.restore(degradedS), 'Could not verify')
   })
 })

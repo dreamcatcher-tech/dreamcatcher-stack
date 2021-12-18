@@ -43,9 +43,10 @@ export class Channel extends mixin(channelSchema) {
     const _isLoopback = systemRole === '.'
     // TODO assert the order of rxPromises and txPromises is sequential
     if (address.isUnknown()) {
-      assert.strictEqual(Object.keys(replies).length, 0)
+      assert.strictEqual(replies.size, 0)
       assert.strictEqual(typeof tip, 'undefined')
       assert.strictEqual(typeof tipHeight, 'undefined')
+      assert.strictEqual(typeof rxPromises, 'undefined')
     }
     // TODO if this is pierce channel, ensure only requests are OOB effects ?
 
@@ -69,7 +70,7 @@ export class Channel extends mixin(channelSchema) {
     }
   }
   isTransmitting() {
-    return !!this.requests.length || !!Object.keys(this.replies).length
+    return !!this.requests.length || !!this.replies.size
   }
   isLoopback() {
     return this.systemRole === '.'
@@ -85,7 +86,7 @@ export class Channel extends mixin(channelSchema) {
   rxLoopbackSettle() {
     let _rxPromises = this.rxPromises || []
     for (const promisedKey of _rxPromises) {
-      const reply = this.replies[promisedKey]
+      const reply = this.replies.get(promisedKey)
       if (reply) {
         assert(reply instanceof Continuation)
         if (!reply.isPromise()) {
@@ -111,12 +112,12 @@ export class Channel extends mixin(channelSchema) {
     return [nextHeight, nextIndex]
   }
   #rxLoopbackContinuation() {
-    if (Object.keys(this.replies).length) {
+    if (this.replies.size) {
       const [nextHeight, nextIndex] = this._nextCoords()
       // TODO assert no replies higher than this one are present
       const key = `${nextHeight}_${nextIndex}`
-      if (this.replies[key]) {
-        const action = this.replies[key]
+      if (this.replies.has(key)) {
+        const action = this.replies.get(key)
         return [action, nextHeight, nextIndex]
       }
     }
@@ -137,7 +138,7 @@ export class Channel extends mixin(channelSchema) {
     }
     return false
   }
-
+  // TODO cache all rx*() to avoid create()
   rxLoopbackRequest() {
     assert(this.isLoopback())
     const [nextHeight, nextIndex] = this._nextCoords()

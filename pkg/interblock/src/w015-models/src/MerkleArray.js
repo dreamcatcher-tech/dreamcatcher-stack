@@ -244,8 +244,8 @@ export class MerkleArray {
         } else if (Array.isArray(element)) {
           // only arrays in schemas are all of the same type
           const array = element.map((e) => {
-            if (typeof e.hash === 'function') {
-              return e.hash()
+            if (typeof e.hashRaw === 'function') {
+              return e.hashRaw()
             }
             return e
           })
@@ -327,10 +327,10 @@ export class MerkleArray {
     return bytesToHex(this.hash())
   }
   hash() {
+    assert(this.#isClean(), 'cannot hash while dirty')
     if (this.#dirty.size) {
       this.#updateMerkleTree()
     }
-    assert(this.#isClean(), 'cannot hash while dirty')
     const topLayer = this.#merkle.last()
     assert.strictEqual(topLayer.size, 1)
     return topLayer.get(0)

@@ -1,8 +1,9 @@
 import assert from 'assert-fast'
 import { Dmz, Integrity, Address } from '.'
 import { provenanceSchema } from '../schemas/modelSchemas'
-import { mixin } from '../MapFactory'
+import { Base, mixin } from '../MapFactory'
 import Debug from 'debug'
+import Immutable from 'immutable'
 const debug = Debug('interblock:classes:Provenance')
 
 export class Provenance extends mixin(provenanceSchema) {
@@ -11,7 +12,10 @@ export class Provenance extends mixin(provenanceSchema) {
   #lineageKeys
   #getLineageKeys() {
     if (!this.#lineageKeys) {
-      this.#lineageKeys = Object.keys(this.lineage).map((i) => parseInt(i))
+      this.#lineageKeys = Immutable.List()
+      for (const [key] of this.lineage.entries()) {
+        this.#lineageKeys = this.#lineageKeys.push(parseInt(key))
+      }
     }
     return this.#lineageKeys
   }
@@ -20,13 +24,14 @@ export class Provenance extends mixin(provenanceSchema) {
     assert(dmz.hashString(), 'Dmz must be ready for hashing')
     assert.strictEqual(typeof forkedLineage, 'object')
     const dmzIntegrity = Integrity.create(dmz)
+    assert.strictEqual(dmzIntegrity.hash, dmz.hashString())
     const provenance = {
       dmzIntegrity,
       height: 0,
       address: Address.create('GENESIS'),
       lineage: forkedLineage,
     }
-    const integrity = generateIntegrity(provenance)
+    const integrity = Provenance.generateIntegrity(provenance)
     const signatures = []
 
     return super.create({ ...provenance, integrity, signatures })
@@ -44,10 +49,12 @@ export class Provenance extends mixin(provenanceSchema) {
       assert(this.address.isGenesis())
     } else {
       assert(this.signatures.length <= 1, `single signer only`)
-      assert(lineageKeys.length)
+      assert(lineageKeys.size)
     }
     const reflectedIntegrity = this.reflectIntegrity()
     if (!this.integrity.deepEquals(reflectedIntegrity)) {
+      debug(reflectedIntegrity.hash)
+      debug(this.integrity.hash)
       throw new Error('Self integrity degraded - refusing to instantiate')
     }
     const _signatureIntegrity = () => {
@@ -76,14 +83,15 @@ export class Provenance extends mixin(provenanceSchema) {
   // TODO generate reflectedIntegrity and address lazily
   reflectIntegrity() {
     if (!this.#reflectedIntegrity) {
-      this.#reflectedIntegrity = generateIntegrity(this)
+      this.#reflectedIntegrity = Provenance.generateIntegrity(this)
     }
     return this.#reflectedIntegrity
   }
   isNextProvenance(child) {
-    const isParent = Object.values(child.lineage).some((lineage) =>
-      lineage.equals(this.reflectIntegrity())
-    )
+    assert(child instanceof Provenance)
+    const parentLineage = child.lineage.get(this.height + '')
+    const isParent =
+      parentLineage && parentLineage.deepEquals(this.reflectIntegrity())
     const isHigher = child.height > this.height
     return isParent && isHigher
   }
@@ -94,20 +102,30 @@ export class Provenance extends mixin(provenanceSchema) {
     assert(shortest >= 0 && shortest < this.height)
     return shortest
   }
-}
+  static generateIntegrity(obj) {
+    const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
+    const check = {}
+    for (const key of checkKeys) {
+      assert(typeof obj[key] !== undefined, `missing integrity key: ${key}`)
+      check[key] = obj[key]
+    }
+    check.dmzIntegrity = check.dmzIntegrity.hashString()
+    check.address = check.address.hashString()
+    if (obj.lineage instanceof Base) {
+      check.lineage = {}
+      for (const [key, value] of obj.lineage.entries()) {
+        check.lineage[key] = value
+      }
+    } else {
+      // in provenanceProducer, we cannot make a map, so used a plain object
+      check.lineage = { ...obj.lineage }
+    }
+    for (const key of Object.keys(check.lineage)) {
+      check.lineage[key] = check.lineage[key].hashString()
+    }
+    assert(!check.height || Object.keys(check.lineage).length)
 
-const generateIntegrity = (obj) => {
-  const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
-  const check = {}
-  for (const key of checkKeys) {
-    check[key] = obj[key]
+    const integrity = Integrity.create(check)
+    return integrity
   }
-  check.dmzIntegrity = check.dmzIntegrity.hashString()
-  check.address = check.address.hashString()
-  check.lineage = { ...check.lineage }
-  for (const key of Object.keys(check.lineage)) {
-    check.lineage[key] = check.lineage[key].hashString()
-  }
-  const integrity = Integrity.create(check)
-  return integrity
 }

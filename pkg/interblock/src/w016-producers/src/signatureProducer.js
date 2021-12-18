@@ -18,9 +18,9 @@ const sign = async (integrity, keypair) => {
     publicKey.key
   )
   // TODO find a cleaner way to use publicKey objects, and publicKey strings in crypto
-  const model = Signature.clone({ publicKey, integrity, seal })
+  const signature = Signature.create({ publicKey, integrity, seal })
   debug(`sign complete`)
-  return model
+  return signature
 }
 
 export { sign }

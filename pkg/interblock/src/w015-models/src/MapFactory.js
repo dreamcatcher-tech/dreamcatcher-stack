@@ -54,7 +54,7 @@ export const mixin = (schema) => {
   }
   throw new Error('unsupported schema')
 }
-const Base = class {}
+export const Base = class {}
 const patternProperties = (schema) => {
   // behave like a map
   const { patternProperties } = schema
@@ -328,6 +328,13 @@ const properties = (schema) => {
       }
       return new this.constructor(insidersOnly, nextBackingArray)
     }
+    delete(propertyName) {
+      assert(Number.isInteger(propMap[propertyName]), `${propertyName}`)
+      assert(!schema.required.includes(propertyName), `${propertyName}`)
+      const arrayIndex = propMap[propertyName]
+      const nextBackingArray = this.#backingArray.put(arrayIndex, EMPTY)
+      return new this.constructor(insidersOnly, nextBackingArray)
+    }
     deepEquals(other) {
       if (!(other instanceof this.constructor)) {
         return false
@@ -394,7 +401,7 @@ const properties = (schema) => {
         if (value === EMPTY) {
           continue
         }
-        if (value instanceof Base) {
+        if (typeof value.toJS === 'function') {
           js[prop] = value.toJS()
         } else if (Array.isArray(value)) {
           js[prop] = value.map((v) => {
@@ -487,7 +494,7 @@ const deepValue = (schema, currentValue, nextValue) => {
     }
   } else {
     assert.strictEqual(schema.type, 'object')
-    if (!schema.properties && !schema.patternProperties) {
+    if (!schema.properties && !schema.patternProperties && !schema.title) {
       assert.strictEqual(typeof nextValue, 'object')
       return nextValue
     }
@@ -496,7 +503,12 @@ const deepValue = (schema, currentValue, nextValue) => {
     if (nextValue instanceof Class) {
       return nextValue
     } else if (currentValue === EMPTY) {
-      currentValue = new Class(insidersOnly)
+      if (schema.title === 'State') {
+        // TODO avoid state being a special case
+        currentValue = Class.create()
+      } else {
+        currentValue = new Class(insidersOnly)
+      }
     }
     const ret = currentValue.update(nextValue)
     return ret

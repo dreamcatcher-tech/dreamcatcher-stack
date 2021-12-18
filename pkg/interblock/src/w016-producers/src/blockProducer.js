@@ -5,23 +5,26 @@ import {
   addSignature,
   generatePierceProvenance,
 } from './provenanceProducer'
-
+import Debug from 'debug'
+const debug = Debug('interblock:producers:blockProducer')
 const assemble = (unsignedBlock, signature) => {
   const provenance = addSignature(unsignedBlock.provenance, signature)
-  return Block.clone({ ...unsignedBlock, provenance })
+  return Block.clone({ ...unsignedBlock.spread(), provenance })
 }
 const generateUnsigned = (nextDmz, block) => {
   assert(nextDmz instanceof Dmz)
   assert(block instanceof Block)
   const provenance = generateNextProvenance(nextDmz, block)
-  return Block.clone({ ...nextDmz, provenance })
+  debug(nextDmz.hashString())
+  debug(provenance.dmzIntegrity.hash)
+  return Block.clone({ ...nextDmz.spread(), provenance })
 }
 const generatePierceBlock = (pierceDmz, targetBlock) => {
   const ioChannel = targetBlock.network['.@@io']
   if (ioChannel) {
     const { tipHeight, address } = ioChannel
     const provenance = generatePierceProvenance(pierceDmz, address, tipHeight)
-    return Block.clone({ ...pierceDmz, provenance })
+    return Block.clone({ ...pierceDmz.spread(), provenance })
   }
   return Block.create(pierceDmz)
 }

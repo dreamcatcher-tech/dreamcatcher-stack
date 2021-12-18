@@ -11,7 +11,7 @@ describe('channel', () => {
       const start = Date.now()
       Channel.create()
       const elapsed = Date.now() - start
-      assert(elapsed < 3, elapsed)
+      assert(elapsed < 3, `elapsed time: ${elapsed}`)
     })
     test('create', () => {
       const channel = Channel.create()

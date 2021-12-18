@@ -21,17 +21,21 @@ const ingestInterblocks = (channel, interblocks) => {
   // TODO check the precedents match correctly ?
 
   const ingested = []
+  let next = channel
   for (const interblock of interblocks) {
-    const currentChannel = channel
+    const currentChannel = next
     // BEWARE channel is a mutable object during this loop
-    channel = _ingestInterblock(channel, interblock)
-    if (channel === currentChannel) {
+    next = _ingestInterblock(next, interblock)
+    if (next === currentChannel) {
       debug(`interblock not ingested`)
       break
     }
     ingested.push(interblock)
   }
-  return [Channel.clone(channel), ingested]
+  if (!(next instanceof Channel)) {
+    next = channel.update(next)
+  }
+  return [next, ingested]
 }
 
 const _ingestInterblock = (channel, interblock) => {
@@ -42,18 +46,18 @@ const _ingestInterblock = (channel, interblock) => {
   // handle validator change in lineage
   debug('ingestInterblock')
   assert(interblock instanceof Interblock)
-  assert(channel.address.equals(interblock.provenance.getAddress()))
+  assert(channel.address.deepEquals(interblock.provenance.getAddress()))
   const { provenance, turnovers } = interblock
   const integrity = provenance.reflectIntegrity()
-  const remote = interblock.getRemote()
+  const { transmission } = interblock
 
   let { rxRepliesTip, tip, tipHeight } = channel
   assert(_rxRepliesTipHeight(rxRepliesTip) <= provenance.height)
 
-  if (tip && !remote.precedent.equals(tip)) {
+  if (tip && !transmission.precedent.equals(tip)) {
     return channel
   }
-  if (remote.precedent.isUnknown()) {
+  if (transmission.precedent.isUnknown()) {
     debug(`precedent unknown`)
     assert.strictEqual(typeof tip, 'undefined')
     assert.strictEqual(typeof rxRepliesTip, 'undefined')
@@ -68,7 +72,7 @@ const _ingestInterblock = (channel, interblock) => {
       // TODO handle validators changing at any point
     }
   }
-  rxRepliesTip = _getRxRepliesTip(rxRepliesTip, remote.replies)
+  rxRepliesTip = _getRxRepliesTip(rxRepliesTip, transmission.replies)
   tip = integrity
   tipHeight = provenance.height
   const nextChannel = {
@@ -120,24 +124,26 @@ const _rxRepliesTipHeight = (rxRepliesTip) => {
   return parseInt(rxRepliesTip.split('_').pop())
 }
 const setAddress = (channel, address) => {
+  assert(channel instanceof Channel)
   assert(address instanceof Address)
   assert(!address.isGenesis())
-  if (channel.address.equals(address)) {
+  if (channel.address.deepEquals(address)) {
     return channel
   }
   // TODO if changing address, flush all channels
-  return Channel.clone({ ...channel, address })
+  return channel.update({ address })
 }
 
 // entry point for covenant into system
 const txRequest = (channel, action) => {
-  debug('txRequest')
+  assert(channel instanceof Channel)
   assert(action instanceof Action, `must supply request object`)
+  debug('txRequest')
   // TODO decide if should allow actions to initiate channels just by asking to talk to them
   // TODO use immutable map to detect duplicates faster
   let { requests } = channel
   requests = [...requests, action]
-  return Channel.clone({ ...channel, requests })
+  return channel.update({ requests })
 }
 
 // entry point for covenant into system
@@ -146,12 +152,12 @@ const txReply = (channel, txReply) => {
   assert(txReply instanceof TxReply, `must supply reply object`)
   // TODO track txPromises so dev reducer cannot misbehave
   const replyKey = txReply.getReplyKey()
-  if (channel.replies[replyKey]) {
-    assert.strictEqual(channel.replies[replyKey].type, '@@PROMISE')
+  let { replies } = channel
+  if (replies.has(replyKey)) {
+    assert.strictEqual(replies.get(replyKey).type, '@@PROMISE')
   }
 
-  let { replies } = channel
-  const existingReply = replies[replyKey]
+  const existingReply = replies.get(replyKey)
   if (existingReply) {
     if (!existingReply.isPromise()) {
       throw new Error(`Can only settle previous promises: ${replyKey}`)
@@ -172,7 +178,7 @@ const txReply = (channel, txReply) => {
     throw new Error(`Can only settle synchronously with tip: ${replyKey}`)
   }
   replies = { ...replies, [replyKey]: reply }
-  return Channel.clone({ ...channel, replies })
+  return channel.update({ replies })
 }
 const invalidate = (channel) => {
   const invalid = Address.create('INVALID')
@@ -184,13 +190,16 @@ const invalidate = (channel) => {
 const _isTip = (replyKey, replies) => {
   assert.strictEqual(typeof replyKey, 'string')
   assert.strictEqual(typeof replies, 'object')
-  const keys = Object.keys(replies)
-  if (!keys.length) {
+  if (!replies.size) {
     return true
   }
-  let [maxHeight, maxIndex] = _splitParse(keys[0])
-  for (const key of keys) {
+  let maxHeight, maxIndex
+  for (const [key, value] of replies.entries()) {
     const [height, index] = _splitParse(key)
+    if (maxHeight === undefined) {
+      maxHeight = height
+      maxIndex = index
+    }
     if (height > maxHeight || (height === maxHeight && index > maxIndex)) {
       maxHeight = height
       maxIndex = index
@@ -213,21 +222,19 @@ const _splitParse = (replyKey) => {
 const shiftLoopbackSettle = (loopback) => {
   const rxReply = loopback.rxLoopbackSettle()
   assert(rxReply instanceof RxReply)
-  let { rxPromises = [], ...rest } = loopback
-
+  let { rxPromises = [] } = loopback
   const key = `${rxReply.getHeight()}_${rxReply.getIndex()}`
   assert(rxPromises.includes(key))
   rxPromises = rxPromises.filter((promisedKey) => promisedKey !== key)
   if (rxPromises.length) {
-    rest.rxPromises = rxPromises
+    return loopback.update({ rxPromises })
   }
-  return Channel.clone(rest)
+  return loopback.delete('rxPromises')
 }
 
 const shiftLoopbackReply = (loopback) => {
   assert(loopback instanceof Channel)
   assert(loopback.isLoopback())
-  const nextLoopback = { ...loopback }
   let { replies, rxPromises = [], rxRepliesTip, tipHeight } = loopback
   if (!loopback.isLoopbackReplyPromised()) {
     const rxReply = loopback.rxLoopbackReply()
@@ -242,14 +249,14 @@ const shiftLoopbackReply = (loopback) => {
   } else {
     rxRepliesTip = `${currentHeight}_${0}`
   }
-  nextLoopback.rxRepliesTip = rxRepliesTip
+  let nextLoopback = loopback.update({ rxRepliesTip })
   if (loopback.isLoopbackReplyPromised()) {
-    const promise = replies[rxRepliesTip]
+    const promise = replies.get(rxRepliesTip)
     assert.strictEqual(promise.type, '@@PROMISE')
-    nextLoopback.rxPromises = [...rxPromises, rxRepliesTip]
+    rxPromises = [...rxPromises, rxRepliesTip]
+    nextLoopback = nextLoopback.update({ rxPromises })
   }
-
-  return Channel.clone(nextLoopback)
+  return nextLoopback
 }
 const splitRxRepliesTip = (rxRepliesTip) => {
   if (!rxRepliesTip) {

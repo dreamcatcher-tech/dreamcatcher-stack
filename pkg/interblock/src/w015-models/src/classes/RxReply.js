@@ -26,18 +26,32 @@ export class RxReply extends mixin(rxReplySchema) {
   isReply() {
     return true
   }
+  #address
+  #height
+  #index
+  #ensureInternals() {
+    if (!this.#address) {
+      const { address, height, index } = splitSequence(this.identifier)
+      this.#address = address
+      this.#height = height
+      this.#index = index
+    }
+  }
   getAddress() {
-    // TODO move all usage to be properties directly
-    return this.address
+    this.#ensureInternals()
+    return this.#address
   }
   getHeight() {
-    return this.height
+    this.#ensureInternals()
+    return this.#height
   }
   getIndex() {
-    return this.index
+    this.#ensureInternals()
+    return this.#index
   }
   getReplyKey() {
-    return `${this.height}_${this.index}`
+    this.#ensureInternals()
+    return `${this.#height}_${this.#index}`
   }
   getLogEntry() {
     const { type, address } = this

@@ -44,11 +44,11 @@ export class Conflux {
   #chainMap = new Map()
   static generateRxReplies = (replies, address) => {
     assert.strictEqual(typeof replies, 'object')
-    assert(Object.values(replies).every((v) => v instanceof Continuation))
     assert(address instanceof Address)
     const rxReplies = []
-    for (const key in replies) {
-      const { type, payload } = replies[key]
+    for (const [key, value] of replies.entries()) {
+      assert(value instanceof Continuation)
+      const { type, payload } = value
       if (type === '@@PROMISE') {
         continue
       }
@@ -100,7 +100,7 @@ export class Conflux {
       for (const interblock of thread) {
         const address = interblock.provenance.getAddress()
         const { height } = interblock.provenance
-        const { replies, requests } = interblock.getRemote()
+        const { replies, requests } = interblock.transmission
         const rxReplies = Conflux.generateRxReplies(replies, address)
         const rxRequests = Conflux.generateRxRequests(requests, address, height)
         this.#rxReplies.push(...rxReplies)
@@ -113,7 +113,7 @@ export class Conflux {
       const chainId = interblock.getChainId()
       const { height } = interblock.provenance
       const address = interblock.provenance.getAddress()
-      const remote = interblock.getRemote()
+      const { transmission } = interblock
       if (!this.#chainMap.has(chainId)) {
         this.#chainMap.set(chainId, [])
       }
@@ -121,8 +121,9 @@ export class Conflux {
       const last = thread[thread.length - 1]
       if (last) {
         // TODO may be duplicated with checks in channelProducer
-        assert(remote.precedent.equals(last.provenance.reflectIntegrity()))
-        assert(address.equals(last.provenance.getAddress()))
+        const lastIntegrity = last.provenance.reflectIntegrity()
+        assert(transmission.precedent.deepEquals(lastIntegrity))
+        assert(address.deepEquals(last.provenance.getAddress()))
       }
       thread.push(interblock)
     }

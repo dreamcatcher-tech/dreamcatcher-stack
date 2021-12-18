@@ -11,11 +11,11 @@ export class Interblock extends mixin(interblockSchema) {
     // TODO allow multiple aliases
     assert(block instanceof Block)
     assert(block.isVerifiedBlock(), `Block must be verified`)
-    assert.strictEqual(typeof networkAlias, 'string')
+    assert.strictEqual(typeof networkAlias, 'string', `networkAlias not string`)
     assert(networkAlias !== '.', `Cannot make interblock from loopback channel`)
     assert(Array.isArray(turnovers))
     assert(turnovers.every((t) => t instanceof Turnover))
-    assert(block.network.has(networkAlias))
+    assert(block.network.has(networkAlias), `${networkAlias} not in network`)
 
     const { provenance } = block
     const proof = Proof.create(block, networkAlias)
@@ -35,7 +35,7 @@ export class Interblock extends mixin(interblockSchema) {
     const { address, replies, requests, precedent } = transmission
     assert(address.isResolved())
     const msg = `Interblocks must always transmit something`
-    assert(Object.keys(replies).length || requests.length, msg)
+    assert(replies.size || requests.length, msg)
     if (precedent.isUnknown() && !provenance.address.isGenesis()) {
       assert(turnovers.length, `new channel must supply turnovers`)
     }
@@ -57,9 +57,6 @@ export class Interblock extends mixin(interblockSchema) {
   }
   getOriginAlias() {
     return originAlias
-  }
-  getRemote() {
-    return tx
   }
 
   isConnectionAttempt() {
@@ -109,6 +106,6 @@ export class Interblock extends mixin(interblockSchema) {
     return replies[0] && !Object.keys(requests).length
   }
   getChainId() {
-    return provenance.getAddress().getChainId()
+    return this.provenance.getAddress().getChainId()
   }
 }

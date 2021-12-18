@@ -1,6 +1,9 @@
 import assert from 'assert-fast'
 import { produceWithPatches, freeze } from 'immer'
 import equals from 'fast-deep-equal'
+import * as crypto from '../../../w012-crypto'
+import { Buffer } from 'buffer'
+import { Base } from '../MapFactory'
 
 const schema = {
   title: 'State',
@@ -49,14 +52,14 @@ export const assertNoUndefined = (obj, path = '/') => {
     }
   }
 }
-
-export class State {
+export class State extends Base {
   static get schema() {
     return schema
   }
   static restore(backingArray) {
     assert(Array.isArray(backingArray))
     assert.strictEqual(backingArray.length, 1)
+    assert.strictEqual(typeof backingArray[0], 'object')
     return State.create(backingArray[0])
   }
   static create(base) {
@@ -71,8 +74,8 @@ export class State {
     if (LOCKED_CONSTRUCTOR !== insidersOnly) {
       throw new Error('Locked constructor - use State.create()')
     }
+    super()
     assert.strictEqual(typeof base, 'object')
-    const deepFreeze = true
     freeze(base, deepFreeze)
     this.#base = base
     this.assertLogic()
@@ -91,15 +94,16 @@ export class State {
   }
   merge() {
     this.diff()
-    return new State(insidersOnly, this.#base)
+    return new State(insidersOnly, this.#getState())
   }
   update(updatedState) {
     const next = this.#clone()
     next.#next = updatedState
+    freeze(next.#next, deepFreeze)
     return next
   }
   #clone() {
-    const next = new State()
+    const next = new State(insidersOnly, this.#base)
     next.#base = this.#base
     next.#next = this.#next
     next.#diffFor = this.#diffFor
@@ -132,6 +136,25 @@ export class State {
     return patches
   }
   toArray() {
-    return [this.#base]
+    return [this.#getState()]
+  }
+  toJS() {
+    // TODO ensure that merging has happened already
+    return this.#getState()
+  }
+  #getState() {
+    if (this.#next) {
+      return this.#next
+    }
+    return this.#base
+  }
+  #assertIsClean() {
+    assert.strictEqual(this.#next, undefined, 'State is dirty')
+  }
+  hashRaw() {
+    this.#assertIsClean()
+    const hash = crypto.objectHash(this.#getState())
+    // TODO check if this hashes correctly
+    return Uint8Array.from(Buffer.from(hash, 'hex'))
   }
 }

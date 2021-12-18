@@ -2,7 +2,8 @@ import { mixin } from '../MapFactory'
 import { provenanceSchema } from '../schemas/modelSchemas'
 import { Provenance, Dmz, Interblock, Validators } from '.'
 import assert from 'assert-fast'
-import debug from 'debug'
+import Debug from 'debug'
+const debug = Debug('interblock:classes:Block')
 
 const blockSchema = {
   ...Dmz.schema,
@@ -17,6 +18,7 @@ const blockSchema = {
 }
 const defaultDmz = Dmz.create()
 export class Block extends mixin(blockSchema) {
+  #dmz
   static create(dmz = defaultDmz, forkedLineages = {}) {
     // throw new Error(`Only blockProducer can make new block models`)
     assert(dmz instanceof Dmz)
@@ -35,11 +37,11 @@ export class Block extends mixin(blockSchema) {
     const address = this.provenance.getAddress()
     const isLoop = this.network.hasByAddress(address)
     assert(!isLoop, `Loop detected - use loopback address instead`)
-    const { provenance, ...spreadDmz } = this.spread()
-    const dmz = Dmz.create(spreadDmz)
+    const { validators, provenance } = this
+    const dmz = this.getDmz()
     const hash = dmz.hashString()
     assert.strictEqual(hash, provenance.dmzIntegrity.hash, `hash mismatch`)
-    const { isOnlyRequired } = checkSignatures(dmz.validators, provenance)
+    const { isOnlyRequired } = checkSignatures(validators, provenance)
     if (!isOnlyRequired) {
       throw new Error('Invalid signatures detected on block')
     }
@@ -55,7 +57,11 @@ export class Block extends mixin(blockSchema) {
 
   getDmz() {
     // TODO intertwine with DMZ deeper than this
-    return dmz
+    if (!this.#dmz) {
+      const { provenance, ...spreadDmz } = this.spread()
+      this.#dmz = Dmz.create(spreadDmz)
+    }
+    return this.#dmz
   }
 
   /**
@@ -82,6 +88,7 @@ export class Block extends mixin(blockSchema) {
     const isProvenance = this.provenance.isNextProvenance(nextBlock.provenance)
     // TODO check if forked lineage was applied if required
     // TODO check that channels have been emptied, and correct precedent set
+    debug({ isBlock, isVerifiedBlock, isProvenance })
     return isBlock && isVerifiedBlock && isProvenance
   }
   getChainId() {
@@ -120,11 +127,12 @@ const checkSignatures = (validators, provenance) => {
   const providedPublicKeys = provenance.signatures.map(
     (signature) => signature.publicKey
   )
+  // TODO make a map to do lookups faster
   const isAllRequired = requiredPublicKeys.every((key) =>
-    providedPublicKeys.some((providedKey) => providedKey.equals(key))
+    providedPublicKeys.some((providedKey) => providedKey.deepEquals(key))
   )
   const isOnlyRequired = providedPublicKeys.every((key) =>
-    requiredPublicKeys.some((requiredKey) => requiredKey.equals(key))
+    requiredPublicKeys.some((requiredKey) => requiredKey.deepEquals(key))
   )
   return { isPierce, isAllRequired, isOnlyRequired }
 }

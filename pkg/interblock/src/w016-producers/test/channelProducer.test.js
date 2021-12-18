@@ -15,6 +15,7 @@ import {
   Provenance,
   RxReply,
   RxRequest,
+  State,
   TxReply,
 } from '../../w015-models'
 const debug = Debug('interblock:tests:producers:channel')
@@ -58,7 +59,7 @@ describe('channelProducer', () => {
     const action = Action.create('action1')
     tx = txRequest(tx, action)
     assert(tx instanceof Channel)
-    assert(action.equals(tx.requests[0]))
+    assert(action.deepEquals(tx.requests[0]))
     assert.strictEqual(tx.requests.length, 1)
   })
   test('multiple actions requested', () => {
@@ -79,7 +80,7 @@ describe('channelProducer', () => {
     remote = txRequest(remote, Action.create('action1'))
     remote = txRequest(remote, Action.create('action2'))
     remote = txRequest(remote, Action.create('action3'))
-    const [interblock] = reflect(remote)
+    const interblock = reflect(remote)
 
     let local = Channel.create(interblock.provenance.getAddress())
     const [nextLocal] = ingestInterblocks(local, [interblock])
@@ -92,17 +93,17 @@ describe('channelProducer', () => {
     local = txReply(local, TxReply.create('@@PROMISE', {}, seq + 2))
     local = txReply(local, TxReply.create('@@RESOLVE', {}, seq + 0))
 
-    assert(local.replies['0_0'].type === '@@RESOLVE')
-    assert(local.replies['0_1'].type === '@@PROMISE')
-    assert(local.replies['0_2'].type === '@@PROMISE')
+    assert(local.replies.get('0_0').type === '@@RESOLVE')
+    assert(local.replies.get('0_1').type === '@@PROMISE')
+    assert(local.replies.get('0_2').type === '@@PROMISE')
 
     local = txReply(local, TxReply.create('@@RESOLVE', {}, seq + 2))
-    assert(local.replies['0_0'].type === '@@RESOLVE')
-    assert(local.replies['0_1'].type === '@@PROMISE')
-    assert(local.replies['0_2'].type === '@@RESOLVE')
+    assert(local.replies.get('0_0').type === '@@RESOLVE')
+    assert(local.replies.get('0_1').type === '@@PROMISE')
+    assert(local.replies.get('0_2').type === '@@RESOLVE')
 
     assert.strictEqual(local.requests.length, 0)
-    assert.strictEqual(Object.keys(local.replies).length, 3)
+    assert.strictEqual(local.replies.size, 3)
   })
   test.todo(
     'txReply enforces replyKey correctness'
@@ -147,7 +148,7 @@ describe('channelProducer', () => {
       const action = Action.create('REMOTE_ACTION')
       let txChannel = Channel.create(Address.create('TEST'))
       txChannel = txRequest(txChannel, action)
-      const [txInterblock] = reflect(txChannel)
+      const txInterblock = reflect(txChannel)
 
       let rxChannel = Channel.create()
       rxChannel = setAddress(rxChannel, txInterblock.provenance.getAddress())
@@ -163,9 +164,9 @@ describe('channelProducer', () => {
       const { identifier } = request
       const reply = TxReply.create('@@RESOLVE', { t: 'p' }, identifier)
       rxChannel = txReply(rxChannel, reply)
-      assert(rxChannel.replies['0_0'].isResolve())
+      assert(rxChannel.replies.get('0_0').isResolve())
 
-      const [rxInterblock] = reflect(rxChannel)
+      const rxInterblock = reflect(rxChannel)
       // recreate but with known rx address now
       txChannel = Channel.create(rxInterblock.provenance.getAddress())
       txChannel = txRequest(txChannel, action)
@@ -209,7 +210,7 @@ describe('channelProducer', () => {
       loopback = txRequest(loopback, action3)
       assert.strictEqual(loopback.requests.length, 3)
       const rxReq1 = loopback.rxLoopbackRequest()
-      assert(rxReq1.equals(loopback.rxLoopbackRequest()))
+      assert(rxReq1.deepEquals(loopback.rxLoopbackRequest()))
       assert(rxReq1 instanceof RxRequest)
       assert.throws(() => shiftLoopbackReply(loopback))
       assert.throws(() => shiftLoopbackSettle(loopback))
@@ -230,8 +231,8 @@ describe('channelProducer', () => {
       assert.strictEqual(rxReq2.type, action2.type)
       const txRep2 = TxReply.create('@@PROMISE', {}, rxReq2.identifier)
       loopback = txReply(loopback, txRep2)
-      assert.throws(() => txReply(loopback, txRep2))
-      assert(rxReq2.equals(loopback.rxLoopbackRequest()))
+      assert.throws(() => txReply(loopback, txRep2), 'Can only promise for tip')
+      assert(rxReq2.deepEquals(loopback.rxLoopbackRequest()))
       assert(loopback.isLoopbackReplyPromised())
       assert(!loopback.rxPromises)
       loopback = shiftLoopbackReply(loopback)
@@ -312,7 +313,7 @@ describe('stress tests', () => {
       const actions = Array(bufferedActionsCount).map(() =>
         request('STRESS', { id: id++ })
       )
-      const state = stateModel.create({ actions })
+      const state = State.create({ actions })
 
       // produce a new interblock
     }
@@ -337,5 +338,6 @@ const reflect = (transmission) => {
   const dmz = Dmz.create({ network })
   const block = Block.create(dmz)
   assert(block.isVerifiedBlock())
-  return [interblock, block]
+  const interblock = Interblock.create(block, 'transmission')
+  return interblock
 }

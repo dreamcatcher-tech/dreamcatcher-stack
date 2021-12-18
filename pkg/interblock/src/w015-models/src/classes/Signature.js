@@ -1,8 +1,10 @@
 import { signatureSchema } from '../schemas/modelSchemas'
 import { mixin } from '../MapFactory'
+import * as crypto from '../../../w012-crypto'
+
 export class Signature extends mixin(signatureSchema) {
-  static create() {
-    throw new Error(`Only Keypair can create Signatures`)
+  static create({ integrity, seal, publicKey }) {
+    return super.create({ integrity, seal, publicKey })
   }
   assertLogic() {
     const { integrity, seal, publicKey } = this

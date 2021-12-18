@@ -1,8 +1,8 @@
 import { mixin } from '../MapFactory'
 
 const schema = {
-  type: 'object',
   title: 'Acl',
+  type: 'object',
   //   description: `Access control list, power rating, alias table, and chargeout rates
   // Groups are similar to roles.
   // Groups contain only Actors

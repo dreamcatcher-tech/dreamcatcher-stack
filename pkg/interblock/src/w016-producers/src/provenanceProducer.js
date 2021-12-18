@@ -10,11 +10,13 @@ import {
   Block,
   Signature,
 } from '../../w015-models'
+import Debug from 'debug'
+const debug = Debug('interblock:producers:provenanceProducer')
 
 const generateNextProvenance = (nextDmz, block) => {
   assert(nextDmz instanceof Dmz)
   assert(block instanceof Block)
-  assert(!nextDmz.equals(block.getDmz()), 'block dmz has not changed')
+  assert(!nextDmz.deepEquals(block.getDmz()), 'block dmz has not changed')
   // TODO check the dmz follows from the current one ?
   // TODO put checks in that blocks without new transmissions cannot be created
 
@@ -29,31 +31,23 @@ const generateNextProvenance = (nextDmz, block) => {
     const genesisHeight = 0
     lineage[genesisHeight] = genesis
   }
-  const dmzIntegrity = Integrity.create(nextDmz.getHash())
+  const dmzIntegrity = Integrity.create(nextDmz)
+  debug('dmzIntegrity', dmzIntegrity.hash)
   const parentIntegrity = provenance.reflectIntegrity()
   lineage[provenance.height] = parentIntegrity
   const address = provenance.getAddress()
   const height = provenance.height + 1
-  const nextProvenance = {
-    dmzIntegrity,
-    height,
-    address,
-    lineage,
-  }
-  const integrity = Integrity.create(nextProvenance)
+  const next = { dmzIntegrity, height, address, lineage }
+  const integrity = Provenance.generateIntegrity(next)
   const signatures = []
-  const unsigned = Provenance.clone({
-    ...nextProvenance,
-    integrity,
-    signatures,
-  })
+  const unsigned = provenance.update({ ...next, integrity, signatures })
   return unsigned
 }
 const addSignature = (provenance, signature) => {
   assert(provenance instanceof Provenance)
   assert(signature instanceof Signature)
-  assert(!provenance.signatures.length, `temporarily single sign only`)
-  return Provenance.clone({ ...provenance, signatures: [signature] })
+  assert(!provenance.signatures.length, `prototype is single sign only`)
+  return provenance.update({ signatures: [signature] })
 }
 const generatePierceProvenance = (pierceDmz, address, parentHeight) => {
   assert(pierceDmz instanceof Dmz)

@@ -26,7 +26,7 @@ describe('blockProducer', () => {
       assert(block.isNextBlock(next))
 
       const falseSignature = await signatureProducer.sign(integrity, keypairB)
-      assert(!falseSignature.equals(signature))
+      assert(!falseSignature.deepEquals(signature))
       assert.throws(() => blockProducer.assemble(unsigned, falseSignature))
     })
     test('throws if no dmz or block provided', () => {
@@ -42,12 +42,16 @@ describe('blockProducer', () => {
     test('pass serialize test', () => {
       const block = Block.create()
       const state = { test: 'state' }
-      const nextDmz = Dmz.clone({ ...block.getDmz(), state })
+      const nextDmz = block.getDmz().update({ state }).merge()
       const nextBlock = blockProducer.generateUnsigned(nextDmz, block)
-      const json = nextBlock.serialize()
+      debug(nextBlock.provenance.toArray())
+      debug(Object.keys(Block.schema.properties).sort())
+      debug(Object.keys(Block.schema.properties.provenance.properties).sort())
+      Block.restore(nextBlock.toArray())
+      const json = JSON.stringify(nextBlock.toArray())
       assert.strictEqual(typeof json, 'string')
-      const clone = Block.clone(json)
-      assert(clone.equals(nextBlock))
+      const clone = Block.restore(JSON.parse(json))
+      assert(clone.deepEquals(nextBlock))
     })
     test.skip('dual validator signing', () => {
       const kp1 = crypto.generateKeyPair()
