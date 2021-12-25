@@ -88,7 +88,8 @@ const standardEngineFactory = () => {
             assert(txInterblocks.every((v) => v instanceof Interblock))
             assert.strictEqual(typeof isRedriveRequired, 'boolean')
             const awaits = txInterblocks.map((interblock) =>
-              sqsTransmit.push(interblock)
+              // pushDirect to surface rejections
+              sqsTransmit.pushDirect(interblock)
             )
             await Promise.all(awaits)
             // TODO speed up by increasing next block before this completes

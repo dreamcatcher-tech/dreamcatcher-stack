@@ -13,9 +13,9 @@ const test = (network, alias, height, fn) => {
   assert(_tap, `tap not set`)
   // if network belongs to this alias, and is at this height, run this fn
   const block = _tap.getLatest(alias)
-  const blockParent = block.network['..'].address
-  const isParentSame = network['..'].address.equals(blockParent)
-  const isAliasSame = compareAliases(block.network['..'], network['..'])
+  const blockParent = block.network.get('..').address
+  const isParentSame = network.get('..').address.deepEquals(blockParent)
+  const isAliasSame = compareAliases(block.network.get('..'), network.get('..'))
   const isHeightSame = height === block.provenance.height
   if (isParentSame && isAliasSame && isHeightSame) {
     fn(debug)

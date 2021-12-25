@@ -61,7 +61,7 @@ const transmitConfig = (ioConsistency) => {
       fetchRemoteTargets: async ({ interblock }) => {
         assert(interblock instanceof Interblock)
         const toAddress = interblock.getTargetAddress()
-        assert(Address.isModel(toAddress))
+        assert(toAddress instanceof Address)
         const sockets = await consistency.getSockets(toAddress)
         debug(`fetchTargetSockets length: ${sockets.length}`)
         return { sockets }

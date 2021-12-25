@@ -43,7 +43,7 @@ const cryptoSourceFactory = (leveldb, keyname = 'CI') => {
         throw new Error(`cannot store keypair`)
       }
       _keypair = retrieved
-      if (!_keypair.equals(keypairAttempt)) {
+      if (!_keypair.deepEquals(keypairAttempt)) {
         console.error(`collision avoided for: `, keyname)
       }
     }

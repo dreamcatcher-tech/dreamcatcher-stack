@@ -14,7 +14,7 @@ const reconcile = (lock, block) => {
   assert(block instanceof Block)
   const piercings = { requests: [], replies: [] }
   const interblocks = []
-  return Lock.clone({ ...lock, block, piercings, interblocks })
+  return lock.update({ block, piercings, interblocks })
 }
 
 export { reconcile }

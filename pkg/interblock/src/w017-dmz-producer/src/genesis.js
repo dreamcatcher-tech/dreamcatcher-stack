@@ -10,7 +10,7 @@ const genesisReducer = (dmz, action) => {
   assert.strictEqual(action.type, '@@GENESIS')
   interchain('@@INIT') // covenant, take your first breath
   replyPromise()
-  const chainId = dmz.network['.'].address.getChainId()
+  const chainId = dmz.network.get('.').address.getChainId()
   const height = dmz.getCurrentHeight()
   const index = 0
   const replyIdentifier = `${chainId}_${height}_${index}`
@@ -19,7 +19,7 @@ const genesisReducer = (dmz, action) => {
     originIdentifier: action.identifier,
   }
   const meta = metaProducer.withSlice(dmz.meta, replyIdentifier, slice)
-  return Dmz.clone({ ...dmz, meta })
+  return dmz.update({ meta })
   // TODO check can only have come from parent, and must be the first action in the channel
   // auto respond will resolve this action
   // TODO wait for response from covenant, in case rejected

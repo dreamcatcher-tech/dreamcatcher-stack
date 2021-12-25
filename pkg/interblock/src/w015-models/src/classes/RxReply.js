@@ -54,7 +54,8 @@ export class RxReply extends mixin(rxReplySchema) {
     return `${this.#height}_${this.#index}`
   }
   getLogEntry() {
-    const { type, address } = this
+    const { type } = this
+    const address = this.getAddress()
     const chainId = address.getChainId()
     return `${type} ${chainId.substring(0, 9)} ${this.getReplyKey()}`
   }

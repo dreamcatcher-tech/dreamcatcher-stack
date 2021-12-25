@@ -180,12 +180,12 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
       let nextBlock = await getLatest(address)
       while (segments.length) {
         alias = segments.shift()
-        if (!nextBlock.network[alias]) {
+        if (!nextBlock.network.has(alias)) {
           debug(`getLatestFromPath non existent:`, path)
           return
         }
-        assert(nextBlock.network[alias].address.isResolved())
-        address = nextBlock.network[alias].address
+        assert(nextBlock.network.get(alias).address.isResolved())
+        address = nextBlock.network.get(alias).address
         nextBlock = await getLatest(address)
       }
       if (height === -1 || height === nextBlock.getHeight()) {

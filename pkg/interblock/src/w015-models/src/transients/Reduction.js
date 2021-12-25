@@ -8,6 +8,7 @@ const schema = {
   required: ['isPending'],
   additionalProperties: false,
   properties: {
+    // TODO rename reduction to nextState or something
     reduction: { type: 'object' },
     isPending: { type: 'boolean' },
     txReplies: {

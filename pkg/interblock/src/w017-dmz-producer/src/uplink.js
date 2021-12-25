@@ -12,24 +12,26 @@ const uplink = (chainId) => ({
 const uplinkReducer = (dmz, rxRequest) => {
   assert(dmz instanceof Dmz)
   assert(rxRequest instanceof RxRequest)
-  const { network } = dmz
+  let { network } = dmz
   const { chainId } = rxRequest.payload
   assert(chainId) // TODO test against regex
   const address = Address.create(chainId)
   assert.strictEqual(address.getChainId(), chainId)
   assert(address.isResolved())
 
-  let alias = network.getAlias(address)
-  const nextNetwork = {}
-  if (!alias || network[alias].systemRole !== 'UP_LINK') {
-    alias = autoAlias(network, '.uplink_')
-    assert(!network[alias])
-    nextNetwork[alias] = Channel.create(address, 'UP_LINK')
+  const isUplinkRequired =
+    !network.hasByAddress(address) ||
+    network.getByAddress(address).systemRole !== 'UP_LINK'
+  if (isUplinkRequired) {
+    const alias = autoAlias(network, '.uplink_')
+    assert(!network.has(alias))
+    network = network.set(alias, Channel.create(address, 'UP_LINK'))
+    dmz = dmz.update({ network })
   }
   const shortChainId = chainId.substring(0, 9)
-  debug(`uplinkReducer ${alias} set to ${shortChainId}`)
+  debug(`uplinkReducer set to ${shortChainId}`)
   replyResolve()
-  return Dmz.clone({ ...dmz, network: network.merge(nextNetwork) })
+  return dmz
 }
 const uplinkReply = (slice, rxReply, dmz) => {
   assert.strictEqual(typeof slice, 'object')

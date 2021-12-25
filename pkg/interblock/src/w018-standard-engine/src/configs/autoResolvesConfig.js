@@ -77,7 +77,7 @@ const config = {
       assert(dmz instanceof Dmz)
       assert(externalAction instanceof RxRequest)
       const address = externalAction.getAddress()
-      const isChannelRemoved = !dmz.network.getAlias(address)
+      const isChannelRemoved = !dmz.network.getByAddress(address)
       debug(`isChannelRemoved`, isChannelRemoved)
       return isChannelRemoved
     },

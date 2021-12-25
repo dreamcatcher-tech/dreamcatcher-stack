@@ -90,11 +90,11 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         turnoverHeights: ({ block }) => {
           assert(block instanceof Block)
           assert(!block.provenance.address.isGenesis())
-          const txAliases = block.network.txInterblockAliases()
+          const txAliases = block.network.getTransmittingAliases()
           debug(`calculateTurnoverHeights tx length:`, txAliases.length)
           const heights = new Set()
           for (const alias of txAliases) {
-            const channel = block.network[alias]
+            const channel = block.network.get(alias)
             if (channel.precedent.isUnknown()) {
               // TODO handle multiple turnover events in the chain
               heights.add(0)
@@ -125,10 +125,10 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           assert(block instanceof Block)
           assert(!block.provenance.address.isGenesis())
           assert(Object.values(turnoverBlocks).every((b) => b instanceof Block))
-          const txAliases = block.network.txInterblockAliases()
+          const txAliases = block.network.getTransmittingAliases()
           debug(`assignTxInterblocks length:`, txAliases.length)
           const interblocks = txAliases.map((alias) => {
-            const channel = block.network[alias]
+            const channel = block.network.get(alias)
             const turnovers = []
             if (channel.precedent.isUnknown()) {
               const turoverBlock = turnoverBlocks[0]
@@ -235,7 +235,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         assert(nextLock.block)
         assert(!nextLock.block.equals(lock.block))
         debug(`effects`)
-        const io = nextLock.block.network['.@@io']
+        const io = nextLock.block.network.get('.@@io')
         assert(io && nextLock.block.config.isPierced)
         // TODO set container permissions to allow network access
         const timeout = 30000

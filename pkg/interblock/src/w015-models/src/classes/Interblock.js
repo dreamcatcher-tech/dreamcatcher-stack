@@ -27,6 +27,9 @@ export class Interblock extends mixin(interblockSchema) {
     }
     return super.create(interblock)
   }
+  static clone(interblock) {
+    return super.create(interblock)
+  }
   assertLogic() {
     const { provenance, proof, transmission, turnovers = [] } = this
     debug(transmission)
@@ -41,27 +44,25 @@ export class Interblock extends mixin(interblockSchema) {
     }
   }
   extractGenesis() {
-    if (requests[0] && requests[0].payload.genesis) {
-      if (!extractedGenesis) {
+    const initialRequest = this.transmission.requests[0]
+    if (initialRequest && initialRequest.payload.genesis) {
+      if (!this.#extractedGenesis) {
         // TODO move to producers and handle minimal payload
-
-        const genesis = Block.clone(requests[0].payload.genesis)
+        // TODO handle serialization of payload
+        const genesis = initialRequest.payload.genesis
         assert(genesis.provenance.address.isGenesis())
-        extractedGenesis = genesis
+        this.#extractedGenesis = genesis
       }
     }
-    return extractedGenesis
+    return this.#extractedGenesis
   }
   getTargetAddress() {
-    return address
-  }
-  getOriginAlias() {
-    return originAlias
+    return this.transmission.address
   }
 
   isConnectionAttempt() {
-    const request = tx.requests[0]
-    const isSingleRequest = tx.requests.length === 1
+    const request = this.transmission.requests[0]
+    const isSingleRequest = this.transmission.requests.length === 1
     if (request && request.type === '@@INTRO' && isSingleRequest) {
       // TODO check no replies back yet
       return true
@@ -69,7 +70,7 @@ export class Interblock extends mixin(interblockSchema) {
   }
   isGenesisAttempt() {
     try {
-      return !!extractGenesis()
+      return !!this.extractGenesis()
     } catch (e) {
       return false
     }

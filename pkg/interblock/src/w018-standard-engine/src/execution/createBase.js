@@ -50,35 +50,25 @@ const prebuiltInterblock = {
   },
   proof: {
     block: 'no proof needed',
-    network: {
-      networkChannels: [
-        '69a5295a9e3c6f0ae1168c434d8b81ea064e150f69ec8c79bacceff47b1a286d',
-        '8a52c34adda1258265ff2668c9df406728f0fbf4872b03a1eb4ce49eabaf079e',
-        'd6d59ee97bae317db85f3b1381c6102061116861ffea6a4d0682f873c1a2066c',
-      ],
-    },
-    channel: 'c852ff8878d14d9f44952a439bb3c32a69799b3b2eff74fe83c1e53a481e7393',
   },
-  network: {
-    transmission: {
-      address: {
-        chainId: {
-          hash: '9f71f58cf978462ffdbce6d07bdede517718acde35d240139732145b040497fa',
-          algorithm: 'sha256',
-        },
-        status: 'RESOLVED',
-      },
-      replies: {},
-      requests: [
-        {
-          type: 'REMOTE_ACTION',
-          payload: {},
-        },
-      ],
-      precedent: {
-        hash: 'UNKNOWN',
+  transmission: {
+    address: {
+      chainId: {
+        hash: '9f71f58cf978462ffdbce6d07bdede517718acde35d240139732145b040497fa',
         algorithm: 'sha256',
       },
+      status: 'RESOLVED',
+    },
+    replies: {},
+    requests: [
+      {
+        type: 'REMOTE_ACTION',
+        payload: {},
+      },
+    ],
+    precedent: {
+      hash: 'UNKNOWN',
+      algorithm: 'sha256',
     },
   },
 }

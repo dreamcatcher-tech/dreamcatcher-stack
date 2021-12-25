@@ -18,7 +18,7 @@ describe('pierce', () => {
     debug(`pings complete`)
     await base.settle()
     const baseBlock = await base.getLatest()
-    const { replies } = baseBlock.network['.@@io']
+    const { replies } = baseBlock.network.get('.@@io')
     assert.strictEqual(Object.keys(replies).length, 1)
     assert.strictEqual(replies['1_0'].type, '@@RESOLVE')
   })
@@ -27,7 +27,7 @@ describe('pierce', () => {
     const { ioTransmit } = base.getEngine()
     let noIoTransmissions = true
     ioTransmit.subscribe((interblock) => {
-      if (interblock.network['.@@io']) {
+      if (interblock.network.get('.@@io')) {
         noIoTransmissions = false
       }
     })
@@ -44,7 +44,7 @@ describe('pierce', () => {
     const p2Promise = base.pierce(ping2)
     await Promise.all([p1Promise, p2Promise])
     const baseBlock = await base.getLatest()
-    const io = baseBlock.network['.@@io']
+    const io = baseBlock.network.get('.@@io')
     assert.strictEqual(Object.keys(io.replies).length, 2)
     assert.strictEqual(io.replies['0_0'].payload.string, 'p1')
     assert.strictEqual(io.replies['0_1'].payload.string, 'p2')

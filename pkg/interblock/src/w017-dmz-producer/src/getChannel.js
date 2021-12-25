@@ -14,11 +14,11 @@ const getChannelReducer = (network, action) => {
   assert.strictEqual(typeof alias, 'string')
   alias = posix.normalize(alias)
   debug(`getChannelReducer`, alias)
-  if (network['..'].address.isRoot() && alias.startsWith('/')) {
+  if (network.get('..').address.isRoot() && alias.startsWith('/')) {
     alias = alias.substring(1)
     alias = alias || '.'
   }
-  if (!network[alias]) {
+  if (!network.has(alias)) {
     throw new Error(`Unknown channel: ${alias}`)
   }
   replyResolve(getChannelParams(network, alias))

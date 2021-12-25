@@ -32,7 +32,6 @@ export class Integrity extends mixin(integritySchema) {
   }
   assertLogic() {
     // TODO check the format of the hash string using regex
-    const arr = this.toArray()
   }
   isUnknown() {
     return this.hash === 'UNKNOWN'

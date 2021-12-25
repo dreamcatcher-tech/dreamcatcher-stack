@@ -27,7 +27,7 @@ const openChildReducer = (dmz, rxRequest) => {
   const { child, parent, fullPath } = rxRequest.payload
   assert.strictEqual(typeof child, 'string')
   debug(`reducer child: %o parent: %o fullPath: %o`, child, parent, fullPath)
-  let channel = dmz.network[child]
+  let channel = dmz.network.get(child)
   if (!channel) {
     replyReject(new Error(`Alias not found: ${child}`))
   } else if (channel.address.isUnknown()) {
@@ -63,7 +63,7 @@ const openChildReply = (slice, reply, dmz) => {
       debug(`reply received for @@OPEN_CHILD: %o`, chainId.substring(0, 9))
       // TODO move to using network and action sequence to discover fullPath
       const alias = segment + '/' + child
-      assert(dmz.network[alias], `Alias not found: ${alias}`)
+      assert(dmz.network.get(alias), `Alias not found: ${alias}`)
       debug(`connecting to: `, alias)
       // TODO run connect directly here
       interchain(connect(alias, chainId))
@@ -78,7 +78,7 @@ const openChildReply = (slice, reply, dmz) => {
       )
       const normalized = posix.normalize(fullPath)
       assert.strictEqual(normalized, fullPath)
-      const channel = channelProducer.invalidate(dmz.network[fullPath])
+      const channel = channelProducer.invalidate(dmz.network.get(fullPath))
       const network = dmz.network.merge({ [fullPath]: channel })
       return Dmz.clone({ ...dmz, network })
     }
@@ -90,13 +90,8 @@ const openPaths = (dmz) => {
   // TODO if we have a subpath, should jump ahead to that
   // eg: for /a/b/c/d we might have /a/b already, so should use that first
   assert(dmz instanceof Dmz)
-  let { network } = dmz
-  const nextNetwork = {}
-  const aliases = network.getAliases()
-  const unresolved = aliases.filter((alias) =>
-    network[alias].address.isUnknown()
-  )
-  let { meta } = dmz
+  let { network, meta } = dmz
+  const unresolved = network.getUnresolvedAliases()
   for (const fullPath of unresolved) {
     if (fullPath === '.@@io' || !fullPath.includes('/')) {
       continue // local paths are invalidated separately
@@ -105,14 +100,16 @@ const openPaths = (dmz) => {
     assert(segmentPaths.length > 1)
 
     segmentPaths.some((segmentPath, index) => {
-      const channel = network[segmentPath]
+      const channel = network.get(segmentPath)
       if (channel && !channel.address.isUnknown()) {
         return false
       }
       debug(`unresolved path: `, segmentPath)
       if (index === 0) {
-        if (!network[segmentPath]) {
-          nextNetwork[fullPath] = channelProducer.invalidate(network[fullPath])
+        if (!network.has(segmentPath)) {
+          let channel = network.get(fullPath)
+          channel = channelProducer.invalidate(channel)
+          network = network.set(fullPath, channel)
           return true
         }
       }
@@ -121,7 +118,7 @@ const openPaths = (dmz) => {
       debug('parent: ', segment)
       const child = segmentPath.split('/').pop()
       debug('child: ', child)
-      const segChannel = network[segment]
+      const segChannel = network.get(segment)
       if (_isAwaitingOpen(meta, segment)) {
         debug(`parent: %o was already asked to open child: %o`, segment, child)
       } else {
@@ -129,19 +126,19 @@ const openPaths = (dmz) => {
         assert(isUnresolvedSeg, `unresolved parent attempted: ${segment}`)
         debug('sending open action from parent: %o to %o', segment, child)
         const open = Action.create(openChild(child, segment, fullPath))
-        nextNetwork[segment] = channelProducer.txRequest(segChannel, open)
         const chainId = segChannel.address.getChainId()
         const height = dmz.getCurrentHeight()
         const index = segChannel.requests.length
         const identifier = `${chainId}_${height}_${index}`
         const slice = { type: '@@OPEN_CHILD', child, segment, fullPath }
         meta = metaProducer.withSlice(meta, identifier, slice)
+        const openedChannel = channelProducer.txRequest(segChannel, open)
+        network = network.set(segment, openedChannel)
       }
       return true
     })
   }
-  network = network.merge(nextNetwork)
-  return Dmz.clone({ ...dmz, network, meta })
+  return dmz.update({ network, meta })
 }
 const _isAwaitingOpen = (meta, segment) => {
   // TODO WARNING must consider all paths that are its parent too

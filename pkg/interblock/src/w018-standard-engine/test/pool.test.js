@@ -4,7 +4,7 @@ import { Block } from '../../w015-models'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pool')
-Debug.enable()
+Debug.enable('*met*')
 
 describe('pool', () => {
   describe('initializeStorage', () => {
@@ -13,8 +13,8 @@ describe('pool', () => {
       const block = await metrology.getLatest()
       assert(block instanceof Block)
       assert.strictEqual(block.provenance.height, 0)
-      assert.strictEqual(block.network.getAliases().length, 2)
-      assert(block.network['..'].address.isRoot())
+      assert.strictEqual(block.network.size, 2)
+      assert(block.network.get('..').address.isRoot())
       await metrology.settle()
     })
     test('two metrology bases have different addresses', async () => {
@@ -32,32 +32,34 @@ describe('pool', () => {
 
   describe('poolInterblock', () => {
     describe('birthChild', () => {
-      test('new child created from genesis', async () => {
-        const base = await metrologyFactory('birthChild')
+      test.only('new child created from genesis', async () => {
+        const base = await metrologyFactory()
         base.enableLogging()
         await base.spawn('child')
         await base.settle()
         const baseBlock = await base.getLatest()
         assert(baseBlock instanceof Block)
         assert.strictEqual(baseBlock.provenance.height, 2)
-        const childChannel = baseBlock.network.child
+        const childChannel = baseBlock.network.get('child')
         assert.strictEqual(childChannel.tipHeight, 1)
         assert(!childChannel.isTransmitting())
         const block1 = await base.getBlock(1)
         const block1Integrity = block1.provenance.reflectIntegrity()
-        assert(block1Integrity.equals(childChannel.precedent))
+        assert(block1Integrity.deepEquals(childChannel.precedent))
 
         const childBlock = await base.getLatestFromPath('/child')
+        const childBlockAddress = childBlock.provenance.getAddress()
+
         assert.strictEqual(childBlock.provenance.height, 1)
-        assert.strictEqual(childBlock.network.getAliases().length, 2)
-        assert.strictEqual(baseBlock.network.getAliases().length, 4)
-        assert.strictEqual(baseBlock.network.child.systemRole, './')
-        assert(childChannel.address.equals(childBlock.provenance.getAddress()))
-        const parent = childBlock.network['..']
-        assert(parent.address.equals(baseBlock.provenance.getAddress()))
+        assert.strictEqual(childBlock.network.size, 2)
+        assert.strictEqual(baseBlock.network.size, 4)
+        assert.strictEqual(baseBlock.network.get('child').systemRole, './')
+        assert(childChannel.address.deepEquals(childBlockAddress))
+        const parent = childBlock.network.get('..')
+        assert(parent.address.deepEquals(baseBlock.provenance.getAddress()))
         assert.strictEqual(parent.tipHeight + 1, baseBlock.provenance.height)
         const { tip } = parent
-        assert(tip.equals(block1Integrity))
+        assert(tip.deepEquals(block1Integrity))
       })
     })
     describe('poolAffectedChains', () => {

@@ -16,7 +16,7 @@ describe('hooker', () => {
     await base.settle()
     const block = await base.getLatest()
     assert.strictEqual(block.provenance.height, 3)
-    const { requests, replies } = block.network['.']
+    const { requests, replies } = block.network.get('.')
     const length = (obj) => Object.keys(obj).length
     assert.strictEqual(length(requests), length(replies))
     assert.strictEqual(length(requests), 0)

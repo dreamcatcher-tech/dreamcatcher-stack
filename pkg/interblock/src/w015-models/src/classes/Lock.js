@@ -113,17 +113,9 @@ const assertUniqueHeights = (interblocks) => {
 }
 const refinePiercings = (block, piercings) => {
   let { requests, replies } = piercings
-  requests = requests.map((request) => {
-    assert.strictEqual(typeof request, 'object')
-    request = TxRequest.create(request)
-    return request
-  })
+  assert(requests.every((v) => v instanceof TxRequest))
+  assert(replies.every((v) => v instanceof TxReply))
   requests = sort(deduplicatePiercings(requests))
-  replies = replies.map((reply) => {
-    assert.strictEqual(typeof reply, 'object')
-    reply = TxReply.create(reply)
-    return reply
-  })
   replies = sort(deduplicatePiercings(replies))
   return removeProcessedPiercings(block, { requests, replies })
 }
@@ -133,7 +125,7 @@ const removeProcessedPiercings = (block, { requests, replies }) => {
   if (!block || !block.network.has('.@@io')) {
     return { requests, replies }
   }
-  const ioChannel = block.network['.@@io']
+  const ioChannel = block.network.get('.@@io')
   // TODO on a transmitting block, remove piercings that have been replied to
   // or those replies that have been ingested by rxRepliesTip
   return { requests, replies }

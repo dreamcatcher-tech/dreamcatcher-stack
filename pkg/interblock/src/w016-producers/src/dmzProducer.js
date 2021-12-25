@@ -15,13 +15,13 @@ const generatePierceDmz = (targetBlock, pierceReplies, pierceRequests) => {
   assert(Array.isArray(pierceRequests))
   assert(pierceReplies.every((v) => v instanceof TxReply))
   assert(pierceRequests.every((v) => v instanceof TxRequest))
-  if (targetBlock.network['.@@io']) {
-    assert(targetBlock.network['.@@io'].address.isResolved())
+  if (targetBlock.network.has('.@@io')) {
+    assert(targetBlock.network.get('.@@io').address.isResolved())
   }
 
   const pierceDmz = _extractPierceDmz(targetBlock)
-  let txChannel = pierceDmz.network['@@PIERCE_TARGET']
-  assert(txChannel.address.equals(targetBlock.provenance.getAddress()))
+  let txChannel = pierceDmz.network.get('@@PIERCE_TARGET')
+  assert(txChannel.address.deepEquals(targetBlock.provenance.getAddress()))
   assert.strictEqual(txChannel.systemRole, 'PIERCE')
 
   for (const txReply of pierceReplies) {
@@ -33,25 +33,25 @@ const generatePierceDmz = (targetBlock, pierceReplies, pierceRequests) => {
     txChannel = channelProducer.txRequest(txChannel, request)
   }
 
-  const network = pierceDmz.network.merge({ '@@PIERCE_TARGET': txChannel })
-  return Dmz.clone({ ...pierceDmz, network })
+  const network = pierceDmz.network.update({ '@@PIERCE_TARGET': txChannel })
+  return pierceDmz.update({ network })
 }
 
 const _extractPierceDmz = (block) => {
   const algorithm = '@@pierce'
   const key = '@@PIERCE_PUBLIC_KEY'
-  const publicKey = PublicKey.clone({ key, algorithm })
+  const publicKey = PublicKey.create({ key, algorithm })
   const baseDmz = Dmz.create({ validators: { ['@@PIERCE']: publicKey } })
   const address = block.provenance.getAddress()
   let pierceChannel = Channel.create(address, 'PIERCE')
-  if (block.network['.@@io']) {
-    const { tip } = block.network['.@@io']
+  if (block.network.has('.@@io')) {
+    const { tip } = block.network.get('.@@io')
     if (tip) {
-      pierceChannel = Channel.clone({ ...pierceChannel, precedent: tip })
+      pierceChannel = pierceChannel.update({ precedent: tip })
     }
   }
-  const network = baseDmz.network.merge({ '@@PIERCE_TARGET': pierceChannel })
-  return Dmz.clone({ ...baseDmz, network })
+  const network = baseDmz.network.update({ '@@PIERCE_TARGET': pierceChannel })
+  return baseDmz.update({ network })
 }
 
 const accumulate = (dmz, transmissions = []) => {
@@ -75,13 +75,13 @@ const accumulate = (dmz, transmissions = []) => {
   const requestsMap = _mapUnIdentifiedRequests(accumulator)
   accumulator = accumulator.map((tx) => {
     if (tx.to && !tx.identifier) {
-      let channel = dmz.network[tx.to]
-      if (dmz.network['..'].address.isRoot()) {
+      let channel = dmz.network.get(tx.to)
+      if (dmz.network.get('..').address.isRoot()) {
         // TODO find how to reconcile with networkProducer.tx()
         if (tx.to === '/') {
-          channel = dmz.network['.']
+          channel = dmz.network.get('.')
         } else if (tx.to.startsWith('/')) {
-          channel = dmz.network[tx.to.slice(1)]
+          channel = dmz.network.get(tx.to.slice(1))
         }
       }
       if (channel) {

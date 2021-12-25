@@ -105,6 +105,7 @@
       "src/w015*/**/*.test.js",
       "src/w016*/**/*.test.js",
       "src/w017*/**/*.test.js",
+      "src/w018*/**/*.test.js",
       "!package.test.js"
     ],
     "env": {

@@ -29,42 +29,39 @@ const ingestInterblocks = (network, interblocks = [], config) => {
   assert(network instanceof Network)
   assert(Array.isArray(interblocks))
   assert(interblocks.every((v) => v instanceof Interblock))
-  assert(Config.isModel(config))
+  assert(config instanceof Config)
 
   const addressMap = _generateAddressMap(interblocks)
-  const nextNetwork = {}
   const ingestedInterblocks = []
   for (const address of addressMap.keys()) {
-    const alias = network.getAlias(address)
+    const channel = network.getByAddress(address)
     // TODO split handling opening public channel into seperate function call
     const isPublic = config.isPublicChannelOpen
     const channelInterblocks = addressMap.get(address)
     const firstInterblock = channelInterblocks[0]
-    if (!alias && isPublic && firstInterblock.isConnectionAttempt()) {
+    if (!channel && isPublic && firstInterblock.isConnectionAttempt()) {
       debug(`connection attempt accepted`)
       const name = `@@PUBLIC_${address.getChainId()}`
       const blankChannel = Channel.create(address)
       const accept = Action.create({ type: '@@ACCEPT' })
-      const acceptChannel = Channel.clone({
-        ...blankChannel,
+      const acceptChannel = blankChannel.update({
         requests: [accept],
       })
-      nextNetwork[name] = acceptChannel
-    } else if (alias) {
-      const channel = nextNetwork[alias] || network[alias]
+      network = network.set(name, acceptChannel)
+    } else if (channel) {
       assert(channel instanceof Channel)
       const [nextChannel, ingested] = channelProducer.ingestInterblocks(
         channel,
         channelInterblocks
       )
-      ingestedInterblocks.push(...ingested)
       if (nextChannel !== channel) {
-        nextNetwork[alias] = nextChannel
+        network = network.setByAddress(address, nextChannel)
+        ingestedInterblocks.push(...ingested)
       }
     }
   }
 
-  return [network.merge(nextNetwork), new Conflux(ingestedInterblocks)]
+  return [network, new Conflux(ingestedInterblocks)]
   // TODO close all timed out connection attempts
 }
 
@@ -82,41 +79,40 @@ const respondRequest = (network, request) => {
 }
 
 const _respond = (network, rxRequest, reply) => {
+  assert(network instanceof Network)
   assert(rxRequest instanceof RxRequest)
   assert(reply instanceof Continuation)
   assert(!reply.isPromise())
   const address = rxRequest.getAddress()
-  const alias = network.getAlias(address)
-  const channel = network[alias]
+  const channel = network.getByAddress(address)
   assert(channel instanceof Channel)
-  assert(channel.address.equals(address))
+  assert(channel.address.deepEquals(address))
   const replyKey = rxRequest.getReplyKey()
   const existingReply = channel.replies[replyKey]
   assert(!existingReply || existingReply.isPromise())
   const { type, payload } = reply
   const txReply = TxReply.create(type, payload, rxRequest.identifier)
   const nextChannel = channelProducer.txReply(channel, txReply)
-  assert(nextChannel.replies[replyKey])
-  return network.merge({ [alias]: nextChannel })
+  assert(nextChannel.replies.get(replyKey))
+  return network.setByAddress(address, nextChannel)
 }
 
-const tx = (network, transmissions) => {
+const tx = (network, txReplies, txRequests) => {
   assert(network instanceof Network)
-  assert(Array.isArray(transmissions))
-  const requests = transmissions.filter((v) => v instanceof TxRequest)
-  const replies = transmissions.filter(TxReply.isModel)
-  assert.strictEqual(transmissions.length, requests.length + replies.length)
+  assert(Array.isArray(txReplies))
+  assert(txReplies.every((v) => v instanceof TxReply))
+  assert(Array.isArray(txRequests))
+  assert(txRequests.every((v) => v instanceof TxRequest))
 
-  debug(`tx requests: ${requests.length} replies: ${replies.length}`)
-  const nextNetwork = {}
-  for (const txRequest of requests) {
+  debug(`txReplies: ${txReplies.length} txRequests: ${txRequests.length}`)
+  for (const txRequest of txRequests) {
     let { to } = txRequest
-    if (network['..'].address.isRoot() && to.startsWith('/')) {
+    if (network.get('..').address.isRoot() && to.startsWith('/')) {
       to = to.substring(1)
       to = to || '.'
     }
     // TODO detect child construction by the path, so ensure role is correct
-    let channel = nextNetwork[to] || network[to]
+    let channel = network.get(to)
     if (!channel) {
       // TODO handle children ?  if no pathing or starts with ./ ?
       // TODO maybe do path opening here, working backwards
@@ -125,52 +121,45 @@ const tx = (network, transmissions) => {
       channel = Channel.create(address, systemRole)
       debug(`channel created with systemRole: ${systemRole}`)
     }
-    nextNetwork[to] = channelProducer.txRequest(channel, txRequest.getRequest())
+    channel = channelProducer.txRequest(channel, txRequest.getRequest())
+    network = network.set(to, channel)
   }
-  for (const txReply of replies) {
+  for (const txReply of txReplies) {
     const address = txReply.getAddress()
-    const alias = network.getAlias(address)
-    if (!alias) {
-      debug(`No alias found for: %O`, txReply)
-      return
+    if (!network.hasByAddress(address)) {
+      continue
     }
-    const channel = nextNetwork[alias] || network[alias]
-    nextNetwork[alias] = channelProducer.txReply(channel, txReply)
+    let channel = network.getByAddress(address)
+    channel = channelProducer.txReply(channel, txReply)
+    network = network.setByAddress(address, channel)
   }
-  return network.merge(nextNetwork)
+  return network
 }
 
 const invalidateLocal = (network) => {
   // TODO rename to unopenable path
-  const nextNetwork = {}
-  const aliases = network.getAliases()
+  const aliases = network.getUnresolvedAliases()
   for (const alias of aliases) {
     if (alias === '.@@io') {
       continue
     }
     const isLocal = !alias.includes('/')
-    if (isLocal && network[alias].address.isUnknown()) {
-      nextNetwork[alias] = channelProducer.invalidate(network[alias])
+    const channel = network.get(alias)
+    if (isLocal && channel.address.isUnknown()) {
+      network = network.set(alias, channelProducer.invalidate(channel))
     }
   }
-  return network.merge(nextNetwork)
+  return network
 }
 const reaper = (network) => {
   // TODO also handle timed out channels here - idle clogs system
-  const aliases = network.getAliases()
-  let nextNetwork
+  const aliases = network.getUnresolvedAliases()
   for (const alias of aliases) {
-    const channel = network[alias]
+    const channel = network.get(alias)
     if (channel.address.isInvalid()) {
       assert(!channel.tip)
-      if (!nextNetwork) {
-        nextNetwork = { ...network }
-      }
-      delete nextNetwork[alias]
+      network = network.remove(alias)
     }
-  }
-  if (nextNetwork) {
-    return Network.clone(nextNetwork)
   }
   return network
 }
@@ -189,30 +178,16 @@ const _generateAddressMap = (interblocks) => {
 }
 const zeroTransmissions = (network, precedent) => {
   assert(network instanceof Network)
+  const aliases = network.getTransmittingAliases()
   const nextNetwork = {}
-  const aliases = network.getAliases()
   for (const alias of aliases) {
-    const channel = network[alias]
-    if (!channel.address.isUnknown() && channel.isTransmitting()) {
-      const nextChannel = channelProducer.zeroTransmissions(channel, precedent)
-      nextNetwork[alias] = nextChannel
-    }
+    const channel = network.get(alias)
+    assert(channel.isTransmitting())
+    const nextChannel = channelProducer.zeroTransmissions(channel, precedent)
+    nextNetwork[alias] = nextChannel
   }
-  network = network.merge(nextNetwork)
-  if (aliases.length > 100) {
-    network = { ...network }
-    let count = 0
-    for (const alias of aliases) {
-      if (!alias.startsWith('custNo-')) {
-        continue
-      }
-      if (count < 50) {
-        // delete network[alias]
-      }
-      count++
-    }
-  }
-  return Network.clone(network)
+  network = network.setMany(nextNetwork)
+  return network
 }
 export {
   ingestInterblocks,

@@ -63,23 +63,23 @@ const createConfig = (isolation, consistency) => ({
         interblocks,
         config
       )
-      return { ...context, dmz: Dmz.clone({ ...dmz, network }), conflux }
+      return { ...context, dmz: dmz.update({ network }), conflux }
     }),
     connectToParent: assign({
       dmz: ({ dmz, interblocks }) => {
         assert(dmz instanceof Dmz)
         assert(Array.isArray(interblocks))
         assert(interblocks.every((v) => v instanceof Interblock))
-        assert(dmz.network['..'].address.isUnknown(), `Target connected`)
+        assert(dmz.network.get('..').address.isUnknown(), `Target connected`)
         debug(`connectToParent`)
 
         const [interblock] = interblocks
         assert(interblock.isGenesisAttempt(), `Not genesis attempt`)
         const address = interblock.provenance.getAddress()
-        let parent = dmz.network['..']
+        let parent = dmz.network.get('..')
         parent = channelProducer.setAddress(parent, address)
-        const network = dmz.network.merge({ '..': parent })
-        return Dmz.clone({ ...dmz, network })
+        const network = dmz.network.set('..', parent)
+        return dmz.update({ network })
       },
     }),
     zeroTransmissions: assign({
@@ -92,16 +92,14 @@ const createConfig = (isolation, consistency) => ({
           dmz.network,
           precedent
         )
-        return Dmz.clone({ ...dmz, network })
+        return dmz.update({ network })
       },
     }),
     blankPiercings: assign({
       dmz: ({ dmz }) => {
         assert(dmz instanceof Dmz)
         debug(`blankPiercings`)
-        dmz = { ...dmz }
-        delete dmz.piercings
-        return Dmz.clone(dmz)
+        return dmz.delete('piercings')
       },
     }),
     assignContainerId: assign({
@@ -123,11 +121,10 @@ const createConfig = (isolation, consistency) => ({
       dmz: ({ dmz }) => {
         assert(dmz instanceof Dmz)
         debug(`zeroLoopback`)
-        const loopback = channelProducer.zeroLoopback(dmz.network['.'])
-        return Dmz.clone({
-          ...dmz,
-          network: dmz.network.merge({ '.': loopback }),
-        })
+        let loopback = dmz.network.get('.')
+        loopback = channelProducer.zeroLoopback(loopback)
+        const network = dmz.network.set('.', loopback)
+        return dmz.update({ network })
       },
     }),
     generatePierceDmz: assign({
@@ -164,10 +161,10 @@ const createConfig = (isolation, consistency) => ({
         assert(dmz instanceof Dmz)
         assert(pierceBlock instanceof Block)
         debug(`injectReplayablePiercings`)
-        const ioChannel = pierceBlock.network['@@PIERCE_TARGET']
+        const ioChannel = pierceBlock.network.get('@@PIERCE_TARGET')
         const { replies, requests } = ioChannel
         const piercings = Piercings.create(replies, requests)
-        return Dmz.clone({ ...dmz, piercings })
+        return dmz.update({ piercings })
       },
     }),
     openPierceChannel: assign({
@@ -176,17 +173,21 @@ const createConfig = (isolation, consistency) => ({
         assert(pierceBlock instanceof Block)
         debug(`openPierceChannel`)
         const ioAddress = pierceBlock.provenance.getAddress()
-        let ioChannel =
-          dmz.network['.@@io'] || Channel.create(ioAddress, 'PIERCE')
+        let ioChannel
+        if (!dmz.network.has('.@@io')) {
+          ioChannel = Channel.create(ioAddress, 'PIERCE')
+        } else {
+          ioChannel = dmz.network.get('.@@io')
+        }
         if (ioChannel.address.isUnknown()) {
           debug(`address unknown`)
           // TODO ? is this ever the case ?
           ioChannel = channelProducer.setAddress(ioChannel, ioAddress)
         }
-        assert(ioChannel.address.equals(ioAddress))
+        assert(ioChannel.address.deepEquals(ioAddress))
         assert.strictEqual(ioChannel.systemRole, 'PIERCE')
-        const network = dmz.network.merge({ '.@@io': ioChannel })
-        return Dmz.clone({ ...dmz, network })
+        const network = dmz.network.update({ '.@@io': ioChannel })
+        return dmz.update({ network })
       },
     }),
     selectAction: assign({
@@ -235,7 +236,7 @@ const createConfig = (isolation, consistency) => ({
     isGenesis: ({ lock }) => {
       assert(lock instanceof Lock)
       const { block } = lock
-      const isNotRoot = !block.network['..'].address.isRoot()
+      const isNotRoot = !block.network.get('..').address.isRoot()
       const isGenesis = block.provenance.address.isGenesis() && isNotRoot
       debug(`isGenesis: `, isGenesis)
       return isGenesis
@@ -259,7 +260,7 @@ const createConfig = (isolation, consistency) => ({
     },
     isPierceChannelUnopened: ({ dmz }) => {
       assert(dmz instanceof Dmz)
-      const ioChannel = dmz.network['.@@io']
+      const ioChannel = dmz.network.get('.@@io')
       const isPierceChannelUnopened =
         !ioChannel || !ioChannel.address.isResolved()
       debug(`isPierceChannelUnopened`, isPierceChannelUnopened)
@@ -269,7 +270,7 @@ const createConfig = (isolation, consistency) => ({
       // TODO merge this into Channel so can reuse in increasorConfig
       assert(lock instanceof Lock)
       assert(dmz instanceof Dmz)
-      const io = dmz.network['.@@io']
+      const io = dmz.network.get('.@@io')
       const isCovenantEffectable = !!(io && io.requests.length)
       debug(`isCovenantEffectable`, isCovenantEffectable)
       return isCovenantEffectable
@@ -290,7 +291,7 @@ const createConfig = (isolation, consistency) => ({
       // TODO rename anvil to externalAction
       debug(`reduce: `, rxAction.getLogEntry())
       const tickPayload = { containerId, timeout: 30000 }
-      const tick = (state, action, accumulator) =>
+      const tick = (state, action, accumulator = []) =>
         isolation.tick({ ...tickPayload, state, action, accumulator })
 
       const { machine, config } = interpreterConfig(tick)

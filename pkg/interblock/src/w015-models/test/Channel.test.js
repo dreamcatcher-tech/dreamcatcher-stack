@@ -7,11 +7,10 @@ Debug.enable('*:Channel')
 describe('channel', () => {
   describe('create', () => {
     test('create speed', () => {
-      const precompileFlush = Channel.create()
       const start = Date.now()
       Channel.create()
       const elapsed = Date.now() - start
-      assert(elapsed < 3, `elapsed time: ${elapsed}`)
+      assert(elapsed < 6, `elapsed time: ${elapsed}`)
     })
     test('create', () => {
       const channel = Channel.create()

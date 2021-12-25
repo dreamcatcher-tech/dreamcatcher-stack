@@ -27,7 +27,7 @@ const config = {
         assert(dmz instanceof Dmz)
         assert(reduceResolve instanceof Reduction)
         debug('mergeSystemState')
-        return Dmz.clone(reduceResolve.reduction)
+        return reduceResolve.reduction
       },
     }),
     respondLoopbackRequest,
@@ -48,7 +48,7 @@ const config = {
     respondRejection,
     warnReplyRejection: ({ reduceRejection }) => {
       // TODO reject all loopback actions and reject the external action
-      debug(`warnReplyRejection dmz`)
+      debug(`warnReplyRejection dmz`, reduceRejection)
       // console.error(reduceRejection)
     },
   },
@@ -58,7 +58,7 @@ const config = {
       assert(dmz instanceof Dmz)
       assert(anvil instanceof RxRequest)
       const address = anvil.getAddress()
-      const isChannelUnavailable = !dmz.network.getAlias(address)
+      const isChannelUnavailable = !dmz.network.hasByAddress(address)
       debug(`isChannelUnavailable: `, isChannelUnavailable)
       return isChannelUnavailable
     },

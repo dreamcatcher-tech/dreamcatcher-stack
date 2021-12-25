@@ -21,21 +21,16 @@ const ingestInterblocks = (channel, interblocks) => {
   // TODO check the precedents match correctly ?
 
   const ingested = []
-  let next = channel
   for (const interblock of interblocks) {
-    const currentChannel = next
-    // BEWARE channel is a mutable object during this loop
-    next = _ingestInterblock(next, interblock)
-    if (next === currentChannel) {
+    const currentChannel = channel
+    channel = _ingestInterblock(channel, interblock)
+    if (channel === currentChannel) {
       debug(`interblock not ingested`)
       break
     }
     ingested.push(interblock)
   }
-  if (!(next instanceof Channel)) {
-    next = channel.update(next)
-  }
-  return [next, ingested]
+  return [channel, ingested]
 }
 
 const _ingestInterblock = (channel, interblock) => {
@@ -68,22 +63,19 @@ const _ingestInterblock = (channel, interblock) => {
       assert(turnovers.length)
       const genesis = turnovers[0]
       assert(genesis.provenance.address.isGenesis())
-      assert(genesis.provenance.getAddress().equals(channel.address))
+      assert(genesis.provenance.getAddress().deepEquals(channel.address))
       // TODO handle validators changing at any point
     }
   }
   rxRepliesTip = _getRxRepliesTip(rxRepliesTip, transmission.replies)
   tip = integrity
   tipHeight = provenance.height
-  const nextChannel = {
-    ...channel,
-    tip,
-    tipHeight,
-  }
+  const update = { tip, tipHeight }
   if (rxRepliesTip) {
-    nextChannel.rxRepliesTip = rxRepliesTip
+    update.rxRepliesTip = rxRepliesTip
   }
-  return nextChannel
+  channel = channel.update(update)
+  return channel
 }
 const _getRxRepliesTip = (rxRepliesTip, replies) => {
   const keys = Object.keys(replies)
@@ -280,12 +272,8 @@ const zeroLoopback = (channel) => {
   if (Number.isInteger(channel.tipHeight)) {
     tipHeight = channel.tipHeight + 1
   }
-  return Channel.clone({
-    ...channel,
-    requests: [],
-    replies: {},
-    tipHeight,
-  })
+  const replies = channel.replies.clear()
+  return channel.update({ requests: [], replies, tipHeight })
 }
 const zeroTransmissions = (channel, precedent) => {
   assert(channel instanceof Channel)
@@ -293,12 +281,7 @@ const zeroTransmissions = (channel, precedent) => {
   if (!channel.isTransmitting()) {
     return channel
   }
-  return Channel.clone({
-    ...channel,
-    replies: {},
-    requests: [],
-    precedent,
-  })
+  return channel.update({ replies: {}, requests: [], precedent })
 }
 const shiftLoopback = (loopback) => {
   assert(loopback instanceof Channel)

@@ -13,23 +13,28 @@ export class TxReply extends mixin(txReplySchema) {
     const txReply = { type, payload, identifier }
     return super.create(txReply)
   }
-  assertLogic() {
-    const { type, payload, identifier } = this
-    const { address, height, index } = splitSequence(identifier)
-    this.#address = address
-    this.#height = height
-    this.#index = index
+  #ensurePrivates() {
+    if (!this.#address) {
+      const { address, height, index } = splitSequence(this.identifier)
+      this.#address = address
+      this.#height = height
+      this.#index = index
+    }
   }
   getAddress() {
+    this.#ensurePrivates()
     return this.#address
   }
   getHeight() {
+    this.#ensurePrivates()
     return this.#height
   }
   getIndex() {
+    this.#ensurePrivates()
     return this.#index
   }
   getReplyKey() {
+    this.#ensurePrivates()
     return `${this.#height}_${this.#index}`
   }
 

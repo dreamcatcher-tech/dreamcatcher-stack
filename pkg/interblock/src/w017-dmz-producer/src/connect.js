@@ -16,11 +16,11 @@ const connectReducer = (dmz, rxRequest) => {
   assert.strictEqual(address.getChainId(), chainId)
   assert(alias && typeof alias === 'string')
   let { network } = dmz
-  let channel = network[alias] || Channel.create(address)
+  let channel = network.get(alias) || Channel.create(address)
   // TODO blank the queues if changing address for existing alias ?
   // TODO beware unresolving an already resolved address
   channel = channelProducer.setAddress(channel, address)
-  network = network.merge({ [alias]: channel })
-  return Dmz.clone({ ...dmz, network })
+  network = network.set(alias, channel)
+  return dmz.update({ network })
 }
 export { connect, connectReducer }

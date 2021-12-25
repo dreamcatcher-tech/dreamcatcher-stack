@@ -138,20 +138,34 @@ const patternProperties = (schema) => {
       }
       return next
     }
+    clear() {
+      // TODO tie into the MerkleArray better
+      let next = this.#clone()
+      for (const [key] of this.entries()) {
+        next = next.remove(key)
+      }
+      return next
+    }
     remove(key) {
       assert(typeof key, 'string')
       assert(this.#map.has(key))
       const next = this.#clone()
       next.#backingArray = next.#backingArray.remove(this.#map.get(key))
+      next.#map = next.#map.delete(key)
       return next
     }
     #clone() {
       const next = new this.constructor(insidersOnly)
       next.#backingArray = this.#backingArray
       next.#map = this.#map
+      if (typeof this._imprint === 'function') {
+        // TODO pass in old item into a constructor on the child instead
+        this._imprint(next)
+      }
       return next
     }
-    merge() {
+    merge(noArgsAllowed) {
+      assert.strictEqual(noArgsAllowed, undefined, `no args to merge`)
       const next = this.#clone()
       next.#backingArray = next.#backingArray.merge()
       return next
@@ -340,11 +354,15 @@ const properties = (schema) => {
         return false
       }
       if (!this.#backingArray.equals(other.#backingArray)) {
-        return equals(this.toArray(), other.toArray())
+        // TODO this is very slow - needs to be model aware
+        const thisArray = this.toArray()
+        const otherArray = other.toArray()
+        return equals(thisArray, otherArray)
       }
       return true
     }
-    merge() {
+    merge(noArgsAllowed) {
+      assert.strictEqual(noArgsAllowed, undefined, `no args to merge`)
       let backingArray = this.#backingArray
       for (const [index, property] of deepIndices.entries()) {
         let deepValue = backingArray.get(index)
@@ -371,7 +389,14 @@ const properties = (schema) => {
     hashString() {
       return this.#backingArray.hashString()
     }
+    serialize() {
+      return JSON.stringify(this.toArray())
+    }
+    getSerializedSize() {
+      return this.serialize().length
+    }
     toArray() {
+      // TODO cache the output in case called again
       // TODO using the schema, know which elements a classes
       // pull them all out until always have js primitives
       const arr = this.#backingArray.toArray()
@@ -483,7 +508,12 @@ const deepValue = (schema, currentValue, nextValue) => {
     if (schema.items.type === 'object') {
       const Class = getClassForSchema(schema.items)
       assert(Class)
-      assert(nextValue.every((v) => v instanceof Class))
+      nextValue = nextValue.map((v) => {
+        if (!(v instanceof Class)) {
+          return new Class(insidersOnly).update(v)
+        }
+        return v
+      })
       return nextValue
     } else {
       // restriction is arbitrary based on what schema features are used

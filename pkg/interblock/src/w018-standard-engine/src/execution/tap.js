@@ -11,7 +11,7 @@ import { setTap } from '../../../w004-needle'
 import Debug from 'debug'
 
 const createTap = (prefix = 'interblock:blocktap') => {
-  let isOn = false
+  let isOn = true
   let options = {}
   const on = (nextOptions = {}) => {
     isOn = true
@@ -61,14 +61,14 @@ const createTap = (prefix = 'interblock:blocktap') => {
   const debugBloc = debugBase.extend('b')
   const block = (block) => {
     assert(block instanceof Block)
-    const chainId = block.provenance.getAddress().getChainId()
+    const chainId = block.getChainId()
     const latest = cache.get(chainId)
     const isNewChain = !latest
-    const isDuplicate = latest && latest.equals(block)
+    const isDuplicate = latest && latest.hashString() === block.hashString()
     if (isDuplicate) {
       return
     }
-    // insertBlock(block, cache)
+    insertBlock(block, cache)
     if (!isOn) {
       return
     }
@@ -95,7 +95,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
       blockCount++
       return
     }
-    if (!latest.equals(block)) {
+    if (latest.hashString !== block.hashString()) {
       assert(latest.getHeight() < block.getHeight())
       cache.set(chainId, block)
       blockCount++
@@ -112,7 +112,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     let loopCount = 0
     while (child && loopCount < 10) {
       loopCount++
-      const parentAddress = child.network['..'].address
+      const parentAddress = child.network.get('..').address
       if (parentAddress.isRoot()) {
         child = undefined
         path.unshift('')

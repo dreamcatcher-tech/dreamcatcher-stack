@@ -87,8 +87,8 @@ const reducer = (dmz, action) => {
   } else {
     assert(dmz.meta.isAwaiting(action))
     const metaSlice = dmz.meta.getMetaSlice(action)
-    const meta = metaProducer.withoutReply(dmz, action)
-    dmz = Dmz.clone({ ...dmz, meta })
+    const meta = metaProducer.withoutReply(dmz.meta, action)
+    dmz = dmz.update({ meta })
 
     switch (metaSlice.type) {
       case '@@INIT':

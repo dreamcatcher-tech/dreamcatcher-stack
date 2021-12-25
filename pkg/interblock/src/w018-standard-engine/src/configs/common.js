@@ -19,7 +19,7 @@ const common = (debug) => {
     assert(isReply || isRequest)
 
     const { state, pending } = dmz
-    const accumulator = pending.getAccumulator()
+    const { accumulator } = pending
     const reduceResolve = await isolatedTick(state, covenantAction, accumulator)
     assert(reduceResolve, `Covenant returned: ${reduceResolve}`)
     debug(`reduceCovenant result pending: `, reduceResolve.isPending)
@@ -31,7 +31,8 @@ const common = (debug) => {
       const { reduceResolve } = event.data
       assert(reduceResolve)
       debug(`assignResolve pending: %o`, reduceResolve.isPending)
-      return Reduction.create(reduceResolve, anvil, dmz)
+      const reduction = Reduction.create(reduceResolve, anvil, dmz)
+      return reduction
     },
   })
   const assignRejection = assign({
@@ -57,18 +58,19 @@ const common = (debug) => {
         anvil,
         reduceRejection
       )
-      return Dmz.clone({ ...dmz, network })
+      return dmz.update({ network })
     },
   })
   const transmit = assign({
     dmz: ({ dmz, reduceResolve }) => {
       assert(dmz instanceof Dmz)
       assert(reduceResolve instanceof Reduction)
-      const { transmissions } = reduceResolve
-      debug('transmit transmissions.length: %o', transmissions.length)
+      const { txReplies, txRequests } = reduceResolve
+      const transmissionsLength = txReplies.length + txRequests.length
+      debug('transmit transmissions.length: %o', transmissionsLength)
       // TODO check if moving channels around inside dmz can affect tx ?
-      const network = networkProducer.tx(dmz.network, transmissions)
-      return Dmz.clone({ ...dmz, network })
+      const network = networkProducer.tx(dmz.network, txReplies, txRequests)
+      return dmz.update({ network })
     },
     isExternalPromise: ({
       isExternalPromise,
@@ -79,14 +81,14 @@ const common = (debug) => {
         return isExternalPromise
       }
       assert(reduceResolve instanceof Reduction)
-      const replies = reduceResolve.getReplies()
+      const { txReplies } = reduceResolve
       // TODO cleanup, since sometimes externalAction is an rxReply
       if (externalAction instanceof RxReply) {
         debug(`transmit isExternalPromise`, false)
         return false
       }
       assert(externalAction instanceof RxRequest)
-      isExternalPromise = replies.some(
+      isExternalPromise = txReplies.some(
         (txReply) =>
           txReply.getReply().isPromise() &&
           txReply.identifier === externalAction.identifier
@@ -141,9 +143,9 @@ const common = (debug) => {
       assert(anvil instanceof RxRequest)
       const isFromBuffer = initialPending.getIsBuffered(anvil)
       const msg = `externalAction can only be responded to by auto resolvers`
-      assert(!anvil.equals(externalAction) || isFromBuffer, msg)
+      assert(!anvil.deepEquals(externalAction) || isFromBuffer, msg)
       const network = networkProducer.respondRequest(dmz.network, anvil)
-      return Dmz.clone({ ...dmz, network })
+      return dmz.update({ network })
     },
   })
   const isLoopbackResponseDone = ({ dmz, anvil }) => {
@@ -162,7 +164,7 @@ const common = (debug) => {
       assert(dmz instanceof Dmz)
       assert(reduceResolve instanceof Reduction)
       debug(`mergeState`)
-      return Dmz.clone({ ...dmz, state: reduceResolve.reduction })
+      return dmz.update({ state: reduceResolve.reduction })
     },
   })
   const isAnvilNotLoopback = ({ anvil }) => {

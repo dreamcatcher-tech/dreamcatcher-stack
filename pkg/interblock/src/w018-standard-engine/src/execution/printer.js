@@ -17,7 +17,7 @@ const interPrint = (interblock, msg, path, bg, fg) => {
 
   const chainIdRaw = provenance.getAddress().getChainId()
   let chainId = shrink(chainIdRaw, bg)
-  const hashRaw = interblock.getHash()
+  const hashRaw = interblock.hashString()
   let hash = chalk.dim(shrink(hashRaw, 'bgWhite', fg))
   let size = getSize(interblock)
 
@@ -70,7 +70,7 @@ const print = (messages) => {
     config: {
       msg: { minWidth: 15, maxWidth: 15 },
       height: { minWidth: 8, maxWidth: 8 },
-      path: { minWidth: 36, maxWidth: 36 },
+      path: { minWidth: 18, maxWidth: 18 },
     },
   }
   const formatted = columnify(messages, options)
@@ -79,7 +79,7 @@ const print = (messages) => {
 const headerPrint = (block, path, isNewChain, isDuplicate, options) => {
   const chainId = shrink(block.provenance.getAddress().getChainId())
   const height = chalk.green(block.provenance.height)
-  const rawHash = block.getHash()
+  const rawHash = block.hashString()
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
   const header = { msg, height, path, chainId, hash }
@@ -93,9 +93,7 @@ const headerPrint = (block, path, isNewChain, isDuplicate, options) => {
 }
 const networkPrint = (network, options) => {
   const messages = []
-  const aliases = network.getAliases()
-  aliases.forEach((alias) => {
-    const channel = network[alias]
+  for (const [alias, channel] of network.entries()) {
     const { address } = channel
     let height = '-'
     let chainId = grayUndefined
@@ -139,8 +137,7 @@ const networkPrint = (network, options) => {
       const action = { msg, height, path, chainId, hash }
       messages.push(action)
     })
-    for (const rxKey in channel.replies) {
-      const reply = channel.replies[rxKey]
+    for (const [rxKey, reply] of channel.replies.entries()) {
       const msg = chalk.yellow('      └── rx:')
       const height = chalk.yellow(rxKey)
       const path = ''
@@ -152,7 +149,7 @@ const networkPrint = (network, options) => {
       messages.push(action)
     }
     // use previous blocks to know when the counters in remotes altered
-  })
+  }
   return messages
 }
 

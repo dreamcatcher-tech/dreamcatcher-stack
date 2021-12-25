@@ -35,7 +35,7 @@ const fsmFactory = () => {
 
   const increasor = increasorConfig(ioCrypto, ioConsistency, ioIsolate)
   const ioIncreaseProcessor = async (payload) => {
-    assert(Address.isModel(payload))
+    assert(payload instanceof Address)
     const action = { type: 'INCREASE_CHAIN', payload }
     const { machine, config } = increasor
     const result = await pure(action, machine, config)

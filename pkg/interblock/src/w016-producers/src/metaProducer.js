@@ -1,13 +1,13 @@
 import assert from 'assert-fast'
 import { Meta, RxReply, Dmz } from '../../w015-models'
 
-const withoutReply = (dmz, rxReply) => {
-  assert(dmz instanceof Dmz)
+const withoutReply = (meta, rxReply) => {
+  assert(meta instanceof Meta)
   assert(rxReply instanceof RxReply)
-  assert(dmz.meta.isAwaiting(rxReply))
-  const meta = { ...dmz.meta, replies: { ...dmz.meta.replies } }
-  delete meta.replies[rxReply.identifier]
-  return Meta.clone(meta)
+  assert(meta.isAwaiting(rxReply))
+  const replies = { ...meta.replies }
+  delete replies[rxReply.identifier]
+  return meta.update({ replies })
 }
 
 const withSlice = (meta, identifier, slice) => {
@@ -15,7 +15,7 @@ const withSlice = (meta, identifier, slice) => {
   assert.strictEqual(typeof identifier, 'string')
   assert.strictEqual(typeof slice, 'object')
   const replies = { ...meta.replies, [identifier]: slice }
-  return Meta.clone({ ...meta, replies })
+  return meta.update({ replies })
 }
 
 export { withoutReply, withSlice }

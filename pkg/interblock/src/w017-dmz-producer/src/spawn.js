@@ -32,7 +32,7 @@ const spawnReducer = (dmz, request) => {
   const originIdentifier = request.identifier
   const subMeta = { type: '@@GENESIS', alias, chainId, originIdentifier }
   const meta = metaProducer.withSlice(dmz.meta, identifier, subMeta)
-  return Dmz.clone({ ...nextDmz, meta })
+  return nextDmz.update({ meta })
 }
 const spawnRequester = (dmz, originAction) => {
   assert(dmz instanceof Dmz)
@@ -43,7 +43,7 @@ const spawnRequester = (dmz, originAction) => {
 
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
-  const { network, validators } = dmz
+  const { validators } = dmz
   const covenantId = CovenantId.create('unity')
   const childDmz = Dmz.create({
     network: Network.create(),
@@ -52,12 +52,12 @@ const spawnRequester = (dmz, originAction) => {
     validators,
   })
   debug(`spawn alias: ${alias}`)
-  alias = !alias ? autoAlias(network) : alias
+  alias = !alias ? autoAlias(dmz.network) : alias
   assert(!alias.includes('/'), `No / character allowed in "${alias}"`)
   if (alias === '.' || alias === '..') {
     throw new Error(`Alias uses reserved name: ${alias}`)
   }
-  let channel = network[alias]
+  let channel = dmz.network.get(alias)
   if (channel && !channel.address.isUnknown()) {
     throw new Error(`childAlias exists: ${alias}`)
   }
@@ -81,8 +81,8 @@ const spawnRequester = (dmz, originAction) => {
   for (const request of preloadedRequests) {
     channel = channelProducer.txRequest(channel, request)
   }
-  const nextNetwork = network.merge({ [alias]: channel })
-  const nextDmz = Dmz.clone({ ...dmz, network: nextNetwork })
+  const network = dmz.network.set(alias, channel)
+  const nextDmz = dmz.update({ network })
 
   const height = dmz.getCurrentHeight()
   const index = 0

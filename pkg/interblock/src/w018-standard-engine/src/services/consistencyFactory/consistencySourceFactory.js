@@ -138,7 +138,11 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     // throw if any errors
   }
 
-  const getIsPresent = (address) => db.queryLatest(address.getChainId())
+  const getIsPresent = (address) => {
+    debug(`getIsPresent`, address.getChainId().substring(0, 9))
+    const latest = db.queryLatest(address.getChainId())
+    return latest
+  }
 
   const getBlock = async ({ address, height }) => {
     if (!address) {
@@ -160,7 +164,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
       return
     }
     assert(block instanceof Block)
-    assert(address.equals(block.provenance.getAddress()))
+    assert(address.deepEquals(block.provenance.getAddress()))
     assert.strictEqual(block.provenance.height, height)
     debug(`getBlock complete`, height)
     return block

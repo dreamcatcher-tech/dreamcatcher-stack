@@ -100,8 +100,16 @@ const ioQueueFactory = (name, model) => {
       envelope.promise = promise
       _requests.push(envelope)
       loop()
-      for (const subscriber of subscribers.values()) {
-        subscriber(action, promise)
+      try {
+        // without trycatch, can receive unhandled rejection error
+        const awaits = []
+        for (const subscriber of subscribers.values()) {
+          awaits.push(subscriber(action, promise))
+        }
+        await Promise.all(awaits)
+      } catch (e) {
+        debug(`subscriber rejected: %O %O`, envelope, e)
+        throw e
       }
       return promise
     },
@@ -124,8 +132,7 @@ const ioQueueFactory = (name, model) => {
 
 const _assertAddable = (model, action) => {
   if (model) {
-    assert(typeof model.isModel === 'function')
-    assert(model.isModel(action), `model is not addable`)
+    assert(action instanceof model, `model is not addable`)
   }
 }
 

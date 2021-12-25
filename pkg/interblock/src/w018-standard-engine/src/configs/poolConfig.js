@@ -34,7 +34,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       assignLock: assign({
         lock: (context, event) => {
           debug(`assignLock`)
-          assert(Lock.isModel(event.data))
+          assert(event.data instanceof Lock)
           return event.data
         },
       }),
@@ -50,7 +50,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         lock: ({ lock, nextBlock }) => {
           assert(lock instanceof Lock)
           assert(nextBlock instanceof Block)
-          debug(`mergeBlockToLock increased: ${!nextBlock.equals(lock.block)}`)
+          debug(`mergeBlockToLock++ : ${!nextBlock.deepEquals(lock.block)}`)
           const nextLock = lockProducer.reconcile(lock, nextBlock)
           return nextLock
         },
@@ -179,7 +179,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         const address = interblock.extractGenesis().provenance.getAddress()
         // TODO split out to allow lockChain to be reused for init
         const lock = await consistency.putLockChain(address)
-        debug(`lockChildChain for ${interblock.getOriginAlias()}: ${!!lock}`)
+        debug(`lockChildChain for ${address.getChainId()}: ${!!lock}`)
         return lock
       },
       unlockChain: async ({ lock }) => {

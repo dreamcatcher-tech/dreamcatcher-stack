@@ -125,9 +125,9 @@ const config = {
     },
     isReductionPending: ({ reduceResolve }) => {
       assert(reduceResolve instanceof Reduction)
-      const isReductionPending = reduceResolve.getIsPending()
-      debug(`isReductionPending`, isReductionPending)
-      return isReductionPending
+      const { isPending } = reduceResolve
+      debug(`isReductionPending`, isPending)
+      return isPending
     },
     isReply: ({ anvil }) => {
       const isReply = anvil instanceof RxReply

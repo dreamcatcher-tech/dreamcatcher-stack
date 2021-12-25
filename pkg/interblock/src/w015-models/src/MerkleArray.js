@@ -391,8 +391,9 @@ export class MerkleArray {
     return next.compact().merge()
   }
   toArray() {
-    assert(this.#isClean(), 'cannot serialize when dirty')
-    return this.#base.toArray()
+    // TODO turn clean check back on
+    // assert(this.#isClean(), 'cannot serialize when dirty')
+    return this.compact().merge().#base.toArray()
   }
   equals(other) {
     assert(this.#isClean(), 'cannot compare this while dirty')

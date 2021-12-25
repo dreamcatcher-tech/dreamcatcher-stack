@@ -14,18 +14,20 @@ const assemble = (unsignedBlock, signature) => {
 const generateUnsigned = (nextDmz, block) => {
   assert(nextDmz instanceof Dmz)
   assert(block instanceof Block)
+  nextDmz = nextDmz.merge() // TODO WARNING when should merge occur ?
   const provenance = generateNextProvenance(nextDmz, block)
   debug(nextDmz.hashString())
   debug(provenance.dmzIntegrity.hash)
   return Block.clone({ ...nextDmz.spread(), provenance })
 }
 const generatePierceBlock = (pierceDmz, targetBlock) => {
-  const ioChannel = targetBlock.network['.@@io']
+  const ioChannel = targetBlock.network.get('.@@io')
   if (ioChannel) {
     const { tipHeight, address } = ioChannel
     const provenance = generatePierceProvenance(pierceDmz, address, tipHeight)
     return Block.clone({ ...pierceDmz.spread(), provenance })
   }
+  pierceDmz = pierceDmz.merge()
   return Block.create(pierceDmz)
 }
 export { assemble, generateUnsigned, generatePierceBlock }

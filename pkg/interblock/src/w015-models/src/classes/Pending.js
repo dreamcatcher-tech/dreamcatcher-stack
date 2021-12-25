@@ -64,10 +64,12 @@ export class Pending extends mixin(schema) {
     return !!this.pendingRequest
   }
   rxBufferedRequest() {
-    return this.bufferedRequests[0]
+    if (this.bufferedRequests) {
+      return this.bufferedRequests[0]
+    }
   }
   getIsBuffered(request) {
     assert(request instanceof RxRequest)
-    return request.equals(this.bufferedRequests[0])
+    return this.bufferedRequests && request.deepEquals(this.bufferedRequests[0])
   }
 }

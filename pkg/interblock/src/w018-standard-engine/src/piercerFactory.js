@@ -19,7 +19,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
       await queuePromise
       const { block } = action.payload
       if (block.getChainId() === address.getChainId()) {
-        const ioChannel = block.network['.@@io']
+        const ioChannel = block.network.get('.@@io')
         if (!ioChannel) {
           return
         }
@@ -39,7 +39,7 @@ const piercerFactory = (address, ioConsistency, sqsIncrease) => {
         const { replies } = ioChannel
         for (const [ioSequence, callbacks] of promises) {
           if (callbacks.replyKey) {
-            const reply = replies[callbacks.replyKey]
+            const reply = replies.get(callbacks.replyKey)
             if (!reply || reply.isPromise()) {
               continue
             }

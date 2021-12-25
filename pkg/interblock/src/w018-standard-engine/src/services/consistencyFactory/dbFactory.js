@@ -32,7 +32,7 @@ class Cache {
   }
   put(key, model) {
     assert(!this.#cache.has(key))
-    const size = model.getSize()
+    const size = model.getSerializedSize()
     const value = { model, size }
     this.#cache.set(key, value)
     this.#total += size
@@ -97,7 +97,7 @@ const dbFactory = (leveldb) => {
     let block = cache.get(key)
     if (!block) {
       const json = await leveldb.get(key)
-      block = Block.clone(JSON.parse(json))
+      block = Block.restore(JSON.parse(json))
     }
     debug(`getBlock height: `, block.getHeight())
     return block
@@ -107,7 +107,7 @@ const dbFactory = (leveldb) => {
     const targetChainId = interblock.getTargetAddress().getChainId()
     const chainId = interblock.getChainId()
     const { height } = interblock.provenance
-    const hash = interblock.getHash()
+    const hash = interblock.hashString()
     const key = `${targetChainId}/pool/${chainId}_${pad(height)}_${hash}`
     await leveldb.put(key, interblock.serialize())
     cache.put(key, interblock)
@@ -115,7 +115,7 @@ const dbFactory = (leveldb) => {
   const putBlock = async (block) => {
     const chainId = block.getChainId()
     const height = block.getHeight()
-    const hash = block.getHash()
+    const hash = block.hashString()
     const string = block.serialize()
     const key = `${chainId}/blocks/${pad(height)}_${hash}`
     await leveldb.put(key, string)
@@ -144,7 +144,7 @@ const dbFactory = (leveldb) => {
     let block = cache.get(key)
     if (!block) {
       const json = await leveldb.get(key)
-      block = Block.clone(JSON.parse(json))
+      block = Block.restore(JSON.parse(json))
       block.serialize()
     }
     debug(`queryLatest height: `, block.getHeight())
@@ -169,7 +169,7 @@ const dbFactory = (leveldb) => {
   const putPierceRequest = async (chainId, txRequest) => {
     assert(txRequest instanceof TxRequest)
     debug(`putPierceRequest`)
-    const key = `${chainId}/piercings/req_${txRequest.getHash()}`
+    const key = `${chainId}/piercings/req_${txRequest.hashString()}`
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
     await leveldb.put(key, txRequest.serialize())
@@ -184,7 +184,7 @@ const dbFactory = (leveldb) => {
     for (const interblock of interblocks) {
       const ibChainId = interblock.getChainId()
       const { height } = interblock.provenance
-      const hash = interblock.getHash()
+      const hash = interblock.hashString()
       const key = `${chainId}/pool/${ibChainId}_${pad(height)}_${hash}`
       batch.del(key)
       keys.push(key)
@@ -208,7 +208,7 @@ const dbFactory = (leveldb) => {
       batch.del(key)
     }
     for (const request of requests) {
-      const key = `${chainId}/piercings/req_${request.getHash()}`
+      const key = `${chainId}/piercings/req_${request.hashString()}`
       keys.push(key)
       batch.del(key)
     }
@@ -334,7 +334,7 @@ const dbFactory = (leveldb) => {
       gte,
       lte,
     })) {
-      const keypair = Keypair.clone(JSON.parse(json))
+      const keypair = Keypair.restore(JSON.parse(json))
       debug('scanKeypair end')
       return keypair
     }

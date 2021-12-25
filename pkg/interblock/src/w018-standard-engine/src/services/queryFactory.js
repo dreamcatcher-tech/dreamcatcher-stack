@@ -63,10 +63,10 @@ const queryFactory = (ioConsistency, block) => {
     let childBlock = parentBlock
     for (const child of children) {
       subpath += '/' + child
-      if (!childBlock.network[child]) {
+      if (!childBlock.network.get(child)) {
         throw new Error(`Non existent path: ${subpath}`)
       }
-      const { address, tipHeight: height } = childBlock.network[child]
+      const { address, tipHeight: height } = childBlock.network.get(child)
       // TODO walk height based on root knowledge
       // TODO WARNING height always stale until have root mode implemented
       childBlock = await consistency.getBlock({ address })
