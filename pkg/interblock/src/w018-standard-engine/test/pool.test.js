@@ -4,7 +4,7 @@ import { Block } from '../../w015-models'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:pool')
-Debug.enable('*met*')
+Debug.enable()
 
 describe('pool', () => {
   describe('initializeStorage', () => {
