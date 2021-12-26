@@ -21,10 +21,7 @@ describe('effects', () => {
     const base = await metrologyFactory('effect', { hyper })
     base.enableLogging()
     await base.settle()
-    await assert.isRejected(
-      base.pierce({ type: 'NONCE' }),
-      'Wrong type of promise'
-    )
+    await assert.isRejected(base.pierce('NONCE'), 'Wrong type of promise')
     const { state } = await base.getLatest()
     assert(state)
   })
@@ -44,10 +41,10 @@ describe('effects', () => {
     const hyper = { ...covenants.hyper, reducer }
     const base = await metrologyFactory('effect', { hyper })
     base.enableLogging()
-    await base.pierce({ type: 'NONCE' })
+    await base.pierce('NONCE')
     const { state } = await base.getLatest()
-    debug(`state:`, state)
-    assert.deepEqual(state.reducerResult, testData)
+    debug(`state:`, state.toJS())
+    assert.deepEqual(state.getState().reducerResult, testData)
   })
   test.todo('inband effect included in block')
   test.todo('effect promise rejection after timeout')

@@ -39,7 +39,7 @@ const config = {
         assert(anvil instanceof RxReply)
         debug(`accumulateReply replyKey: %o`, anvil.getReplyKey())
         const pending = pendingProducer.pushReply(dmz.pending, anvil)
-        return Dmz.clone({ ...dmz, pending })
+        return dmz.update({ pending })
       },
     }),
     shiftCovenantAction: assign({
@@ -74,7 +74,7 @@ const config = {
         const { identifier: id } = covenantAction
         const reply = TxReply.create('@@REJECT', reduceRejection, id)
         const network = networkProducer.tx(dmz.network, [reply])
-        return Dmz.clone({ ...dmz, network })
+        return dmz.update({ network })
       },
     }),
     promiseAnvil: assign({
@@ -94,7 +94,7 @@ const config = {
         assert(dmz.pending.getIsPending())
         debug(`settlePending`)
         const pending = pendingProducer.settle(dmz.pending)
-        return Dmz.clone({ ...dmz, pending })
+        return dmz.update({ pending })
       },
     }),
     mergeState,
@@ -128,7 +128,7 @@ const config = {
     },
     isReductionPending: ({ reduceResolve }) => {
       assert(reduceResolve instanceof Reduction)
-      const isReductionPending = reduceResolve.getIsPending()
+      const isReductionPending = reduceResolve.isPending
       debug(`isReductionPending`, isReductionPending)
       return isReductionPending
     },

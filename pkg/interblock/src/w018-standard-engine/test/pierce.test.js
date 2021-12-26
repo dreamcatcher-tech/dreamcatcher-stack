@@ -9,31 +9,32 @@ Debug.enable()
 describe('pierce', () => {
   test('basic ping', async () => {
     const base = await metrologyFactory()
-    const ping = request('PING')
-    const reply = await base.pierce(ping)
-    assert.strictEqual(reply.type, 'PONG')
-    const second = await base.pierce(ping)
+    const ping1 = request('PING', { count: 1 })
+    const first = await base.pierce(ping1)
+    assert.strictEqual(first.type, 'PONG')
+    assert.strictEqual(first.payload.count, 1)
+    const ping2 = request('PING', { count: 2 })
+    const second = await base.pierce(ping2)
     assert.strictEqual(second.type, 'PONG')
+    assert.strictEqual(second.payload.count, 2)
 
     debug(`pings complete`)
     await base.settle()
     const baseBlock = await base.getLatest()
     const { replies } = baseBlock.network.get('.@@io')
-    assert.strictEqual(Object.keys(replies).length, 1)
-    assert.strictEqual(replies['1_0'].type, '@@RESOLVE')
+    assert.strictEqual(replies.size, 1)
+    assert.strictEqual(replies.get('1_0').type, '@@RESOLVE')
   })
   test('do not txInterblocks to .@@io channel', async () => {
     const base = await metrologyFactory()
     const { ioTransmit } = base.getEngine()
     let noIoTransmissions = true
     ioTransmit.subscribe((interblock) => {
-      if (interblock.network.get('.@@io')) {
-        noIoTransmissions = false
-      }
+      noIoTransmissions = false
     })
     await base.pierce(request('PING'))
-    assert(noIoTransmissions)
     await base.settle()
+    assert(noIoTransmissions)
   })
   test('multiple simultaneous pings maintain order', async () => {
     const base = await metrologyFactory()
@@ -45,9 +46,9 @@ describe('pierce', () => {
     await Promise.all([p1Promise, p2Promise])
     const baseBlock = await base.getLatest()
     const io = baseBlock.network.get('.@@io')
-    assert.strictEqual(Object.keys(io.replies).length, 2)
-    assert.strictEqual(io.replies['0_0'].payload.string, 'p1')
-    assert.strictEqual(io.replies['0_1'].payload.string, 'p2')
+    assert.strictEqual(io.replies.size, 2)
+    assert.strictEqual(io.replies.get('0_0').payload.string, 'p1')
+    assert.strictEqual(io.replies.get('0_1').payload.string, 'p2')
     await base.settle()
   })
   test.todo('reject for unknown chainId')

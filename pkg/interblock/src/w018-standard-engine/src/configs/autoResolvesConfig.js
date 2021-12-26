@@ -38,7 +38,7 @@ const config = {
         const { identifier } = pendingRequest
         const reply = TxReply.create('@@RESOLVE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [reply])
-        return Dmz.clone({ ...dmz, network })
+        return dmz.update({ network })
       },
     }),
   },

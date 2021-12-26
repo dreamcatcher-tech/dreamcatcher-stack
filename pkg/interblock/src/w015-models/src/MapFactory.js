@@ -167,7 +167,7 @@ const patternProperties = (schema) => {
     merge(noArgsAllowed) {
       assert.strictEqual(noArgsAllowed, undefined, `no args to merge`)
       const next = this.#clone()
-      next.#backingArray = next.#backingArray.merge()
+      next.#backingArray = next.#backingArray.compact().merge()
       return next
     }
     hash() {

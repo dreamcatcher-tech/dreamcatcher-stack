@@ -44,7 +44,7 @@ describe('integrity', () => {
     assert(duplicate.deepEquals(integrity))
     assert(integrity.isIntegrityMatch({}))
   })
-  test(`getHash returns the stored hash`, () => {
+  test(`hashString returns the stored hash`, () => {
     const integrity = Integrity.create('test hash')
     assert.strictEqual(integrity.hash, integrity.hashString())
   })

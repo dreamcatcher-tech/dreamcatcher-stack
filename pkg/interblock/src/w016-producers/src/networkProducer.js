@@ -97,7 +97,7 @@ const _respond = (network, rxRequest, reply) => {
   return network.setByAddress(address, nextChannel)
 }
 
-const tx = (network, txReplies, txRequests) => {
+const tx = (network, txReplies = [], txRequests = []) => {
   assert(network instanceof Network)
   assert(Array.isArray(txReplies))
   assert(txReplies.every((v) => v instanceof TxReply))

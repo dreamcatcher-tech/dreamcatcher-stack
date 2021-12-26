@@ -49,7 +49,7 @@ const _ingestInterblock = (channel, interblock) => {
   let { rxRepliesTip, tip, tipHeight } = channel
   assert(_rxRepliesTipHeight(rxRepliesTip) <= provenance.height)
 
-  if (tip && !transmission.precedent.equals(tip)) {
+  if (tip && !transmission.precedent.deepEquals(tip)) {
     return channel
   }
   if (transmission.precedent.isUnknown()) {
@@ -281,7 +281,8 @@ const zeroTransmissions = (channel, precedent) => {
   if (!channel.isTransmitting()) {
     return channel
   }
-  return channel.update({ replies: {}, requests: [], precedent })
+  const replies = channel.replies.clear()
+  return channel.update({ replies, requests: [], precedent })
 }
 const shiftLoopback = (loopback) => {
   assert(loopback instanceof Channel)

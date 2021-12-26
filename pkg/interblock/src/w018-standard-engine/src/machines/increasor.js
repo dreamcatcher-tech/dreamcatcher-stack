@@ -156,7 +156,7 @@ const definition = {
         },
       },
       onDone: [
-        { target: 'txInterblocks', cond: 'isNewBlock' },
+        { target: 'txInterblocks', cond: 'isNewBlockTransmitting' },
         { target: 'done' },
       ],
     },

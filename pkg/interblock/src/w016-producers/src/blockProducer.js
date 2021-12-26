@@ -22,12 +22,12 @@ const generateUnsigned = (nextDmz, block) => {
 }
 const generatePierceBlock = (pierceDmz, targetBlock) => {
   const ioChannel = targetBlock.network.get('.@@io')
+  pierceDmz = pierceDmz.merge()
   if (ioChannel) {
     const { tipHeight, address } = ioChannel
     const provenance = generatePierceProvenance(pierceDmz, address, tipHeight)
     return Block.clone({ ...pierceDmz.spread(), provenance })
   }
-  pierceDmz = pierceDmz.merge()
   return Block.create(pierceDmz)
 }
 export { assemble, generateUnsigned, generatePierceBlock }

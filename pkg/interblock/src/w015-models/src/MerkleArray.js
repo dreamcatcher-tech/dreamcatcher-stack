@@ -311,13 +311,6 @@ export class MerkleArray {
     if (value instanceof Uint8Array) {
       return sha256(value)
     }
-    if (typeof value.getHash === 'function') {
-      const hash = value.getHash()
-      if (hash instanceof Uint8Array) {
-        return hash
-      }
-      return sha256(hash)
-    }
     if (typeof value.serialize === 'function') {
       return sha256(value.serialize())
     }

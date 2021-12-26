@@ -1,12 +1,11 @@
 import assert from 'assert-fast'
-import debug from 'debug'
-import { RxRequest, RxReply, Pending } from '../../w015-models'
+import { RxRequest, RxReply, Pending, Accumulation } from '../../w015-models'
 
 const raisePending = (pending, pendingRequest) => {
   assert(pending instanceof Pending)
   assert(pendingRequest instanceof RxRequest)
   assert(!pending.getIsPending())
-  const raisedPending = Pending.clone({ ...pending, pendingRequest })
+  const raisedPending = pending.update({ pendingRequest })
   return raisedPending
 }
 const bufferRequest = (pending, request) => {
@@ -21,13 +20,13 @@ const pushReply = (pending, reply) => {
   assert(pending instanceof Pending)
   assert(reply instanceof RxReply)
   assert(pending.getIsPending())
-  let accumulator = pending.getAccumulator()
-  let bufferedReplies = pending.getBufferedReplies()
+  let { accumulator = [], bufferedReplies = [] } = pending
   let isSettlingReply = false
   accumulator = accumulator.map((tx) => {
+    assert(tx instanceof Accumulation)
     if (tx.to && tx.identifier === reply.identifier) {
       assert(!tx.reply)
-      tx = { ...tx, reply }
+      tx = tx.update({ reply })
       assert(!isSettlingReply)
       isSettlingReply = true
     }
@@ -36,15 +35,14 @@ const pushReply = (pending, reply) => {
   if (!isSettlingReply) {
     bufferedReplies = [...bufferedReplies, reply]
   }
-  return Pending.clone({ ...pending, accumulator, bufferedReplies })
+  return pending.update({ accumulator, bufferedReplies })
 }
 const settle = (pending) => {
   assert(pending instanceof Pending)
   assert(pending.getIsPending())
-  pending = { ...pending }
-  delete pending.pendingRequest
-  delete pending.accumulator
-  return Pending.clone(pending)
+  pending = pending.delete('pendingRequest')
+  pending = pending.delete('accumulator')
+  return pending
 }
 const shiftRequests = (pending) => {
   assert(pending instanceof Pending)

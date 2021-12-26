@@ -72,7 +72,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     // TODO check getting latest is still the correct previous ?
     if (previous && !previous.isNextBlock(block)) {
       debug(`block is not next %O`, block.provenance.height)
-      assert(previous.equals(block))
+      assert(previous.deepEquals(block))
       debug(`no change`)
     } else if (!previous && !block.provenance.address.isGenesis()) {
       throw new Error(`next was not genesis: ${block.height}`)

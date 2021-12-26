@@ -16,11 +16,10 @@ export class RxRequest extends mixin(rxRequestSchema) {
     return super.create(rxRequest)
   }
   assertLogic() {
-    const { identifier } = this
-    const { address, height, index } = splitSequence(identifier)
-    this.#address = address
-    this.#height = height
-    this.#index = index
+    this.#ensureInternals()
+    const address = this.getAddress()
+    const height = this.getHeight()
+    const index = this.getIndex()
     assert(!address.isUnknown())
     assert(Number.isInteger(height))
     assert(height >= 0)
@@ -28,16 +27,29 @@ export class RxRequest extends mixin(rxRequestSchema) {
     assert(index >= 0)
   }
   // TODO extend from RxReply
+  #ensureInternals() {
+    if (!this.#address) {
+      const { identifier } = this
+      const { address, height, index } = splitSequence(identifier)
+      this.#address = address
+      this.#height = height
+      this.#index = index
+    }
+  }
   getAddress() {
+    this.#ensureInternals()
     return this.#address
   }
   getHeight() {
+    this.#ensureInternals()
     return this.#height
   }
   getIndex() {
+    this.#ensureInternals()
     return this.#index
   }
   getReplyKey() {
+    this.#ensureInternals()
     return `${this.#height}_${this.#index}`
   }
   getRequest() {
@@ -51,6 +63,7 @@ export class RxRequest extends mixin(rxRequestSchema) {
     return false
   }
   getLogEntry() {
+    this.#ensureInternals()
     const { type } = this
     const chainId = this.#address.getChainId()
     return `${type} ${chainId.substring(0, 9)} ${this.getReplyKey()}`

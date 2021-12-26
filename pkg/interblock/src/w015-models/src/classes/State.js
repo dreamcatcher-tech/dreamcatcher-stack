@@ -94,7 +94,7 @@ export class State extends Base {
   }
   merge() {
     this.diff()
-    return new State(insidersOnly, this.#getState())
+    return new State(insidersOnly, this.getState())
   }
   update(updatedState) {
     const next = this.#clone()
@@ -136,13 +136,13 @@ export class State extends Base {
     return patches
   }
   toArray() {
-    return [this.#getState()]
+    return [this.getState()]
   }
   toJS() {
     // TODO ensure that merging has happened already
-    return this.#getState()
+    return this.getState()
   }
-  #getState() {
+  getState() {
     if (this.#next) {
       return this.#next
     }
@@ -153,7 +153,7 @@ export class State extends Base {
   }
   hashRaw() {
     this.#assertIsClean()
-    const hash = crypto.objectHash(this.#getState())
+    const hash = crypto.objectHash(this.getState())
     // TODO check if this hashes correctly
     return Uint8Array.from(Buffer.from(hash, 'hex'))
   }

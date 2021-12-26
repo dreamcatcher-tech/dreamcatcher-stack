@@ -50,7 +50,7 @@ const config = {
         assert(!dmz.pending.getIsPending())
         debug(`raisePending`, anvil.type)
         const pending = pendingProducer.raisePending(dmz.pending, anvil)
-        return Dmz.clone({ ...dmz, pending })
+        return dmz.update({ pending })
       },
     }),
     assignInitialPending: assign({
@@ -68,12 +68,12 @@ const config = {
       dmz: ({ dmz, anvil, covenantAction }) => {
         assert(dmz instanceof Dmz)
         assert(anvil instanceof RxRequest)
-        assert(!covenantAction || anvil.equals(covenantAction))
+        assert(!covenantAction || anvil.deepEquals(covenantAction))
         const { identifier } = anvil
         const promise = TxReply.create('@@PROMISE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [promise])
         debug(`promiseOriginRequest`, anvil.type)
-        return Dmz.clone({ ...dmz, network })
+        return dmz.update({ network })
       },
       isExternalPromise: () => true,
     }),

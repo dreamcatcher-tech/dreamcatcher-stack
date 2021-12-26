@@ -134,7 +134,7 @@ const removeProcessedPiercings = (block, { requests, replies }) => {
 const deduplicatePiercings = (items) => {
   const dedupe = []
   items.forEach((item) => {
-    if (dedupe.every((compare) => !item.equals(compare))) {
+    if (dedupe.every((compare) => !item.deepEquals(compare))) {
       dedupe.push(item)
     }
   })

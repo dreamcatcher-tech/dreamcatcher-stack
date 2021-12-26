@@ -160,7 +160,7 @@ const dbFactory = (leveldb) => {
   const putPierceReply = async (chainId, txReply) => {
     assert(txReply instanceof TxReply)
     debug(`putPierceReply`)
-    const key = `${chainId}/piercings/rep_${txReply.getHash()}`
+    const key = `${chainId}/piercings/rep_${txReply.hashString()}`
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
     await leveldb.put(key, txReply.serialize())
@@ -203,7 +203,7 @@ const dbFactory = (leveldb) => {
     const batch = leveldb.batch()
     const keys = []
     for (const reply of replies) {
-      const key = `${chainId}/piercings/rep_${reply.getHash()}`
+      const key = `${chainId}/piercings/rep_${reply.hashString()}`
       keys.push(key)
       batch.del(key)
     }

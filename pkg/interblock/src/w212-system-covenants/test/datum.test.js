@@ -28,7 +28,6 @@ describe.skip('datum helper functions', () => {
     const action = {
       type: 'FAKE',
       payload: { isTestData: true },
-      getHash: () => '',
     }
     test('basic', () => {
       const template = convertToTemplate({ schema })

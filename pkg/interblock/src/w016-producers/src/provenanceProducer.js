@@ -55,7 +55,7 @@ const generatePierceProvenance = (pierceDmz, address, parentHeight) => {
   assert(Number.isInteger(parentHeight))
   assert(parentHeight >= 0)
 
-  const dmzIntegrity = Integrity.create(pierceDmz.getHash())
+  const dmzIntegrity = Integrity.create(pierceDmz)
   const height = parentHeight + 1
   const lineage = { 0: address.chainId }
   const nextProvenance = {
@@ -64,7 +64,7 @@ const generatePierceProvenance = (pierceDmz, address, parentHeight) => {
     address,
     lineage,
   }
-  const integrity = Integrity.create(nextProvenance)
+  const integrity = Provenance.generateIntegrity(nextProvenance)
   const signatures = []
   return Provenance.clone({
     ...nextProvenance,

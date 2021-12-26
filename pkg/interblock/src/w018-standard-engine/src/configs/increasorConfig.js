@@ -196,6 +196,17 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         debug(`isEffectable %o`, isEffectable)
         return isEffectable
       },
+      isNewBlockTransmitting: ({ block }) => {
+        let isNewBlockTransmitting = false
+        if (block instanceof Block) {
+          const txs = block.network
+            .getTransmittingAliases()
+            .filter((alias) => alias !== '.@@io')
+          isNewBlockTransmitting = !!txs.length
+        }
+        debug(`isNewBlockTransmitting`, isNewBlockTransmitting)
+        return isNewBlockTransmitting
+      },
     },
     services: {
       lockChain: async (context, event) => {
@@ -233,7 +244,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
         // TODO move effects to be in transmit machine
         assert.strictEqual(typeof containerId, 'string')
         assert(nextLock.block)
-        assert(!nextLock.block.equals(lock.block))
+        assert(!nextLock.block.deepEquals(lock.block))
         debug(`effects`)
         const io = nextLock.block.network.get('.@@io')
         assert(io && nextLock.block.config.isPierced)
@@ -268,7 +279,7 @@ const increasorConfig = (ioCrypto, ioConsistency, ioIsolate) => {
           }
           await consistency.putPierceReply({ txReply })
           debug(`reply address:`, txReply.getAddress().getChainId())
-          return txReply
+          return txReply.type
         })
         // TODO race against a timeout, then take only what was completed
         const settlements = await Promise.all(awaits)

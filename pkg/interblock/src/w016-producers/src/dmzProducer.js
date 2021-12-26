@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import {
+  Accumulation,
   Block,
   Channel,
   Dmz,
@@ -25,7 +26,7 @@ const generatePierceDmz = (targetBlock, pierceReplies, pierceRequests) => {
   assert.strictEqual(txChannel.systemRole, 'PIERCE')
 
   for (const txReply of pierceReplies) {
-    assert(txReply.getAddress().equals(txChannel.address))
+    assert(txReply.getAddress().deepEquals(txChannel.address))
     txChannel = channelProducer.txReply(txChannel, txReply)
   }
   for (const txRequest of pierceRequests) {
@@ -54,26 +55,30 @@ const _extractPierceDmz = (block) => {
   return baseDmz.update({ network })
 }
 
-const accumulate = (dmz, transmissions = []) => {
+const accumulate = (dmz, txReplies, txRequests) => {
   assert(dmz instanceof Dmz)
   assert(dmz.pending.getIsPending())
-  assert(Array.isArray(transmissions))
+  assert(Array.isArray(txReplies))
+  assert(txReplies.every((v) => v instanceof TxReply))
+  assert(Array.isArray(txRequests))
+  assert(txRequests.every((v) => v instanceof TxRequest))
+
   // first, extend if there are transmissions
-  let accumulator = [...dmz.pending.getAccumulator()]
-  for (const tx of transmissions) {
-    if (tx instanceof TxReply) {
-      const { type, identifier } = tx
-      accumulator.push({ type, identifier })
-    } else {
-      assert(tx instanceof TxRequest)
-      const { type, to } = tx
-      accumulator.push({ type, to })
-    }
+  let { accumulator = [] } = dmz.pending
+  accumulator = [...accumulator]
+  for (const txReply of txReplies) {
+    const { type, identifier } = txReply
+    accumulator.push(Accumulation.create({ type, identifier }))
+  }
+  for (const txRequest of txRequests) {
+    const { type, to } = txRequest
+    accumulator.push(Accumulation.create({ type, to }))
   }
 
   // then resolve the accumulator as best we can
   const requestsMap = _mapUnIdentifiedRequests(accumulator)
   accumulator = accumulator.map((tx) => {
+    assert(tx instanceof Accumulation)
     if (tx.to && !tx.identifier) {
       let channel = dmz.network.get(tx.to)
       if (dmz.network.get('..').address.isRoot()) {
@@ -93,15 +98,15 @@ const accumulate = (dmz, transmissions = []) => {
           const index = channel.requests.length - requests.length
           assert(index >= 0)
           requests.shift()
-          tx = { ...tx }
-          tx.identifier = `${chainId}_${height}_${index}`
+          const identifier = `${chainId}_${height}_${index}`
+          tx = tx.update({ identifier })
         }
       }
     }
     return tx
   })
-  const pending = { ...dmz.pending, accumulator }
-  return Dmz.clone({ ...dmz, pending })
+  const pending = dmz.pending.update({ accumulator })
+  return dmz.update({ pending })
 }
 
 const _mapUnIdentifiedRequests = (accumulator) => {

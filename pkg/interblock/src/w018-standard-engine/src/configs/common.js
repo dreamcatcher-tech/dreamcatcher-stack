@@ -106,9 +106,9 @@ const common = (debug) => {
       }
       assert(initialPending instanceof Pending)
       assert(reduceResolve instanceof Reduction)
-      const replies = reduceResolve.getReplies()
+      const { txReplies } = reduceResolve
       const { pendingRequest } = initialPending
-      isOriginPromise = replies.some(
+      isOriginPromise = txReplies.some(
         (txReply) =>
           txReply.getReply().isPromise() &&
           txReply.identifier === pendingRequest.identifier
@@ -122,9 +122,9 @@ const common = (debug) => {
       assert(reduceResolve instanceof Reduction)
       assert(dmz instanceof Dmz)
       assert(dmz.pending.getIsPending())
-      const { transmissions } = reduceResolve
-      debug(`assignReplayIdentifiers`, transmissions.length)
-      return dmzProducer.accumulate(dmz, transmissions)
+      const { txReplies, txRequests } = reduceResolve
+      debug(`assignReplayIdentifiers`, txReplies.length, txRequests.length)
+      return dmzProducer.accumulate(dmz, txReplies, txRequests)
     },
   })
   const isReply = ({ anvil }) => {

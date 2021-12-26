@@ -36,6 +36,9 @@ export class Provenance extends mixin(provenanceSchema) {
 
     return super.create({ ...provenance, integrity, signatures })
   }
+  static clone(obj) {
+    return super.create(obj)
+  }
   assertLogic() {
     const { signatures } = this
     if (this.dmzIntegrity.isUnknown()) {
