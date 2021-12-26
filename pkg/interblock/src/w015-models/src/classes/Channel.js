@@ -15,6 +15,10 @@ export class Channel extends mixin(channelSchema) {
     const { replies, requests, precedent } = remote
     return super.create({ address, replies, requests, precedent, systemRole })
   }
+  static createRoot() {
+    const root = Address.create('ROOT')
+    return Channel.create(root, '..')
+  }
   static createLoopback() {
     if (!loopback) {
       const address = Address.create('LOOPBACK')

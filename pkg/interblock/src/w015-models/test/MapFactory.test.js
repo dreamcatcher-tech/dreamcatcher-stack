@@ -7,7 +7,7 @@ import { mixin } from '../src/MapFactory'
 import Debug from 'debug'
 import { Integrity } from '..'
 const debug = Debug('interblock:tests:MapFactory')
-Debug.enable('*MapFactory')
+Debug.enable()
 
 describe('MapFactory', () => {
   const schema = {

@@ -63,7 +63,7 @@ export class Network extends mixin(networkSchema) {
       }
     }
     next.#txs = this.#txs.remove(alias)
-    if (!channel.address.isUnknown()) {
+    if (!channel.address.isUnknown() && !channel.address.isInvalid()) {
       const chainId = channel.address.getChainId()
       next.#addressMap = this.#addressMap.set(chainId, alias)
       next.#unresolvedAliases = this.#unresolvedAliases.delete(alias)
@@ -81,8 +81,8 @@ export class Network extends mixin(networkSchema) {
     assert(alias !== '..', `cannot delete parent`)
     const next = super.remove(alias)
     next.#txs = this.#txs.remove(alias)
-    const { address } = next.get(alias)
-    if (!address.isUnknown()) {
+    const { address } = this.get(alias)
+    if (!address.isUnknown() && !address.isInvalid()) {
       next.#addressMap = this.#addressMap.delete(address.getChainId())
     }
     return next

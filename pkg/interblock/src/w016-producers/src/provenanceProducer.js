@@ -40,7 +40,14 @@ const generateNextProvenance = (nextDmz, block) => {
   const next = { dmzIntegrity, height, address, lineage }
   const integrity = Provenance.generateIntegrity(next)
   const signatures = []
-  const unsigned = provenance.update({ ...next, integrity, signatures })
+  // lineage is a map, and will grow if not cleared first
+  const lineageMap = provenance.lineage.clear().update(lineage)
+  const unsigned = provenance.update({
+    ...next,
+    integrity,
+    signatures,
+    lineage: lineageMap,
+  })
   return unsigned
 }
 const addSignature = (provenance, signature) => {

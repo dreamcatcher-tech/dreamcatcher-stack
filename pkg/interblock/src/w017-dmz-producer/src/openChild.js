@@ -47,7 +47,7 @@ const openChildReducer = (dmz, rxRequest) => {
     channel = channelProducer.txRequest(channel, connect)
     replyPromise()
     const network = dmz.network.merge({ [child]: channel })
-    dmz = Dmz.clone({ ...dmz, network, meta })
+    dmz = dmz.update({ network, meta })
   }
   return dmz
 }
@@ -80,7 +80,7 @@ const openChildReply = (slice, reply, dmz) => {
       assert.strictEqual(normalized, fullPath)
       const channel = channelProducer.invalidate(dmz.network.get(fullPath))
       const network = dmz.network.merge({ [fullPath]: channel })
-      return Dmz.clone({ ...dmz, network })
+      return dmz.update({ network })
     }
     default:
       throw new Error(`Invalid action type: ${reply.type}`)

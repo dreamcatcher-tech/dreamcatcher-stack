@@ -73,7 +73,7 @@ const spawnRequester = (dmz, originAction) => {
     channel = Channel.create(address, './')
   } else {
     preloadedRequests = channel.requests
-    channel = Channel.clone({ ...channel, requests: [] })
+    channel = channel.update({ requests: [] })
     channel = channelProducer.setAddress(channel, address)
     // TODO reresolve the accumulator with identifiers
   }

@@ -18,7 +18,7 @@ const common = (debug) => {
     const isRequest = covenantAction instanceof RxRequest
     assert(isReply || isRequest)
 
-    const { state, pending } = dmz
+    const { pending, state } = dmz
     const { accumulator } = pending
     const reduceResolve = await isolatedTick(state, covenantAction, accumulator)
     assert(reduceResolve, `Covenant returned: ${reduceResolve}`)

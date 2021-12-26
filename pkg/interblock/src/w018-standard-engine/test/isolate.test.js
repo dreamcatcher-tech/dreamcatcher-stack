@@ -2,7 +2,7 @@ import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import { ioQueueFactory } from '../../w003-queue'
 import { isolateFactory, toFunctions } from '../src/services/isolateFactory'
-import { RxRequest, CovenantId, Dmz, Block } from '../../w015-models'
+import { RxRequest, CovenantId, Dmz, Block, State } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:isolate')
 chai.use(chaiAsPromised)
@@ -42,13 +42,13 @@ describe('isolation', () => {
     const accumulator = []
     const tick1 = {
       containerId: await id1,
-      state: {},
+      state: State.create(),
       action: action1,
       accumulator,
     }
     const tick2 = {
       containerId: await id2,
-      state: {},
+      state: State.create(),
       action: action2,
       accumulator,
     }
@@ -61,11 +61,11 @@ describe('isolation', () => {
     assert.deepEqual(r2.reduction, { test: 'reducer2' })
 
     debug(`unload tests`)
-    await assert.isRejected(isolate.unloadCovenant('not valid containerId'))
+    await assert.isRejected(isolate.unloadCovenant('invalid'), 'No container')
     debug(`unloading id1`)
     await isolate.unloadCovenant(await id1)
     debug(`attempting tick1`)
-    await assert.isRejected(isolate.tick(tick1))
+    await assert.isRejected(isolate.tick(tick1), 'No tick container')
 
     assert.deepEqual(await id1, block1.provenance.reflectIntegrity().hash)
   })
@@ -78,7 +78,6 @@ describe('isolation', () => {
     }
     let covenantId = CovenantId.create('reducer1')
     const block1 = Block.create(Dmz.create({ covenantId }))
-
     const fakeConsistency = ioQueueFactory('fakeConsistency')
     const isolateProcessor = isolateFactory(fakeConsistency, covenantMap)
     const queue = ioQueueFactory('testIsolate')
@@ -92,7 +91,7 @@ describe('isolation', () => {
     const action = RxRequest.create('action1', {}, address, height, index)
     const tick1 = {
       containerId,
-      state: {},
+      state: State.create(),
       action,
       accumulator: [],
       timeout: 30000,

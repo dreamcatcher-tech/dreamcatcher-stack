@@ -96,8 +96,9 @@ const dbFactory = (leveldb) => {
     }
     let block = cache.get(key)
     if (!block) {
-      const json = await leveldb.get(key)
-      block = Block.restore(JSON.parse(json))
+      const raw = await leveldb.get(key)
+      const js = JSON.parse(raw)
+      block = Block.restore(js)
     }
     debug(`getBlock height: `, block.getHeight())
     return block

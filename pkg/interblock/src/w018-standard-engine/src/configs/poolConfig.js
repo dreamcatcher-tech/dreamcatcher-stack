@@ -69,8 +69,7 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         baseDmz: ({ validators }) => {
           debug(`createBaseDmz`)
           const covenantId = CovenantId.create('hyper')
-          const root = Address.create('ROOT')
-          const sealedRoot = Channel.create(root)
+          const sealedRoot = Channel.createRoot()
           const sealedParent = Network.create().update({ '..': sealedRoot })
           const dmz = Dmz.create({
             covenantId,

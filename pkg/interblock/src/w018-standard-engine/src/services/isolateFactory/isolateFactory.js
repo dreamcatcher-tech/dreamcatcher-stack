@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { _hook as hook } from '../../../../w002-api'
-import { Block, RxReply, RxRequest } from '../../../../w015-models'
+import { Block, RxReply, RxRequest, State } from '../../../../w015-models'
 import * as systemCovenants from '../../../../w212-system-covenants'
 import * as appCovenants from '../../../../w301-user-apps'
 import { queryFactory } from '../queryFactory'
@@ -10,7 +10,7 @@ const debug = Debug('interblock:isolate')
 // TODO set timestamp in container by overriding Date.now()
 // TODO move to having ramIsolate be the default, but allow other hardware based isolations
 // like containers, iFrames, cluster, and vm2 - same as dynamodb and ramDb
-
+const baseState = State.create()
 const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
   assert.strictEqual(typeof preloadedCovenants, 'object')
   const containers = {}
@@ -36,9 +36,10 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
     // TODO make accumulator be a model
     tick: async ({ containerId, timeout, state, action, accumulator }) => {
       debug(`tick: %o action: %o`, containerId.substring(0, 9), action.type)
+      state = state || baseState
       const container = containers[containerId]
       assert(container, `No tick container for: ${containerId}`)
-      assert(!state || typeof state === 'object')
+      assert(state instanceof State)
       assert(Array.isArray(accumulator))
       timeout = timeout || 30000
       assert(Number.isInteger(timeout) && timeout >= 0)
@@ -52,7 +53,7 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
         assert(container.covenant.covenants)
         reducer = (state) => state
       }
-      const tick = () => reducer(state, action)
+      const tick = () => reducer(state.getState(), action.toJS())
       const queryProcessor = queryFactory(ioConsistency, container.block)
       const queries = (query) => queryProcessor.query(query)
       const result = await hook(tick, accumulator, queries)

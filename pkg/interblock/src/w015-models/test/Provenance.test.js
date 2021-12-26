@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
 import { Dmz, Integrity, Provenance } from '..'
-Debug.enable('*Provenance')
+Debug.enable()
 
 describe('provenance', () => {
   test('creates default model', () => {

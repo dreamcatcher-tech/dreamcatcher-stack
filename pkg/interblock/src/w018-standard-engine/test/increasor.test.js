@@ -47,7 +47,7 @@ describe('increasor', () => {
     // base pool check
     const db = dbFactory(leveldb)
     const c = await db.getBlock(baseBlock.getChainId(), baseBlock.getHeight())
-    assert(baseBlock.equals(c), `database is not live`)
+    assert(baseBlock.deepEquals(c), `database is not live`)
     const basePool = await db.queryPool(baseBlock.getChainId())
     assert.strictEqual(basePool.length, 0)
 
@@ -78,7 +78,7 @@ describe('increasor', () => {
     const baseBlock = await base.getLatest()
     assert.strictEqual(baseBlock.getHeight(), 4)
     const { provenance } = baseBlock
-    assert.strictEqual(Object.keys(provenance.lineage).length, 2)
+    assert.strictEqual(provenance.lineage.size, 2)
   })
   test('lexographic sorting of block height over 10', async () => {
     const base = await metrologyFactory()

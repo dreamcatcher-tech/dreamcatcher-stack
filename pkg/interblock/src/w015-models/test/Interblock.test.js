@@ -84,6 +84,6 @@ describe('interblock', () => {
     assert(interblock.transmission)
     const elapsed = Date.now() - start
     debug(`speed was: ${elapsed}`)
-    assert(elapsed <= 3, `speed was: ${elapsed}`)
+    assert(elapsed <= 10, `speed was: ${elapsed}`)
   })
 })

@@ -140,7 +140,7 @@ const patternProperties = (schema) => {
     }
     clear() {
       // TODO tie into the MerkleArray better
-      let next = this.#clone()
+      let next = this
       for (const [key] of this.entries()) {
         next = next.remove(key)
       }
@@ -167,6 +167,17 @@ const patternProperties = (schema) => {
     merge(noArgsAllowed) {
       assert.strictEqual(noArgsAllowed, undefined, `no args to merge`)
       const next = this.#clone()
+      const compactPlan = next.#backingArray.getCompactPlan()
+      const reverse = new Map()
+      for (const [key, value] of next.#map) {
+        assert(!reverse.has(value))
+        reverse.set(value, key)
+      }
+      for (const [to, from] of compactPlan) {
+        assert(reverse.has(from), `missing ${from}`)
+        const key = reverse.get(from)
+        next.#map = next.#map.set(key, to)
+      }
       next.#backingArray = next.#backingArray.compact().merge()
       return next
     }
@@ -204,7 +215,7 @@ const patternProperties = (schema) => {
        * snappyjs compression takes it down to 1MB is 72ms
        * zipson down to 1.3MB in 134ms
        */
-      const array = this.#backingArray.toArray()
+      const array = this.#backingArray.toArray().sort()
       return array.map(([key, value]) => [key, value.toArray()])
     }
     entries() {
@@ -224,6 +235,9 @@ const patternProperties = (schema) => {
     }
     get size() {
       return this.#map.size
+    }
+    get _dump() {
+      return this.toJS()
     }
   }
   const className = schema.title || 'SyntheticMap'
@@ -440,6 +454,9 @@ const properties = (schema) => {
         }
       }
       return js
+    }
+    get _dump() {
+      return this.toJS()
     }
     spread() {
       const js = {}

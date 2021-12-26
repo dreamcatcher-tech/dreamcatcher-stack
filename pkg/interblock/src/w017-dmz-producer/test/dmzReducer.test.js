@@ -17,7 +17,6 @@ describe('dmzReducer', () => {
   describe('spawn', () => {
     jest.setTimeout(800)
     test('spawn is implicitly awaited', async () => {
-      Debug.enable('*met*')
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)
         if (action.type === 'TEST_SPAWN') {
@@ -34,7 +33,7 @@ describe('dmzReducer', () => {
       await base.pierce({ type: 'TEST_SPAWN' })
       await base.settle()
       const state = await base.getBlock(1)
-      const requests = state.network.child1.requests
+      const requests = state.network.get('child1').requests
       assert.strictEqual(requests.length, 2)
     })
     test('spawn uses hash for seeding inside action', async () => {

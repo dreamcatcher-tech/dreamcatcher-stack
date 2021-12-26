@@ -58,6 +58,7 @@ export class Provenance extends mixin(provenanceSchema) {
     if (!this.integrity.deepEquals(reflectedIntegrity)) {
       debug(reflectedIntegrity.hash)
       debug(this.integrity.hash)
+      Provenance.generateIntegrity(this)
       throw new Error('Self integrity degraded - refusing to instantiate')
     }
     const _signatureIntegrity = () => {
@@ -65,7 +66,7 @@ export class Provenance extends mixin(provenanceSchema) {
         return signatures.length === 0
       }
       return signatures.every(
-        (signature) => signature.integrity.equals(this.integrity)
+        (signature) => signature.integrity.deepEquals(this.integrity)
         // TODO check order the signatures is alphabetical / stable
       )
     }

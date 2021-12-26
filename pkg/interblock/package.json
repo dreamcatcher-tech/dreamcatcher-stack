@@ -17,8 +17,8 @@
     "dev": "vite --force",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --bail",
-    "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --watch"
+    "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules --preserve-symlinks node_modules/.bin/jest --bail",
+    "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules --preserve-symlinks node_modules/.bin/jest --watch"
   },
   "private": false,
   "author": "Dreamcatcher Command",
