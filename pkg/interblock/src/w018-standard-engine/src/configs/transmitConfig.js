@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import flatten from 'lodash.flatten'
 import { assign } from 'xstate'
 import { Interblock, Socket, Tx, Address } from '../../../w015-models'
 import { transmitMachine } from '../machines'

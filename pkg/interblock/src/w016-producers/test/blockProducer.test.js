@@ -1,6 +1,5 @@
 import { assert } from 'chai/index.mjs'
 import { List, Map, Record } from 'immutable'
-import clone from 'lodash.clone'
 import { blockProducer, signatureProducer } from '../../w016-producers'
 import * as crypto from '../../w012-crypto'
 import Debug from 'debug'
@@ -113,11 +112,6 @@ describe('blockProducer', () => {
       debug('Object.assign')
       const shortAssign = Object.assign(big, { assign: true })
       debug('Object.assign short')
-
-      const cloneObj = clone(big)
-      debug('lodash.clone(big)')
-      const loCloneArr = clone(arr)
-      debug('lodash.clone(arr)')
 
       // immutable
       const list = List(arr)

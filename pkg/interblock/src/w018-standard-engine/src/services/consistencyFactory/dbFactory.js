@@ -257,7 +257,7 @@ const dbFactory = (leveldb) => {
     const jsons = await leveldb.getMany(uncachedKeys)
     debug(`getMany done`)
     for (const json of jsons) {
-      const interblock = Interblock.clone(JSON.parse(json))
+      const interblock = Interblock.restore(JSON.parse(json))
       interblocks.push(interblock)
     }
     debug(`queryPool count:`, interblocks.length)
@@ -298,11 +298,11 @@ const dbFactory = (leveldb) => {
     for (const key of uncachedKeys) {
       const json = jsons.shift()
       if (key.startsWith(gte + `rep_`)) {
-        const txReply = TxReply.clone(JSON.parse(json))
+        const txReply = TxReply.restore(JSON.parse(json))
         replies.push(txReply)
       } else {
         assert(key.startsWith(gte + `req_`))
-        const txRequest = TxRequest.clone(JSON.parse(json))
+        const txRequest = TxRequest.restore(JSON.parse(json))
         requests.push(txRequest)
       }
     }

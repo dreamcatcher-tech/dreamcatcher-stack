@@ -106,7 +106,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     assert(socketItems.every((item) => typeof item === 'object'))
     const sockets = socketItems.map(({ socketJson }) => {
       assert(socketJson)
-      return Socket.clone(socketJson)
+      return Socket.restore(socketJson)
     })
     debug(`getSockets length: ${sockets.length}`)
     return sockets
