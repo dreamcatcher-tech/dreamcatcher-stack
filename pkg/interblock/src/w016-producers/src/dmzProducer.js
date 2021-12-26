@@ -55,7 +55,7 @@ const _extractPierceDmz = (block) => {
   return baseDmz.update({ network })
 }
 
-const accumulate = (dmz, txReplies, txRequests) => {
+const accumulate = (dmz, txReplies = [], txRequests = []) => {
   assert(dmz instanceof Dmz)
   assert(dmz.pending.getIsPending())
   assert(Array.isArray(txReplies))

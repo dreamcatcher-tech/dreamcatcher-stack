@@ -14,7 +14,7 @@ const bufferRequest = (pending, request) => {
   assert(pending.getIsPending())
   let { bufferedRequests = [] } = pending
   bufferedRequests = [...bufferedRequests, request]
-  return Pending.clone({ ...pending, bufferedRequests })
+  return pending.update({ bufferedRequests })
 }
 const pushReply = (pending, reply) => {
   assert(pending instanceof Pending)
@@ -51,12 +51,11 @@ const shiftRequests = (pending) => {
   const rxRequest = pending.rxBufferedRequest()
   assert(rxRequest instanceof RxRequest)
   const [first, ...bufferedRequests] = pending.bufferedRequests
-  assert(first.equals(rxRequest))
-  const nextPending = { ...pending }
+  assert(first.deepEquals(rxRequest))
   if (!bufferedRequests.length) {
-    delete nextPending.bufferedRequests
+    pending = pending.delete('bufferedRequests')
   }
-  return Pending.clone(nextPending)
+  return pending
 }
 
 export { raisePending, bufferRequest, pushReply, settle, shiftRequests }

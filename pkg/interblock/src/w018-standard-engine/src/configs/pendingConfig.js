@@ -29,7 +29,7 @@ const config = {
         assert(anvil instanceof RxRequest)
         debug(`bufferRequest: `, anvil.type)
         const pending = pendingProducer.bufferRequest(dmz.pending, anvil)
-        return Dmz.clone({ ...dmz, pending })
+        return dmz.update({ pending })
       },
     }),
     accumulateReply: assign({
@@ -85,7 +85,7 @@ const config = {
         const { identifier } = anvil
         const promise = TxReply.create('@@PROMISE', {}, identifier)
         const network = networkProducer.tx(dmz.network, [promise])
-        return Dmz.clone({ ...dmz, network })
+        return dmz.update({ network })
       },
     }),
     settlePending: assign({

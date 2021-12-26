@@ -85,28 +85,28 @@ const config = {
         assert(dmz.pending.getIsBuffered(covenantAction))
         const rxRequest = dmz.pending.rxBufferedRequest()
         assert(rxRequest instanceof RxRequest)
-        assert(rxRequest.equals(covenantAction))
+        assert(rxRequest.deepEquals(covenantAction))
 
         const pending = pendingProducer.shiftRequests(dmz.pending)
-        return Dmz.clone({ ...dmz, pending })
+        return dmz.update({ pending })
       },
     }),
     filterRePromise: assign({
       reduceResolve: ({ reduceResolve, covenantAction }) => {
         assert(reduceResolve instanceof Reduction)
         assert(covenantAction instanceof RxRequest)
-        let { transmissions: txs } = reduceResolve
-        txs = txs.filter((tx) => {
-          const isForCovenant = tx.identifier === covenantAction.identifier
-          if (tx instanceof TxReply && isForCovenant) {
-            return !tx.getReply().isPromise()
-          }
-          assert(tx instanceof TxRequest)
-          return true
+
+        const txReplies = reduceResolve.txReplies.filter((txReply) => {
+          const isForCovenant = txReply.identifier === covenantAction.identifier
+          return !isForCovenant || !txReply.getReply().isPromise()
         })
-        const isRepromised = txs.length < reduceResolve.transmissions.length
+
+        const isRepromised = txReplies.length < reduceResolve.txReplies.length
         debug(`filterRePromise remove tx promise:`, isRepromised)
-        return Reduction.clone({ ...reduceResolve, transmissions: txs })
+        if (isRepromised) {
+          reduceResolve = reduceResolve.update({ txReplies })
+        }
+        return reduceResolve
       },
     }),
     assignResolve,
