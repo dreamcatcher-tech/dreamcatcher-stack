@@ -61,6 +61,20 @@ export class MerkleArray {
     next.#adds = next.#adds.concat(values)
     return next
   }
+  clear() {
+    assert(!this.#noDeletions, 'No deletions')
+    const next = this.#clone()
+    next.#adds = next.#adds.clear()
+    next.#puts = next.#puts.clear()
+    next.#dels = next.#dels.clear().withMutations((dels) => {
+      for (let i = 0; i < this.#base.size; i++) {
+        dels.add(i)
+      }
+    })
+    next.#merkle = next.#merkle.clear()
+    next.#dirty = next.#dirty.clear()
+    return next
+  }
   remove(index) {
     assert(!this.#noDeletions, 'No deletions')
     assert(index < this.size)

@@ -139,11 +139,9 @@ const patternProperties = (schema) => {
       return next
     }
     clear() {
-      // TODO tie into the MerkleArray better
-      let next = this
-      for (const [key] of this.entries()) {
-        next = next.remove(key)
-      }
+      const next = this.#clone()
+      next.#backingArray = next.#backingArray.clear()
+      next.#map = next.#map.clear()
       return next
     }
     remove(key) {
