@@ -46,16 +46,16 @@ const openChildReducer = (dmz, rxRequest) => {
     meta = metaProducer.withSlice(meta, identifier, slice)
     channel = channelProducer.txRequest(channel, connect)
     replyPromise()
-    const network = dmz.network.merge({ [child]: channel })
+    const network = dmz.network.set(child, channel)
     dmz = dmz.update({ network, meta })
   }
   return dmz
 }
-const openChildReply = (slice, reply, dmz) => {
-  assert.strictEqual(typeof slice, 'object')
+const openChildReply = (metaSlice, reply, dmz) => {
+  assert.strictEqual(typeof metaSlice, 'object')
   assert(reply instanceof RxReply)
   assert(dmz instanceof Dmz)
-  const { child, segment, fullPath } = slice
+  const { child, segment, fullPath } = metaSlice
   assert.strictEqual(typeof fullPath, 'string')
   switch (reply.type) {
     case '@@RESOLVE': {
@@ -79,7 +79,7 @@ const openChildReply = (slice, reply, dmz) => {
       const normalized = posix.normalize(fullPath)
       assert.strictEqual(normalized, fullPath)
       const channel = channelProducer.invalidate(dmz.network.get(fullPath))
-      const network = dmz.network.merge({ [fullPath]: channel })
+      const network = dmz.network.set(fullPath, channel)
       return dmz.update({ network })
     }
     default:

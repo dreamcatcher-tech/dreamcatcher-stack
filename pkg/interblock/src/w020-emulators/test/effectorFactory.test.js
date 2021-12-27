@@ -70,6 +70,7 @@ describe('effector', () => {
      * 2021-09-27 127ms total, 57ms RTT - no sig genesis or pierce, xeon proc
      * 2021-09-28 97ms total, 38ms RTT - assert-fast added
      * 2021-11-07 69ms total, 26ms RTT - blockcount 2, precedent protocol
+     * 2021-12-27 89ms total, 70ms RTT - blockcount 2, models to classes
      */
   })
   test.skip('ping many times', async () => {
@@ -110,9 +111,8 @@ describe('effector', () => {
     const reply = await client.add('child1')
     debug(`reply: `, reply)
     assert.strictEqual(reply.alias, 'child1')
-    const {
-      network: { child1 },
-    } = await client.latest()
+    const { network } = await client.latest()
+    const child1 = network.get('child1')
     assert.strictEqual(child1.address.getChainId(), reply.chainId)
     await client.metro.settle()
   })

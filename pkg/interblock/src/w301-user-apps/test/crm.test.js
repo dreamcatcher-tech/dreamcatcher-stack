@@ -25,8 +25,8 @@ describe('crm', () => {
       const blockRate = Math.floor(testTime / shell.metro.getBlockCount())
       debug(`blockrate: ${blockRate}ms per block`)
 
-      const { state } = await shell.metro.getLatestFromPath('/crm/about')
-      assert(state.schema)
+      const latestAbout = await shell.metro.getLatestFromPath('/crm/about')
+      assert(latestAbout.state.getState().schema)
 
       const crmActions = await shell.actions('/crm/customers')
       const add1Start = Date.now()
@@ -53,6 +53,7 @@ describe('crm', () => {
        * 2021-02-04 176ms publish, 382ms install, blockcount 29, blockrate 19ms - remove immer, cache blank creates, reuse hashes for block and interblock
        * 2021-05-19 245ms publish, 524ms install, blockcount 27, blockrate 28ms - add queries to hooks, install uses a query instead of an action
        * 2021-11-11 129ms publish, 252ms install, blockcount 27, blockrate 14ms add1 167ms, add1 count 18, add2 128ms, add2 count 13 - remove light lineage from protocol
+       * 2021-12-27 185ms publish, 420ms install, blockcount 27, blockrate 22ms add1 258ms, add1 count 17, add2 205ms, add2 count 13 - models as classes
        */
     })
     test.todo('can only add customer if provide valid data')

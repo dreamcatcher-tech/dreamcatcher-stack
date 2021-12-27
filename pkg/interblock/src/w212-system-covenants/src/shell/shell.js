@@ -148,8 +148,8 @@ const config = {
       const absDpkgPath = posix.resolve(wd, dpkgPath)
       const absInstallPath = posix.resolve(wd, installPath)
       // TODO consider a useState function to only return the state ?
-      const { state } = await useBlocks(absDpkgPath)
-      const { installer } = state
+      const latest = await useBlocks(absDpkgPath)
+      const { installer } = latest.getState()
 
       const absInstallDir = posix.dirname(absInstallPath)
       try {

@@ -43,7 +43,6 @@ describe('network', () => {
     assert.strictEqual(network.getByAddress(address), channel)
   })
   test.skip('large network', () => {
-    Debug.enable('*tests*')
     let network = Network.create()
     let channel = Channel.create()
     const count = 200000

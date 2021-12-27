@@ -47,8 +47,9 @@ const deployReducer = (dmz, action) => {
     spawnOptions = { ...spawnOptions, covenantId, state }
     const spawnRequest = spawn(installPath, spawnOptions)
     const [nextDmz, spawnId, alias, chainId] = spawnRequester(dmz, spawnRequest)
-    dmz = nextDmz
+    assert.strictEqual(nextDmz.meta, dmz.meta)
     assert(!meta.replies[spawnId])
+    dmz = nextDmz
     const slice = { type: '@@DEPLOY_GENESIS', alias }
     meta = metaProducer.withSlice(meta, spawnId, slice)
     const secondRequestIndex = 1
@@ -60,8 +61,8 @@ const deployReducer = (dmz, action) => {
     assert(!deploySlice[deployId])
     deploySlice[deployId] = alias
   }
-  meta = { ...meta, deploy: deploySlice }
-  return Dmz.clone({ ...dmz, meta })
+  meta = meta.update({ deploy: deploySlice })
+  return dmz.update({ meta })
 }
 const deployGenesisReply = (meta, rxReply, dmz) => {
   assert.strictEqual(typeof meta, 'object')
@@ -71,9 +72,9 @@ const deployGenesisReply = (meta, rxReply, dmz) => {
   // TODO if this is rejected, rollback the whole operation
   return dmz
 }
-const deployReply = (meta, rxReply, dmz) => {
+const deployReply = (metaSlice, rxReply, dmz) => {
   // TODO handle rejection of deployment, then roll back the whole operation
-  assert.strictEqual(typeof meta, 'object')
+  assert.strictEqual(typeof metaSlice, 'object')
   assert(rxReply instanceof RxReply)
   assert(dmz instanceof Dmz)
   const deploy = { ...dmz.meta.deploy }
@@ -86,11 +87,10 @@ const deployReply = (meta, rxReply, dmz) => {
   if (!Object.keys(rest).length) {
     debug(`deploy complete`)
     replyResolve({}, originIdentifier)
-    const nextMeta = { ...dmz.meta }
-    delete nextMeta.deploy
-    return Dmz.clone({ ...dmz, meta: nextMeta })
+    const meta = dmz.meta.delete('deploy')
+    return dmz.update({ meta })
   }
-  const nextMeta = { ...dmz.meta, deploy }
-  return Dmz.clone({ ...dmz, meta: nextMeta })
+  const meta = dmz.meta.update({ deploy })
+  return dmz.update({ meta })
 }
 export { install, deploy, deployReducer, deployReply, deployGenesisReply }

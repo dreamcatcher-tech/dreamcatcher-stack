@@ -80,8 +80,8 @@ describe('machine validation', () => {
 
       const context = await base.getContext()
       debug(`context:`, context)
-      await base.settle()
       assert.strictEqual(context.wd, '/')
+      await base.settle()
     })
     test(`.. is valid`, async () => {
       const base = await metrologyFactory('effect', { hyper: shell })

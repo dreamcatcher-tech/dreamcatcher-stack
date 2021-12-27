@@ -41,7 +41,11 @@ const config = {
     warnReplyRejection: ({ reduceRejection }) => {
       // TODO reject all loopback actions and reject the external action
       debug(`warnReplyRejection`)
-      // console.error(reduceRejection)
+      if (skipNextReplyError) {
+        skipNextReplyError = false
+        return
+      }
+      console.error(reduceRejection)
     },
     raisePending: assign({
       dmz: ({ dmz, anvil }) => {
@@ -159,5 +163,9 @@ const directConfig = (context) => {
   const machine = { ...directMachine, context }
   return { machine, config }
 }
+let skipNextReplyError = false
+const _skipNextReplyError = () => {
+  skipNextReplyError = true
+}
 
-export { directConfig }
+export { directConfig, _skipNextReplyError }

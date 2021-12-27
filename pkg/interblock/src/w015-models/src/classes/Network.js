@@ -67,11 +67,11 @@ export class Network extends mixin(networkSchema) {
       const chainId = channel.address.getChainId()
       next.#addressMap = this.#addressMap.set(chainId, alias)
       next.#unresolvedAliases = this.#unresolvedAliases.delete(alias)
+      if (channel.isTransmitting() && alias !== '.') {
+        next.#txs = next.#txs.add(alias)
+      }
     } else {
       next.#unresolvedAliases = this.#unresolvedAliases.add(alias)
-    }
-    if (channel.isTransmitting() && alias !== '.') {
-      next.#txs = next.#txs.add(alias)
     }
     return next
   }

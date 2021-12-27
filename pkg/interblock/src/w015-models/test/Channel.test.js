@@ -2,7 +2,7 @@ import { assert } from 'chai/index.mjs'
 import { Action, Address, Channel, Continuation, Provenance } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
-Debug.enable('*:Channel')
+Debug.enable()
 
 describe('channel', () => {
   describe('create', () => {

@@ -1,10 +1,10 @@
 import { assert } from 'chai/index.mjs'
-import { metrologyFactory } from '../src/metrologyFactory'
+import { metrologyFactory } from '..'
+import { _skipNextReplyError } from '../src/configs/directConfig'
 import { shell, hyper, probe } from '../../w212-system-covenants'
 import { isReplyType } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:interpreter')
-Debug.enable()
 
 describe('interpreter', () => {
   test('respond to ping with pong', async () => {
@@ -31,18 +31,13 @@ describe('interpreter', () => {
       }
       return shell.reducer(state, action)
     }
-
     const covenants = { hyper: { ...hyper, reducer } }
     const base = await metrologyFactory('int', covenants)
     base.enableLogging()
-
+    _skipNextReplyError()
     await base.spawn('pinger', { covenantId: probe.covenantId })
     let reply
-    try {
-      reply = await base.pierce(shell.actions.ping('pinger'))
-    } catch (error) {
-      debug(error)
-    }
+    reply = await base.pierce(shell.actions.ping('pinger'))
     // TODO reject all self actions, then reject the external action
     // assert(!reply)
     await base.settle()

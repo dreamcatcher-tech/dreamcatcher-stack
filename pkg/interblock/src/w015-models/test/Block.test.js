@@ -3,7 +3,7 @@ import { Dmz, Provenance, Block, Keypair } from '..'
 import * as crypto from '../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Block')
-Debug.enable('interblock:tests:Block')
+Debug.enable()
 
 describe('block', () => {
   describe('instantiation', () => {

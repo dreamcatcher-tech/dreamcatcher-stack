@@ -49,7 +49,7 @@ const config = {
     warnReplyRejection: ({ reduceRejection }) => {
       // TODO reject all loopback actions and reject the external action
       debug(`warnReplyRejection dmz`, reduceRejection)
-      // console.error(reduceRejection)
+      console.error(reduceRejection)
     },
   },
   guards: {

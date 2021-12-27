@@ -39,7 +39,7 @@ import { createBase } from './execution/createBase'
 import { createTap } from './execution/tap'
 import { actions } from '../../w017-dmz-producer'
 import * as covenants from '../../w212-system-covenants'
-import { Block, Interblock, Address } from '../../w015-models'
+import { Address } from '../../w015-models'
 import { piercerFactory } from './piercerFactory'
 import Debug from 'debug'
 const debugBase = Debug('ib:met')
@@ -84,7 +84,7 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
     }
     const getContext = async () => {
       const block = await getBlock()
-      return block.state.context
+      return block.state.getState().context
     }
     const getLatest = async (address, height) => {
       // TODO fetch from servers and seek out remote chains ?
@@ -255,8 +255,8 @@ const _getCovenant = ({ covenantId }, mergedCovenants) => {
     return mergedCovenants.hyper //hyper always overridden
   }
   for (const key in mergedCovenants) {
-    if (mergedCovenants[key].covenantId.equals(covenantId)) {
-      assert(covenant === covenants.unity)
+    if (mergedCovenants[key].covenantId.deepEquals(covenantId)) {
+      assert.strictEqual(covenant, covenants.unity)
       covenant = mergedCovenants[key]
     }
   }

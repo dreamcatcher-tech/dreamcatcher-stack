@@ -111,6 +111,9 @@ export class Block extends mixin(blockSchema) {
     }
     return channel.tipHeight < interblock.provenance.height
   }
+  getState() {
+    return this.state.getState()
+  }
 }
 const checkSignatures = (validators, provenance) => {
   assert(validators instanceof Validators)
