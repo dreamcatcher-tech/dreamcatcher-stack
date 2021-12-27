@@ -14,13 +14,13 @@ describe('state', () => {
   test('equality', () => {
     const s1 = State.create()
     const s2 = State.create()
-    assert(s1.equals(s2))
+    assert(s1.deepEquals(s2))
     const s3 = State.create({ some: 'object' })
     const s4 = State.create({ some: 'object' })
-    assert(s3.equals(s4))
+    assert(s3.deepEquals(s4))
     const s5 = State.create({ some: 'object' })
     const s6 = State.create({ some: 'different object' })
-    assert(!s5.equals(s6))
+    assert(!s5.deepEquals(s6))
   })
   test('no undefined state keys during serialize', () => {
     assert(State.create({ not: 'missing' }).toArray())

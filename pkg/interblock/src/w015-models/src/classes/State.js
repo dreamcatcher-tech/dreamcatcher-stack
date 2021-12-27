@@ -86,7 +86,7 @@ export class State extends Base {
     assert(this.#base !== null)
     assertNoUndefined(this.#base)
   }
-  equals(other) {
+  deepEquals(other) {
     if (!other || !(other instanceof State)) {
       return false
     }

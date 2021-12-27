@@ -56,9 +56,6 @@ export class Provenance extends mixin(provenanceSchema) {
     }
     const reflectedIntegrity = this.reflectIntegrity()
     if (!this.integrity.deepEquals(reflectedIntegrity)) {
-      debug(reflectedIntegrity.hash)
-      debug(this.integrity.hash)
-      Provenance.generateIntegrity(this)
       throw new Error('Self integrity degraded - refusing to instantiate')
     }
     const _signatureIntegrity = () => {
@@ -128,7 +125,6 @@ export class Provenance extends mixin(provenanceSchema) {
       check.lineage[key] = check.lineage[key].hashString()
     }
     assert(!check.height || Object.keys(check.lineage).length)
-
     const integrity = Integrity.create(check)
     return integrity
   }

@@ -338,6 +338,7 @@ export class MerkleArray {
     if (this.#dirty.size) {
       this.#updateMerkleTree()
     }
+    assert(!this.#dirty.size)
     const topLayer = this.#merkle.last()
     assert.strictEqual(topLayer.size, 1)
     return topLayer.get(0)
@@ -402,15 +403,6 @@ export class MerkleArray {
     // assert(this.#isClean(), 'cannot serialize when dirty')
     return this.compact().merge().#base.toArray()
   }
-  equals(other) {
-    assert(this.#isClean(), 'cannot compare this while dirty')
-    assert(other.#isClean(), 'cannot compare other while dirty')
-    if (other instanceof MerkleArray) {
-      return this.#base.equals(other.#base)
-    }
-    return false
-  }
-
   _dumpInternals() {
     return {
       base: this.#base.toArray(),

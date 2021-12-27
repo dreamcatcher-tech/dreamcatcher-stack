@@ -9,7 +9,7 @@ const debug = Debug('interblock:tests:increasor')
 Debug.enable()
 
 describe('increasor', () => {
-  test('pools always empty after blocking', async () => {
+  test.only('pools always empty after blocking', async () => {
     const leveldb = levelup(memdown())
     const { covenantId } = shell // shell responds to pings
     const base = await metrologyFactory('inc', { hyper: shell }, leveldb)
@@ -45,8 +45,9 @@ describe('increasor', () => {
     assert.strictEqual(ping2.getHeight(), 2)
 
     // base pool check
-    const db = dbFactory(leveldb)
+    const db = dbFactory(leveldb) // avoids the cache
     const c = await db.getBlock(baseBlock.getChainId(), baseBlock.getHeight())
+    baseBlock.deepEquals(c)
     assert(baseBlock.deepEquals(c), `database is not live`)
     const basePool = await db.queryPool(baseBlock.getChainId())
     assert.strictEqual(basePool.length, 0)

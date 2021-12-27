@@ -70,7 +70,10 @@ const defaultParams = {
 export class Dmz extends mixin(schema) {
   static create(params = {}) {
     assert.strictEqual(typeof params, 'object')
-    const timestamp = Timestamp.create()
+    let { timestamp } = params
+    if (!timestamp) {
+      timestamp = Timestamp.create()
+    }
     const fullParams = { ...defaultParams, timestamp, ...params }
     return super.create(fullParams)
   }

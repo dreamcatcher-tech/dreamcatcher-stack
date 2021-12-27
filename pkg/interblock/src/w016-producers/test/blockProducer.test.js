@@ -47,7 +47,7 @@ describe('blockProducer', () => {
       debug(Object.keys(Block.schema.properties).sort())
       debug(Object.keys(Block.schema.properties.provenance.properties).sort())
       Block.restore(nextBlock.toArray())
-      const json = JSON.stringify(nextBlock.toArray())
+      const json = nextBlock.serialize()
       assert.strictEqual(typeof json, 'string')
       const clone = Block.restore(JSON.parse(json))
       assert(clone.deepEquals(nextBlock))

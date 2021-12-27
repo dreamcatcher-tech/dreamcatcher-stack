@@ -67,7 +67,7 @@ const patternProperties = (schema) => {
   const backingArray = new MerkleArray()
   const SyntheticMap = class extends Base {
     #backingArray = backingArray
-    #map = Immutable.Map()
+    #map = Immutable.OrderedMap()
     static get schema() {
       return schema
     }
@@ -80,16 +80,16 @@ const patternProperties = (schema) => {
     }
     static restore(backingArray) {
       assert(Array.isArray(backingArray))
-      const map = {}
-      // TODO use immutable here
-      for (const [key, value] of backingArray) {
-        map[key] = Class.restore(value)
+      let next = new this(insidersOnly)
+      for (const [key, valueArray] of backingArray) {
+        const value = Class.restore(valueArray)
+        next = next.set(key, value)
       }
-      const restored = new this(insidersOnly).setMany(map).merge()
-      if (typeof restored.assertLogic === 'function') {
-        restored.assertLogic()
+      next = next.merge()
+      if (typeof next.assertLogic === 'function') {
+        next.assertLogic()
       }
-      return restored
+      return next
     }
     constructor(LOCKED_CONSTRUCTOR, backingArray) {
       if (LOCKED_CONSTRUCTOR !== insidersOnly) {
@@ -167,9 +167,9 @@ const patternProperties = (schema) => {
       const next = this.#clone()
       const compactPlan = next.#backingArray.getCompactPlan()
       const reverse = new Map()
-      for (const [key, value] of next.#map) {
-        assert(!reverse.has(value))
-        reverse.set(value, key)
+      for (const [key, index] of next.#map) {
+        assert(!reverse.has(index))
+        reverse.set(index, key)
       }
       for (const [to, from] of compactPlan) {
         assert(reverse.has(from), `missing ${from}`)
@@ -188,7 +188,8 @@ const patternProperties = (schema) => {
     get(key) {
       assert.strictEqual(typeof key, 'string', `key ${key} is not a string`)
       if (this.#map.has(key)) {
-        const [storedKey, value] = this.#backingArray.get(this.#map.get(key))
+        const index = this.#map.get(key)
+        const [storedKey, value] = this.#backingArray.get(index)
         assert.strictEqual(storedKey, key)
         return value
       }
@@ -213,8 +214,13 @@ const patternProperties = (schema) => {
        * snappyjs compression takes it down to 1MB is 72ms
        * zipson down to 1.3MB in 134ms
        */
-      const array = this.#backingArray.toArray().sort()
-      return array.map(([key, value]) => [key, value.toArray()])
+      const array = []
+      for (const [mapKey, index] of this.#map) {
+        const [key, value] = this.#backingArray.get(index)
+        assert.strictEqual(mapKey, key)
+        array.push([key, value.toArray()])
+      }
+      return array
     }
     entries() {
       const keys = this.#map.keys()
@@ -236,6 +242,29 @@ const patternProperties = (schema) => {
     }
     get _dump() {
       return this.toJS()
+    }
+    deepEquals(other) {
+      if (!(other instanceof this.constructor)) {
+        return false
+      }
+      if (this.#map.size !== other.#map.size) {
+        return false
+      }
+      if (!this.#map.equals(other.#map)) {
+        const thisMap = this.#map.toJS()
+        const thisJs = this.toJS()
+        const otherMap = other.#map.toJS()
+        const otherJs = other.toJS()
+        return false
+      }
+      for (let i = 0; i < this.#backingArray.size; i++) {
+        const [, thisValue] = this.#backingArray.get(i)
+        const [, otherValue] = other.#backingArray.get(i)
+        if (!thisValue.deepEquals(otherValue)) {
+          return false
+        }
+      }
+      return true
     }
   }
   const className = schema.title || 'SyntheticMap'
@@ -362,14 +391,51 @@ const properties = (schema) => {
       return new this.constructor(insidersOnly, nextBackingArray)
     }
     deepEquals(other) {
+      if (this === other) {
+        return true
+      }
       if (!(other instanceof this.constructor)) {
         return false
       }
-      if (!this.#backingArray.equals(other.#backingArray)) {
-        // TODO this is very slow - needs to be model aware
-        const thisArray = this.toArray()
-        const otherArray = other.toArray()
-        return equals(thisArray, otherArray)
+      if (this.#backingArray !== other.#backingArray) {
+        return this.#deepEquals(other)
+      }
+      return true
+    }
+    #deepEquals(other) {
+      for (let i = 0; i < this.#backingArray.size; i++) {
+        const thisValue = this.#backingArray.get(i)
+        const otherValue = other.#backingArray.get(i)
+        if (thisValue === otherValue) {
+          continue
+        }
+        if (!deepIndices.has(i)) {
+          if (!equals(thisValue, otherValue)) {
+            return false
+          }
+        } else {
+          if (thisValue === EMPTY) {
+            if (otherValue !== EMPTY) {
+              return false
+            }
+          } else {
+            const schema = deepIndices.get(i)
+            if (schema.type === 'array') {
+              if (thisValue.length !== otherValue.length) {
+                return false
+              }
+              if (!thisValue.every((v, i) => v.deepEquals(otherValue[i]))) {
+                return false
+              }
+            } else {
+              assert.strictEqual(schema.type, 'object')
+              if (!thisValue.deepEquals(otherValue)) {
+                thisValue.deepEquals(otherValue)
+                return false
+              }
+            }
+          }
+        }
       }
       return true
     }
@@ -411,16 +477,16 @@ const properties = (schema) => {
       // TODO cache the output in case called again
       // TODO using the schema, know which elements a classes
       // pull them all out until always have js primitives
-      const arr = this.#backingArray.toArray()
+      const array = this.#backingArray.toArray()
       for (const [index, property] of deepIndices.entries()) {
-        if (arr[index] === EMPTY) {
+        if (array[index] === EMPTY) {
           continue
         }
         if (property.type === 'object') {
-          arr[index] = arr[index].toArray()
+          array[index] = array[index].toArray()
         } else {
           assert.strictEqual(property.type, 'array')
-          arr[index] = arr[index].map((v) => {
+          array[index] = array[index].map((v) => {
             if (typeof v.toArray === 'function') {
               return v.toArray()
             }
@@ -428,7 +494,7 @@ const properties = (schema) => {
           })
         }
       }
-      return arr
+      return array
     }
     toJS() {
       const js = {}
