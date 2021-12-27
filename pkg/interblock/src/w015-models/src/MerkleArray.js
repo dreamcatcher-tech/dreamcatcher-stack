@@ -399,8 +399,6 @@ export class MerkleArray {
     return next.compact().merge()
   }
   toArray() {
-    // TODO turn clean check back on
-    // assert(this.#isClean(), 'cannot serialize when dirty')
     return this.compact().merge().#base.toArray()
   }
   _dumpInternals() {

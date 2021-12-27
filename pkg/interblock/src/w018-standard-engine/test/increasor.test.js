@@ -9,7 +9,7 @@ const debug = Debug('interblock:tests:increasor')
 Debug.enable()
 
 describe('increasor', () => {
-  test.only('pools always empty after blocking', async () => {
+  test('pools always empty after blocking', async () => {
     const leveldb = levelup(memdown())
     const { covenantId } = shell // shell responds to pings
     const base = await metrologyFactory('inc', { hyper: shell }, leveldb)

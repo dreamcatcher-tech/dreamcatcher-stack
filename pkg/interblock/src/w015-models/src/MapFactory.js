@@ -64,9 +64,9 @@ const patternProperties = (schema) => {
   const patternName = valueSchema.title
   const Class = Models[patternName]
   assert(Class, 'Can only use pattern properties with titled schema')
-  const backingArray = new MerkleArray()
+  const emptyBackingArray = new MerkleArray()
   const SyntheticMap = class extends Base {
-    #backingArray = backingArray
+    #backingArray = emptyBackingArray
     #map = Immutable.OrderedMap()
     static get schema() {
       return schema
@@ -214,13 +214,8 @@ const patternProperties = (schema) => {
        * snappyjs compression takes it down to 1MB is 72ms
        * zipson down to 1.3MB in 134ms
        */
-      const array = []
-      for (const [mapKey, index] of this.#map) {
-        const [key, value] = this.#backingArray.get(index)
-        assert.strictEqual(mapKey, key)
-        array.push([key, value.toArray()])
-      }
-      return array
+      const array = this.#backingArray.toArray()
+      return array.map(([key, value]) => [key, value.toArray()])
     }
     entries() {
       const keys = this.#map.keys()
@@ -250,14 +245,7 @@ const patternProperties = (schema) => {
       if (this.#map.size !== other.#map.size) {
         return false
       }
-      if (!this.#map.equals(other.#map)) {
-        const thisMap = this.#map.toJS()
-        const thisJs = this.toJS()
-        const otherMap = other.#map.toJS()
-        const otherJs = other.toJS()
-        return false
-      }
-      for (let i = 0; i < this.#backingArray.size; i++) {
+      for (let i = this.#backingArray.size - 1; i >= 0; i--) {
         const [, thisValue] = this.#backingArray.get(i)
         const [, otherValue] = other.#backingArray.get(i)
         if (!thisValue.deepEquals(otherValue)) {
