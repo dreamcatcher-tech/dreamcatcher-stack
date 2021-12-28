@@ -335,9 +335,7 @@ export class MerkleArray {
   }
   hash() {
     assert(this.#isClean(), 'cannot hash while dirty')
-    if (this.#dirty.size) {
-      this.#updateMerkleTree()
-    }
+    this.#updateMerkleTree()
     assert(!this.#dirty.size)
     const topLayer = this.#merkle.last()
     assert.strictEqual(topLayer.size, 1)
@@ -378,6 +376,7 @@ export class MerkleArray {
       assert(Array.isArray(path))
       assert.strictEqual(path.length, 1)
       switch (op) {
+        // TODO use asMutable for all of these
         case 'add': {
           assert(value !== undefined)
           assert.strictEqual(path[0], next.size)

@@ -522,6 +522,9 @@ const properties = (schema) => {
       }
       return js
     }
+    diff() {
+      return this.#backingArray.diff()
+    }
     static _defineProperties() {
       let index = 0
       for (const prop of props) {

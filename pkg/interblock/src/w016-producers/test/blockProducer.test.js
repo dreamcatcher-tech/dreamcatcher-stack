@@ -38,14 +38,14 @@ describe('blockProducer', () => {
       const dmz = block.getDmz()
       assert.throws(() => blockProducer.generateUnsigned(dmz, block))
     })
-    test('pass serialize test', () => {
+    test.only('pass serialize test', () => {
       const block = Block.create()
       const state = { test: 'state' }
       const nextDmz = block.getDmz().update({ state }).merge()
       const nextBlock = blockProducer.generateUnsigned(nextDmz, block)
-      debug(nextBlock.provenance.toArray())
-      debug(Object.keys(Block.schema.properties).sort())
-      debug(Object.keys(Block.schema.properties.provenance.properties).sort())
+      Debug.enable('*tests*')
+      debug(nextBlock.diff())
+
       Block.restore(nextBlock.toArray())
       const json = nextBlock.serialize()
       assert.strictEqual(typeof json, 'string')
