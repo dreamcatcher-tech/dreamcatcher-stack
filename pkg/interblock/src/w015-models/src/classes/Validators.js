@@ -5,7 +5,6 @@ import assert from 'assert-fast'
 
 export class Validators extends mixin(validatorsSchema) {
   static create(validators = {}) {
-    // TODO pass flattree options to MerkleArray
     assert.strictEqual(typeof validators, 'object')
     assert(Object.values(validators).every((key) => key instanceof PublicKey))
     if (!Object.keys(validators).length) {

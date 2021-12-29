@@ -123,10 +123,7 @@ const patternProperties = (schema) => {
       assert(typeof key, 'string')
       assert(value !== undefined)
       assert(regex.test(key), `key ${key} does not match ${regex}`)
-      assert(
-        value instanceof Class,
-        `key ${key} not instance of ${patternName} `
-      )
+      assert(value instanceof Class, `key ${key} must be ${patternName}`)
       const tuple = [key, value]
       const next = this.#clone()
       if (next.#map.has(key)) {
@@ -236,7 +233,10 @@ const patternProperties = (schema) => {
       return this.#map.size
     }
     get _dump() {
-      return this.toJS()
+      return {
+        backingArray: this.#backingArray.toArray(),
+        map: this.#map.toJS(),
+      }
     }
     deepEquals(other) {
       if (!(other instanceof this.constructor)) {
@@ -266,7 +266,7 @@ const properties = (schema) => {
 
   const props = Object.keys(schema.properties).sort()
   const deepIndices = new Map()
-  const merkleOptions = { noCompaction: true, flatTree: true }
+  const merkleOptions = { isNoDeletions: true, isFlatTree: true }
   const emptyArray = props.map(() => EMPTY)
   const backingArray = new MerkleArray(emptyArray, merkleOptions)
   const SyntheticObject = class extends Base {

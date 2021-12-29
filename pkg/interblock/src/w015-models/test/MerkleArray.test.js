@@ -3,6 +3,7 @@ import { MerkleArray } from '../src/MerkleArray'
 import Debug from 'debug'
 import { Address, Channel } from '..'
 const debug = Debug('interblock:tests:MerkleArray')
+Debug.enable()
 
 describe('MerkleArray', () => {
   test('basic', () => {
@@ -100,8 +101,8 @@ describe('MerkleArray', () => {
       })
     )
     ma = ma.compact()
-    ma = ma.merge()
     debug(`hash %o`, ma.hashString().substr(0, 9))
+    ma = ma.merge()
     const result = JSON.parse(JSON.stringify(ma.toArray()))
     const trimmed = arr.filter((v) => v !== undefined)
     assert.deepStrictEqual(result, trimmed)

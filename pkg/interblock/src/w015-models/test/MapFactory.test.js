@@ -16,6 +16,28 @@ describe('MapFactory', () => {
       a: { type: 'string' },
     },
   }
+  test('clear', () => {
+    const patternSchema = {
+      type: 'object',
+      patternProperties: {
+        '(.*?)': Integrity.schema,
+      },
+    }
+    const Pattern = class extends mixin(patternSchema) {}
+    let pattern = Pattern.create({})
+    pattern = pattern.set('a', Integrity.create('a'))
+    pattern = pattern.set('b', Integrity.create('b'))
+    assert.strictEqual(pattern.size, 2)
+    pattern = pattern.clear()
+    pattern.hashString()
+    assert.strictEqual(pattern.size, 0)
+    pattern = pattern.update({ c: Integrity.create('a') })
+    assert.strictEqual(pattern.size, 1)
+    let hash = pattern.hashString()
+    pattern = pattern.merge()
+    assert.strictEqual(pattern.size, 1)
+    assert.strictEqual(hash, pattern.hashString())
+  })
   test('performance', () => {
     // roughly 10x to 50x slower than native objects
     const Base = mixin(schema)

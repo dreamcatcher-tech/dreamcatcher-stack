@@ -21,12 +21,12 @@ export class MerkleArray {
   #puts = Immutable.Map()
   #dels = Immutable.OrderedSet()
   #merkle = Immutable.List()
-  #flatTree = false
-  #noDeletions = false
-  #dirty = Immutable.Set()
-  constructor(base, { flatTree = false, noDeletions = false } = {}) {
-    this.#flatTree = flatTree
-    this.#noDeletions = noDeletions
+  #isFlatTree = false
+  #isNoDeletions = false
+  #dirtySet = Immutable.Set()
+  constructor(base, { isFlatTree = false, isNoDeletions = false } = {}) {
+    this.#isFlatTree = isFlatTree
+    this.#isNoDeletions = isNoDeletions
     if (base) {
       assert(Array.isArray(base))
       assert(base.every((v) => v !== undefined))
@@ -40,12 +40,13 @@ export class MerkleArray {
     clone.#puts = this.#puts
     clone.#dels = this.#dels
     clone.#merkle = this.#merkle
-    clone.#flatTree = this.#flatTree
-    clone.#noDeletions = this.#noDeletions
-    clone.#dirty = this.#dirty
+    clone.#isFlatTree = this.#isFlatTree
+    clone.#isNoDeletions = this.#isNoDeletions
+    clone.#dirtySet = this.#dirtySet
     return clone
   }
   get size() {
+    // WARNING this is misleading, as does not consider this.#dels
     return this.#base.size + this.#adds.size
   }
   addBulk(values) {
@@ -62,7 +63,7 @@ export class MerkleArray {
     return next
   }
   clear() {
-    assert(!this.#noDeletions, 'No deletions')
+    assert(!this.#isNoDeletions, 'No deletions')
     const next = this.#clone()
     next.#adds = next.#adds.clear()
     next.#puts = next.#puts.clear()
@@ -72,14 +73,14 @@ export class MerkleArray {
       }
     })
     next.#merkle = next.#merkle.clear()
-    next.#dirty = next.#dirty.clear()
+    next.#dirtySet = next.#dirtySet.clear()
     return next
   }
   remove(index) {
-    assert(!this.#noDeletions, 'No deletions')
-    assert(index < this.size)
+    assert(!this.#isNoDeletions, 'No deletions permitted')
+    assert(index < this.#base.size + this.#adds.size)
     assert(index >= 0)
-    assert(!this.#dels.has(index))
+    assert(!this.#dels.has(index), 'cannot delete twice')
     const next = this.#clone()
     next.#dels = next.#dels.add(index).sort()
     next.#puts = next.#puts.delete(index)
@@ -102,9 +103,9 @@ export class MerkleArray {
     return next
   }
   get(index) {
-    assert(index < this.size)
+    assert(index < this.size, `index ${index} out of bounds`)
     assert(index >= 0)
-    if (this.#dels.size && this.#dels.has(index)) {
+    if (this.#dels.has(index)) {
       return
     }
     if (index >= this.#base.size) {
@@ -138,14 +139,17 @@ export class MerkleArray {
     }
     return plan
   }
+  #isCompactedAndMerged() {
+    return this.#isCompacted() && this.#isMerged()
+  }
   #isCompacted() {
-    if (this.#noDeletions) {
+    if (this.#isNoDeletions) {
       return true
     }
     if (this.#dels.size && this.#adds.size) {
       return false
     }
-    const length = this.size
+    const length = this.#base.size + this.#adds.size
     let cursor = length - this.#dels.size
     for (const index of this.#dels) {
       if (index !== cursor) {
@@ -157,6 +161,9 @@ export class MerkleArray {
       return false
     }
     return true
+  }
+  #isMerged() {
+    return !this.#adds.size && !this.#puts.size && !this.#dels.size
   }
   compact() {
     if (this.#isCompacted()) {
@@ -194,19 +201,20 @@ export class MerkleArray {
         next.#dels = next.#dels.clear()
       }
     }
+    if (next.#dels.first() < next.#base.size) {
+      next.#dirtySet = next.#dirtySet.subtract(next.#dels)
+    }
     assert(next.#isCompacted())
     return next
   }
-  #isMerged() {
-    return !this.#adds.size && !this.#puts.size && !this.#dels.size
-  }
   merge() {
+    // set dirty flags on everything updated
     assert(this.#isCompacted(), 'cannot merge when not compacted')
-    assert(!this.#dels.size || !this.#adds.size, 'cannot both add and delete')
     if (this.#isMerged()) {
       return this
     }
     const next = this.#clone()
+    next.#dirtySet = next.#dirtySet.subtract(next.#dels)
     const dirty = []
     next.#base = next.#base.withMutations((base) => {
       const nextSize = next.#base.size + next.#adds.size - next.#dels.size
@@ -216,36 +224,43 @@ export class MerkleArray {
       debug(`nextSize`, nextSize)
       base = base.concat(next.#adds)
       debug(`after concat: `, base.size)
+      base = base.setSize(base.size - next.#dels.size)
+      debug(`final size:`, base.size)
       for (const [putIndex, value] of next.#puts.entries()) {
-        assert(putIndex < base.size - next.#dels.size)
+        assert(putIndex < base.size)
         base = base.set(putIndex, value)
         if (putIndex < next.#base.size) {
           dirty.push(putIndex)
         }
       }
-      base = base.setSize(base.size - next.#dels.size)
-      debug(`final size:`, base.size)
     })
 
-    next.#dirty = next.#dirty.subtract(next.#dels)
-    next.#dirty = next.#dirty.concat(dirty)
+    next.#dirtySet = next.#dirtySet.concat(dirty)
     next.#adds = next.#adds.clear()
     next.#puts = next.#puts.clear()
     next.#dels = next.#dels.clear()
     return next
   }
   #updateMerkleTree() {
-    assert(this.#isClean(), 'cannot hash while dirty')
-    assert(Immutable.Set.isSet(this.#dirty))
+    assert(this.#isCompacted(), 'Must compact first')
+    assert(Immutable.Set.isSet(this.#dirtySet))
 
-    if (!this.#base.size) {
+    if (!this.size) {
       this.#merkle = this.#merkle.clear()
-      this.#dirty = this.#dirty.clear()
+      this.#dirtySet = this.#dirtySet.clear()
     }
-    if (!this.#dirty.size) {
+    const isUnchanged = !this.#adds.size && !this.#puts.size && !this.#dels.size
+    if (!this.#dirtySet.size && isUnchanged) {
       return
     }
-    if (this.#flatTree) {
+    this.#dirtySet = this.#dirtySet.withMutations((dirtySet) => {
+      const baseSize = this.#base.size + this.#adds.size - this.#dels.size
+      for (let i = this.#base.size; i < baseSize; i++) {
+        dirtySet.add(i)
+      }
+    })
+
+    if (this.#isFlatTree) {
       const hasher = sha256.create()
       for (const element of this.#base) {
         if (typeof element === 'symbol') {
@@ -274,13 +289,22 @@ export class MerkleArray {
       this.#merkle = this.#merkle.set(0, Immutable.List([hash]))
     } else {
       this.#merkle = this.#merkle.withMutations((merkle) => {
-        let lowerLayer = this.#base
+        let lowerLayer = {
+          get: (index) => {
+            if (index >= this.size) {
+              assert.strictEqual(index, this.size)
+              return
+            }
+            return this.get(index)
+          },
+        }
+
         let layerIndex = 0
-        let dirty = this.#dirty
+        let dirty = this.#dirtySet
           .sort()
           .map((i) => Math.floor(i / 2))
           .toArray()
-        let layerSize = Math.ceil(this.#base.size / 2)
+        let layerSize = Math.ceil(this.size / 2)
         do {
           let layer = merkle.get(layerIndex, Immutable.List())
           let nextDirty = []
@@ -319,7 +343,7 @@ export class MerkleArray {
         merkle.setSize(layerIndex) // knock the top off the christmas tree
       })
     }
-    this.#dirty = this.#dirty.clear()
+    this.#dirtySet = this.#dirtySet.clear()
   }
   static #hash(value) {
     if (value instanceof Uint8Array) {
@@ -334,22 +358,24 @@ export class MerkleArray {
     return bytesToHex(this.hash())
   }
   hash() {
-    assert(this.#isClean(), 'cannot hash while dirty')
     this.#updateMerkleTree()
-    assert(!this.#dirty.size)
+    assert(!this.#dirtySet.size)
+    if (!this.size) {
+      return sha256('')
+    }
     const topLayer = this.#merkle.last()
     assert.strictEqual(topLayer.size, 1)
     return topLayer.get(0)
   }
   proof(index) {
-    assert(this.#isMerged(), 'can only proof after merge')
-    assert(index < this.#base.size)
+    assert(this.#isCompacted(), 'can only proof after compaction')
+    assert(index < this.size)
     assert(index >= 0)
-    assert(this.#base.get(index))
+    assert(this.get(index))
     // TODO generate the merkle proof
   }
   diff() {
-    assert(this.#isCompacted())
+    assert(this.#isCompacted(), `can only diff after compaction`)
     const ops = []
     let index = this.#base.size
     for (const value of this.#adds) {
@@ -364,12 +390,9 @@ export class MerkleArray {
     }
     return ops
   }
-  #isClean() {
-    return this.#isCompacted() && this.#isMerged()
-  }
   patch(opsList) {
     assert(Array.isArray(opsList))
-    assert(this.#isClean(), 'cannot patch when dirty')
+    assert(this.#isCompactedAndMerged(), 'cannot patch when dirty')
     let next = this.#clone()
     for (const { op, path, value } of opsList) {
       assert(operations.includes(op))
@@ -395,17 +418,18 @@ export class MerkleArray {
         }
       }
     }
-    return next.compact().merge()
+    return next.compact()
   }
   toArray() {
     return this.compact().merge().#base.toArray()
   }
-  _dumpInternals() {
+  get _dumpInternals() {
     return {
       base: this.#base.toArray(),
       adds: this.#adds.toArray(),
       puts: this.#puts.toObject(),
       dels: this.#dels.toArray(),
+      dirtySet: this.#dirtySet.toArray(),
       merkle: this.#merkle.toArray().map((l) => l.toArray()),
     }
   }
