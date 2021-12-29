@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Block, Dmz } from '../../w015-models'
+import { Block, Dmz, Signature } from '../../w015-models'
 import {
   generateNextProvenance,
   addSignature,
@@ -8,17 +8,19 @@ import {
 import Debug from 'debug'
 const debug = Debug('interblock:producers:blockProducer')
 const assemble = (unsignedBlock, signature) => {
+  assert(unsignedBlock instanceof Block)
+  assert(signature instanceof Signature)
   const provenance = addSignature(unsignedBlock.provenance, signature)
-  return Block.clone({ ...unsignedBlock.spread(), provenance })
+  return unsignedBlock.update({ provenance })
 }
 const generateUnsigned = (nextDmz, block) => {
   assert(nextDmz instanceof Dmz)
   assert(block instanceof Block)
-  nextDmz = nextDmz.merge() // TODO WARNING when should merge occur ?
   const provenance = generateNextProvenance(nextDmz, block)
-  debug(nextDmz.hashString())
   debug(provenance.dmzIntegrity.hash)
-  return Block.clone({ ...nextDmz.spread(), provenance })
+  const nextBlock = block.update({ ...nextDmz.spread(), provenance })
+  nextBlock.assertLogic()
+  return nextBlock
 }
 const generatePierceBlock = (pierceDmz, targetBlock) => {
   const ioChannel = targetBlock.network.get('.@@io')

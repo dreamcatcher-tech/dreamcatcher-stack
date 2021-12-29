@@ -54,7 +54,6 @@ export class Block extends mixin(blockSchema) {
     const { isPierce, isAllRequired, isOnlyRequired } = sigCheck
     return isPierce || (isAllRequired && isOnlyRequired)
   }
-
   getDmz() {
     // TODO intertwine with DMZ deeper than this
     if (!this.#dmz) {

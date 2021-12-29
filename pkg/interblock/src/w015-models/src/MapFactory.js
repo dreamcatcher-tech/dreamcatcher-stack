@@ -176,7 +176,7 @@ const patternProperties = (schema) => {
       next.#backingArray = next.#backingArray.compact().merge()
       return next
     }
-    hash() {
+    hashRaw() {
       return this.#backingArray.hash()
     }
     hashString() {
@@ -340,10 +340,24 @@ const properties = (schema) => {
         // TODO do type checking based on the schema, particularly if deep
         debug(`set`, propertyName, nextValue)
         const arrayIndex = propMap[propertyName]
+        if (nextBackingArray.get(arrayIndex) === nextValue) {
+          continue
+        }
 
         if (deepIndices.has(arrayIndex)) {
           const schema = deepIndices.get(arrayIndex)
           const currentValue = nextBackingArray.get(arrayIndex)
+          if (Array.isArray(nextValue)) {
+            // TODO check if array deep equals the other
+          } else if (typeof nextValue.deepEquals === 'function') {
+            if (nextValue.deepEquals(currentValue)) {
+              continue
+            }
+          } else {
+            if (equals(nextValue, currentValue)) {
+              continue
+            }
+          }
           nextValue = deepValue(schema, currentValue, nextValue)
         } else {
           const propertySchema = schema.properties[propertyName]
@@ -368,6 +382,9 @@ const properties = (schema) => {
         }
         // TODO use withMutations for speed
         nextBackingArray = nextBackingArray.put(arrayIndex, nextValue)
+      }
+      if (nextBackingArray === this.#backingArray) {
+        return this
       }
       return new this.constructor(insidersOnly, nextBackingArray)
     }

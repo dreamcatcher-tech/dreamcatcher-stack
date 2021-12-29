@@ -38,6 +38,12 @@ describe('MapFactory', () => {
     assert.strictEqual(pattern.size, 1)
     assert.strictEqual(hash, pattern.hashString())
   })
+  test.only('deduplication', () => {
+    const dmz = Models.Dmz.create()
+    const { state } = dmz
+    const next = dmz.update({ state })
+    assert.strictEqual(next, dmz)
+  })
   test('performance', () => {
     // roughly 10x to 50x slower than native objects
     const Base = mixin(schema)

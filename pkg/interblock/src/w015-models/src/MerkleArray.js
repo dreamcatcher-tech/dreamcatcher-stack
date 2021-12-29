@@ -261,8 +261,10 @@ export class MerkleArray {
     })
 
     if (this.#isFlatTree) {
+      assert(this.#isNoDeletions)
       const hasher = sha256.create()
-      for (const element of this.#base) {
+      for (let i = 0; i < this.size; i++) {
+        const element = this.get(i)
         if (typeof element === 'symbol') {
           continue
         }
