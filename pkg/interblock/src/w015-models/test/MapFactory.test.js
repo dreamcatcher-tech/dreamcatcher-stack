@@ -38,7 +38,7 @@ describe('MapFactory', () => {
     assert.strictEqual(pattern.size, 1)
     assert.strictEqual(hash, pattern.hashString())
   })
-  test.only('deduplication', () => {
+  test('deduplication', () => {
     const dmz = Models.Dmz.create()
     const { state } = dmz
     const next = dmz.update({ state })

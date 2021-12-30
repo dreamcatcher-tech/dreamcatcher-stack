@@ -11,11 +11,14 @@ const assemble = (unsignedBlock, signature) => {
   assert(unsignedBlock instanceof Block)
   assert(signature instanceof Signature)
   const provenance = addSignature(unsignedBlock.provenance, signature)
-  return unsignedBlock.update({ provenance })
+  const nextBlock = unsignedBlock.update({ provenance })
+  nextBlock.assertLogic()
+  return nextBlock
 }
 const generateUnsigned = (nextDmz, block) => {
   assert(nextDmz instanceof Dmz)
   assert(block instanceof Block)
+  nextDmz = nextDmz.compact()
   const provenance = generateNextProvenance(nextDmz, block)
   debug(provenance.dmzIntegrity.hash)
   const nextBlock = block.update({ ...nextDmz.spread(), provenance })
@@ -24,7 +27,7 @@ const generateUnsigned = (nextDmz, block) => {
 }
 const generatePierceBlock = (pierceDmz, targetBlock) => {
   const ioChannel = targetBlock.network.get('.@@io')
-  pierceDmz = pierceDmz.merge()
+  pierceDmz = pierceDmz.compact()
   if (ioChannel) {
     const { tipHeight, address } = ioChannel
     const provenance = generatePierceProvenance(pierceDmz, address, tipHeight)

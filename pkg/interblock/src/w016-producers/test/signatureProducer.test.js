@@ -15,18 +15,16 @@ describe('signatureProducer', () => {
 
     const degradedI = sig
       .update({ integrity: Integrity.create({ degraded: 'degraded' }) })
-      .merge()
       .toArray()
     assert.throws(() => Signature.restore(degradedI), 'Could not verify')
 
     const degradedP = sig
       .update({ publicKey: keypairTamper.publicKey })
-      .merge()
       .toArray()
     assert.throws(() => Signature.restore(degradedP), 'Could not verify')
 
     const { seal } = await signatureProducer.sign(integrity, keypairTamper)
-    const degradedS = sig.update({ seal }).merge().toArray()
+    const degradedS = sig.update({ seal }).toArray()
     assert.throws(() => Signature.restore(degradedS), 'Could not verify')
   })
 })

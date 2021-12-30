@@ -159,8 +159,7 @@ const patternProperties = (schema) => {
       }
       return next
     }
-    merge(noArgsAllowed) {
-      assert.strictEqual(noArgsAllowed, undefined, `no args to merge`)
+    compact() {
       const next = this.#clone()
       const compactPlan = next.#backingArray.getCompactPlan()
       const reverse = new Map()
@@ -168,12 +167,20 @@ const patternProperties = (schema) => {
         assert(!reverse.has(index))
         reverse.set(index, key)
       }
-      for (const [to, from] of compactPlan) {
-        assert(reverse.has(from), `missing ${from}`)
-        const key = reverse.get(from)
-        next.#map = next.#map.set(key, to)
-      }
-      next.#backingArray = next.#backingArray.compact().merge()
+      next.#map = next.#map.withMutations((map) => {
+        for (const [to, from] of compactPlan) {
+          assert(reverse.has(from), `missing ${from}`)
+          const key = reverse.get(from)
+          map.set(key, to)
+        }
+      })
+      next.#backingArray = next.#backingArray.compact()
+      return next
+    }
+    merge(noArgsAllowed) {
+      assert.strictEqual(noArgsAllowed, undefined, `no args to merge`)
+      const next = this.compact()
+      next.#backingArray = next.#backingArray.merge()
       return next
     }
     hashRaw() {
