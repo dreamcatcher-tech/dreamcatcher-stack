@@ -175,17 +175,5 @@ describe('blockProducer', () => {
       // })
       // debug('immer update no auto') // 4s
     })
-    test('big Network', () => {
-      // make a reducer that dispatches a large number of requests out ?
-      // exercise the time of every network model operation
-      // test clone times work as expected
-    })
-    test('block clone during add signature is constant time', async () => {
-      // generate a big block
-      // change the dmz or add a legit signature
-      // time the cloning
-      // do the same for the small block
-      // verify the clone time is the exact same
-    })
   })
 })

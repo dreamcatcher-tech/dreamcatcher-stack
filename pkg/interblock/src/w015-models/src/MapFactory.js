@@ -139,7 +139,7 @@ const patternProperties = (schema) => {
       const next = this.#clone()
       next.#backingArray = next.#backingArray.clear()
       next.#map = next.#map.clear()
-      return next
+      return next.#compact()
     }
     remove(key) {
       assert(typeof key, 'string')
@@ -147,7 +147,7 @@ const patternProperties = (schema) => {
       const next = this.#clone()
       next.#backingArray = next.#backingArray.remove(this.#map.get(key))
       next.#map = next.#map.delete(key)
-      return next
+      return next.#compact()
     }
     #clone() {
       const next = new this.constructor(insidersOnly)
@@ -159,7 +159,7 @@ const patternProperties = (schema) => {
       }
       return next
     }
-    compact() {
+    #compact() {
       const next = this.#clone()
       const compactPlan = next.#backingArray.getCompactPlan()
       const reverse = new Map()
@@ -179,7 +179,7 @@ const patternProperties = (schema) => {
     }
     merge(noArgsAllowed) {
       assert.strictEqual(noArgsAllowed, undefined, `no args to merge`)
-      const next = this.compact()
+      const next = this.#clone()
       next.#backingArray = next.#backingArray.merge()
       return next
     }
