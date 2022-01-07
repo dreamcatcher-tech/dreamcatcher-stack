@@ -7,7 +7,7 @@ import { spawnReducer, spawn } from '../src/spawn'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
-Debug.enable('*met* *blockProducer')
+Debug.enable()
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')

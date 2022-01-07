@@ -40,7 +40,6 @@ describe('blockProducer', () => {
       assert.throws(() => blockProducer.generateUnsigned(dmz, block))
     })
     test('serialize with diff', () => {
-      Debug.enable('*tests* *blockProducer hash:* *:State')
       const block = Block.create()
       const state = { test: 'state' }
       const baseDmz = block.getDmz()

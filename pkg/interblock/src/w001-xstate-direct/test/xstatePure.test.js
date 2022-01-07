@@ -3,6 +3,7 @@ import chaiAsPromised from 'chai-as-promised'
 import Debug from 'debug'
 import { interpret, Machine, assign } from 'xstate'
 import { pure } from '..'
+import { _skipNextErrorLog } from '../src/xstatePure'
 chai.use(chaiAsPromised)
 
 const debug = Debug('interblock:tests:xstatePure')
@@ -197,6 +198,7 @@ describe('baseline', () => {
     debug('')
     debug('')
     debug('')
+    _skipNextErrorLog()
     await assert.isRejected(pure('UNHANDLED', definition, config))
   })
 })

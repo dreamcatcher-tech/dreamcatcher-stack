@@ -56,7 +56,7 @@ describe('machine validation', () => {
     test('cd errors on garbage path', async () => {
       const base = await metrologyFactory('e', { hyper: shell })
       const cd = shell.actions.cd('garbagePath')
-      await assert.isRejected(base.pierce(cd))
+      await assert.isRejected(base.pierce(cd), '/garbagePath')
       await base.settle()
     })
     test('cd errors on nested garbage path', async () => {

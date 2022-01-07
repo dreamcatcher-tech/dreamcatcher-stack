@@ -39,7 +39,6 @@ describe('interpreter', () => {
     let reply
     reply = await base.pierce(shell.actions.ping('pinger'))
     // TODO reject all self actions, then reject the external action
-    // assert(!reply)
     await base.settle()
   })
 })

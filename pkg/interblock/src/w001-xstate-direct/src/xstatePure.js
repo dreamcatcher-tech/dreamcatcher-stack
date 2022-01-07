@@ -122,7 +122,11 @@ const pure = async (event, definition, config = {}) => {
       } else {
         transitions = node.invoke.onError
         if (!transitions) {
-          console.error('error in invoke:', event.data)
+          if (skipNextErrorLog) {
+            skipNextErrorLog = false
+          } else {
+            console.error('error in invoke:', event.data)
+          }
           throw event.data
         }
       }
@@ -338,4 +342,9 @@ const pure = async (event, definition, config = {}) => {
 }
 const splitPath = (path) => path.split('.')
 
-export { pure }
+let skipNextErrorLog = false
+const _skipNextErrorLog = () => {
+  skipNextErrorLog = true
+}
+
+export { pure, _skipNextErrorLog }

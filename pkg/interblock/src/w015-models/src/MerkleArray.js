@@ -54,6 +54,7 @@ export class MerkleArray {
     assert(Array.isArray(values))
     const next = this.#clone()
     next.#adds = next.#adds.concat(values)
+    // TODO mark in dirtySet
     return next
   }
   add(...values) {
@@ -67,6 +68,7 @@ export class MerkleArray {
     next.#dels = next.#dels.clear().withMutations((dels) => {
       for (let i = 0; i < this.#base.size; i++) {
         dels.add(i)
+        next.#dirtySet = next.#dirtySet.add(i)
       }
     })
     next.#merkle = next.#merkle.clear()
@@ -80,6 +82,9 @@ export class MerkleArray {
     const next = this.#clone()
     next.#dels = next.#dels.add(index).sort()
     next.#puts = next.#puts.delete(index)
+    if (index < this.#base.size) {
+      next.#dirtySet = next.#dirtySet.add(index)
+    }
     return next
   }
   put(index, value) {
@@ -96,6 +101,7 @@ export class MerkleArray {
     } else {
       next.#puts = next.#puts.set(index, value)
     }
+    next.#dirtySet = next.#dirtySet.add(index)
     return next
   }
   get(index) {
@@ -312,6 +318,9 @@ export class MerkleArray {
           dirty.forEach((dirtyIndex, index) => {
             if (dirty[index + 1] === dirtyIndex) {
               // lookahead avoids using a 4x slower Set to deduplicate
+              return
+            }
+            if (dirtyIndex * 2 >= this.size) {
               return
             }
             let left = lowerLayer.get(dirtyIndex * 2)
