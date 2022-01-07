@@ -20,20 +20,27 @@ const defaultDmz = Dmz.create()
 export class Block extends mixin(blockSchema) {
   #dmz
   static create(dmz = defaultDmz, forkedLineages = {}) {
-    // throw new Error(`Only blockProducer can make new block models`)
     assert(dmz instanceof Dmz)
     assert(dmz.hashString(), `Dmz must be hashable`)
     assert.strictEqual(typeof forkedLineages, 'object')
     const provenance = Provenance.create(dmz, forkedLineages)
-    // TODO make block be derived from Dmz
-    const block = super.create({ ...dmz.spread(), provenance })
+    const block = super.create().updateBlock(dmz, provenance)
     return block
   }
-  static clone(params) {
-    // TODO try remove need for this method
-    return super.create(params)
+  updateBlock(dmz, provenance) {
+    assert(dmz instanceof Dmz)
+    assert(provenance instanceof Provenance)
+    const next = super.update({ ...dmz.spread(), provenance })
+    next.#dmz = dmz
+    next.#internalAssertLogic()
+    return next
   }
-  assertLogic() {
+  update(obj) {
+    assert.strictEqual(typeof obj, 'object')
+    assert.strictEqual(Object.keys(obj).length, 0, `Blocks cannot be updated`)
+    return super.update(obj)
+  }
+  #internalAssertLogic() {
     const address = this.provenance.getAddress()
     const isLoop = this.network.hasByAddress(address)
     assert(!isLoop, `Loop detected - use loopback address instead`)
@@ -46,6 +53,10 @@ export class Block extends mixin(blockSchema) {
       throw new Error('Invalid signatures detected on block')
     }
   }
+  _imprint(next) {
+    assert(next instanceof Block)
+    next.#dmz = this.#dmz
+  }
   isVerifiedBlock() {
     if (this.provenance.address.isGenesis()) {
       return true
@@ -55,31 +66,9 @@ export class Block extends mixin(blockSchema) {
     return isPierce || (isAllRequired && isOnlyRequired)
   }
   getDmz() {
-    // TODO intertwine with DMZ deeper than this
-    if (!this.#dmz) {
-      const { provenance, ...spreadDmz } = this.spread()
-      this.#dmz = Dmz.create(spreadDmz)
-    }
+    assert(this.#dmz)
     return this.#dmz
   }
-
-  /**
-   * Used to detect what role should be taken based on a block
-   * and a pubkey.
-   *
-   * @param {*} pubkeys
-   * @param {*} _block
-   */
-  whoami(pubkeys, block) {
-    assert(block instanceof Block)
-    // return one of PROPOSER, VALIDATOR, WITNESS
-    pubkeys.forEach((_pubkey) => {
-      // read the acl in the block
-      // seek the key
-      // return the highest ranking match
-    })
-  }
-
   isNextBlock(nextBlock) {
     // TODO work out validators being succeeded
     const isBlock = nextBlock instanceof Block
@@ -112,6 +101,22 @@ export class Block extends mixin(blockSchema) {
   }
   getState() {
     return this.state.getState()
+  }
+  /**
+   * Used to detect what role should be taken based on a block
+   * and a pubkey.
+   *
+   * @param {*} pubkeys
+   * @param {*} _block
+   */
+  whoami(pubkeys, block) {
+    assert(block instanceof Block)
+    // return one of PROPOSER, VALIDATOR, WITNESS
+    pubkeys.forEach((_pubkey) => {
+      // read the acl in the block
+      // seek the key
+      // return the highest ranking match
+    })
   }
 }
 const checkSignatures = (validators, provenance) => {

@@ -7,7 +7,7 @@ import { spawnReducer, spawn } from '../src/spawn'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
-Debug.enable()
+Debug.enable('*met* *blockProducer')
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')
@@ -15,6 +15,7 @@ describe('dmzReducer', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
+    jest.setTimeout(800)
     test('spawn is implicitly awaited', async () => {
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)

@@ -107,6 +107,10 @@ const patternProperties = (schema) => {
       }
       Object.freeze(this)
     }
+    update(map) {
+      // TODO rename
+      return this.setMany(map)
+    }
     setMany(map) {
       // TODO use the bulkAdd method on MerkleArray with a bulkPut option
       let next = this
@@ -114,10 +118,6 @@ const patternProperties = (schema) => {
         next = next.set(key, value)
       }
       return next
-    }
-    update(map) {
-      // TODO rename
-      return this.setMany(map)
     }
     set(key, value) {
       assert(typeof key, 'string')
@@ -133,7 +133,7 @@ const patternProperties = (schema) => {
         next.#map = next.#map.set(key, next.#backingArray.size)
         next.#backingArray = next.#backingArray.add(tuple)
       }
-      return next
+      return next.#compact()
     }
     clear() {
       const next = this.#clone()
@@ -471,6 +471,9 @@ const properties = (schema) => {
       }
 
       const next = new this.constructor(insidersOnly, backingArray.merge())
+      if (typeof this._imprint === 'function') {
+        this._imprint(next)
+      }
       return next
     }
     hashRaw() {

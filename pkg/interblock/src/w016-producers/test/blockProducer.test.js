@@ -12,6 +12,7 @@ describe('blockProducer', () => {
       const block = Block.create()
       const keypairA = Keypair.create('keypairA')
       const keypairB = Keypair.create('keypairB')
+      assert(keypairA.publicKey.key !== keypairB.publicKey.key)
       const dmz = Dmz.create({
         state: { test: 'changedState' },
         validators: keypairA.getValidatorEntry(),

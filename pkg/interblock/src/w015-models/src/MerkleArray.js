@@ -57,10 +57,7 @@ export class MerkleArray {
     return next
   }
   add(...values) {
-    assert(Array.isArray(values))
-    const next = this.#clone()
-    next.#adds = next.#adds.concat(values)
-    return next
+    return this.addBulk(values)
   }
   clear() {
     assert(!this.#isNoDeletions, 'No deletions')

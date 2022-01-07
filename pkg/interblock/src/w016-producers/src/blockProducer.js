@@ -11,16 +11,15 @@ const assemble = (unsignedBlock, signature) => {
   assert(unsignedBlock instanceof Block)
   assert(signature instanceof Signature)
   const provenance = addSignature(unsignedBlock.provenance, signature)
-  const nextBlock = unsignedBlock.update({ provenance })
-  nextBlock.assertLogic()
+  const dmz = unsignedBlock.getDmz()
+  const nextBlock = unsignedBlock.updateBlock(dmz, provenance)
   return nextBlock
 }
 const generateUnsigned = (nextDmz, block) => {
   assert(nextDmz instanceof Dmz)
   assert(block instanceof Block)
   const provenance = generateNextProvenance(nextDmz, block)
-  const nextBlock = block.update({ ...nextDmz.spread(), provenance })
-  nextBlock.assertLogic()
+  const nextBlock = block.updateBlock(nextDmz, provenance)
   return nextBlock
 }
 const generatePierceBlock = (pierceDmz, targetBlock) => {
@@ -28,7 +27,7 @@ const generatePierceBlock = (pierceDmz, targetBlock) => {
   if (ioChannel) {
     const { tipHeight, address } = ioChannel
     const provenance = generatePierceProvenance(pierceDmz, address, tipHeight)
-    return Block.clone({ ...pierceDmz.spread(), provenance })
+    return targetBlock.updateBlock(pierceDmz, provenance)
   }
   return Block.create(pierceDmz)
 }

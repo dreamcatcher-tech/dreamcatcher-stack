@@ -98,7 +98,6 @@ const pure = async (event, definition, config = {}) => {
         state = resolveTransition(state, event)
         return { state, event }
       } catch (data) {
-        // console.log('error in invoke:', data)
         debug(`invoke error: %o`, data.message)
         event = { type: `error.invoke.${invoke.src}`, data }
         state = resolveTransition(state, event)
@@ -123,6 +122,7 @@ const pure = async (event, definition, config = {}) => {
       } else {
         transitions = node.invoke.onError
         if (!transitions) {
+          console.error('error in invoke:', event.data)
           throw event.data
         }
       }
