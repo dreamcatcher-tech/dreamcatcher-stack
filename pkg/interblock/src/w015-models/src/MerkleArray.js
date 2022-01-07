@@ -70,7 +70,6 @@ export class MerkleArray {
       }
     })
     next.#merkle = next.#merkle.clear()
-    next.#dirtySet = next.#dirtySet.clear()
     return next
   }
   remove(index) {
@@ -299,11 +298,11 @@ export class MerkleArray {
         }
 
         let layerIndex = 0
+        let layerSize = Math.ceil(this.size / 2)
         let dirty = this.#dirtySet
           .sort()
           .map((i) => Math.floor(i / 2))
           .toArray()
-        let layerSize = Math.ceil(this.size / 2)
         do {
           let layer = merkle.get(layerIndex, Immutable.List())
           let nextDirty = []
@@ -318,6 +317,7 @@ export class MerkleArray {
             let left = lowerLayer.get(dirtyIndex * 2)
             let right = lowerLayer.get(dirtyIndex * 2 + 1)
             if (layerIndex === 0) {
+              assert(left !== undefined, `must have "left" in layer 0`)
               left = MerkleArray.#hash(left)
               if (typeof right !== 'undefined') {
                 right = MerkleArray.#hash(right)
@@ -343,6 +343,7 @@ export class MerkleArray {
       })
     }
     this.#dirtySet = this.#dirtySet.clear()
+    assert.strictEqual(this.#merkle.last().size, 1, `merkle tree failure`)
   }
   static #hash(value) {
     if (value instanceof Uint8Array) {

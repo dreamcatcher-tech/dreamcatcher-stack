@@ -15,7 +15,6 @@ describe('dmzReducer', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
-    jest.setTimeout(800)
     test('spawn is implicitly awaited', async () => {
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)
