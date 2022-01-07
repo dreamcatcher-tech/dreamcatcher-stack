@@ -40,7 +40,7 @@ describe('block', () => {
     test('generate unique genesis by default', () => {
       const dmz = Dmz.create()
       const block = Block.create(dmz)
-      const clone = Block.clone(block.spread())
+      const clone = block.updateBlock(block.getDmz(), block.provenance)
       assert(clone instanceof Block)
       assert(clone.deepEquals(block))
       const second = Block.create(dmz)
@@ -61,10 +61,7 @@ describe('block', () => {
       const pArr = block.provenance.toArray()
       const pRaw = JSON.parse(JSON.stringify(pArr))
       const pClone = Provenance.restore(pRaw)
-      const clone = Block.clone({
-        ...dmzClone.spread(),
-        provenance: pClone,
-      })
+      const clone = Block.create().updateBlock(dmzClone, pClone)
       assert(clone.isVerifiedBlock())
     })
     test('validation throws if provenance does not match', () => {
@@ -74,8 +71,7 @@ describe('block', () => {
 
       const b1 = Block.create(dmz1)
       const b2 = Block.create(dmz2)
-      const degraded = { ...b1.spread(), provenance: b2.provenance }
-      assert.throws(() => Block.clone(degraded), 'hash mismatch')
+      assert.throws(() => b1.updateBlock(dmz1, b2.provenance), 'hash mismatch')
     })
     test.todo('changed validators uses previous validators for current block')
     test.todo('can provide initial parameters to make a block from')
