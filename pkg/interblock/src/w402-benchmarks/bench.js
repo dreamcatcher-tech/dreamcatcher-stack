@@ -34,10 +34,17 @@ const install = async (shell) => {
   await shell.install(dpkgPath, 'crm')
 }
 
-const addCustomer = async (shell) => {
+const crmSetup = async () => {
+  const shell = await publish()
+  await install(shell)
   const crmActions = await shell.actions('/crm/customers')
-  await crmActions.add({ formData: { custNo: 100, name: 'test name 1' } })
-  //   await crmActions.add({ formData: { custNo: 101, name: 'test name 2' } })
+  return crmActions
+}
+const crmActions = await crmSetup()
+let custNo = 100
+const addCustomer = async () => {
+  await crmActions.add({ formData: { custNo, name: 'test name 1' } })
+  custNo++
 }
 
 suite
@@ -81,9 +88,7 @@ suite
   .add('add customer', {
     defer: true,
     fn: async (deferred) => {
-      const shell = await publish()
-      await install(shell)
-      await addCustomer(shell)
+      await addCustomer()
       deferred.resolve()
     },
   })
