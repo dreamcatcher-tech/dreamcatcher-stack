@@ -27,12 +27,11 @@ jobs:
         working-directory: pkg/interblock
         run: yarn bench | tee output.txt
       - name: Store benchmark result
-        working-directory: pkg/interblock
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: Benchmark.js Benchmark
           tool: 'benchmarkjs'
-          output-file-path: output.txt
+          output-file-path: pkg/interblock/output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           # Show alert with commit comment on detecting possible performance regression
