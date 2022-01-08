@@ -39,7 +39,8 @@ describe('blockProducer', () => {
       const dmz = block.getDmz()
       assert.throws(() => blockProducer.generateUnsigned(dmz, block))
     })
-    test('serialize with diff', () => {
+    test.only('serialize with diff', () => {
+      Debug.enable('*tests*')
       const block = Block.create()
       const state = { test: 'state' }
       const baseDmz = block.getDmz()

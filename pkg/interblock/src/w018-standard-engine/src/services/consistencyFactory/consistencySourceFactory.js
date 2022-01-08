@@ -167,7 +167,8 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     assert(address.deepEquals(block.provenance.getAddress()))
     assert.strictEqual(block.provenance.height, height)
     debug(`getBlock complete`, height)
-    return block
+    const merged = block.merge()
+    return merged
   }
   const getBlocks = async ({ address, heights }) => {
     assert(address instanceof Address)
