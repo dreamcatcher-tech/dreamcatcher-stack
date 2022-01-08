@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1641610994819,
+  "lastUpdate": 1641611404068,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Benchmark.js Benchmark": [
@@ -225,6 +225,53 @@ window.BENCHMARK_DATA = {
             "range": "±3.37%",
             "unit": "ops/sec",
             "extra": "70 samples"
+          }
+        ]
+      }
+    ],
+    "Interblock Benchmark": [
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "evil_liskov",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "evil_liskov",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "cd0474a125ef95db34089b176c190e8bda3c911c",
+          "message": "minor",
+          "timestamp": "2022-01-08T03:08:04Z",
+          "tree_id": "61af59709c8c525329214e9bb6eaa5fd1eca1dd0",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/cd0474a125ef95db34089b176c190e8bda3c911c"
+        },
+        "date": 1641611402833,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 0.99,
+            "range": "±0.06%",
+            "unit": "ops/sec",
+            "extra": "9 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 44.76,
+            "range": "±9.28%",
+            "unit": "ops/sec",
+            "extra": "77 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 63.83,
+            "range": "±3.31%",
+            "unit": "ops/sec",
+            "extra": "77 samples"
           }
         ]
       }
