@@ -1,4 +1,4 @@
-name: Publish NPM and Benchmark
+name: Benchmark
 on:
   push:
     branches:
@@ -29,7 +29,7 @@ jobs:
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          name: Benchmark.js Benchmark
+          name: Interblock Benchmark
           tool: 'benchmarkjs'
           output-file-path: pkg/interblock/output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
