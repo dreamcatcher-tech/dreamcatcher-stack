@@ -27,8 +27,8 @@ jobs:
         working-directory: pkg/interblock
         run: yarn bench | tee output.txt
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
         working-directory: pkg/interblock
+        uses: benchmark-action/github-action-benchmark@v1
         with:
           name: Benchmark.js Benchmark
           tool: 'benchmarkjs'
