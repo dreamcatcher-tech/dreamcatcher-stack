@@ -27,7 +27,6 @@ suite
     defer: true,
     fn: async (deferred) => {
       const shell = await effectorFactory()
-      await new Promise((r) => setTimeout(r, 1000))
       await shell.metro.settle()
       deferred.resolve()
     },
