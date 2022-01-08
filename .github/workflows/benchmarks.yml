@@ -22,7 +22,6 @@ jobs:
       - name: Install
         run: |
           yarn install --frozen-lockfile
-          yarn build
 
       - name: Run benchmark
         working-directory: pkg/interblock
