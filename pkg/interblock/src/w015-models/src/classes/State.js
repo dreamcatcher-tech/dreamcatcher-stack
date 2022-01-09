@@ -4,7 +4,7 @@ import equals from 'fast-deep-equal'
 import * as crypto from '../../../w012-crypto'
 import { Buffer } from 'buffer'
 import { Base } from '../MapFactory'
-import { bytesToHex } from '@noble/hashes/lib/utils'
+import { bytesToHex } from '@noble/hashes/utils'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:State')
 const schema = {

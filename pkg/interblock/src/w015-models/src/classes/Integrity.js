@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
-import { sha256 } from '@noble/hashes/lib/sha256.js'
-import { bytesToHex } from '@noble/hashes/lib/utils'
+import { sha256 } from '@noble/hashes/sha256'
+import { bytesToHex } from '@noble/hashes/utils'
 import * as crypto from '../../../w012-crypto'
 import { integritySchema } from '../schemas/modelSchemas'
 import { mixin } from '../MapFactory'

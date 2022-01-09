@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import LevelUp from 'levelup'
+import levelup from 'levelup'
 import leftPad from 'pad-left'
 import Debug from 'debug'
 import {
@@ -68,7 +68,7 @@ class Cache {
 }
 
 const dbFactory = (leveldb) => {
-  assert(leveldb instanceof LevelUp)
+  assert(leveldb instanceof levelup)
   assert(leveldb.isOperational())
   const cacheLimitMb = 100
   const cache = new Cache(cacheLimitMb)
