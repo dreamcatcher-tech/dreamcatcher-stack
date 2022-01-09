@@ -6,53 +6,57 @@ import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')
-
+let shell
+const pingRTT = []
+let count = 0
 function App() {
-  const [count, setCount] = useState(0)
+  const [blockCount, setBlockCount] = useState(0)
+  const click = async () => {
+    if (!shell) {
+      debug('shell not ready')
+      return
+    }
+    count++
+    const pingStart = Date.now()
+    const payload = { test: 'ping' }
+    const reply = await shell.ping('.', payload)
+    debug(`reply: `, reply)
+    assert(equal(reply, payload))
+    debug(`pong received`)
+    const rtt = Date.now() - pingStart
+    pingRTT.unshift({ rtt, count })
+    debug(`ping RTT: ${rtt} ms`)
+    const blockCount = shell.metro.getBlockCount()
+    setBlockCount(blockCount)
+    debug(`blockcount: ${blockCount}`)
+    await shell.metro.settle()
+    debug(`stop`)
+  }
 
   useEffect(() => {
     Debug.enable('*tests*  *:provenance')
-    const start = Date.now()
     debug(`start`)
-    effectorFactory('inBrowser').then(async (shell) => {
+    effectorFactory('inBrowser').then(async (blockchain) => {
       // client.enableLogging()
       debug(`effector ready`)
-      const pingStart = Date.now()
-      const payload = { test: 'ping' }
-      const reply = await shell.ping('.', payload)
-      debug(`reply: `, reply)
-      assert(equal(reply, payload))
-      debug(`pong received`)
-      debug(`ping RTT: ${Date.now() - pingStart} ms`)
-      debug(`blockcount: ${shell.metro.getBlockCount()}`)
-      debug(`test time: ${Date.now() - start} ms`)
-      await shell.metro.settle()
-      debug(`stop`)
+      shell = blockchain
+      debug(`first ping`)
+      await click()
+      debug(`second ping`)
+      await click()
     })
   }, [])
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
+        <p>View console logs to see chain tests</p>
         <p>
-          <button type="button" onClick={() => setCount((count) => count + 1)}>
+          Ping:{' '}
+          <button type="button" onClick={click}>
             count is: {count}
           </button>
         </p>
         <p>
-          Edit <code>App.jsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {' | '}
           <a
             className="App-link"
             href="https://vitejs.dev/guide/features.html"
@@ -62,6 +66,12 @@ function App() {
             Vite Docs
           </a>
         </p>
+        Block Count: {blockCount}
+        <ul>
+          {pingRTT.map(({ rtt, count }) => (
+            <li key={count}>Ping RTT: {rtt} ms</li>
+          ))}
+        </ul>
       </header>
     </div>
   )
