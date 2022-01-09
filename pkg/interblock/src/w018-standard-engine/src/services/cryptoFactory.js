@@ -1,6 +1,5 @@
 import assert from 'assert-fast'
-import levelup from 'levelup'
-import memdown from 'memdown'
+import levelmem from 'level-mem'
 import { Keypair } from '../../../w015-models'
 import { signatureProducer } from '../../../w016-producers'
 import { dbFactory } from './consistencyFactory'
@@ -10,7 +9,7 @@ const debug = Debug('interblock:services:crypto')
 
 // TODO reuse the same key if CI for deterministic blocks
 const cryptoSourceFactory = (leveldb, keyname = 'CI') => {
-  leveldb = leveldb || levelup(memdown())
+  leveldb = leveldb || levelmem()
   const db = dbFactory(leveldb)
   assert(typeof keyname === 'string')
   const sign = async (integrity) => {

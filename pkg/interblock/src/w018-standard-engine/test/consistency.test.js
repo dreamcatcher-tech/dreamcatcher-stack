@@ -1,8 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import { consistencySourceFactory } from '../src/services/consistencyFactory'
-import levelup from 'levelup'
-import memdown from 'memdown'
-import { Address, Block, Lock } from '../../w015-models'
+import levelmem from 'level-mem'
+import { Address, Block } from '../../w015-models'
 import { v4 } from 'uuid'
 import { Integrity } from '../../w015-models'
 import Debug from 'debug'
@@ -37,7 +36,7 @@ describe('consistency', () => {
     })
     test('lock is exclusive between consistency sources', async () => {
       const address = Address.create('TEST')
-      const db = levelup(memdown())
+      const db = levelmem()
       const source1 = consistencySourceFactory(db)
       const source2 = consistencySourceFactory(db)
 

@@ -28,8 +28,7 @@
  */
 
 import assert from 'assert-fast'
-import levelup from 'levelup'
-import memdown from 'memdown'
+import levelmem from 'level-mem'
 import posix from 'path-browserify'
 import setImmediate from 'set-immediate-shim'
 import { standardEngineFactory } from './standardEngineFactory'
@@ -66,7 +65,7 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
 
   const isolateProcessor = isolateFactory(ioConsistency, covenants)
   ioIsolate.setProcessor(isolateProcessor)
-  leveldb = leveldb || levelup(memdown())
+  leveldb = leveldb || levelmem()
   assert(leveldb.isOperational())
   const consistencyProcessor = consistencyFactory(leveldb, identifier)
   ioConsistency.setProcessor(consistencyProcessor)

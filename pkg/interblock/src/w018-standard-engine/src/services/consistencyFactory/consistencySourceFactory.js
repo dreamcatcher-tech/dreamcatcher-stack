@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import levelmem from 'level-mem'
 import {
   Address,
   Lock,
@@ -8,16 +9,14 @@ import {
   TxRequest,
   TxReply,
 } from '../../../../w015-models'
-import levelup from 'levelup'
-import memdown from 'memdown'
 import { lockFactory } from './lockFactory'
 import { dbFactory } from './dbFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
 const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
-  leveldb = leveldb || levelup(memdown())
-  assert(leveldb instanceof levelup)
+  leveldb = leveldb || levelmem()
+  assert(leveldb.isOperational())
   const lockProvider = lockFactory(leveldb)
   const db = dbFactory(leveldb)
   const locks = new Map() // TODO move to caching in the DB rather than here

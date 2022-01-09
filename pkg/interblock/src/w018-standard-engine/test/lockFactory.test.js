@@ -1,13 +1,12 @@
 import { assert } from 'chai/index.mjs'
 import { lockFactory } from '../src/services/consistencyFactory/lockFactory'
-import levelup from 'levelup'
-import memdown from 'memdown'
+import levelmem from 'level-mem'
 
 describe('lockFactory', () => {
   test('cannot acquire lock twice in order', async () => {
     const chainId = 'testChainId'
     const awsRequestId = 'testAwsRequestId'
-    const db = levelup(memdown())
+    const db = levelmem()
     const lock = lockFactory(db)
     const uuid = await lock.tryAcquire(chainId, awsRequestId)
     assert(uuid)
@@ -17,7 +16,7 @@ describe('lockFactory', () => {
   test('cannot acquire lock twice', async () => {
     const chainId = 'testChainIdTwice'
     const awsRequestId = 'testAwsRequestId'
-    const db = levelup(memdown())
+    const db = levelmem()
     const lock = lockFactory(db)
     const p1 = lock.tryAcquire(chainId, awsRequestId)
     const p2 = lock.tryAcquire(chainId, awsRequestId)
@@ -28,7 +27,7 @@ describe('lockFactory', () => {
   test('can acquire lock after release', async () => {
     const chainId = 'testChainIdRelease'
     const awsRequestId = 'testAwsRequestId'
-    const db = levelup(memdown())
+    const db = levelmem()
     const lock = lockFactory(db)
     const uuid = await lock.tryAcquire(chainId, awsRequestId)
     assert(uuid)

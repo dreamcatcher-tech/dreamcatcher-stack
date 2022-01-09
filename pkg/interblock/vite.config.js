@@ -10,20 +10,7 @@ dependencies['@noble/hashes/utils'] = true
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    reactRefresh(),
-    {
-      name: 'singleHMR workaround',
-      handleHotUpdate({ modules, file }) {
-        modules.map((m) => {
-          m.importedModules = new Set()
-          m.importers = new Set()
-        })
-        return modules
-      },
-    },
-  ],
-
+  plugins: [reactRefresh()],
   build: {
     target: 'esnext',
     minify: 'esbuild', // required to transform biginteger in noble-crypto

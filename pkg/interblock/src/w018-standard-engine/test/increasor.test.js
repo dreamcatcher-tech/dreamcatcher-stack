@@ -1,6 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import levelup from 'levelup'
-import memdown from 'memdown'
+import levelmem from 'level-mem'
 import { metrologyFactory } from '..'
 import { shell } from '../../w212-system-covenants'
 import { dbFactory } from '../src/services/consistencyFactory'
@@ -10,7 +9,7 @@ Debug.enable()
 
 describe('increasor', () => {
   test('pools always empty after blocking', async () => {
-    const leveldb = levelup(memdown())
+    const leveldb = levelmem()
     const { covenantId } = shell // shell responds to pings
     const base = await metrologyFactory('inc', { hyper: shell }, leveldb)
     await base.spawn('ping1', { covenantId })

@@ -1,4 +1,3 @@
-import levelup from 'levelup'
 import lock from 'level-lock' // TODO make work on AWS
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -8,7 +7,7 @@ let ramLockId = 1
 const locks = new Map()
 
 const lockFactory = (leveldb) => {
-  assert(leveldb instanceof levelup)
+  assert(leveldb.isOperational())
   const debug = Debug(`interblock:aws:lock:id-${instanceId++}`)
 
   const tryAcquire = async (chainId, lockPrefix, expiryMs) => {

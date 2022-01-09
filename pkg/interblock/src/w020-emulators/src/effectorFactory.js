@@ -33,12 +33,10 @@
  *
  */
 import assert from 'assert-fast'
-import levelup from 'levelup'
-import memdown from 'memdown'
-import leveljs from 'level-js'
-import LevelDOWN from 'leveldown'
 import { metrologyFactory } from '../../w018-standard-engine'
 import posix from 'path-browserify'
+import level from 'level'
+import levelmem from 'level-mem'
 import { CovenantId } from '../../w015-models'
 import { tcpTransportFactory } from './tcpTransportFactory'
 import * as covenants from '../../w212-system-covenants'
@@ -63,13 +61,9 @@ const effectorFactory = async (identifier, overloads = {}, dbPath) => {
   }
   let leveldb
   if (dbPath) {
-    if (dbPath === ':indexeddb:') {
-      leveldb = levelup(leveljs())
-    } else {
-      leveldb = levelup(LevelDOWN(dbPath))
-    }
+    leveldb = level(dbPath)
   } else {
-    leveldb = levelup(memdown())
+    leveldb = levelmem()
   }
 
   const metrology = await metrologyFactory(identifier, overloads, leveldb)
