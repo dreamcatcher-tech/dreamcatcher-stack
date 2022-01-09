@@ -1,9 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import * as snappy from 'snappy'
-import * as snappyjs from 'snappyjs'
-import flatstr from 'flatstr'
 import { Buffer } from 'buffer'
-import { stringify } from 'zipson'
 import { Network, Channel, Address } from '..'
 
 import Debug from 'debug'
@@ -76,19 +72,6 @@ describe('network', () => {
     start = Date.now()
     const string = JSON.stringify(array)
     debug(`stringify: %o ms size: %o`, Date.now() - start, string.length)
-    start = Date.now()
-    flatstr(string)
-    const buf = Buffer.from(string)
-    debug(`conversion time: %o ms`, Date.now() - start)
-    start = Date.now()
-    const compressed = snappy.compressSync(buf)
-    debug(`snappy %o ms size: %o`, Date.now() - start, compressed.length)
-    start = Date.now()
-    const compressed2 = snappyjs.compress(buf)
-    debug(`snappyjs %o ms size: %o`, Date.now() - start, compressed2.length)
-    start = Date.now()
-    const compressed3 = stringify(array)
-    debug(`zipson %o ms size: %o`, Date.now() - start, compressed3.length)
   })
   test.todo('rxReply always selected before rxRequest')
   test.todo('rxReply( request ) throws if non existant channel in request')

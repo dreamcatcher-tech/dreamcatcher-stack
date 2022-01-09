@@ -76,34 +76,36 @@ export class Interblock extends mixin(interblockSchema) {
     }
   }
   isConnectionResponse() {
-    // TODO handle covenant renaming incoming conneciton before first transmission
+    // TODO handle covenant renaming incoming connection before first transmission
     // or outlaw it
     // TODO totally broken
-    const isAliasMatch = originAlias.startsWith('@@PUBLIC_')
-    const chainId = originAlias.substring('@@PUBLIC_'.length)
-    const isAddress = isAliasMatch && chainId === address.getChainId()
-    const accept = requests[0]
-    const isRequests = accept && accept.type === '@@ACCEPT'
-    const isRepliesBlank = !Object.keys(replies).length
-    return isAddress && isRequests && isRepliesBlank
+    // const isAliasMatch = originAlias.startsWith('@@PUBLIC_')
+    // const chainId = originAlias.substring('@@PUBLIC_'.length)
+    // const isAddress = isAliasMatch && chainId === address.getChainId()
+    // const accept = requests[0]
+    // const isRequests = accept && accept.type === '@@ACCEPT'
+    // const isRepliesBlank = !Object.keys(replies).length
+    // return isAddress && isRequests && isRepliesBlank
   }
   isConnectionResolve() {
-    if (!isConnectionAttempt()) {
+    if (!this.isConnectionAttempt()) {
       return false
     }
-    const resolve = replies[0]
+    const resolve = this.transmission.replies[0]
     if (resolve) {
       assert(resolve instanceof Continuation)
       return resolve.isResolve()
     }
   }
   isDownlinkInit() {
+    const { requests, replies } = this.transmission
     return requests[0] && !Object.keys(replies).length // TODO beware wrap around
   }
   // TODO cannot deduce this without access to the source block
   // or some member of which chains have had lineage sent
   isUplinkInit() {
     // TODO beware wrap around
+    const { requests, replies } = this.transmission
     return replies[0] && !Object.keys(requests).length
   }
   getChainId() {
