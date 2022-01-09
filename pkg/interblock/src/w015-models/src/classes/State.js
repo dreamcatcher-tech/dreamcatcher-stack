@@ -4,7 +4,6 @@ import equals from 'fast-deep-equal'
 import * as crypto from '../../../w012-crypto'
 import { Buffer } from 'buffer'
 import { Base } from '../MapFactory'
-import { bytesToHex } from '@noble/hashes/utils'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:State')
 const schema = {
@@ -151,7 +150,7 @@ export class State extends Base {
     return this.#base
   }
   hashString() {
-    const hash = bytesToHex(this.hashRaw())
+    const hash = crypto.bytesToHex(this.hashRaw())
     debug(hash, this.getState())
     return hash
   }

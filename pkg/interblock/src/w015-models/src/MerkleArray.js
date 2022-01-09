@@ -1,7 +1,6 @@
 import assert from 'assert-fast'
 import Immutable from 'immutable'
-import { sha256 } from '@noble/hashes/sha256'
-import { bytesToHex } from '@noble/hashes/utils'
+import { sha256, bytesToHex } from '../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:MerkleArray')
 const operations = ['add', 'remove', 'replace']

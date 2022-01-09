@@ -1,6 +1,4 @@
 import assert from 'assert-fast'
-import { sha256 } from '@noble/hashes/sha256'
-import { bytesToHex } from '@noble/hashes/utils'
 import * as crypto from '../../../w012-crypto'
 import { integritySchema } from '../schemas/modelSchemas'
 import { mixin } from '../MapFactory'
@@ -16,7 +14,7 @@ export class Integrity extends mixin(integritySchema) {
       return super.create({ hash: content, algorithm: 'sha256' })
     }
     if (typeof content === 'string') {
-      const hash = bytesToHex(sha256(content))
+      const hash = crypto.bytesToHex(crypto.sha256(content))
       return super.create({ hash, algorithm: 'sha256' })
     }
     assert(typeof content === 'object', `Must supply object: ${content}`)
