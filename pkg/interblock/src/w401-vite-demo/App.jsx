@@ -16,7 +16,9 @@ function App() {
       debug('shell not ready')
       return
     }
-    count++
+    const key = count++
+    const entry = { rtt: '(waiting...)', key }
+    pingRTT.unshift(entry)
     const pingStart = Date.now()
     const payload = { test: 'ping' }
     const reply = await shell.ping('.', payload)
@@ -24,7 +26,7 @@ function App() {
     assert(equal(reply, payload))
     debug(`pong received`)
     const rtt = Date.now() - pingStart
-    pingRTT.unshift({ rtt, count })
+    entry.rtt = rtt
     debug(`ping RTT: ${rtt} ms`)
     const blockCount = shell.metro.getBlockCount()
     setBlockCount(blockCount)
@@ -36,7 +38,10 @@ function App() {
   useEffect(() => {
     Debug.enable('*tests*  *:provenance')
     debug(`start`)
-    effectorFactory('inBrowser').then(async (blockchain) => {
+    const identifier = 'inBrowser'
+    const overloads = {}
+    const dbPath = 'vite-test'
+    effectorFactory(identifier, overloads, dbPath).then(async (blockchain) => {
       // client.enableLogging()
       debug(`effector ready`)
       shell = blockchain
@@ -68,8 +73,8 @@ function App() {
         </p>
         Block Count: {blockCount}
         <ul>
-          {pingRTT.map(({ rtt, count }) => (
-            <li key={count}>Ping RTT: {rtt} ms</li>
+          {pingRTT.map(({ rtt, key }) => (
+            <li key={key}>Ping RTT: {rtt} ms</li>
           ))}
         </ul>
       </header>

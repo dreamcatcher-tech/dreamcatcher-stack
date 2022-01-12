@@ -1,5 +1,5 @@
 /**
- * These polyfills are specific to levelup.
+ * These shims are specific to levelup.
  * In particular its reliance on the 'util' package.
  */
 import process from 'process'
