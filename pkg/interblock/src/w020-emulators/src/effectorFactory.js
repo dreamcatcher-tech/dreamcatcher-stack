@@ -6,37 +6,24 @@
  *
  * It produces interblocks the same as running a full blockchain,
  * but without the need for crash recovery, isolation, or security.
- * Crash recoverability might be added later.
- *
- * This is how side effects enter chainland.
- * This same principle is applied for SES and other side effect based aws services.
+ * Crash recovery is best effort and depends when the database last
+ * synced to the filesystem.
  *
  * The primary purpose is for the client:
  *      All apps consist of some client side UI connected to the shell chain.
  *      There is one client shell chain per session.
  *      Other apps may wrap this shell with additional functionality,
- *      but the user is always modelled as a chain, through which all actions come through.
+ *      The user is always modelled as a chain
  *      The default shell is the DOS shell.
- *      Developers use this to install their applications, and to connect their apps.
+ *      Developers use this to install and connect with their apps.
  *      Admins use this to browse installations and troubleshoot running apps.
- *      Users use this to execute their applications, either directly or wrapped in a UI.
- *
- *      We may build out additional functions for our core apps into the default client.
- *      Client can be 'chroot'ed to focus on a slice of state to function as an application,
- *      by using the 'cd' command.
- *      Client can be set to subscribe to a given path and optionally its children
- *      to stay current, but usually reading on demand is sufficient and recommended.
- *
- *      Provided socket is used to communication with other block producers.
- *      Client marshalls between which block producers the actions will be directed towards,
- *      to allow emulation mode.
+ *      Users use this to interact with their applications
  *
  */
 import assert from 'assert-fast'
 import { metrologyFactory } from '../../w018-standard-engine'
 import posix from 'path-browserify'
 import level from 'level'
-import levelmem from 'level-mem'
 import { CovenantId } from '../../w015-models'
 import { tcpTransportFactory } from './tcpTransportFactory'
 import * as covenants from '../../w212-system-covenants'
@@ -62,8 +49,6 @@ const effectorFactory = async (identifier, overloads = {}, dbPath) => {
   let leveldb
   if (dbPath) {
     leveldb = level(dbPath)
-  } else {
-    leveldb = levelmem()
   }
 
   const metrology = await metrologyFactory(identifier, overloads, leveldb)

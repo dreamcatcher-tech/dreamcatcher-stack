@@ -1,5 +1,8 @@
 import { assert } from 'chai/index.mjs'
 import { State } from '..'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:State')
+Debug.enable('*State')
 
 // TODO add in the covenant api tools, and make some actions
 
@@ -33,6 +36,25 @@ describe('state', () => {
   test.todo('identifier pattern wrong')
   test.todo('state non serializable')
   test.todo('actions non serializable')
+  test.only('diff with complete change', () => {
+    let state = State.create()
+    const diff = state.diff()
+    debug(`diff: `, diff)
+    state = state.update({ some: 'change' })
+    debug(`diff: `, state.diff())
+    state = state.update({ another: 'change' })
+    debug(`diff: `, state.diff())
+    state = state.update({ deep: { some: 'change' } })
+    debug(`diff: `, state.diff())
+    state = state.update({ deep: { some: 'other change' } })
+    debug(`diff: `, state.diff())
+    state = state.update({ deep: { some: 'other change', extra: true } })
+    debug(`diff: `, state.diff()[0])
+    state = state.merge()
+    debug(`diff: `, state.diff())
+    state = state.update({ deep: { extra: false } })
+    debug(`diff: `, state.diff()[0])
+  })
   describe('logicize', () => {
     describe('reply', () => {
       test.todo('only one promise per batch')

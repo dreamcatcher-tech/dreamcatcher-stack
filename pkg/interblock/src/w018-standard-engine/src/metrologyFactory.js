@@ -65,8 +65,6 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
 
   const isolateProcessor = isolateFactory(ioConsistency, covenants)
   ioIsolate.setProcessor(isolateProcessor)
-  leveldb = leveldb || levelmem()
-  assert(leveldb.isOperational())
   const consistencyProcessor = consistencyFactory(leveldb, identifier)
   ioConsistency.setProcessor(consistencyProcessor)
   const consistency = toFunctions(ioConsistency)

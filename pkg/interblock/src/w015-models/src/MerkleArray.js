@@ -383,6 +383,11 @@ export class MerkleArray {
     // TODO generate the merkle proof
   }
   diff() {
+    /**
+     * If there is any similarity, use diff, else return the full object.
+     * Idea is that if a schema based object is totally different, then
+     * we issue a complete replace with a deep JS object
+     */
     assert(this.#isCompacted(), `can only diff after compaction`)
     const ops = []
     let index = this.#base.size

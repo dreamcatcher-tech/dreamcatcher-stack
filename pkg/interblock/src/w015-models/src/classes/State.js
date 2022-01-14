@@ -1,11 +1,13 @@
 import assert from 'assert-fast'
-import { produceWithPatches, freeze } from 'immer'
+import { produceWithPatches, freeze, enablePatches } from 'immer'
 import equals from 'fast-deep-equal'
 import * as crypto from '../../../w012-crypto'
 import { Buffer } from 'buffer'
 import { Base } from '../MapFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:State')
+enablePatches()
+
 const schema = {
   title: 'State',
   description: `The result of running a covenant is stored here.
@@ -98,6 +100,7 @@ export class State extends Base {
     return new State(insidersOnly, this.getState())
   }
   update(updatedState) {
+    assert.strictEqual(typeof updatedState, 'object')
     const next = this.#clone()
     next.#next = updatedState
     freeze(next.#next, deepFreeze)
@@ -120,7 +123,7 @@ export class State extends Base {
     // size calculation should be low cost
   }
   diff() {
-    if (!this.next) {
+    if (!this.#next) {
       return []
     }
     if (this.#diffFor === this.#next && this.#lastDiff) {
