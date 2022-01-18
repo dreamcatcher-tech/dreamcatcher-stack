@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import leftPad from 'pad-left'
-import Debug from 'debug'
+import { isRxDatabase } from 'rxdb'
 import {
   Block,
   Interblock,
@@ -8,6 +8,7 @@ import {
   TxReply,
   TxRequest,
 } from '../../../../w015-models'
+import Debug from 'debug'
 const debug = Debug('interblock:consistency:db')
 const types = ['blocks', 'interblocks', 'piercings', 'pool']
 const pad = (height) => {
@@ -30,6 +31,8 @@ class Cache {
     this.#limitMB = limit
   }
   put(key, model) {
+    assert.strictEqual(typeof key, 'string')
+    assert.strictEqual(typeof model, 'object')
     assert(!this.#cache.has(key))
     const size = model.getSerializedSize()
     const value = { model, size }
@@ -48,6 +51,7 @@ class Cache {
     }
   }
   get(key) {
+    assert.strictEqual(typeof key, 'string')
     const value = this.#cache.get(key)
     if (value) {
       this.#cache.delete(key)
@@ -57,6 +61,7 @@ class Cache {
     debug(`cache miss`, key)
   }
   del(key) {
+    assert.strictEqual(typeof key, 'string')
     if (!this.#cache.has(key)) {
       return
     }
@@ -66,19 +71,41 @@ class Cache {
   }
 }
 
-const dbFactory = (leveldb) => {
-  assert(leveldb.isOperational())
+const dbFactory = (rxdbPromise) => {
   const cacheLimitMb = 100
   const cache = new Cache(cacheLimitMb)
   // TODO make separate caches for interblocks, blocks, piercings
 
+  let db
+  const settleRxdb = async () => {
+    if (!db) {
+      const rxdb = await rxdbPromise
+      assert(isRxDatabase(rxdb))
+      const { blockchains } = await rxdb.addCollections({
+        blockchains: {
+          schema: {
+            version: 0,
+            primaryKey: 'key',
+            type: 'object',
+            properties: {
+              key: { type: 'string' },
+              value: { type: 'array' },
+            },
+          },
+        },
+      })
+      db = blockchains
+    }
+  }
+
   const getBlock = async (chainId, height) => {
+    await settleRxdb()
     assert.strictEqual(typeof chainId, 'string')
     assert(Number.isInteger(height))
     assert(height >= 0)
     const gte = `${chainId}/blocks/${pad(height)}`
     let key
-    for await (const [keyBuffer] of leveldb.iterator({
+    for await (const [keyBuffer] of db.iterator({
       limit: 1,
       keys: true,
       values: false,
@@ -94,7 +121,7 @@ const dbFactory = (leveldb) => {
     }
     let block = cache.get(key)
     if (!block) {
-      const raw = await leveldb.get(key)
+      const raw = await db.get(key)
       const js = JSON.parse(raw)
       block = Block.restore(js)
     }
@@ -102,47 +129,45 @@ const dbFactory = (leveldb) => {
     return block
   }
   const putPool = async (interblock) => {
+    await settleRxdb()
     assert(interblock instanceof Interblock)
     const targetChainId = interblock.getTargetAddress().getChainId()
     const chainId = interblock.getChainId()
     const { height } = interblock.provenance
     const hash = interblock.hashString()
     const key = `${targetChainId}/pool/${chainId}_${pad(height)}_${hash}`
-    await leveldb.put(key, interblock.serialize())
+    await db.put(key, interblock.serialize())
     cache.put(key, interblock)
   }
   const putBlock = async (block) => {
+    await settleRxdb()
     const chainId = block.getChainId()
     const height = block.getHeight()
     const hash = block.hashString()
-    const string = block.serialize()
+    const array = block.toArray()
     const key = `${chainId}/blocks/${pad(height)}_${hash}`
-    await leveldb.put(key, string)
+    debug(`putBlock`, key)
+    await db.insert({ key, array })
     cache.put(key, block)
     debug(`putBlock`, chainId.substring(0, 9), height)
   }
   const queryLatest = async (chainId) => {
+    await settleRxdb()
     debug(`queryLatest %o`, chainId.substring(0, 9))
-    const gte = `${chainId}/blocks/`
-    const lte = `${chainId}/blocks/~`
-    let key
-    for await (const [keyBuffer] of leveldb.iterator({
-      reverse: true,
-      limit: 1,
-      keys: true,
-      values: false,
-      gte,
-      lte,
-    })) {
-      key = keyBuffer.toString()
-    }
-    if (!key) {
+    const $gte = `${chainId}/blocks/`
+    const $lte = `${chainId}/blocks/~`
+
+    const rxDocument = await db
+      .findOne({ selector: { key: { $gte, $lte } }, sort: [{ key: 'desc' }] })
+      .exec()
+    if (!rxDocument) {
       debug(`queryLatest nothing found`)
       return
     }
-    let block = cache.get(key)
+    let block = cache.get(rxDocument.key)
     if (!block) {
-      const json = await leveldb.get(key)
+      debug(`findOne`, rxDocument.key)
+      const json = await db.findOne({ selector: { key: rxDocument } }).exec()
       block = Block.restore(JSON.parse(json))
       block.serialize()
     }
@@ -150,45 +175,49 @@ const dbFactory = (leveldb) => {
     return block
   }
   const putKeypair = async (keypair) => {
+    await settleRxdb()
     debug(`putKeypair`)
     assert(keypair instanceof Keypair)
     const { key } = keypair.publicKey
-    await leveldb.put(`crypto/${key}`, keypair.serialize())
+    await db.put(`crypto/${key}`, keypair.serialize())
   }
 
   const putPierceReply = async (chainId, txReply) => {
+    await settleRxdb()
     assert(txReply instanceof TxReply)
     debug(`putPierceReply`)
     const key = `${chainId}/piercings/rep_${txReply.hashString()}`
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
-    await leveldb.put(key, txReply.serialize())
+    await db.put(key, txReply.serialize())
     cache.put(key, txReply)
   }
   const putPierceRequest = async (chainId, txRequest) => {
+    await settleRxdb()
     assert(txRequest instanceof TxRequest)
     debug(`putPierceRequest`)
     const key = `${chainId}/piercings/req_${txRequest.hashString()}`
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
-    await leveldb.put(key, txRequest.serialize())
+    await db.put(key, txRequest.serialize())
     cache.put(key, txRequest)
   }
 
   const delPool = async (chainId, interblocks) => {
+    await settleRxdb()
     // TODO check interblock was included in the block
     assert(Array.isArray(interblocks))
-    const batch = leveldb.batch()
+
     const keys = []
     for (const interblock of interblocks) {
       const ibChainId = interblock.getChainId()
       const { height } = interblock.provenance
       const hash = interblock.hashString()
       const key = `${chainId}/pool/${ibChainId}_${pad(height)}_${hash}`
-      batch.del(key)
       keys.push(key)
     }
-    await batch.write()
+    const results = await db.bulkRemove(keys)
+    assert(!results.error.length, results.error)
     for (const key of keys) {
       cache.del(key)
     }
@@ -196,22 +225,21 @@ const dbFactory = (leveldb) => {
   }
 
   const delPierce = async (chainId, piercings) => {
+    await settleRxdb()
     const { replies, requests } = piercings
     assert(Array.isArray(replies))
     assert(Array.isArray(requests))
-    const batch = leveldb.batch()
     const keys = []
     for (const reply of replies) {
       const key = `${chainId}/piercings/rep_${reply.hashString()}`
       keys.push(key)
-      batch.del(key)
     }
     for (const request of requests) {
       const key = `${chainId}/piercings/req_${request.hashString()}`
       keys.push(key)
-      batch.del(key)
     }
-    await batch.write()
+    const results = await db.bulkRemove(keys)
+    assert(!results.error.length, results.error)
     for (const key of keys) {
       cache.del(key)
     }
@@ -231,18 +259,14 @@ const dbFactory = (leveldb) => {
   }
 
   const queryPool = async (chainId) => {
+    await settleRxdb()
     debug(`queryPool`, chainId.substring(0, 9))
-    const gte = `${chainId}/pool/`
-    const lte = `${chainId}/pool/~`
-    const keys = []
-    for await (const [keyBuffer] of leveldb.iterator({
-      keys: true,
-      values: false,
-      gte,
-      lte,
-    })) {
-      keys.push(keyBuffer.toString())
-    }
+    const $gte = `${chainId}/pool/`
+    const $lte = `${chainId}/pool/~`
+    const rxDocuments = await db
+      .find({ selector: { key: { $gte, $lte } } })
+      .exec()
+    const keys = rxDocuments.map((rxDocument) => rxDocument.key)
     const interblocks = []
     const uncachedKeys = keys.filter((key) => {
       const cached = cache.get(key)
@@ -252,8 +276,9 @@ const dbFactory = (leveldb) => {
       interblocks.push(cached)
     })
     debug(`getMany`, uncachedKeys.length)
-    const jsons = await leveldb.getMany(uncachedKeys)
+    const jsons = await db.findByIds(uncachedKeys)
     debug(`getMany done`)
+
     for (const json of jsons) {
       const interblock = Interblock.restore(JSON.parse(json))
       interblocks.push(interblock)
@@ -263,43 +288,40 @@ const dbFactory = (leveldb) => {
   }
 
   const queryPiercings = async (chainId) => {
+    await settleRxdb()
     debug(`queryPiercings`, chainId.substring(0, 9))
-    const gte = `${chainId}/piercings/`
-    const lte = `${chainId}/piercings/~`
+    const $gte = `${chainId}/piercings/`
+    const $lte = `${chainId}/piercings/~`
     const requests = []
     const replies = []
     // TODO handle timestamps on piercings
-    const keys = []
-    for await (const [keyBuffer] of leveldb.iterator({
-      keys: true,
-      values: false,
-      gte,
-      lte,
-    })) {
-      keys.push(keyBuffer.toString())
-    }
+    const rxDocuments = await db
+      .find({ selector: { key: { $gte, $lte } } })
+      .exec()
+    const keys = rxDocuments.map((rxDocument) => rxDocument.key)
     const uncachedKeys = keys.filter((key) => {
       const tx = cache.get(key)
       if (!tx) {
         return true
       }
-      if (key.startsWith(gte + `rep_`)) {
+      if (key.startsWith($gte + `rep_`)) {
         assert(tx instanceof TxReply)
         replies.push(tx)
       } else {
-        assert(key.startsWith(gte + `req_`))
+        assert(key.startsWith($gte + `req_`))
         assert(tx instanceof TxRequest)
         requests.push(tx)
       }
     })
-    const jsons = await leveldb.getMany(uncachedKeys)
+    const jsons = await db.findByIds(uncachedKeys)
     for (const key of uncachedKeys) {
+      throw Error('TODO')
       const json = jsons.shift()
-      if (key.startsWith(gte + `rep_`)) {
+      if (key.startsWith($gte + `rep_`)) {
         const txReply = TxReply.restore(JSON.parse(json))
         replies.push(txReply)
       } else {
-        assert(key.startsWith(gte + `req_`))
+        assert(key.startsWith($gte + `req_`))
         const txRequest = TxRequest.restore(JSON.parse(json))
         requests.push(txRequest)
       }
@@ -310,8 +332,9 @@ const dbFactory = (leveldb) => {
   }
 
   const scanBaseChainId = async () => {
+    await settleRxdb()
     debug('scanBaseChainId start')
-    for await (const [keyBuffer] of leveldb.iterator({
+    for await (const [keyBuffer] of db.iterator({
       keys: true,
       values: false,
       limit: 1,
@@ -323,10 +346,11 @@ const dbFactory = (leveldb) => {
     }
   }
   const scanKeypair = async () => {
+    await settleRxdb()
     debug('scanKeypair start')
     const gte = `crypto/`
     const lte = `crypto/~`
-    for await (const [, json] of leveldb.iterator({
+    for await (const [, json] of db.iterator({
       keys: false,
       values: true,
       limit: 1,

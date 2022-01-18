@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
-import levelmem from 'level-mem'
+import { createRxDatabase } from 'rxdb/plugins/core'
+import { getRxStorageLoki } from 'rxdb/plugins/lokijs'
 import {
   Address,
   Lock,
@@ -14,13 +15,26 @@ import { dbFactory } from './dbFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
-const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
-  leveldb = leveldb || levelmem()
-  assert(leveldb.isOperational())
-  const lockProvider = lockFactory(leveldb)
-  const db = dbFactory(leveldb)
+const rxdbmem = async () => {
+  const db = await createRxDatabase({
+    name: 'CI-inMemoryDb',
+    storage: getRxStorageLoki(),
+    multiInstance: false,
+  })
+  return db
+}
+
+const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
+  rxdb = rxdb || rxdbmem()
+  const lockProvider = lockFactory(rxdb)
+  const db = dbFactory(rxdb)
   const locks = new Map() // TODO move to caching in the DB rather than here
   let baseAddress
+
+  const shutdown = async () => {
+    const rxdbResolved = await rxdb
+    await rxdbResolved.destroy()
+  }
 
   const putPoolInterblock = async ({ interblock }) => {
     assert(interblock instanceof Interblock)
@@ -38,6 +52,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
       debug(`lockChain could not lock ${shortId}`)
       return
     }
+    // TODO parallelize
     debug(`locked chain: ${shortId} with: ${uuid}`)
     const latest = await getBlock({ address })
     debug(`block height: %o`, latest && latest.getHeight())
@@ -129,12 +144,6 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
   const delSocket = async (socket) => {
     assert(socket instanceof Socket)
     debug(`delSocket %o`, socket.id)
-
-    // read the cleanup table to get the address mappings
-    // for each one,
-    // delete from the main table
-    // if succeed, delete from the cleanup table
-    // throw if any errors
   }
 
   const getIsPresent = (address) => {
@@ -213,6 +222,7 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     // TODO check chainId exists, and pierce is enabled in the latest block
     await db.putPierceRequest(chainId, txRequest)
   }
+
   return {
     putSocket,
     getSockets,
@@ -229,6 +239,9 @@ const consistencySourceFactory = (leveldb, lockPrefix = 'CI') => {
     putPoolInterblock,
     putPierceRequest,
     putPierceReply,
+
+    shutdown,
+    rxdb,
   }
 }
 export { consistencySourceFactory }

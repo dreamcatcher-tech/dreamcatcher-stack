@@ -36,7 +36,7 @@ describe('state', () => {
   test.todo('identifier pattern wrong')
   test.todo('state non serializable')
   test.todo('actions non serializable')
-  test.only('diff with complete change', () => {
+  test('diff with complete change', () => {
     let state = State.create()
     const diff = state.diff()
     debug(`diff: `, diff)

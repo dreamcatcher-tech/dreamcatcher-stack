@@ -1,16 +1,22 @@
 import { assert } from 'chai/index.mjs'
 import { consistencySourceFactory } from '../src/services/consistencyFactory'
-import levelmem from 'level-mem'
 import { Address, Block } from '../../w015-models'
 import { v4 } from 'uuid'
 import { Integrity } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:consistency')
-Debug.enable()
+Debug.enable('*:consistency *:db')
 
-describe('consistency', () => {
+describe.only('consistency', () => {
   const lockExpiresMs = 2
-  const consistencySource = consistencySourceFactory()
+  let consistencySource
+  beforeEach(() => {
+    consistencySource = consistencySourceFactory()
+  })
+  afterEach(async () => {
+    await consistencySource.shutdown()
+    consistencySource = undefined
+  })
   describe('putPoolInterblocks', () => {
     test.todo('duplicates discarded')
   })
@@ -36,9 +42,9 @@ describe('consistency', () => {
     })
     test('lock is exclusive between consistency sources', async () => {
       const address = Address.create('TEST')
-      const db = levelmem()
-      const source1 = consistencySourceFactory(db)
-      const source2 = consistencySourceFactory(db)
+      const { rxdb } = consistencySource
+      const source1 = consistencySourceFactory(rxdb)
+      const source2 = consistencySourceFactory(rxdb)
 
       const lock1 = await source1.putLockChain(address, lockExpiresMs)
       const lock2 = await source2.putLockChain(address, lockExpiresMs)

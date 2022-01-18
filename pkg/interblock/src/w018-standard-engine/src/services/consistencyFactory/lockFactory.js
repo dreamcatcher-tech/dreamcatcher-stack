@@ -1,19 +1,21 @@
-import lock from 'level-lock' // TODO make work on AWS
 import assert from 'assert-fast'
+import { isRxDatabase } from 'rxdb'
+import lock from 'level-lock'
 import Debug from 'debug'
 
 let instanceId = 0
 let ramLockId = 1
 const locks = new Map()
 
-const lockFactory = (leveldb) => {
-  assert(leveldb.isOperational())
+const lockFactory = (rxdb) => {
   const debug = Debug(`interblock:aws:lock:id-${instanceId++}`)
 
   const tryAcquire = async (chainId, lockPrefix, expiryMs) => {
+    rxdb = await rxdb
+    assert(isRxDatabase(rxdb))
     const shortId = chainId.substring(0, 9)
     debug(`attempting to lock %o %o %o`, shortId, lockPrefix, expiryMs)
-    const unlock = lock(leveldb, chainId, 'w')
+    const unlock = lock(rxdb, chainId, 'w')
     if (!unlock) {
       debug(`already locked to this thread: ${shortId}`)
       return
