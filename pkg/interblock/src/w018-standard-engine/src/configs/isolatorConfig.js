@@ -235,9 +235,10 @@ const createConfig = (isolation, consistency) => ({
   guards: {
     isGenesis: ({ lock }) => {
       assert(lock instanceof Lock)
+      assert(lock.block)
       const { block } = lock
       const isNotRoot = !block.network.get('..').address.isRoot()
-      const isGenesis = block.provenance.address.isGenesis() && isNotRoot
+      const isGenesis = isNotRoot && block.provenance.address.isGenesis()
       debug(`isGenesis: `, isGenesis)
       return isGenesis
     },

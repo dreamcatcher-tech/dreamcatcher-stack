@@ -15,6 +15,13 @@ import Debug from 'debug'
 const debug = Debug('interblock:dmz:spawn')
 
 const spawn = (alias, spawnOpts = {}) => {
+  spawnOpts = { ...spawnOpts }
+  for (const key in spawnOpts) {
+    if (typeof spawnOpts[key].toJS === 'function') {
+      // actions must be plainJS, with no models in the payloads
+      spawnOpts[key] = spawnOpts[key].toJS()
+    }
+  }
   const action = {
     type: '@@SPAWN',
     payload: { alias, spawnOpts },
@@ -30,8 +37,8 @@ const spawnReducer = (dmz, request) => {
   const [nextDmz, identifier, alias, chainId] = spawnRequester(dmz, request)
   replyPromise() // allows spawnReducer to be reused by deploy reducer
   const originIdentifier = request.identifier
-  const subMeta = { type: '@@GENESIS', alias, chainId, originIdentifier }
-  const meta = metaProducer.withSlice(dmz.meta, identifier, subMeta)
+  const slice = { type: '@@GENESIS', alias, chainId, originIdentifier }
+  const meta = metaProducer.withSlice(dmz.meta, identifier, slice)
   return nextDmz.update({ meta })
 }
 const spawnRequester = (dmz, originAction) => {
@@ -45,6 +52,8 @@ const spawnRequester = (dmz, originAction) => {
   // may reject any actions other than cancel deploy while deploying ?
   const { validators } = dmz
   const covenantId = CovenantId.create('unity')
+  assert.strictEqual(spawnOpts.validators, undefined, `cannot spec validators`)
+  assert.strictEqual(spawnOpts.timestamp, undefined, `cannot spec timestamp`)
   const childDmz = Dmz.create({
     network: Network.create(),
     covenantId,
@@ -64,7 +73,13 @@ const spawnRequester = (dmz, originAction) => {
   // TODO insert dmz.getHash() into create() to generate repeatable randomness
 
   const genesis = Block.create(childDmz)
-  const payload = { genesis, alias }
+  const payload = {
+    provenance: genesis.provenance.toJS(),
+    validators: genesis.validators.toJS(),
+    timestamp: genesis.timestamp.toJS(),
+    spawnOpts,
+    alias,
+  }
   const genesisRequest = Action.create('@@GENESIS', payload)
   const address = genesis.provenance.getAddress()
 

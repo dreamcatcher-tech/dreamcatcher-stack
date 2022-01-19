@@ -1,5 +1,14 @@
 import assert from 'assert-fast'
-import { Block, Continuation, Proof, Remote, Turnover } from '.'
+import {
+  Block,
+  Continuation,
+  CovenantId,
+  Dmz,
+  Proof,
+  Provenance,
+  Remote,
+  Turnover,
+} from '.'
 import { interblockSchema } from '../schemas/modelSchemas'
 import { mixin } from '../MapFactory'
 import Debug from 'debug'
@@ -27,9 +36,6 @@ export class Interblock extends mixin(interblockSchema) {
     }
     return super.create(interblock)
   }
-  static clone(interblock) {
-    return super.create(interblock)
-  }
   assertLogic() {
     const { provenance, proof, transmission, turnovers = [] } = this
     debug(transmission)
@@ -45,16 +51,45 @@ export class Interblock extends mixin(interblockSchema) {
   }
   extractGenesis() {
     const initialRequest = this.transmission.requests[0]
-    if (initialRequest && initialRequest.payload.genesis) {
+    if (initialRequest) {
+      const { type, payload } = initialRequest
+      if (type !== '@@GENESIS') {
+        return
+      }
+      const spawnKeys = [
+        'provenance',
+        'validators',
+        'spawnOpts',
+        'alias',
+        'timestamp',
+      ]
+      for (const key of spawnKeys) {
+        if (!payload[key]) {
+          return
+        }
+      }
+      if (Object.keys(payload).length !== spawnKeys.length) {
+        return
+      }
       if (!this.#extractedGenesis) {
         // TODO move to producers and handle minimal payload
         // TODO handle serialization of payload
-        const genesis = initialRequest.payload.genesis
+
+        const provenance = Provenance.clone(payload.provenance)
+        const covenantId = CovenantId.create('unity')
+        const { validators, timestamp } = payload
+        const childDmz = Dmz.create({
+          covenantId,
+          ...payload.spawnOpts,
+          validators,
+          timestamp,
+        })
+        const genesis = Block.create().updateBlock(childDmz, provenance)
         assert(genesis.provenance.address.isGenesis())
         this.#extractedGenesis = genesis
       }
+      return this.#extractedGenesis
     }
-    return this.#extractedGenesis
   }
   getTargetAddress() {
     return this.transmission.address
@@ -111,4 +146,53 @@ export class Interblock extends mixin(interblockSchema) {
   getChainId() {
     return this.provenance.getAddress().getChainId()
   }
+  static getIgniter() {
+    return super.create(prebuiltInterblock)
+  }
+}
+
+const prebuiltInterblock = {
+  provenance: {
+    dmzIntegrity: {
+      hash: '16e18b2510c8e15beb165a041bf24aff602b42a6220e9d992ce793c2a0df092b',
+      algorithm: 'sha256',
+    },
+    height: 0,
+    address: {
+      chainId: {
+        hash: 'd9ebd32bacad329c70169da1e55c72d044e4ce0b93b3a11b942b6d3027d0ee74',
+        algorithm: 'sha256',
+      },
+      status: 'GENESIS_8d601ec4-ac6b-4e43-8345-dce986e65685',
+    },
+    lineage: {},
+    integrity: {
+      hash: 'c8ac8e773ec1ec3ad2d9f634bc9216a89bab1c3ce540ee2384138cad2718c59e',
+      algorithm: 'sha256',
+    },
+    signatures: [],
+  },
+  proof: {
+    block: 'no proof needed',
+  },
+  transmission: {
+    address: {
+      chainId: {
+        hash: '9f71f58cf978462ffdbce6d07bdede517718acde35d240139732145b040497fa',
+        algorithm: 'sha256',
+      },
+      status: 'RESOLVED',
+    },
+    replies: {},
+    requests: [
+      {
+        type: 'REMOTE_ACTION',
+        payload: {},
+      },
+    ],
+    precedent: {
+      hash: 'UNKNOWN',
+      algorithm: 'sha256',
+    },
+  },
 }

@@ -1,16 +1,17 @@
 import assert from 'assert-fast'
-import levelmem from 'level-mem'
 import { Keypair } from '../../../w015-models'
 import { signatureProducer } from '../../../w016-producers'
 import { dbFactory } from './consistencyFactory'
+import { rxdbmem } from './rxdbmem'
 import * as crypto from '../../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:services:crypto')
 
 // TODO reuse the same key if CI for deterministic blocks
-const cryptoSourceFactory = (leveldb, keyname = 'CI') => {
-  leveldb = leveldb || levelmem()
-  const db = dbFactory(leveldb)
+const cryptoSourceFactory = (rxdb, keyname = 'CI') => {
+  const dbName = `crypto-${keyname}`
+  rxdb = rxdb || rxdbmem(dbName)
+  const db = dbFactory(rxdb)
   assert(typeof keyname === 'string')
   const sign = async (integrity) => {
     debug(`sign`)
@@ -32,6 +33,7 @@ const cryptoSourceFactory = (leveldb, keyname = 'CI') => {
     if (current) {
       _keypair = current
     } else {
+      // TODO use db consistency methods to avoid this dance
       const keypairRaw =
         keyname === 'CI' ? crypto.ciKeypair : crypto.generateKeyPair()
       const keypairAttempt = Keypair.create(keyname, keypairRaw)

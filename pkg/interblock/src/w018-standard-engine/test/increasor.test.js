@@ -1,17 +1,14 @@
 import { assert } from 'chai/index.mjs'
-import levelmem from 'level-mem'
 import { metrologyFactory } from '..'
 import { shell } from '../../w212-system-covenants'
 import { dbFactory } from '../src/services/consistencyFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:increasor')
-Debug.enable()
-
+Debug.enable('*:db *:pool *met* *:increasor *transmit*')
 describe('increasor', () => {
-  test('pools always empty after blocking', async () => {
-    const leveldb = levelmem()
+  test.only('pools always empty after blocking', async () => {
     const { covenantId } = shell // shell responds to pings
-    const base = await metrologyFactory('inc', { hyper: shell }, leveldb)
+    const base = await metrologyFactory('inc', { hyper: shell })
     await base.spawn('ping1', { covenantId })
     await base.spawn('ping2', { covenantId })
 
@@ -58,6 +55,7 @@ describe('increasor', () => {
     // ping2 pool check
     const ping2Pool = await db.queryPool(ping2.getChainId())
     assert.strictEqual(ping2Pool.length, 0)
+    await base.shutdown()
   })
   test('no changes after isolation leaves block untouched', async () => {
     const base = await metrologyFactory()

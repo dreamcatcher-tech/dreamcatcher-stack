@@ -89,11 +89,10 @@ const pure = async (event, definition, config = {}) => {
     const { invoke } = node
     if (invoke) {
       debug(`asyncFunction name: %o`, node.invoke.src)
-      const asyncFunction = config.services[invoke.src]
-      const msg = `missing function: ${invoke.src}`
-      assert.strictEqual(typeof asyncFunction, 'function', msg)
+      const asyncFn = config.services[invoke.src]
+      assert.strictEqual(typeof asyncFn, 'function', `missing: ${invoke.src}`)
       try {
-        const data = await asyncFunction(contextMgr.getContext(), event)
+        const data = await asyncFn(contextMgr.getContext(), event)
         event = { type: `done.invoke.${invoke.src}`, data }
         state = resolveTransition(state, event)
         return { state, event }

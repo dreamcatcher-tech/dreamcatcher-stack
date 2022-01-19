@@ -28,7 +28,6 @@
  */
 
 import assert from 'assert-fast'
-import levelmem from 'level-mem'
 import posix from 'path-browserify'
 import setImmediate from 'set-immediate-shim'
 import { standardEngineFactory } from './standardEngineFactory'
@@ -44,7 +43,7 @@ import Debug from 'debug'
 const debugBase = Debug('ib:met')
 
 let id = 0
-const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
+const metrologyFactory = async (identifier, covenants = {}, rxdb) => {
   // TODO use metrology in streamProcessor
   assert.strictEqual(typeof covenants, 'object')
   identifier = identifier || `id-${id++}`
@@ -65,7 +64,7 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
 
   const isolateProcessor = isolateFactory(ioConsistency, covenants)
   ioIsolate.setProcessor(isolateProcessor)
-  const consistencyProcessor = consistencyFactory(leveldb, identifier)
+  const consistencyProcessor = consistencyFactory(rxdb, identifier)
   ioConsistency.setProcessor(consistencyProcessor)
   const consistency = toFunctions(ioConsistency)
   const tap = enableLoggingWithTap(engine, identifier)
@@ -193,6 +192,10 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
       }
       // TODO fetch from other block producers
     }
+    const shutdown = async () => {
+      await settle()
+      await consistency.shutdown()
+    }
     return {
       pierce,
       spawn,
@@ -212,6 +215,7 @@ const metrologyFactory = async (identifier, covenants = {}, leveldb) => {
       getBlockCount, // move to engine.stats
       getChainCount,
       getActionCreators,
+      shutdown,
     }
   }
   return metrology(baseAddress, '/')

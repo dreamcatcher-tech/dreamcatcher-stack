@@ -72,6 +72,7 @@ class Cache {
 }
 
 const dbFactory = (rxdbPromise) => {
+  assert(rxdbPromise, `must supply rxdb`)
   const cacheLimitMb = 100
   const cache = new Cache(cacheLimitMb)
   // TODO make separate caches for interblocks, blocks, piercings
@@ -103,27 +104,22 @@ const dbFactory = (rxdbPromise) => {
     assert.strictEqual(typeof chainId, 'string')
     assert(Number.isInteger(height))
     assert(height >= 0)
-    const gte = `${chainId}/blocks/${pad(height)}`
-    let key
-    for await (const [keyBuffer] of db.iterator({
-      limit: 1,
-      keys: true,
-      values: false,
-      gte,
-      lte: gte + '~',
-    })) {
-      // TODO check hash matches
-      // TODO check that no other block exists at this height
-      key = keyBuffer.toString()
-    }
-    if (!key) {
+    debug(`getBlock`, chainId, height)
+    const $gte = `${chainId}/blocks/${pad(height)}`
+    const $lte = $gte + '~'
+    const doc = await db
+      .findOne({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
+      .exec()
+    // TODO check hash matches
+    // TODO check that no other block exists at this height
+    if (!doc) {
       return
     }
-    let block = cache.get(key)
+    let block = cache.get(doc.key)
     if (!block) {
-      const raw = await db.get(key)
-      const js = JSON.parse(raw)
-      block = Block.restore(js)
+      const { value } = doc
+      assert(Array.isArray(value))
+      block = Block.restore(value)
     }
     debug(`getBlock height: `, block.getHeight())
     return block
@@ -136,7 +132,8 @@ const dbFactory = (rxdbPromise) => {
     const { height } = interblock.provenance
     const hash = interblock.hashString()
     const key = `${targetChainId}/pool/${chainId}_${pad(height)}_${hash}`
-    await db.put(key, interblock.serialize())
+    const value = interblock.toArray()
+    await db.insert({ key, value })
     cache.put(key, interblock)
   }
   const putBlock = async (block) => {
@@ -144,10 +141,10 @@ const dbFactory = (rxdbPromise) => {
     const chainId = block.getChainId()
     const height = block.getHeight()
     const hash = block.hashString()
-    const array = block.toArray()
+    const value = block.toArray()
     const key = `${chainId}/blocks/${pad(height)}_${hash}`
     debug(`putBlock`, key)
-    await db.insert({ key, array })
+    await db.insert({ key, value })
     cache.put(key, block)
     debug(`putBlock`, chainId.substring(0, 9), height)
   }
@@ -158,7 +155,10 @@ const dbFactory = (rxdbPromise) => {
     const $lte = `${chainId}/blocks/~`
 
     const rxDocument = await db
-      .findOne({ selector: { key: { $gte, $lte } }, sort: [{ key: 'desc' }] })
+      .findOne({
+        selector: { key: { $and: [{ $gte }, { $lte }] } },
+        sort: [{ key: 'desc' }],
+      })
       .exec()
     if (!rxDocument) {
       debug(`queryLatest nothing found`)
@@ -167,10 +167,11 @@ const dbFactory = (rxdbPromise) => {
     let block = cache.get(rxDocument.key)
     if (!block) {
       debug(`findOne`, rxDocument.key)
-      const json = await db.findOne({ selector: { key: rxDocument } }).exec()
-      block = Block.restore(JSON.parse(json))
-      block.serialize()
+      const doc = await db.findOne({ selector: { key: rxDocument.key } }).exec()
+      block = Block.restore(doc.value)
     }
+    const dump = await db.find().exec()
+    debug(dump.map((x) => x.key))
     debug(`queryLatest height: `, block.getHeight())
     return block
   }
@@ -178,8 +179,9 @@ const dbFactory = (rxdbPromise) => {
     await settleRxdb()
     debug(`putKeypair`)
     assert(keypair instanceof Keypair)
-    const { key } = keypair.publicKey
-    await db.put(`crypto/${key}`, keypair.serialize())
+    const key = `crypto/${keypair.publicKey.key}`
+    const value = keypair.toArray()
+    await db.insert({ key, value })
   }
 
   const putPierceReply = async (chainId, txReply) => {
@@ -189,7 +191,8 @@ const dbFactory = (rxdbPromise) => {
     const key = `${chainId}/piercings/rep_${txReply.hashString()}`
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
-    await db.put(key, txReply.serialize())
+    const value = txReply.toArray()
+    await db.insert({ key, value })
     cache.put(key, txReply)
   }
   const putPierceRequest = async (chainId, txRequest) => {
@@ -199,12 +202,14 @@ const dbFactory = (rxdbPromise) => {
     const key = `${chainId}/piercings/req_${txRequest.hashString()}`
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
-    await db.put(key, txRequest.serialize())
+    const value = txRequest.toArray()
+    await db.insert({ key, value })
     cache.put(key, txRequest)
   }
 
   const delPool = async (chainId, interblocks) => {
     await settleRxdb()
+    debug(`delPool`)
     // TODO check interblock was included in the block
     assert(Array.isArray(interblocks))
 
@@ -264,7 +269,7 @@ const dbFactory = (rxdbPromise) => {
     const $gte = `${chainId}/pool/`
     const $lte = `${chainId}/pool/~`
     const rxDocuments = await db
-      .find({ selector: { key: { $gte, $lte } } })
+      .find({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
       .exec()
     const keys = rxDocuments.map((rxDocument) => rxDocument.key)
     const interblocks = []
@@ -276,11 +281,11 @@ const dbFactory = (rxdbPromise) => {
       interblocks.push(cached)
     })
     debug(`getMany`, uncachedKeys.length)
-    const jsons = await db.findByIds(uncachedKeys)
+    const docs = await db.findByIds(uncachedKeys)
     debug(`getMany done`)
 
-    for (const json of jsons) {
-      const interblock = Interblock.restore(JSON.parse(json))
+    for (const doc of docs) {
+      const interblock = Interblock.restore(doc.value)
       interblocks.push(interblock)
     }
     debug(`queryPool count:`, interblocks.length)
@@ -288,6 +293,7 @@ const dbFactory = (rxdbPromise) => {
   }
 
   const queryPiercings = async (chainId) => {
+    assert.strictEqual(typeof chainId, 'string')
     await settleRxdb()
     debug(`queryPiercings`, chainId.substring(0, 9))
     const $gte = `${chainId}/piercings/`
@@ -296,7 +302,7 @@ const dbFactory = (rxdbPromise) => {
     const replies = []
     // TODO handle timestamps on piercings
     const rxDocuments = await db
-      .find({ selector: { key: { $gte, $lte } } })
+      .find({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
       .exec()
     const keys = rxDocuments.map((rxDocument) => rxDocument.key)
     const uncachedKeys = keys.filter((key) => {
@@ -313,10 +319,10 @@ const dbFactory = (rxdbPromise) => {
         requests.push(tx)
       }
     })
-    const jsons = await db.findByIds(uncachedKeys)
+    const docs = await db.findByIds(uncachedKeys)
     for (const key of uncachedKeys) {
       throw Error('TODO')
-      const json = jsons.shift()
+      const json = docs.shift()
       if (key.startsWith($gte + `rep_`)) {
         const txReply = TxReply.restore(JSON.parse(json))
         replies.push(txReply)
@@ -334,12 +340,9 @@ const dbFactory = (rxdbPromise) => {
   const scanBaseChainId = async () => {
     await settleRxdb()
     debug('scanBaseChainId start')
-    for await (const [keyBuffer] of db.iterator({
-      keys: true,
-      values: false,
-      limit: 1,
-    })) {
-      const key = keyBuffer.toString()
+    const firstDocument = await db.findOne().exec()
+    if (firstDocument) {
+      const { key } = firstDocument
       const [baseChainId] = key.split('/')
       debug('scanBaseChainId end')
       return baseChainId
@@ -348,19 +351,19 @@ const dbFactory = (rxdbPromise) => {
   const scanKeypair = async () => {
     await settleRxdb()
     debug('scanKeypair start')
-    const gte = `crypto/`
-    const lte = `crypto/~`
-    for await (const [, json] of db.iterator({
-      keys: false,
-      values: true,
-      limit: 1,
-      gte,
-      lte,
-    })) {
-      const keypair = Keypair.restore(JSON.parse(json))
+    const $gte = `crypto/`
+    const $lte = `crypto/~`
+    const firstDocument = await db
+      .findOne({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
+      .exec()
+    if (firstDocument) {
+      const { value } = firstDocument
+      assert(Array.isArray(value))
+      const keypair = Keypair.restore(value)
       debug('scanKeypair end')
       return keypair
     }
+    debug(`no keypair found`)
   }
 
   return {

@@ -1,13 +1,16 @@
 import { assert } from 'chai/index.mjs'
-import { consistencySourceFactory } from '../src/services/consistencyFactory'
-import { Address, Block } from '../../w015-models'
+import {
+  consistencySourceFactory,
+  dbFactory,
+} from '../src/services/consistencyFactory'
+import { Address, Block, TxRequest } from '../../w015-models'
 import { v4 } from 'uuid'
 import { Integrity } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:consistency')
 Debug.enable('*:consistency *:db')
 
-describe.only('consistency', () => {
+describe('consistency', () => {
   const lockExpiresMs = 2
   let consistencySource
   beforeEach(() => {
@@ -66,7 +69,20 @@ describe.only('consistency', () => {
       await consistencySource.putUnlockChain(nextLock)
     })
   })
-  describe('unlockChain', () => {})
+  describe('unlockChain', () => {
+    test.only('delete piercings', async () => {
+      const { rxdb } = consistencySource
+      const db = dbFactory(rxdb)
+      const integrity = Integrity.create(v4())
+      const address = Address.create(integrity)
+      const chainId = address.getChainId()
+      const txRequest = TxRequest.create()
+      await db.putPierceRequest(chainId, txRequest)
+      const piercings = await db.queryPiercings(chainId)
+      assert.strictEqual(piercings.requests[0], txRequest)
+      await db.delPierce(chainId, piercings)
+    })
+  })
   describe('isPresent', () => {
     test('non existent chainId', async () => {
       const address = Address.create('TEST')

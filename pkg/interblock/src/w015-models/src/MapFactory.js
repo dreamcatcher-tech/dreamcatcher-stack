@@ -482,12 +482,12 @@ const properties = (schema) => {
     hashString() {
       return this.#backingArray.hashString()
     }
-    serialize() {
-      return JSON.stringify(this.toArray())
-    }
-    getSerializedSize() {
-      return this.serialize().length
-    }
+    // serialize() {
+    //   return JSON.stringify(this.toArray())
+    // }
+    // getSerializedSize() {
+    // return 15 // TODO
+    // }
     toArray() {
       // TODO cache the output in case called again
       // TODO using the schema, know which elements a classes

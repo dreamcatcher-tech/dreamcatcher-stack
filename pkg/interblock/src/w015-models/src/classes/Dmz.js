@@ -14,7 +14,7 @@ import {
   Pending,
   Piercings,
 } from '.'
-import { mixin } from '../MapFactory'
+import { mixin, Base } from '../MapFactory'
 const schema = {
   type: 'object',
   title: 'Dmz',
@@ -70,11 +70,18 @@ const defaultParams = {
 export class Dmz extends mixin(schema) {
   static create(params = {}) {
     assert.strictEqual(typeof params, 'object')
-    let { timestamp } = params
-    if (!timestamp) {
-      timestamp = Timestamp.create()
+    params = { ...params }
+    for (const key in params) {
+      if (params[key] instanceof Base) {
+        continue
+      }
+      assert.strictEqual(typeof params[key], 'object')
+      params[key] = defaultParams[key].update(params[key])
     }
-    const fullParams = { ...defaultParams, timestamp, ...params }
+    if (!params.timestamp) {
+      params.timestamp = Timestamp.create()
+    }
+    const fullParams = { ...defaultParams, ...params }
     return super.create(fullParams)
   }
   assertLogic() {

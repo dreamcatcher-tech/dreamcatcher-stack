@@ -1,6 +1,5 @@
 import assert from 'assert-fast'
-import { createRxDatabase } from 'rxdb/plugins/core'
-import { getRxStorageLoki } from 'rxdb/plugins/lokijs'
+import { rxdbmem } from '../rxdbmem'
 import {
   Address,
   Lock,
@@ -15,17 +14,8 @@ import { dbFactory } from './dbFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
-const rxdbmem = async () => {
-  const db = await createRxDatabase({
-    name: 'CI-inMemoryDb',
-    storage: getRxStorageLoki(),
-    multiInstance: false,
-  })
-  return db
-}
-
 const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
-  rxdb = rxdb || rxdbmem()
+  rxdb = rxdb || rxdbmem(lockPrefix)
   const lockProvider = lockFactory(rxdb)
   const db = dbFactory(rxdb)
   const locks = new Map() // TODO move to caching in the DB rather than here
