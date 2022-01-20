@@ -21,11 +21,6 @@ const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
   const locks = new Map() // TODO move to caching in the DB rather than here
   let baseAddress
 
-  const shutdown = async () => {
-    const rxdbResolved = await rxdb
-    await rxdbResolved.destroy()
-  }
-
   const putPoolInterblock = async ({ interblock }) => {
     assert(interblock instanceof Interblock)
     debug(`poolInterblock`)
@@ -230,7 +225,6 @@ const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
     putPierceRequest,
     putPierceReply,
 
-    shutdown,
     rxdb,
   }
 }

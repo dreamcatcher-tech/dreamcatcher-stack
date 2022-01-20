@@ -2,13 +2,16 @@ import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '..'
 import { shell } from '../../w212-system-covenants'
 import { dbFactory } from '../src/services/consistencyFactory'
+import { rxdbmem } from '../src/services/rxdbmem'
+
 import Debug from 'debug'
 const debug = Debug('interblock:tests:increasor')
-Debug.enable('*:db *:pool *met* *:increasor *transmit*')
+Debug.enable()
 describe('increasor', () => {
   test.only('pools always empty after blocking', async () => {
     const { covenantId } = shell // shell responds to pings
-    const base = await metrologyFactory('inc', { hyper: shell })
+    const rxdb = rxdbmem('increasor')
+    const base = await metrologyFactory('inc', { hyper: shell }, rxdb)
     await base.spawn('ping1', { covenantId })
     await base.spawn('ping2', { covenantId })
 
@@ -41,7 +44,7 @@ describe('increasor', () => {
     assert.strictEqual(ping2.getHeight(), 2)
 
     // base pool check
-    const db = dbFactory(leveldb) // avoids the cache
+    const db = dbFactory(rxdb) // avoids the cache
     const c = await db.getBlock(baseBlock.getChainId(), baseBlock.getHeight())
     baseBlock.deepEquals(c)
     assert(baseBlock.deepEquals(c), `database is not live`)

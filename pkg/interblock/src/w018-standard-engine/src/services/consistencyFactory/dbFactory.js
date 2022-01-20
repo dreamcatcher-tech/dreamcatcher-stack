@@ -34,7 +34,7 @@ class Cache {
     assert.strictEqual(typeof key, 'string')
     assert.strictEqual(typeof model, 'object')
     assert(!this.#cache.has(key))
-    const size = model.getSerializedSize()
+    const size = 1024 // TODO
     const value = { model, size }
     this.#cache.set(key, value)
     this.#total += size
@@ -82,20 +82,22 @@ const dbFactory = (rxdbPromise) => {
     if (!db) {
       const rxdb = await rxdbPromise
       assert(isRxDatabase(rxdb))
-      const { blockchains } = await rxdb.addCollections({
-        blockchains: {
-          schema: {
-            version: 0,
-            primaryKey: 'key',
-            type: 'object',
-            properties: {
-              key: { type: 'string' },
-              value: { type: 'array' },
+      if (!rxdb.blockchains) {
+        await rxdb.addCollections({
+          blockchains: {
+            schema: {
+              version: 0,
+              primaryKey: 'key',
+              type: 'object',
+              properties: {
+                key: { type: 'string' },
+                value: { type: 'array' },
+              },
             },
           },
-        },
-      })
-      db = blockchains
+        })
+      }
+      db = rxdb.blockchains
     }
   }
 
@@ -170,8 +172,6 @@ const dbFactory = (rxdbPromise) => {
       const doc = await db.findOne({ selector: { key: rxDocument.key } }).exec()
       block = Block.restore(doc.value)
     }
-    const dump = await db.find().exec()
-    debug(dump.map((x) => x.key))
     debug(`queryLatest height: `, block.getHeight())
     return block
   }

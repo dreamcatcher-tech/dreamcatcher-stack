@@ -6,6 +6,13 @@ import assert from 'assert-fast'
 export class Validators extends mixin(validatorsSchema) {
   static create(validators = {}) {
     assert.strictEqual(typeof validators, 'object')
+    validators = { ...validators }
+    for (const key in validators) {
+      if (validators[key] instanceof PublicKey) {
+        continue
+      }
+      validators[key] = PublicKey.create(validators[key])
+    }
     assert(Object.values(validators).every((key) => key instanceof PublicKey))
     if (!Object.keys(validators).length) {
       const ciKeypair = Keypair.create()

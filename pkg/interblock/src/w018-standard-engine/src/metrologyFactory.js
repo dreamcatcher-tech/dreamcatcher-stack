@@ -126,7 +126,6 @@ const metrologyFactory = async (identifier, covenants = {}, rxdb) => {
     })
     const getAbsolutePath = () => absolutePath
     const getEngine = () => engine
-    const getPersistence = () => ioConsistency.getProcessor().persistence
     const getChainId = () => address.getChainId()
     const settle = async (enginePair) => {
       const queues = Object.values(engine)
@@ -194,7 +193,8 @@ const metrologyFactory = async (identifier, covenants = {}, rxdb) => {
     }
     const shutdown = async () => {
       await settle()
-      await consistency.shutdown()
+      const rxdbResolved = await rxdb
+      await rxdbResolved.destroy()
     }
     return {
       pierce,
@@ -206,7 +206,6 @@ const metrologyFactory = async (identifier, covenants = {}, rxdb) => {
       getContext,
       getAbsolutePath,
       getEngine,
-      getPersistence,
       getChainId,
       getCovenants,
       settle,
