@@ -1,3 +1,5 @@
+import assert from 'assert-fast'
+import equals from 'fast-deep-equal'
 import { actionSchema } from '../schemas/modelSchemas'
 import { mixin } from '../MapFactory'
 import { assertNoUndefined } from './State'
@@ -13,6 +15,8 @@ export class Action extends mixin(actionSchema) {
       action = { ...action, payload: {} }
     }
     assertNoUndefined(action.payload)
+    const cloned = JSON.parse(JSON.stringify(action.payload))
+    assert(equals(payload, cloned), 'payload must be stringifiable')
     return super.create(action)
   }
 }

@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Action } from '..'
+import { Action, Integrity } from '..'
 
 describe('acl', () => {
   test('throws on blank creation', () => {
@@ -14,5 +14,11 @@ describe('acl', () => {
     assert.throws(() => Action.create(original))
     const nested = { type: 'test', payload: { deep: { missing: undefined } } }
     assert.throws(() => Action.create(nested))
+  })
+  test('payload must be POJO', () => {
+    const integrity = Integrity.create('Complex object')
+    const msg = 'payload must be stringifiable'
+    assert.throws(() => Action.create('TYPE', integrity), msg)
+    assert.throws(() => Action.create('@@RESOLVE', { integrity }), msg)
   })
 })

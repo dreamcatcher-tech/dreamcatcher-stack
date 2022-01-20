@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import equals from 'fast-deep-equal'
 import { serializeError } from 'serialize-error'
 import { continuationSchema } from '../schemas/modelSchemas'
 import { mixin } from '../MapFactory'
@@ -6,6 +7,9 @@ export class Continuation extends mixin(continuationSchema) {
   static create(type = '@@RESOLVE', payload = {}) {
     if (type === '@@REJECT' && payload instanceof Error) {
       payload = serializeError(payload)
+    } else {
+      const cloned = JSON.parse(JSON.stringify(payload))
+      assert(equals(payload, cloned), 'payload must be stringifiable')
     }
     return super.create({ type, payload })
   }
