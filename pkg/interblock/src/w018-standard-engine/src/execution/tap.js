@@ -11,14 +11,15 @@ import { setTap } from '../../../w004-needle'
 import Debug from 'debug'
 
 const createTap = (prefix = 'interblock:blocktap') => {
-  let isOn = true
+  let _isOn = true
   let options = {}
   const on = (nextOptions = {}) => {
-    isOn = true
+    _isOn = true
     options = nextOptions
   }
-  const off = () => (isOn = false)
+  const off = () => (_isOn = false)
   const debugBase = Debug(prefix)
+  const isOn = () => _isOn && debugBase.enabled
   const cache = new Map()
 
   const debugTran = debugBase.extend('t')
