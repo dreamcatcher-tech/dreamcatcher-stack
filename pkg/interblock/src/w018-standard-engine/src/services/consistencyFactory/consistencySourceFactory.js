@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import { rxdbmem } from '../rxdbmem'
 import {
   Address,
   Lock,
@@ -15,7 +14,6 @@ import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
 const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
-  rxdb = rxdb || rxdbmem(lockPrefix)
   const lockProvider = lockFactory(rxdb)
   const db = dbFactory(rxdb)
   const locks = new Map() // TODO move to caching in the DB rather than here

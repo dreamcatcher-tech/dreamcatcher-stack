@@ -10,7 +10,7 @@ import { receiveConfig } from './configs/receiveConfig'
 import { transmitConfig } from './configs/transmitConfig'
 import { pure } from '../../w001-xstate-direct'
 
-const fsmFactory = () => {
+const fsmFactory = (identifier, rxdb) => {
   const ioIsolate = ioQueueFactory('ioIsolate')
   const ioCrypto = ioQueueFactory('ioCrypto')
   const ioConsistency = ioQueueFactory('ioConsistency')
@@ -19,8 +19,8 @@ const fsmFactory = () => {
   const ioReceive = ioQueueFactory('ioReceive', Tx)
   const ioTransmit = ioQueueFactory('ioTransmit', Interblock)
 
-  ioCrypto.setProcessor(cryptoFactory())
-  ioConsistency.setProcessor(consistencyFactory())
+  ioCrypto.setProcessor(cryptoFactory(rxdb, identifier))
+  ioConsistency.setProcessor(consistencyFactory(rxdb, identifier))
   ioIsolate.setProcessor(isolateFactory(ioConsistency))
 
   const pool = poolConfig(ioCrypto, ioConsistency)

@@ -175,14 +175,6 @@ const dbFactory = (rxdbPromise) => {
     debug(`queryLatest height: `, block.getHeight())
     return block
   }
-  const putKeypair = async (keypair) => {
-    await settleRxdb()
-    debug(`putKeypair`)
-    assert(keypair instanceof Keypair)
-    const key = `crypto/${keypair.publicKey.key}`
-    const value = keypair.toArray()
-    await db.insert({ key, value })
-  }
 
   const putPierceReply = async (chainId, txReply) => {
     await settleRxdb()
@@ -348,23 +340,6 @@ const dbFactory = (rxdbPromise) => {
       return baseChainId
     }
   }
-  const scanKeypair = async () => {
-    await settleRxdb()
-    debug('scanKeypair start')
-    const $gte = `crypto/`
-    const $lte = `crypto/~`
-    const firstDocument = await db
-      .findOne({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
-      .exec()
-    if (firstDocument) {
-      const { value } = firstDocument
-      assert(Array.isArray(value))
-      const keypair = Keypair.restore(value)
-      debug('scanKeypair end')
-      return keypair
-    }
-    debug(`no keypair found`)
-  }
 
   return {
     putPool,
@@ -379,9 +354,6 @@ const dbFactory = (rxdbPromise) => {
     queryPool,
 
     scanBaseChainId,
-
-    scanKeypair,
-    putKeypair,
 
     putPierceReply,
     putPierceRequest,

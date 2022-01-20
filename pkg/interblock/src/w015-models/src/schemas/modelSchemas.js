@@ -93,8 +93,8 @@ const signatureSchema = {
   additionalProperties: false,
   required: ['publicKey', 'integrity', 'seal'],
   properties: {
-    publicKey: publicKeySchema,
-    integrity: integritySchema,
+    publicKey: publicKeySchema, // TODO use key as a string for compactness
+    integrity: integritySchema, // TODO remove this, as included in provenance
     seal: {
       type: 'string',
     },

@@ -1,26 +1,24 @@
 import assert from 'assert-fast'
 import { Keypair } from '../../../w015-models'
 import { signatureProducer } from '../../../w016-producers'
-import { dbFactory } from './consistencyFactory'
-import { rxdbmem } from './rxdbmem'
+import { rxdbCrypto } from './rxdbCrypto'
 import * as crypto from '../../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:services:crypto')
 
 // TODO reuse the same key if CI for deterministic blocks
-const cryptoSourceFactory = (rxdb, keyname = 'CI') => {
-  const dbName = `crypto-${keyname}`
-  rxdb = rxdb || rxdbmem(dbName)
-  const db = dbFactory(rxdb)
+const cryptoSourceFactory = (cryptoDb, keyname = 'CI') => {
+  const db = rxdbCrypto(cryptoDb)
   assert(typeof keyname === 'string')
   const sign = async (integrity) => {
-    debug(`sign`)
     const keypair = await _getKeypair()
+    debug(`sign as:`, keypair.name)
     return signatureProducer.sign(integrity, keypair)
   }
 
   const getValidatorEntry = async () => {
     const keypair = await _getKeypair()
+    debug(`getValidatorEntry as:`, keypair.name)
     return keypair.getValidatorEntry()
   }
 
@@ -54,8 +52,8 @@ const cryptoSourceFactory = (rxdb, keyname = 'CI') => {
   return { sign, getValidatorEntry }
 }
 
-const cryptoFactory = (leveldb, keyname = 'CI') => {
-  const cryptoSource = cryptoSourceFactory(leveldb, keyname)
+const cryptoFactory = (cryptoDb, keyname = 'CI') => {
+  const cryptoSource = cryptoSourceFactory(cryptoDb, keyname)
   const cryptoProcessor = async (action) => {
     debug(`crypto: ${action.type}`)
     switch (action.type) {

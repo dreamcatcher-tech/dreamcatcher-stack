@@ -71,7 +71,7 @@ export class Dmz extends mixin(schema) {
   static create(params = {}) {
     assert.strictEqual(typeof params, 'object')
     params = { ...params }
-    if (params.validators) {
+    if (params.validators && !(params.validators instanceof Validators)) {
       params.validators = Validators.create(params.validators)
     }
     for (const key in params) {

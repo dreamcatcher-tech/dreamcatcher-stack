@@ -8,7 +8,7 @@ import { v4 } from 'uuid'
 import { Integrity } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:consistency')
-Debug.enable('*:consistency *:db')
+Debug.enable()
 
 describe('consistency', () => {
   const lockExpiresMs = 2
@@ -17,7 +17,9 @@ describe('consistency', () => {
     consistencySource = consistencySourceFactory()
   })
   afterEach(async () => {
-    await consistencySource.shutdown()
+    let { rxdb } = consistencySource
+    rxdb = await rxdb
+    await rxdb.destroy()
     consistencySource = undefined
   })
   describe('putPoolInterblocks', () => {
@@ -70,7 +72,7 @@ describe('consistency', () => {
     })
   })
   describe('unlockChain', () => {
-    test.only('delete piercings', async () => {
+    test('delete piercings', async () => {
       const { rxdb } = consistencySource
       const db = dbFactory(rxdb)
       const integrity = Integrity.create(v4())

@@ -11,7 +11,7 @@ const debugBase = Debug('interblock:engine')
  * The sqs queues are created here, which are tapped by aws.
  * sqs queues threadbreak, in that they cannot be awaited on for a result.
  */
-const standardEngineFactory = () => {
+const standardEngineFactory = (identifier, rxdb) => {
   debugBase(`standardEngineFactory`)
 
   const receiver = (ioReceive, sqsPool, sqsTransmit) => async (tx) => {
@@ -132,7 +132,7 @@ const standardEngineFactory = () => {
     }
   }
 
-  const fsm = fsmFactory()
+  const fsm = fsmFactory(identifier, rxdb)
   const {
     ioIsolate,
     ioCrypto,

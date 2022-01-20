@@ -29,17 +29,17 @@ export class Address extends mixin(addressSchema) {
       status = 'INVALID'
       integrity = defaultIntegrity
     } else if (typeof integrity === 'string') {
-      if (integrity.startsWith('TEST')) {
+      if (integrity === 'TEST') {
         integrity = testIntegrity.hash
       }
-      const possibleIntegrity = Integrity.create(integrity)
-      if (possibleIntegrity.hash.length === integrity.length) {
+      const hashLength = testIntegrity.hash.length // 64
+      if (integrity.length === hashLength) {
         // TODO use a regex tester for chainIds
-        const hash = integrity
-        integrity = Integrity.create(hash)
+        const hashString = integrity
+        integrity = Integrity.create(hashString)
         status = 'RESOLVED'
       } else {
-        integrity = possibleIntegrity
+        throw new Error(`Invalid integrity: ${integrity}`)
       }
     } else if (!integrity.isUnknown()) {
       status = `RESOLVED`

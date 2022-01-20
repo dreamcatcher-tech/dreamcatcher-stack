@@ -30,6 +30,7 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import setImmediate from 'set-immediate-shim'
+import { rxdbmem } from './services/rxdbMem'
 import { standardEngineFactory } from './standardEngineFactory'
 import { isolateFactory } from './services/isolateFactory'
 import { consistencyFactory, toFunctions } from './services/consistencyFactory'
@@ -42,13 +43,13 @@ import { piercerFactory } from './piercerFactory'
 import Debug from 'debug'
 const debugBase = Debug('ib:met')
 
-let id = 0
-const metrologyFactory = async (identifier, covenants = {}, rxdb) => {
+const metrologyFactory = async (identifier = 'CI', covenants = {}, rxdb) => {
   // TODO use metrology in streamProcessor
+  assert.strictEqual(typeof identifier, 'string')
   assert.strictEqual(typeof covenants, 'object')
-  identifier = identifier || `id-${id++}`
+  rxdb = rxdb || rxdbmem(identifier)
   const debug = debugBase.extend(`${identifier}`)
-  const engine = standardEngineFactory()
+  const engine = standardEngineFactory(identifier, rxdb)
   const {
     sqsTx,
     sqsRx,
@@ -64,8 +65,6 @@ const metrologyFactory = async (identifier, covenants = {}, rxdb) => {
 
   const isolateProcessor = isolateFactory(ioConsistency, covenants)
   ioIsolate.setProcessor(isolateProcessor)
-  const consistencyProcessor = consistencyFactory(rxdb, identifier)
-  ioConsistency.setProcessor(consistencyProcessor)
   const consistency = toFunctions(ioConsistency)
   const tap = enableLoggingWithTap(engine, identifier)
   const baseAddress = await createBase(ioConsistency, sqsPool)

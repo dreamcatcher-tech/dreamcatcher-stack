@@ -24,7 +24,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
 
   const debugTran = debugBase.extend('t')
   const interblockTransmit = (interblock) => {
-    if (!isOn) {
+    if (!isOn()) {
       return
     }
     const formatted = interblockPrint(interblock)
@@ -33,7 +33,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
 
   const debugPool = debugBase.extend('p')
   const interblockPool = (interblock) => {
-    if (!isOn) {
+    if (!isOn()) {
       return
     }
     const formatted = interblockPrint(interblock)
@@ -70,7 +70,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
       return
     }
     insertBlock(block, cache)
-    if (!isOn) {
+    if (!isOn()) {
       return
     }
     const path = getPath(block, cache)

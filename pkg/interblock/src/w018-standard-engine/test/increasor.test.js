@@ -2,13 +2,14 @@ import { assert } from 'chai/index.mjs'
 import { metrologyFactory } from '..'
 import { shell } from '../../w212-system-covenants'
 import { dbFactory } from '../src/services/consistencyFactory'
-import { rxdbmem } from '../src/services/rxdbmem'
+import { rxdbmem } from '../src/services/rxdbMem'
+import { ciKeypair } from '../../w012-crypto'
 
 import Debug from 'debug'
 const debug = Debug('interblock:tests:increasor')
-Debug.enable()
+Debug.enable('*met* *Interblock')
 describe('increasor', () => {
-  test.only('pools always empty after blocking', async () => {
+  test('pools always empty after blocking', async () => {
     const { covenantId } = shell // shell responds to pings
     const rxdb = rxdbmem('increasor')
     const base = await metrologyFactory('inc', { hyper: shell }, rxdb)
@@ -70,8 +71,9 @@ describe('increasor', () => {
     await base.settle()
     baseBlock = await base.getLatest()
     assert.strictEqual(baseBlock.getHeight(), 0)
+    await base.shutdown()
   })
-  test('new channel causes lineage fork', async () => {
+  test.only('new channel causes lineage fork', async () => {
     const base = await metrologyFactory()
     await base.spawn('child1')
     await base.spawn('child2')
@@ -80,6 +82,25 @@ describe('increasor', () => {
     assert.strictEqual(baseBlock.getHeight(), 4)
     const { provenance } = baseBlock
     assert.strictEqual(provenance.lineage.size, 2)
+    await base.shutdown()
+  })
+  test('non CI keys work', async () => {
+    const base = await metrologyFactory('not-CI-key')
+    await base.spawn('child1')
+    await base.settle()
+    const block = await base.getLatest()
+    assert(block.validators.has('not-CI-key'))
+    const publicKey = block.validators.get('not-CI-key')
+    assert(ciKeypair.publicKey !== publicKey.key)
+    await base.shutdown()
+
+    const ci = await metrologyFactory()
+    await ci.spawn('child1')
+    await ci.settle()
+    const ciBlock = await ci.getLatest()
+    const ciPublicKey = ciBlock.validators.get('CI')
+    assert.strictEqual(ciKeypair.publicKey, ciPublicKey.key)
+    await ci.shutdown()
   })
   test('lexographic sorting of block height over 10', async () => {
     const base = await metrologyFactory()
