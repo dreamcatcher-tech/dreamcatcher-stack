@@ -19,8 +19,8 @@ export const rxdbCrypto = (rxdbPromise) => {
               primaryKey: 'key',
               type: 'object',
               properties: {
-                key: { type: 'string' },
-                value: { type: 'array' },
+                key: { type: 'string', final: true },
+                value: { type: 'array', final: true },
               },
             },
           },

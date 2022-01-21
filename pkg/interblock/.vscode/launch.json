@@ -152,6 +152,20 @@
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Bench",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--preserve-symlinks",
+        "--inspect=9229",
+        "--experimental-specifier-resolution=node",
+        "src/w402-benchmarks/bench"
+      ],
+      "skipFiles": ["<node_internals>/**/*.js"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

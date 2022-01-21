@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
 import { createRxDatabase, addRxPlugin } from 'rxdb/plugins/core'
 import { getRxStorageLoki } from 'rxdb/plugins/lokijs'
-addRxPlugin(RxDBDevModePlugin)
+// addRxPlugin(RxDBDevModePlugin)
 
 export const rxdbmem = async (lockPrefix) => {
   if (!lockPrefix || lockPrefix === 'CI') {

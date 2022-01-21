@@ -47,12 +47,14 @@ const addCustomer = async () => {
   custNo++
 }
 
+let id = 0
+
 suite
   .add('boot', {
     defer: true,
     fn: async (deferred) => {
-      const shell = await effectorFactory()
-      await shell.shutdown()
+      const shell = await effectorFactory(`id-${id++}`)
+      shell.shutdown()
       deferred.resolve()
     },
   })
