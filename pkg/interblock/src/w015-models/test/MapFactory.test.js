@@ -5,7 +5,7 @@ import { assert } from 'chai/index.mjs'
 import * as Models from '..' // needed so mixin can be imported
 import { mixin } from '../src/MapFactory'
 import Debug from 'debug'
-import { Integrity } from '..'
+import { Address, Channel, Integrity } from '..'
 const debug = Debug('interblock:tests:MapFactory')
 Debug.enable()
 
@@ -104,6 +104,11 @@ describe('MapFactory', () => {
     assert.throws(() => (Integrity.schema = {}))
     assert.throws(() => (Integrity.schema.add = {}))
     assert.throws(() => delete Integrity.schema.title)
+  })
+  test('objects are strictly preserved', () => {
+    const address = Address.create()
+    const channel = Channel.create(address)
+    assert.strictEqual(address, channel.address)
   })
   test.skip('no circular references in models', async () => {
     const __filename = fileURLToPath(import.meta.url)

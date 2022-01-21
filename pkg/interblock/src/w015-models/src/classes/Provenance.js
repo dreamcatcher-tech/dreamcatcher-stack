@@ -103,6 +103,12 @@ export class Provenance extends mixin(provenanceSchema) {
     assert(shortest >= 0 && shortest < this.height)
     return shortest
   }
+  hash() {
+    throw new Error('do not hash provenance')
+  }
+  hashString() {
+    this.hash()
+  }
   static generateIntegrity(obj) {
     const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
     const check = {}

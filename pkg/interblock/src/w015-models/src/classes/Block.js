@@ -27,6 +27,12 @@ export class Block extends mixin(blockSchema) {
     const block = super.create().updateBlock(dmz, provenance)
     return block
   }
+  hash() {
+    throw new Error('Do not raw hash blocks')
+  }
+  hashString() {
+    return this.provenance.reflectIntegrity().hash
+  }
   updateBlock(dmz, provenance) {
     assert(dmz instanceof Dmz)
     assert(provenance instanceof Provenance)

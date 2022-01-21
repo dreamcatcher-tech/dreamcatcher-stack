@@ -73,13 +73,6 @@ export class Interblock extends mixin(interblockSchema) {
       if (!this.#extractedGenesis) {
         // TODO move to producers and handle minimal payload
         // TODO handle serialization of payload
-
-        const chainId = this.getTargetAddress().getChainId().substring(0, 9)
-        const originChainId = this.getChainId().substring(0, 9)
-        debug(
-          `extracting genesis to: ${chainId} from: ${originChainId} at height: ${this.provenance.height}`
-        )
-
         const provenance = Provenance.clone(payload.provenance)
         const covenantId = CovenantId.create('unity')
         const { validators, timestamp } = payload

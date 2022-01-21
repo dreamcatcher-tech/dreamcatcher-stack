@@ -158,8 +158,7 @@ const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
     assert(address.deepEquals(block.provenance.getAddress()))
     assert.strictEqual(block.provenance.height, height)
     debug(`getBlock complete`, height)
-    const merged = block.merge()
-    return merged
+    return block
   }
   const getBlocks = async ({ address, heights }) => {
     assert(address instanceof Address)

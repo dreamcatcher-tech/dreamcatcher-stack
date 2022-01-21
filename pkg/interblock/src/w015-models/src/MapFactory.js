@@ -72,7 +72,7 @@ const patternProperties = (schema) => {
       return schema
     }
     static create(map) {
-      const instance = new this(insidersOnly).setMany(map).merge()
+      const instance = new this(insidersOnly).setMany(map)
       if (typeof instance.assertLogic === 'function') {
         instance.assertLogic()
       }
@@ -282,7 +282,7 @@ const properties = (schema) => {
       return schema
     }
     static create(params = {}) {
-      const instance = new this(insidersOnly).update(params).merge()
+      const instance = new this(insidersOnly).update(params)
       if (typeof instance.assertLogic === 'function') {
         instance.assertLogic()
       }
@@ -469,8 +469,11 @@ const properties = (schema) => {
         }
         backingArray = backingArray.put(index, deepValue)
       }
-
-      const next = new this.constructor(insidersOnly, backingArray.merge())
+      const merged = backingArray.merge()
+      if (merged === backingArray) {
+        return this
+      }
+      const next = new this.constructor(insidersOnly, merged)
       if (typeof this._imprint === 'function') {
         this._imprint(next)
       }

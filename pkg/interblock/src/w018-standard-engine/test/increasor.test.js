@@ -9,6 +9,11 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:increasor')
 Debug.enable('*met* *Interblock')
 describe('increasor', () => {
+  test('single child chain', async () => {
+    const base = await metrologyFactory()
+    await base.spawn('child1')
+    await base.shutdown()
+  })
   test('pools always empty after blocking', async () => {
     const { covenantId } = shell // shell responds to pings
     const rxdb = rxdbmem('increasor')
@@ -73,7 +78,7 @@ describe('increasor', () => {
     assert.strictEqual(baseBlock.getHeight(), 0)
     await base.shutdown()
   })
-  test.only('new channel causes lineage fork', async () => {
+  test('new channel causes lineage fork', async () => {
     const base = await metrologyFactory()
     await base.spawn('child1')
     await base.spawn('child2')

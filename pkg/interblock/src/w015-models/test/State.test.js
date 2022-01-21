@@ -2,7 +2,7 @@ import { assert } from 'chai/index.mjs'
 import { State } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:State')
-Debug.enable('*State')
+Debug.enable()
 
 // TODO add in the covenant api tools, and make some actions
 
