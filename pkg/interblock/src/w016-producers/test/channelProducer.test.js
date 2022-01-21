@@ -125,7 +125,7 @@ describe('channelProducer', () => {
     test.todo('negotiate channel reset ?')
     test.todo('reject if channel invalid')
     test('throws on interblock replies ahead of requests', () => {
-      const resolvedAddress = Address.create('test')
+      const resolvedAddress = Address.create('TEST')
       const channelBase = Channel.create(resolvedAddress)
       const request1 = Action.create('request1')
       // TODO make a fake remote which replied out of sequence

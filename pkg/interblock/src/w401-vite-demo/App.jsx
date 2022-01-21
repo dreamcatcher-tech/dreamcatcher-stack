@@ -38,10 +38,9 @@ function App() {
   useEffect(() => {
     Debug.enable('*tests*  *:provenance')
     debug(`start`)
-    const identifier = 'inBrowser'
+    const identifier = 'vite-test'
     const overloads = {}
-    const dbPath = 'vite-test'
-    effectorFactory(identifier, overloads, dbPath).then(async (blockchain) => {
+    effectorFactory(identifier, overloads).then(async (blockchain) => {
       // client.enableLogging()
       debug(`effector ready`)
       shell = blockchain
@@ -50,7 +49,7 @@ function App() {
       debug(`second ping`)
       await click()
     })
-  }, [])
+  }, [async () => await shell.shutdown()])
   return (
     <div className="App">
       <header className="App-header">

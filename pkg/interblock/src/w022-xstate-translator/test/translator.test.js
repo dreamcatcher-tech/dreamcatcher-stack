@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised'
 import { Machine } from 'xstate'
 import { send, sendParent, respond, translator } from '..'
 import { shell } from '../../w212-system-covenants'
-import { RxReply, Action, Address } from '../../w015-models'
+import { RxReply, Address, Integrity } from '../../w015-models'
 import { _hook as hook, interchain } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:translator')
@@ -130,7 +130,7 @@ describe('translator', () => {
       assert.strictEqual(remote.to, 'remote')
 
       const replyPayload = { remoteReply: 'remoteReply' }
-      const address = Address.create('TEST ADDRESS')
+      const address = Address.create('TEST')
       const reply = RxReply.create('@@RESOLVE', replyPayload, address, 0, 0)
       const { type, to } = remote
       const acc = [{ type, to, reply }]
@@ -243,7 +243,8 @@ describe('translator', () => {
 
 const createAccumulation = (raw, message) => {
   const { type, to } = raw
-  const address = Address.create('TEST ' + type)
+  const integrity = Integrity.create('TEST ' + type)
+  const address = Address.create(integrity)
   const reply = RxReply.create('@@RESOLVE', { message }, address, 10, 10)
   return { type, to, reply }
 }

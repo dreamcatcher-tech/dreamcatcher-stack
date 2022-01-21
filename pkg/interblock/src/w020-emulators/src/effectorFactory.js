@@ -23,7 +23,6 @@
 import assert from 'assert-fast'
 import { metrologyFactory } from '../../w018-standard-engine'
 import posix from 'path-browserify'
-import level from 'level'
 import { CovenantId } from '../../w015-models'
 import { tcpTransportFactory } from './tcpTransportFactory'
 import * as covenants from '../../w212-system-covenants'
@@ -32,7 +31,7 @@ import { socketFactory } from './socketFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:effector')
 
-const effectorFactory = async (identifier, overloads = {}, dbPath) => {
+const effectorFactory = async (identifier, overloads = {}) => {
   assert(!overloads || typeof overloads === 'object')
   debug(`effectorFactory`)
   overloads = _inflateOverloads(overloads)
@@ -46,12 +45,8 @@ const effectorFactory = async (identifier, overloads = {}, dbPath) => {
     socket,
     hyper: covenants.shell,
   }
-  let leveldb
-  if (dbPath) {
-    leveldb = level(dbPath)
-  }
 
-  const metrology = await metrologyFactory(identifier, overloads, leveldb)
+  const metrology = await metrologyFactory(identifier, overloads)
   const shell = effector(metrology)
   shell.startNetworking = async () =>
     await shell.add('net', { covenantId: net.covenantId })
@@ -93,6 +88,7 @@ const effector = (metro) => {
     return metro.getLatestFromPath(absPath, height)
   }
   const context = () => metro.getContext()
+  const shutdown = () => metro.shutdown()
   const base = {
     metro,
     subscribePending, // TODO make this a promise with result
@@ -101,6 +97,7 @@ const effector = (metro) => {
     actions,
     latest,
     context,
+    shutdown,
     _debug: Debug, // used to expose debug info in dos
   }
   const shellActions = _mapPierceToActions(metro.pierce)

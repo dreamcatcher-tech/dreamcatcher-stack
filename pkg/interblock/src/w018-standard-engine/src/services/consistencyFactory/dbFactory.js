@@ -17,6 +17,7 @@ const pad = (height) => {
   return leftPad(height, 10, '0')
 }
 
+let isCacheDisabled = false
 class Cache {
   #debug = Debug('interblock:consistency:db:cache')
   #cache = new Map()
@@ -30,7 +31,15 @@ class Cache {
     assert(limit >= 0)
     this.#limitMB = limit
   }
+  static disable() {
+    debug(`disabling cache`)
+    isCacheDisabled = true
+  }
   put(key, model) {
+    if (isCacheDisabled) {
+      debug(`cache disabled`)
+      return
+    }
     assert.strictEqual(typeof key, 'string')
     assert.strictEqual(typeof model, 'object')
     assert(!this.#cache.has(key))
@@ -190,7 +199,7 @@ const dbFactory = (rxdbPromise) => {
   const putPierceRequest = async (chainId, txRequest) => {
     await settleRxdb()
     assert(txRequest instanceof TxRequest)
-    debug(`putPierceRequest`)
+    debug(`putPierceRequest`, txRequest.hashString().substring(0, 9))
     const key = `${chainId}/piercings/req_${txRequest.hashString()}`
     // TODO get order by loosely trying to add the current tip count + 1
     // doesn't matter if it collides
@@ -296,32 +305,18 @@ const dbFactory = (rxdbPromise) => {
     const rxDocuments = await db
       .find({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
       .exec()
-    const keys = rxDocuments.map((rxDocument) => rxDocument.key)
-    const uncachedKeys = keys.filter((key) => {
-      const tx = cache.get(key)
-      if (!tx) {
-        return true
-      }
+    for (const doc of rxDocuments) {
+      const { key } = doc
+      let tx = cache.get(key)
       if (key.startsWith($gte + `rep_`)) {
+        tx = tx || TxReply.restore(doc.value)
         assert(tx instanceof TxReply)
         replies.push(tx)
       } else {
+        tx = tx || TxRequest.restore(doc.value)
         assert(key.startsWith($gte + `req_`))
         assert(tx instanceof TxRequest)
         requests.push(tx)
-      }
-    })
-    const docs = await db.findByIds(uncachedKeys)
-    for (const key of uncachedKeys) {
-      throw Error('TODO')
-      const json = docs.shift()
-      if (key.startsWith($gte + `rep_`)) {
-        const txReply = TxReply.restore(JSON.parse(json))
-        replies.push(txReply)
-      } else {
-        assert(key.startsWith($gte + `req_`))
-        const txRequest = TxRequest.restore(JSON.parse(json))
-        requests.push(txRequest)
       }
     }
     debug(`queryPiercings replies: %o`, replies.length)
@@ -362,4 +357,4 @@ const dbFactory = (rxdbPromise) => {
   }
 }
 
-export { dbFactory }
+export { dbFactory, Cache }

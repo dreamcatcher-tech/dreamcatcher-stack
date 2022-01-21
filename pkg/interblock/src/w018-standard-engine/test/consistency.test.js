@@ -3,6 +3,7 @@ import {
   consistencySourceFactory,
   dbFactory,
 } from '../src/services/consistencyFactory'
+import { rxdbmem } from '../src/services/rxdbMem'
 import { Address, Block, TxRequest } from '../../w015-models'
 import { v4 } from 'uuid'
 import { Integrity } from '../../w015-models'
@@ -13,14 +14,15 @@ Debug.enable()
 describe('consistency', () => {
   const lockExpiresMs = 2
   let consistencySource
-  beforeEach(() => {
-    consistencySource = consistencySourceFactory()
+  let rxdb
+  beforeEach(async () => {
+    rxdb = await rxdbmem()
+    consistencySource = consistencySourceFactory(rxdb)
   })
   afterEach(async () => {
-    let { rxdb } = consistencySource
-    rxdb = await rxdb
     await rxdb.destroy()
     consistencySource = undefined
+    rxdb = undefined
   })
   describe('putPoolInterblocks', () => {
     test.todo('duplicates discarded')
@@ -47,7 +49,6 @@ describe('consistency', () => {
     })
     test('lock is exclusive between consistency sources', async () => {
       const address = Address.create('TEST')
-      const { rxdb } = consistencySource
       const source1 = consistencySourceFactory(rxdb)
       const source2 = consistencySourceFactory(rxdb)
 
@@ -73,7 +74,6 @@ describe('consistency', () => {
   })
   describe('unlockChain', () => {
     test('delete piercings', async () => {
-      const { rxdb } = consistencySource
       const db = dbFactory(rxdb)
       const integrity = Integrity.create(v4())
       const address = Address.create(integrity)

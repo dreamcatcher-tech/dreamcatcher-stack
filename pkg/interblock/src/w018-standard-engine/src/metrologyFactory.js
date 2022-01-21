@@ -195,6 +195,9 @@ const metrologyFactory = async (identifier = 'CI', covenants = {}, rxdb) => {
       const rxdbResolved = await rxdb
       await rxdbResolved.destroy()
     }
+    const getRxdb = async () => {
+      return await rxdb
+    }
     return {
       pierce,
       spawn,
@@ -214,6 +217,7 @@ const metrologyFactory = async (identifier = 'CI', covenants = {}, rxdb) => {
       getChainCount,
       getActionCreators,
       shutdown,
+      getRxdb,
     }
   }
   return metrology(baseAddress, '/')

@@ -221,8 +221,6 @@ const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
     putPoolInterblock,
     putPierceRequest,
     putPierceReply,
-
-    rxdb,
   }
 }
 export { consistencySourceFactory }

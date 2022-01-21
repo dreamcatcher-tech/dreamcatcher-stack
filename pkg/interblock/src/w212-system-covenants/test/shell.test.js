@@ -22,7 +22,7 @@ describe('machine validation', () => {
       const [cdResult, lsResult] = await Promise.all([cdPromise, lsPromise])
       assert.strictEqual(cdResult.absolutePath, '/child1')
       assert.strictEqual(Object.keys(lsResult.children).length, 4)
-      await base.settle()
+      await base.shutdown()
     })
   })
   test.todo('opens up a path')
@@ -51,13 +51,13 @@ describe('machine validation', () => {
       const { wd: wdNested } = await base.getContext()
       assert.strictEqual(wdNested, '/child1/nested1')
 
-      await base.settle()
+      await base.shutdown()
     })
     test('cd errors on garbage path', async () => {
       const base = await metrologyFactory('e', { hyper: shell })
       const cd = shell.actions.cd('garbagePath')
       await assert.isRejected(base.pierce(cd), '/garbagePath')
-      await base.settle()
+      await base.shutdown()
     })
     test('cd errors on nested garbage path', async () => {
       const base = await metrologyFactory('e', { hyper: shell })
@@ -68,7 +68,7 @@ describe('machine validation', () => {
       await assert.isRejected(base.pierce(cdTrailing))
       const cdLong = shell.actions.cd('child1/garbagePath/asdf/asdf/')
       await assert.isRejected(base.pierce(cdLong))
-      await base.settle()
+      await base.shutdown()
     })
     test('. is resolved', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -81,7 +81,7 @@ describe('machine validation', () => {
       const context = await base.getContext()
       debug(`context:`, context)
       assert.strictEqual(context.wd, '/')
-      await base.settle()
+      await base.shutdown()
     })
     test(`.. is valid`, async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -97,6 +97,7 @@ describe('machine validation', () => {
       debug(`parentResult`, parentResult)
       const { wd: wdParent } = await base.getContext()
       assert.strictEqual(wdParent, '/')
+      await base.shutdown()
     })
     test(`cd .. at root stays at root`, async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -109,6 +110,7 @@ describe('machine validation', () => {
       await base.pierce(cdUp)
       const { wd: wdCd } = await base.getContext()
       assert.strictEqual(wdCd, '/')
+      await base.shutdown()
     })
     test.todo('cd rejects if non existent path')
     test.todo('absolute path')
@@ -124,6 +126,7 @@ describe('machine validation', () => {
       assert.deepEqual(Object.keys(children), ['..', '.'])
       const { children: repeated } = await base.pierce(ls)
       assert.deepEqual(Object.keys(repeated), ['..', '.', '.@@io'])
+      await base.shutdown()
     })
     test('list remote directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -135,6 +138,7 @@ describe('machine validation', () => {
       const lsAbsolute = shell.actions.ls('child1')
       const { children: childrenAbsolute } = await base.pierce(lsAbsolute)
       assert.deepEqual(Object.keys(childrenAbsolute), ['..', '.'])
+      await base.shutdown()
     })
     test('throws on invalid directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -144,6 +148,7 @@ describe('machine validation', () => {
         base.pierce(ls),
         'Non existent path: /nonExistentChild'
       )
+      await base.shutdown()
     })
     test('throws on invalid nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -153,12 +158,14 @@ describe('machine validation', () => {
         base.pierce(ls),
         'Non existent path: /nonExistentChild'
       )
+      await base.shutdown()
     })
     test('throws on invalid double nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
       base.enableLogging()
       const ls = shell.actions.ls('nonExistentChild/nested1/nested2')
       await assert.isRejected(base.pierce(ls))
+      await base.shutdown()
     })
     test('throws on shallow invalid nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -166,6 +173,7 @@ describe('machine validation', () => {
       base.enableLogging()
       const ls = shell.actions.ls('validChild/nonExistentChild')
       await assert.isRejected(base.pierce(ls), 'Non existent path: /validChild')
+      await base.shutdown()
     })
     test('throws on deep invalid nested directory', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -178,6 +186,7 @@ describe('machine validation', () => {
         base.pierce(ls),
         'Non existent path: /c1/nested1/invalid'
       )
+      await base.shutdown()
     })
     test('root path when cd is child', async () => {
       const base = await metrologyFactory('effect', { hyper: shell })
@@ -189,6 +198,7 @@ describe('machine validation', () => {
       const ls = shell.actions.ls('/child')
       const result = await base.pierce(ls)
       debug(result)
+      await base.shutdown()
     })
     test.todo('simultaneous requests')
   })
@@ -198,6 +208,7 @@ describe('machine validation', () => {
       await base.spawn('child')
       const state = await base.pierce(shell.actions.cat('child'))
       debug(state)
+      await base.shutdown()
     })
   })
   describe('normalize', () => {
@@ -245,6 +256,7 @@ describe('machine validation', () => {
       const installResult = await blockchain.pierce(install)
       debug(`installResult`, installResult)
       assert(isExecuted)
+      await blockchain.shutdown()
     })
   })
 })

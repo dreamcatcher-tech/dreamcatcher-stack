@@ -27,6 +27,12 @@ export class Block extends mixin(blockSchema) {
     const block = super.create().updateBlock(dmz, provenance)
     return block
   }
+  static restore(array) {
+    const block = super.restore(array)
+    const { provenance, ...dmz } = block.spread()
+    block.#dmz = Dmz.create(dmz)
+    return block
+  }
   hash() {
     throw new Error('Do not raw hash blocks')
   }
@@ -72,7 +78,7 @@ export class Block extends mixin(blockSchema) {
     return isPierce || (isAllRequired && isOnlyRequired)
   }
   getDmz() {
-    assert(this.#dmz)
+    assert(this.#dmz, `dmz not present`)
     return this.#dmz
   }
   isNextBlock(nextBlock) {

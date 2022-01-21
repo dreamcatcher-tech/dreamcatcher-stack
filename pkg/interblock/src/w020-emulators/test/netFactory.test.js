@@ -29,7 +29,7 @@ describe('netFactory', () => {
       error.message.startsWith('No socket found')
     )
 
-    await client.settle()
+    await client.shutdown()
     debug(`pingReply latencyMs`, pingReply.latencyMs)
     debug(`connectResult latencyMs`, connectResult.latencyMs)
     debug(`disconnectResult latencyMs`, disconnectResult.latencyMs)

@@ -58,8 +58,8 @@ describe('emulateAwsFactory', () => {
     assert.strictEqual(pong.type, 'PONG')
     debug(`ping RTT: ${Date.now() - start} ms`)
 
-    await aws.engine.settle()
-    await client.engine.settle()
+    await aws.shutdown()
+    await client.shutdown()
     debug(`stop`)
   })
 })

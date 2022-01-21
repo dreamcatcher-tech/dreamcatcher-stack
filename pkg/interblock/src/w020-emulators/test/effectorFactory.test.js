@@ -36,7 +36,7 @@ describe('effector', () => {
     debug(`total test time: ${Date.now() - start} ms`)
     // BUT this is bad since still testing xstate time, not pure execution
     // also cold start includes compile costs for schemas
-    await shell.metro.settle()
+    await shell.shutdown()
     debug(`stop`)
     /**
      * 2020-05-11 736ms no crypto
@@ -89,7 +89,7 @@ describe('effector', () => {
       }
     }
     const results = await Promise.all(promises)
-    await shell.settle()
+    await shell.shutdown()
     assert(results.every((reply) => reply && Number.isInteger(reply.count)))
     assert(results.every((reply, index) => reply.count === index))
     debug(`blockcount: `, shell.metro.getBlockCount())
@@ -114,7 +114,7 @@ describe('effector', () => {
     const { network } = await client.latest()
     const child1 = network.get('child1')
     assert.strictEqual(child1.address.getChainId(), reply.chainId)
-    await client.metro.settle()
+    await client.shutdown()
   })
   test('ping created child', async () => {
     const client = await effectorFactory()
@@ -123,13 +123,14 @@ describe('effector', () => {
     const reply = await client.ping('testChild')
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
     assert(reply)
-    await client.metro.settle()
+    await client.shutdown()
   })
   test('cannot create same child twice', async () => {
     // TODO handle errors in the translator
     const client = await effectorFactory()
     await client.add('testChild')
     await assert.isRejected(client.add('testChild'))
+    await client.shutdown()
   })
 })
 

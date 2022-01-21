@@ -4,10 +4,10 @@ import { shell } from '../../w212-system-covenants'
 import { dbFactory } from '../src/services/consistencyFactory'
 import { rxdbmem } from '../src/services/rxdbMem'
 import { ciKeypair } from '../../w012-crypto'
-
 import Debug from 'debug'
 const debug = Debug('interblock:tests:increasor')
-Debug.enable('*met* *Interblock')
+Debug.enable()
+
 describe('increasor', () => {
   test('single child chain', async () => {
     const base = await metrologyFactory()

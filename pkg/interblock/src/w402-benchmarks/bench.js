@@ -12,9 +12,9 @@ const coldPing = async () => {
   const payload = { test: 'ping' }
   const reply = await shell.ping('.', payload)
   assert.deepEqual(reply, payload)
-  await shell.metro.settle()
+  await shell.shutdown()
 }
-const hotShell = await effectorFactory()
+const hotShell = await effectorFactory('hot')
 
 const hotPing = async () => {
   const payload = { test: 'ping' }
@@ -22,8 +22,8 @@ const hotPing = async () => {
   assert.deepEqual(reply, payload)
 }
 
-const publish = async () => {
-  const shell = await effectorFactory('crm')
+const publish = async (id = 'app') => {
+  const shell = await effectorFactory(id)
   const { crm } = apps
   const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
   return shell
@@ -35,7 +35,7 @@ const install = async (shell) => {
 }
 
 const crmSetup = async () => {
-  const shell = await publish()
+  const shell = await publish('crm')
   await install(shell)
   const crmActions = await shell.actions('/crm/customers')
   return crmActions
@@ -52,7 +52,7 @@ suite
     defer: true,
     fn: async (deferred) => {
       const shell = await effectorFactory()
-      await shell.metro.settle()
+      await shell.shutdown()
       deferred.resolve()
     },
   })
@@ -73,7 +73,8 @@ suite
   .add('publish', {
     defer: true,
     fn: async (deferred) => {
-      await publish()
+      const shell = await publish()
+      await shell.shutdown()
       deferred.resolve()
     },
   })
@@ -82,6 +83,7 @@ suite
     fn: async (deferred) => {
       const shell = await publish()
       await install(shell)
+      await shell.shutdown()
       deferred.resolve()
     },
   })

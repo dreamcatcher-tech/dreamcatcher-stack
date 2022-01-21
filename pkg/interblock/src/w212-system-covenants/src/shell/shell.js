@@ -188,7 +188,7 @@ const config = {
       debug(`getState: `, absolutePath)
       const { state } = await useBlocks(absolutePath)
       debug(`getState result: `, state)
-      return { state }
+      return { state: state.toJS() }
     },
   },
 }

@@ -24,6 +24,7 @@ describe('effects', () => {
     await assert.isRejected(base.pierce('NONCE'), 'Wrong type of promise')
     const { state } = await base.getLatest()
     assert(state)
+    await base.shutdown()
   })
 
   test('hooked promise effect', async () => {
@@ -45,6 +46,7 @@ describe('effects', () => {
     const { state } = await base.getLatest()
     debug(`state:`, state.toJS())
     assert.deepEqual(state.getState().reducerResult, testData)
+    await base.shutdown()
   })
   test.todo('inband effect included in block')
   test.todo('effect promise rejection after timeout')

@@ -42,7 +42,7 @@ describe('crm', () => {
       const lastBlockCount = shell.metro.getBlockCount()
       debug(`add 2 block count: ${lastBlockCount - add2BlockCount}`)
 
-      await shell.metro.settle()
+      await shell.shutdown()
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
        * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
@@ -78,7 +78,7 @@ describe('crm', () => {
       )
       assert.strictEqual(realCustomers.length, 1)
       debug(realCustomers)
-      await shell.metro.settle()
+      await shell.shutdown()
     })
   })
   describe('data import', () => {

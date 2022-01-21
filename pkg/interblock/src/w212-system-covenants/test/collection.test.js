@@ -55,8 +55,7 @@ describe('collection', () => {
       customer2.getState().formData.firstName,
       'test firstname'
     )
-
-    await shell.metro.settle()
+    await shell.shutdown()
   })
   test('add two items concurrently to collection', async () => {
     const shell = await effectorFactory('c')
@@ -82,8 +81,7 @@ describe('collection', () => {
 
     const customer2 = await shell.latest('col1/firstName-B')
     assert(customer2.getState().formData.firstName)
-
-    await shell.metro.settle()
+    await shell.shutdown()
   })
 
   test('batch add', async () => {
@@ -113,6 +111,7 @@ describe('collection', () => {
 
     const customer2 = await shell.latest('col1/firstName-B')
     assert(customer2.getState().formData.firstName)
+    await shell.shutdown()
   })
   test.todo('collection with initial state already set')
   test.todo('reject add with key already assigned')

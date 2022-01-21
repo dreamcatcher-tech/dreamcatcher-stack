@@ -48,10 +48,7 @@ describe('blockProducer', () => {
       const nextBlock = blockProducer.generateUnsigned(nextDmz, block)
       debug(nextBlock.diff())
 
-      Block.restore(nextBlock.toArray())
-      const json = nextBlock.serialize()
-      assert.strictEqual(typeof json, 'string')
-      const clone = Block.restore(JSON.parse(json))
+      const clone = Block.restore(nextBlock.toArray())
       assert(clone.deepEquals(nextBlock))
     })
     test.skip('dual validator signing', () => {
