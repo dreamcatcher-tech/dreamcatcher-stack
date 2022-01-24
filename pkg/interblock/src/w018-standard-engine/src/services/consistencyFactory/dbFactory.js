@@ -107,6 +107,10 @@ const dbFactory = (rxdbPromise) => {
         })
       }
       db = rxdb.blockchains
+    } else {
+      if (db.destroyed) {
+        throw new Error(`db "${db.database.name}" is destroyed`)
+      }
     }
   }
 
@@ -323,7 +327,11 @@ const dbFactory = (rxdbPromise) => {
     const firstDocument = await db.findOne().exec()
     if (firstDocument) {
       const { key } = firstDocument
-      const [baseChainId] = key.split('/')
+      const [baseChainId, blocks, id] = key.split('/')
+      assert.strictEqual(blocks, 'blocks')
+      const [height, hash] = id.split('_')
+      assert.strictEqual(hash, baseChainId)
+      assert.strictEqual(parseInt(height), 0)
       debug('scanBaseChainId end')
       return baseChainId
     }

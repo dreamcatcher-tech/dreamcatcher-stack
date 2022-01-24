@@ -28,11 +28,14 @@ import { tcpTransportFactory } from './tcpTransportFactory'
 import * as covenants from '../../w212-system-covenants'
 import { netFactory } from './netFactory'
 import { socketFactory } from './socketFactory'
+import { createRxdb } from './rxdbFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:effector')
 
-const effectorFactory = async (identifier, overloads = {}) => {
+const effectorFactory = async (id = 'ib', overloads = {}, dbPath = '') => {
+  assert.strictEqual(typeof id, 'string', `identifier: ${id}`)
   assert(!overloads || typeof overloads === 'object')
+  assert.strictEqual(typeof dbPath, 'string')
   debug(`effectorFactory`)
   overloads = _inflateOverloads(overloads)
   // start the net watcher, to reconcile hardware with chainware
@@ -45,8 +48,8 @@ const effectorFactory = async (identifier, overloads = {}) => {
     socket,
     hyper: covenants.shell,
   }
-
-  const metrology = await metrologyFactory(identifier, overloads)
+  const rxdb = createRxdb(dbPath)
+  const metrology = await metrologyFactory(id, overloads, rxdb)
   const shell = effector(metrology)
   shell.startNetworking = async () =>
     await shell.add('net', { covenantId: net.covenantId })

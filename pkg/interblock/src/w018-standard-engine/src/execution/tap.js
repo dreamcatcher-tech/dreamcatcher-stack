@@ -64,7 +64,7 @@ const createTap = (prefix = 'interblock:blocktap') => {
     assert(block instanceof Block)
     const chainId = block.getChainId()
     const latest = cache.get(chainId)
-    const isNewChain = !latest
+    const isNewChain = !latest && !block.getHeight()
     const isDuplicate = latest && latest.hashString() === block.hashString()
     if (isDuplicate) {
       return
@@ -122,7 +122,10 @@ const createTap = (prefix = 'interblock:blocktap') => {
         child = undefined
       } else {
         const parent = cache.get(parentAddress.getChainId())
-        assert(parent, `Hole in pedigree`)
+        console.log('hole in pedigree')
+        if (!parent) {
+          return unknown
+        }
         const name = parent.network.getAlias(child.provenance.getAddress())
         path.unshift(name)
         child = parent

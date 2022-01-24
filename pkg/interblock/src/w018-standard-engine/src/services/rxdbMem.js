@@ -11,10 +11,10 @@ export const rxdbmem = async (lockPrefix) => {
     lockPrefix = 'ci-db-' + lockPrefix.toLowerCase()
   }
   assert(/^[a-z][a-z0-9_$()+/-]*$/.test(lockPrefix), lockPrefix)
-  const db = await createRxDatabase({
+  const rxdb = await createRxDatabase({
     name: lockPrefix,
     storage: getRxStorageLoki(),
     multiInstance: false,
   })
-  return db
+  return rxdb
 }

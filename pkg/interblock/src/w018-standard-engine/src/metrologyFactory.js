@@ -67,7 +67,10 @@ const metrologyFactory = async (identifier = 'CI', covenants = {}, rxdb) => {
   ioIsolate.setProcessor(isolateProcessor)
   const consistency = toFunctions(ioConsistency)
   const tap = enableLoggingWithTap(engine, identifier)
-  const baseAddress = await createBase(ioConsistency, sqsPool)
+  let baseAddress = await consistency.getBaseAddress()
+  if (!baseAddress) {
+    baseAddress = await createBase(ioConsistency, sqsPool)
+  }
 
   const metrology = (address, absolutePath) => {
     assert(address instanceof Address)

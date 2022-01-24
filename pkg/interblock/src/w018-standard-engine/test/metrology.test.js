@@ -1,12 +1,37 @@
-import { assert } from 'chai/index.mjs'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
+import { shell } from '../../w212-system-covenants'
 import { metrologyFactory } from '..'
 import { jest } from '@jest/globals'
+import { rxdbmem } from '../src/services/rxdbMem'
+
 import Debug from 'debug'
 const debug = Debug('interblock:tests:metrology')
+Debug.enable('*met*')
+chai.use(chaiAsPromised)
 
 describe('metrology', () => {
+  describe('persistence', () => {
+    test('recover from previous database', async () => {
+      const rxdb = await rxdbmem('recover1')
+      const base1 = await metrologyFactory('a', { hyper: shell }, rxdb)
+      await base1.spawn('child1')
+      const ping = shell.actions.ping('child1', { test: 'ping' })
+      const reply1 = await base1.pierce(ping)
+      assert.strictEqual(reply1.test, 'ping')
+      await base1.settle()
+
+      const docs = await rxdb.blockchains.find().exec()
+      debug(docs.map((doc) => doc.key))
+      debug(`reopening db`)
+      const base2 = await metrologyFactory('a', { hyper: shell }, rxdb)
+      const reply2 = await base2.pierce(ping)
+      assert.strictEqual(reply2.test, 'ping')
+      await base2.shutdown()
+    })
+    test.todo('different ids result in different databases')
+  })
   describe('spawn', () => {
-    jest.setTimeout(200000)
     test.skip('spawn many times', async () => {
       Debug.enable('*tests* *met*')
       const client = await metrologyFactory()
