@@ -3,6 +3,7 @@ import { metrologyFactory } from '..'
 import { shell } from '../../w212-system-covenants'
 import { dbFactory } from '../src/services/consistencyFactory'
 import { rxdbmem } from '../src/services/rxdbMem'
+import { Cache } from '../src/services/consistencyFactory/dbFactory'
 import { ciKeypair } from '../../w012-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:increasor')
@@ -10,6 +11,12 @@ Debug.enable()
 
 describe('increasor', () => {
   test('single child chain', async () => {
+    const base = await metrologyFactory()
+    await base.spawn('child1')
+    await base.shutdown()
+  })
+  test('single child chain no cache', async () => {
+    Cache.disable()
     const base = await metrologyFactory()
     await base.spawn('child1')
     await base.shutdown()

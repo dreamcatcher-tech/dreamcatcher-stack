@@ -177,9 +177,8 @@ const dbFactory = (rxdbPromise) => {
     }
     let block = cache.get(rxDocument.key)
     if (!block) {
-      debug(`findOne`, rxDocument.key)
-      const doc = await db.findOne({ selector: { key: rxDocument.key } }).exec()
-      block = Block.restore(doc.value)
+      assert(Array.isArray(rxDocument.value))
+      block = Block.restore(rxDocument.value)
     }
     debug(`queryLatest height: `, block.getHeight())
     return block
@@ -272,21 +271,15 @@ const dbFactory = (rxdbPromise) => {
     const rxDocuments = await db
       .find({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
       .exec()
-    const keys = rxDocuments.map((rxDocument) => rxDocument.key)
+    debug(`queryPool done`)
     const interblocks = []
-    const uncachedKeys = keys.filter((key) => {
-      const cached = cache.get(key)
-      if (!cached) {
-        return true
+    for (const rxDocument of rxDocuments) {
+      let interblock = cache.get(rxDocument.key)
+      if (!interblock) {
+        assert(Array.isArray(rxDocument.value))
+        interblock = Interblock.restore(rxDocument.value)
       }
-      interblocks.push(cached)
-    })
-    debug(`getMany`, uncachedKeys.length)
-    const docs = await db.findByIds(uncachedKeys)
-    debug(`getMany done`)
-
-    for (const doc of docs) {
-      const interblock = Interblock.restore(doc.value)
+      assert(interblock)
       interblocks.push(interblock)
     }
     debug(`queryPool count:`, interblocks.length)
