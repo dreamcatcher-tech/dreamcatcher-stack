@@ -2,12 +2,11 @@ import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import { shell } from '../../w212-system-covenants'
 import { metrologyFactory } from '..'
-import { jest } from '@jest/globals'
 import { rxdbmem } from '../src/services/rxdbMem'
 
 import Debug from 'debug'
 const debug = Debug('interblock:tests:metrology')
-Debug.enable('*met*')
+Debug.enable()
 chai.use(chaiAsPromised)
 
 describe('metrology', () => {

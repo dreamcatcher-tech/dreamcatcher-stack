@@ -167,7 +167,7 @@ const pure = async (event, definition, config = {}) => {
       const { cond } = transition
       if (cond) {
         const condFn = config.guards[cond]
-        assert.strictEqual(typeof condFn, 'function', cond)
+        assert.strictEqual(typeof condFn, 'function', `missing guard: ${cond}`)
         if (condFn(contextMgr.getContext(), event)) {
           return { ...state, transition }
         }

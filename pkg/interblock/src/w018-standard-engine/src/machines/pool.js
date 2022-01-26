@@ -52,64 +52,13 @@ const definition = {
       type: 'final',
     },
     initializeStorage: {
-      // TODO merge service calls with genesis creation
-      initial: 'isStorageEmpty',
-      states: {
-        isStorageEmpty: {
-          invoke: {
-            src: 'isStorageEmpty',
-            onDone: [
-              {
-                target: 'fetchValidatorKey',
-                cond: 'isStorageEmpty',
-              },
-              { target: 'done' },
-            ],
-          },
-        },
-        // TODO lock special chainId 'SYSTEM_INIT'
-        // never give this lock out again unless the db is empty
-        fetchValidatorKey: {
-          invoke: {
-            src: 'fetchValidatorKey',
-            onDone: {
-              target: 'createBaseBlock',
-              actions: 'assignValidatorKey',
-            },
-          },
-        },
-        createBaseBlock: {
-          entry: 'createBaseDmz',
-          invoke: {
-            src: 'signBlock',
-            onDone: {
-              target: 'lockBaseChain',
-              actions: 'assignGeneratedBlock',
-            },
-          },
-        },
-        lockBaseChain: {
-          invoke: {
-            src: 'lockBaseChain',
-            onDone: {
-              target: 'unlockChain',
-              actions: 'assignLock',
-            },
-          },
-        },
-        unlockChain: {
-          entry: 'mergeBlockToLock',
-          invoke: {
-            src: 'unlockChain',
-            onDone: 'done',
-          },
-        },
-        done: { type: 'final' },
+      invoke: {
+        src: 'initializeStorage',
+        onDone: [
+          { target: 'done', cond: 'isInitialConditions' },
+          { target: 'processInterblock' },
+        ],
       },
-      onDone: [
-        { target: 'done', cond: 'isInitialConditions' },
-        { target: 'processInterblock' },
-      ],
     },
     processInterblock: {
       initial: 'isGenesis',

@@ -1,13 +1,8 @@
 import assert from 'assert-fast'
+import equal from 'fast-deep-equal'
 import leftPad from 'pad-left'
 import { isRxDatabase } from 'rxdb'
-import {
-  Block,
-  Interblock,
-  Keypair,
-  TxReply,
-  TxRequest,
-} from '../../../../w015-models'
+import { Block, Interblock, TxReply, TxRequest } from '../../../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:consistency:db')
 const types = ['blocks', 'interblocks', 'piercings', 'pool']
@@ -79,6 +74,7 @@ class Cache {
     this.#cache.delete(key)
   }
 }
+const sysInitChainId = `0000000000000000000000000000000000000000000000000000000000000000`
 
 const dbFactory = (rxdbPromise) => {
   assert(rxdbPromise, `must supply rxdb`)
@@ -321,22 +317,34 @@ const dbFactory = (rxdbPromise) => {
     return { replies, requests }
   }
 
-  const scanBaseChainId = async () => {
+  const findBaseKey = async () => {
     await settleRxdb()
-    debug('scanBaseChainId start')
-    const firstDocument = await db.findOne().exec()
-    if (firstDocument) {
-      const { key } = firstDocument
-      const [baseChainId, blocks, id] = key.split('/')
+    debug('findBaseKey start')
+    const $gte = `${sysInitChainId}/blocks/`
+    const $lte = `${sysInitChainId}/blocks/~`
+    const docs = await db
+      .find({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
+      .exec()
+    assert(docs.length <= 1, `Duplicate base chainId: ${docs.length}`)
+    if (docs.length) {
+      const { key, value } = docs[0]
+      assert(equal(value, []))
+      const [, blocks, id] = key.split('/')
       assert.strictEqual(blocks, 'blocks')
       const [height, hash] = id.split('_')
-      assert.strictEqual(hash, baseChainId)
       assert.strictEqual(parseInt(height), 0)
-      debug('scanBaseChainId end')
-      return baseChainId
+      debug('findBaseKey end')
+      return hash
     }
   }
-
+  const putBaseKey = async (chainId) => {
+    await settleRxdb()
+    debug('putBaseKey start')
+    const key = `${sysInitChainId}/blocks/${pad(0)}_${chainId}`
+    const value = []
+    await db.insert({ key, value })
+    debug('putBaseKey end')
+  }
   return {
     putPool,
     putBlock,
@@ -349,7 +357,8 @@ const dbFactory = (rxdbPromise) => {
     queryLatest,
     queryPool,
 
-    scanBaseChainId,
+    findBaseKey,
+    putBaseKey,
 
     putPierceReply,
     putPierceRequest,
@@ -358,4 +367,4 @@ const dbFactory = (rxdbPromise) => {
   }
 }
 
-export { dbFactory, Cache }
+export { dbFactory, Cache, sysInitChainId }

@@ -12,6 +12,10 @@ const fromFunctions = (consistencySource) => async (action) => {
       return consistencySource.putLockChain(action.payload)
     case 'UNLOCK':
       return consistencySource.putUnlockChain(action.payload)
+    case 'LOCKINIT':
+      return consistencySource.putLockSystemInit()
+    case 'UNLOCKINIT':
+      return consistencySource.putUnlockSystemInit(action.payload)
     case 'IS_PRESENT':
       return consistencySource.getIsPresent(action.payload)
     case 'GET_BLOCK':
@@ -36,6 +40,8 @@ const toFunctions = (queue) => ({
   putPoolInterblock: (payload) => queue.push({ type: 'POOL', payload }),
   putLockChain: (payload) => queue.push({ type: 'LOCK', payload }),
   putUnlockChain: (payload) => queue.push({ type: 'UNLOCK', payload }),
+  putLockSystemInit: () => queue.push({ type: 'LOCKINIT', payload: {} }),
+  putUnlockSystemInit: (payload) => queue.push({ type: 'UNLOCKINIT', payload }),
   getIsPresent: (payload) => queue.push({ type: 'IS_PRESENT', payload }),
   getBlock: (payload) => queue.push({ type: 'GET_BLOCK', payload }),
   getBlocks: (payload) => queue.push({ type: 'GET_BLOCKS', payload }),

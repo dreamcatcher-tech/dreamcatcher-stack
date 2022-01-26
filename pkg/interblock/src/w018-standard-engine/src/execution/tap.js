@@ -122,8 +122,8 @@ const createTap = (prefix = 'interblock:blocktap') => {
         child = undefined
       } else {
         const parent = cache.get(parentAddress.getChainId())
-        console.log('hole in pedigree')
         if (!parent) {
+          console.log('hole in pedigree')
           return unknown
         }
         const name = parent.network.getAlias(child.provenance.getAddress())

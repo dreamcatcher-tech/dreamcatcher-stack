@@ -9,7 +9,7 @@ import {
   TxReply,
 } from '../../../../w015-models'
 import { lockFactory } from './lockFactory'
-import { dbFactory } from './dbFactory'
+import { dbFactory, sysInitChainId } from './dbFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:services:consistency')
 
@@ -169,13 +169,32 @@ const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
     const blocks = await Promise.all(awaits)
     return blocks
   }
-
+  const putLockSystemInit = async () => {
+    const uuid = await lockProvider.tryAcquire(sysInitChainId, lockPrefix)
+    if (!uuid) {
+      debug(`could not lock system init`)
+      throw new Error(`could not lock system init`)
+    }
+    return { uuid }
+  }
+  const putUnlockSystemInit = async ({ uuid, chainId }) => {
+    assert.strictEqual(typeof uuid, 'string') // TODO regex
+    assert.strictEqual(typeof chainId, 'string') // TODO regex
+    const isLockValid = await lockProvider.isValid(sysInitChainId, uuid)
+    if (!isLockValid) {
+      // TODO retry the increase if lock failed, else chain will stall
+      debug(`unlock rejected for ${chainId}`)
+      throw new Error(`could not unlock system init`)
+    }
+    await db.putBaseKey(chainId)
+    await lockProvider.release(sysInitChainId, uuid)
+  }
   const getBaseAddress = async () => {
     debug(`getBaseAddress`)
     if (baseAddress) {
       return baseAddress
     }
-    const baseChainId = await db.scanBaseChainId()
+    const baseChainId = await db.findBaseKey()
     if (!baseChainId) {
       return
     }
@@ -212,6 +231,8 @@ const consistencySourceFactory = (rxdb, lockPrefix = 'CI') => {
 
     putLockChain,
     putUnlockChain,
+    putLockSystemInit,
+    putUnlockSystemInit,
 
     getIsPresent,
     getBlock,

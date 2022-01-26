@@ -1,26 +1,16 @@
 import assert from 'assert-fast'
 import { assign } from 'xstate'
 import { poolMachine } from '../machines'
-import {
-  Channel,
-  Network,
-  Block,
-  Lock,
-  Interblock,
-  Address,
-  Dmz,
-  CovenantId,
-  PublicKey,
-} from '../../../w015-models'
+import { pure } from '../../../w001-xstate-direct'
+import { Block, Lock, Interblock } from '../../../w015-models'
+import { initializeConfig } from './initializeConfig'
 import { lockProducer } from '../../../w016-producers'
 import { toFunctions as consistencyFn } from '../services/consistencyFactory'
-import { toCryptoFunctions as cryptoFn } from '../services/cryptoFactory'
 import Debug from 'debug'
 const debug = Debug('interblock:cfg:pool')
 
 const poolConfig = (ioCrypto, ioConsistency) => {
   const consistency = consistencyFn(ioConsistency)
-  const crypto = cryptoFn(ioCrypto)
   const config = {
     actions: {
       assignInterblock: assign({
@@ -50,44 +40,13 @@ const poolConfig = (ioCrypto, ioConsistency) => {
         lock: ({ lock, nextBlock }) => {
           assert(lock instanceof Lock)
           assert(nextBlock instanceof Block)
-          debug(`mergeBlockToLock++ : ${!nextBlock.deepEquals(lock.block)}`)
+          debug(`mergeBlockToLock`)
           const nextLock = lockProducer.reconcile(lock, nextBlock)
           return nextLock
         },
       }),
-      assignGeneratedBlock: assign({
-        nextBlock: (context, event) => {
-          assert(event.data instanceof Block)
-          debug(`assignGeneratedBlock`)
-          return event.data
-        },
-      }),
       unassignLock: assign({
         lock: () => undefined,
-      }),
-      createBaseDmz: assign({
-        baseDmz: ({ validators }) => {
-          debug(`createBaseDmz`)
-          const covenantId = CovenantId.create('hyper')
-          const sealedRoot = Channel.createRoot()
-          const sealedParent = Network.create().update({ '..': sealedRoot })
-          const dmz = Dmz.create({
-            covenantId,
-            validators,
-            network: sealedParent,
-            // TODO tighten permissions
-            config: { isPierced: true, isPublicChannelOpen: true },
-          })
-          return dmz
-        },
-      }),
-      assignValidatorKey: assign({
-        validators: (context, event) => {
-          debug(`assignValidatorKey: %o`, event.data)
-          const result = Object.values(event.data)[0]
-          assert(result instanceof PublicKey)
-          return event.data
-        },
       }),
       assignTargetBlock: assign({
         targetBlock: (context, event) => {
@@ -105,13 +64,9 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       }),
     },
     guards: {
-      isStorageEmpty: (context, event) => {
-        const { isStorageEmpty } = event.data
-        debug(`isStorageEmpty: ${isStorageEmpty}`)
-        return isStorageEmpty
-      },
-      isInitialConditions: ({ baseDmz }) => {
-        const isInitialConditions = !!baseDmz
+      isInitialConditions: (context, event) => {
+        const { isInitialConditions } = event.data
+        assert.strictEqual(typeof isInitialConditions, 'boolean')
         debug(`isInitialConditions`, isInitialConditions)
         return isInitialConditions
       },
@@ -157,13 +112,15 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
     },
     services: {
-      // always have to get the target block anyway, to see if this is valid
-      isStorageEmpty: async () => {
-        const baseAddress = await consistency.getBaseAddress()
-        const isStorageEmpty = !baseAddress
-        debug(`isStorageEmpty service: ${isStorageEmpty}`)
-        return { isStorageEmpty }
+      initializeStorage: async () => {
+        const { machine, config } = initializeConfig(ioCrypto, ioConsistency)
+        const result = await pure('INITIALIZE', machine, config)
+        const { isInitialConditions } = result
+        debug(`initializeStorage isInitialConditions: ${isInitialConditions}`)
+        return { isInitialConditions }
       },
+      // always have to get the target block anyway, to see if this is valid
+
       checkIsOriginPresent: async ({ interblock }) => {
         // check the origin of the genesis interblock is hosted by us
         const address = interblock.provenance.getAddress()
@@ -183,26 +140,9 @@ const poolConfig = (ioCrypto, ioConsistency) => {
       },
       unlockChain: async ({ lock }) => {
         assert(lock instanceof Lock)
+        assert(lock.block)
         debug(`unlockChain`, lock.block.getChainId().substring(0, 9))
         await consistency.putUnlockChain(lock)
-      },
-      fetchValidatorKey: async () => {
-        debug(`fetchValidatorKey`)
-        const entry = await crypto.getValidatorEntry()
-        return entry
-      },
-      signBlock: async ({ baseDmz }) => {
-        // TODO replace with dedicated startup process
-        debug(`signBlock`)
-        assert(baseDmz instanceof Dmz)
-        const block = Block.create(baseDmz)
-        return block
-      },
-      lockBaseChain: async ({ nextBlock }) => {
-        debug(`lockBaseChain`)
-        const address = nextBlock.provenance.getAddress()
-        const lock = await consistency.putLockChain(address)
-        return lock
       },
       fetchTargetBlock: async ({ interblock }) => {
         assert(interblock instanceof Interblock)
