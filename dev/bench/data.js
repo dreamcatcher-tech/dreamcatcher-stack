@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1642997107570,
+  "lastUpdate": 1643231936471,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interblock Benchmark": [
@@ -864,6 +864,72 @@ window.BENCHMARK_DATA = {
             "range": "±4.71%",
             "unit": "ops/sec",
             "extra": "21 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "evil_liskov",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "evil_liskov",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "203b6e1ad6e93d606e25bb57b52c4ed67db79a47",
+          "message": "Split init out of pool machine.\nMake base chain recoverable.",
+          "timestamp": "2022-01-26T21:16:59Z",
+          "tree_id": "192c8313efa647f487d306d9f3571119cd086e2b",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/203b6e1ad6e93d606e25bb57b52c4ed67db79a47"
+        },
+        "date": 1643231935857,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 56.56,
+            "range": "±2.18%",
+            "unit": "ops/sec",
+            "extra": "74 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 25.23,
+            "range": "±1.75%",
+            "unit": "ops/sec",
+            "extra": "62 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 47.88,
+            "range": "±3.21%",
+            "unit": "ops/sec",
+            "extra": "76 samples"
+          },
+          {
+            "name": "publish",
+            "value": 11.95,
+            "range": "±2.30%",
+            "unit": "ops/sec",
+            "extra": "60 samples"
+          },
+          {
+            "name": "install",
+            "value": 2.23,
+            "range": "±3.41%",
+            "unit": "ops/sec",
+            "extra": "16 samples"
+          },
+          {
+            "name": "add customer",
+            "value": 4.53,
+            "range": "±4.69%",
+            "unit": "ops/sec",
+            "extra": "27 samples"
           }
         ]
       }
