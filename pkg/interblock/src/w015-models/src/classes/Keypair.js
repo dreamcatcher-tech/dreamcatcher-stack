@@ -60,6 +60,7 @@ export class Keypair extends mixin(schema) {
       throw new Error('Not a valid keypair - refusing to instantiate')
     }
     this.#isVerified = true
+    return this.#isVerified
   }
   assertIsVerified() {
     if (!this.#isVerified) {

@@ -46,12 +46,16 @@ describe('keypair', () => {
     assert.deepEqual(c1.toArray(), c2.toArray())
     assert.deepEqual(c1.toJS(), c2.toJS())
   })
-  test('create with same seed is same', () => {
+  test('create with same seed is same', async () => {
     const kp1 = crypto.generateKeyPair()
     const s1 = Keypair.create('test1', kp1)
     const s2 = Keypair.create('test1', kp1)
     assert.deepEqual(s1.toJS(), s2.toJS())
     assert.strictEqual(s1.secretKey, kp1.secretKey)
     assert.strictEqual(s1.publicKey.key, kp1.publicKey)
+    const isVerified1 = await s1.verify()
+    s1.assertIsVerified()
+    const isVerified2 = await s2.verify()
+    s2.assertIsVerified()
   })
 })

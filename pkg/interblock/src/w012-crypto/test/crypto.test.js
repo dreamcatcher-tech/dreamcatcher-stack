@@ -213,12 +213,15 @@ describe('crypto', () => {
         secretKey: 'random secret key',
       })
       assert.strictEqual(isVerifiedKeyPair, false)
-      const { secretKey } = crypto.generateKeyPair()
-      const { publicKey } = crypto.generateKeyPair()
-      const swapped = await crypto.verifyKeyPair({
+      const k1 = crypto.generateKeyPair()
+      const k2 = crypto.generateKeyPair()
+      const { secretKey } = k1
+      const { publicKey } = k2
+      const tampered = {
         publicKey,
         secretKey,
-      })
+      }
+      const swapped = await crypto.verifyKeyPair(tampered)
       assert(!swapped)
     })
     test('caches already verified keypairs', async () => {
@@ -229,7 +232,15 @@ describe('crypto', () => {
       assert(isVerified)
       assert.strictEqual(crypto._verifiedSet.size, size + 1)
     })
-    test.todo('caches created keypairs for instant verify')
+    test('test specific keypair', async () => {
+      const keypairRaw = {
+        publicKey:
+          'BCAKS3N1D3HQuKbitcoqecT0AAlm8rbETjIWNKnW3hu6ZMiZdrLzeKzgtBNt/D0nP3VacbHiGVYEHdOpsvf1GSI=',
+        secretKey: 'gEmzak+2O4iuDs3zgnALuwBt0n/CCgcYZnClmWgBbSo=',
+      }
+      const isVerified = await crypto.verifyKeyPair(keypairRaw)
+      assert(isVerified)
+    })
   })
 
   describe('nonce', () => {

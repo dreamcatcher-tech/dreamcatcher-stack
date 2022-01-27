@@ -57,7 +57,10 @@ const verifyKeyPair = async ({ publicKey, secretKey }) => {
 const signHash = async (messageHash, secretKey, publicKey) => {
   assert.strictEqual(typeof messageHash, 'string')
   assert.strictEqual(typeof secretKey, 'string')
-  assert.strictEqual(typeof publicKey, 'string')
+  if (publicKey) {
+    assert.strictEqual(typeof publicKey, 'string')
+    assert(_verifiedSet.has(`${publicKey}_${secretKey}`), 'keypair unverified')
+  }
   assert.strictEqual(messageHash.length, _hashTemplate.length, `invalid hash`)
   // TODO check the format of the hash string
   const secret = Buffer.from(secretKey, 'base64').toString('hex')
