@@ -505,14 +505,14 @@ const properties = (schema) => {
         } else {
           assert.strictEqual(property.type, 'array')
           array[index] = array[index].map((v) => {
-            if (typeof v.toArray === 'function') {
+            if (v instanceof Base) {
               return v.toArray()
             }
             return v
           })
         }
       }
-      return array
+      return array.map((v) => (v === EMPTY ? null : v))
     }
     toJS() {
       const js = {}

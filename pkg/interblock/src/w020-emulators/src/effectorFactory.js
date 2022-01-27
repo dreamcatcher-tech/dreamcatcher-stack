@@ -91,7 +91,7 @@ const effector = (metro) => {
     return metro.getLatestFromPath(absPath, height)
   }
   const context = () => metro.getContext()
-  const shutdown = () => metro.shutdown()
+  const shutdown = (opts) => metro.shutdown(opts)
   const base = {
     metro,
     subscribePending, // TODO make this a promise with result

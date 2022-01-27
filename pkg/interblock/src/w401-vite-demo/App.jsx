@@ -38,7 +38,7 @@ function App() {
       debug('shell not ready')
       return
     }
-    await shell.dropDb()
+    await shell.shutdown({ dropDb: true })
     debug('resetDb done')
   }
 

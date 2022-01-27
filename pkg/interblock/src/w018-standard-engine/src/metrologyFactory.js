@@ -193,10 +193,15 @@ const metrologyFactory = async (identifier = 'CI', covenants = {}, rxdb) => {
       }
       // TODO fetch from other block producers
     }
-    const shutdown = async () => {
+    const shutdown = async (opts = {}) => {
       await settle()
       const rxdbResolved = await rxdb
-      await rxdbResolved.destroy()
+      if (opts.dropDb === true) {
+        await rxdbResolved.remove()
+        // TODO dump crypto keys too ?
+      } else {
+        await rxdbResolved.destroy()
+      }
     }
     const getRxdb = async () => {
       return await rxdb
