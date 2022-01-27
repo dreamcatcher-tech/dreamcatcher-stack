@@ -10,7 +10,7 @@ describe('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
       const publishStart = Date.now()
-      const shell = await effectorFactory('crm')
+      const shell = await effectorFactory()
       shell.metro.enableLogging()
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
@@ -61,7 +61,7 @@ describe('crm', () => {
   })
   describe('list customers', () => {
     test('list customers basic', async () => {
-      const shell = await effectorFactory('crm')
+      const shell = await effectorFactory()
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       await shell.install(dpkgPath, 'crm')
