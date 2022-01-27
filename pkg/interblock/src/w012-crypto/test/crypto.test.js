@@ -172,8 +172,6 @@ describe('crypto', () => {
       const tamp = crypto.objectHash('a different hash')
       const isNotOk = crypto.verifyHash(tamp, signature, publicKey)
       assert(!isNotOk)
-      const isNotOkSync = crypto.verifyHashSync(tamp, signature, publicKey)
-      assert(!isNotOkSync)
     })
     test('throws if hash not a secure hash', async () => {
       const notSecure = 'random'
@@ -192,7 +190,6 @@ describe('crypto', () => {
         publicKey
       )
       assert.strictEqual(crypto._verifiedSet.size, size + 1)
-      assert(crypto.verifyHashSync(testHash, signature, publicKey))
       const isVerified = crypto.verifyHash(testHash, signature, publicKey)
       assert(isVerified)
       assert.strictEqual(crypto._verifiedSet.size, size + 1)
@@ -216,20 +213,21 @@ describe('crypto', () => {
         secretKey: 'random secret key',
       })
       assert.strictEqual(isVerifiedKeyPair, false)
-      const { secretKey } = await crypto.generateKeyPair()
-      const { publicKey } = await crypto.generateKeyPair()
+      const { secretKey } = crypto.generateKeyPair()
+      const { publicKey } = crypto.generateKeyPair()
       const swapped = await crypto.verifyKeyPair({
         publicKey,
         secretKey,
       })
       assert(!swapped)
-      assert(!crypto.verifyKeyPairSync(swapped))
     })
     test('caches already verified keypairs', async () => {
       const { size } = crypto._verifiedSet
-      const keypair = await crypto.generateKeyPair()
+      const keypair = crypto.generateKeyPair()
       assert.strictEqual(crypto._verifiedSet.size, size + 1)
-      assert(crypto.verifyKeyPairSync(keypair))
+      const isVerified = await crypto.verifyKeyPair(keypair)
+      assert(isVerified)
+      assert.strictEqual(crypto._verifiedSet.size, size + 1)
     })
     test.todo('caches created keypairs for instant verify')
   })

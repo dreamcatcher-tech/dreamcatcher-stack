@@ -10,7 +10,7 @@ export class Signature extends mixin(signatureSchema) {
     const { integrity, seal, publicKey } = this
     const { hash } = integrity
     const { key } = publicKey
-    if (!crypto.verifyHashSync(hash, seal, key)) {
+    if (!crypto.verifyHash(hash, seal, key)) {
       const error = new Error(`Could not verify hash synchronously: ${hash}`)
       error.toVerify = { hash, seal, key }
       throw error

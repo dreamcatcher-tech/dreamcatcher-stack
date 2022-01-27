@@ -1,13 +1,16 @@
-import { assert } from 'chai/index.mjs'
+import chai, { assert } from 'chai/index.mjs'
 import { Keypair } from '..'
 import * as crypto from '../../w012-crypto'
+import chaiAsPromised from 'chai-as-promised'
+chai.use(chaiAsPromised)
+
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Keypair')
 
 describe('keypair', () => {
   const kp1 = crypto.generateKeyPair()
   const kp2 = crypto.generateKeyPair()
-  test('verifies keys on load', async () => {
+  test('unverifies keys throw', async () => {
     const keypairDefault1 = Keypair.create()
     const keypairDefault2 = Keypair.create()
     const keypair1 = Keypair.create('KP1', kp1)
@@ -26,10 +29,12 @@ describe('keypair', () => {
     const kp1Arr = keypair1.toArray()
     const kp2Arr = keypair2.toArray()
     const restored = Keypair.restore(kp1Arr)
+    assert.throws(() => (restored.alter = 'immutable'), 'Cannot add property')
     assert.deepEqual(keypair1.toArray(), restored.toArray())
     kp1Arr[2] = kp2Arr[2]
-    assert.throws(() => Keypair.restore(kp1Arr))
-    assert.throws(() => (restored.alter = 'immutable'))
+    const tamper = Keypair.restore(kp1Arr)
+    assert.throws(() => tamper.assertIsVerified())
+    await assert.isRejected(tamper.verify())
   })
 
   test('default create is same each time', () => {

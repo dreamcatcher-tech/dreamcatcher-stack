@@ -42,6 +42,7 @@ export const rxdbCrypto = (rxdbPromise) => {
       const { value } = firstDocument
       assert(Array.isArray(value))
       const keypair = Keypair.restore(value)
+      await keypair.verify()
       debug('scanKeypair end')
       return keypair
     }

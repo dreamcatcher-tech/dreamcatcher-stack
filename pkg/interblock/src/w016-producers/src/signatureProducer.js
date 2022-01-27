@@ -8,6 +8,7 @@ const sign = async (integrity, keypair) => {
   assert(integrity instanceof Integrity)
   assert(!integrity.isUnknown())
   assert(keypair instanceof Keypair)
+  keypair.assertIsVerified()
   debug(`sign`)
   const { hash } = integrity
   const { secretKey, publicKey } = keypair

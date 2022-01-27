@@ -48,7 +48,7 @@ const effectorFactory = async (id = 'ib', overloads = {}, dbPath = '') => {
     socket,
     hyper: covenants.shell,
   }
-  const rxdb = createRxdb(dbPath)
+  const rxdb = await createRxdb(dbPath)
   const metrology = await metrologyFactory(id, overloads, rxdb)
   const shell = effector(metrology)
   shell.startNetworking = async () =>

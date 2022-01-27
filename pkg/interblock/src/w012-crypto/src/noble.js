@@ -34,14 +34,13 @@ const generateKeyPair = () => {
   return keypair
 }
 
-// TODO remove the awkwardness from this being async
-const verifyKeyPairSync = ({ publicKey, secretKey }) =>
-  _verifiedSet.has(`${publicKey}_${secretKey}`)
-
 const verifyKeyPair = async ({ publicKey, secretKey }) => {
   assert.strictEqual(typeof publicKey, 'string')
   assert.strictEqual(typeof secretKey, 'string')
   const mapKey = `${publicKey}_${secretKey}`
+  if (_verifiedSet.has(mapKey)) {
+    return true
+  }
   try {
     const { signature } = await signHash(_hashTemplate, secretKey)
     const verified = verifyHash(_hashTemplate, signature, publicKey)
@@ -73,13 +72,11 @@ const signHash = async (messageHash, secretKey, publicKey) => {
   return { messageHash, signature }
 }
 
-const verifyHashSync = (messageHash, signature, publicKey) => {
-  const key = `${messageHash}_${signature}_${publicKey}`
-  const isVerified = _verifiedSet.has(key)
-  return isVerified
-}
-
 const verifyHash = (hash, signature, publicKey) => {
+  const key = `${hash}_${signature}_${publicKey}`
+  if (_verifiedSet.has(key)) {
+    return true
+  }
   // TODO assert formats and length of all args
   const signatureRaw = Uint8Array.from(Buffer.from(signature, 'base64'))
   const publicKeyRaw = Uint8Array.from(Buffer.from(publicKey, 'base64'))
@@ -89,7 +86,6 @@ const verifyHash = (hash, signature, publicKey) => {
     if (!isVerified) {
       return false
     }
-    const key = `${hash}_${signature}_${publicKey}`
     _verifiedSet.add(key)
     return true
   } catch (e) {
@@ -101,10 +97,8 @@ const verifyHash = (hash, signature, publicKey) => {
 export {
   signHash,
   verifyHash,
-  verifyHashSync,
   generateKeyPair,
   verifyKeyPair,
-  verifyKeyPairSync,
   ciKeypair,
   pierceKeypair,
   _verifiedSet,

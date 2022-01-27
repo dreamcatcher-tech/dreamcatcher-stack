@@ -25,34 +25,45 @@ export class Keypair extends mixin(schema) {
     if (name !== 'CI' && keypairRaw === crypto.ciKeypair) {
       throw Error('using the CI keypair must use the name "CI"')
     }
+    let isVerified = false
     if (name === 'CI') {
       if (keypairRaw && keypairRaw !== crypto.ciKeypair) {
         throw new Error('CI name is reserved for the CI keypair')
       }
       keypairRaw = crypto.ciKeypair
+      isVerified = true
     }
     let publicKey = ciPublicKey
     if (name !== 'CI') {
-      keypairRaw = keypairRaw || crypto.generateKeyPair()
       algorithm = algorithm || 'noble-secp256k1'
+      if (!keypairRaw) {
+        assert.strictEqual(algorithm, 'noble-secp256k1', `wrong algorithm`)
+        isVerified = true
+        keypairRaw = crypto.generateKeyPair()
+      }
       assert.strictEqual(typeof algorithm, 'string')
       const params = { key: keypairRaw.publicKey, algorithm }
       publicKey = PublicKey.create(params)
     }
     const { secretKey } = keypairRaw
     const keypair = super.create({ name, publicKey, secretKey })
+    keypair.#isVerified = isVerified
     return keypair
   }
-  static async verify(keypairRaw) {
-    // TODO run the async verify check in crypto, so that the sync
-    // check can be performed during restore
-  }
-  assertLogic() {
+  #isVerified = false
+  async verify() {
     const publicKey = this.publicKey.key
     const { secretKey } = this
     const keypairRaw = { publicKey, secretKey }
-    if (!crypto.verifyKeyPairSync(keypairRaw)) {
+    const isVerified = await crypto.verifyKeyPair(keypairRaw)
+    if (!isVerified) {
       throw new Error('Not a valid keypair - refusing to instantiate')
+    }
+    this.#isVerified = true
+  }
+  assertIsVerified() {
+    if (!this.#isVerified) {
+      throw new Error('Keypair is not verified')
     }
   }
   getValidatorEntry() {

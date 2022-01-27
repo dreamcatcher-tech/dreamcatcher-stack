@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { effectorFactory } from '..'
-import logo from './logo.svg'
 import './App.css'
 import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
@@ -11,7 +10,7 @@ const pingRTT = []
 let count = 0
 function App() {
   const [blockCount, setBlockCount] = useState(0)
-  const click = async () => {
+  const ping = async () => {
     if (!shell) {
       debug('shell not ready')
       return
@@ -34,30 +33,48 @@ function App() {
     await shell.metro.settle()
     debug(`stop`)
   }
+  const resetDb = async () => {
+    if (!shell) {
+      debug('shell not ready')
+      return
+    }
+    await shell.dropDb()
+    debug('resetDb done')
+  }
 
   useEffect(() => {
     Debug.enable('*tests*  *:provenance')
     debug(`start`)
     const identifier = 'vite-test'
     const overloads = {}
-    effectorFactory(identifier, overloads).then(async (blockchain) => {
+    const dbName = 'test-idb'
+    effectorFactory(identifier, overloads, dbName).then(async (blockchain) => {
       // client.enableLogging()
       debug(`effector ready`)
       shell = blockchain
       debug(`first ping`)
-      await click()
+      await ping()
       debug(`second ping`)
-      await click()
+      await ping()
     })
-  }, [async () => await shell.shutdown()])
+    return async () => {
+      debug(`shutting down...`)
+      await shell.shutdown()
+      debug(`shutdown complete`)
+    }
+  }, [])
   return (
     <div className="App">
       <header className="App-header">
         <p>View console logs to see chain tests</p>
         <p>
-          Ping:{' '}
-          <button type="button" onClick={click}>
-            count is: {count}
+          <button type="button" onClick={ping}>
+            Ping: {count}
+          </button>
+        </p>
+        <p>
+          <button type="button" onClick={resetDb}>
+            Reset DB
           </button>
         </p>
         <p>
