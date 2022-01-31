@@ -57,19 +57,16 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
     })
     .filter((alias) => !alias.includes('/'))
 
-  aliases.splice(2, 0, ...actionNames)
+  aliases.splice(0, 0, ...actionNames)
   debug(`aliases: `, aliases)
   aliases.forEach((alias) => {
     debug(`child: ${alias}`)
-    let { systemRole, chainId, lineageHeight, heavyHeight, hash } =
-      children[alias]
-    let filename, height
+    let { systemRole, chainId, hash = '', height = '' } = children[alias]
+    let filename = alias
 
     if (systemRole !== 'function') {
       chainId = chainId.length === 64 ? chainId.substring(0, 8) : chainId
-      lineageHeight === -1 && (lineageHeight = '-')
-      heavyHeight === -1 && (heavyHeight = '-')
-      height = heavyHeight + '.' + lineageHeight
+      hash = hash.length === 64 ? hash.substring(0, 8) : hash
       if (systemRole !== 'UP_LINK') {
         filename = chalk.blueBright(alias)
       } else {
@@ -77,15 +74,18 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
       }
     } else {
       filename = chalk.red(alias)
-      height = ' '
-      chainId = '(local function)'
+      height = ''
+      chainId = '(function)'
     }
 
     // TODO use the same tools as networkPrint
+    debug(filename, height, chainId, hash)
+
     ui.div(
       { text: filename, width: 35 },
-      { text: height, width: 10 },
-      { text: chainId, width: 55 }
+      { text: height + '', width: 10 },
+      { text: chainId, width: 13 },
+      { text: hash, width: 55 }
     )
   })
   return { out: ui.toString() }

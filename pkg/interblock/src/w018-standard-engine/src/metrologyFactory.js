@@ -192,6 +192,9 @@ const metrologyFactory = async (identifier = 'CI', covenants = {}, rxdb) => {
       if (height > nextBlock.getHeight()) {
         // TODO subscribe, seek, or otherwise find if height insufficient
       }
+      if (height < nextBlock.getHeight()) {
+        return await getLatest(nextBlock.provenance.getAddress(), height)
+      }
       // TODO fetch from other block producers
     }
     const shutdown = async (opts = {}) => {

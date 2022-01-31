@@ -53,10 +53,6 @@ const initializeConfig = (ioCrypto, ioConsistency) => {
           })
           return dmz
         },
-        isInitialConditions: () => {
-          debug(`isInitialConditions:`, true)
-          return true
-        },
       }),
       assignBaseBlock: assign({
         nextBlock: ({ baseDmz }, event) => {

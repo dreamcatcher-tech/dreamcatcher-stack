@@ -51,7 +51,7 @@ const interPrint = (interblock, msg, path, bg, fg) => {
   }
   return format(messages)
 }
-const blockPrint = (block, path, isNewChain, isDuplicate, options) => {
+const blockPrint = (block, path, isNewChain, isDuplicate, options = {}) => {
   const header = headerPrint(block, path, isNewChain, isDuplicate, options)
   const messages = [header]
 

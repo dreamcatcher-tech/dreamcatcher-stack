@@ -1,6 +1,6 @@
 import Enquirer from 'enquirer-browserify'
 import chalk from 'ansi-colors-browserify'
-import isNode from 'detect-node'
+import isBrowser from 'is-in-browser'
 import Debug from 'debug'
 const debug = Debug('dos:read')
 const { Input } = Enquirer
@@ -26,8 +26,8 @@ export const read = async (
     // question.choices = autoComplete.getList()
   }
   const prompt = new Input(question)
-  if (!isNode) {
-    prompt.blink = { off: true }
+  if (isBrowser) {
+    // prompt.blink = { off: true }
   }
   const result = await prompt.run()
   debug(`prompt result: `, result)

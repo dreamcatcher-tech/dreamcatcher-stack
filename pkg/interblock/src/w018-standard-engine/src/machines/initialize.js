@@ -2,7 +2,7 @@ const definition = {
   id: 'pool.initialize',
   initial: 'idle',
   strict: true,
-  context: { isInitialConditions: false, systemInitUuid: undefined },
+  context: { systemInitUuid: undefined },
   states: {
     idle: { on: { INITIALIZE: 'isStorageEmpty' } },
     isStorageEmpty: {
@@ -66,7 +66,7 @@ const definition = {
       },
     },
     done: {
-      data: ({ isInitialConditions }) => ({ isInitialConditions }),
+      data: ({ baseDmz }) => ({ isInitialConditions: !!baseDmz }),
       type: 'final',
     },
   },

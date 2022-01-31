@@ -29,6 +29,7 @@ export const blocks = async (
   while (nextHeight <= topHeight) {
     // TODO fetch in parallel using payload layer
     block = await blockchain.latest(absPath, nextHeight)
+    assert(block, `failed to find block at height: ${nextHeight}`)
     out += blockPrint(block, absPath) + `\n`
     nextHeight++
     debug(`next height: `, nextHeight)
