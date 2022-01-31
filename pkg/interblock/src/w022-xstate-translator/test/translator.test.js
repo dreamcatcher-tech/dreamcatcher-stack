@@ -111,7 +111,7 @@ describe('translator', () => {
       assert(!state.isPending)
       assert.strictEqual(state.transmissions.length, 1)
       const [donePing] = state.transmissions
-      assert.strictEqual(donePing.type, 'done.invoke.ping')
+      assert.strictEqual(donePing.type, 'done.invoke.shell.ping:invocation[0]')
 
       state = await hook(() => shell.reducer(state.reduction, donePing))
       assert.strictEqual(state.reduction.value, 'idle')
@@ -137,7 +137,10 @@ describe('translator', () => {
       state = await hook(() => shell.reducer(undefined, pingRemote), acc)
       assert.strictEqual(state.transmissions.length, 1)
       const [doneInvoke] = state.transmissions
-      assert.strictEqual(doneInvoke.type, 'done.invoke.ping')
+      assert.strictEqual(
+        doneInvoke.type,
+        'done.invoke.shell.ping:invocation[0]'
+      )
 
       state = await hook(() => shell.reducer(state.reduction, doneInvoke))
       assert.strictEqual(state.reduction.value, 'idle')
@@ -189,7 +192,10 @@ describe('translator', () => {
 
     assert.strictEqual(result.transmissions.length, 1)
     const [doneInvoke] = result.transmissions
-    assert.strictEqual(doneInvoke.type, 'done.invoke.invoker')
+    assert.strictEqual(
+      doneInvoke.type,
+      'done.invoke.testMachine.testInvoke:invocation[0]'
+    )
     assert.strictEqual(result.reduction.value, 'testInvoke')
     assert(!result.isPending)
     const finalTick = () => reducer(result.reduction, doneInvoke)
@@ -208,7 +214,10 @@ describe('translator', () => {
     let nextState = await hook(() => reducer(undefined, request))
     assert.strictEqual(nextState.transmissions.length, 1)
     const [doneInvoke] = nextState.transmissions
-    assert.strictEqual(doneInvoke.type, 'done.invoke.instantInvoker')
+    assert.strictEqual(
+      doneInvoke.type,
+      'done.invoke.testMachine.testInvokeInstant:invocation[0]'
+    )
 
     nextState = await hook(() => reducer(nextState.reduction, doneInvoke))
     assert.strictEqual(nextState.transmissions.length, 1)
@@ -224,7 +233,10 @@ describe('translator', () => {
     debug(nextState)
     assert.strictEqual(nextState.transmissions.length, 1)
     const [doneInvoke] = nextState.transmissions
-    assert.strictEqual(doneInvoke.type, 'done.invoke.testInvokeUndefinedResult')
+    assert.strictEqual(
+      doneInvoke.type,
+      'done.invoke.testMachine.testInvokeUndefinedResult:invocation[0]'
+    )
     assert.deepEqual(doneInvoke.payload, {})
   })
   test.todo('instant return after multiple awaits')

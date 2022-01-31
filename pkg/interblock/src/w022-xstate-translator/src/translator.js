@@ -90,7 +90,7 @@ const translator = (machine) => {
           debug(`xstate.start`)
           const { activity } = xstateAction
           assert(activity && activity.type === 'xstate.invoke')
-          const { src } = activity
+          const { id, src } = activity
           const service = machine.options.services[src]
           assert(typeof service === 'function')
           debug(`running service: `, src)
@@ -98,7 +98,7 @@ const translator = (machine) => {
           const nextResponse = await service(context, event)
           debug(`invoke result: `, nextResponse && nextResponse.type)
 
-          const { type, data } = createDoneInvoke(nextResponse, src)
+          const { type, data } = createDoneInvoke(id, nextResponse)
           debug(`doneInvoke data`, data)
           interchain(type, data) // send to self
           break
@@ -126,7 +126,7 @@ const translator = (machine) => {
     return cleanNextState
   }
 }
-const createDoneInvoke = (data, id) => {
+const createDoneInvoke = (id, data) => {
   if (data && data.message && data.stack) {
     // TODO never include error objects in done - make a special done object
     debug(`error detected %O`, data)

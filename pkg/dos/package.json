@@ -22,7 +22,7 @@
     "@dreamcatcher-tech/interblock": "^1.0.10",
     "ansi-colors-browserify": "^4.1.2",
     "assert": "^2.0.0",
-    "chai": "^4.3.4",
+    "chai": "^4.3.6",
     "clear": "^0.1.0",
     "cliui": "^7.0.4",
     "debug": "^4.3.3",
@@ -39,14 +39,14 @@
     "util": "^0.12.4"
   },
   "devDependencies": {
-    "eslint": "^8.6.0",
+    "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.28.0",
     "jest": "^27.4.7",
     "nodemon": "^2.0.15",
     "prettier": "^2.5.1",
-    "vite": "^2.7.10"
+    "vite": "^2.7.13"
   },
   "publishConfig": {
     "access": "public"
