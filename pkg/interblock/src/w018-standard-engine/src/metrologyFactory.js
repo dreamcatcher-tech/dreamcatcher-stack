@@ -82,7 +82,8 @@ const metrologyFactory = async (identifier = 'CI', covenants = {}, rxdb) => {
     }
     const getContext = async () => {
       const block = await getBlock()
-      return block.state.getState().context
+      const state = block.getState()
+      return state.context
     }
     const getLatest = async (address, height) => {
       // TODO fetch from servers and seek out remote chains ?
@@ -252,7 +253,7 @@ const enableLoggingWithTap = (engine, identifier) => {
       }
     }
     if (action.type === 'UNLOCK') {
-      await queuePromise
+      // await queuePromise
       // TODO check if the children need resyncing ?
       tap.block(action.payload.block)
     }

@@ -26,7 +26,7 @@ const Explorer = (props) => {
   }
   // the current block has to have this alias in it somewhere, else some error
   const alias = nextCwd.split('/').pop()
-  const nextChainId = block.network[alias].address.getChainId()
+  const nextChainId = block.network.get(alias).address.getChainId()
   const nextProps = { ...props, cwd: nextCwd, chainId: nextChainId }
   const child = nextCwd ? <Explorer {...nextProps} /> : null
   return child

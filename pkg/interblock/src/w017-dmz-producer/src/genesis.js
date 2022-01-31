@@ -1,4 +1,9 @@
-import { interchain, replyPromise, replyResolve } from '../../w002-api'
+import {
+  interchain,
+  replyPromise,
+  replyResolve,
+  replyReject,
+} from '../../w002-api'
 import { Dmz, RxReply } from '../../w015-models'
 import Debug from 'debug'
 import assert from 'assert-fast'
@@ -32,14 +37,23 @@ const genesisReply = (meta, reply) => {
 
   const { alias, chainId, originIdentifier } = meta
   debug('reply received for @@GENESIS %O', meta)
-  replyResolve({ alias, chainId }, originIdentifier)
+  const { type, payload } = reply
+  if (type === '@@REJECT') {
+    replyReject(payload, originIdentifier)
+  } else {
+    replyResolve({ alias, chainId }, originIdentifier)
+  }
 }
 const initReply = (meta, reply) => {
   assert.strictEqual(typeof meta, 'object')
   assert(reply instanceof RxReply)
   const { originIdentifier } = meta
-  // TODO handle rejection of @@INIT
-  debug('@@INIT reply received', originIdentifier)
-  replyResolve({}, originIdentifier)
+  const { type, payload } = reply
+  debug('@@INIT reply received', type, originIdentifier)
+  if (type === '@@REJECT') {
+    replyReject(payload, originIdentifier)
+  } else {
+    replyResolve(payload, originIdentifier)
+  }
 }
 export { genesisReducer, genesisReply, initReply }

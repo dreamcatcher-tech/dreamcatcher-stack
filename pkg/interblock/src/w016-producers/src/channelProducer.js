@@ -158,7 +158,6 @@ const txReply = (channel, txReply) => {
   const isTip = _isTip(replyKey, replies)
   const reply = txReply.getReply()
   if (reply.isPromise() && !isTip) {
-    _isTip(replyKey, replies)
     throw new Error(`Can only promise for tip action: ${replyKey}`)
   }
   const isLoopbackPromise =
@@ -167,6 +166,7 @@ const txReply = (channel, txReply) => {
     channel.rxPromises &&
     channel.rxPromises.includes(replyKey)
   if (!existingReply && !isTip && !isLoopbackPromise) {
+    _isTip(replyKey, replies)
     throw new Error(`Can only settle synchronously with tip: ${replyKey}`)
   }
   replies = { ...replies, [replyKey]: reply }
@@ -201,7 +201,7 @@ const _isTip = (replyKey, replies) => {
   if (replyHeight === maxHeight) {
     return replyIndex === maxIndex + 1
   }
-  if (replyHeight === maxHeight + 1) {
+  if (replyHeight > maxHeight) {
     return replyIndex === 0
   }
   return false

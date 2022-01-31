@@ -29,7 +29,7 @@ describe('collection', () => {
   }
 
   test('add with test data', async () => {
-    const shell = await effectorFactory('c')
+    const shell = await effectorFactory()
     await shell.add('col1', 'collection')
     const actions = await shell.actions('col1')
     await actions.setDatumTemplate({ schema, children })
@@ -58,7 +58,7 @@ describe('collection', () => {
     await shell.shutdown()
   })
   test('add two items concurrently to collection', async () => {
-    const shell = await effectorFactory('c')
+    const shell = await effectorFactory()
     await shell.add('col1', 'collection')
     const actions = await shell.actions('col1')
     const namePath = ['firstName']
@@ -85,7 +85,7 @@ describe('collection', () => {
   })
 
   test('batch add', async () => {
-    const shell = await effectorFactory('c')
+    const shell = await effectorFactory()
     await shell.add('col1', 'collection')
     const actions = await shell.actions('col1')
     const namePath = ['firstName']

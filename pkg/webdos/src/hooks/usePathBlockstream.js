@@ -28,7 +28,7 @@ const truncateSubscriptions = (subscriptions, length) => {
 export default (cwd) => {
   // TODO if we do not have permission to access block, throw an error
   // TODO do not push new blocks until all blocks in path are resolved
-  const { blockchain } = useBlockchain()
+  const { blockchain, latest } = useBlockchain()
   const [blocks, setBlocks] = useState([])
   const [fetchedCwd, setFetchedCwd] = useState()
   useEffect(() => {
@@ -47,7 +47,7 @@ export default (cwd) => {
       debug(`tracker %s %i %s`, shortChainId, index, segments[index])
       const sub = (block) => {
         setBlocks((current) => {
-          if (!block.equals(current[index])) {
+          if (block !== current[index]) {
             const next = [...current]
             next[index] = block
             return next
@@ -60,7 +60,7 @@ export default (cwd) => {
           return
         }
         const nextSegment = segments[nextIndex]
-        const nextChannel = block.network[nextSegment]
+        const nextChannel = block.network.get(nextSegment)
         assert(nextChannel, `Invalid channel: ${nextSegment}`)
         assert(nextChannel.address.isResolved(), `Unresolved: ${nextSegment}`)
 
@@ -77,7 +77,7 @@ export default (cwd) => {
       const unsubscribe = blockchain.subscribeBlockstream(chainId, sub)
       return { chainId, unsubscribe }
     }
-    const baseChainId = blockchain.latest().getChainId()
+    const baseChainId = latest.getChainId()
     subscriptions.push(tracker(baseChainId, 0))
 
     return () => {

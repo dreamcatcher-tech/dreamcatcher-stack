@@ -15,6 +15,7 @@ describe('crm', () => {
       const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
       assert.strictEqual(dpkgPath, 'dpkgCrm')
       const installStart = Date.now()
+
       await shell.install(dpkgPath, 'crm')
 
       debug(`publish time: ${installStart - publishStart} ms`)

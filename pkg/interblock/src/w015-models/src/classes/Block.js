@@ -42,7 +42,15 @@ export class Block extends mixin(blockSchema) {
   updateBlock(dmz, provenance) {
     assert(dmz instanceof Dmz)
     assert(provenance instanceof Provenance)
-    const next = super.update({ ...dmz.spread(), provenance })
+    let next = super.update({ ...dmz.spread(), provenance })
+    for (const key in next) {
+      if (key === 'provenance') {
+        continue
+      }
+      if (dmz[key] === undefined && next[key] !== undefined) {
+        next = next.delete(key)
+      }
+    }
     next.#dmz = dmz
     next.#internalAssertLogic()
     return next
@@ -50,7 +58,7 @@ export class Block extends mixin(blockSchema) {
   update(obj) {
     assert.strictEqual(typeof obj, 'object')
     assert.strictEqual(Object.keys(obj).length, 0, `Blocks cannot be updated`)
-    return super.update(obj)
+    return this
   }
   #internalAssertLogic() {
     const address = this.provenance.getAddress()
@@ -63,6 +71,11 @@ export class Block extends mixin(blockSchema) {
     const { isOnlyRequired } = checkSignatures(validators, provenance)
     if (!isOnlyRequired) {
       throw new Error('Invalid signatures detected on block')
+    }
+    if (this.piercings) {
+      assert(this.network.has('.@@io'))
+      const io = this.network.get('.@@io')
+      assert(io.isTransmitting())
     }
   }
   _imprint(next) {

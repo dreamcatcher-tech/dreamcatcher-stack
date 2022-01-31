@@ -84,11 +84,12 @@ const effector = (metro) => {
     const dispatch = (action) => shellActions.dispatch(action, absPath)
     return _mapPierceToActions(dispatch, actions)
   }
-  const latest = (path = '.', height) => {
+  const latest = async (path = '.', height) => {
     assert.strictEqual(typeof path, 'string', `path not string: ${path}`)
     const absPath = posix.resolve('/', path)
     debug(`latest`, absPath)
-    return metro.getLatestFromPath(absPath, height)
+    const block = await metro.getLatestFromPath(absPath, height)
+    return block
   }
   const context = () => metro.getContext()
   const shutdown = (opts) => metro.shutdown(opts)

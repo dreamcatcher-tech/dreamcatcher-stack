@@ -17,7 +17,7 @@ describe('acl', () => {
   })
   test('payload must be POJO', () => {
     const integrity = Integrity.create('Complex object')
-    const msg = 'payload must be stringifiable'
+    const msg = 'payload not POJO'
     assert.throws(() => Action.create('TYPE', integrity), msg)
     assert.throws(() => Action.create('@@RESOLVE', { integrity }), msg)
   })

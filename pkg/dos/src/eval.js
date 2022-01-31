@@ -16,7 +16,7 @@ export const evaluate = async (ctx, cmd, cmdArgs = []) => {
     if (isLocalCommand) {
       // TODO allow remote location at any path to be used as actions
       const { blockchain } = ctx
-      const { wd } = blockchain.context()
+      const { wd } = await blockchain.context()
       const absolutePath = posix.resolve(wd, cmd)
       const actionName = posix.basename(absolutePath)
       const parent = posix.dirname(absolutePath)

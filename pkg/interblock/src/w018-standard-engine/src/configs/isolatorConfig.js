@@ -88,18 +88,18 @@ const createConfig = (isolation, consistency) => ({
         assert(dmz instanceof Dmz)
         debug(`zeroTransmissions`)
         const precedent = lock.block.provenance.reflectIntegrity()
-        const network = networkProducer.zeroTransmissions(
-          dmz.network,
-          precedent
-        )
-        return dmz.update({ network })
+        const { network } = dmz
+        const next = networkProducer.zeroTransmissions(network, precedent)
+        return dmz.update({ network: next })
       },
     }),
     blankPiercings: assign({
       dmz: ({ dmz }) => {
         assert(dmz instanceof Dmz)
         debug(`blankPiercings`)
-        return dmz.delete('piercings')
+        const next = dmz.delete('piercings')
+        assert(!next.piercings)
+        return next
       },
     }),
     assignContainerId: assign({

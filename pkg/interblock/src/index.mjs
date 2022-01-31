@@ -34,7 +34,6 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
-import './w000-level-db-shim'
 import assert from 'assert-fast'
 import { effectorFactory, awsFactory } from './w020-emulators'
 import * as engine from './w018-standard-engine'

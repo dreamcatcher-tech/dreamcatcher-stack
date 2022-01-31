@@ -1,11 +1,7 @@
 import process from 'process'
 import ora from 'ora'
 import { assert } from 'chai'
-import {
-  effectorFactory,
-  apps,
-  checkModules,
-} from '@dreamcatcher-tech/interblock'
+import { effectorFactory, apps } from '@dreamcatcher-tech/interblock'
 import interblockPackageJson from '@dreamcatcher-tech/interblock/package.json'
 import { read } from './read'
 import { evaluate } from './eval'
@@ -19,7 +15,7 @@ const debug = Debug('dos:repl')
 
 export default async function repl(opts = {}) {
   assert.strictEqual(typeof opts, 'object')
-  Debug.enable('*:repl *commands* *:eval')
+  // Debug.enable('*:repl *commands* *:eval')
   debug(`repl`)
   opts.read = opts.read || withAutoComplete(read)
   opts.evaluate = opts.evaluate || withSpin(evaluate)
@@ -138,9 +134,11 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
 const noTiming = ['time', 'clear', 'help']
 
 const awaitBlockchain = async (blockchain) => {
-  const { state } = await blockchain.latest()
+  const latest = await blockchain.latest()
+  const state = latest.getState()
   if (!state.context) {
     debug(`creating one block as workaround for no @@INIT action`)
-    await blockchain.cd()
+    await blockchain.ping()
+    debug(`done`)
   }
 }

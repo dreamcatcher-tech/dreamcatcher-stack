@@ -347,13 +347,12 @@ const properties = (schema) => {
         // TODO do type checking based on the schema, particularly if deep
         debug(`set`, propertyName, nextValue)
         const arrayIndex = propMap[propertyName]
-        if (nextBackingArray.get(arrayIndex) === nextValue) {
+        const currentValue = nextBackingArray.get(arrayIndex)
+        if (currentValue === nextValue) {
           continue
         }
-
         if (deepIndices.has(arrayIndex)) {
           const schema = deepIndices.get(arrayIndex)
-          const currentValue = nextBackingArray.get(arrayIndex)
           if (Array.isArray(nextValue)) {
             // TODO check if array deep equals the other
           } else if (typeof nextValue.deepEquals === 'function') {

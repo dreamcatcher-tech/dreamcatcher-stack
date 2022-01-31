@@ -1,12 +1,11 @@
 import { assert } from 'chai/index.mjs'
 import React, { useState, useEffect } from 'react'
-import { effectorFactory, checkModules } from '@dreamcatcher-tech/interblock'
+import { effectorFactory } from '@dreamcatcher-tech/interblock'
 import equals from 'fast-deep-equal'
 import { Terminal } from '.'
 import process from 'process'
 import Debug from 'debug'
 const debug = Debug('terminal:Blockchain')
-checkModules()
 
 export const BlockchainContext = React.createContext()
 BlockchainContext.displayName = 'Blockchain'
@@ -34,8 +33,8 @@ const Blockchain = ({ id = 'terminal', dev, children }) => {
       assert.strictEqual(typeof dev, 'object', `dev must be an object`)
       debug(`installing dev mode app`)
       const { installer, covenantId } = dev
-      const name = covenantId.name
-      const { dpkgPath } = await blockchain.publish(name, installer, covenantId)
+      const { name } = covenantId
+      const { dpkgPath } = await blockchain.publish(name, installer)
       debug(`dpkgPath: `, dpkgPath)
       const installResult = await blockchain.install(dpkgPath, 'app')
 
@@ -67,7 +66,7 @@ const Blockchain = ({ id = 'terminal', dev, children }) => {
       debug(`setLatest to height: ${block.provenance.height}`)
       setLatest(block)
       setContext((current) => {
-        const { context } = block.state
+        const { context } = block.getState()
         if (!equals(context, current)) {
           debug(`setting context %o`, context)
           return context

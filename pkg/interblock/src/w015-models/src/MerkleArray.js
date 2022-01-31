@@ -222,11 +222,8 @@ export class MerkleArray {
       for (let i = base.size; i < nextSize; i++) {
         dirty.push(i)
       }
-      debug(`nextSize`, nextSize)
       base = base.concat(next.#adds)
-      debug(`after concat: `, base.size)
       base = base.setSize(base.size - next.#dels.size)
-      debug(`final size:`, base.size)
       for (const [putIndex, value] of next.#puts.entries()) {
         assert(putIndex < base.size)
         base = base.set(putIndex, value)

@@ -15,8 +15,9 @@ export class Action extends mixin(actionSchema) {
       action = { ...action, payload: {} }
     }
     assertNoUndefined(action.payload)
-    const cloned = JSON.parse(JSON.stringify(action.payload))
-    assert(equals(action.payload, cloned), 'payload must be stringifiable')
+    const s = JSON.stringify(action.payload, null, 2)
+    const cloned = JSON.parse(s)
+    assert(equals(action.payload, cloned), `payload not POJO ${s}`)
     return super.create(action)
   }
 }

@@ -15,7 +15,7 @@ export const blocks = async (
   // reason being so we can log all the user actions in the shell
   start = safeParseInt(start)
   stop = safeParseInt(stop)
-  const { wd } = blockchain.context()
+  const { wd } = await blockchain.context()
   path = path || wd
   const absPath = posix.resolve(wd, path)
   debug(`using path: %o`, absPath)

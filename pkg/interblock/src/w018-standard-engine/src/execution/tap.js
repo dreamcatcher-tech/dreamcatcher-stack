@@ -1,11 +1,5 @@
 import assert from 'assert-fast'
-import {
-  blockPrint,
-  interPrint,
-  headerPrint,
-  networkPrint,
-  print,
-} from './printer'
+import { blockPrint, interPrint } from './printer'
 import { Block, Interblock } from '../../../w015-models'
 import { setTap } from '../../../w004-needle'
 import Debug from 'debug'

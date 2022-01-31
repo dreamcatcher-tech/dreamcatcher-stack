@@ -6,6 +6,11 @@ import { mixin } from '../MapFactory'
 export class Continuation extends mixin(continuationSchema) {
   static create(type = '@@RESOLVE', payload = {}) {
     if (type === '@@REJECT' && payload instanceof Error) {
+      if (payload.name === 'AssertionError') {
+        if (payload.actual === undefined) {
+          payload.actual = null
+        }
+      }
       payload = serializeError(payload)
     } else {
       const cloned = JSON.parse(JSON.stringify(payload))

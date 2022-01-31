@@ -3,7 +3,6 @@ import chaiAsPromised from 'chai-as-promised'
 import { shell } from '../../w212-system-covenants'
 import { metrologyFactory } from '..'
 import { rxdbmem } from '../src/services/rxdbMem'
-
 import Debug from 'debug'
 const debug = Debug('interblock:tests:metrology')
 Debug.enable()

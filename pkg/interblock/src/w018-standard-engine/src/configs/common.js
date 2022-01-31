@@ -40,11 +40,6 @@ const common = (debug) => {
       if (anvil instanceof RxReply) {
         // TODO do something with replies that cause rejections
       }
-      if (event.data.name === 'AssertionError') {
-        if (event.data.actual === undefined) {
-          event.data.actual = null
-        }
-      }
       // console.error(event.data)
       return event.data
     },

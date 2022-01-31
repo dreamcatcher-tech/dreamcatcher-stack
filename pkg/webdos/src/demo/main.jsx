@@ -25,7 +25,7 @@ import multi from './multi'
 import timesheets from './timesheets'
 import Debug from 'debug'
 const debug = Debug('client:tests:App')
-Debug.enable('*:widgets:* *Route *Switch')
+Debug.enable('*:widgets:* *Route *Switch *met* ')
 
 const Map = () => {
   return (

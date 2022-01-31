@@ -1,10 +1,12 @@
-import { assert } from 'chai/index.mjs'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { shell } from '../../w212-system-covenants'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:covenants')
 Debug.enable()
+chai.use(chaiAsPromised)
 
 describe('user covenants', () => {
   test('@@INIT', async () => {
@@ -21,11 +23,11 @@ describe('user covenants', () => {
     const base = await metrologyFactory('init', { hyper, initter })
     base.enableLogging()
     const add = shell.actions.add('test', 'initter')
-    const result = await base.pierce(add)
+    await base.pierce(add)
     assert(!unreachableReached)
-    await base.settle()
+    await base.shutdown()
   })
-  test.skip('@@INIT cannot return undefined', async () => {
+  test('@@INIT cannot return undefined', async () => {
     let unreachableReached = false
     const reducer = async (state, action) => {
       debug(action)
@@ -39,11 +41,11 @@ describe('user covenants', () => {
     const base = await metrologyFactory('init', { hyper, initter })
     base.enableLogging()
     const add = shell.actions.add('test', 'initter')
-    await assert.rejects(() => base.pierce(add))
+    await assert.isRejected(base.pierce(add))
     assert(!unreachableReached)
-    await base.settle()
+    await base.shutdown()
   })
-  test.skip('throw on @@INIT', async () => {
+  test('throw on @@INIT bubbles up', async () => {
     let unreachableReached = false
     const reducer = async (state, action) => {
       debug(action)
@@ -57,8 +59,8 @@ describe('user covenants', () => {
     const base = await metrologyFactory('throw', { hyper, thrower })
     base.enableLogging()
     const add = shell.actions.add('test', 'thrower')
-    await assert.rejects(() => base.pierce(add))
+    await assert.isRejected(base.pierce(add), '@@INIT test')
     assert(!unreachableReached)
-    await base.settle()
+    await base.shutdown()
   })
 })

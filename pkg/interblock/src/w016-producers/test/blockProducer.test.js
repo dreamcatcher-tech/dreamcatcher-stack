@@ -51,6 +51,19 @@ describe('blockProducer', () => {
       const clone = Block.restore(nextBlock.toArray())
       assert(clone.deepEquals(nextBlock))
     })
+    test('update equality', () => {
+      const block = Block.create()
+      const dmz = block.getDmz()
+      for (const key in dmz) {
+        assert.strictEqual(dmz[key], block[key])
+      }
+      const nextDmz = dmz.update({ config: { isPierced: true } })
+      assert(nextDmz.config !== block.config)
+      assert.strictEqual(dmz.config, block.config)
+      const nextBlock = blockProducer.generateUnsigned(nextDmz, block)
+      assert(nextBlock.config !== block.config)
+      assert.strictEqual(nextBlock.config, nextDmz.config)
+    })
     test.skip('dual validator signing', () => {
       const kp1 = crypto.generateKeyPair()
       const kp2 = crypto.generateKeyPair()

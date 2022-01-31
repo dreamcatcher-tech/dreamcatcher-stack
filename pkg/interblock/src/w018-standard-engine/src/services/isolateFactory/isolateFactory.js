@@ -53,7 +53,9 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
         assert(container.covenant.covenants)
         reducer = (state) => state
       }
-      const tick = () => reducer(state.getState(), action.toJS())
+      const tick = () => {
+        return reducer(state.getState(), action.toJS())
+      }
       const queryProcessor = queryFactory(ioConsistency, container.block)
       const queries = (query) => queryProcessor.query(query)
       const result = await hook(tick, accumulator, queries)

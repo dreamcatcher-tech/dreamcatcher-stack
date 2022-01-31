@@ -56,7 +56,7 @@ const blockPrint = (block, path, isNewChain, isDuplicate, options) => {
   const messages = [header]
 
   if (!isDuplicate && !options.headersOnly) {
-    const networkLines = networkPrint(block.network, options)
+    const networkLines = networkPrint(block, options)
     messages.push(...networkLines)
   }
   const text = print(messages)
@@ -91,7 +91,8 @@ const headerPrint = (block, path, isNewChain, isDuplicate, options) => {
   }
   return header
 }
-const networkPrint = (network, options) => {
+const networkPrint = (block, options) => {
+  const { network } = block
   const messages = []
   for (const [alias, channel] of network.entries()) {
     const { address } = channel
@@ -142,14 +143,19 @@ const networkPrint = (network, options) => {
       const height = chalk.yellow(rxKey)
       const path = ''
       const chainId = chalk.gray(reply.type)
-      const hash = grayUndefined
+      let hash = grayUndefined
       // const size = reply ? getSize(reply) : grayUndefined // TODO sum size of req & rep
+      if (alias === '.@@io' && block.piercings) {
+        const index = rxKey.split('_').pop()
+        hash = block.piercings.requests[index].type
+      }
 
       const action = { msg, height, path, chainId, hash }
       messages.push(action)
     }
     // use previous blocks to know when the counters in remotes altered
   }
+
   return messages
 }
 
