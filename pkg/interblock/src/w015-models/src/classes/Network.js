@@ -150,4 +150,11 @@ export class Network extends mixin(networkSchema) {
     const reply = channel.replies.get(replyKey)
     return reply
   }
+  getAliases() {
+    const aliases = []
+    for (const [alias] of this.entries()) {
+      aliases.push(alias)
+    }
+    return aliases
+  }
 }

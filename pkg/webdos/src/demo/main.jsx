@@ -25,7 +25,7 @@ import multi from './multi'
 import timesheets from './timesheets'
 import Debug from 'debug'
 const debug = Debug('client:tests:App')
-Debug.enable('*:widgets:* *Route *Switch *met* ')
+Debug.enable('*:widgets:* *Route* *Switch *met* ')
 
 const Map = () => {
   return (
@@ -81,7 +81,7 @@ export default class Demo extends Component {
           <Terminal style={{ height: '280px', background: 'black' }} />
           <Router>
             <Switch>
-              <Route covenant="multi">
+              <Route covenant="app">
                 <AppContainer>
                   <Nav />
                   <MapBackground>
