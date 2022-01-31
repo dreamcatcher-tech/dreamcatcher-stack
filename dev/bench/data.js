@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1643254735673,
+  "lastUpdate": 1643590535349,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interblock Benchmark": [
@@ -1194,6 +1194,72 @@ window.BENCHMARK_DATA = {
             "range": "±4.15%",
             "unit": "ops/sec",
             "extra": "22 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "evil_liskov",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "evil_liskov",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "a2413908cd0bf98ba759e7399be3f7ef2b30749e",
+          "message": "update dos to new models API.\nBlock remove piercings correctly.\nLogger log pierce request type.\ntip height can now jump ahead multiple blocks in channelProducer.\nGenesis can reject.\nAll tests pass.\nBrowser webdos loads.",
+          "timestamp": "2022-01-31T00:53:51Z",
+          "tree_id": "d3035b872439b76b503c8ad7a8175ecfc224ff59",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/a2413908cd0bf98ba759e7399be3f7ef2b30749e"
+        },
+        "date": 1643590534867,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 51.43,
+            "range": "±2.34%",
+            "unit": "ops/sec",
+            "extra": "77 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 22.85,
+            "range": "±1.61%",
+            "unit": "ops/sec",
+            "extra": "57 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 41.15,
+            "range": "±2.76%",
+            "unit": "ops/sec",
+            "extra": "67 samples"
+          },
+          {
+            "name": "publish",
+            "value": 9.91,
+            "range": "±3.06%",
+            "unit": "ops/sec",
+            "extra": "51 samples"
+          },
+          {
+            "name": "install",
+            "value": 1.89,
+            "range": "±3.71%",
+            "unit": "ops/sec",
+            "extra": "14 samples"
+          },
+          {
+            "name": "add customer",
+            "value": 3.72,
+            "range": "±4.94%",
+            "unit": "ops/sec",
+            "extra": "23 samples"
           }
         ]
       }
