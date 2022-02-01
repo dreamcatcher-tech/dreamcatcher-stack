@@ -164,7 +164,6 @@ const dbFactory = (rxdbPromise) => {
     debug(`queryLatest %o`, chainId.substring(0, 9))
     const $gte = `${chainId}/blocks/`
     const $lte = `${chainId}/blocks/~`
-
     const rxDocument = await db
       .findOne({
         selector: { key: { $and: [{ $gte }, { $lte }] } },
@@ -175,6 +174,7 @@ const dbFactory = (rxdbPromise) => {
       debug(`queryLatest nothing found`)
       return
     }
+    assert(rxDocument.key.includes($gte), `wrong key: ${rxDocument.key}`)
     let block = cache.get(rxDocument.key)
     if (!block) {
       assert(Array.isArray(rxDocument.value))

@@ -15,9 +15,14 @@ export const cat = async (
   const absolutePath = posix.resolve(wd, path)
   debug(`absolutePath`, absolutePath)
   const latest = await blockchain.latest(absolutePath)
-  const state = latest.getState()
-  const out = inspect(state, { colors: true, depth: null })
-  return { out }
+  if (args[0] === '--full') {
+    const out = inspect(latest.toJS(), { colors: true, depth: null })
+    return { out }
+  } else {
+    const state = latest.getState()
+    const out = inspect(state, { colors: true, depth: null })
+    return { out }
+  }
 }
 
 const help = `

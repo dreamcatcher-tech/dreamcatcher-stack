@@ -10,7 +10,7 @@ const debug = Debug('interblock:tests:increasor')
 Debug.enable()
 
 describe('increasor', () => {
-  test.only('single child chain', async () => {
+  test('single child chain', async () => {
     const base = await metrologyFactory()
     await base.spawn('child1')
     await base.shutdown()

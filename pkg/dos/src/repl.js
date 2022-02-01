@@ -94,7 +94,7 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
   if (!blockchain) {
     debug(`no blockchain provided`)
     spinner.text = `Initializing blockchain...`
-    blockchain = await effectorFactory('console')
+    blockchain = await effectorFactory('console', {}, 'dos')
     debug('blockchain created')
   }
   const latest = await blockchain.latest()

@@ -22,7 +22,11 @@ const Blockchain = ({ id = 'terminal', dev, children }) => {
     let isActive = true
     debug(`initializing blockchain: ${id}`)
     const covenantOverloads = _extractCovenants(dev)
-    const blockchain = await effectorFactory(id, covenantOverloads)
+    const blockchain = await effectorFactory(
+      id,
+      covenantOverloads,
+      'interblock'
+    )
     if (!isActive) {
       // TODO wrap stdin in package attached to blockchain so can be replaced
       debug(`blockchain loaded but torn down`)
