@@ -126,6 +126,7 @@ const dbFactory = (rxdbPromise) => {
     if (!doc) {
       return
     }
+    assert(doc.key.includes($gte), `$gte: ${$gte} wrong key: ${doc.key}`)
     let block = cache.get(doc.key)
     if (!block) {
       const { value } = doc
@@ -163,22 +164,22 @@ const dbFactory = (rxdbPromise) => {
     await settleRxdb()
     debug(`queryLatest %o`, chainId.substring(0, 9))
     const $gte = `${chainId}/blocks/`
-    const $lte = `${chainId}/blocks/~`
-    const rxDocument = await db
+    const $lte = $gte + '~'
+    const doc = await db
       .findOne({
         selector: { key: { $and: [{ $gte }, { $lte }] } },
         sort: [{ key: 'desc' }],
       })
       .exec()
-    if (!rxDocument) {
+    if (!doc) {
       debug(`queryLatest nothing found`)
       return
     }
-    assert(rxDocument.key.includes($gte), `wrong key: ${rxDocument.key}`)
-    let block = cache.get(rxDocument.key)
+    assert(doc.key.includes($gte), `$gte: ${$gte} wrong key: ${doc.key}`)
+    let block = cache.get(doc.key)
     if (!block) {
-      assert(Array.isArray(rxDocument.value))
-      block = Block.restore(rxDocument.value)
+      assert(Array.isArray(doc.value))
+      block = Block.restore(doc.value)
     }
     debug(`queryLatest height: `, block.getHeight())
     return block
@@ -267,7 +268,7 @@ const dbFactory = (rxdbPromise) => {
     await settleRxdb()
     debug(`queryPool`, chainId.substring(0, 9))
     const $gte = `${chainId}/pool/`
-    const $lte = `${chainId}/pool/~`
+    const $lte = $gte + '~'
     const rxDocuments = await db
       .find({ selector: { key: { $and: [{ $gte }, { $lte }] } } })
       .exec()
