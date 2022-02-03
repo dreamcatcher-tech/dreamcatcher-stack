@@ -19,7 +19,8 @@
     "serve": "vite preview",
     "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules --preserve-symlinks node_modules/.bin/jest --bail",
     "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules --preserve-symlinks node_modules/.bin/jest --watch",
-    "bench": "node --preserve-symlinks --experimental-specifier-resolution=node src/w402-benchmarks/bench"
+    "bench": "node --preserve-symlinks --experimental-specifier-resolution=node src/w402-benchmarks/bench",
+    "bench:dev": "nodemon --exec yarn bench"
   },
   "private": false,
   "author": "Dreamcatcher Command",

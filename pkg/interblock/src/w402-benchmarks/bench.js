@@ -1,6 +1,8 @@
 import Benchmark from 'benchmark'
 import { assert } from 'chai'
 import { effectorFactory, apps } from '../..'
+import { Block, Dmz, Keypair } from '../w015-models'
+import { blockProducer, signatureProducer } from '../w016-producers'
 import Debug from 'debug'
 const debug = Debug('interblock:benchmarks')
 const suite = new Benchmark.Suite()
@@ -48,7 +50,10 @@ const addCustomer = async () => {
 }
 
 let id = 0
-
+const keypair = Keypair.create('bench')
+const dmz = Dmz.create({ validators: keypair.getValidatorEntry() })
+let block = Block.create(dmz)
+let stateCounter = 0
 suite
   .add('boot', {
     defer: true,
@@ -94,6 +99,27 @@ suite
     fn: async (deferred) => {
       await addCustomer()
       deferred.resolve()
+    },
+  })
+  .add('block making', {
+    defer: true,
+    fn: async (deferred) => {
+      stateCounter++
+      const state = block.getDmz().state.update({ stateCounter })
+      const nextDmz = block.getDmz().update({ state })
+      const unsignedBlock = blockProducer.generateUnsigned(nextDmz, block)
+      const { integrity } = unsignedBlock.provenance
+      const signature = await signatureProducer.sign(integrity, keypair)
+      block = blockProducer.assemble(unsignedBlock, signature)
+      deferred.resolve()
+    },
+  })
+  .add('unsigned block making', {
+    fn: () => {
+      stateCounter++
+      const state = block.getDmz().state.update({ stateCounter })
+      const nextDmz = block.getDmz().update({ state })
+      block = blockProducer.generateUnsigned(nextDmz, block)
     },
   })
   .on('cycle', (event) => {
