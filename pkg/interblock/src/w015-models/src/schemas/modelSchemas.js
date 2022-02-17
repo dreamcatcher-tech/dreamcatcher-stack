@@ -120,7 +120,7 @@ const provenanceSchema = {
   additionalProperties: false,
   required: [
     'dmzIntegrity',
-    'height', // TODO why care about height in git like structures ?
+    'height', // height matters in git like structures, to provide rapid indexing to history
     'address',
     'lineage',
     'integrity',

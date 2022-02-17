@@ -1,4 +1,5 @@
 {
   "editor.wordWrap": "wordWrapColumn",
-  "debug.console.wordWrap": false
+  "debug.console.wordWrap": false,
+  "cSpell.enableFiletypes": ["!javascript"]
 }

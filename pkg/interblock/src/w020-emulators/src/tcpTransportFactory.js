@@ -108,7 +108,7 @@ const tcpTransportFactory = (url) => {
   const interblock = async (interblock) => {
     const OPEN = 1
     assert.strictEqual(ws.readyState, OPEN, `websocket not open`)
-    ws.send(interblock.serialize())
+    ws.send(interblock.toArray())
   }
 
   return { connect, ping, pingLambda, version, disconnect, interblock }

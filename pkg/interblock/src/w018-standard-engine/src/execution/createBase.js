@@ -1,4 +1,4 @@
-import { Block, Interblock } from '../../../w015-models'
+import { Interblock } from '../../../w015-models'
 
 const createBase = async (ioConsistency, sqsPool) => {
   const baseAddressPromise = tapConsistency(ioConsistency)
