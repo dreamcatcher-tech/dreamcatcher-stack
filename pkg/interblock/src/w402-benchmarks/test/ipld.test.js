@@ -1,5 +1,5 @@
 import { createHAMT } from 'hamt-sharding'
-describe.only('ipld', () => {
+describe('ipld', () => {
   describe('HAMT', () => {
     test('speed', async () => {})
   })

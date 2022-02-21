@@ -1,10 +1,13 @@
 import assert from 'assert-fast'
-import equals from 'fast-deep-equal'
-import { actionSchema } from '../schemas/modelSchemas'
-import { mixin } from '../MapFactory'
 import { assertNoUndefined } from './State'
-export class Action extends mixin(actionSchema) {
-  static create(action, payload = {}) {
+import equals from 'fast-deep-equal'
+import { IpldStruct } from '../IpldStruct'
+import { RawBinary } from './RawBinary'
+import { schemas } from '../schemas/ipldSchemas'
+
+const classMap = { binary: RawBinary }
+export class Action extends IpldStruct {
+  static create(action, payload = {}, binary) {
     if (typeof action === 'undefined') {
       throw new Error(`Actions cannot be undefined`)
     }
@@ -18,6 +21,19 @@ export class Action extends mixin(actionSchema) {
     const s = JSON.stringify(action.payload, null, 2)
     const cloned = JSON.parse(s)
     assert(equals(action.payload, cloned), `payload not POJO ${s}`)
+    if (binary) {
+      action = { ...action, binary }
+    }
+    if (action.binary) {
+      assert(binary instanceof RawBinary)
+    }
     return super.create(action)
+  }
+  static getClassFor(key) {
+    assert(classMap[key], `key not mapped to CID class`)
+    return classMap[key]
+  }
+  static get schema() {
+    return schemas.types.Action
   }
 }
