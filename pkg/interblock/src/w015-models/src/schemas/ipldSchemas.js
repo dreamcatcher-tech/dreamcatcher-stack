@@ -15,11 +15,6 @@ export const schemas = {
         },
       },
     },
-    ContinuationTypes: {
-      kind: 'enum',
-      members: { '@@REJECT': null, '@@PROMISE': null, '@@RESOLVE': null },
-      representation: { string: {} },
-    },
     Action: {
       // Messages for communicating with a reducer.
       // Actions are always delivered as part of a channel between chains.
@@ -32,6 +27,11 @@ export const schemas = {
         binary: { type: 'Link', optional: true },
       },
       representation: { map: {} },
+    },
+    ContinuationTypes: {
+      kind: 'enum',
+      members: { '@@REJECT': null, '@@PROMISE': null, '@@RESOLVE': null },
+      representation: { string: {} },
     },
     Continuation: {
       // make this copy the Action schema, but with an enum for the type ?
@@ -55,9 +55,25 @@ export const schemas = {
       kind: 'struct',
       fields: {
         contents: { type: 'Link' },
-        genesis: { type: { kind: 'link', expectedType: 'Block' } },
+        genesis: { type: { kind: 'link', expectedType: 'Pulse' } },
       },
       representation: { map: {} },
+    },
+    Address: {
+      // special object that wraps a link, just like RawBinary wraps a Block
+      // without it, information attempts to be implied by what a link is
+    },
+    PublicKey: {
+      kind: 'struct',
+      fields: {
+        key: 'String', // supposed to be an IPFS PeerID
+        algorithm: 'String',
+      },
+    },
+    Validators: {
+      kind: 'map',
+      keyType: 'String',
+      valueType: { kind: 'link', expectedType: 'PublicKey' },
     },
     Signature: {
       kind: 'struct',
@@ -80,6 +96,41 @@ export const schemas = {
       },
       representation: { map: {} },
     },
-    // Channel: {},
+    SystemRoles: {
+      kind: 'enum',
+      members: {
+        '..': null,
+        '.': null,
+        './': null,
+        UP_LINK: null,
+        DOWN_LINK: null,
+        PIERCE: null,
+      },
+      representation: { string: {} },
+    },
+    Channel: {
+      kind: 'struct',
+      fields: {
+        genesis: { type: 'Link' },
+        replies: {
+          // TODO can replies point to a specific block ?
+          // TODO height needs to be relative to this channel alone
+          type: { kind: 'map', keyType: 'String', valueType: 'Continuation' },
+        },
+        requests: { type: { kind: 'list' }, valueType: 'Action' },
+        precedent: { type: { kind: 'link', expectedType: 'Pulse' } },
+
+        systemRole: 'SystemRoles',
+        // rxPromises
+        rxRepliesTip: 'String',
+        tip: {
+          // matches up with precedent on the other side
+          type: { kind: 'Link', expectedType: 'Pulse' },
+        },
+        // TODO find some way to imply the height, or remove notions of height ?
+        tipHeight: 'Int',
+      },
+      representation: { map: {} },
+    },
   },
 }
