@@ -10,7 +10,10 @@ let schema = parse(`
     foo Int
     bar Bool
     baz String
+    bob {String: Int}
+    boh [Status]
   }
+  type Moo = SimpleStruct
   type MyMap { String: SimpleStruct }
   type Any union {
 	| Bool   bool
@@ -25,6 +28,12 @@ let schema = parse(`
   type Block struct {
     boo &SimpleStruct
   }
+  type Status enum {
+    | Nope
+    | Yeah
+  }
+  type Replies {String:Status}
+
 `)
 
 const js = {

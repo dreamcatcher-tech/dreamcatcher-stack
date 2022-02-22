@@ -1,7 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { Action, Integrity } from '..'
 import { BlockFactory } from '../src/CIDFactory'
-import { Block } from 'multiformats/block'
 import { RawBinary } from '../src/classes/RawBinary'
 
 describe.only('Action', () => {

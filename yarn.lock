@@ -2957,6 +2957,11 @@ binary-extensions@^2.0.0:
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.2.0.tgz#75f502eeaf9ffde42fc98829645be4ea76bd9e2d"
   integrity sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==
 
+bit-sequence@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/bit-sequence/-/bit-sequence-1.1.0.tgz#a7f2769050153b2b695146031151bd6b40d7dc0b"
+  integrity sha512-xi8Zql4GyDj+31c1P4/okMx1TlcH8km0F3HuKEihePUEUzMcCBQTFdfXxoUTSrDWXy8tKB7iVGv6ppVeOYrG1w==
+
 bl@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/bl/-/bl-4.1.0.tgz#451535264182bec2fbbc83a62ab98cf11d9f7b3a"
@@ -5610,7 +5615,7 @@ graphviz@0.0.9:
   dependencies:
     temp "~0.4.0"
 
-hamt-sharding@^2.0.0, hamt-sharding@^2.0.1:
+hamt-sharding@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/hamt-sharding/-/hamt-sharding-2.0.1.tgz#f45686d0339e74b03b233bee1bde9587727129b6"
   integrity sha512-vnjrmdXG9dDs1m/H4iJ6z0JFI2NtgsW5keRkTcM85NGak69Mkf5PHUqBz+Xs0T4sg0ppvj9O5EGAJo40FTxmmA==
@@ -5791,6 +5796,13 @@ hyphenate-style-name@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/hyphenate-style-name/-/hyphenate-style-name-1.0.4.tgz#691879af8e220aea5750e8827db4ef62a54e361d"
   integrity sha512-ygGZLjmXfPHj+ZWh6LwbC37l43MhfztxetbFCoYTM2VjkIUpeHgSNn7QIyVFj7YQ1Wl9Cbw5sholVJPzWvC2MQ==
+
+iamap@^2.0.0:
+  version "2.0.10"
+  resolved "https://registry.yarnpkg.com/iamap/-/iamap-2.0.10.tgz#48fb1a144e7801bb59e9842b206811cddd92e6da"
+  integrity sha512-B0tJgzzIfnw1nP1rVb8Z3iOg9sT1+j+pytfas8YAZ5j5Pp13rcoz9z6kHLgXxzvVSuMpqykPPgVln2FFphyJIA==
+  dependencies:
+    bit-sequence "^1.1.0"
 
 iconv-lite@0.4.24, iconv-lite@^0.4.24, iconv-lite@^0.4.5:
   version "0.4.24"
@@ -6332,6 +6344,23 @@ ipfs-utils@^9.0.1, ipfs-utils@^9.0.2:
     react-native-fetch-api "^2.0.0"
     stream-to-it "^0.2.2"
 
+ipld-hashmap@^2.1.9:
+  version "2.1.9"
+  resolved "https://registry.yarnpkg.com/ipld-hashmap/-/ipld-hashmap-2.1.9.tgz#3de38d2509cd54eb8b256a3fc04c0a77d56a62a2"
+  integrity sha512-y9PMeNFSGDt2Pn/665hjnfweBFmTDiKZNiFvtH+IL/bYPOfwWr/LpdMoZ/q/7tvFs0sjrlpt+JC3+vh9YiIfvA==
+  dependencies:
+    iamap "^2.0.0"
+    ipld-schema "^1.1.2"
+    ipld-schema-describer "^1.0.3"
+    multiformats "^9.1.2"
+
+ipld-schema-describer@^1.0.3:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/ipld-schema-describer/-/ipld-schema-describer-1.0.9.tgz#7e3e2f18683514fd81d48d6c1fdcad438a197abd"
+  integrity sha512-h+/W33rQIFHd2Cy+S2OswLVjKcQ4u9F6khR0rdmAa6ubsz9vwD1itT9pfOCEAq9guesw+ozEji/C1EZSs6bauA==
+  dependencies:
+    ipld-schema "^1.1.3"
+
 ipld-schema-validator@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/ipld-schema-validator/-/ipld-schema-validator-0.1.0.tgz#37037600961d73045d536cf0e5fb5ba7a967cb09"
@@ -6340,7 +6369,7 @@ ipld-schema-validator@^0.1.0:
     ipld-schema "^1.1.1"
     yargs "^17.0.1"
 
-ipld-schema@^1.1.1:
+ipld-schema@^1.1.1, ipld-schema@^1.1.2, ipld-schema@^1.1.3:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/ipld-schema/-/ipld-schema-1.1.6.tgz#ee8c4e914d05145a15aac5c667aab12173893470"
   integrity sha512-0vHXUkCcOg1vD1OWNqouKnhunhvTuuXmjWavvOnPXRfTf5evB8S0hJoy3iNA/z3Tit9EjczIw218wGempoO9uw==
