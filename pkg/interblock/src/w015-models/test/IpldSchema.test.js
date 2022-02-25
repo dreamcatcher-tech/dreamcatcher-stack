@@ -1,3 +1,4 @@
+import coll from 'ipld-schema/bin/collect-input'
 import { parse } from 'ipld-schema'
 import validate from '@ipld/schema-validation'
 // import { create as validate } from 'ipld-schema-validator' // rvagg
@@ -25,7 +26,7 @@ let schema = parse(`
 	| List   list
 	| Link   link
   } representation kinded
-  type Block struct {
+  type Pulse struct {
     boo &SimpleStruct
   }
   type Status enum {
@@ -33,7 +34,11 @@ let schema = parse(`
     | Yeah
   }
   type Replies {String:Status}
-
+  type Tx struct {
+    genesis &Pulse
+    precedent &Pulse
+    requests [Action]
+  }
 `)
 
 const js = {
@@ -53,7 +58,17 @@ const js = {
 }
 
 describe('ipld schema', () => {
-  test.only('parse', () => {
+  test.only('parse', async () => {
+    const j = await coll(['./src/w015-models/IpldSchemas.md'])
+    console.log(j)
+
+    let m = parse(j[0].contents)
+    console.log(m)
+    writeFileSync(
+      './src/w015-models/IpldSchemas.md.json',
+      JSON.stringify(m, null, 2)
+    )
+
     const control = validate(js)
     console.dir(schema, { depth: Infinity })
     const result = control({ b: { foo: 1, bar: true, baz: 'hello' } }, 'MyMap')

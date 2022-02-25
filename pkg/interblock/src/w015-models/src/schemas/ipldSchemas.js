@@ -59,16 +59,17 @@ export const schemas = {
       },
       representation: { map: {} },
     },
-    Address: {
-      // special object that wraps a link, just like RawBinary wraps a Block
-      // without it, information attempts to be implied by what a link is
-    },
+    // Address: {
+    //   // special object that wraps a link, just like RawBinary wraps a Block
+    //   // without it, information attempts to be implied by what a link is
+    // },
     PublicKey: {
       kind: 'struct',
       fields: {
         key: 'String', // supposed to be an IPFS PeerID
         algorithm: 'String',
       },
+      representation: { map: {} },
     },
     Validators: {
       kind: 'map',
@@ -82,20 +83,21 @@ export const schemas = {
       },
       representation: { map: {} },
     },
-    Remote: {
-      kind: 'struct',
-      fields: {
-        genesis: { type: 'Link' },
-        replies: {
-          // TODO can replies point to a specific block ?
-          // TODO height be relative to this channel alone
-          type: { kind: 'map', keyType: 'String', valueType: 'Continuation' },
-        },
-        requests: { type: { kind: 'list' }, valueType: 'Action' },
-        precedent: { type: { kind: 'link', expectedType: 'Pulse' } },
-      },
-      representation: { map: {} },
-    },
+    // Tx: {
+    //   kind: 'struct',
+    //   fields: {
+    //     genesis: { type: 'Link' },
+    //     requests: { type: { kind: 'list', valueType: 'Action' } },
+    //     replies: {
+    //       // TODO can replies point to a specific block ?
+    //       // TODO height be relative to this channel alone
+    //       type: { kind: 'map', keyType: 'String', valueType: 'Continuation' },
+    //     },
+    //     promises: { type: { kind: 'list', valueType: 'Continuation' } },
+    //     precedent: { type: { kind: 'link', expectedType: 'Pulse' } },
+    //   },
+    //   representation: { map: {} },
+    // },
     SystemRoles: {
       kind: 'enum',
       members: {
@@ -108,29 +110,31 @@ export const schemas = {
       },
       representation: { string: {} },
     },
-    Channel: {
-      kind: 'struct',
-      fields: {
-        genesis: { type: 'Link' },
-        replies: {
-          // TODO can replies point to a specific block ?
-          // TODO height needs to be relative to this channel alone
-          type: { kind: 'map', keyType: 'String', valueType: 'Continuation' },
-        },
-        requests: { type: { kind: 'list' }, valueType: 'Action' },
-        precedent: { type: { kind: 'link', expectedType: 'Pulse' } },
-
-        systemRole: 'SystemRoles',
-        // rxPromises
-        rxRepliesTip: 'String',
-        tip: {
-          // matches up with precedent on the other side
-          type: { kind: 'Link', expectedType: 'Pulse' },
-        },
-        // TODO find some way to imply the height, or remove notions of height ?
-        tipHeight: 'Int',
-      },
-      representation: { map: {} },
-    },
+    // Channel: {
+    //   kind: 'struct',
+    //   fields: {
+    //     tx: { type: { kind: 'Tx' } },
+    //     systemRole: 'SystemRoles',
+    //     tip: {
+    //       // matches up with precedent on the other side
+    //       type: { kind: 'Link', expectedType: 'Pulse' },
+    //     },
+    //   },
+    //   representation: { map: {} },
+    // },
   },
 }
+
+/**
+const RemoteChannelExample = {
+  precedent: CIDPrecedent,
+  requests: [action1, action2, action3],
+  replies: [
+    { CID0: [null, null, lateReply] },
+    { CID1: [reply1, reply2, null, reply4] },
+    { CID2: [reply1, reply2, reply3] },
+  ],
+  promises: [{ CID0: [3, 5, 6, 9] }, { CID1: [2] }],
+  genesis: CIDGenesis,
+}
+*/
