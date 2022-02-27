@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
-import { Action, Integrity } from '..'
-import { BlockFactory } from '../src/CIDFactory'
-import { RawBinary } from '../src/classes/RawBinary'
+import { Action } from '../../src/ipld/Action'
+import { RawBinary } from '../../src/ipld/RawBinary'
+import { BlockFactory } from '../../src/CIDFactory'
 
 describe.only('Action', () => {
   test('throws on blank creation', () => {
@@ -18,10 +18,10 @@ describe.only('Action', () => {
     assert.throws(() => Action.create(nested))
   })
   test('payload must be POJO', () => {
-    const integrity = Integrity.create('Complex object')
+    const complexObject = Action.create('COMPLEX')
     const msg = 'payload not POJO'
-    assert.throws(() => Action.create('TYPE', integrity), msg)
-    assert.throws(() => Action.create('@@RESOLVE', { integrity }), msg)
+    assert.throws(() => Action.create('TYPE', complexObject), msg)
+    assert.throws(() => Action.create('@@RESOLVE', { complexObject }), msg)
   })
   test('with binary', async () => {
     const block = await BlockFactory({ type: 'test' })

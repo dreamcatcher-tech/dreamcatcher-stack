@@ -1,8 +1,8 @@
 import assert from 'assert-fast'
-import { assertNoUndefined } from './State'
+import { assertNoUndefined } from '../utils'
 import equals from 'fast-deep-equal'
 import { IpldStruct } from '../IpldStruct'
-import { RawBinary } from './RawBinary'
+import { RawBinary } from '../ipld/RawBinary'
 import { schemas } from '../schemas/ipldSchemas'
 
 const classMap = { binary: RawBinary }
