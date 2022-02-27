@@ -38,9 +38,9 @@ One of three types. Synchronous replies are resolves or rejections too.
 
 ```sh
 type ContinuationTypes enum {
-    | REJECT
-    | PROMISE
-    | RESOLVE
+    | REJECT("@@REJECT")
+    | PROMISE("@@PROMISE")
+    | RESOLVE("@@RESOLVE")
 }
 type Continuation struct {
     type ContinuationTypes
@@ -158,10 +158,10 @@ type Mux struct {
     promises [IndexedPromise]
 }
 type Tx struct {
-    genesis &Pulse              # The remote genesis aka chainId
-    precedent &Pulse            # The last Pulse this chain sent from
-    system optional Mux         # System messages
-    covenant optional Mux       # Covenant messages
+    genesis &Pulse     # The remote chainId
+    precedent &Pulse   # The last Pulse sent
+    system Mux         # System messages
+    covenant Mux       # Covenant messages
 }
 ```
 
@@ -173,7 +173,7 @@ type Tx struct {
 type Channel struct{
     tx Tx
     systemRole SystemRoles
-    tip &Pulse                  # The last Pulse this chain received
+    tip &Pulse         # The last Pulse this chain received
     system Mux
     covenant Mux
 }

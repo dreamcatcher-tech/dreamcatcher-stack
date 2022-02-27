@@ -45,7 +45,11 @@ export default {
         RESOLVE: null,
       },
       representation: {
-        string: {},
+        string: {
+          REJECT: '@@REJECT',
+          PROMISE: '@@PROMISE',
+          RESOLVE: '@@RESOLVE',
+        },
       },
     },
     Continuation: {
@@ -212,11 +216,9 @@ export default {
         },
         system: {
           type: 'Mux',
-          optional: true,
         },
         covenant: {
           type: 'Mux',
-          optional: true,
         },
       },
       representation: {
