@@ -1,4 +1,5 @@
 import { assert } from 'chai/index.mjs'
+import { Integrity } from '../..'
 import { Action } from '../../src/ipld/Action'
 import { RawBinary } from '../../src/ipld/RawBinary'
 import { BlockFactory } from '../../src/CIDFactory'
