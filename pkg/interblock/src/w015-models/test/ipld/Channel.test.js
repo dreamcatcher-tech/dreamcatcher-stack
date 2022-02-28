@@ -1,5 +1,11 @@
 import { assert } from 'chai/index.mjs'
-import { Action, Address, Channel, Continuation, Provenance } from '..'
+import {
+  Action,
+  Address,
+  Channel,
+  Continuation,
+  Provenance,
+} from '../../src/ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
 Debug.enable()

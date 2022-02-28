@@ -4,6 +4,10 @@ Read the [Guide to IPLD schemas](https://ipld.io/docs/schemas/using/authoring-gu
 
 Any changes to this file need to be followed by running `yarn schemas` to generate the file `src/w014-schemas/ipldSchemas.js` which is imported by all the Models in `w015-models`
 
+## Any
+
+A convenience mapping to allow any javascript object
+
 ```sh
 type Any union {
     | Bool   bool
@@ -17,80 +21,59 @@ type Any union {
 } representation kinded
 ```
 
-## Action
+## Binary
 
-Messages for communicating with a reducer.
-Actions are always delivered as part of a channel between chains.
-These are effectively [Redux](https://redux.js.org) actions, with an addition of an IPLD CID for adding binary data.
+Special in that it exposes a raw link, but adheres to the model interface for interop with the other models here. Similar to Address in that it exposes an IPLD primitive.
 
 ```sh
-type Action struct {
-    type String
-    payload { String : Any }
-    binary optional Link
-}
-```
-
-## Continuation
-
-Actions that implement the continuation system.
-One of three types. Synchronous replies are resolves or rejections too.
-
-```sh
-type ContinuationTypes enum {
-    | REJECT("@@REJECT")
-    | PROMISE("@@PROMISE")
-    | RESOLVE("@@RESOLVE")
-}
-type Continuation struct {
-    type ContinuationTypes
-    payload { String : Any }
-    binary optional Link
-}
-```
-
-## Pulse
-
-```sh
-type Pulse struct {
-    genesis &Pulse
-    lineage Link
-    turnovers Link
-}
-```
-
-## Provenance
-
-Proof of the Provenance of the object referenced by signed integrity.
-The integrity of the first provenance in a chain is the chainId.
-The integrity which is signed is the integrity of the whole object,
-minus "integrity" and "signatures" keys
-
-Integrity can be a merkle proof so a large group of chains with the same
-validators can have all their next blocks signed with a single signature by
-creating signatures for the root hash, then distribute
-to all the chains. This can help with speed as running chains internally
-is much faster than cross block boundaries.
-
-```sh
-type Provenance struct {
-    contents Link
-    signatures Signatures
-}
+type Binary link
 ```
 
 ## Address
 
-Special object that wraps a link, just like RawBinary wraps a Block.
-Without it, information attempts to be implied by what a link is.
+Special object that wraps an IPLD Link, just like Binary wraps an IPLD Block.
+The model includes some predefined link types, for give different types of address, which are `ROOT`, `LOOPBACK`, `INVALID`, and `GENESIS`
 
 ```sh
 type Address link
 ```
 
+## Request
+
+Messages for communicating with a reducer.
+Requests are always delivered as part of a channel between chains.
+These are effectively [Redux](https://redux.js.org) actions, with an addition of an IPLD CID for adding binary data.
+
+```sh
+type Request struct {
+    type String
+    payload { String : Any }
+    binary optional Binary
+}
+```
+
+## Reply
+
+Messages that implement the continuation system.
+One of three types. Immediate replies are resolves or rejections too.
+Later will be extended to cover generators.
+
+```sh
+type ReplyTypes enum {
+    | REJECT("@@REJECT")
+    | PROMISE("@@PROMISE")
+    | RESOLVE("@@RESOLVE")
+}
+type Reply struct {
+    type ReplyTypes
+    payload { String : Any }
+    binary optional Binary
+}
+```
+
 ## Public Key
 
-`key` is an IPFS PeerID
+`key` is the public key from an IPFS PeerID
 
 `PublicKeyTypes` comes from [`js-libp2p-crypto`](https://github.com/libp2p/js-libp2p-crypto/blob/125d33ca7db2b7ef666d1c1425e10827a7555058/src/keys/keys.js#L20)
 
@@ -110,12 +93,16 @@ type PublicKey struct {
 ## Validators
 
 ```sh
-type Validators [PublicKey]
+type Validators struct {
+    quorumThreshold Int
+    validators [&PublicKey]
+}
 ```
 
 ## Signatures
 
-An array of strings that matches the order of the Validators list
+An array of signatures as base encoded strings that matches the order of the Validators list.
+Gaps in the array represent missing signatures, which might still pass quorum.
 
 ```sh
 type Signatures [String]
@@ -147,13 +134,13 @@ const TxExample = {
 ```sh
 type IndexedPromise struct {
     index Int
-    reply Continuation
+    reply &Reply
 }
 type Mux struct {
     requestsIndex Int
-    requests [Action]
+    requests [&Request]
     repliesIndex Int
-    replies [Continuation]
+    replies [&Reply]
     promisesIndex [Int]
     promises [IndexedPromise]
 }
@@ -211,5 +198,174 @@ type Network struct {
     aliases { String : Alias }  # Map of aliases to channelIds
     txs Txs                     # Active channels
     unresolved [Int]            # ChannelIds that are unresolved
+}
+```
+
+## IO
+
+All network channels that have some as yet unsettled activity go here. This avoids needing to walk the whole network list to find out which channels require further processing. During pooling, incoming InterPulses are attached to channels in IO.
+
+```sh
+type IO struct {
+
+}
+```
+
+## Covenant
+
+Provides a CID and some info about a covenant, which is a package of code that is to be executed. The code package links to a raw binary.
+
+```sh
+type PackageTypes enum {
+    | javascript
+    | javascript_xstate
+    | python
+    | go
+    | rust
+    | haskell
+    | c
+    | cpp
+}
+type Covenant struct {
+    name String
+    version String
+    type PackageTypes
+    systemPackage optional String
+    package optional Link
+}
+
+```
+
+## Timestamp
+
+Date example `2011-10-05T14:48:00.000Z`
+
+```sh
+type Timestamp struct {
+    date String     # ISO8601 standard string
+    epochMs Int     # ms since unix epoch
+}
+```
+
+## ACL
+
+```sh
+type ACL struct {
+
+}
+```
+
+## State
+
+CID links inside the State will allow the author to break down their state any way they please. This will not be supported initially, as the State should be kept small enough to be managed as a single object.
+
+```sh
+type State { String : Any }
+```
+
+## Meta
+
+A storage area used to
+
+```sh
+type Meta struct {
+    replies { String: { String : Any }}
+}
+```
+
+## Pending
+
+Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and actionId. It then keeps track of all outbound actions made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests.
+
+This avoids rerunning the covenant many times pointlessly while it is waiting for many actions to resolve, and it keeps giving back the same result.
+
+This structure consists of two arrays - one of all the outbound requests the covenant made, and another of all the so far received replies. The reducer should not be invoked until all the empty slots in the `replies` array have been filled.
+
+```sh
+type RequestId struct {
+    channelId Int
+    requestId Int
+}
+type PendingRequest struct {
+    request &Request
+    to String
+    id RequestId
+}
+type Pending struct {
+    pendingRequest optional RequestId
+    requests [PendingRequest]
+    replies [&Reply]
+}
+```
+
+## Config
+
+```sh
+type SideEffectsConfig struct {
+    networkAccess [String]
+    asyncTimeoutMs Int
+}
+type Interpulse struct {
+    version String
+    package Binary
+}
+type Config struct {
+    isPierced Bool
+    sideEffects SideEffectsConfig
+    isPublicChannelOpen Bool # May specify based on some list of approots
+    acl &ACL
+    interpulse &Interpulse
+}
+```
+
+## PulseContents
+
+The Pulse structure is required to be both the snapshot of a stable state and a working object used to pool with. When in pooling mode, it must be additive, in that if a block was begun with one version of the pool, using IPFS to determine what the diff of the next pool should allow a new blocking effort to begin without any backtracking.
+
+An example of where such backtracking might occur if designed poorly is in the induction of Pierce actions. As these are put into a virtual channel, each time they are pooled, a new virtual Pulse needs to be created, to permit blocking to have already begun, then carry on immediately using the next pooled Trie.
+
+A `StateTreeNode` is used to provide an overlay tree to separate the covenant defined knowledge from the activity that the system operations generate while tending to the covenants intentions.
+
+`lineage` is a tree now, not a chain, and this link points to the root of the tree.
+
+```sh
+type Lineage [Link]
+type Turnovers [&Pulse]  # TODO make into a tree
+type StateTreeNode struct {
+    state &State
+    binary &Binary
+    children { String : &StateTreeNode }
+}
+type PulseContents struct {
+    approot &Pulse
+    validators &Validators
+    config &Config
+    covenant &Covenant
+    binary Binary
+    timestamp Timestamp
+    network &Network
+    state &State
+    meta &Meta
+    pending &Pending
+}
+type Provenance struct {
+    stateTree &StateTreeNode
+    lineage &Lineage         # Must allow merging of N parents
+    turnovers Turnovers
+    genesis &Pulse           # Allows instant chainId lookup
+    contents &PulseContents
+}
+```
+
+## Pulse
+
+The Pulse actual is an array of signatures that satisfy the configuration of the `PulseContents` that the signatures sign off on.
+
+The CID of the first Pulse is the chainId.
+
+```sh
+type Pulse struct {
+    provenance &Provenance
+    signatures Signatures
 }
 ```

@@ -1,7 +1,4 @@
 import assert from 'assert-fast'
-import { assertNoUndefined } from './classes/State'
-import equals from 'fast-deep-equal'
-import { schemas } from './schemas/ipldSchemas'
 import { CID } from 'multiformats/cid'
 import { Block } from 'multiformats/block'
 import { BlockFactory } from './CIDFactory'

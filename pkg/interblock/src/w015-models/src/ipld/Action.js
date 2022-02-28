@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
-import { assertNoUndefined } from '../utils'
+import { assertNoUndefined } from './utils'
 import equals from 'fast-deep-equal'
-import { IpldStruct } from '../IpldStruct'
+import { IpldStruct } from './IpldStruct'
 import { RawBinary } from '.'
 import { schemas } from '../schemas/ipldSchemas'
 

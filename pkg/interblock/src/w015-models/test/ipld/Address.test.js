@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Address, Integrity } from '..'
+import { Address } from '../../src/ipld'
 
 describe('address', () => {
   test('no params makes unknown address', () => {

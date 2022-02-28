@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
 import { encode, Block } from 'multiformats/block'
-import { IpldInterface } from '../IpldInterface'
+import { IpldInterface } from './IpldInterface'
 import * as codec from 'multiformats/codecs/raw'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 
