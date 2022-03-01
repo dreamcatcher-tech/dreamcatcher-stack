@@ -32,7 +32,9 @@ type Binary link
 ## Address
 
 Special object that wraps an IPLD Link, just like Binary wraps an IPLD Block.
-The model includes some predefined link types, for give different types of address, which are `ROOT`, `LOOPBACK`, `INVALID`, and `GENESIS`
+The model includes some predefined link types: `ROOT`, `LOOPBACK`, `INVALID`, and `GENESIS`.
+
+Addresses are always CID version 0, which makes them easy to distinguish at a glance from `Pulse`s and `Binary`s, which are CID version 1.
 
 ```sh
 type Address link
@@ -56,7 +58,7 @@ type Request struct {
 
 Messages that implement the continuation system.
 One of three types. Immediate replies are resolves or rejections too.
-Later will be extended to cover generators.
+Later will be extended to implement generators.
 
 ```sh
 type ReplyTypes enum {
@@ -85,7 +87,7 @@ type PublicKeyTypes enum {
 }
 type PublicKey struct {
     key String
-    name String
+    nickname String
     algorithm PublicKeyTypes
 }
 ```
@@ -110,30 +112,38 @@ type Signatures [String]
 
 ## Tx
 
-A transmission that is destined for some chainId, which might be as yet unresolved.
-
-CID links cannot be used as keys in maps, hence the use of nested arrays.
-The CIDs must be provided in order.
-
-The sneaky part is that the CID of an action is actually the precedent of the InterPulse that it arrived on. This is so that a permanent ID can be given to an action when it is created, which is a time when the currently Pulsehash is unknown.
+A transmission that is destined for some chainId, which might be as yet unresolved.  
+At the start of each block, all transmitting channels are zeroed. Validators may coordinate transmission workloads by sharing the pooled softblock where they each zero out channels as they get sent, to ensure all interblocks are sent, and to parallelize the work.
 
 ```js
 const TxExample = {
-  genesis: CIDGenesis,
-  precedent: CIDPrecedent,
-
-  requestsIndex: 23423,
-  requests: [action1, action2, action3],
-  repliesIndex: 3324,
-  replies: [reply1, reply2, reply3, reply4]
-  promisesIndex: [ 32, 434, 435 ],
-  promises: [ { index: 12, reply: reply5 }, { index: 9, reply: reply6 } ]
+    genesis: CIDGenesis,
+    precedent: CIDPrecedent,
+    system: {
+        requestsIndex: 23423,
+        requests: [action1, action2, action3],
+        repliesIndex: 3324,
+        replies: [reply1, reply2, reply3, reply4]
+        promisedIds: [ 32, 434, 435 ],
+        promises: [
+            { index: 12, reply: reply5 },
+            { index: 9, reply: reply6 }
+        ]
+    },
+    covenant: {
+        requestsIndex: 84587,
+        requests: [],
+        repliesIndex: 868594,
+        replies: [reply1]
+        promisedIds: [ 3, 562, 9923 ],
+        promises: []
+    }
 }
 ```
 
 ```sh
-type IndexedPromise struct {
-    index Int
+type Settle struct {
+    requestId Int
     reply &Reply
 }
 type Mux struct {
@@ -141,12 +151,12 @@ type Mux struct {
     requests [&Request]
     repliesIndex Int
     replies [&Reply]
-    promisesIndex [Int]
-    promises [IndexedPromise]
+    promisedIds [Int]
+    promisedReplies [Settle]
 }
 type Tx struct {
-    genesis &Pulse     # The remote chainId
-    precedent &Pulse   # The last Pulse sent
+    genesis &Address   # The remote chainId
+    precedent &Pulse   # The last Pulse this chain sent
     system Mux         # System messages
     covenant Mux       # Covenant messages
 }
@@ -154,15 +164,18 @@ type Tx struct {
 
 ## Channel
 
-`tip` matches up with precedent on the other side
+`tip` matches up with precedent on the other side.
 
 ```sh
-type Channel struct{
+type RxTracker struct { # tracks what counters each ingestion is up to
+    requestsTip Int
+    repliesTip Int
+}
+type Channel struct {
+    tip &Pulse          # The last Pulse this chain received
+    system RxTracker
+    covenant RxTracker
     tx Tx
-    systemRole SystemRoles
-    tip &Pulse         # The last Pulse this chain received
-    system Mux
-    covenant Mux
 }
 ```
 
@@ -172,42 +185,27 @@ Every channel is given an index, which is monotonic since the start of the chain
 This ID stays with the channel for its entire lifecycle.
 Internally, everything references channels by this id, with the advantage being communications are unaffected by renames or resolving the chainId, and when actions are dispatched, a unique identifier can be given to the action sender regardless of the current point in the lifecycle of the chain.
 
-If a channel still has some activity that it is trying to do, it is in the Txs list.
-
 If a channel is unresolved, it is in the unresolved list, which is actively managed by the system. This is a list of ints that reference the channels list for this items that are unresolved.
 
 There may be many aliases mapped to the same channelId.
 
 ```sh
-type Txs struct {
-}
 type SystemRoles enum {
-    | PARENT
-    | LOOPBACK
-    | CHILD
+    | PARENT("..")
+    | LOOPBACK(".")
+    | CHILD("./")
     | UP_LINK
     | DOWN_LINK
     | PIERCE
 }
 type Alias struct {
     systemRole SystemRoles
-    channelIndex Int
+    channelId Int
 }
 type Network struct {
-    channels [ Channel ]        # Array of channels where the index is the channelId
-    aliases { String : Alias }  # Map of aliases to channelIds
-    txs Txs                     # Active channels
-    unresolved [Int]            # ChannelIds that are unresolved
-}
-```
-
-## IO
-
-All network channels that have some as yet unsettled activity go here. This avoids needing to walk the whole network list to find out which channels require further processing. During pooling, incoming InterPulses are attached to channels in IO.
-
-```sh
-type IO struct {
-
+    counter Int
+    channels { String : Channel }   # Map of channelIds to channels
+    aliases { String : Alias }      # Map of aliases to channelIds
 }
 ```
 
@@ -249,6 +247,8 @@ type Timestamp struct {
 
 ## ACL
 
+Will contain a list of what groups have access to what paths, and what actions they can use at those paths. Then, a list of users to groups. Basically copying Linux, so probably chmod will be stored with the chains.
+
 ```sh
 type ACL struct {
 
@@ -265,7 +265,7 @@ type State { String : Any }
 
 ## Meta
 
-A storage area used to
+A storage area used to track information used by the system as it manages its own chain and the interactions with other chains. Eg: used to track genesis actions so it knows which action to reply to.
 
 ```sh
 type Meta struct {
@@ -300,6 +300,8 @@ type Pending struct {
 
 ## Config
 
+Entropy is a seed used to provide pseudorandomness to the chain. Initially it is used to ensure the genesis blocks are strongly unique, but every time a function requests some random data, we increment the count, then run a twister function that many times to generate the randomness. The count can be zeroed by storing the current value of the twister. If the covenant is pending, this count is not increased, but rather the count in Pending slice is increased temporarily.
+
 ```sh
 type SideEffectsConfig struct {
     networkAccess [String]
@@ -309,12 +311,17 @@ type Interpulse struct {
     version String
     package Binary
 }
+type Entropy struct {
+    seed String
+    count Int
+}
 type Config struct {
     isPierced Bool
     sideEffects SideEffectsConfig
     isPublicChannelOpen Bool # May specify based on some list of approots
     acl &ACL
     interpulse &Interpulse
+    entropy Entropy
 }
 ```
 
@@ -350,8 +357,8 @@ type PulseContents struct {
 }
 type Provenance struct {
     stateTree &StateTreeNode
-    lineage &Lineage         # Must allow merging of N parents
-    turnovers Turnovers
+    lineageTree &Lineage     # Must allow merging of N parents
+    turnoversTree Turnovers
     genesis &Pulse           # Allows instant chainId lookup
     contents &PulseContents
 }

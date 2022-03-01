@@ -97,7 +97,7 @@ export default {
         key: {
           type: 'String',
         },
-        name: {
+        nickname: {
           type: 'String',
         },
         algorithm: {
@@ -132,10 +132,10 @@ export default {
       kind: 'list',
       valueType: 'String',
     },
-    IndexedPromise: {
+    Settle: {
       kind: 'struct',
       fields: {
-        index: {
+        requestId: {
           type: 'Int',
         },
         reply: {
@@ -176,16 +176,16 @@ export default {
             },
           },
         },
-        promisesIndex: {
+        promisedIds: {
           type: {
             kind: 'list',
             valueType: 'Int',
           },
         },
-        promises: {
+        promisedReplies: {
           type: {
             kind: 'list',
-            valueType: 'IndexedPromise',
+            valueType: 'Settle',
           },
         },
       },
@@ -199,7 +199,7 @@ export default {
         genesis: {
           type: {
             kind: 'link',
-            expectedType: 'Pulse',
+            expectedType: 'Address',
           },
         },
         precedent: {
@@ -219,15 +219,23 @@ export default {
         map: {},
       },
     },
+    RxTracker: {
+      kind: 'struct',
+      fields: {
+        requestsTip: {
+          type: 'Int',
+        },
+        repliesTip: {
+          type: 'Int',
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
     Channel: {
       kind: 'struct',
       fields: {
-        tx: {
-          type: 'Tx',
-        },
-        systemRole: {
-          type: 'SystemRoles',
-        },
         tip: {
           type: {
             kind: 'link',
@@ -235,19 +243,15 @@ export default {
           },
         },
         system: {
-          type: 'Mux',
+          type: 'RxTracker',
         },
         covenant: {
-          type: 'Mux',
+          type: 'RxTracker',
+        },
+        tx: {
+          type: 'Tx',
         },
       },
-      representation: {
-        map: {},
-      },
-    },
-    Txs: {
-      kind: 'struct',
-      fields: {},
       representation: {
         map: {},
       },
@@ -263,7 +267,11 @@ export default {
         PIERCE: null,
       },
       representation: {
-        string: {},
+        string: {
+          PARENT: '..',
+          LOOPBACK: '.',
+          CHILD: './',
+        },
       },
     },
     Alias: {
@@ -272,7 +280,7 @@ export default {
         systemRole: {
           type: 'SystemRoles',
         },
-        channelIndex: {
+        channelId: {
           type: 'Int',
         },
       },
@@ -283,9 +291,13 @@ export default {
     Network: {
       kind: 'struct',
       fields: {
+        counter: {
+          type: 'Int',
+        },
         channels: {
           type: {
-            kind: 'list',
+            kind: 'map',
+            keyType: 'String',
             valueType: 'Channel',
           },
         },
@@ -296,23 +308,7 @@ export default {
             valueType: 'Alias',
           },
         },
-        txs: {
-          type: 'Txs',
-        },
-        unresolved: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
-          },
-        },
       },
-      representation: {
-        map: {},
-      },
-    },
-    IO: {
-      kind: 'struct',
-      fields: {},
       representation: {
         map: {},
       },
@@ -495,6 +491,20 @@ export default {
         map: {},
       },
     },
+    Entropy: {
+      kind: 'struct',
+      fields: {
+        seed: {
+          type: 'String',
+        },
+        count: {
+          type: 'Int',
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
     Config: {
       kind: 'struct',
       fields: {
@@ -518,6 +528,9 @@ export default {
             kind: 'link',
             expectedType: 'Interpulse',
           },
+        },
+        entropy: {
+          type: 'Entropy',
         },
       },
       representation: {
@@ -636,13 +649,13 @@ export default {
             expectedType: 'StateTreeNode',
           },
         },
-        lineage: {
+        lineageTree: {
           type: {
             kind: 'link',
             expectedType: 'Lineage',
           },
         },
-        turnovers: {
+        turnoversTree: {
           type: 'Turnovers',
         },
         genesis: {
