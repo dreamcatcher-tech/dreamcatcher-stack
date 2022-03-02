@@ -58,7 +58,7 @@ type Request struct {
 
 Messages that implement the continuation system.
 One of three types. Immediate replies are resolves or rejections too.
-Later will be extended to implement generators.
+Later these types will be extended to implement generators.
 
 ```sh
 type ReplyTypes enum {
@@ -113,52 +113,52 @@ type Signatures [String]
 ## Tx
 
 A transmission that is destined for some chainId, which might be as yet unresolved.  
-At the start of each block, all transmitting channels are zeroed. Validators may coordinate transmission workloads by sharing the pooled softblock where they each zero out channels as they get sent, to ensure all interblocks are sent, and to parallelize the work.
+At the start of each block, all transmitting channels are zeroed and the precedent is updated. Validators may coordinate transmission workloads by sharing the pooled softblock where they each zero out channels as they get sent, to ensure all interblocks are sent, and to parallelize the work.
 
 ```js
 const TxExample = {
     genesis: CIDGenesis,
     precedent: CIDPrecedent,
     system: {
-        requestsIndex: 23423,
+        requestsStart: 23423,
         requests: [action1, action2, action3],
-        repliesIndex: 3324,
+        repliesStart: 3324,
         replies: [reply1, reply2, reply3, reply4]
         promisedIds: [ 32, 434, 435 ],
-        promises: [
-            { index: 12, reply: reply5 },
-            { index: 9, reply: reply6 }
+        promisedReplies: [
+            { requestId: 12, reply: reply5 },
+            { requestId: 9, reply: reply6 }
         ]
     },
     covenant: {
-        requestsIndex: 84587,
+        requestsStart: 84587,
         requests: [],
-        repliesIndex: 868594,
+        repliesStart: 868594,
         replies: [reply1]
         promisedIds: [ 3, 562, 9923 ],
-        promises: []
+        promisedReplies: []
     }
 }
 ```
 
 ```sh
-type Settle struct {
+type PromisedReply struct {
     requestId Int
     reply &Reply
 }
-type Mux struct {
-    requestsIndex Int
+type TxQueue struct {
+    requestsStart Int
     requests [&Request]
-    repliesIndex Int
+    repliesStart Int
     replies [&Reply]
     promisedIds [Int]
-    promisedReplies [Settle]
+    promisedReplies [PromisedReply]
 }
 type Tx struct {
-    genesis &Address   # The remote chainId
+    genesis Address   # The remote chainId
     precedent &Pulse   # The last Pulse this chain sent
-    system Mux         # System messages
-    covenant Mux       # Covenant messages
+    system TxQueue         # System messages
+    covenant TxQueue       # Covenant messages
 }
 ```
 
@@ -185,9 +185,9 @@ Every channel is given an index, which is monotonic since the start of the chain
 This ID stays with the channel for its entire lifecycle.
 Internally, everything references channels by this id, with the advantage being communications are unaffected by renames or resolving the chainId, and when actions are dispatched, a unique identifier can be given to the action sender regardless of the current point in the lifecycle of the chain.
 
-If a channel is unresolved, it is in the unresolved list, which is actively managed by the system. This is a list of ints that reference the channels list for this items that are unresolved.
-
 There may be many aliases mapped to the same channelId.
+
+Strings are used in the channels map, to effectively give sparse arrays in json.
 
 ```sh
 type SystemRoles enum {
@@ -211,7 +211,15 @@ type Network struct {
 
 ## Covenant
 
-Provides a CID and some info about a covenant, which is a package of code that is to be executed. The code package links to a raw binary.
+The Covenant system uses a PulseChain to represent a code package and its various revisions. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod.
+
+The PulseChain will include CID links to the git repos that the code was generated from, strengthening the link between running code and committed code.
+
+To determine what packages to load, we need to be told what chainId to look for, and then which specific Pulse in that PulseChain contains the version we will be running. In development mode, we override this lookup by developer supplied functions at runtime, to allow rapid feedback.
+
+Publishing new versions of your code is done by making a new Pulse in the PulseChain. Your software package may be connected to, or listed on an aggregator PulseChain, to allow centralized searching. Permissions and other management concerns are handled with the standard PulseChain methods.
+
+To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the schema below. System covenants are loaded from the chain that they publish from, the same as user supplied covenants, except we shortcut the lookup and load process, and we also skip containment.
 
 ```sh
 type PackageTypes enum {
@@ -224,12 +232,16 @@ type PackageTypes enum {
     | c
     | cpp
 }
-type Covenant struct {
+type PackageState struct {  # Basically package.json excerpts
     name String
     version String
     type PackageTypes
-    systemPackage optional String
-    package optional Link
+}
+type Covenant struct {
+    genesis Address
+    pulse &Pulse
+    info &PackageState      # Link to the info in the Pulse
+    package Binary          # link to the binary of the Pulse
 }
 
 ```
@@ -241,17 +253,16 @@ Date example `2011-10-05T14:48:00.000Z`
 ```sh
 type Timestamp struct {
     date String     # ISO8601 standard string
-    epochMs Int     # ms since unix epoch
 }
 ```
 
 ## ACL
 
-Will contain a list of what groups have access to what paths, and what actions they can use at those paths. Then, a list of users to groups. Basically copying Linux, so probably chmod will be stored with the chains.
+Will contain a list of what groups have access to what paths, and what actions they can use at those paths. Then, a list of users to groups. Basically copying Linux, so chmod permissions will be stored with the chains rather than in a central list.
 
 ```sh
 type ACL struct {
-
+    # ACL will be done in a future revision
 }
 ```
 
@@ -270,14 +281,13 @@ A storage area used to track information used by the system as it manages its ow
 ```sh
 type Meta struct {
     replies { String: { String : Any }}
+    deploy { String : Any }     # track ongoing deploy operations
 }
 ```
 
 ## Pending
 
-Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and actionId. It then keeps track of all outbound actions made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests.
-
-This avoids rerunning the covenant many times pointlessly while it is waiting for many actions to resolve, and it keeps giving back the same result.
+Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and actionId. It then keeps track of all outbound actions made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.
 
 This structure consists of two arrays - one of all the outbound requests the covenant made, and another of all the so far received replies. The reducer should not be invoked until all the empty slots in the `replies` array have been filled.
 
@@ -288,7 +298,7 @@ type RequestId struct {
 }
 type PendingRequest struct {
     request &Request
-    to String
+    to String       # Alias at time of invocation
     id RequestId
 }
 type Pending struct {
@@ -300,7 +310,7 @@ type Pending struct {
 
 ## Config
 
-Entropy is a seed used to provide pseudorandomness to the chain. Initially it is used to ensure the genesis blocks are strongly unique, but every time a function requests some random data, we increment the count, then run a twister function that many times to generate the randomness. The count can be zeroed by storing the current value of the twister. If the covenant is pending, this count is not increased, but rather the count in Pending slice is increased temporarily.
+Entropy is a seed used to provide pseudorandomness to the chain. Initially it is used to ensure the genesis blocks are strongly unique, but every time a function requests some random data, we increment the count, then run a twister function that many times to generate the randomness. The count is zeroed each Pulse by storing the current value of the twister. If the covenant is pending, this count is not increased, but rather the count in Pending slice is increased temporarily.
 
 ```sh
 type SideEffectsConfig struct {
@@ -318,36 +328,32 @@ type Entropy struct {
 type Config struct {
     isPierced Bool
     sideEffects SideEffectsConfig
-    isPublicChannelOpen Bool # May specify based on some list of approots
+    isPublicChannelOpen Bool # May be list of approots
     acl &ACL
     interpulse &Interpulse
     entropy Entropy
+    covenant &Covenant
 }
 ```
 
 ## PulseContents
 
-The Pulse structure is required to be both the snapshot of a stable state and a working object used to pool with. When in pooling mode, it must be additive, in that if a block was begun with one version of the pool, using IPFS to determine what the diff of the next pool should allow a new blocking effort to begin without any backtracking.
+The Pulse structure is required to be both the snapshot of a stable state and a working object used to pool with and process with. When in pooling mode, it must be additive, in that if a block was begun with one version of the pool, using IPFS to determine what the diff of the next pool should allow a new blocking effort to begin without any backtracking.
 
-An example of where such backtracking might occur if designed poorly is in the induction of Pierce actions. As these are put into a virtual channel, each time they are pooled, a new virtual Pulse needs to be created, to permit blocking to have already begun, then carry on immediately using the next pooled Trie.
-
-A `StateTreeNode` is used to provide an overlay tree to separate the covenant defined knowledge from the activity that the system operations generate while tending to the covenants intentions.
-
-`lineage` is a tree now, not a chain, and this link points to the root of the tree.
+An example of where such backtracking might occur if designed poorly is in the induction of Pierce actions. As these are put into a virtual channel, each time they are pooled, a new virtual Pulse needs to be created, to permit blocking to have already begun, then carry on immediately using the next pooled DAG.
 
 ```sh
-type Lineage [Link]
-type Turnovers [&Pulse]  # TODO make into a tree
+type Lineage [Link]         # TODO define DAG tighter
+type Turnovers [&Pulse]     # TODO make into a tree
 type StateTreeNode struct {
     state &State
     binary &Binary
     children { String : &StateTreeNode }
 }
 type PulseContents struct {
-    approot &Pulse
+    approot &Pulse          # The latest known approot
     validators &Validators
     config &Config
-    covenant &Covenant
     binary Binary
     timestamp Timestamp
     network &Network
@@ -355,11 +361,24 @@ type PulseContents struct {
     meta &Meta
     pending &Pending
 }
+```
+
+## Provenance
+
+Basically answers where did the current `PulseContents` come from.
+
+A `StateTreeNode` is used to provide an overlay tree to separate the covenant defined knowledge from the activity that the system operations generate while tending to the covenants intentions.
+
+`lineageTree` is a tree now, not a chain, and this link points to the root of the tree.
+
+`turnoversTree` lists all the `Pulse`s that changed the validator set or quorum threshold, to allow rapid validation without seeing every block in the chain.
+
+```sh
 type Provenance struct {
     stateTree &StateTreeNode
     lineageTree &Lineage     # Must allow merging of N parents
-    turnoversTree Turnovers
-    genesis &Pulse           # Allows instant chainId lookup
+    turnoversTree &Turnovers
+    genesis Address
     contents &PulseContents
 }
 ```

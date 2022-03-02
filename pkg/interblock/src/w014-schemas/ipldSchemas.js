@@ -132,7 +132,7 @@ export default {
       kind: 'list',
       valueType: 'String',
     },
-    Settle: {
+    PromisedReply: {
       kind: 'struct',
       fields: {
         requestId: {
@@ -149,10 +149,10 @@ export default {
         map: {},
       },
     },
-    Mux: {
+    TxQueue: {
       kind: 'struct',
       fields: {
-        requestsIndex: {
+        requestsStart: {
           type: 'Int',
         },
         requests: {
@@ -164,7 +164,7 @@ export default {
             },
           },
         },
-        repliesIndex: {
+        repliesStart: {
           type: 'Int',
         },
         replies: {
@@ -185,7 +185,7 @@ export default {
         promisedReplies: {
           type: {
             kind: 'list',
-            valueType: 'Settle',
+            valueType: 'PromisedReply',
           },
         },
       },
@@ -197,10 +197,7 @@ export default {
       kind: 'struct',
       fields: {
         genesis: {
-          type: {
-            kind: 'link',
-            expectedType: 'Address',
-          },
+          type: 'Address',
         },
         precedent: {
           type: {
@@ -209,10 +206,10 @@ export default {
           },
         },
         system: {
-          type: 'Mux',
+          type: 'TxQueue',
         },
         covenant: {
-          type: 'Mux',
+          type: 'TxQueue',
         },
       },
       representation: {
@@ -329,7 +326,7 @@ export default {
         string: {},
       },
     },
-    Covenant: {
+    PackageState: {
       kind: 'struct',
       fields: {
         name: {
@@ -341,13 +338,31 @@ export default {
         type: {
           type: 'PackageTypes',
         },
-        systemPackage: {
-          type: 'String',
-          optional: true,
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Covenant: {
+      kind: 'struct',
+      fields: {
+        genesis: {
+          type: 'Address',
+        },
+        pulse: {
+          type: {
+            kind: 'link',
+            expectedType: 'Pulse',
+          },
+        },
+        info: {
+          type: {
+            kind: 'link',
+            expectedType: 'PackageState',
+          },
         },
         package: {
-          type: 'Link',
-          optional: true,
+          type: 'Binary',
         },
       },
       representation: {
@@ -359,9 +374,6 @@ export default {
       fields: {
         date: {
           type: 'String',
-        },
-        epochMs: {
-          type: 'Int',
         },
       },
       representation: {
@@ -392,6 +404,13 @@ export default {
               keyType: 'String',
               valueType: 'Any',
             },
+          },
+        },
+        deploy: {
+          type: {
+            kind: 'map',
+            keyType: 'String',
+            valueType: 'Any',
           },
         },
       },
@@ -532,6 +551,12 @@ export default {
         entropy: {
           type: 'Entropy',
         },
+        covenant: {
+          type: {
+            kind: 'link',
+            expectedType: 'Covenant',
+          },
+        },
       },
       representation: {
         map: {},
@@ -599,12 +624,6 @@ export default {
             expectedType: 'Config',
           },
         },
-        covenant: {
-          type: {
-            kind: 'link',
-            expectedType: 'Covenant',
-          },
-        },
         binary: {
           type: 'Binary',
         },
@@ -656,13 +675,13 @@ export default {
           },
         },
         turnoversTree: {
-          type: 'Turnovers',
-        },
-        genesis: {
           type: {
             kind: 'link',
-            expectedType: 'Pulse',
+            expectedType: 'Turnovers',
           },
+        },
+        genesis: {
+          type: 'Address',
         },
         contents: {
           type: {
