@@ -32,7 +32,13 @@ type Binary link
 ## Address
 
 Special object that wraps an IPLD Link, just like Binary wraps an IPLD Block.
-The model includes some predefined link types: `ROOT`, `LOOPBACK`, `INVALID`, and `GENESIS`.
+The model includes these constants:
+
+1. UNKNOWN `QmVQEFQi81SSbZaezrm78p333EGeYzfEZyvCnX848KaMCw`
+1. ROOT `QmSawJHmTNpaUjDYWCE9RgoHTpKbi6JD7TuGESFbtZ4ZLc`
+1. LOOPBACK `Qme2gGBx8EnSrXc5shQF867KPQd4jwubNov67KEKZbo4p3`
+1. INVALID `QmYSWwmJ4w1pZ6igGRNKcVHpBU68iaumYEjsdbMpxfAQaj`
+1. GENESIS `QmZTKF2kuFHy8isKWXpNeNa5zjeJwsHUbPbTNF1fS8HkpB`
 
 Addresses are always CID version 0, which makes them easy to distinguish at a glance from `Pulse`s and `Binary`s, which are CID version 1.
 
@@ -252,7 +258,7 @@ Date example `2011-10-05T14:48:00.000Z`
 
 ```sh
 type Timestamp struct {
-    date String     # ISO8601 standard string
+    isoDate String     # ISO8601 standard string
 }
 ```
 
@@ -336,7 +342,7 @@ type Config struct {
 }
 ```
 
-## PulseContents
+## Dmz
 
 The Pulse structure is required to be both the snapshot of a stable state and a working object used to pool with and process with. When in pooling mode, it must be additive, in that if a block was begun with one version of the pool, using IPFS to determine what the diff of the next pool should allow a new blocking effort to begin without any backtracking.
 
@@ -350,7 +356,7 @@ type StateTreeNode struct {
     binary &Binary
     children { String : &StateTreeNode }
 }
-type PulseContents struct {
+type Dmz struct {
     approot &Pulse          # The latest known approot
     validators &Validators
     config &Config
@@ -365,7 +371,7 @@ type PulseContents struct {
 
 ## Provenance
 
-Basically answers where did the current `PulseContents` come from.
+Basically answers where did the current snapshot of the `Dmz` come from.
 
 A `StateTreeNode` is used to provide an overlay tree to separate the covenant defined knowledge from the activity that the system operations generate while tending to the covenants intentions.
 
@@ -379,13 +385,13 @@ type Provenance struct {
     lineageTree &Lineage     # Must allow merging of N parents
     turnoversTree &Turnovers
     genesis Address
-    contents &PulseContents
+    contents &Dmz
 }
 ```
 
 ## Pulse
 
-The Pulse actual is an array of signatures that satisfy the configuration of the `PulseContents` that the signatures sign off on.
+The Pulse actual is an array of signatures that satisfy the configuration of the `Dmz` that the signatures sign off on.
 
 The CID of the first Pulse is the chainId.
 
