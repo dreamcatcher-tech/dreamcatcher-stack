@@ -1,11 +1,11 @@
 import assert from 'assert-fast'
 import { assertNoUndefined } from '../ipld/utils'
 import equals from 'fast-deep-equal'
-import { IpldStruct } from '../IpldStruct'
-import { RawBinary } from '../ipld/RawBinary'
+import { IpldStruct } from '../ipld/IpldStruct'
+import { Binary } from '../ipld/Binary'
 import { schemas } from '../schemas/ipldSchemas'
 
-const classMap = { binary: RawBinary }
+const classMap = { binary: Binary }
 export class Action extends IpldStruct {
   static create(action, payload = {}, binary) {
     if (typeof action === 'undefined') {
@@ -25,7 +25,7 @@ export class Action extends IpldStruct {
       action = { ...action, binary }
     }
     if (action.binary) {
-      assert(binary instanceof RawBinary)
+      assert(binary instanceof Binary)
     }
     return super.create(action)
   }

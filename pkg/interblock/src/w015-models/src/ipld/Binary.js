@@ -5,7 +5,7 @@ import { IpldInterface } from './IpldInterface'
 import * as codec from 'multiformats/codecs/raw'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 
-export class RawBinary extends IpldInterface {
+export class Binary extends IpldInterface {
   // TODO use the unixFS API so these objects are browseable
   #ipldBlock
   static async create(value) {

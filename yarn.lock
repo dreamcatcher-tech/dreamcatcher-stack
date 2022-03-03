@@ -634,6 +634,13 @@
   dependencies:
     multiformats "^9.5.4"
 
+"@ipld/dag-pb@^2.1.16":
+  version "2.1.16"
+  resolved "https://registry.yarnpkg.com/@ipld/dag-pb/-/dag-pb-2.1.16.tgz#7133fec4f1bbce8fedb859bc2d477a0a2401de93"
+  integrity sha512-5+A87ZsKZ2yEEjtW6LIzTgDJcm6O24d0lmXlubwtMblI5ZB+aTw7PH6kjc8fM6pbnNtVg4Y+c+WZ3zCxdesIBg==
+  dependencies:
+    multiformats "^9.5.4"
+
 "@ipld/schema-validation@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@ipld/schema-validation/-/schema-validation-1.1.0.tgz#64ab4d02b6a72d325dec3c2759a161746620df7f"
