@@ -1,1 +1,1 @@
-// import {} from Ip
+export default './ipldSchemas'

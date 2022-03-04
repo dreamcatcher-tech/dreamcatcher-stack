@@ -103,7 +103,7 @@ type PublicKey struct {
 ```sh
 type Validators struct {
     quorumThreshold Int
-    validators [&PublicKey]
+    publicKeys [&PublicKey]
 }
 ```
 
@@ -308,7 +308,7 @@ type PendingRequest struct {
     id RequestId
 }
 type Pending struct {
-    pendingRequest optional RequestId
+    pendingRequest RequestId
     requests [PendingRequest]
     replies [&Reply]
 }
@@ -357,15 +357,15 @@ type StateTreeNode struct {
     children { String : &StateTreeNode }
 }
 type Dmz struct {
-    approot &Pulse          # The latest known approot
     validators &Validators
     config &Config
-    binary Binary
     timestamp Timestamp
     network &Network
     state &State
     meta &Meta
-    pending &Pending
+    pending optional &Pending
+    approot optional &Pulse          # The latest known approot
+    binary optional Binary
 }
 ```
 
