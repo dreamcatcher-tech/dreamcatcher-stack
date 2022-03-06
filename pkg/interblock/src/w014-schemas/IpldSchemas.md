@@ -92,8 +92,8 @@ type PublicKeyTypes enum {
     | RSA
 }
 type PublicKey struct {
+    name String
     key String
-    nickname String
     algorithm PublicKeyTypes
 }
 ```
@@ -349,13 +349,6 @@ The Pulse structure is required to be both the snapshot of a stable state and a 
 An example of where such backtracking might occur if designed poorly is in the induction of Pierce actions. As these are put into a virtual channel, each time they are pooled, a new virtual Pulse needs to be created, to permit blocking to have already begun, then carry on immediately using the next pooled DAG.
 
 ```sh
-type Lineage [Link]         # TODO define DAG tighter
-type Turnovers [&Pulse]     # TODO make into a tree
-type StateTreeNode struct {
-    state &State
-    binary &Binary
-    children { String : &StateTreeNode }
-}
 type Dmz struct {
     validators &Validators
     config &Config
@@ -380,6 +373,13 @@ A `StateTreeNode` is used to provide an overlay tree to separate the covenant de
 `turnoversTree` lists all the `Pulse`s that changed the validator set or quorum threshold, to allow rapid validation without seeing every block in the chain.
 
 ```sh
+type StateTreeNode struct {
+    state &State
+    binary &Binary
+    children { String : &StateTreeNode }
+}
+type Lineage [Link]          # TODO define DAG tighter
+type Turnovers [&Pulse]      # TODO make into a tree
 type Provenance struct {
     stateTree &StateTreeNode
     lineageTree &Lineage     # Must allow merging of N parents

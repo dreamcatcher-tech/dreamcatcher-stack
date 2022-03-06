@@ -3,7 +3,7 @@ import { assertNoUndefined } from '../ipld/utils'
 import equals from 'fast-deep-equal'
 import { IpldStruct } from '../ipld/IpldStruct'
 import { Binary } from '../ipld/Binary'
-import { schemas } from '../schemas/ipldSchemas'
+import schemas from '../../../w014-schemas'
 
 const classMap = { binary: Binary }
 export class Action extends IpldStruct {

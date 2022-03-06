@@ -3,9 +3,8 @@ import { assertNoUndefined } from './utils'
 import equals from 'fast-deep-equal'
 import { IpldStruct } from './IpldStruct'
 import { Binary } from '.'
-import { schemas } from '../schemas/ipldSchemas'
+import schemas from '../../../w014-schemas'
 
-const classMap = { binary: Binary }
 export class Action extends IpldStruct {
   static create(action, payload = {}, binary) {
     if (typeof action === 'undefined') {
@@ -29,10 +28,7 @@ export class Action extends IpldStruct {
     }
     return super.create(action)
   }
-  static getClassFor(key) {
-    assert(classMap[key], `key not mapped to CID class`)
-    return classMap[key]
-  }
+  static classMap = { binary: Binary }
   static get schema() {
     return schemas.types.Action
   }
