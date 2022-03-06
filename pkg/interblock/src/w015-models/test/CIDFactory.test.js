@@ -3,7 +3,7 @@ import { CIDFactory, BlockFactory } from '../src/CIDFactory'
 import { encode, decode, code } from '@ipld/dag-cbor'
 import assert from 'assert-fast'
 
-describe.only('CIDFactory', () => {
+describe('CIDFactory', () => {
   test('POJO', async () => {
     const obj = {
       x: 1,

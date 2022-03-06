@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import { Address } from '../../src/ipld'
 import { cidV0FromString } from '../../src/ipld/Address'
-describe.only('address', () => {
+describe('address', () => {
   test('no params makes unknown address', () => {
     const address = Address.createUnknown()
     assert(!address.isGenesis())

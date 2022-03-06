@@ -9,6 +9,9 @@ export class IpldStruct extends IpldInterface {
     const instance = new this()
     Object.assign(instance, map)
     instance.deepFreeze()
+    if (typeof instance.assertLogic === 'function') {
+      instance.assertLogic()
+    }
     return instance
   }
   #ipldBlock
@@ -30,11 +33,15 @@ export class IpldStruct extends IpldInterface {
     const { cid } = this.ipldBlock
     return cid
   }
-
+  #isPreCrushed = false
   async crush() {
     if (!this.isModified()) {
       return this
     }
+    if (this.#isPreCrushed) {
+      throw new Error('TESTING Crush has already been called')
+    }
+    this.#isPreCrushed = true
     const crushed = new this.constructor()
     Object.assign(crushed, this)
     const dagTree = { ...this }
@@ -42,10 +49,14 @@ export class IpldStruct extends IpldInterface {
       if (crushed[key] instanceof IpldInterface) {
         crushed[key] = await crushed[key].crush()
         dagTree[key] = crushed[key].cid
-      }
-      if (crushed[key] instanceof Block) {
+      } else if (crushed[key] instanceof Block) {
         // TODO move to use a dedicated Binary class
-        dagTree[key] = crushed[key].cid
+        // dagTree[key] = crushed[key].cid
+      } else if (Array.isArray(crushed[key])) {
+        const awaits = crushed[key].map((v) => v.crush())
+        const crushes = await Promise.all(awaits)
+        crushed[key] = crushes
+        dagTree[key] = crushes.map((v) => v.cid)
       }
     }
     crushed.#ipldBlock = await BlockFactory(dagTree)
@@ -76,6 +87,16 @@ export class IpldStruct extends IpldInterface {
           const valueBlocks = thisValue.getDiffBlocks(fromValue)
           blocks.push(...valueBlocks)
         }
+      } else if (Array.isArray(thisValue)) {
+        const valueBlocks = thisValue.map((v, i) => {
+          if (!fromValue) {
+            return v.getDiffBlocks()
+          }
+          if (!v.cid.equals(fromValue[i].cid)) {
+            return v.getDiffBlocks(fromValue[i])
+          }
+        })
+        blocks.push(...valueBlocks)
       }
     }
     return blocks

@@ -1,6 +1,7 @@
+import assert from 'assert-fast'
 import { Block } from 'multiformats/block'
 import { CID } from 'multiformats/cid'
-
+import { deepFreeze } from './utils'
 /**
  * Rules are:
  *    1. There must be a path from the root CID to every child CID that is
@@ -22,7 +23,8 @@ export class IpldInterface {
     throw new Error('Not Implemented')
   }
   static getClassFor(key) {
-    throw new Error('Not Implemented')
+    assert(this.classMap[key], `key not mapped to CID class`)
+    return this.classMap[key]
   }
   get ipldBlock() {
     throw new Error('Not Implemented')
@@ -44,24 +46,5 @@ export class IpldInterface {
   }
   getDiffBlocks(from) {
     throw new Error('Not Implemented')
-  }
-}
-const deepFreeze = (obj) => {
-  if (Object.isFrozen(obj)) {
-    return
-  }
-  Object.freeze(obj)
-
-  for (const key in obj) {
-    if (obj[key] instanceof Uint8Array) {
-      continue
-    }
-    if (obj instanceof Block && key === 'asBlock') {
-      // asBlock is a circular reference
-      continue
-    }
-    if (typeof obj[key] === 'object') {
-      deepFreeze(obj[key])
-    }
   }
 }

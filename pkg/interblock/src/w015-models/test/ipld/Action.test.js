@@ -3,7 +3,7 @@ import { Integrity } from '../..'
 import { Action, RawBinary } from '../../src/ipld'
 import { BlockFactory } from '../../src/CIDFactory'
 
-describe.only('Action', () => {
+describe('Action', () => {
   test('throws on blank creation', () => {
     assert.throws(Action.create)
   })

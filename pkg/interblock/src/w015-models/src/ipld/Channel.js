@@ -1,12 +1,11 @@
 import assert from 'assert-fast'
-import { RxRequest, RxReply, Continuation, Address, Remote } from '.'
-import { channelSchema } from '../schemas/modelSchemas'
-import { mixin } from '../MapFactory'
+import { Address } from '.'
 import Debug from 'debug'
+import { IpldStruct } from './IpldStruct'
 const debug = Debug('interblock:models:channel')
 
 let loopback
-export class Channel extends mixin(channelSchema) {
+export class Channel extends IpldStruct {
   static create(address = Address.create(), systemRole = 'DOWN_LINK') {
     // TODO calculate systemRole from alias
     assert(address instanceof Address)
@@ -78,108 +77,5 @@ export class Channel extends mixin(channelSchema) {
   }
   isLoopback() {
     return this.systemRole === '.'
-  }
-
-  static #splitKey(key) {
-    const [sHeight, sIndex] = key.split('_')
-    const height = Number.parseInt(sHeight)
-    const index = Number.parseInt(sIndex)
-    return [height, index]
-  }
-
-  rxLoopbackSettle() {
-    let _rxPromises = this.rxPromises || []
-    for (const promisedKey of _rxPromises) {
-      const reply = this.replies.get(promisedKey)
-      if (reply) {
-        assert(reply instanceof Continuation)
-        if (!reply.isPromise()) {
-          const { type, payload } = reply
-          const [height, index] = Channel.#splitKey(promisedKey)
-          return RxReply.create(type, payload, this.address, height, index)
-        }
-      }
-    }
-  }
-
-  _nextCoords() {
-    // TODO move out to utils file
-    let nextHeight = Number.isInteger(this.tipHeight) ? this.tipHeight + 1 : 1
-    let nextIndex = 0
-    if (typeof this.rxRepliesTip === 'string') {
-      const [height, index] = Channel.#splitKey(this.rxRepliesTip)
-      assert(height <= nextHeight)
-      if (height === nextHeight) {
-        nextIndex = index + 1
-      }
-    }
-    return [nextHeight, nextIndex]
-  }
-  #rxLoopbackContinuation() {
-    if (this.replies.size) {
-      const [nextHeight, nextIndex] = this._nextCoords()
-      // TODO assert no replies higher than this one are present
-      const key = `${nextHeight}_${nextIndex}`
-      if (this.replies.has(key)) {
-        const action = this.replies.get(key)
-        return [action, nextHeight, nextIndex]
-      }
-    }
-    return []
-  }
-  rxLoopbackReply() {
-    const [action, height, index] = this.#rxLoopbackContinuation()
-    if (!action || action.type === '@@PROMISE') {
-      return
-    }
-    const { type, payload } = action
-    return RxReply.create(type, payload, this.address, height, index)
-  }
-  isLoopbackReplyPromised() {
-    const [action] = this.#rxLoopbackContinuation()
-    if (action && action.type === '@@PROMISE') {
-      return true
-    }
-    return false
-  }
-  // TODO cache all rx*() to avoid create()
-  rxLoopbackRequest() {
-    assert(this.isLoopback())
-    const [nextHeight, nextIndex] = this._nextCoords()
-    if (this.requests[nextIndex]) {
-      const { type: t, payload: p } = this.requests[nextIndex]
-      return RxRequest.create(t, p, this.address, nextHeight, nextIndex)
-    }
-  }
-
-  isLoopbackExhausted() {
-    if (this.rxLoopbackSettle()) {
-      return false
-    }
-    if (this.rxLoopbackReply()) {
-      return false
-    }
-    if (this.isLoopbackReplyPromised()) {
-      return false
-    }
-    if (this.rxLoopbackRequest()) {
-      return false
-    }
-    return true
-  }
-  rxLoopback() {
-    let rx
-    rx = this.rxLoopbackSettle()
-    if (rx) {
-      return rx
-    }
-    rx = this.rxLoopbackReply()
-    if (rx) {
-      return rx
-    }
-    rx = this.rxLoopbackRequest()
-    if (rx) {
-      return rx
-    }
   }
 }

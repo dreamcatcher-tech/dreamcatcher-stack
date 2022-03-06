@@ -58,7 +58,7 @@ const js = {
 }
 
 describe('ipld schema', () => {
-  test.only('parse', async () => {
+  test('parse', async () => {
     const j = await coll(['./src/w015-models/IpldSchemas.md'])
     console.log(j)
 

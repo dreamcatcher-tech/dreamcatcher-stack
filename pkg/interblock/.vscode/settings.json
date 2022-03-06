@@ -2,5 +2,13 @@
   "editor.wordWrap": "wordWrapColumn",
   "debug.console.wordWrap": false,
   "cSpell.enableFiletypes": ["!javascript"],
-  "cSpell.words": ["Interpulse", "IPFS", "IPLD", "ipldsch", "kinded", "struct"]
+  "cSpell.words": [
+    "approot",
+    "Interpulse",
+    "IPFS",
+    "IPLD",
+    "ipldsch",
+    "kinded",
+    "struct"
+  ]
 }
