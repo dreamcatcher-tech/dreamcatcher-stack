@@ -1,7 +1,7 @@
 import { Validators, Keypair } from '../../src/ipld'
 import { assert } from 'chai/index.mjs'
 
-describe.only('Validators', () => {
+describe('Validators', () => {
   test('ci', () => {
     const validators = Validators.createCI()
     assert.strictEqual(validators.publicKeys.length, 1)

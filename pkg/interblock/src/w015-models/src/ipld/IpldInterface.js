@@ -47,4 +47,12 @@ export class IpldInterface {
   getDiffBlocks(from) {
     throw new Error('Not Implemented')
   }
+  logDiff(from) {
+    const diffmap = this.getDiffBlocks(from)
+    const log = []
+    for (const { cid, value } of diffmap.values()) {
+      log.push([cid, value])
+    }
+    console.dir(log, { depth: Infinity })
+  }
 }

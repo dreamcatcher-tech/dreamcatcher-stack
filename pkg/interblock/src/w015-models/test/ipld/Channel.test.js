@@ -1,22 +1,14 @@
 import { assert } from 'chai/index.mjs'
-import {
-  Action,
-  Address,
-  Channel,
-  Continuation,
-  Provenance,
-} from '../../src/ipld'
+import { Request, Address, Channel, Reply, Provenance } from '../../src/ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
 Debug.enable()
 
 describe('channel', () => {
   describe('create', () => {
-    test('create speed', () => {
-      const start = Date.now()
-      Channel.create()
-      const elapsed = Date.now() - start
-      assert(elapsed < 6, `elapsed time: ${elapsed}`)
+    test('basic', async () => {
+      const channel = Channel.create()
+      const crushed = await channel.crush()
     })
     test('create', () => {
       const channel = Channel.create()
@@ -30,13 +22,13 @@ describe('channel', () => {
       assert(!restored.tip)
       assert(restored.deepEquals(channel))
 
-      const action = Action.create('TEST_ACTION')
+      const action = Request.create('TEST_ACTION')
       const reply = Continuation.create()
       const array = channel.toArray()
       array[3] = [action.toArray()]
 
       const deepRestore = Channel.restore(array)
-      assert(deepRestore.requests.every((a) => a instanceof Action))
+      assert(deepRestore.requests.every((a) => a instanceof Request))
       const withReply = deepRestore.update({ replies: { '0_3': reply } })
       for (const [key, value] of withReply.replies.entries()) {
         assert.strictEqual(key, '0_3')
@@ -60,6 +52,27 @@ describe('channel', () => {
     test.todo('throw if loopback and contains banned actions')
   })
   describe('loopback', () => {
+    test.only('basic', async () => {
+      let channel = Channel.createLoopback()
+      let crushed = await channel.crush()
+      const ping = Request.create('PING')
+      channel = channel.txReducerRequest(ping)
+      assert.strictEqual(channel.rxReducerRequest(), ping)
+      const requestId = channel.tx.reducer.getRequestId()
+      assert.strictEqual(requestId, 0)
+
+      const pong = Reply.create()
+      channel = channel.txReducerReply(pong)
+      assert(!channel.rxReducerRequest())
+      assert.strictEqual(channel.rxReducerReply(), pong)
+
+      channel = channel.shiftReducerReplies()
+      assert(!channel.rxReducerReply())
+
+      const last = await channel.crush()
+      last.logDiff()
+      last.logDiff(crushed)
+    })
     test('_nextCoords', () => {
       let channel = Channel.create(Address.create('LOOPBACK'), '.')
       const [ih, ii] = channel._nextCoords()

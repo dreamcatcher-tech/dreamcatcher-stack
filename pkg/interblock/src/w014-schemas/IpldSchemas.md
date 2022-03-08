@@ -136,7 +136,7 @@ const TxExample = {
             { requestId: 9, reply: reply6 }
         ]
     },
-    covenant: {
+    reducer: {
         requestsStart: 84587,
         requests: [],
         repliesStart: 868594,
@@ -161,10 +161,10 @@ type TxQueue struct {
     promisedReplies [PromisedReply]
 }
 type Tx struct {
-    genesis Address   # The remote chainId
-    precedent &Pulse   # The last Pulse this chain sent
-    system TxQueue         # System messages
-    covenant TxQueue       # Covenant messages
+    genesis Address             # The remote chainId
+    precedent optional &Pulse   # The last Pulse this chain sent
+    system TxQueue              # System messages
+    reducer TxQueue             # Reducer messages
 }
 ```
 
@@ -178,9 +178,9 @@ type RxTracker struct { # tracks what counters each ingestion is up to
     repliesTip Int
 }
 type Channel struct {
-    tip &Pulse          # The last Pulse this chain received
-    system RxTracker
-    covenant RxTracker
+    tip optional &Pulse          # The last Pulse this chain received
+    rxSystem RxTracker
+    rxReducer RxTracker
     tx Tx
 }
 ```
@@ -226,6 +226,12 @@ To determine what packages to load, we need to be told what chainId to look for,
 Publishing new versions of your code is done by making a new Pulse in the PulseChain. Your software package may be connected to, or listed on an aggregator PulseChain, to allow centralized searching. Permissions and other management concerns are handled with the standard PulseChain methods.
 
 To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the schema below. System covenants are loaded from the chain that they publish from, the same as user supplied covenants, except we shortcut the lookup and load process, and we also skip containment.
+
+We have 3 types of dependencies in the system:
+
+1. Conventional - these are specified using the package manager that your code type uses. Eg: npm, pip, cargo
+2. ChainModule - these are pieces of code that are managed by the in chain code publication system. These can be spliced into existing package managers, and represent a hash based reference to a code package and a code executable. In nodejs, an executable is an npm package that has all its modules installed and optionally some transpilation applied. Covenants as dependencies are in this category.
+3. ChainInstance - this is a reference to a running chain, and is referenced by chainId. These can be oracles, services, people, or any other object in the chain based multiverse.
 
 ```sh
 type PackageTypes enum {

@@ -5,7 +5,7 @@ import { IpldStruct } from './IpldStruct'
 import { Binary } from '.'
 import schemas from '../../../w014-schemas'
 
-export class Action extends IpldStruct {
+export class Request extends IpldStruct {
   static create(action, payload = {}, binary) {
     if (typeof action === 'undefined') {
       throw new Error(`Actions cannot be undefined`)
@@ -26,7 +26,7 @@ export class Action extends IpldStruct {
     if (action.binary) {
       assert(binary instanceof Binary)
     }
-    return super.create(action)
+    return super.clone(action)
   }
   static classMap = { binary: Binary }
   static get schema() {

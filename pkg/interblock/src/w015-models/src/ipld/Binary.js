@@ -42,8 +42,10 @@ export class Binary extends IpldInterface {
   }
   getDiffBlocks(from) {
     if (this === from) {
-      return []
+      return new Map()
     }
-    return [this.ipldBlock]
+    const blocks = new Map()
+    blocks.set(this.ipldBlock.cid.toString(), this.ipldBlock)
+    return blocks
   }
 }

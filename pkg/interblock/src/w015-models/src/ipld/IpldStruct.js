@@ -5,7 +5,8 @@ import { BlockFactory } from './CIDFactory'
 import { IpldInterface } from './IpldInterface'
 
 export class IpldStruct extends IpldInterface {
-  static create(map) {
+  static clone(map) {
+    assert.strictEqual(typeof map, 'object')
     const instance = new this()
     Object.assign(instance, map)
     instance.deepFreeze()
@@ -39,21 +40,19 @@ export class IpldStruct extends IpldInterface {
       return this
     }
     if (this.#isPreCrushed) {
-      throw new Error('TESTING Crush has already been called')
+      // throw new Error('TESTING Crush has already been called')
     }
     this.#isPreCrushed = true
     const crushed = new this.constructor()
     Object.assign(crushed, this)
     const dagTree = { ...this }
     for (const key in crushed) {
-      if (crushed[key] instanceof IpldInterface) {
-        crushed[key] = await crushed[key].crush()
+      const slice = crushed[key]
+      if (slice instanceof IpldInterface) {
+        crushed[key] = await slice.crush()
         dagTree[key] = crushed[key].cid
-      } else if (crushed[key] instanceof Block) {
-        // TODO move to use a dedicated Binary class
-        // dagTree[key] = crushed[key].cid
-      } else if (Array.isArray(crushed[key])) {
-        const awaits = crushed[key].map((v) => v.crush())
+      } else if (Array.isArray(slice)) {
+        const awaits = slice.map((v) => v.crush())
         const crushes = await Promise.all(awaits)
         crushed[key] = crushes
         dagTree[key] = crushes.map((v) => v.cid)
@@ -72,12 +71,13 @@ export class IpldStruct extends IpldInterface {
       assert(!from.isModified())
     }
     if (this === from) {
-      return []
+      return new Map()
     }
     if (from && this.cid.equals(from.cid)) {
-      return []
+      return new Map()
     }
-    const blocks = [this.ipldBlock]
+    const blocks = new Map()
+    blocks.set(this.ipldBlock.cid.toString(), this.ipldBlock)
     for (const key in this) {
       const thisValue = this[key]
       const fromValue = from && from[key]
@@ -85,18 +85,18 @@ export class IpldStruct extends IpldInterface {
         assert(fromValue === undefined || fromValue instanceof IpldInterface)
         if (!fromValue || !thisValue.cid.equals(fromValue.cid)) {
           const valueBlocks = thisValue.getDiffBlocks(fromValue)
-          blocks.push(...valueBlocks)
+          merge(blocks, valueBlocks)
         }
       } else if (Array.isArray(thisValue)) {
         const valueBlocks = thisValue.map((v, i) => {
-          if (!fromValue) {
+          if (!fromValue || !fromValue[i]) {
             return v.getDiffBlocks()
           }
           if (!v.cid.equals(fromValue[i].cid)) {
             return v.getDiffBlocks(fromValue[i])
           }
         })
-        blocks.push(...valueBlocks)
+        valueBlocks.forEach((map) => merge(blocks, map))
       }
     }
     return blocks
@@ -136,5 +136,13 @@ export class IpldStruct extends IpldInterface {
     // copy all values over
     // update this key
     // return this
+  }
+}
+
+const merge = (dst, src) => {
+  assert(dst instanceof Map)
+  assert(src instanceof Map)
+  for (const [key, value] of src) {
+    dst.set(key, value)
   }
 }

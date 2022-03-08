@@ -21,10 +21,6 @@ export const deepFreeze = (obj) => {
     if (obj[key] instanceof Uint8Array) {
       continue
     }
-    if (obj instanceof Block && key === 'asBlock') {
-      // asBlock is a circular reference
-      continue
-    }
     if (typeof obj[key] === 'object') {
       deepFreeze(obj[key])
     }

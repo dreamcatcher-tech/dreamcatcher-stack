@@ -120,7 +120,7 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
-      "name": "Keypair",
+      "name": "Channel",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -130,7 +130,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testTimeout=9999999",
-        "${workspaceRoot}/src/w015-models/test/classes/Keypair.test.js"
+        "${workspaceRoot}/src/w015-models/test/ipld/Channel.test.js"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],
       "console": "integratedTerminal",

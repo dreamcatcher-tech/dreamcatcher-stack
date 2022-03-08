@@ -68,11 +68,14 @@ export class Address extends IpldInterface {
   get ipldBlock() {
     throw new Error(`Address is not a block`)
   }
+  get cid() {
+    return this.#cid
+  }
   crush() {
     return this
   }
   getDiffBlocks(from) {
-    throw new Error(`Address is not a block`)
+    return new Map()
   }
   getChainId() {
     if (this.#cid === LOOPBACK) {
