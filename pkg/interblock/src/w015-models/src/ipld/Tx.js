@@ -131,10 +131,14 @@ export class TxQueue extends IpldStruct {
 }
  */
 export class Tx extends IpldStruct {
-  static classMap = { genesis: Address, precedent: Pulse }
+  static classMap = {
+    genesis: Address,
+    precedent: Pulse,
+    system: TxQueue,
+    reducer: TxQueue,
+  }
   static create(genesis) {
     assert(genesis instanceof Address)
-    assert(!genesis.isUnknown(), `Tx must be resolved`)
     return super.clone({
       genesis,
       system: TxQueue.create(),

@@ -18,7 +18,7 @@ export class Provenance extends IpldStruct {
       genesis,
       dmz,
     }
-    return super.create(provenance)
+    return super.clone(provenance)
   }
   isNextProvenance(child) {
     assert(child instanceof Provenance)

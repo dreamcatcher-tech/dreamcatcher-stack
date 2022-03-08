@@ -69,8 +69,8 @@ export class Channel extends IpldStruct {
   assertLogic() {
     const { tip, rxSystem, rxReducer, tx } = this
     if (this.isUnknown()) {
-      assert(system.isEmpty())
-      assert(reducer.isEmpty())
+      assert(rxSystem.isEmpty(), 'Replies to Unknown are impossible')
+      assert(rxReducer.isEmpty(), 'Replies to Unknown are impossible')
       assert(!tip)
     }
     if (tip) {

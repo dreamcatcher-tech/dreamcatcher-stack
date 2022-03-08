@@ -9,37 +9,30 @@ describe('channel', () => {
     test('basic', async () => {
       const channel = Channel.create()
       const crushed = await channel.crush()
+      assert.strictEqual(crushed.getDiffBlocks().size, 3)
     })
-    test('create', () => {
-      const channel = Channel.create()
-      assert(channel.address.isUnknown())
-      assert(channel.precedent.isUnknown())
+    test('create', async () => {
+      let channel = Channel.create()
+      assert(channel.tx.genesis.isUnknown())
+      assert(!channel.tx.precedent)
       assert(!channel.tip)
-      const arr = channel.toArray()
-      const restored = Channel.restore(arr)
-      assert(restored.address.isUnknown())
-      assert(restored.precedent.isUnknown())
-      assert(!restored.tip)
-      assert(restored.deepEquals(channel))
+      const crushed = await channel.crush()
+      const blocks = crushed.getDiffBlocks()
+      const resolver = (cid) => blocks.get(cid.toString())
+      const uncrushed = await Channel.uncrush(crushed.cid, resolver)
+      assert.deepEqual(crushed, uncrushed)
 
-      const action = Request.create('TEST_ACTION')
-      const reply = Continuation.create()
-      const array = channel.toArray()
-      array[3] = [action.toArray()]
-
-      const deepRestore = Channel.restore(array)
-      assert(deepRestore.requests.every((a) => a instanceof Request))
-      const withReply = deepRestore.update({ replies: { '0_3': reply } })
-      for (const [key, value] of withReply.replies.entries()) {
-        assert.strictEqual(key, '0_3')
-        assert(value instanceof Continuation)
-      }
+      const request = Request.create('TEST_ACTION')
+      const reply = Reply.create()
+      channel = channel.txReducerRequest(request)
+      assert(channel.tx.genesis.isUnknown())
+      assert.throws(() => channel.txReducerReply(reply), 'Replies to')
+      const recrushed = await channel.crush()
     })
     test('includes known address', () => {
-      const provenance = Provenance.create()
-      const address = provenance.getAddress()
+      const address = Address.createRoot()
       const channel = Channel.create(address)
-      assert(channel.address.deepEquals(address))
+      assert.strictEqual(channel.tx.genesis, address)
     })
     test.todo('loopback bans @@OPEN_CHILD action')
   })
@@ -52,7 +45,7 @@ describe('channel', () => {
     test.todo('throw if loopback and contains banned actions')
   })
   describe('loopback', () => {
-    test.only('basic', async () => {
+    test('basic', async () => {
       let channel = Channel.createLoopback()
       let crushed = await channel.crush()
       const ping = Request.create('PING')
@@ -70,33 +63,6 @@ describe('channel', () => {
       assert(!channel.rxReducerReply())
 
       const last = await channel.crush()
-      last.logDiff()
-      last.logDiff(crushed)
-    })
-    test('_nextCoords', () => {
-      let channel = Channel.create(Address.create('LOOPBACK'), '.')
-      const [ih, ii] = channel._nextCoords()
-      assert.strictEqual(ih, 1)
-      assert.strictEqual(ii, 0)
-
-      channel = channel.update({ tipHeight: 1 })
-      const [fh, fi] = channel._nextCoords()
-      assert.strictEqual(fh, 2)
-      assert.strictEqual(fi, 0)
-
-      channel = channel.update({ rxRepliesTip: '2_0' })
-      const [rh, ri] = channel._nextCoords()
-      assert.strictEqual(rh, 2)
-      assert.strictEqual(ri, 1)
-
-      channel = channel.update({ rxRepliesTip: '2_1' })
-      const [lh, li] = channel._nextCoords()
-      assert.strictEqual(lh, 2)
-      assert.strictEqual(li, 2)
-
-      channel = channel.update({ rxRepliesTip: '3_1' })
-      assert.strictEqual(channel.tipHeight, 1)
-      assert.throws(channel._nextCoords)
     })
   })
   describe('rxRequest', () => {
