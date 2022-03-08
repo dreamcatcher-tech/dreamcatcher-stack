@@ -21,6 +21,37 @@ type Any union {
 } representation kinded
 ```
 
+## HAMT
+
+Schemas for the hash array mapped trie used to reduce Network slowness with speed.
+
+```sh
+# Root node layout
+type HashMapRoot struct {
+  hashAlg Int
+  bucketSize Int
+  hamt HashMapNode
+}
+
+# Non-root node layout
+type HashMapNode struct {
+  map Bytes
+  data [ Element ]
+} representation tuple
+
+type Element union {
+  | &HashMapNode link
+  | Bucket list
+} representation kinded
+
+type Bucket [ BucketEntry ]
+
+type BucketEntry struct {
+  key Bytes
+  value Any
+} representation tuple
+```
+
 ## Binary
 
 Special in that it exposes a raw link, but adheres to the model interface for interop with the other models here. Similar to Address in that it exposes an IPLD primitive.
@@ -181,7 +212,7 @@ type Channel struct {
     tip optional &Pulse          # The last Pulse this chain received
     rxSystem RxTracker
     rxReducer RxTracker
-    tx Tx
+    tx &Tx
 }
 ```
 
@@ -212,6 +243,7 @@ type Network struct {
     counter Int
     channels { String : Channel }   # Map of channelIds to channels
     aliases { String : Alias }      # Map of aliases to channelIds
+    addresses { String : Int }
 }
 ```
 

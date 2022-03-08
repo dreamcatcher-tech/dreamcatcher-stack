@@ -25,12 +25,9 @@ describe('keypair', () => {
     const kp1 = await Keypair.generate('TEST')
     const kp2 = await Keypair.generate('TEST')
     assert.notDeepEqual(kp1, kp2)
-    const v1 = kp1.getValidatorEntry()
-    const v2 = kp2.getValidatorEntry()
     const { key: v1pk, ...v1Rest } = kp1.publicKey
     const { key: v2pk, ...v2Rest } = kp2.publicKey
 
-    assert.notDeepEqual(v1, v2)
     assert.notDeepEqual(v1pk, v2pk)
     assert.deepEqual(v1Rest, v2Rest)
   })

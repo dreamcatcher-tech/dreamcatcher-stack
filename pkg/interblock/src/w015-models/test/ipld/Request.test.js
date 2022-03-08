@@ -1,7 +1,6 @@
 import { assert } from 'chai/index.mjs'
-import { Integrity } from '../..'
-import { Request, RawBinary } from '../../src/ipld'
-import { BlockFactory } from '../../src/CIDFactory'
+import { Request, Binary } from '../../src/ipld'
+import { fromString } from 'uint8arrays/from-string'
 
 describe('Request', () => {
   test('throws on blank creation', () => {
@@ -24,36 +23,36 @@ describe('Request', () => {
     assert.throws(() => Request.create('@@RESOLVE', { complexObject }), msg)
   })
   test('with binary', async () => {
-    const block = await BlockFactory({ type: 'test' })
-    const binary = await RawBinary.create(block.bytes)
+    const bytes = fromString('with binary')
+    const binary = await Binary.create(bytes)
     const action = Request.create('TYPE', {}, binary)
-    assert(action.binary instanceof RawBinary)
+    assert(action.binary instanceof Binary)
   })
   test('action is frozen', async () => {
-    const block = await BlockFactory({ type: 'test' })
-    const binary = await RawBinary.create(block.bytes)
+    const bytes = fromString('action is frozen')
+    const binary = await Binary.create(bytes)
     const action = Request.create('TYPE', {}, binary)
     assert.throws(() => (action.type = 'tamper'), 'Cannot assign to read only')
     assert.throws(() => (binary.type = 'tamper'), 'Cannot add property type')
     assert.throws(() => (binary.cid = 'tamper'), 'Cannot set property cid')
   })
   test('encode decode', async () => {
-    const block = await BlockFactory({ type: 'test' })
-    const binary = await RawBinary.create(block.bytes)
-    const action = Request.create('TYPE', { some: 'thing' }, binary)
-    const crushedAction = await action.crush()
-    assert.strictEqual(crushedAction.crushedSize, 79)
+    const bytes = fromString('encode decode')
+    const binary = await Binary.create(bytes)
+    const request = Request.create('TYPE', { some: 'thing' }, binary)
+    const crushedRequest = await request.crush()
+    assert.strictEqual(crushedRequest.crushedSize, 79)
 
-    const diffBlocks = crushedAction.getDiffBlocks()
-    assert(Array.isArray(diffBlocks))
-    assert.strictEqual(diffBlocks.length, 2)
-    assert.strictEqual(crushedAction.getDiffBlocks(crushedAction).length, 0)
+    const diffBlocks = crushedRequest.getDiffBlocks()
+    assert(diffBlocks instanceof Map)
+    assert.strictEqual(diffBlocks.size, 2)
+    assert.strictEqual(crushedRequest.getDiffBlocks(crushedRequest).size, 0)
 
-    const resolver = (cid) => diffBlocks.find((block) => block.cid === cid)
-    const rootCid = diffBlocks[0].cid
+    const resolver = (cid) => diffBlocks.get(cid.toString())
+    const rootCid = crushedRequest.cid
     const revived = await Request.uncrush(rootCid, resolver)
-    assert(crushedAction !== revived) // TODO make a cache so objects are equal
-    assert.deepEqual(crushedAction, revived)
+    assert(crushedRequest !== revived) // TODO make a cache so objects are equal
+    assert.deepEqual(crushedRequest, revived)
   })
   test('deduplication by hash', async () => {
     const action1 = Request.create('TYPE', { some: 'thing' })

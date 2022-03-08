@@ -6,7 +6,7 @@ export class Timestamp extends IpldStruct {
     assert(now instanceof Date)
     // '2011-10-05T14:48:00.000Z'
     const isoDate = now.toISOString()
-    return super.create({ isoDate })
+    return super.clone({ isoDate })
   }
   isExpired(expiresAfterMs) {
     throw new Error('not implemented')

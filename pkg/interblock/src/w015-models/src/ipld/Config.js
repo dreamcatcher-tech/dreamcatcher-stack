@@ -9,7 +9,7 @@ export class Config extends IpldStruct {
       sideEffects,
       isPublicChannelOpen: false,
     }
-    return super.create({ ...config, ...opts })
+    return super.clone({ ...config, ...opts })
   }
   assertLogic() {
     // TODO check that if no async, network is also disabled

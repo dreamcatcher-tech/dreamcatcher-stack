@@ -4,23 +4,37 @@ import Debug from 'debug'
 import { Channel, Address } from '.'
 import { IpldStruct } from './IpldStruct'
 const debug = Debug('interblock:classes:Network')
-// TODO merge this with Conflux ?
-// TODO assert that no channel has an identical hash during the hashing process ?
-
-export class Network extends IpldStruct {
-  #txs = Immutable.Set() // any channel that is transmitting
-  #addressMap = Immutable.Map()
-  #unresolvedAliases = Immutable.Set()
-  static create(channels = {}) {
-    assert.strictEqual(typeof channels, 'object')
-    assert(!channels['.'])
-    assert(!channels['..'])
-    const params = {
-      '..': Channel.create(Address.create(), '..'),
-      '.': Channel.createLoopback(),
-      ...channels,
+/**
+    type SystemRoles enum {
+        | PARENT("..")
+        | LOOPBACK(".")
+        | CHILD("./")
+        | UP_LINK
+        | DOWN_LINK
+        | PIERCE
     }
-    return super.create(params)
+    type Alias struct {
+        systemRole SystemRoles
+        channelId Int
+    }
+    type Network struct {
+        counter Int
+        channels { String : Channel }   # Map of channelIds to channels
+        aliases { String : Alias }      # Map of aliases to channelIds
+        addresses { Address : Int }
+    }
+ */
+export class Network extends IpldStruct {
+  // #txs = Immutable.Set() // any channel that is transmitting
+  // #addressMap = Immutable.Map()
+  // #unresolvedAliases = Immutable.Set()
+  static create() {
+    const parent = Channel.create(Address.createUnknown())
+    const self = Channel.createLoopback()
+    const channels = Immutable.Map().set(0, parent).set(1, self)
+    const counter = 2
+    const aliases = Immutable.Map().set('..', 0).set('.', 1)
+    return super.clone({ counter, channels, aliases })
   }
   assertLogic() {
     assert(!this.has(undefined))
@@ -31,15 +45,57 @@ export class Network extends IpldStruct {
     assert(this.get('..').systemRole === '..', `parent role invalid`)
     // TODO build up the maps after a restore event ?
   }
-  _imprint(next) {
-    assert(next instanceof Network)
-    assert(next !== this)
-    next.#txs = this.#txs
-    next.#addressMap = this.#addressMap
-    next.#unresolvedAliases = this.#unresolvedAliases
+  static async uncrush(rootCid, resolver, options) {
+    assert(rootCid instanceof CID, `rootCid must be a CID, got ${rootCid}`)
+    assert(typeof resolver === 'function', `resolver must be a function`)
+    const hamtRoot = await resolver(rootCid)
+
+    const map = { ...block.value }
+    for (const key in map) {
+      if (map[key] instanceof CID) {
+        const childClass = this.getClassFor(key)
+        map[key] = await childClass.uncrush(map[key], resolver, options)
+      }
+    }
+    const instance = new this()
+    Object.assign(instance, map)
+    instance.#ipldBlock = block
+    instance.deepFreeze()
+    return instance
   }
+  async loadAddresses(addresses, getter) {
+    assert(Array.isArray(addresses))
+    assert(addresses.every((a) => a instanceof Address))
+    assert.strictEqual(typeof getter, 'function')
+    const awaits = addresses.map((a) => {})
+  }
+  async loadAliases(aliases, getter) {
+    assert(Array.isArray(aliases))
+    assert(aliases.every((s) => typeof s === 'string'))
+    assert.strictEqual(typeof getter, 'function')
+    const awaits = aliases.map(async (s) => {
+      const alias = await getter(s)
+    })
+    // walk through all aliases
+    // load all from hamt, then cache the gets
+    // when start using the object, we use the cache only and throw if something gets missed
+
+    // once all required aliases are loaded, then load all the channelids
+  }
+  async loadIds(ids, getter) {
+    assert(Array.isArray(ids))
+    assert(ids.every((i) => Number.isInteger(i) && i >= 0))
+    assert.strictEqual(typeof getter, 'function')
+  }
+  // _imprint(next) {
+  //   assert(next instanceof Network)
+  //   assert(next !== this)
+  //   next.#txs = this.#txs
+  //   next.#addressMap = this.#addressMap
+  //   next.#unresolvedAliases = this.#unresolvedAliases
+  // }
   getUnresolvedAliases() {
-    return this.#unresolvedAliases
+    // return this.#unresolvedAliases
   }
   set(alias, channel) {
     assert.strictEqual(typeof alias, 'string')

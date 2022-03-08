@@ -10,10 +10,7 @@ describe('Validators', () => {
   test('crush', async () => {
     const validators = Validators.createCI()
     const crushed = await validators.crush()
-    console.dir(crushed, { depth: Infinity })
-    console.log(crushed.crushedSize)
-    console.dir(crushed.getDiffBlocks(), { depth: Infinity })
-    assert.strictEqual(crushed.getDiffBlocks(crushed).length, 0)
+    assert.strictEqual(crushed.getDiffBlocks(crushed).size, 0)
   })
   test('multiple', async () => {
     const k1 = await Keypair.generate('K1')
