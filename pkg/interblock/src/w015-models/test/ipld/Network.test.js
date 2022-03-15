@@ -5,7 +5,7 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
 
 describe('network', () => {
-  test.only('creates default', () => {
+  test('creates default', () => {
     const network = Network.create()
     assert(network.get('..'))
     assert(network.get('.'))

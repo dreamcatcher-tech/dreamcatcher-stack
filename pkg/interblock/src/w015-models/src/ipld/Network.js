@@ -59,7 +59,7 @@ export class Network extends IpldStruct {
     }
     const instance = new this()
     Object.assign(instance, map)
-    instance.#ipldBlock = block
+    // instance.#ipldBlock = block
     instance.deepFreeze()
     return instance
   }

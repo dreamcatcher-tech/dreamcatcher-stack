@@ -19,7 +19,7 @@ type Channel struct {
     tip optional &Pulse          # The last Pulse this chain received
     system RxTracker
     reducer RxTracker
-    tx Tx
+    tx &Tx
 }
 ```
  */

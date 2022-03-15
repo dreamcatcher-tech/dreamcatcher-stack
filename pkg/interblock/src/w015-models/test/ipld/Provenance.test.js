@@ -4,7 +4,7 @@ import { Provenance, Dmz } from '../../src/ipld'
 Debug.enable()
 
 describe('provenance', () => {
-  test.only('creates default model', () => {
+  test('creates default model', () => {
     const dmz = Dmz.create()
     const provenance = Provenance.create(dmz)
     assert(provenance)

@@ -4,7 +4,7 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:Dmz')
 
 describe('dmz', () => {
-  test.only('create defaults', () => {
+  test('create defaults', () => {
     const dmz = Dmz.create()
   })
 
