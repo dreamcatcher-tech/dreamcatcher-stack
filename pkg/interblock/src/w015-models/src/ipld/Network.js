@@ -29,9 +29,9 @@ export class Network extends IpldStruct {
   // #addressMap = Immutable.Map()
   // #unresolvedAliases = Immutable.Set()
   static create() {
-    const parent = Channel.create(Address.createUnknown())
-    const self = Channel.createLoopback()
-    const channels = Immutable.Map().set(0, parent).set(1, self)
+    const parent = Channel.create()
+    const loopback = Channel.createLoopback()
+    const channels = Immutable.Map().set(0, parent).set(1, loopback)
     const counter = 2
     const aliases = Immutable.Map().set('..', 0).set('.', 1)
     return super.clone({ counter, channels, aliases })
