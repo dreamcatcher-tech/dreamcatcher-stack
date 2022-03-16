@@ -4,7 +4,7 @@ import * as codec from '@ipld/dag-cbor'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as hashFactory from 'multiformats/hashes/hasher'
 
-import { encode, decode, code } from '@ipld/dag-cbor'
+// import { encode, decode, code } from '@ipld/dag-cbor'
 
 // const hasher = hashFactory.from({
 //   // As per multiformats table
@@ -14,16 +14,16 @@ import { encode, decode, code } from '@ipld/dag-cbor'
 //   encode: sha256,
 // })
 
-const cidVersion = 1
+// const cidVersion = 1
 
-export const CIDFactory = async (obj) => {
-  const data = encode(obj)
-  const hash = await hasher.digest(data)
-  const cid = CID.create(cidVersion, code, hash)
-  return cid
-}
+// export const CIDFactory = async (obj) => {
+//   const data = encode(obj)
+//   const hash = await hasher.digest(data)
+//   const cid = CID.create(cidVersion, code, hash)
+//   return cid
+// }
 
-export const BlockFactory = async (value) => {
+export const encode = async (value) => {
   const block = await Block.encode({ value, codec, hasher })
   return block
 }

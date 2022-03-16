@@ -45,11 +45,11 @@ export class IpldInterface {
   static uncrush() {
     throw new Error('Not Implemented')
   }
-  getDiffBlocks(from) {
+  getDiffBlocks() {
     throw new Error('Not Implemented')
   }
-  logDiff(from) {
-    const diffmap = this.getDiffBlocks(from)
+  logDiff() {
+    const diffmap = this.getDiffBlocks()
     const log = []
     for (const { cid, value } of diffmap.values()) {
       log.push([cid, value])

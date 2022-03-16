@@ -314,6 +314,8 @@ type ACL struct {
 
 CID links inside the State will allow the author to break down their state any way they please. This will not be supported initially, as the State should be kept small enough to be managed as a single object.
 
+The result of running a covenant is stored here, and must be serializable.
+
 ```sh
 type State { String : Any }
 ```

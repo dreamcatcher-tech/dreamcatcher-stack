@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
 import { Block } from 'multiformats/block'
-import { BlockFactory } from './CIDFactory'
+import { encode } from './IpldUtils'
 import { IpldInterface } from './IpldInterface'
 
 export class IpldStruct extends IpldInterface {
@@ -58,7 +58,7 @@ export class IpldStruct extends IpldInterface {
         dagTree[key] = crushes.map((v) => v.cid)
       }
     }
-    crushed.#ipldBlock = await BlockFactory(dagTree)
+    crushed.#ipldBlock = await encode(dagTree)
     IpldInterface.deepFreeze(crushed.#ipldBlock)
     crushed.deepFreeze()
     return crushed

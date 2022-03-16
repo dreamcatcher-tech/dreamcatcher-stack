@@ -2,6 +2,7 @@ import assert from 'assert-fast'
 import Immutable from 'immutable'
 import Debug from 'debug'
 import { Channel, Address } from '.'
+import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
 const debug = Debug('interblock:classes:Network')
 /**
@@ -25,25 +26,22 @@ const debug = Debug('interblock:classes:Network')
     }
  */
 export class Network extends IpldStruct {
-  // #txs = Immutable.Set() // any channel that is transmitting
-  // #addressMap = Immutable.Map()
-  // #unresolvedAliases = Immutable.Set()
   static create() {
     const parent = Channel.create()
     const loopback = Channel.createLoopback()
-    const channels = Immutable.Map().set(0, parent).set(1, loopback)
     const counter = 2
-    const aliases = Immutable.Map().set('..', 0).set('.', 1)
-    return super.clone({ counter, channels, aliases })
+    const channels = Hamt.create().set(0, parent).set(1, loopback)
+    const aliases = Hamt.create().set('..', 0).set('.', 1)
+    const addresses = Hamt.create()
+    return super.clone({ counter, channels, aliases, addresses })
   }
   assertLogic() {
-    assert(!this.has(undefined))
-    assert(this.has('..'))
-    assert(this.has('.'))
-    assert(this.get('.') instanceof Channel, 'channel invalid')
-    assert(this.get('.').systemRole === '.', `self not loopback channel`)
-    assert(this.get('..').systemRole === '..', `parent role invalid`)
-    // TODO build up the maps after a restore event ?
+    assert(this.counter >= 2)
+    // assert(this.aliases.has('..'))
+    // assert(this.has('.'))
+    // assert(this.get('.') instanceof Channel, 'channel invalid')
+    // assert(this.get('.').systemRole === '.', `self not loopback channel`)
+    // assert(this.get('..').systemRole === '..', `parent role invalid`)
   }
   static async uncrush(rootCid, resolver, options) {
     assert(rootCid instanceof CID, `rootCid must be a CID, got ${rootCid}`)
@@ -63,18 +61,18 @@ export class Network extends IpldStruct {
     instance.deepFreeze()
     return instance
   }
-  async loadAddresses(addresses, getter) {
+  async ensureAddresses(addresses, resolver) {
     assert(Array.isArray(addresses))
     assert(addresses.every((a) => a instanceof Address))
-    assert.strictEqual(typeof getter, 'function')
+    assert.strictEqual(typeof resolver, 'function')
     const awaits = addresses.map((a) => {})
   }
-  async loadAliases(aliases, getter) {
+  async ensureAliases(aliases, resolver) {
     assert(Array.isArray(aliases))
     assert(aliases.every((s) => typeof s === 'string'))
-    assert.strictEqual(typeof getter, 'function')
+    assert.strictEqual(typeof resolver, 'function')
     const awaits = aliases.map(async (s) => {
-      const alias = await getter(s)
+      const alias = await resolver(s)
     })
     // walk through all aliases
     // load all from hamt, then cache the gets
@@ -82,55 +80,43 @@ export class Network extends IpldStruct {
 
     // once all required aliases are loaded, then load all the channelids
   }
-  async loadIds(ids, getter) {
-    assert(Array.isArray(ids))
-    assert(ids.every((i) => Number.isInteger(i) && i >= 0))
-    assert.strictEqual(typeof getter, 'function')
-  }
-  // _imprint(next) {
-  //   assert(next instanceof Network)
-  //   assert(next !== this)
-  //   next.#txs = this.#txs
-  //   next.#addressMap = this.#addressMap
-  //   next.#unresolvedAliases = this.#unresolvedAliases
-  // }
   getUnresolvedAliases() {
-    // return this.#unresolvedAliases
+    // walk all the loaded channels and interrogate
   }
   set(alias, channel) {
-    assert.strictEqual(typeof alias, 'string')
-    assert(channel instanceof Channel)
-    const next = super.set(alias, channel)
-    if (this.has(alias)) {
-      const { address } = this.get(alias)
-      if (!address.isUnknown()) {
-        next.#addressMap = this.#addressMap.remove(address.getChainId())
-      }
-    }
-    next.#txs = this.#txs.remove(alias)
-    if (!channel.address.isUnknown() && !channel.address.isInvalid()) {
-      const chainId = channel.address.getChainId()
-      next.#addressMap = this.#addressMap.set(chainId, alias)
-      next.#unresolvedAliases = this.#unresolvedAliases.delete(alias)
-      if (channel.isTransmitting() && alias !== '.') {
-        next.#txs = next.#txs.add(alias)
-      }
-    } else {
-      next.#unresolvedAliases = this.#unresolvedAliases.add(alias)
-    }
-    return next
+    // assert.strictEqual(typeof alias, 'string')
+    // assert(channel instanceof Channel)
+    // const next = super.set(alias, channel)
+    // if (this.has(alias)) {
+    //   const { address } = this.get(alias)
+    //   if (!address.isUnknown()) {
+    //     // next.#addressMap = this.#addressMap.remove(address.getChainId())
+    //   }
+    // }
+    // next.#txs = this.#txs.remove(alias)
+    // if (!channel.address.isUnknown() && !channel.address.isInvalid()) {
+    //   const chainId = channel.address.getChainId()
+    //   // next.#addressMap = this.#addressMap.set(chainId, alias)
+    //   next.#unresolvedAliases = this.#unresolvedAliases.delete(alias)
+    //   if (channel.isTransmitting() && alias !== '.') {
+    //     next.#txs = next.#txs.add(alias)
+    //   }
+    // } else {
+    //   next.#unresolvedAliases = this.#unresolvedAliases.add(alias)
+    // }
+    // return next
   }
   remove(alias) {
-    assert.strictEqual(typeof alias, 'string')
-    assert(alias !== '.', `cannot delete self`)
-    assert(alias !== '..', `cannot delete parent`)
-    const next = super.remove(alias)
-    next.#txs = this.#txs.remove(alias)
-    const { address } = this.get(alias)
-    if (!address.isUnknown() && !address.isInvalid()) {
-      next.#addressMap = this.#addressMap.delete(address.getChainId())
-    }
-    return next
+    // assert.strictEqual(typeof alias, 'string')
+    // assert(alias !== '.', `cannot delete self`)
+    // assert(alias !== '..', `cannot delete parent`)
+    // const next = super.remove(alias)
+    // next.#txs = this.#txs.remove(alias)
+    // const { address } = this.get(alias)
+    // if (!address.isUnknown() && !address.isInvalid()) {
+    //   // next.#addressMap = this.#addressMap.delete(address.getChainId())
+    // }
+    // return next
   }
   rename(srcAlias, destAlias) {
     // needed to preserve the hash tree efficiently
@@ -147,15 +133,15 @@ export class Network extends IpldStruct {
   hasByAddress(address) {
     assert(address instanceof Address)
     assert(!address.isUnknown())
-    return this.#addressMap.has(address.getChainId())
+    // return this.#addressMap.has(address.getChainId())
   }
   getByAddress(address) {
     assert(address instanceof Address)
     assert(!address.isUnknown())
     // TODO handle same address referred to twice as different aliases
     const msg = `no channel found for address: ${address.getChainId()}`
-    assert(this.#addressMap.has(address.getChainId()), msg)
-    const alias = this.#addressMap.get(address.getChainId())
+    // assert(this.#addressMap.has(address.getChainId()), msg)
+    // const alias = this.#addressMap.get(address.getChainId())
     if (this.has(alias)) {
       return this.get(alias)
     }
@@ -163,20 +149,20 @@ export class Network extends IpldStruct {
   getAlias(address) {
     assert(address instanceof Address)
     assert(!address.isUnknown())
-    return this.#addressMap.get(address.getChainId())
+    // return this.#addressMap.get(address.getChainId())
   }
   setByAddress(address, channel) {
     assert(address instanceof Address)
     assert(channel instanceof Channel)
     assert(this.hasByAddress(address))
-    const alias = this.#addressMap.get(address.getChainId())
-    return this.set(alias, channel)
+    // const alias = this.#addressMap.get(address.getChainId())
+    // return this.set(alias, channel)
   }
   getTransmittingAliases() {
-    return this.#txs.toArray()
+    // return this.#txs.toArray()
   }
   isTransmitting() {
-    return !!this.#txs.size
+    // return !!this.#txs.size
   }
   getParent() {
     return this.get('..')

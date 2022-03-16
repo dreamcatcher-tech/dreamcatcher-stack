@@ -25,6 +25,7 @@ export class Hamt extends IpldInterface {
     instance.#valueClass = valueClass
     return instance
   }
+  // TODO allow WeakGet, WeakEntries, to only give what is loaded
   #clone() {
     const next = new this.constructor()
     next.#valueClass = this.#valueClass
