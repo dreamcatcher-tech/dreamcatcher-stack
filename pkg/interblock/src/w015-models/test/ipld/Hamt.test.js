@@ -70,4 +70,12 @@ describe('Hamt', () => {
     hamt = await hamt.ensure(['test'], resolver)
     assert(hamt.get('test') instanceof TestClass)
   })
+  test('throws on existing key', async () => {
+    let hamt = Hamt.create()
+    assert.throws(() => hamt.get('bogus key'), 'bogus key')
+    hamt = hamt.set('some key', 'some value')
+    assert.strictEqual(hamt.get('some key'), 'some value')
+    assert.throws(() => hamt.set('some key', 'over'), 'Cannot overwrite')
+  })
+  test.todo('recursive crush')
 })

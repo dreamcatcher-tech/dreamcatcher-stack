@@ -46,6 +46,8 @@ export class Address extends IpldInterface {
   }
   static generate(provenance) {
     assert(provenance instanceof Provenance)
+    const { cid } = provenance
+    return this.create(cid.toV0())
   }
   static create(cid) {
     const instance = new this()

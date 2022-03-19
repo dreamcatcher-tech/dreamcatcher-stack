@@ -1,76 +1,78 @@
 import { assert } from 'chai/index.mjs'
 import { Network, Channel, Address } from '../../src/ipld'
-
+import * as utils from '../../src/ipld/IpldUtils'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
+Debug.enable('*tests*')
 
 describe('network', () => {
-  test('creates default', () => {
+  test('creates default', async () => {
     const network = Network.create()
-    assert(network.get('..'))
-    assert(network.get('.'))
-    assert.strictEqual(network.size, 2)
+    const crush = await network.crush()
+    const diffs = await crush.getDiffBlocks()
+    debug(diffs.size)
+    assert(network.getByAlias('..'))
+    assert(network.getByAlias('.'))
+    assert.strictEqual(network.counter, 2)
   })
   test('cannot delete parent or self', () => {
     const network = Network.create()
-    assert.throws(() => network.del('..'))
-    assert.throws(() => network.del('.'))
+    assert.throws(() => network.delete('..'), 'Cannot delete parent')
+    assert.throws(() => network.delete('.'), 'Cannot delete loopback')
+    assert.throws(() => network.delete('else'), 'else has not')
+    assert.throws(() => network.delete(4), '4 has not')
   })
   test('parent is unknown by default', () => {
     const network = Network.create()
-    const parent = network.get('..')
+    const parent = network.getByAlias('..')
     assert(parent)
-    assert(parent.address.isUnknown())
+    assert(parent.tx.genesis.isUnknown())
   })
   test('can only set Channel instances', () => {
     const network = Network.create()
-    assert.throws(() => network.set('else', 'test'))
-    assert.throws(() => network.set('else', { test: 'test' }))
+    assert.throws(() => network.setChannel('else', 'test'), 'must supply')
+    assert.throws(() => network.setChannel('else', { t: 't' }), 'must supply')
   })
-  test('get by address', () => {
+  test('get by address', async () => {
     let network = Network.create()
-    const address = Address.create('TEST')
+    const address = Address.create(await utils.address('TEST'))
     assert(!address.isUnknown())
     const channel = Channel.create(address)
     const alias = 'testAlias'
-    network = network.set(alias, channel)
-    assert.strictEqual(network.get(alias), channel)
+    network = network.setChannel(alias, channel)
+    assert.strictEqual(network.getByAlias(alias), channel)
     assert.strictEqual(network.getByAddress(address), channel)
   })
-  test.skip('large network', () => {
+  test.todo('same channel results in same channelId')
+  test.todo('diffs only give difference to previous crush')
+  test('large network', async () => {
     let network = Network.create()
     let channel = Channel.create()
-    const count = 200000
-    const next = {}
+    const count = 20
+    let start = Date.now()
     for (let i = 0; i < count; i++) {
       const alias = `alias${i}`
-      const address = Address.create('GENESIS')
+      const address = Address.createGenesis()
       channel = Channel.create(address)
-      // network = network.merge({ [alias]: channel })
-      next[alias] = channel
+      network = network.setChannel(alias, channel)
     }
-    let start = Date.now()
-    network = network.setMany(next)
     debug(`time to %o: %o ms`, count, Date.now() - start)
     start = Date.now()
-    network = network.setMany({ addOne: channel })
+    network = network.setChannel('addOne', channel)
     debug(`add one time %o ms`, Date.now() - start)
     start = Date.now()
-    network = network.merge()
-    debug(`merge time %o ms`, Date.now() - start)
+    network = await network.crush()
+    debug(`crush first time %o ms`, Date.now() - start, network.cid)
     start = Date.now()
-    const hash = network.hashString()
-    debug(`hash time: %o ms %o`, Date.now() - start, hash.substr(0, 10))
+    const diffs1 = await network.getDiffBlocks()
+    debug(`diffs: %o ms length: %o`, Date.now() - start, diffs1.size)
     start = Date.now()
-    network = network.setMany({ addTwo: channel }).merge()
-    const hash2 = network.hashString()
-    debug(`hash2 time: %o ms %o`, Date.now() - start, hash2.substr(0, 10))
+    network = network.setChannel('addTwo', channel)
+    network = await network.crush()
+    debug(`crush second time: %o ms %o`, Date.now() - start, network.cid)
     start = Date.now()
-    const array = network.toArray()
-    debug(`toArray: %o ms length: %o`, Date.now() - start, array.length)
-    start = Date.now()
-    const string = JSON.stringify(array)
-    debug(`stringify: %o ms size: %o`, Date.now() - start, string.length)
+    const diffs2 = await network.getDiffBlocks()
+    debug(`diffs: %o ms length: %o`, Date.now() - start, diffs2.size)
   })
   test.todo('rxReply always selected before rxRequest')
   test.todo('rxReply( request ) throws if non existant channel in request')

@@ -64,7 +64,7 @@ export class IpldStruct extends IpldInterface {
     return crushed
   }
 
-  getDiffBlocks(from) {
+  async getDiffBlocks(from) {
     assert(!this.isModified())
     if (from) {
       assert(from instanceof this.constructor)
@@ -84,16 +84,16 @@ export class IpldStruct extends IpldInterface {
       if (thisValue instanceof IpldInterface) {
         assert(fromValue === undefined || fromValue instanceof IpldInterface)
         if (!fromValue || !thisValue.cid.equals(fromValue.cid)) {
-          const valueBlocks = thisValue.getDiffBlocks(fromValue)
+          const valueBlocks = await thisValue.getDiffBlocks(fromValue)
           merge(blocks, valueBlocks)
         }
       } else if (Array.isArray(thisValue)) {
-        const valueBlocks = thisValue.map((v, i) => {
+        const valueBlocks = thisValue.map(async (v, i) => {
           if (!fromValue || !fromValue[i]) {
-            return v.getDiffBlocks()
+            return await v.getDiffBlocks()
           }
           if (!v.cid.equals(fromValue[i].cid)) {
-            return v.getDiffBlocks(fromValue[i])
+            return await v.getDiffBlocks(fromValue[i])
           }
         })
         valueBlocks.forEach((map) => merge(blocks, map))

@@ -3,7 +3,7 @@ import { IpldStruct } from './IpldStruct'
 
 export class Meta extends IpldStruct {
   static create() {
-    return super.create({ replies: {} })
+    return super.clone({ replies: {} })
   }
   assertLogic() {
     const { replies } = this

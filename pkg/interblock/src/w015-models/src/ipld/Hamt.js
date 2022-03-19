@@ -37,11 +37,12 @@ export class Hamt extends IpldInterface {
     return next
   }
   set(key, value) {
-    assert(typeof key !== undefined)
-    assert(typeof key === 'string' || Number.isInteger(key))
-    key = key + ''
+    assertKey(key)
     if (this.#valueClass) {
       assert(value instanceof this.#valueClass, `Not correct class type`)
+    }
+    if (this.#gets.has(key)) {
+      throw new Error(`Cannot overwrite key: ${key}`)
     }
     const next = this.#clone()
     next.#gets = this.#gets.set(key, value)
@@ -50,10 +51,10 @@ export class Hamt extends IpldInterface {
     return next
   }
   delete(key) {
-    assert(typeof key !== undefined)
-    assert(typeof key === 'string' || Number.isInteger(key))
-    key = key + ''
-
+    assertKey(key)
+    if (!this.#gets.has(key)) {
+      throw new Error(`non existent key: ${key}`)
+    }
     const next = this.#clone()
     next.#gets = this.#gets.remove(key)
     next.#sets = this.#sets.remove(key)
@@ -61,9 +62,7 @@ export class Hamt extends IpldInterface {
     return next
   }
   get(key) {
-    assert(typeof key !== undefined)
-    assert(typeof key === 'string' || Number.isInteger(key))
-    key = key + ''
+    assertKey(key)
     if (!this.#gets.has(key) || this.#deletes.has(key)) {
       throw new Error(`${key} has not been preloaded`)
     }
@@ -94,11 +93,19 @@ export class Hamt extends IpldInterface {
       this.#hashmap = await create(this.#putStore, { blockHasher, blockCodec })
     }
     for (const key of this.#deletes) {
-      console.log(key)
+      debug(`delete`, key)
+      const has = await this.#hashmap.has(key)
+      if (has) {
+        throw new Error(`non existent key: ${key}`)
+      }
       await this.#hashmap.delete(key)
     }
     for (const [key, value] of this.#sets) {
       debug('set:', key, value)
+      const has = await this.#hashmap.has(key)
+      if (has) {
+        throw new Error(`cannot overwrite key: ${key}`)
+      }
       await this.#hashmap.set(key, value)
     }
     const next = this.#clone()
@@ -160,4 +167,10 @@ export class Hamt extends IpldInterface {
     }
     return this.#putStore.getDiffs(cid)
   }
+}
+
+const assertKey = (key) => {
+  assert(typeof key !== undefined)
+  assert(key !== '')
+  assert(typeof key === 'string' || Number.isInteger(key))
 }

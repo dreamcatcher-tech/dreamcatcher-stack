@@ -224,7 +224,9 @@ Internally, everything references channels by this id, with the advantage being 
 
 There may be many aliases mapped to the same channelId.
 
-Strings are used in the channels map, to effectively give sparse arrays in json.
+A HAMT is used to track large amounts of data whilst storing only diffs.
+
+Channel is not stored as a link, but as a full object, since inside of the channel the Tx key will be stored as a link anyway, so no point double linking.
 
 ```sh
 type SystemRoles enum {

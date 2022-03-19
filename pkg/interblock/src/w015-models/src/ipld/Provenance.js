@@ -28,12 +28,6 @@ export class Provenance extends IpldStruct {
     const isHigher = child.height > this.height
     return isParent && isHigher
   }
-  hash() {
-    throw new Error('do not hash provenance')
-  }
-  hashString() {
-    this.hash()
-  }
   static generateIntegrity(obj) {
     const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
     const check = {}
