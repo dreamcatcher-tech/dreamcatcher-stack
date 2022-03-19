@@ -65,6 +65,9 @@ export class Network extends IpldStruct {
     const channel = this.channels.get(channelId)
     return channel
   }
+  hasByAlias(alias) {
+    return this.aliases.has(alias)
+  }
   delete(alias) {
     // TODO check if any other aliases refer to this channel
     const { channelId } = this.aliases.get(alias)

@@ -73,6 +73,8 @@ The model includes these constants:
 
 Addresses are always CID version 0, which makes them easy to distinguish at a glance from `Pulse`s and `Binary`s, which are CID version 1.
 
+An address is created from the version 0 CID of the first Pulse of the chain.
+
 ```sh
 type Address link
 ```
@@ -158,7 +160,7 @@ const TxExample = {
     precedent: CIDPrecedent,
     system: {
         requestsStart: 23423,
-        requests: [action1, action2, action3],
+        requests: [request1, request2, request3],
         repliesStart: 3324,
         replies: [reply1, reply2, reply3, reply4]
         promisedIds: [ 32, 434, 435 ],
@@ -317,6 +319,8 @@ type ACL struct {
 CID links inside the State will allow the author to break down their state any way they please. This will not be supported initially, as the State should be kept small enough to be managed as a single object.
 
 The result of running a covenant is stored here, and must be serializable.
+
+State is special in that it wraps an object directly, with no predefined keys.
 
 ```sh
 type State { String : Any }

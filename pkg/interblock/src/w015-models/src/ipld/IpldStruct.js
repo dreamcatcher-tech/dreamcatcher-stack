@@ -88,7 +88,7 @@ export class IpldStruct extends IpldInterface {
           merge(blocks, valueBlocks)
         }
       } else if (Array.isArray(thisValue)) {
-        const valueBlocks = thisValue.map(async (v, i) => {
+        const awaits = thisValue.map(async (v, i) => {
           if (!fromValue || !fromValue[i]) {
             return await v.getDiffBlocks()
           }
@@ -96,6 +96,7 @@ export class IpldStruct extends IpldInterface {
             return await v.getDiffBlocks(fromValue[i])
           }
         })
+        const valueBlocks = await Promise.all(awaits)
         valueBlocks.forEach((map) => merge(blocks, map))
       }
     }

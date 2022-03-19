@@ -3,7 +3,8 @@ import dagPB, { prepare } from '@ipld/dag-pb'
 import { CID } from 'multiformats/cid'
 import { IpldInterface } from './IpldInterface'
 import { sha256 } from 'multiformats/hashes/sha2'
-import { Provenance } from '.'
+import { Pulse } from '.'
+import * as utils from './IpldUtils'
 
 export const cidV0FromString = (string) => {
   assert.strictEqual(typeof string, 'string')
@@ -44,10 +45,10 @@ export class Address extends IpldInterface {
   static createGenesis() {
     return this.create(GENESIS)
   }
-  static generate(provenance) {
-    assert(provenance instanceof Provenance)
-    const { cid } = provenance
-    return this.create(cid.toV0())
+  static generate(pulse) {
+    assert(pulse instanceof Pulse)
+    const cid = utils.address(pulse)
+    return this.create(cid)
   }
   static create(cid) {
     const instance = new this()

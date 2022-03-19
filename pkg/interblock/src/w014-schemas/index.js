@@ -1,1 +1,1 @@
-export default './ipldSchemas'
+export { default } from './ipldSchemas'

@@ -15,6 +15,70 @@ export default {
         },
       },
     },
+    HashMapRoot: {
+      kind: 'struct',
+      fields: {
+        hashAlg: {
+          type: 'Int',
+        },
+        bucketSize: {
+          type: 'Int',
+        },
+        hamt: {
+          type: 'HashMapNode',
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    HashMapNode: {
+      kind: 'struct',
+      fields: {
+        map: {
+          type: 'Bytes',
+        },
+        data: {
+          type: {
+            kind: 'list',
+            valueType: 'Element',
+          },
+        },
+      },
+      representation: {
+        tuple: {},
+      },
+    },
+    Element: {
+      kind: 'union',
+      representation: {
+        kinded: {
+          link: {
+            kind: 'link',
+            expectedType: 'HashMapNode',
+          },
+          list: 'Bucket',
+        },
+      },
+    },
+    Bucket: {
+      kind: 'list',
+      valueType: 'BucketEntry',
+    },
+    BucketEntry: {
+      kind: 'struct',
+      fields: {
+        key: {
+          type: 'Bytes',
+        },
+        value: {
+          type: 'Any',
+        },
+      },
+      representation: {
+        tuple: {},
+      },
+    },
     Binary: {
       kind: 'link',
     },
@@ -94,10 +158,10 @@ export default {
     PublicKey: {
       kind: 'struct',
       fields: {
-        key: {
+        name: {
           type: 'String',
         },
-        nickname: {
+        key: {
           type: 'String',
         },
         algorithm: {
@@ -114,7 +178,7 @@ export default {
         quorumThreshold: {
           type: 'Int',
         },
-        validators: {
+        publicKeys: {
           type: {
             kind: 'list',
             valueType: {
@@ -204,11 +268,12 @@ export default {
             kind: 'link',
             expectedType: 'Pulse',
           },
+          optional: true,
         },
         system: {
           type: 'TxQueue',
         },
-        covenant: {
+        reducer: {
           type: 'TxQueue',
         },
       },
@@ -238,15 +303,19 @@ export default {
             kind: 'link',
             expectedType: 'Pulse',
           },
+          optional: true,
         },
-        system: {
+        rxSystem: {
           type: 'RxTracker',
         },
-        covenant: {
+        rxReducer: {
           type: 'RxTracker',
         },
         tx: {
-          type: 'Tx',
+          type: {
+            kind: 'link',
+            expectedType: 'Tx',
+          },
         },
       },
       representation: {
@@ -303,6 +372,13 @@ export default {
             kind: 'map',
             keyType: 'String',
             valueType: 'Alias',
+          },
+        },
+        addresses: {
+          type: {
+            kind: 'map',
+            keyType: 'String',
+            valueType: 'Int',
           },
         },
       },
@@ -372,7 +448,7 @@ export default {
     Timestamp: {
       kind: 'struct',
       fields: {
-        date: {
+        isoDate: {
           type: 'String',
         },
       },
@@ -457,7 +533,6 @@ export default {
       fields: {
         pendingRequest: {
           type: 'RequestId',
-          optional: true,
         },
         requests: {
           type: {
@@ -562,15 +637,63 @@ export default {
         map: {},
       },
     },
-    Lineage: {
-      kind: 'list',
-      valueType: 'Link',
-    },
-    Turnovers: {
-      kind: 'list',
-      valueType: {
-        kind: 'link',
-        expectedType: 'Pulse',
+    Dmz: {
+      kind: 'struct',
+      fields: {
+        validators: {
+          type: {
+            kind: 'link',
+            expectedType: 'Validators',
+          },
+        },
+        config: {
+          type: {
+            kind: 'link',
+            expectedType: 'Config',
+          },
+        },
+        timestamp: {
+          type: 'Timestamp',
+        },
+        network: {
+          type: {
+            kind: 'link',
+            expectedType: 'Network',
+          },
+        },
+        state: {
+          type: {
+            kind: 'link',
+            expectedType: 'State',
+          },
+        },
+        meta: {
+          type: {
+            kind: 'link',
+            expectedType: 'Meta',
+          },
+        },
+        pending: {
+          type: {
+            kind: 'link',
+            expectedType: 'Pending',
+          },
+          optional: true,
+        },
+        approot: {
+          type: {
+            kind: 'link',
+            expectedType: 'Pulse',
+          },
+          optional: true,
+        },
+        binary: {
+          type: 'Binary',
+          optional: true,
+        },
+      },
+      representation: {
+        map: {},
       },
     },
     StateTreeNode: {
@@ -603,60 +726,15 @@ export default {
         map: {},
       },
     },
-    PulseContents: {
-      kind: 'struct',
-      fields: {
-        approot: {
-          type: {
-            kind: 'link',
-            expectedType: 'Pulse',
-          },
-        },
-        validators: {
-          type: {
-            kind: 'link',
-            expectedType: 'Validators',
-          },
-        },
-        config: {
-          type: {
-            kind: 'link',
-            expectedType: 'Config',
-          },
-        },
-        binary: {
-          type: 'Binary',
-        },
-        timestamp: {
-          type: 'Timestamp',
-        },
-        network: {
-          type: {
-            kind: 'link',
-            expectedType: 'Network',
-          },
-        },
-        state: {
-          type: {
-            kind: 'link',
-            expectedType: 'State',
-          },
-        },
-        meta: {
-          type: {
-            kind: 'link',
-            expectedType: 'Meta',
-          },
-        },
-        pending: {
-          type: {
-            kind: 'link',
-            expectedType: 'Pending',
-          },
-        },
-      },
-      representation: {
-        map: {},
+    Lineage: {
+      kind: 'list',
+      valueType: 'Link',
+    },
+    Turnovers: {
+      kind: 'list',
+      valueType: {
+        kind: 'link',
+        expectedType: 'Pulse',
       },
     },
     Provenance: {
@@ -686,7 +764,7 @@ export default {
         contents: {
           type: {
             kind: 'link',
-            expectedType: 'PulseContents',
+            expectedType: 'Dmz',
           },
         },
       },

@@ -61,6 +61,10 @@ export class Hamt extends IpldInterface {
     next.#deletes = this.#deletes.add(key)
     return next
   }
+  has(key) {
+    assertKey(key)
+    return this.#gets.has(key)
+  }
   get(key) {
     assertKey(key)
     if (!this.#gets.has(key) || this.#deletes.has(key)) {
@@ -86,29 +90,31 @@ export class Hamt extends IpldInterface {
     if (!this.isModified()) {
       const next = this.#clone()
       next.#putStore = new PutStore()
-      return this
+      return next
     }
     this.#putStore.setPutMode()
-    if (!this.#hashmap) {
-      this.#hashmap = await create(this.#putStore, { blockHasher, blockCodec })
+    let hashmap = this.#hashmap
+    if (!hashmap) {
+      hashmap = await create(this.#putStore, { blockHasher, blockCodec })
     }
     for (const key of this.#deletes) {
       debug(`delete`, key)
-      const has = await this.#hashmap.has(key)
+      const has = await hashmap.has(key)
       if (has) {
         throw new Error(`non existent key: ${key}`)
       }
-      await this.#hashmap.delete(key)
+      await hashmap.delete(key)
     }
     for (const [key, value] of this.#sets) {
       debug('set:', key, value)
-      const has = await this.#hashmap.has(key)
+      const has = await hashmap.has(key)
       if (has) {
         throw new Error(`cannot overwrite key: ${key}`)
       }
-      await this.#hashmap.set(key, value)
+      await hashmap.set(key, value)
     }
     const next = this.#clone()
+    next.#hashmap = hashmap
     next.#sets = this.#sets.clear()
     next.#deletes = this.#deletes.clear()
     return next

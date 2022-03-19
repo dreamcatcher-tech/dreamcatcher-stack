@@ -1,9 +1,8 @@
 import { CID } from 'ipfs-core'
-import { CIDFactory, BlockFactory } from '../src/CIDFactory'
-import { encode, decode, code } from '@ipld/dag-cbor'
+import { address, encode } from '../../src/ipld/IpldUtils'
 import assert from 'assert-fast'
 
-describe('CIDFactory', () => {
+describe('IpldUtils', () => {
   test('POJO', async () => {
     const obj = {
       x: 1,
@@ -15,18 +14,13 @@ describe('CIDFactory', () => {
       },
       a: 'asdfasdfasdfasdfasdfasdfasdf',
     }
-    const cid = await CIDFactory(obj)
+    const cid = await address(obj)
     assert(CID.asCID(cid))
 
-    const block = await BlockFactory(obj)
+    const block = await encode(obj)
 
     obj.linkTest = { m: block.cid }
-    const linkedBlock = await BlockFactory(obj)
-    console.dir(linkedBlock, { depth: Infinity })
-
-    for await (const r of linkedBlock.links()) {
-      console.dir(r, { depth: Infinity })
-    }
+    const linkedBlock = await encode(obj)
   })
   test('Links', () => {
     const obj = {

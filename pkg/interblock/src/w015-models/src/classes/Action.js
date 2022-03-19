@@ -27,13 +27,13 @@ export class Action extends IpldStruct {
     if (action.binary) {
       assert(binary instanceof Binary)
     }
-    return super.create(action)
+    return super.clone(action)
   }
   static getClassFor(key) {
     assert(classMap[key], `key not mapped to CID class`)
     return classMap[key]
   }
   static get schema() {
-    return schemas.types.Action
+    return schemas.types.Request
   }
 }

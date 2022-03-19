@@ -35,15 +35,15 @@ export class Dmz extends IpldStruct {
     assert.strictEqual(typeof params, 'object')
     for (const key in params) {
       assert(this.classMap[key], `key ${key} not mapped to CID class`)
-      assert(params[key] instanceof classMap[key])
+      assert(params[key] instanceof this.classMap[key])
     }
     params = { ...defaultParams, ...params }
-    return super.create(params)
+    return super.clone(params)
   }
   assertLogic() {
     // TODO if isSideEffectCapable ensure the validators list is singular
     const { network, config } = this
     // TODO verify that the pending buffers map to legit channels
-    assert(!network.has('.@@io') || config.isPierced)
+    assert(!network.hasByAlias('.@@io') || config.isPierced)
   }
 }

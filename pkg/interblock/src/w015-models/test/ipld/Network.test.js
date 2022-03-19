@@ -3,7 +3,7 @@ import { Network, Channel, Address } from '../../src/ipld'
 import * as utils from '../../src/ipld/IpldUtils'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
-Debug.enable('*tests*')
+Debug.enable()
 
 describe('network', () => {
   test('creates default', async () => {
