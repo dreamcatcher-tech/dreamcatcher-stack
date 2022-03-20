@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { State } from '../../src/ipld/State'
+import { State } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:State')
 Debug.enable()

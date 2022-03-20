@@ -1,8 +1,7 @@
 import chai, { assert } from 'chai/index.mjs'
-import { Keypair } from '../../src/ipld/Keypair'
+import { Keypair } from '..'
 import chaiAsPromised from 'chai-as-promised'
 chai.use(chaiAsPromised)
-import crypto from 'libp2p-crypto'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Keypair')
 

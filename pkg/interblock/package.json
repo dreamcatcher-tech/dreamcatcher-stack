@@ -103,7 +103,7 @@
   "wallaby": {
     "autoDetect": true,
     "tests": [
-      "**/*.test.js",
+      "**/w008-ipld/**/*.test.js",
       "!package.test.js"
     ],
     "env": {

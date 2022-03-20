@@ -1,4 +1,4 @@
-import { Validators, Keypair } from '../../src/ipld'
+import { Validators, Keypair } from '..'
 import { assert } from 'chai/index.mjs'
 
 describe('Validators', () => {

@@ -12,12 +12,18 @@ import {
 } from '.'
 import { IpldStruct } from './IpldStruct'
 
-const defaultParams = {
-  config: Config.create(),
-  timestamp: Timestamp.create(),
-  network: Network.create(),
-  state: State.create(),
-  meta: Meta.create(),
+let defaultParams
+const getDefaultParams = () => {
+  if (!defaultParams) {
+    defaultParams = {
+      config: Config.create(),
+      timestamp: Timestamp.create(),
+      network: Network.create(),
+      state: State.create(),
+      meta: Meta.create(),
+    }
+  }
+  return defaultParams
 }
 export class Dmz extends IpldStruct {
   static classMap = {
@@ -37,7 +43,7 @@ export class Dmz extends IpldStruct {
       assert(this.classMap[key], `key ${key} not mapped to CID class`)
       assert(params[key] instanceof this.classMap[key])
     }
-    params = { ...defaultParams, ...params }
+    params = { ...getDefaultParams(), ...params }
     return super.clone(params)
   }
   assertLogic() {

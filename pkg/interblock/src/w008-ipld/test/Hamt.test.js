@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
-import { IpldStruct } from '../../src/ipld/IpldStruct'
-import { Hamt } from '../../src/ipld/Hamt'
+import { IpldStruct } from '../src/IpldStruct'
+import { Hamt } from '../src/Hamt'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:ipld:hamt')
 Debug.enable()

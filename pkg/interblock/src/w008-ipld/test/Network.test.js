@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
-import { Network, Channel, Address } from '../../src/ipld'
-import * as utils from '../../src/ipld/IpldUtils'
+import { Network, Channel, Address } from '..'
+import * as utils from '../src/IpldUtils'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
 Debug.enable()

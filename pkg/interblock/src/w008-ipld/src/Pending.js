@@ -14,11 +14,11 @@ export class Pending extends IpldStruct {
     if (!pendingRequest) {
       assert(!accumulator.length)
     }
-    for (const tx of accumulator) {
-      if (tx.reply) {
-        assert(tx.reply instanceof RxReply)
-      }
-    }
+    // for (const tx of accumulator) {
+    //   if (tx.reply) {
+    //     assert(tx.reply instanceof RxReply)
+    //   }
+    // }
   }
   getIsPending() {
     return !!this.pendingRequest
@@ -28,8 +28,8 @@ export class Pending extends IpldStruct {
       return this.bufferedRequests[0]
     }
   }
-  getIsBuffered(request) {
-    assert(request instanceof RxRequest)
-    return this.bufferedRequests && request.deepEquals(this.bufferedRequests[0])
-  }
+  // getIsBuffered(request) {
+  //   assert(request instanceof RxRequest)
+  //   return this.bufferedRequests && request.deepEquals(this.bufferedRequests[0])
+  // }
 }

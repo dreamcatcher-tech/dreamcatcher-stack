@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Dmz } from '../../src/ipld'
+import { Dmz } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Dmz')
 

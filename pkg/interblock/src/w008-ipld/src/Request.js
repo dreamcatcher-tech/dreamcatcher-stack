@@ -3,7 +3,7 @@ import { assertNoUndefined } from './utils'
 import equals from 'fast-deep-equal'
 import { IpldStruct } from './IpldStruct'
 import { Binary } from '.'
-import schemas from '../../../w014-schemas'
+import schemas from '../../w006-schemas'
 
 export class Request extends IpldStruct {
   static create(action, payload = {}, binary) {

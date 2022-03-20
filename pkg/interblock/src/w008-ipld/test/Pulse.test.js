@@ -1,7 +1,7 @@
-import { Dmz, Provenance, Pulse } from '../../src/ipld'
+import { Dmz, Provenance, Pulse } from '..'
 
 describe('Pulse', () => {
-  test.only('basic', async () => {
+  test('basic', async () => {
     const provenance = Provenance.createGenesis()
     const pulse = Pulse.create(provenance)
     // make a genesis pulse

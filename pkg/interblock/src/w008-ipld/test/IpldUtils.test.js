@@ -1,5 +1,5 @@
 import { CID } from 'ipfs-core'
-import { address, encode } from '../../src/ipld/IpldUtils'
+import { address, encode } from '../src/IpldUtils'
 import assert from 'assert-fast'
 
 describe('IpldUtils', () => {

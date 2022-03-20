@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Request, Binary } from '../../src/ipld'
+import { Request, Binary } from '..'
 import { fromString } from 'uint8arrays/from-string'
 
 describe('Request', () => {

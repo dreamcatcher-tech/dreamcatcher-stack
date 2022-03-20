@@ -19,37 +19,37 @@ export class Provenance extends IpldStruct {
     }
     return super.clone(provenance)
   }
-  isNextProvenance(child) {
-    assert(child instanceof Provenance)
-    const parentLineage = child.lineage.get(this.height + '')
-    const isParent =
-      parentLineage && parentLineage.deepEquals(this.reflectIntegrity())
-    const isHigher = child.height > this.height
-    return isParent && isHigher
-  }
-  static generateIntegrity(obj) {
-    const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
-    const check = {}
-    for (const key of checkKeys) {
-      assert(typeof obj[key] !== undefined, `missing integrity key: ${key}`)
-      check[key] = obj[key]
-    }
-    check.dmzIntegrity = check.dmzIntegrity.hashString()
-    check.address = check.address.hashString()
-    if (obj.lineage instanceof Base) {
-      check.lineage = {}
-      for (const [key, value] of obj.lineage.entries()) {
-        check.lineage[key] = value
-      }
-    } else {
-      // in provenanceProducer, we cannot make a map, so used a plain object
-      check.lineage = { ...obj.lineage }
-    }
-    for (const key of Object.keys(check.lineage)) {
-      check.lineage[key] = check.lineage[key].hashString()
-    }
-    assert(!check.height || Object.keys(check.lineage).length)
-    const integrity = Integrity.create(check)
-    return integrity
-  }
+  // isNextProvenance(child) {
+  //   assert(child instanceof Provenance)
+  //   const parentLineage = child.lineage.get(this.height + '')
+  //   const isParent =
+  //     parentLineage && parentLineage.deepEquals(this.reflectIntegrity())
+  //   const isHigher = child.height > this.height
+  //   return isParent && isHigher
+  // }
+  // static generateIntegrity(obj) {
+  //   const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
+  //   const check = {}
+  //   for (const key of checkKeys) {
+  //     assert(typeof obj[key] !== undefined, `missing integrity key: ${key}`)
+  //     check[key] = obj[key]
+  //   }
+  //   check.dmzIntegrity = check.dmzIntegrity.hashString()
+  //   check.address = check.address.hashString()
+  //   if (obj.lineage instanceof Base) {
+  //     check.lineage = {}
+  //     for (const [key, value] of obj.lineage.entries()) {
+  //       check.lineage[key] = value
+  //     }
+  //   } else {
+  //     // in provenanceProducer, we cannot make a map, so used a plain object
+  //     check.lineage = { ...obj.lineage }
+  //   }
+  //   for (const key of Object.keys(check.lineage)) {
+  //     check.lineage[key] = check.lineage[key].hashString()
+  //   }
+  //   assert(!check.height || Object.keys(check.lineage).length)
+  //   const integrity = Integrity.create(check)
+  //   return integrity
+  // }
 }

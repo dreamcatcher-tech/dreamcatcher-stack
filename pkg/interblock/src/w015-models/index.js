@@ -68,6 +68,6 @@
  *      modelCreators used to make subtypes
  */
 
-export * from './src/ipld'
+export * from './src/classes'
 export * from './src/queues'
 export * from './src/transients'

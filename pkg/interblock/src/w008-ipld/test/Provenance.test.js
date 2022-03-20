@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
-import { Provenance, Dmz } from '../../src/ipld'
+import { Provenance, Dmz } from '..'
 Debug.enable()
 
 describe('provenance', () => {
