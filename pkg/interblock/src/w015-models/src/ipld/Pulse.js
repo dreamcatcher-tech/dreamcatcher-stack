@@ -5,7 +5,7 @@ import assert from 'assert-fast'
 export class Pulse extends IpldStruct {
   static create(provenance) {
     assert(provenance instanceof Provenance)
-    const instance = super.create({ provenance, signatures: [] })
+    const instance = super.clone({ provenance, signatures: [] })
     return instance
   }
   addSignature(index, signature) {

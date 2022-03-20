@@ -5,10 +5,9 @@ import Debug from 'debug'
 const debug = Debug('interblock:classes:Provenance')
 
 export class Provenance extends IpldStruct {
-  static createGenesis(dmz) {
+  static createGenesis(dmz = Dmz.create()) {
     // used to make genesis
     assert(dmz instanceof Dmz)
-    assert(!dmz.isModified(), 'Dmz must be ready for hashing')
     const genesis = Address.createGenesis()
     const provenance = {
       stateTree: 'TODO',

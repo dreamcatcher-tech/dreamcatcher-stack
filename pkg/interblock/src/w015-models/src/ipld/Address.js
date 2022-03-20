@@ -47,6 +47,7 @@ export class Address extends IpldInterface {
   }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
+    assert(!pulse.isModified(), `Pulse must be crushed already`)
     const cid = utils.address(pulse)
     return this.create(cid)
   }
