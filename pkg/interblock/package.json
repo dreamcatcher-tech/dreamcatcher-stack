@@ -13,8 +13,8 @@
   "main": "src/index.mjs",
   "type": "module",
   "scripts": {
-    "schemas": "node --preserve-symlinks --experimental-specifier-resolution=node src/w014-schemas/bin.js && prettier -w src/w014-schemas/ipldSchemas.js",
-    "schemas:dev": "nodemon --exec yarn schemas --ignore src/w014-schemas/ipldSchemas.js --ext js,md",
+    "schemas": "node --preserve-symlinks --experimental-specifier-resolution=node src/w006-schemas/bin.js && prettier -w src/w006-schemas/ipldSchemas.js",
+    "schemas:dev": "nodemon --exec yarn schemas --ignore src/w006-schemas/ipldSchemas.js --ext js,md",
     "prepublishOnly": "yarn schemas && yarn build",
     "dev": "vite --force",
     "build": "vite build",
