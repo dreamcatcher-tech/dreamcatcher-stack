@@ -27,4 +27,7 @@ export default defineConfig({
       entry: path.resolve('./src/index.mjs'),
     },
   },
+  test: {
+    globals: true,
+  },
 })

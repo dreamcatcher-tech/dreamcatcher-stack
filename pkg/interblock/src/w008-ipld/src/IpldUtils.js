@@ -1,17 +1,14 @@
-import { CID } from 'ipfs-core'
+import { CID } from 'multiformats/cid'
 import * as Block from 'multiformats/block'
 import * as codec from '@ipld/dag-cbor'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
-import * as cbor from '@ipld/dag-cbor'
-
-export const address = async (obj) => {
-  const data = cbor.encode(obj)
-  const hash = await hasher.digest(data)
-  const cid = CID.createV0(hash)
-  return cid
-}
+import assert from 'assert-fast'
 
 export const encode = async (value) => {
   const block = await Block.encode({ value, codec, hasher })
   return block
+}
+
+export const encodeV0 = (value) => {
+  assert(typeof value !== undefined)
 }

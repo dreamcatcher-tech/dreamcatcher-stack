@@ -4,7 +4,7 @@ import { encode } from './IpldUtils'
 import { IpldInterface } from './IpldInterface'
 import { assertNoUndefined } from './utils'
 import Debug from 'debug'
-import { CID } from 'ipfs-core'
+import { CID } from 'multiformats/cid'
 const debug = Debug('interblock:classes:State')
 
 // TODO ensure no functions attempted to be stored

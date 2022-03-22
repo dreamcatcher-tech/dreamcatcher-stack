@@ -6,27 +6,27 @@ import { Binary } from '.'
 import schemas from '../../w006-schemas'
 
 export class Request extends IpldStruct {
-  static create(action, payload = {}, binary) {
-    if (typeof action === 'undefined') {
+  static create(request, payload = {}, binary) {
+    if (typeof request === 'undefined') {
       throw new Error(`Actions cannot be undefined`)
     }
-    if (typeof action === 'string') {
-      action = { type: action, payload }
+    if (typeof request === 'string') {
+      request = { type: request, payload }
     }
-    if (!action.payload) {
-      action = { ...action, payload: {} }
+    if (!request.payload) {
+      request = { ...request, payload: {} }
     }
-    assertNoUndefined(action.payload)
-    const s = JSON.stringify(action.payload, null, 2)
+    assertNoUndefined(request.payload)
+    const s = JSON.stringify(request.payload, null, 2)
     const cloned = JSON.parse(s)
-    assert(equals(action.payload, cloned), `payload not POJO ${s}`)
+    assert(equals(request.payload, cloned), `payload not POJO ${s}`)
     if (binary) {
-      action = { ...action, binary }
+      request = { ...request, binary }
     }
-    if (action.binary) {
+    if (request.binary) {
       assert(binary instanceof Binary)
     }
-    return super.clone(action)
+    return super.clone(request)
   }
   static classMap = { binary: Binary }
   static get schema() {

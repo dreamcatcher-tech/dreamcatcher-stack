@@ -1,4 +1,4 @@
-import { CID } from 'ipfs-core'
+import { CID } from 'multiformats/cid'
 import { address, encode } from '../src/IpldUtils'
 import assert from 'assert-fast'
 
