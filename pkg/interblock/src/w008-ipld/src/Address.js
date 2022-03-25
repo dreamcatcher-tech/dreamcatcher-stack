@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import dagPB, { prepare } from '@ipld/dag-pb'
 import { CID } from 'multiformats/cid'
+import { Block } from 'multiformats/block'
 import { IpldInterface } from './IpldInterface'
 import { sha256 } from 'multiformats/hashes/sha2'
 import { Pulse } from '.'
@@ -28,48 +29,55 @@ const ROOT = CID.parse('QmSawJHmTNpaUjDYWCE9RgoHTpKbi6JD7TuGESFbtZ4ZLc')
 const LOOPBACK = CID.parse('Qme2gGBx8EnSrXc5shQF867KPQd4jwubNov67KEKZbo4p3')
 const INVALID = CID.parse('QmYSWwmJ4w1pZ6igGRNKcVHpBU68iaumYEjsdbMpxfAQaj')
 const GENESIS = CID.parse('QmZTKF2kuFHy8isKWXpNeNa5zjeJwsHUbPbTNF1fS8HkpB')
+const defines = [UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS]
 
-// console.log(prepare({ Links: [CID.parse('bafkqabiaaebagba')] }))
-
-const address = (cid) => {
-  assert(cid instanceof CID)
-  assert.strictEqual(cid.version, 1)
-  const bytes = dagPB.encode(cid)
+const addressBlock = (cidV1) => {
+  assert(cidV1 instanceof CID)
+  assert.strictEqual(cidV1.version, 1)
+  const value = prepare({ Links: [cidV1] })
+  const bytes = dagPB.encode(value)
   const hash = sha256.digest(bytes)
-  const cidV0 = CID.createV0(hash)
-  assert.strictEqual(cidV0.version, 0)
-  return cidV0
+  const cid = CID.createV0(hash)
+  assert.strictEqual(cid.version, 0)
+  return new Block({ cid, bytes, value })
 }
 
 export class Address extends IpldInterface {
   #cid
   #ipldBlock
   static createUnknown() {
-    return this.create(UNKNOWN)
+    return this.createPredefined(UNKNOWN)
   }
   static createRoot() {
-    return this.create(ROOT)
+    return this.createPredefined(ROOT)
   }
   static createLoopback() {
-    return this.create(LOOPBACK)
+    return this.createPredefined(LOOPBACK)
   }
   static createInvalid() {
-    return this.create(INVALID)
+    return this.createPredefined(INVALID)
   }
   static createGenesis() {
-    return this.create(GENESIS)
+    return this.createPredefined(GENESIS)
   }
-  static async generate(pulse) {
+  static generate(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified(), `Pulse must be crushed already`)
     // TODO check the pulse is genesis
-    const cid = await address(pulse.cid)
-    return this.create(cid)
+    const block = addressBlock(pulse.cid)
+    return this.createFromBlock(block)
   }
-  static create(cid) {
+  static createFromBlock(block) {
+    assert(block instanceof Block)
+    const instance = new this()
+    instance.#setCid(block.cid)
+    instance.#ipldBlock = block
+    return instance
+  }
+  static createPredefined(cid) {
+    assert(defines.includes(cid), `not predefined`)
     const instance = new this()
     instance.#setCid(cid)
-    instance.deepFreeze()
     return instance
   }
   #setCid(cid) {
@@ -78,7 +86,18 @@ export class Address extends IpldInterface {
     this.#cid = cid
   }
   static async uncrush(rootCid, resolver, options) {
-    return this.create(rootCid)
+    assert(rootCid instanceof CID)
+    assert.strictEqual(typeof resolver, 'function')
+    for (const define of defines) {
+      if (define.equals(rootCid)) {
+        return this.createPredefined(define)
+      }
+    }
+    const block = await resolver(rootCid)
+    assert(block instanceof Block)
+    const instance = this.createFromBlock(block)
+    instance.#ipldBlock = undefined
+    return instance
   }
   isModified() {
     return false
@@ -90,12 +109,16 @@ export class Address extends IpldInterface {
     return this.#cid
   }
   crush() {
-    return this
-    // TODO blank previous if crush called twice
+    const instance = new Address()
+    instance.#setCid(this.#cid)
+    return instance
   }
   getDiffBlocks() {
     const map = new Map()
-    map.set(this.cid, this.ipldBlock)
+    if (this.ipldBlock) {
+      map.set(this.cid, this.ipldBlock)
+    }
+    return map
   }
   getChainId() {
     if (this.#cid === LOOPBACK) {

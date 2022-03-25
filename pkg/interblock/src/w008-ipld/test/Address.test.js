@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Address } from '..'
+import { Address, Pulse } from '..'
 import { cidV0FromString } from '../src/Address'
 describe('address', () => {
   test('no params makes unknown address', () => {
@@ -13,14 +13,23 @@ describe('address', () => {
     assert.throws(() => genesis.getChainId(), 'Address not resolved')
   })
   test('rejects random objects', () => {
-    assert.throws(() => Address.create({ some: 'random thing' }), 'cid')
-  })
-  test('test addresses from strings', () => {
+    assert.throws(() => Address.createPredefined({ s: 't' }), 'not predefined')
     const cid = cidV0FromString('testing')
-    const address = Address.create(cid)
-    assert(!address.isUnknown())
-    assert(!address.isGenesis())
-    assert.strictEqual(address.getChainId(), cid.toString())
+    assert.throws(() => Address.createPredefined(cid), 'not predefined')
   })
-  test.todo('generate from provenance')
+  test('generate from Pulse', async () => {
+    const pulse = await Pulse.create().crush()
+    const address = Address.generate(pulse)
+    assert.strictEqual(address.cid.version, 0)
+    assert(address.ipldBlock)
+    assert.strictEqual(address.cid, address.ipldBlock.cid)
+    assert(!address.isModified())
+
+    const diffs = address.getDiffBlocks()
+    assert.strictEqual(diffs.size, 1)
+
+    const crushed = address.crush()
+    const nextDiffs = crushed.getDiffBlocks()
+    assert.strictEqual(nextDiffs.size, 0)
+  })
 })

@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Network, Channel, Address } from '..'
+import { Pulse, Network, Channel, Address } from '..'
 import * as utils from '../src/IpldUtils'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
@@ -35,7 +35,8 @@ describe('network', () => {
   })
   test('get by address', async () => {
     let network = Network.create()
-    const address = Address.create(await utils.address('TEST'))
+    const pulse = await Pulse.create().crush()
+    const address = Address.generate(pulse)
     assert(!address.isUnknown())
     const channel = Channel.create(address)
     const alias = 'testAlias'

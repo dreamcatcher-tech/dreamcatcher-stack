@@ -1,5 +1,5 @@
 import { CID } from 'multiformats/cid'
-import { address, encode } from '../src/IpldUtils'
+import { encode } from '../src/IpldUtils'
 import assert from 'assert-fast'
 
 describe('IpldUtils', () => {
@@ -14,9 +14,6 @@ describe('IpldUtils', () => {
       },
       a: 'asdfasdfasdfasdfasdfasdfasdf',
     }
-    const cid = await address(obj)
-    assert(CID.asCID(cid))
-
     const block = await encode(obj)
 
     obj.linkTest = { m: block.cid }
