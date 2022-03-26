@@ -19,6 +19,7 @@ export class Provenance extends IpldStruct {
     }
     return super.clone(provenance)
   }
+
   // isNextProvenance(child) {
   //   assert(child instanceof Provenance)
   //   const parentLineage = child.lineage.get(this.height + '')

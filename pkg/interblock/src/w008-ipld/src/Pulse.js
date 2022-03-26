@@ -17,4 +17,12 @@ export class Pulse extends IpldStruct {
     }
     return this.provenance.genesis
   }
+  isVerifiedBlock() {
+    if (this.provenance.address.isGenesis()) {
+      return true
+    }
+    const sigCheck = checkSignatures(this.validators, this.provenance)
+    const { isPierce, isAllRequired, isOnlyRequired } = sigCheck
+    return isPierce || (isAllRequired && isOnlyRequired)
+  }
 }

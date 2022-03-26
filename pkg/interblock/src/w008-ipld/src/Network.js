@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import Immutable from 'immutable'
 import Debug from 'debug'
-import { Channel, Address } from '.'
+import { Channel, Address, Loopback, Tx } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
 const debug = Debug('interblock:classes:Network')
@@ -23,9 +23,22 @@ const debug = Debug('interblock:classes:Network')
         channels { String : Channel }   # Map of channelIds to channels
         aliases { String : Alias }      # Map of aliases to channelIds
         addresses { String : Int }
+        loopback Channel
+        parent Channel
+        rxIds [ Int ]
+        txs [ &Tx ]        
     }
  */
 export class Network extends IpldStruct {
+  static classMap = {
+    channels: Hamt,
+    aliases: Hamt,
+    addresses: Hamt,
+    loopback: Loopback,
+    parent: Channel,
+    rxIds: Rx,
+    txs: Tx,
+  }
   static createRoot() {
     // make the parent be a root address
   }
@@ -34,18 +47,31 @@ export class Network extends IpldStruct {
     const channels = Hamt.create()
     const aliases = Hamt.create()
     const addresses = Hamt.create()
-    let instance = super.clone({ counter, channels, aliases, addresses })
-
     const parent = Channel.create()
-    const loopback = Channel.createLoopback()
-
-    instance = instance.setChannel('..', parent).setChannel('.', loopback)
+    const loopback = Loopback.createLoopback()
+    let instance = super.clone({
+      counter,
+      channels,
+      aliases,
+      addresses,
+      parent,
+      loopback,
+    })
     return instance
   }
   setChannel(alias, channel, systemRole = './') {
     assert.strictEqual(typeof alias, 'string')
     assert(channel instanceof Channel, `must supply Channel`)
     assert.strictEqual(typeof systemRole, 'string')
+    if (alias === '.') {
+      assert.strictEqual(systemRole, '.')
+      // TODO check it is greater than the current
+      return this.set('loopback', channel)
+    }
+    if (alias === '..') {
+      assert.strictEqual(systemRole, '..')
+      return this.set('parent', channel)
+    }
     const channelId = this.counter
     const counter = this.counter + 1
     const channels = this.channels.set(channelId, channel)
@@ -56,7 +82,7 @@ export class Network extends IpldStruct {
     }
     const aliases = this.aliases.set(alias, { channelId, systemRole })
 
-    return Network.clone({ counter, channels, aliases, addresses })
+    return Network.clone({ ...this, counter, channels, aliases, addresses })
   }
   getByAlias(alias) {
     const { channelId } = this.aliases.get(alias)
@@ -70,16 +96,16 @@ export class Network extends IpldStruct {
   }
   delete(alias) {
     // TODO check if any other aliases refer to this channel
-    const { channelId } = this.aliases.get(alias)
-    assert(Number.isInteger(channelId))
-    const parentId = 0
-    const loopbackId = 1
-    if (channelId === parentId) {
+    assert.strictEqual(typeof alias, 'string', `Alias must be a string`)
+    assert(alias)
+    if (alias === '..') {
       throw new Error(`Cannot delete parent`)
     }
-    if (channelId === loopbackId) {
+    if (alias === '.') {
       throw new Error(`Cannot delete loopback`)
     }
+    const { channelId } = this.aliases.get(alias)
+    assert(Number.isInteger(channelId))
     const channels = this.channels.delete(channelId)
     return this.constructor.clone({ ...this, channels })
   }
@@ -90,25 +116,6 @@ export class Network extends IpldStruct {
     // assert(this.get('.') instanceof Channel, 'channel invalid')
     // assert(this.get('.').systemRole === '.', `self not loopback channel`)
     // assert(this.get('..').systemRole === '..', `parent role invalid`)
-  }
-  async ensureAddresses(addresses, resolver) {
-    assert(Array.isArray(addresses))
-    assert(addresses.every((a) => a instanceof Address))
-    assert.strictEqual(typeof resolver, 'function')
-    const awaits = addresses.map((a) => {})
-  }
-  async ensureAliases(aliases, resolver) {
-    assert(Array.isArray(aliases))
-    assert(aliases.every((s) => typeof s === 'string'))
-    assert.strictEqual(typeof resolver, 'function')
-    const awaits = aliases.map(async (s) => {
-      const alias = await resolver(s)
-    })
-    // walk through all aliases
-    // load all from hamt, then cache the gets
-    // when start using the object, we use the cache only and throw if something gets missed
-
-    // once all required aliases are loaded, then load all the channelids
   }
   rename(srcAlias, destAlias) {
     // needed to preserve the hash tree efficiently
@@ -131,10 +138,10 @@ export class Network extends IpldStruct {
     return channel
   }
   getParent() {
-    return this.getByAlias('..')
+    return this.parent
   }
   getLoopback() {
-    return this.getByAlias('.')
+    return this.loopback
   }
   getResponse(request) {
     // TODO move to use channelIds
@@ -147,5 +154,19 @@ export class Network extends IpldStruct {
     }
     const reply = channel.replies.get(replyKey)
     return reply
+  }
+  isInterblockAddable(interblock) {
+    assert(interblock instanceof Interblock)
+    const address = interblock.provenance.getAddress()
+    const channel = this.network.getByAddress(address)
+    if (!channel) {
+      return false
+    }
+    // TODO check against tip parameters fully
+    // TODO check turnovers
+    if (!Number.isInteger(channel.tipHeight)) {
+      return true
+    }
+    return channel.tipHeight < interblock.provenance.height
   }
 }

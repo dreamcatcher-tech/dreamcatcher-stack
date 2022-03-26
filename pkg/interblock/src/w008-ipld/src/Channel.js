@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Tx, Request } from '.'
+import { Address, Tx, Request, Pulse } from '.'
 import Debug from 'debug'
 import { IpldStruct } from './IpldStruct'
 import { deepFreeze } from './utils'
@@ -15,10 +15,13 @@ type RxTracker struct { # tracks what counters each ingestion is up to
     requestsTip Int
     repliesTip Int
 }
-type Channel struct {
+type Rx struct {
     tip optional &Pulse          # The last Pulse this chain received
     system RxTracker
     reducer RxTracker
+}
+type Channel struct {
+    rx Rx
     tx &Tx
 }
 ```
@@ -47,8 +50,24 @@ class RxTracker {
   }
 }
 
+class Rx extends IpldStruct {
+  static classMap = {
+    tip: Pulse,
+    system: RxTracker,
+    reducer: RxTracker,
+  }
+  addTip(pulse) {
+    assert(pulse instanceof Pulse)
+    if (!this.tip) {
+      assert(this.system.isEmpty())
+      assert(this.reducer.isEmpty())
+    }
+    // TODO
+  }
+}
+
 export class Channel extends IpldStruct {
-  static classMap = { tx: Tx }
+  static classMap = { tx: Tx, rx: Rx }
   static create(address = Address.createUnknown()) {
     assert(address instanceof Address)
     const tracker = new RxTracker()

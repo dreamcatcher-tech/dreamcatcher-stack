@@ -1,13 +1,5 @@
 import assert from 'assert-fast'
-import { Block } from 'multiformats/block'
-import { CID } from 'multiformats/cid'
 import { deepFreeze } from './utils'
-/**
- * Rules are:
- *    1. There must be a path from the root CID to every child CID that is
- *       unbroken.  Ie: every CID must have a direct parent which is also a
- *       piece of CID linked data
- */
 
 export class IpldInterface {
   get schema() {

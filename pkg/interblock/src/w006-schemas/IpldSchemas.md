@@ -210,10 +210,13 @@ type RxTracker struct { # tracks what counters each ingestion is up to
     requestsTip Int
     repliesTip Int
 }
-type Channel struct {
+type Rx struct {
     tip optional &Pulse          # The last Pulse this chain received
-    rxSystem RxTracker
-    rxReducer RxTracker
+    system RxTracker
+    reducer RxTracker
+}
+type Channel struct {
+    rx Rx
     tx &Tx
 }
 ```
@@ -248,6 +251,10 @@ type Network struct {
     channels { String : Channel }   # Map of channelIds to channels
     aliases { String : Alias }      # Map of aliases to channelIds
     addresses { String : Int }
+    loopback Channel
+    parent Channel
+    rxIds [ Int ]
+    txs [ &Tx ]
 }
 ```
 

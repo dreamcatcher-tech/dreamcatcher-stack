@@ -295,7 +295,7 @@ export default {
         map: {},
       },
     },
-    Channel: {
+    Rx: {
       kind: 'struct',
       fields: {
         tip: {
@@ -305,11 +305,22 @@ export default {
           },
           optional: true,
         },
-        rxSystem: {
+        system: {
           type: 'RxTracker',
         },
-        rxReducer: {
+        reducer: {
           type: 'RxTracker',
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Channel: {
+      kind: 'struct',
+      fields: {
+        rx: {
+          type: 'Rx',
         },
         tx: {
           type: {
@@ -379,6 +390,27 @@ export default {
             kind: 'map',
             keyType: 'String',
             valueType: 'Int',
+          },
+        },
+        loopback: {
+          type: 'Channel',
+        },
+        parent: {
+          type: 'Channel',
+        },
+        rxIds: {
+          type: {
+            kind: 'list',
+            valueType: 'Int',
+          },
+        },
+        txs: {
+          type: {
+            kind: 'list',
+            valueType: {
+              kind: 'link',
+              expectedType: 'Tx',
+            },
           },
         },
       },
