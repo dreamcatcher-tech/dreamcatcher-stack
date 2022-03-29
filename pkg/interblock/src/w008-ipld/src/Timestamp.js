@@ -1,12 +1,13 @@
 import assert from 'assert-fast'
-import { IpldStruct } from './IpldStruct'
 
-export class Timestamp extends IpldStruct {
+export class Timestamp {
   static create(now = new Date()) {
     assert(now instanceof Date)
     // '2011-10-05T14:48:00.000Z'
     const isoDate = now.toISOString()
-    return super.clone({ isoDate })
+    const instance = new this.constructor()
+    instance.isoDate = isoDate
+    return instance
   }
   isExpired(expiresAfterMs) {
     throw new Error('not implemented')

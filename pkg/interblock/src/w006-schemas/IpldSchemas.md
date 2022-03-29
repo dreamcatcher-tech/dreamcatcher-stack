@@ -4,23 +4,6 @@ Read the [Guide to IPLD schemas](https://ipld.io/docs/schemas/using/authoring-gu
 
 Any changes to this file need to be followed by running `yarn schemas` to generate the file `src/w014-schemas/ipldSchemas.js` which is imported by all the Models in `w015-models`
 
-## Any
-
-A convenience mapping to allow any javascript object
-
-```sh
-type Any union {
-    | Bool   bool
-    | Int    int
-    | Float  float
-    | String string
-    | Bytes  bytes
-    | Map    map
-    | List   list
-    | Link   link
-} representation kinded
-```
-
 ## HAMT
 
 Schemas for the hash array mapped trie used to reduce Network slowness with speed.
@@ -73,7 +56,7 @@ The model includes these constants:
 
 Addresses are always CID version 0, which makes them easy to distinguish at a glance from `Pulse`s and `Binary`s, which are CID version 1.
 
-An address is created from the version 0 CID of the first Pulse of the chain.
+An address is the version 0 CID that links to the version 1 CID of the first Pulse of a given chain.
 
 ```sh
 type Address link
@@ -187,11 +170,11 @@ type PromisedReply struct {
 }
 type TxQueue struct {
     requestsStart Int
-    requests [&Request]
+    requests optional [&Request]
     repliesStart Int
-    replies [&Reply]
+    replies optional [&Reply]
     promisedIds [Int]
-    promisedReplies [PromisedReply]
+    promisedReplies optional [PromisedReply]
 }
 type Tx struct {
     genesis Address             # The remote chainId
@@ -201,9 +184,10 @@ type Tx struct {
 }
 ```
 
-## Channel
+## Rx
 
-`tip` matches up with precedent on the other side.
+After each block is made, tip chain precedents are trimmed to free up memory.
+Once Rx is no longer active, trimmed to be nothing.
 
 ```sh
 type RxTracker struct { # tracks what counters each ingestion is up to
@@ -212,12 +196,35 @@ type RxTracker struct { # tracks what counters each ingestion is up to
 }
 type Rx struct {
     tip optional &Pulse          # The last Pulse this chain received
-    system RxTracker
-    reducer RxTracker
+    system optional RxTracker
+    reducer optional RxTracker
 }
+```
+
+## Channel
+
+`tip` matches up with precedent on the other side.
+
+Tx and Rx are split out so that they can be stored on the block separately.
+Tx needs to be separate so that remote fetching does not expose the channelId.
+Rx needs to be separate to allow the ingestion of messages to be halted at any point.
+Both are separate from Channel so that the potentially large HAMT that stores
+all the Channel instances is updated as little as possible, whilst providing rapid
+lookup to get channels that are active.
+
+Tx needs to be hashed as it is an independent transmission, but Rx does not
+need to be hashed.
+
+The structure implements the design goal of making the Pulse be the context
+of the state machine that processes all the actions.
+
+Channel stores rx and tx only after all the activity has been wrung out of them.
+
+```sh
 type Channel struct {
+    tx Tx
     rx Rx
-    tx &Tx
+    aliases [String]    # all aliases except the address string
 }
 ```
 
@@ -232,6 +239,10 @@ There may be many aliases mapped to the same channelId.
 A HAMT is used to track large amounts of data whilst storing only diffs.
 
 Channel is not stored as a link, but as a full object, since inside of the channel the Tx key will be stored as a link anyway, so no point double linking.
+
+Rxs may use a hamt.
+
+Txs are blanked each block, so no need to use a HAMT.
 
 ```sh
 type SystemRoles enum {
@@ -248,13 +259,12 @@ type Alias struct {
 }
 type Network struct {
     counter Int
-    channels { String : Channel }   # Map of channelIds to channels
-    aliases { String : Alias }      # Map of aliases to channelIds
-    addresses { String : Int }
+    channels HashMapRoot            # Map of channelIds to channels
+    aliases HashMapRoot             # Map of aliases to channelIds
     loopback Channel
     parent Channel
-    rxIds [ Int ]
-    txs [ &Tx ]
+    rxs HashMapRoot                 # uses a HAMT as pauses often during pending
+    txs [ &Tx ]                     # delicate as remote side fetches this path
 }
 ```
 
@@ -346,7 +356,9 @@ type Meta struct {
 
 ## Pending
 
-Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and actionId. It then keeps track of all outbound actions made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.
+Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and requestId. It then keeps track of all requests made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.
+
+Each rerun must produce the exact same requests each time, in the exact same order.
 
 This structure consists of two arrays - one of all the outbound requests the covenant made, and another of all the so far received replies. The reducer should not be invoked until all the empty slots in the `replies` array have been filled.
 
@@ -357,11 +369,11 @@ type RequestId struct {
 }
 type PendingRequest struct {
     request &Request
-    to String       # Alias at time of invocation
+    to String                   # Alias at time of invocation
     id RequestId
 }
 type Pending struct {
-    pendingRequest RequestId
+    pendingRequest RequestId    # The request that triggered pending mode
     requests [PendingRequest]
     replies [&Reply]
 }
@@ -376,10 +388,6 @@ type SideEffectsConfig struct {
     networkAccess [String]
     asyncTimeoutMs Int
 }
-type Interpulse struct {
-    version String
-    package Binary
-}
 type Entropy struct {
     seed String
     count Int
@@ -387,9 +395,9 @@ type Entropy struct {
 type Config struct {
     isPierced Bool
     sideEffects SideEffectsConfig
-    isPublicChannelOpen Bool # May be list of approots
+    isPublicChannelOpen Bool    # May be list of approots
     acl &ACL
-    interpulse &Interpulse
+    interpulse &Covenant        # What version of Interpulse is this built for
     entropy Entropy
     covenant &Covenant
 }
@@ -405,12 +413,12 @@ An example of where such backtracking might occur if designed poorly is in the i
 type Dmz struct {
     validators &Validators
     config &Config
-    timestamp Timestamp
-    network &Network
+    timestamp Timestamp                 # changes every block
+    network Network                     # block implies network changed
     state &State
     meta &Meta
     pending optional &Pending
-    approot optional &Pulse          # The latest known approot
+    approot optional PulseLink          # The latest known approot
     binary optional Binary
 }
 ```
@@ -431,14 +439,14 @@ type StateTreeNode struct {
     binary &Binary
     children { String : &StateTreeNode }
 }
-type Lineage [Link]          # TODO define DAG tighter
+type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
 type Turnovers [&Pulse]      # TODO make into a tree
 type Provenance struct {
     stateTree &StateTreeNode
     lineageTree &Lineage     # Must allow merging of N parents
     turnoversTree &Turnovers
     genesis Address
-    contents &Dmz
+    contents Dmz
 }
 ```
 
@@ -446,11 +454,23 @@ type Provenance struct {
 
 The Pulse actual is an array of signatures that satisfy the configuration of the `Dmz` that the signatures sign off on.
 
-The CID of the first Pulse is the chainId.
+The CID of the first Pulse is used to derive the chainId.
 
 ```sh
 type Pulse struct {
     provenance &Provenance
     signatures Signatures
 }
+```
+
+## PulseLink
+
+In some places, we want to avoid dereferencing CIDs during the uncrush process.
+These places are always Pulses, and so the PulseLink class signals to the
+uncrush process not to look any further.
+
+If the program needs to dereference the actual Pulse, then it needs to do so explicitly, and should also free up the object when finished, to avoid holding any entire blockchain in ram.
+
+```sh
+type PulseLink link
 ```

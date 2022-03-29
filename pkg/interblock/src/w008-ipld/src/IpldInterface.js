@@ -14,9 +14,10 @@ export class IpldInterface {
   isModified() {
     throw new Error('Not Implemented')
   }
-  static classMap = {}
+  static links = [] // which keys should be crushed into CIDs
+  static classMap = {} // keys to Class mappings
   static getClassFor(key) {
-    assert(this.classMap[key], `key ${key} not mapped to CID class`)
+    assert(this.classMap[key], `key ${key} not mapped to class`)
     return this.classMap[key]
   }
   get ipldBlock() {

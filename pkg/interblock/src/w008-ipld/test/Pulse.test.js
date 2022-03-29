@@ -24,4 +24,5 @@ describe('Pulse', () => {
   test.todo('pierce pulse')
   test.todo('pending')
   test.todo('public connection')
+  test.todo('precedent multiple pulses ahead')
 })

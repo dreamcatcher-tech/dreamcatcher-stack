@@ -1,20 +1,5 @@
 export default {
   types: {
-    Any: {
-      kind: 'union',
-      representation: {
-        kinded: {
-          bool: 'Bool',
-          int: 'Int',
-          float: 'Float',
-          string: 'String',
-          bytes: 'Bytes',
-          map: 'Map',
-          list: 'List',
-          link: 'Link',
-        },
-      },
-    },
     HashMapRoot: {
       kind: 'struct',
       fields: {
@@ -227,6 +212,7 @@ export default {
               expectedType: 'Request',
             },
           },
+          optional: true,
         },
         repliesStart: {
           type: 'Int',
@@ -239,6 +225,7 @@ export default {
               expectedType: 'Reply',
             },
           },
+          optional: true,
         },
         promisedIds: {
           type: {
@@ -251,6 +238,7 @@ export default {
             kind: 'list',
             valueType: 'PromisedReply',
           },
+          optional: true,
         },
       },
       representation: {
@@ -307,9 +295,11 @@ export default {
         },
         system: {
           type: 'RxTracker',
+          optional: true,
         },
         reducer: {
           type: 'RxTracker',
+          optional: true,
         },
       },
       representation: {
@@ -319,13 +309,16 @@ export default {
     Channel: {
       kind: 'struct',
       fields: {
+        tx: {
+          type: 'Tx',
+        },
         rx: {
           type: 'Rx',
         },
-        tx: {
+        aliases: {
           type: {
-            kind: 'link',
-            expectedType: 'Tx',
+            kind: 'list',
+            valueType: 'String',
           },
         },
       },
@@ -372,25 +365,10 @@ export default {
           type: 'Int',
         },
         channels: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Channel',
-          },
+          type: 'HashMapRoot',
         },
         aliases: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Alias',
-          },
-        },
-        addresses: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Int',
-          },
+          type: 'HashMapRoot',
         },
         loopback: {
           type: 'Channel',
@@ -398,11 +376,8 @@ export default {
         parent: {
           type: 'Channel',
         },
-        rxIds: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
-          },
+        rxs: {
+          type: 'HashMapRoot',
         },
         txs: {
           type: {
@@ -603,20 +578,6 @@ export default {
         map: {},
       },
     },
-    Interpulse: {
-      kind: 'struct',
-      fields: {
-        version: {
-          type: 'String',
-        },
-        package: {
-          type: 'Binary',
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
     Entropy: {
       kind: 'struct',
       fields: {
@@ -652,7 +613,7 @@ export default {
         interpulse: {
           type: {
             kind: 'link',
-            expectedType: 'Interpulse',
+            expectedType: 'Covenant',
           },
         },
         entropy: {
@@ -688,10 +649,7 @@ export default {
           type: 'Timestamp',
         },
         network: {
-          type: {
-            kind: 'link',
-            expectedType: 'Network',
-          },
+          type: 'Network',
         },
         state: {
           type: {
@@ -713,10 +671,7 @@ export default {
           optional: true,
         },
         approot: {
-          type: {
-            kind: 'link',
-            expectedType: 'Pulse',
-          },
+          type: 'PulseLink',
           optional: true,
         },
         binary: {
@@ -794,10 +749,7 @@ export default {
           type: 'Address',
         },
         contents: {
-          type: {
-            kind: 'link',
-            expectedType: 'Dmz',
-          },
+          type: 'Dmz',
         },
       },
       representation: {
@@ -820,6 +772,9 @@ export default {
       representation: {
         map: {},
       },
+    },
+    PulseLink: {
+      kind: 'link',
     },
   },
 }
