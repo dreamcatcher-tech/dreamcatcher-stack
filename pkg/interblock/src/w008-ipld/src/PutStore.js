@@ -1,6 +1,6 @@
-import * as Block from 'multiformats/block'
-import { sha256 as blockHasher } from 'multiformats/hashes/sha2'
-import * as blockCodec from '@ipld/dag-cbor'
+import { Block, create } from 'multiformats/block'
+import { sha256 as hasher } from 'multiformats/hashes/sha2'
+import * as codec from '@ipld/dag-cbor'
 import { CID } from 'multiformats/cid'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -8,56 +8,61 @@ const debug = Debug('interblock:models:putstore')
 
 export class PutStore {
   #putsMap = new Map()
-  #isGetsMode = false
+  #getsMap = new Map() // used as a cache
   #ipfsResolver
-  constructor(resolver) {
-    this.#ipfsResolver = resolver
-  }
-  setGetMode() {
-    this.#isGetsMode = true
-  }
-  setPutMode() {
-    this.#isGetsMode = false
-  }
-  setIpfsResolver(resolver) {
+  constructor(resolver, previous) {
     assert.strictEqual(typeof resolver, 'function')
     this.#ipfsResolver = resolver
+    if (previous) {
+      assert(previous instanceof PutStore)
+      this.#getsMap = previous.#putsMap
+    }
   }
-  get isModified() {
-    return !!this.#putsMap.size
+  async get(cid) {
+    // used by js-ipld-hamt
+    assert(cid instanceof CID)
+    debug('get:', cid.toString().substring(0, 9))
+    const block = await this.getBlock(cid)
+    return block.bytes
   }
-  get(key) {
-    assert(key instanceof CID)
-    key = key.toString()
-    debug('get:', key.substring(0, 9))
-    if (!this.#isGetsMode) {
-      if (this.#putsMap.has(key)) {
-        return this.#putsMap.get(key)
-      }
-      throw new Error(`No gets in cache store for: ${key}`)
+  async put(cid, bytes) {
+    // used by js-ipld-hamt
+    assert(cid instanceof CID)
+    assert(bytes instanceof Uint8Array)
+    if (this.#putsMap.has(cid.toString())) {
+      return
+    }
+    const block = await create({ bytes, cid, hasher, codec })
+    return this.putBlock(cid, block)
+  }
+  async getBlock(cid) {
+    assert(cid instanceof CID)
+    if (this.#putsMap.has(cid.toString())) {
+      return this.#putsMap.get(cid.toString())
     }
     if (!this.#ipfsResolver) {
       throw new Error('No ipfs resolver set')
     }
-    return this.#ipfsResolver(key)
-  }
-  put(key, value) {
-    assert(key instanceof CID)
-    assert(value instanceof Uint8Array)
-    key = key.toString()
-    if (this.#isGetsMode) {
-      throw new Error('No puts in gets mode')
+    const block = await this.#ipfsResolver(cid)
+    if (!block) {
+      throw new Error(`No block found for ${cid}`)
     }
-    debug('put: ', key.substring(0, 9))
-    this.#putsMap.set(key, value)
+    return block
   }
-  async getDiffs(cid) {
+  putBlock(cid, block) {
+    assert(cid instanceof CID)
+    assert(block instanceof Block)
+    assert(!this.#putsMap.has(cid.toString()))
+    debug('put: ', cid.toString().substring(0, 9))
+    this.#putsMap.set(cid.toString(), block)
+  }
+  trim(cid) {
+    // works out all the diffs based on the cid
+    // deletes everything else
+    // returns a new instance
     assert(cid instanceof CID, `must pass rootCid`)
     assert(this.#putsMap.has(cid.toString()), `Missing hamt root ${cid}`)
     const diffs = new Map()
-    const hasher = blockHasher
-    const codec = blockCodec
-
     let links = [cid]
     while (links.length) {
       const nextLinks = []
@@ -65,15 +70,37 @@ export class PutStore {
         assert(cid instanceof CID)
         const cidString = cid.toString()
         if (this.#putsMap.has(cidString)) {
-          const bytes = this.#putsMap.get(cidString)
-          const block = await Block.create({ bytes, cid, hasher, codec })
+          const block = this.#putsMap.get(cidString)
           diffs.set(cidString, block)
-          let children = block.value[1]
-          if (block.value.hamt) {
-            children = block.value.hamt[1]
+          for (const [, childCid] of block.links()) {
+            nextLinks.push(childCid)
           }
-          children = children.filter((v) => v instanceof CID)
-          nextLinks.push(...children)
+        }
+      }
+      links = nextLinks
+    }
+    this.#putsMap = diffs
+  }
+  getDiffs(cid) {
+    assert(cid instanceof CID, `must pass rootCid`)
+    assert(this.#putsMap.has(cid.toString()), `Missing hamt root ${cid}`)
+    const diffs = new Map()
+    if (!this.#putsMap.size) {
+      debug('no diffs detected')
+      return new Map()
+    }
+    let links = [cid]
+    while (links.length) {
+      const nextLinks = []
+      for (const cid of links) {
+        assert(cid instanceof CID)
+        const cidString = cid.toString()
+        if (this.#putsMap.has(cidString)) {
+          const block = this.#putsMap.get(cidString)
+          diffs.set(cidString, block)
+          for (const [, childCid] of block.links()) {
+            nextLinks.push(childCid)
+          }
         }
       }
       links = nextLinks

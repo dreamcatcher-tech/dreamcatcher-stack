@@ -151,4 +151,7 @@ export class Address extends IpldInterface {
   isResolved() {
     return !this.isUnknown() && !this.isInvalid() && !this.isGenesis()
   }
+  isRemote() {
+    return this.isResolved() && !this.isRoot() && !this.isLoopback()
+  }
 }

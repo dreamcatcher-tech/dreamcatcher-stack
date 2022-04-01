@@ -32,7 +32,7 @@ export class IpldInterface {
     }
     return this.ipldBlock.cid
   }
-  async crush() {
+  async crush(resolver) {
     throw new Error('Not Implemented')
   }
   static uncrush() {

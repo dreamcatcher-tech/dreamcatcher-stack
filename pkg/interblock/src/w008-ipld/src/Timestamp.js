@@ -5,7 +5,7 @@ export class Timestamp {
     assert(now instanceof Date)
     // '2011-10-05T14:48:00.000Z'
     const isoDate = now.toISOString()
-    const instance = new this.constructor()
+    const instance = new Timestamp()
     instance.isoDate = isoDate
     return instance
   }

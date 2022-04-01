@@ -1,34 +1,36 @@
-import { assert } from 'chai/index.mjs'
 import { IpldStruct } from '../src/IpldStruct'
+import chai, { assert } from 'chai/index.mjs'
 import { Hamt } from '../src/Hamt'
 import Debug from 'debug'
-const debug = Debug('interblock:tests:ipld:hamt')
-Debug.enable()
+import chaiAsPromised from 'chai-as-promised'
+chai.use(chaiAsPromised)
 
-describe('Hamt', () => {
+const debug = Debug('interblock:tests:ipld:hamt')
+Debug.enable('*tests*')
+
+describe.only('Hamt', () => {
   test('basic', async () => {
     const base = Hamt.create()
     assert(base.isModified())
     let hamt = base.set('testkey', 'testvalue')
     assert(hamt.isModified())
     assert(base !== hamt)
-    assert.strictEqual(hamt.get('testkey'), 'testvalue')
+    assert.strictEqual(await hamt.get('testkey'), 'testvalue')
     const crushed = await hamt.crush()
     const diffs = await crushed.getDiffBlocks()
     assert.strictEqual(diffs.size, 1)
-    const resolver = (cid) => diffs.get(cid).bytes
+    const resolver = (cid) => diffs.get(cid.toString())
     const uncrushed = await Hamt.uncrush(crushed.cid, resolver)
-    const ensured = await uncrushed.ensure(['testkey'], resolver)
-    const result = ensured.get('testkey')
+    assert(await uncrushed.has('testkey'))
+    const result = await uncrushed.get('testkey')
     assert.strictEqual(result, 'testvalue')
   })
-  test('ensure', async () => {
+  test.only('multiple keys', async () => {
     let hamt = Hamt.create()
     hamt = await hamt.crush()
     const diffs = await hamt.getDiffBlocks()
     assert.strictEqual(diffs.size, 1)
-
-    const resolver = (cid) => diffs.get(cid).bytes
+    const resolver = (cid) => diffs.get(cid.toString())
     hamt = await Hamt.uncrush(hamt.cid, resolver)
     for (let i = 0; i < 100; i++) {
       hamt = hamt.set('test-' + i, { test: 'test-' + i })
@@ -43,18 +45,14 @@ describe('Hamt', () => {
     const bigResolver = (cid) => bigDiffs.get(cid).bytes
     hamt = await Hamt.uncrush(hamt.cid, bigResolver)
     debug(`uncrush: ${Date.now() - start} ms`)
-    start = Date.now()
-    hamt = await hamt.ensure(['test-59'], bigResolver)
-    debug(`ensure: ${Date.now() - start} ms`)
 
-    debug(hamt.get('test-59'))
-    assert.deepEqual(hamt.get('test-59'), { test: 'test-59' })
-    assert.throws(() => hamt.get('test-58'))
     start = Date.now()
-    hamt = await hamt.ensure(['test-58'], bigResolver)
-    debug(`ensure: ${Date.now() - start} ms`)
+    assert.deepEqual(await hamt.get('test-59'), { test: 'test-59' })
+    debug(`deep get: ${Date.now() - start} ms`)
 
-    assert.deepEqual(hamt.get('test-58'), { test: 'test-58' })
+    start = Date.now()
+    assert.deepEqual(await hamt.get('test-58'), { test: 'test-58' })
+    debug(`deep get 2: ${Date.now() - start} ms`)
   })
   test('with class', async () => {
     class TestClass extends IpldStruct {}
@@ -62,19 +60,21 @@ describe('Hamt', () => {
     assert.throws(() => hamt.set('test', { a: 'b' }), 'Not correct class type')
     const testInstance = new TestClass()
     hamt = hamt.set('test', testInstance)
-    assert(hamt.get('test') instanceof TestClass)
+    assert((await hamt.get('test')) instanceof TestClass)
     hamt = await hamt.crush()
     const diffs = await hamt.getDiffBlocks()
-    const resolver = (cid) => diffs.get(cid).bytes
+    expect(diffs.size).toBe(2)
+    expect(diffs).toMatchSnapshot()
+    const resolver = (cid) => diffs.get(cid.toString())
     hamt = await Hamt.uncrush(hamt.cid, resolver, TestClass)
-    hamt = await hamt.ensure(['test'], resolver)
-    assert(hamt.get('test') instanceof TestClass)
+    const result = await hamt.get('test')
+    assert(result instanceof TestClass)
   })
   test('throws on existing key', async () => {
     let hamt = Hamt.create()
-    assert.throws(() => hamt.get('bogus key'), 'bogus key')
+    await assert.isRejected(hamt.get('bogus key'), 'bogus key')
     hamt = hamt.set('some key', 'some value')
-    assert.strictEqual(hamt.get('some key'), 'some value')
+    assert.strictEqual(await hamt.get('some key'), 'some value')
     assert.throws(() => hamt.set('some key', 'over'), 'Cannot overwrite')
   })
   test.todo('recursive crush')

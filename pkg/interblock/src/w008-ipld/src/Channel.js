@@ -1,78 +1,46 @@
 import assert from 'assert-fast'
-import { Address, Tx, Request, Pulse } from '.'
+import { Address, Rx, Tx, Request, Pulse } from '.'
 import Debug from 'debug'
 import { IpldStruct } from './IpldStruct'
 import { deepFreeze } from './utils'
 const debug = Debug('interblock:models:channel')
 
 /**
- * ## Channel
+## Channel
 
 `tip` matches up with precedent on the other side.
 
+Tx and Rx are split out so that they can be stored on the block separately.
+Tx needs to be separate so that remote fetching does not expose the channelId.
+Rx needs to be separate to allow the ingestion of messages to be halted at any point.
+Both are separate from Channel so that the potentially large HAMT that stores
+all the Channel instances is updated as little as possible, whilst providing rapid
+lookup to get channels that are active.
+
+Tx needs to be hashed as it is an independent transmission, but Rx does not
+need to be hashed.
+
+The structure implements the design goal of making the Pulse be the context
+of the state machine that processes all the actions.
+
+Channel stores rx and tx only after all the activity has been wrung out of them.
+
 ```sh
-type RxTracker struct { # tracks what counters each ingestion is up to
-    requestsTip Int
-    repliesTip Int
-}
-type Rx struct {
-    tip optional &Pulse          # The last Pulse this chain received
-    system RxTracker
-    reducer RxTracker
-}
 type Channel struct {
+    tx Tx
     rx Rx
-    tx &Tx
+    aliases [String]    # all aliases except the address string
 }
 ```
  */
-
-class RxTracker {
-  requestsTip
-  repliesTip
-  constructor(requestsTip = 0, repliesTip = 0) {
-    assert(Number.isInteger(requestsTip))
-    assert(Number.isInteger(repliesTip))
-    assert(requestsTip >= 0)
-    assert(repliesTip >= 0)
-    this.requestsTip = requestsTip
-    this.repliesTip = repliesTip
-    deepFreeze(this)
-  }
-  isEmpty() {
-    return this.requestsTip === 0 && this.repliesTip === 0
-  }
-  incrementRequests() {
-    return new this.constructor(this.requestsTip + 1, this.repliesTip)
-  }
-  incrementReplies() {
-    return new this.constructor(this.requestsTip, this.repliesTip + 1)
-  }
-}
-
-class Rx extends IpldStruct {
-  static classMap = {
-    tip: Pulse,
-    system: RxTracker,
-    reducer: RxTracker,
-  }
-  addTip(pulse) {
-    assert(pulse instanceof Pulse)
-    if (!this.tip) {
-      assert(this.system.isEmpty())
-      assert(this.reducer.isEmpty())
-    }
-    // TODO
-  }
-}
 
 export class Channel extends IpldStruct {
   static classMap = { tx: Tx, rx: Rx }
   static create(address = Address.createUnknown()) {
     assert(address instanceof Address)
-    const tracker = new RxTracker()
+    const rx = Rx.create()
     const tx = Tx.create(address)
-    return super.clone({ rxSystem: tracker, rxReducer: tracker, tx })
+    return super.clone({ rx, tx, aliases: [] })
   }
   static createRoot() {
     const root = Address.createRoot()
@@ -86,10 +54,9 @@ export class Channel extends IpldStruct {
     return this.tx.genesis.isUnknown()
   }
   assertLogic() {
-    const { tip, rxSystem, rxReducer, tx } = this
+    const { tip, rx, tx } = this
     if (this.isUnknown()) {
-      assert(rxSystem.isEmpty(), 'Replies to Unknown are impossible')
-      assert(rxReducer.isEmpty(), 'Replies to Unknown are impossible')
+      assert(rx.isEmpty(), 'Replies to Unknown are impossible')
       assert(!tip)
     }
     if (tip) {

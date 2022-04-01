@@ -10,9 +10,10 @@ import Debug from 'debug'
 import { PutStore } from './PutStore'
 const debug = Debug('interblock:models:hamt')
 
+const hamtOptions = { blockHasher, blockCodec }
 export class Hamt extends IpldInterface {
   #valueClass
-  #putStore = new PutStore()
+  #putStore
   #hashmap
   #gets = Immutable.Map()
   #sets = Immutable.Map()
@@ -30,10 +31,12 @@ export class Hamt extends IpldInterface {
     const next = new this.constructor()
     next.#valueClass = this.#valueClass
     next.#putStore = this.#putStore
-    next.#hashmap = this.#hashmap
     next.#gets = this.#gets
     next.#sets = this.#sets
     next.#deletes = this.#deletes
+    if (this.#hashmap) {
+      next.#hashmap = new this.#hashmap.constructor(this.#hashmap._iamap)
+    }
     return next
   }
   set(key, value) {
@@ -61,16 +64,36 @@ export class Hamt extends IpldInterface {
     next.#deletes = this.#deletes.add(key)
     return next
   }
-  has(key) {
+  async has(key) {
     assertKey(key)
-    return this.#gets.has(key)
-  }
-  get(key) {
-    assertKey(key)
-    if (!this.#gets.has(key) || this.#deletes.has(key)) {
-      throw new Error(`${key} has not been preloaded`)
+    if (this.#gets.has(key)) {
+      return true
     }
-    return this.#gets.get(key)
+    if (this.#deletes.has(key)) {
+      return false
+    }
+    if (!this.#hashmap) {
+      return false
+    }
+    return await this.#hashmap.has(key)
+  }
+  async get(key) {
+    assertKey(key)
+    if (!(await this.has(key))) {
+      throw new Error(`key not present: ${key}`)
+    }
+    if (this.#gets.has(key)) {
+      return this.#gets.get(key)
+    }
+    let result = await this.#hashmap.get(key)
+    assert(result !== undefined)
+    if (this.#valueClass) {
+      assert(result instanceof CID)
+      const resolver = (cid) => this.#putStore.getBlock(cid)
+      result = await this.#valueClass.uncrush(result, resolver)
+    }
+    this.#gets = this.#gets.set(key, result)
+    return result
   }
   isModified() {
     return !!this.#sets.size || !!this.#deletes.size || !this.#hashmap
@@ -86,37 +109,51 @@ export class Hamt extends IpldInterface {
   get crushedSize() {
     throw new Error('Not Implemented')
   }
-  async crush() {
+  async crush(resolver = () => {}) {
+    assert.strictEqual(typeof resolver, 'function')
+    const next = this.#clone()
+
+    // load the hashmap from a new putstore every time
+    // at the end, build the diffmap from the putstore
+    // save the last diffs in the putstore as a cache for next time
+
     if (!this.isModified()) {
-      const next = this.#clone()
-      next.#putStore = new PutStore()
       return next
     }
-    this.#putStore.setPutMode()
-    let hashmap = this.#hashmap
+    let hashmap = next.#hashmap
+    const putStore = new PutStore(resolver, next.#putStore)
     if (!hashmap) {
-      hashmap = await create(this.#putStore, { blockHasher, blockCodec })
+      hashmap = await create(putStore, hamtOptions)
+    } else {
+      hashmap = await load(putStore, hashmap.cid, hamtOptions)
     }
-    for (const key of this.#deletes) {
+
+    for (const key of next.#deletes) {
       debug(`delete`, key)
-      const has = await hashmap.has(key)
-      if (has) {
+      if (!(await hashmap.has(key))) {
         throw new Error(`non existent key: ${key}`)
       }
       await hashmap.delete(key)
     }
-    for (const [key, value] of this.#sets) {
+    for (const [key, value] of next.#sets) {
       debug('set:', key, value)
-      const has = await hashmap.has(key)
-      if (has) {
+      if (await hashmap.has(key)) {
         throw new Error(`cannot overwrite key: ${key}`)
       }
-      await hashmap.set(key, value)
+      if (next.#valueClass) {
+        const crushed = await value.crush()
+        next.#gets = next.#gets.set(key, crushed)
+        await hashmap.set(key, crushed.cid)
+        putStore.putBlock(crushed.cid, crushed.ipldBlock)
+      } else {
+        await hashmap.set(key, value)
+      }
     }
-    const next = this.#clone()
+    putStore.trim(hashmap.cid)
     next.#hashmap = hashmap
-    next.#sets = this.#sets.clear()
-    next.#deletes = this.#deletes.clear()
+    next.#sets = next.#sets.clear()
+    next.#deletes = next.#deletes.clear()
+    next.#putStore = putStore
     return next
   }
   static async uncrush(cid, resolver, valueClass) {
@@ -124,40 +161,10 @@ export class Hamt extends IpldInterface {
     assert(typeof resolver === 'function', `resolver must be a function`)
 
     const instance = this.create(valueClass)
-    instance.#putStore.setIpfsResolver(resolver)
-    instance.#putStore.setGetMode()
-    const hashmap = await load(instance.#putStore, cid, {
-      blockHasher,
-      blockCodec,
-    })
+    instance.#putStore = new PutStore(resolver)
+    const hashmap = await load(instance.#putStore, cid, hamtOptions)
     instance.#hashmap = hashmap
     return instance
-  }
-  async ensure(keys, resolver) {
-    assert(Array.isArray(keys))
-    assert(this.#hashmap)
-    this.#putStore.setIpfsResolver(resolver)
-    this.#putStore.setGetMode()
-    keys = keys.filter((key) => !this.#gets.has(key))
-    const awaits = keys.map(async (key) => {
-      const object = await this.#hashmap.get(key)
-      if (this.#valueClass) {
-        return this.#valueClass.clone(object)
-      }
-      return object
-    })
-    const values = await Promise.all(awaits)
-    const next = this.#clone()
-    next.#gets = this.#gets.withMutations((gets) => {
-      keys.forEach((key, index) => {
-        const value = values[index]
-        if (value === undefined) {
-          throw new Error(`key: ${key} not in this map`)
-        }
-        gets.set(key, value)
-      })
-    })
-    return next
   }
   getDiffBlocks() {
     // This only stores diff since the last call to crush()
@@ -167,16 +174,12 @@ export class Hamt extends IpldInterface {
 
     const { cid } = this
     debug(`get diff for CID`, cid)
-    if (!this.#putStore.isModified) {
-      debug('no diffs detected')
-      return new Map()
-    }
     return this.#putStore.getDiffs(cid)
   }
 }
 
 const assertKey = (key) => {
-  assert(typeof key !== undefined)
+  assert(key !== undefined)
   assert(key !== '')
   assert(typeof key === 'string' || Number.isInteger(key))
 }

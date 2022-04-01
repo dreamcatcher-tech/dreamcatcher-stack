@@ -35,7 +35,8 @@ describe('network', () => {
   })
   test('get by address', async () => {
     let network = Network.create()
-    const pulse = await Pulse.create().crush()
+    let pulse = Pulse.create()
+    pulse = await pulse.crush()
     const address = Address.generate(pulse)
     assert(!address.isUnknown())
     const channel = Channel.create(address)

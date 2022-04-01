@@ -224,7 +224,6 @@ Channel stores rx and tx only after all the activity has been wrung out of them.
 type Channel struct {
     tx Tx
     rx Rx
-    aliases [String]    # all aliases except the address string
 }
 ```
 
@@ -253,13 +252,17 @@ type SystemRoles enum {
     | DOWN_LINK
     | PIERCE
 }
-type Alias struct {
+type ChannelRole struct {
     systemRole SystemRoles
     channelId Int
 }
+type AliasedChannel struct {
+    channel Channel
+    aliases [String]    # all aliases except the address string
+}
 type Network struct {
     counter Int
-    channels HashMapRoot            # Map of channelIds to channels
+    channels HashMapRoot            # Map of channelIds to AliasedChannels
     aliases HashMapRoot             # Map of aliases to channelIds
     loopback Channel
     parent Channel

@@ -35,7 +35,7 @@ export class IpldStruct extends IpldInterface {
     return cid
   }
   #isPreCrushed = false
-  async crush() {
+  async crush(resolver) {
     if (!this.isModified()) {
       return this
     }
@@ -49,10 +49,10 @@ export class IpldStruct extends IpldInterface {
     for (const key in crushed) {
       const slice = crushed[key]
       if (slice instanceof IpldInterface) {
-        crushed[key] = await slice.crush()
+        crushed[key] = await slice.crush(resolver)
         dagTree[key] = crushed[key].cid
       } else if (Array.isArray(slice)) {
-        const awaits = slice.map((v) => v.crush())
+        const awaits = slice.map((v) => v.crush(resolver))
         const crushes = await Promise.all(awaits)
         crushed[key] = crushes
         dagTree[key] = crushes.map((v) => v.cid)
@@ -63,7 +63,6 @@ export class IpldStruct extends IpldInterface {
     crushed.deepFreeze()
     return crushed
   }
-
   async getDiffBlocks(from) {
     assert(!this.isModified())
     if (from) {
