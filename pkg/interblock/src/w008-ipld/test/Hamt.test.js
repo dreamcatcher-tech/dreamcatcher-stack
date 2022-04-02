@@ -8,7 +8,7 @@ chai.use(chaiAsPromised)
 const debug = Debug('interblock:tests:ipld:hamt')
 Debug.enable('*tests*')
 
-describe.only('Hamt', () => {
+describe('Hamt', () => {
   test('basic', async () => {
     const base = Hamt.create()
     assert(base.isModified())
@@ -25,11 +25,12 @@ describe.only('Hamt', () => {
     const result = await uncrushed.get('testkey')
     assert.strictEqual(result, 'testvalue')
   })
-  test.only('multiple keys', async () => {
+  test('multiple keys', async () => {
     let hamt = Hamt.create()
     hamt = await hamt.crush()
     const diffs = await hamt.getDiffBlocks()
     assert.strictEqual(diffs.size, 1)
+    expect(diffs).toMatchSnapshot()
     const resolver = (cid) => diffs.get(cid.toString())
     hamt = await Hamt.uncrush(hamt.cid, resolver)
     for (let i = 0; i < 100; i++) {
@@ -42,7 +43,7 @@ describe.only('Hamt', () => {
     const bigDiffs = await hamt.getDiffBlocks()
     debug(`diffs: ${Date.now() - start} ms`)
     start = Date.now()
-    const bigResolver = (cid) => bigDiffs.get(cid).bytes
+    const bigResolver = (cid) => bigDiffs.get(cid.toString())
     hamt = await Hamt.uncrush(hamt.cid, bigResolver)
     debug(`uncrush: ${Date.now() - start} ms`)
 

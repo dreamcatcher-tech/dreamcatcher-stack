@@ -30,7 +30,7 @@ export class Hamt extends IpldInterface {
   #clone() {
     const next = new this.constructor()
     next.#valueClass = this.#valueClass
-    next.#putStore = this.#putStore
+    next.#putStore = this.#putStore && this.#putStore.clone()
     next.#gets = this.#gets
     next.#sets = this.#sets
     next.#deletes = this.#deletes
@@ -162,6 +162,8 @@ export class Hamt extends IpldInterface {
 
     const instance = this.create(valueClass)
     instance.#putStore = new PutStore(resolver)
+    const block = await resolver(cid)
+    instance.#putStore.putBlock(cid, block)
     const hashmap = await load(instance.#putStore, cid, hamtOptions)
     instance.#hashmap = hashmap
     return instance

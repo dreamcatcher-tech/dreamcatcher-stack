@@ -10,6 +10,7 @@ export class PutStore {
   #putsMap = new Map()
   #getsMap = new Map() // used as a cache
   #ipfsResolver
+  #untrimmed = false
   constructor(resolver, previous) {
     assert.strictEqual(typeof resolver, 'function')
     this.#ipfsResolver = resolver
@@ -17,6 +18,13 @@ export class PutStore {
       assert(previous instanceof PutStore)
       this.#getsMap = previous.#putsMap
     }
+  }
+  clone() {
+    const next = new this.constructor(this.#ipfsResolver)
+    next.#putsMap = new Map(this.#putsMap)
+    next.#getsMap = new Map(this.#getsMap)
+    next.#untrimmed = this.#untrimmed
+    return next
   }
   async get(cid) {
     // used by js-ipld-hamt
@@ -29,6 +37,7 @@ export class PutStore {
     // used by js-ipld-hamt
     assert(cid instanceof CID)
     assert(bytes instanceof Uint8Array)
+    this.#untrimmed = true
     if (this.#putsMap.has(cid.toString())) {
       return
     }
@@ -39,6 +48,9 @@ export class PutStore {
     assert(cid instanceof CID)
     if (this.#putsMap.has(cid.toString())) {
       return this.#putsMap.get(cid.toString())
+    }
+    if (this.#getsMap.has(cid.toString())) {
+      return this.#getsMap.get(cid.toString())
     }
     if (!this.#ipfsResolver) {
       throw new Error('No ipfs resolver set')
@@ -57,9 +69,6 @@ export class PutStore {
     this.#putsMap.set(cid.toString(), block)
   }
   trim(cid) {
-    // works out all the diffs based on the cid
-    // deletes everything else
-    // returns a new instance
     assert(cid instanceof CID, `must pass rootCid`)
     assert(this.#putsMap.has(cid.toString()), `Missing hamt root ${cid}`)
     const diffs = new Map()
@@ -80,10 +89,12 @@ export class PutStore {
       links = nextLinks
     }
     this.#putsMap = diffs
+    this.#untrimmed = false
   }
   getDiffs(cid) {
     assert(cid instanceof CID, `must pass rootCid`)
     assert(this.#putsMap.has(cid.toString()), `Missing hamt root ${cid}`)
+    assert(!this.#untrimmed, `Must call trim() before getDiffs()`)
     const diffs = new Map()
     if (!this.#putsMap.size) {
       debug('no diffs detected')
