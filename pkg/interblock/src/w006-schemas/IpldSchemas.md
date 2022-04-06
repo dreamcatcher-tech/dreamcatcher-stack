@@ -243,31 +243,46 @@ Rxs may use a hamt.
 
 Txs are blanked each block, so no need to use a HAMT.
 
+Uplinks should never include any channels that are in the other hamts.
+
+Constraints:
+
+1. same alias name cannot be in multiple tables
+1. remote addresses have exactly 1 channelId
+1. uplinks cannot be tranmsitted to
+
+Channel Types
+
+1. children - by alias, bidirectional
+1. uplink - by address, the rx side of downlink
+1. downlink - by path resolved to address, the tx side of uplink
+1. symlink - permanenent link by path, resolution refreshed each tx
+1. hardlink - permanent link by address, acts as a shared child
+
+This does introduce non-determinism, as the timing of when something occurred can now affect what address it was resolved to.
+
 ```sh
-type SystemRoles enum {
-    | PARENT("..")
-    | LOOPBACK(".")
-    | CHILD("./")
-    | UP_LINK
-    | DOWN_LINK
-    | PIERCE
-}
-type ChannelRole struct {
-    systemRole SystemRoles
-    channelId Int
-}
-type AliasedChannel struct {
-    channel Channel
-    aliases [String]    # all aliases except the address string
+type Channels struct {
+    counter Int
+    channelSet HashMapRoot           # Map of channelIds to Channels
+    addresses HashMapRoot          # reverse lookup of channels
 }
 type Network struct {
-    counter Int
-    channels HashMapRoot            # Map of channelIds to AliasedChannels
-    aliases HashMapRoot             # Map of aliases to channelIds
-    loopback Channel
-    parent Channel
-    rxs HashMapRoot                 # uses a HAMT as pauses often during pending
-    txs [ &Tx ]                     # delicate as remote side fetches this path
+    parent optional Channel
+    loopback optional Channel
+    io optional Channel
+
+    channels optional Channels
+
+    # alias maps to channelIds
+    children optional HashMapRoot           # keys are paths
+    uplinks optional HashMapRoot            # keys are channelIds
+    downlinks optional HashMapRoot          # keys are paths
+    symlinks optional HashMapRoot           # keys are paths without "/"
+    hardlinks optional HashMapRoot          # keys are paths without "/"
+
+    rxs optional [ Int ]
+    txs optional [ Int ]
 }
 ```
 
@@ -373,10 +388,10 @@ type RequestId struct {
 type PendingRequest struct {
     request &Request
     to String                   # Alias at time of invocation
-    id RequestId
+    id optional RequestId       # Not known at time of creation
 }
 type Pending struct {
-    pendingRequest RequestId    # The request that triggered pending mode
+    rxPendingRequest RequestId    # The request that triggered pending mode
     requests [PendingRequest]
     replies [&Reply]
 }

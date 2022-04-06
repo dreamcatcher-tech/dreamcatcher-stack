@@ -5,6 +5,10 @@ import { encode } from './IpldUtils'
 import { IpldInterface } from './IpldInterface'
 
 export class IpldStruct extends IpldInterface {
+  #ipldBlock
+  #previous
+  #crushed
+  #isPreCrushed = false
   static clone(map) {
     assert.strictEqual(typeof map, 'object')
     const instance = new this()
@@ -15,7 +19,6 @@ export class IpldStruct extends IpldInterface {
     }
     return instance
   }
-  #ipldBlock
   isModified() {
     return this.#ipldBlock === undefined
   }
@@ -34,9 +37,17 @@ export class IpldStruct extends IpldInterface {
     const { cid } = this.ipldBlock
     return cid
   }
-  #isPreCrushed = false
   async crush(resolver) {
     if (!this.isModified()) {
+      assert(this.#ipldBlock)
+      assert(this === this.#crushed)
+      if (this !== this.#previous) {
+        const next = this.constructor.clone({ ...this })
+        next.#previous = next
+        next.#crushed = next
+        next.#ipldBlock = this.#ipldBlock
+        return next
+      }
       return this
     }
     if (this.#isPreCrushed) {
@@ -50,7 +61,11 @@ export class IpldStruct extends IpldInterface {
       const slice = crushed[key]
       if (slice instanceof IpldInterface) {
         crushed[key] = await slice.crush(resolver)
-        dagTree[key] = crushed[key].cid
+        if (this.isCidLink(key)) {
+          dagTree[key] = crushed[key].cid
+        } else {
+          dagTree[key] = crushed[key]
+        }
       } else if (Array.isArray(slice)) {
         const awaits = slice.map((v) => v.crush(resolver))
         const crushes = await Promise.all(awaits)
@@ -59,23 +74,20 @@ export class IpldStruct extends IpldInterface {
       }
     }
     crushed.#ipldBlock = await encode(dagTree)
+    crushed.#crushed = crushed
+    crushed.#previous = this.#crushed
     IpldInterface.deepFreeze(crushed.#ipldBlock)
     crushed.deepFreeze()
     return crushed
   }
-  async getDiffBlocks(from) {
+  async getDiffBlocks() {
+    // diffs since the last time we crushed
     assert(!this.isModified())
-    if (from) {
-      assert(from instanceof this.constructor)
-      assert(!from.isModified())
-    }
-    if (this === from) {
-      return new Map()
-    }
-    if (from && this.cid.equals(from.cid)) {
-      return new Map()
-    }
     const blocks = new Map()
+    const from = this.#previous
+    if (from === this) {
+      return blocks
+    }
     blocks.set(this.ipldBlock.cid.toString(), this.ipldBlock)
     for (const key in this) {
       const thisValue = this[key]
@@ -120,6 +132,10 @@ export class IpldStruct extends IpldInterface {
     instance.#ipldBlock = block
     instance.deepFreeze()
     return instance
+  }
+  setMap(map) {
+    assert.strictEqual(typeof map, 'object')
+    return this.constructor.clone({ ...this, ...map })
   }
   set(key, value) {
     if (this[key] === value) {

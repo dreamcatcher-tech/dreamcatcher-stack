@@ -13,23 +13,26 @@ const debug = Debug('interblock:models:hamt')
 const hamtOptions = { blockHasher, blockCodec }
 export class Hamt extends IpldInterface {
   #valueClass
+  #isMutable
   #putStore
   #hashmap
   #gets = Immutable.Map()
   #sets = Immutable.Map()
   #deletes = Immutable.Set()
-  static create(valueClass) {
+  static create(valueClass, isMutable = false) {
     if (valueClass) {
       assert(valueClass.prototype instanceof IpldStruct, 'Not IpldStruct type')
     }
     const instance = new this()
     instance.#valueClass = valueClass
+    instance.#isMutable = isMutable
     return instance
   }
   // TODO allow WeakGet, WeakEntries, to only give what is loaded
   #clone() {
     const next = new this.constructor()
     next.#valueClass = this.#valueClass
+    next.#isMutable = this.#isMutable
     next.#putStore = this.#putStore && this.#putStore.clone()
     next.#gets = this.#gets
     next.#sets = this.#sets
@@ -44,7 +47,7 @@ export class Hamt extends IpldInterface {
     if (this.#valueClass) {
       assert(value instanceof this.#valueClass, `Not correct class type`)
     }
-    if (this.#gets.has(key)) {
+    if (!this.#isMutable && this.#gets.has(key)) {
       throw new Error(`Cannot overwrite key: ${key}`)
     }
     const next = this.#clone()
@@ -112,11 +115,6 @@ export class Hamt extends IpldInterface {
   async crush(resolver = () => {}) {
     assert.strictEqual(typeof resolver, 'function')
     const next = this.#clone()
-
-    // load the hashmap from a new putstore every time
-    // at the end, build the diffmap from the putstore
-    // save the last diffs in the putstore as a cache for next time
-
     if (!this.isModified()) {
       return next
     }
@@ -144,7 +142,12 @@ export class Hamt extends IpldInterface {
         const crushed = await value.crush()
         next.#gets = next.#gets.set(key, crushed)
         await hashmap.set(key, crushed.cid)
-        putStore.putBlock(crushed.cid, crushed.ipldBlock)
+        const diffs = await crushed.getDiffBlocks()
+        for (const [, ipldBlock] of diffs) {
+          if (!putStore.hasBlock(ipldBlock.cid)) {
+            putStore.putBlock(ipldBlock.cid, ipldBlock)
+          }
+        }
       } else {
         await hashmap.set(key, value)
       }

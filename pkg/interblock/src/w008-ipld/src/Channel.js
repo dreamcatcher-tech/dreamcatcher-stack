@@ -35,6 +35,7 @@ type Channel struct {
  */
 
 export class Channel extends IpldStruct {
+  static cidLinks = ['tx']
   static classMap = { tx: Tx, rx: Rx }
   static create(address = Address.createUnknown()) {
     assert(address instanceof Address)
@@ -50,8 +51,21 @@ export class Channel extends IpldStruct {
     const loopback = Address.createLoopback()
     return Channel.create(loopback)
   }
+  resolve(address) {
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    assert(this.isUnknown(), `Can only resolve unknown channels`)
+    const tx = this.tx.resolve(address)
+    return this.constructor.clone({ ...this, tx })
+  }
   isUnknown() {
     return this.tx.genesis.isUnknown()
+  }
+  isRemote() {
+    return this.tx.genesis.isRemote()
+  }
+  getAddress() {
+    return this.tx.genesis.cid
   }
   assertLogic() {
     const { tip, rx, tx } = this
@@ -63,8 +77,9 @@ export class Channel extends IpldStruct {
       assert(!tx.isLoopback())
     }
   }
-  txReducerRequest(request) {
-    const tx = this.tx.txReducerRequest(request)
+  txRequest(request) {
+    assert(request instanceof Request)
+    const tx = this.tx.txRequest(request)
     return this.constructor.clone({ ...this, tx })
   }
   rxReducerRequest() {
@@ -90,5 +105,10 @@ export class Channel extends IpldStruct {
     const tx = this.tx.shiftReducerReplies()
     const rxReducer = this.rxReducer.incrementReplies()
     return this.constructor.clone({ ...this, tx, rxReducer })
+  }
+  isNext(channel) {
+    assert(channel instanceof Channel)
+    // TODO verify the logic follows
+    return true
   }
 }

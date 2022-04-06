@@ -1,11 +1,13 @@
-import { assert } from 'chai/index.mjs'
-import { Pulse, Network, Channel, Address } from '..'
+import chai, { assert } from 'chai/index.mjs'
+import chaiAsPromised from 'chai-as-promised'
+import { Request, Pulse, Network, Channel, Address } from '..'
 import * as utils from '../src/IpldUtils'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
-Debug.enable()
+Debug.enable('*ipld:Network')
+chai.use(chaiAsPromised)
 
-describe('network', () => {
+describe.only('network', () => {
   test('creates default', async () => {
     const network = Network.create()
     const crush = await network.crush()
@@ -15,12 +17,12 @@ describe('network', () => {
     assert(network.getLoopback())
     assert.strictEqual(network.counter, 0)
   })
-  test('cannot delete parent or self', () => {
+  test('cannot delete parent or self', async () => {
     const network = Network.create()
-    assert.throws(() => network.delete('..'), 'Cannot delete parent')
-    assert.throws(() => network.delete('.'), 'Cannot delete loopback')
-    assert.throws(() => network.delete('else'), 'else has not')
-    assert.throws(() => network.delete(4), 'Alias must be a string')
+    await assert.isRejected(network.delete('..'), 'Cannot delete parent')
+    await assert.isRejected(network.delete('.'), 'Cannot delete loopback')
+    await assert.isRejected(network.delete('else'), 'key not present')
+    await assert.isRejected(network.delete(4), 'Alias must be a string')
   })
   test('parent is unknown by default', () => {
     const network = Network.create()
@@ -28,23 +30,45 @@ describe('network', () => {
     assert(parent)
     assert(parent.tx.genesis.isUnknown())
   })
-  test('can only set Channel instances', () => {
+  test('can only set Channel instances', async () => {
     const network = Network.create()
-    assert.throws(() => network.setChannel('else', 'test'), 'must supply')
-    assert.throws(() => network.setChannel('else', { t: 't' }), 'must supply')
+    await assert.isRejected(network.setChannel('else', 'test'), 'must supply')
+    await assert.isRejected(network.setChannel('e', { t: 't' }), 'must supply')
   })
-  test('get by address', async () => {
+  test.only('transmit to downlink', async () => {
     let network = Network.create()
     let pulse = Pulse.create()
     pulse = await pulse.crush()
     const address = Address.generate(pulse)
     assert(!address.isUnknown())
+    assert(address.isRemote())
+
+    // set a downlink to have this address
+    network = await network.resolveDownlink('/some/testalias', address)
+    // send a tx
+    const request = Request.create('TEST')
+    network = await network.txRequest(request, 'testalias')
+    // if channels doesn't hold it, then goes direct into tx slice
+    network = await network.crush()
+    console.dir(await network.getDiffBlocks(), { depth: null })
+
+    // send a tx to an unknown alias
+    // set address to resolved
+    // send a reply
+
+    network = network.openUplink(toAddress)
+
+    network = network.setChild(alias, channel)
+
     const channel = Channel.create(address)
     const alias = 'testAlias'
     network = network.setChannel(alias, channel)
-    assert.strictEqual(network.getByAlias(alias), channel)
-    assert.strictEqual(network.getByAddress(address), channel)
+    assert.strictEqual(await network.getByAlias(alias), channel)
+    assert.strictEqual(await network.getByAddress(address), channel)
   })
+  test.todo('open uplink')
+  test.todo('create child')
+  test.todo('transmit to child')
   test.todo('same channel results in same channelId')
   test.todo('diffs only give difference to previous crush')
   test('large network', async () => {

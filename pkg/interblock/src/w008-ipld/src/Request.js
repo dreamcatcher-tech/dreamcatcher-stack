@@ -32,4 +32,22 @@ export class Request extends IpldStruct {
   static get schema() {
     return schemas.types.Action
   }
+  static SYSTEM_TYPES = [
+    '@@PING',
+    '@@SPAWN',
+    '@@GENESIS',
+    '@@CONNECT',
+    '@@UPLINK',
+    '@@INTRO',
+    '@@ACCEPT',
+    '@@OPEN_CHILD',
+    '@@GET_GIVEN_NAME', // TODO may delete ?
+    '@@DEPLOY',
+    '@@INSTALL',
+    '@@GET_CHAN', // TODO may delete ?
+    '@@CAT',
+  ]
+  isSystem() {
+    return Request.SYSTEM_TYPES.includes(this.type)
+  }
 }

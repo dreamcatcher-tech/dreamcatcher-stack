@@ -131,6 +131,7 @@ export class TxQueue extends IpldStruct {
 }
  */
 export class Tx extends IpldStruct {
+  static cidLinks = ['genesis', 'precedent']
   static classMap = {
     genesis: Address,
     precedent: Pulse,
@@ -145,6 +146,11 @@ export class Tx extends IpldStruct {
       reducer: TxQueue.create(),
     })
   }
+  resolve(address) {
+    assert(address instanceof Address)
+    assert(address.isRemote(), `Address must be a remote address`)
+    return this.constructor.clone({ ...this, genesis: address })
+  }
   isLoopback() {
     return this.genesis.isLoopback()
   }
@@ -156,9 +162,15 @@ export class Tx extends IpldStruct {
       assert(systemRequests.every(({ type }) => !banned.includes(type)))
     }
   }
-  txReducerRequest(request) {
-    const reducer = this.reducer.txRequest(request)
-    return this.constructor.clone({ ...this, reducer })
+  txRequest(request) {
+    assert(request instanceof Request)
+    let { reducer, system } = this
+    if (request.isSystem()) {
+      system = system.txRequest(request)
+    } else {
+      reducer = reducer.txRequest(request)
+    }
+    return this.setMap({ reducer, system })
   }
   txReducerReply(reply) {
     let reducer = this.reducer.txReply(reply)
@@ -166,11 +178,11 @@ export class Tx extends IpldStruct {
       // modify the requests start
       reducer = reducer.shiftRequestsStart()
     }
-    return this.constructor.clone({ ...this, reducer })
+    return this.setMap({ reducer })
   }
   shiftReducerReplies() {
     assert(this.isLoopback())
     const reducer = this.reducer.shiftRepliesStart()
-    return this.constructor.clone({ ...this, reducer })
+    return this.setMap({ reducer })
   }
 }

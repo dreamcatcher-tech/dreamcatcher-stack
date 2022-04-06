@@ -68,6 +68,10 @@ export class PutStore {
     debug('put: ', cid.toString().substring(0, 9))
     this.#putsMap.set(cid.toString(), block)
   }
+  hasBlock(cid) {
+    assert(cid instanceof CID)
+    return this.#putsMap.has(cid.toString())
+  }
   trim(cid) {
     assert(cid instanceof CID, `must pass rootCid`)
     assert(this.#putsMap.has(cid.toString()), `Missing hamt root ${cid}`)

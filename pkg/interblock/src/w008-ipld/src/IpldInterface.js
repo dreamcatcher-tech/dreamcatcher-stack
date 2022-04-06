@@ -14,7 +14,17 @@ export class IpldInterface {
   isModified() {
     throw new Error('Not Implemented')
   }
-  static links = [] // which keys should be crushed into CIDs
+  static cidLinks // array of which keys should be crushed into CIDs
+  isCidLink(key) {
+    assert(typeof key === 'string')
+    assert(key)
+    if (this.constructor.cidLinks) {
+      assert(Array.isArray(this.constructor.cidLinks))
+      return this.constructor.cidLinks.includes(key)
+    } else {
+      return !!this.constructor.classMap[key]
+    }
+  }
   static classMap = {} // keys to Class mappings
   static getClassFor(key) {
     assert(this.classMap[key], `key ${key} not mapped to class`)
@@ -41,8 +51,8 @@ export class IpldInterface {
   getDiffBlocks() {
     throw new Error('Not Implemented')
   }
-  logDiff() {
-    const diffmap = this.getDiffBlocks()
+  async logDiff() {
+    const diffmap = await this.getDiffBlocks()
     const log = []
     for (const { cid, value } of diffmap.values()) {
       log.push([cid, value])

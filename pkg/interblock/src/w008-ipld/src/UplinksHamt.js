@@ -2,22 +2,15 @@ import { Hamt } from './Hamt'
 import { Channel } from '.'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
-
-class AliasedChannel extends IpldStruct {
-  static classMap = {
-    channel: Channel,
-  }
-  static create(channel, alias) {
-    assert(channel instanceof Channel, 'Not a Channel')
-    assert(typeof alias === 'string', 'Not a string')
-    assert(alias, 'Not a string')
-    return super.clone({ channel, aliases: [alias] })
-  }
-}
-
-export class ChannelsHamt extends Hamt {
+/**
+ * Children are always fully resolved.
+ * When crush occurs, should check the channels are next.
+ * Alias cannot have '/' character in it.
+ * Channels have to have an address on them.
+ */
+export class UplinksHamt extends Hamt {
   static create() {
-    return super.create(AliasedChannel)
+    return super.create(Channel)
   }
   set() {
     throw new Error('not implemented')

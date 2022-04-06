@@ -50,6 +50,6 @@ export class Dmz extends IpldStruct {
     // TODO if isSideEffectCapable ensure the validators list is singular
     const { network, config } = this
     // TODO verify that the pending buffers map to legit channels
-    assert(!network.hasByAlias('.@@io') || config.isPierced)
+    assert(!network.getIo() || config.isPierced)
   }
 }
