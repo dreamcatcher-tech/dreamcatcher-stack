@@ -8,13 +8,13 @@ export class Provenance extends IpldStruct {
   static createGenesis(dmz = Dmz.create()) {
     // used to make genesis
     assert(dmz instanceof Dmz)
-    const genesis = Address.createGenesis()
+    const address = Address.createGenesis()
     const provenance = {
       stateTree: 'TODO',
       // later, will allow foreign chains as prefixes to the provenance index
       lineageTree: 'TODO',
       turnoversTree: 'TODO',
-      genesis,
+      address,
       dmz,
     }
     return super.clone(provenance)

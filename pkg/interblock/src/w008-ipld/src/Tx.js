@@ -9,7 +9,7 @@ At the start of each block, all transmitting channels are zeroed and the precede
 
 ```js
 const TxExample = {
-    genesis: CIDGenesis,
+    address: CIDGenesis,
     precedent: CIDPrecedent,
     system: {
         requestsStart: 23423,
@@ -40,7 +40,7 @@ type PromisedReply struct {
 }
 
 type Tx struct {
-    genesis Address        # The remote chainId
+    address Address        # The remote chainId
     precedent &Pulse       # The last Pulse this chain sent
     system TxQueue         # System messages
     reducer TxQueue       # Covenant messages
@@ -124,24 +124,24 @@ export class TxQueue extends IpldStruct {
 }
 /**
  * type Tx struct {
-    genesis Address        # The remote chainId
+    address Address        # The remote chainId
     precedent optional &Pulse       # The last Pulse this chain sent
     system TxQueue         # System messages
     reducer TxQueue       # Covenant messages
 }
  */
 export class Tx extends IpldStruct {
-  static cidLinks = ['genesis', 'precedent']
+  static cidLinks = ['address', 'precedent']
   static classMap = {
-    genesis: Address,
+    address: Address,
     precedent: Pulse,
     system: TxQueue,
     reducer: TxQueue,
   }
-  static create(genesis) {
-    assert(genesis instanceof Address)
+  static create(address) {
+    assert(address instanceof Address)
     return super.clone({
-      genesis,
+      address,
       system: TxQueue.create(),
       reducer: TxQueue.create(),
     })
@@ -149,10 +149,10 @@ export class Tx extends IpldStruct {
   resolve(address) {
     assert(address instanceof Address)
     assert(address.isRemote(), `Address must be a remote address`)
-    return this.constructor.clone({ ...this, genesis: address })
+    return this.constructor.clone({ ...this, address })
   }
   isLoopback() {
-    return this.genesis.isLoopback()
+    return this.address.isLoopback()
   }
   assertLogic() {
     if (this.isLoopback()) {

@@ -59,13 +59,13 @@ export class Channel extends IpldStruct {
     return this.constructor.clone({ ...this, tx })
   }
   isUnknown() {
-    return this.tx.genesis.isUnknown()
+    return this.tx.address.isUnknown()
   }
   isRemote() {
-    return this.tx.genesis.isRemote()
+    return this.tx.address.isRemote()
   }
   getAddress() {
-    return this.tx.genesis.cid
+    return this.tx.address.cid
   }
   assertLogic() {
     const { tip, rx, tx } = this

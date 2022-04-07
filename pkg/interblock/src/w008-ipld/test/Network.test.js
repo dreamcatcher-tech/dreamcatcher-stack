@@ -28,7 +28,7 @@ describe.only('network', () => {
     const network = Network.create()
     const parent = network.getParent()
     assert(parent)
-    assert(parent.tx.genesis.isUnknown())
+    assert(parent.isUnknown())
   })
   test('can only set Channel instances', async () => {
     const network = Network.create()

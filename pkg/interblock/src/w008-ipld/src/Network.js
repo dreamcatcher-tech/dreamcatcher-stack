@@ -197,7 +197,7 @@ export class Network extends IpldStruct {
     assert(channel instanceof Channel, `must supply Channel`)
     assert.strictEqual(typeof systemRole, 'string')
     debug(`setChannel`, alias, channel, systemRole)
-    const address = channel.tx.genesis
+    const { address } = channel.tx
     if (alias === '.') {
       assert(address.isLoopback())
       assert.strictEqual(systemRole, '.')

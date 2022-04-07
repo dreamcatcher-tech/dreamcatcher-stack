@@ -12,10 +12,10 @@ export class Pulse extends IpldStruct {
     // validate signature
   }
   getAddress() {
-    if (this.provenance.genesis.isGenesis()) {
+    if (this.provenance.address.isGenesis()) {
       return Address.generate(this)
     }
-    return this.provenance.genesis
+    return this.provenance.address
   }
   isVerifiedBlock() {
     if (this.provenance.address.isGenesis()) {

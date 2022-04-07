@@ -139,7 +139,7 @@ At the start of each block, all transmitting channels are zeroed and the precede
 
 ```js
 const TxExample = {
-    genesis: CIDGenesis,
+    address: CIDGenesis,
     precedent: CIDPrecedent,
     system: {
         requestsStart: 23423,
@@ -177,7 +177,7 @@ type TxQueue struct {
     promisedReplies optional [PromisedReply]
 }
 type Tx struct {
-    genesis Address             # The remote chainId
+    address Address             # The remote chainId
     precedent optional &Pulse   # The last Pulse this chain sent
     system TxQueue              # System messages
     reducer TxQueue             # Reducer messages
@@ -321,7 +321,7 @@ type PackageState struct {  # Basically package.json excerpts
     type PackageTypes
 }
 type Covenant struct {
-    genesis Address
+    address Address
     pulse &Pulse
     info &PackageState      # Link to the info in the Pulse
     package Binary          # link to the binary of the Pulse
@@ -463,7 +463,7 @@ type Provenance struct {
     stateTree &StateTreeNode
     lineageTree &Lineage     # Must allow merging of N parents
     turnoversTree &Turnovers
-    genesis Address
+    address Address
     contents Dmz
 }
 ```
