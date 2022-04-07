@@ -43,7 +43,7 @@ type Tx struct {
     genesis Address        # The remote chainId
     precedent &Pulse       # The last Pulse this chain sent
     system TxQueue         # System messages
-    covenant TxQueue       # Covenant messages
+    reducer TxQueue       # Covenant messages
 }
 ```
  */
