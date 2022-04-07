@@ -264,7 +264,7 @@ This does introduce non-determinism, as the timing of when something occurred ca
 ```sh
 type Channels struct {
     counter Int
-    channelSet HashMapRoot           # Map of channelIds to Channels
+    list HashMapRoot           # Map of channelIds to Channels
     addresses HashMapRoot          # reverse lookup of channels
 }
 type Network struct {
@@ -275,11 +275,11 @@ type Network struct {
     channels optional Channels
 
     # alias maps to channelIds
-    children optional HashMapRoot           # keys are paths
-    uplinks optional HashMapRoot            # keys are channelIds
-    downlinks optional HashMapRoot          # keys are paths
-    symlinks optional HashMapRoot           # keys are paths without "/"
-    hardlinks optional HashMapRoot          # keys are paths without "/"
+    children optional HashMapRoot           # keys are local paths
+    uplinks optional HashMapRoot            # keys are channelIds, value=true
+    downlinks optional HashMapRoot          # keys are remote paths
+    symlinks optional HashMapRoot           # local paths : any paths
+    hardlinks optional HashMapRoot          # local paths : any paths
 
     rxs optional [ Int ]
     txs optional [ Int ]
