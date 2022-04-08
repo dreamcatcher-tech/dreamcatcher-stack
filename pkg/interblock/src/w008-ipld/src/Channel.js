@@ -65,7 +65,7 @@ export class Channel extends IpldStruct {
     return this.tx.address.isRemote()
   }
   getAddress() {
-    return this.tx.address.cid
+    return this.tx.address
   }
   assertLogic() {
     const { tip, rx, tx } = this
@@ -77,10 +77,15 @@ export class Channel extends IpldStruct {
       assert(!tx.isLoopback())
     }
   }
+  txGenesis(params = {}) {
+    assert(typeof params === 'object')
+    const request = Request.create('@@GENESIS', { params })
+    return this.txRequest(request)
+  }
   txRequest(request) {
     assert(request instanceof Request)
     const tx = this.tx.txRequest(request)
-    return this.constructor.clone({ ...this, tx })
+    return this.setMap({ tx })
   }
   rxReducerRequest() {
     const { requestsTip } = this.rxReducer

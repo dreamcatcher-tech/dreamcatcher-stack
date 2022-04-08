@@ -1,7 +1,8 @@
 import assert from 'assert-fast'
-import { PublicKey } from './PublicKey'
+import { PublicKey, Provenance } from '.'
 import crypto from 'libp2p-crypto'
 import { fromString as from } from 'uint8arrays/from-string'
+import { toString as to } from 'uint8arrays/to-string'
 import { deepFreeze } from './utils'
 const {
   secp256k1: { Secp256k1PrivateKey },
@@ -36,5 +37,13 @@ export class Keypair {
     keypair.publicKey = PublicKey.create(name, privateKey.public)
     deepFreeze(keypair)
     return keypair
+  }
+  async sign(provenance) {
+    assert(provenance instanceof Provenance)
+    assert(!provenance.isModified())
+    const { cid } = provenance
+    const bytes = await this.#privateKey.sign(cid.bytes)
+    const signature = to(bytes, 'base36upper')
+    return signature
   }
 }

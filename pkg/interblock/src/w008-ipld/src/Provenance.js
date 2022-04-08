@@ -1,23 +1,55 @@
 import assert from 'assert-fast'
-import { Address, Dmz } from '.'
+import { Address, Dmz, Pulse, PulseLink } from '.'
 import { IpldStruct } from './IpldStruct'
 import Debug from 'debug'
 const debug = Debug('interblock:classes:Provenance')
-
+/**
+ type StateTreeNode struct {
+    state &State
+    binary &Binary
+    children { String : &StateTreeNode }
+}
+type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
+type Turnovers [PulseLink]      # TODO make into a tree
+type Provenance struct {
+    stateTree &StateTreeNode
+    lineageTree &Lineage     # Must allow merging of N parents
+    turnovers &Turnovers
+    address Address
+    contents Dmz
+}
+ */
 export class Provenance extends IpldStruct {
+  static classMap = { address: Address, dmz: Dmz, lineages: PulseLink }
   static createGenesis(dmz = Dmz.create()) {
     // used to make genesis
     assert(dmz instanceof Dmz)
     const address = Address.createGenesis()
     const provenance = {
-      stateTree: 'TODO',
+      states: 'TODO',
       // later, will allow foreign chains as prefixes to the provenance index
-      lineageTree: 'TODO',
-      turnoversTree: 'TODO',
+      lineages: [],
+      turnovers: 'TODO',
       address,
       dmz,
     }
     return super.clone(provenance)
+  }
+  hasLineage(pulse) {
+    assert(pulse instanceof Pulse)
+    for (const pulseLink of this.lineages) {
+      if (pulseLink.cid.equals(pulse.cid)) {
+        return true
+      }
+    }
+    return false
+  }
+  setLineage(pulse) {
+    assert(pulse instanceof Pulse)
+    const pulseLink = PulseLink.generate(pulse)
+    const lineages = [pulseLink]
+    assert(pulseLink.cid.equals(pulse.cid))
+    return this.setMap({ lineages })
   }
 
   // isNextProvenance(child) {

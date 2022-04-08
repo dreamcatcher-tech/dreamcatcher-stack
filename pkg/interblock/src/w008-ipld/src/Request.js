@@ -16,10 +16,11 @@ export class Request extends IpldStruct {
     if (!request.payload) {
       request = { ...request, payload: {} }
     }
-    assertNoUndefined(request.payload)
-    const s = JSON.stringify(request.payload, null, 2)
-    const cloned = JSON.parse(s)
-    assert(equals(request.payload, cloned), `payload not POJO ${s}`)
+    payload = request.payload
+    assertNoUndefined(payload)
+    const stringified = JSON.stringify(payload, null, 2)
+    const cloned = JSON.parse(stringified)
+    assert(equals(payload, cloned), `payload not POJO ${stringified}`)
     if (binary) {
       request = { ...request, binary }
     }

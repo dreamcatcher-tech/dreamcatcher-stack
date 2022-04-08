@@ -9,21 +9,20 @@ import { IpldStruct } from './IpldStruct'
  * Channels have to have an address on them.
  */
 export class ChildrenHamt extends Hamt {
-  static create() {
-    return super.create(Channel)
-  }
   set() {
     throw new Error('not implemented')
+  }
+  async addChild(path, channelId) {
+    // TODO check that a child does not already exist with this address
+    assert(typeof path === 'string')
+    assert(path)
+    assert(!path.includes('/'))
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    return await super.set(path, channelId)
   }
   delete(channelId) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0 && channelId < this.counter)
-  }
-  async updateChannel(channelId, channel) {
-    // assumes this channel is present already
-    assert()
-  }
-  setChannel(channelId, channel) {
-    // when go to crush, ensure we are not reinstating something that has been deleted
   }
 }

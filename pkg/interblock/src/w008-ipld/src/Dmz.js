@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import {
-  Pulse,
+  PulseLink,
   Validators,
   Config,
   Binary,
@@ -23,7 +23,14 @@ const getDefaultParams = () => {
       meta: Meta.create(),
     }
   }
+  if (ciTimestamp) {
+    return { ...defaultParams, timestamp: ciTimestamp }
+  }
   return defaultParams
+}
+let ciTimestamp
+export const setCiTimestamp = () => {
+  ciTimestamp = Timestamp.create(new Date('2022-04-07T04:39:08.511Z'))
 }
 export class Dmz extends IpldStruct {
   static classMap = {
@@ -34,16 +41,21 @@ export class Dmz extends IpldStruct {
     state: State,
     meta: Meta,
     pending: Pending,
-    approot: Pulse,
+    approot: PulseLink,
     binary: Binary,
   }
   static create(params = {}) {
     assert.strictEqual(typeof params, 'object')
+    params = { ...params }
+    const defaultParams = getDefaultParams()
     for (const key in params) {
       assert(this.classMap[key], `key ${key} not mapped to CID class`)
-      assert(params[key] instanceof this.classMap[key])
+      const isInstanceOf = params[key] instanceof this.classMap[key]
+      if (!isInstanceOf) {
+        params[key] = defaultParams[key].setMap(params[key])
+      }
     }
-    params = { ...getDefaultParams(), ...params }
+    params = { ...defaultParams, ...params }
     return super.clone(params)
   }
   assertLogic() {

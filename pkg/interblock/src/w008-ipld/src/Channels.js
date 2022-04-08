@@ -1,5 +1,5 @@
 import { Hamt } from './Hamt'
-import { Channel } from '.'
+import { Channel, Address } from '.'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 
@@ -19,7 +19,13 @@ export class Channels extends IpldStruct {
     const isMutable = true
     const list = Hamt.create(Channel, isMutable)
     const addresses = Hamt.create()
-    return super.clone({ counter: 0, list, addresses })
+    const rxs = []
+    const txs = []
+    return super.clone({ counter: 0, list, addresses, rxs, txs })
+  }
+  async hasAddress(address) {
+    assert(address instanceof Address)
+    return await this.addresses.has(address.cid.toString())
   }
   async delete(channelId) {
     await this.assertChannelIdValid(channelId)
@@ -36,7 +42,7 @@ export class Channels extends IpldStruct {
     assert(channelId < this.counter)
     assert(await this.list.has(channelId), `channelId not present`)
   }
-  async createChannel(channel) {
+  async addChannel(channel) {
     assert(channel instanceof Channel)
     assert(Number.isInteger(this.counter))
     assert(this.counter >= 0)
@@ -44,11 +50,12 @@ export class Channels extends IpldStruct {
     const channelId = counter++
     const list = this.list.set(channelId, channel)
     if (channel.isRemote()) {
-      const address = channel.getAddress().toString()
-      assert(!(await this.addresses.has(address)))
-      addresses = this.addresses.set(address, channelId)
+      const key = channel.getAddress().cid.toString()
+      assert(!(await this.addresses.has(key)))
+      addresses = this.addresses.set(key, channelId)
     }
-    return this.setMap({ counter, list, addresses })
+    const next = this.setMap({ counter, list, addresses })
+    return next.updateActives(channelId, channel)
   }
   async updateChannel(channelId, channel) {
     assert(Number.isInteger(channelId))
@@ -62,10 +69,36 @@ export class Channels extends IpldStruct {
     const list = this.list.set(channelId, channel)
     let { addresses } = this
     if (!previous.isRemote() && channel.isRemote()) {
-      const address = channel.getAddress().toString()
-      assert(!(await this.addresses.has(address)))
-      addresses = addresses.set(address, channelId)
+      const key = channel.getAddress().cid.toString()
+      assert(!(await this.addresses.has(key)))
+      addresses = addresses.set(key, channelId)
     }
-    return this.setMap({ list, addresses })
+    const next = this.setMap({ list, addresses })
+    return next.updateActives(channelId, channel, previous)
+  }
+  updateActives(channelId, channel) {
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    assert(channel instanceof Channel)
+    let { rxs, txs } = this
+    if (!channel.rx.isEmpty()) {
+      if (!rxs.includes(channelId)) {
+        rxs = [...rxs, channelId]
+      }
+    }
+    if (!channel.tx.isEmpty()) {
+      if (!txs.includes(channelId)) {
+        txs = [...txs, channelId]
+      }
+    }
+    return this.setMap({ rxs, txs })
+  }
+  async getTx(channelId) {
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    assert(this.txs.includes(channelId))
+    const { tx } = await this.list.get(channelId)
+    assert(!tx.isEmpty())
+    return tx
   }
 }

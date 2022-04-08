@@ -1,6 +1,5 @@
 import { assert } from 'chai/index.mjs'
 import { Address, Pulse } from '..'
-import { cidV0FromString } from '../src/Address'
 describe('address', () => {
   test('no params makes unknown address', () => {
     const address = Address.createUnknown()
@@ -11,11 +10,6 @@ describe('address', () => {
     assert(genesis.isGenesis())
     assert(!genesis.isUnknown())
     assert.throws(() => genesis.getChainId(), 'Address not resolved')
-  })
-  test('rejects random objects', () => {
-    assert.throws(() => Address.createPredefined({ s: 't' }), 'not predefined')
-    const cid = cidV0FromString('testing')
-    assert.throws(() => Address.createPredefined(cid), 'not predefined')
   })
   test('generate from Pulse', async () => {
     const pulse = await Pulse.create().crush()

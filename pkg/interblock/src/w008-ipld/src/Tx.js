@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Pulse, Reply, Request } from '.'
+import { Address, PulseLink, Reply, Request } from '.'
 import { IpldStruct } from './IpldStruct'
 /**
  * ## Tx
@@ -121,6 +121,22 @@ export class TxQueue extends IpldStruct {
     const [, ...replies] = this.replies
     return this.constructor.clone({ ...this, repliesStart, replies })
   }
+  isEmpty() {
+    return (
+      !this.requests.length &&
+      !this.replies.length &&
+      !this.promisedReplies.length
+    )
+  }
+  isStart() {
+    return (
+      !this.requestsStart &&
+      !this.repliesStart &&
+      !this.replies.length &&
+      !this.promisedIds.length &&
+      !this.promisedReplies.length
+    )
+  }
 }
 /**
  * type Tx struct {
@@ -134,7 +150,7 @@ export class Tx extends IpldStruct {
   static cidLinks = ['address', 'precedent']
   static classMap = {
     address: Address,
-    precedent: Pulse,
+    precedent: PulseLink,
     system: TxQueue,
     reducer: TxQueue,
   }
@@ -184,5 +200,25 @@ export class Tx extends IpldStruct {
     assert(this.isLoopback())
     const reducer = this.reducer.shiftRepliesStart()
     return this.setMap({ reducer })
+  }
+  isEmpty() {
+    return this.system.isEmpty() && this.reducer.isEmpty()
+  }
+  isGenesisRequest() {
+    const request = this.system.rxRequest(0)
+    const isGenesis =
+      request && request.type === '@@GENESIS' && request.payload.params
+    return (
+      isGenesis &&
+      this.address.isRemote() &&
+      !this.precedent &&
+      this.system.isStart() &&
+      this.reducer.isStart()
+    )
+  }
+  getGenesisParams() {
+    assert(this.isGenesisRequest())
+    const request = this.system.rxRequest(0)
+    return request.payload.params
   }
 }

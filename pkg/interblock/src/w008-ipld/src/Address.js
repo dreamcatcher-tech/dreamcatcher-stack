@@ -42,27 +42,40 @@ const addressBlock = (cidV1) => {
   return new Block({ cid, bytes, value })
 }
 
+export const fromString = (string) => {
+  assert.strictEqual(typeof string, 'string')
+  assert(string)
+  const value = prepare({ Data: string })
+  const bytes = dagPB.encode(value)
+  const hash = sha256.digest(bytes)
+  const cid = CID.createV0(hash)
+  assert.strictEqual(cid.version, 0)
+  const block = new Block({ cid, bytes, value })
+  return Address.createFromBlock(block)
+}
+
 export class Address extends IpldInterface {
   #cid
   #ipldBlock
   static createUnknown() {
-    return this.createPredefined(UNKNOWN)
+    return this.#createPredefined(UNKNOWN)
   }
   static createRoot() {
-    return this.createPredefined(ROOT)
+    return this.#createPredefined(ROOT)
   }
   static createLoopback() {
-    return this.createPredefined(LOOPBACK)
+    return this.#createPredefined(LOOPBACK)
   }
   static createInvalid() {
-    return this.createPredefined(INVALID)
+    return this.#createPredefined(INVALID)
   }
   static createGenesis() {
-    return this.createPredefined(GENESIS)
+    return this.#createPredefined(GENESIS)
   }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified(), `Pulse must be crushed already`)
+    assert(pulse.isGenesis(), `Pulse must be genesis`)
     // TODO check the pulse is genesis
     const block = addressBlock(pulse.cid)
     return this.createFromBlock(block)
@@ -74,7 +87,7 @@ export class Address extends IpldInterface {
     instance.#ipldBlock = block
     return instance
   }
-  static createPredefined(cid) {
+  static #createPredefined(cid) {
     assert(defines.includes(cid), `not predefined`)
     const instance = new this()
     instance.#setCid(cid)
@@ -90,7 +103,7 @@ export class Address extends IpldInterface {
     assert.strictEqual(typeof resolver, 'function')
     for (const define of defines) {
       if (define.equals(rootCid)) {
-        return this.createPredefined(define)
+        return this.#createPredefined(define)
       }
     }
     const block = await resolver(rootCid)

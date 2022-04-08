@@ -19,6 +19,15 @@ export class IpldStruct extends IpldInterface {
     }
     return instance
   }
+  #clone() {
+    const next = new this.constructor()
+    Object.assign(next, this)
+    next.#ipldBlock = this.#ipldBlock
+    next.#previous = this.#previous
+    next.#crushed = this.#crushed
+    next.#isPreCrushed = this.#isPreCrushed
+    return next
+  }
   isModified() {
     return this.#ipldBlock === undefined
   }
@@ -37,15 +46,17 @@ export class IpldStruct extends IpldInterface {
     const { cid } = this.ipldBlock
     return cid
   }
+  get currentCrush() {
+    return this.#crushed
+  }
   async crush(resolver) {
     if (!this.isModified()) {
       assert(this.#ipldBlock)
       assert(this === this.#crushed)
       if (this !== this.#previous) {
-        const next = this.constructor.clone({ ...this })
+        const next = this.#clone()
         next.#previous = next
         next.#crushed = next
-        next.#ipldBlock = this.#ipldBlock
         return next
       }
       return this
@@ -60,6 +71,7 @@ export class IpldStruct extends IpldInterface {
     for (const key in crushed) {
       const slice = crushed[key]
       if (slice instanceof IpldInterface) {
+        await slice.crush(resolver)
         crushed[key] = await slice.crush(resolver)
         if (this.isCidLink(key)) {
           dagTree[key] = crushed[key].cid
@@ -67,10 +79,19 @@ export class IpldStruct extends IpldInterface {
           dagTree[key] = crushed[key]
         }
       } else if (Array.isArray(slice)) {
-        const awaits = slice.map((v) => v.crush(resolver))
+        const awaits = slice.map((v) => {
+          if (v instanceof IpldInterface) {
+            return v.crush(resolver)
+          }
+          return v
+        })
         const crushes = await Promise.all(awaits)
         crushed[key] = crushes
-        dagTree[key] = crushes.map((v) => v.cid)
+        if (this.isCidLink(key)) {
+          dagTree[key] = crushes.map((v) => v.cid)
+        } else {
+          dagTree[key] = crushes
+        }
       }
     }
     crushed.#ipldBlock = await encode(dagTree)
@@ -130,12 +151,35 @@ export class IpldStruct extends IpldInterface {
     const instance = new this()
     Object.assign(instance, map)
     instance.#ipldBlock = block
+    instance.#crushed = instance
+    instance.#previous = instance
     instance.deepFreeze()
     return instance
   }
   setMap(map) {
     assert.strictEqual(typeof map, 'object')
-    return this.constructor.clone({ ...this, ...map })
+    const inflated = { ...map }
+    for (const key in map) {
+      if (map[key] === this[key]) {
+        delete inflated[key]
+        continue
+      }
+      if (this.constructor.classMap[key]) {
+        if (this[key] instanceof IpldStruct) {
+          const next = this[key].setMap(map[key])
+          assert(next instanceof this.constructor.classMap[key])
+          inflated[key] = next
+        }
+      }
+      // TODO handle arrays
+    }
+    if (Object.keys(inflated).length === 0) {
+      return this
+    }
+    const next = this.#clone()
+    next.#ipldBlock = undefined // this is now modified
+    Object.assign(next, inflated)
+    return next
   }
   set(key, value) {
     if (this[key] === value) {

@@ -14,7 +14,7 @@ import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 import { PulseLink, Pulse } from '.'
 
-class RxTracker {
+class RxRemaining {
   requestsTip
   repliesTip
   constructor(requestsTip = 0, repliesTip = 0) {
@@ -28,27 +28,33 @@ class RxTracker {
   isEmpty() {
     return this.requestsTip === 0 && this.repliesTip === 0
   }
-  incrementRequests() {
-    return new this.constructor(this.requestsTip + 1, this.repliesTip)
+  decrementRequests() {
+    return new this.constructor(this.requestsTip - 1, this.repliesTip)
   }
-  incrementReplies() {
-    return new this.constructor(this.requestsTip, this.repliesTip + 1)
+  decrementReplies() {
+    return new this.constructor(this.requestsTip, this.repliesTip - 1)
   }
 }
 
 export class Rx extends IpldStruct {
   static classMap = {
     tip: PulseLink,
-    system: RxTracker,
-    reducer: RxTracker,
+    system: RxRemaining,
+    reducer: RxRemaining,
   }
   static create() {
     return super.clone({
-      system: new RxTracker(),
-      reducer: new RxTracker(),
+      system: new RxRemaining(),
+      reducer: new RxRemaining(),
     })
   }
   isEmpty() {
+    // empty means that both trackers both match the tip
+    if (!this.tip) {
+      assert(this.system.isEmpty())
+      assert(this.reducer.isEmpty())
+      return true
+    }
     return this.system.isEmpty() && this.reducer.isEmpty()
   }
   addTip(pulse) {

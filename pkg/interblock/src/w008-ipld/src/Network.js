@@ -11,6 +11,9 @@ import {
   AddressesHamt,
   Request,
   Io,
+  Dmz,
+  Pulse,
+  Provenance,
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
@@ -58,54 +61,70 @@ export class Network extends IpldStruct {
   static create() {
     const channels = Channels.create()
     const downlinks = DownlinksHamt.create()
-    let instance = super.clone({ channels, downlinks })
+    const uplinks = UplinksHamt.create()
+    const children = ChildrenHamt.create()
+    let instance = super.clone({ channels, downlinks, uplinks, children })
     return instance
   }
-  async #childrenHas(name) {
-    return this.children && (await this.children.has(name))
+  async addChild(path, params = {}) {
+    assert(typeof path === 'string')
+    assert(path)
+    assert(!path.includes('/'))
+    assert(typeof params === 'object')
+    if (await this.children.has(path)) {
+      throw new Error(`child exists: ${path}`)
+    }
+    const dmz = Dmz.create(params)
+    const provenance = Provenance.createGenesis(dmz)
+    const genesis = await Pulse.create(provenance).crush()
+    const address = genesis.getAddress()
+    const channel = Channel.create(address).txGenesis(params)
+
+    const channelId = this.channels.counter
+    const channels = await this.channels.addChannel(channel)
+    const children = await this.children.addChild(path, channelId)
+
+    return this.setMap({ channels, children })
   }
-  async #downlinksHas(name) {
-    return this.downlinks && (await this.downlinks.has(name))
-  }
-  async #uplinksHas(name) {
-    return this.uplinks && (await this.uplinks.has(name))
-  }
-  async #addressesHas(address) {
+  async addUplink(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
-    return this.addresses && (await this.addresses.has(address))
+    if (await this.channels.hasAddress(address)) {
+      throw new Error(`address already present: ${address.cid}`)
+    }
+    const channel = Channel.create(address)
+    const channelId = this.channels.counter
+    const channels = await this.channels.addChannel(channel)
+    const uplinks = await this.uplinks.set(address, channelId)
+    return this.setMap({ channels, uplinks })
   }
-  #addChannel(channel) {
-    assert(channel instanceof Channel)
-    let counter = Number.isInteger(this.counter) ? this.counter : 0
-    const channelId = counter++
-    let channels = this.channels || ChannelsHamt.create()
-    channels = channels.setChannel(channelId, channel)
-    return this.constructor.clone({ ...this, counter, channels })
+  async getUplink(address) {
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    assert(await this.uplinks.hasUplink(address))
+    const channelId = await this.uplinks.get(address)
+    return await this.channels.getChannel(channelId)
   }
 
-  #updateChannel(channelId, channel) {
-    const channels = this.channels.updateChannel(channelId, channel)
-    return this.constructor.clone({ ...this, channels })
-  }
   async resolveDownlink(path, address) {
     assert.strictEqual(typeof path, 'string')
     assert(path)
     assert(address instanceof Address)
     assert(address.isRemote())
     assert(this.isForeign(path))
-    if (await this.#downlinksHas(path)) {
+    if (await this.downlinks.has(path)) {
       const channelId = await this.downlinks.get(path)
       let channel = await this.channels.getChannel(channelId)
       channel = channel.resolve(address)
-      return this.#updateChannel(channelId, channel)
+      const channels = await this.channels.updateChannel(channelId, channel)
+      return this.setMap({ channels })
     } else {
       const channel = Channel.create(address)
       const channelId = this.channels.counter
-      const channels = await this.channels.createChannel(channel)
+      const channels = await this.channels.addChannel(channel)
       assert.strictEqual(await channels.getChannel(channelId), channel)
       const downlinks = this.downlinks.setDownlink(path, channelId)
-      return this.constructor.clone({ ...this, downlinks, channels })
+      return this.setMap({ downlinks, channels })
     }
   }
 
@@ -134,7 +153,7 @@ export class Network extends IpldStruct {
       } else {
         const channel = Channel.create()
         channelId = this.channels.counter
-        channels = await this.channels.createChannel(channel)
+        channels = await this.channels.addChannel(channel)
         assert.strictEqual(await channels.getChannel(channelId), channel)
         downlinks = downlinks.setDownlink(path, channelId)
       }
@@ -152,23 +171,13 @@ export class Network extends IpldStruct {
     channels = await channels.updateChannel(channelId, channel)
     return await this.setMap({ channels, downlinks })
   }
-
   rm(alias) {
-    // find out
     // if it was a child, then we can only fully terminate the chain
     // if it was a link, then we remove the alias mapping
     // if this is the only mapping, then we can remove the channel
   }
-  resolveChannel(alias, address) {
-    // this is a oneway operation, so gets an explicit function call
-    // action goes on to the tx section of the chain, as all modifications do
-    // errors only during crush, if conflicts are found
-    // during runtime needs to be as fast as possible
-    // renames from covenant will cause problems as won't error directly ?
-    // can force them to cross a block boundary
-  }
 
-  // must keep alias to channelId mappings private
+  //
   // ie: do not store them in the channel
   // can alter any channel by providing any given alias and replacement channel
   // there are limits on what the next channel can contain if one exists already

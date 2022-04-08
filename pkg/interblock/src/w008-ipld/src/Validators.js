@@ -1,7 +1,7 @@
-import { PublicKey } from './PublicKey'
-import { Keypair } from './Keypair'
+import { PublicKey, Keypair } from '.'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
+import equals from 'fast-deep-equal'
 
 export class Validators extends IpldStruct {
   static createCI() {
@@ -32,5 +32,13 @@ export class Validators extends IpldStruct {
       }
       keyset.add(value.key)
     }
+  }
+  has(publicKey) {
+    assert(publicKey instanceof PublicKey)
+    return this.indexOf(publicKey) !== -1
+  }
+  indexOf(publicKey) {
+    assert(publicKey instanceof PublicKey)
+    return this.publicKeys.findIndex((key) => equals(key, publicKey))
   }
 }

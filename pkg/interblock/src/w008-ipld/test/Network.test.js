@@ -1,13 +1,14 @@
 import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import { Request, Pulse, Network, Channel, Address } from '..'
+import { fromString } from '../src/Address'
 import * as utils from '../src/IpldUtils'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
 Debug.enable('*ipld:Network')
 chai.use(chaiAsPromised)
 
-describe.only('network', () => {
+describe('network', () => {
   test('creates default', async () => {
     const network = Network.create()
     const crush = await network.crush()
@@ -35,7 +36,7 @@ describe.only('network', () => {
     await assert.isRejected(network.setChannel('else', 'test'), 'must supply')
     await assert.isRejected(network.setChannel('e', { t: 't' }), 'must supply')
   })
-  test.only('transmit to downlink', async () => {
+  test('transmit to downlink', async () => {
     let network = Network.create()
     let pulse = Pulse.create()
     pulse = await pulse.crush()
@@ -43,31 +44,34 @@ describe.only('network', () => {
     assert(!address.isUnknown())
     assert(address.isRemote())
 
-    // set a downlink to have this address
     network = await network.resolveDownlink('/some/testalias', address)
-    // send a tx
     const request = Request.create('TEST')
     network = await network.txRequest(request, 'testalias')
-    // if channels doesn't hold it, then goes direct into tx slice
     network = await network.crush()
-    console.dir(await network.getDiffBlocks(), { depth: null })
-
-    // send a tx to an unknown alias
-    // set address to resolved
-    // send a reply
-
-    network = network.openUplink(toAddress)
-
-    network = network.setChild(alias, channel)
-
-    const channel = Channel.create(address)
-    const alias = 'testAlias'
-    network = network.setChannel(alias, channel)
-    assert.strictEqual(await network.getByAlias(alias), channel)
-    assert.strictEqual(await network.getByAddress(address), channel)
+    const diffs = await network.getDiffBlocks()
+    const resolver = (cid) => diffs.get(cid.toString())
+    const uncrushed = await Network.uncrush(network.cid, resolver)
+    assert.deepEqual(uncrushed, network)
+    const rediffs = await uncrushed.getDiffBlocks()
+    assert.strictEqual(rediffs.size, 0)
+    const doubleCrushed = await network.crush()
+    const doubleDiffs = await doubleCrushed.getDiffBlocks()
+    assert.strictEqual(doubleDiffs.size, 0)
   })
-  test.todo('open uplink')
-  test.todo('create child')
+  test('open uplink', async () => {
+    let network = Network.create()
+    const upAddress = fromString('test uplink')
+    network = await network.addUplink(upAddress)
+    const uplink = await network.getUplink(upAddress)
+    assert(uplink instanceof Channel)
+    assert.strictEqual(uplink.getAddress(), upAddress)
+  })
+  test('create child', async () => {
+    let network = Network.create()
+    network = await network.addChild('child1')
+
+    // TODO
+  })
   test.todo('transmit to child')
   test.todo('same channel results in same channelId')
   test.todo('diffs only give difference to previous crush')
