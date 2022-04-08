@@ -125,8 +125,9 @@ type Validators struct {
 
 ## Signatures
 
-An array of signatures as base encoded strings that matches the order of the Validators list.
+An array of signatures as `base36upper` encoded strings that matches the order of the Validators list.
 Gaps in the array represent missing signatures, which might still pass quorum.
+May be CID'd if space becomes an issue.
 
 ```sh
 type Signatures [String]
@@ -177,10 +178,10 @@ type TxQueue struct {
     promisedReplies optional [PromisedReply]
 }
 type Tx struct {
-    address Address             # The remote chainId
-    precedent optional &Pulse   # The last Pulse this chain sent
-    system TxQueue              # System messages
-    reducer TxQueue             # Reducer messages
+    address Address                 # The remote chainId
+    precedent optional PulseLink    # The last Pulse this chain sent
+    system TxQueue                  # System messages
+    reducer TxQueue                 # Reducer messages
 }
 ```
 
@@ -188,16 +189,17 @@ type Tx struct {
 
 After each block is made, tip chain precedents are trimmed to free up memory.
 Once Rx is no longer active, trimmed to be nothing.
+`RxRemaining` tracks how many actions remain to be processed. Storing only the difference removes the redundancy of storing any cursor information.
 
 ```sh
-type RxTracker struct { # tracks what counters each ingestion is up to
+type RxRemaining struct {
     requestsTip Int
     repliesTip Int
 }
 type Rx struct {
-    tip optional &Pulse          # The last Pulse this chain received
-    system optional RxTracker
-    reducer optional RxTracker
+    tip optional PulseLink          # The last Pulse this chain received
+    system optional RxRemaining
+    reducer optional RxRemaining
 }
 ```
 
@@ -222,7 +224,7 @@ Channel stores rx and tx only after all the activity has been wrung out of them.
 
 ```sh
 type Channel struct {
-    tx Tx
+    tx &Tx
     rx Rx
 }
 ```
@@ -256,7 +258,7 @@ Channel Types
 1. children - by alias, bidirectional
 1. uplink - by address, the rx side of downlink
 1. downlink - by path resolved to address, the tx side of uplink
-1. symlink - permanenent link by path, resolution refreshed each tx
+1. symlink - permanent link by path, resolution refreshed each tx
 1. hardlink - permanent link by address, acts as a shared child
 
 This does introduce non-determinism, as the timing of when something occurred can now affect what address it was resolved to.
@@ -266,6 +268,8 @@ type Channels struct {
     counter Int
     list HashMapRoot           # Map of channelIds to Channels
     addresses HashMapRoot          # reverse lookup of channels
+    rxs optional [ Int ]
+    txs optional [ Int ]
 }
 type Network struct {
     parent optional Channel
@@ -280,9 +284,6 @@ type Network struct {
     downlinks optional HashMapRoot          # keys are remote paths
     symlinks optional HashMapRoot           # local paths : any paths
     hardlinks optional HashMapRoot          # local paths : any paths
-
-    rxs optional [ Int ]
-    txs optional [ Int ]
 }
 ```
 
@@ -322,7 +323,7 @@ type PackageState struct {  # Basically package.json excerpts
 }
 type Covenant struct {
     address Address
-    pulse &Pulse
+    pulse PulseLink
     info &PackageState      # Link to the info in the Pulse
     package Binary          # link to the binary of the Pulse
 }
@@ -458,13 +459,13 @@ type StateTreeNode struct {
     children { String : &StateTreeNode }
 }
 type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
-type Turnovers [&Pulse]      # TODO make into a tree
+type Turnovers [PulseLink]   # TODO make into a tree
 type Provenance struct {
-    stateTree &StateTreeNode
-    lineageTree &Lineage     # Must allow merging of N parents
-    turnoversTree &Turnovers
+    states &StateTreeNode
+    lineages &Lineage     # Must allow merging of N parents
+    turnovers &Turnovers
     address Address
-    contents Dmz
+    dmz Dmz
 }
 ```
 
