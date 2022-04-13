@@ -42,12 +42,12 @@ export class Hamt extends IpldInterface {
     }
     return next
   }
-  set(key, value) {
+  async set(key, value) {
     assertKey(key)
     if (this.#valueClass) {
       assert(value instanceof this.#valueClass, `Not correct class type`)
     }
-    if (!this.#isMutable && this.#gets.has(key)) {
+    if (!this.#isMutable && (await this.has(key))) {
       throw new Error(`Cannot overwrite key: ${key}`)
     }
     const next = this.#clone()

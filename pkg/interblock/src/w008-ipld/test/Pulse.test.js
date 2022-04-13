@@ -1,5 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import {
+  Interpulse,
   Request,
   Channel,
   Dmz,
@@ -31,12 +32,11 @@ describe('Pulse', () => {
   })
   test.only('birth child', async () => {
     let parent = await Pulse.createCI().crush()
-    const address = Address.generate(parent)
-    console.log('parent', address.cid)
     const config = { entropy: { seed: 'test' } }
-    let { network } = parent.provenance.dmz
-    network = await network.addChild('child1', { config })
-    parent = parent.setMap({ provenance: { dmz: { network } } })
+    let { dmz } = parent.provenance
+    dmz = await dmz.addChild('child1', { config })
+    parent = parent.generateSoftPulse()
+    parent = parent.setMap({ provenance: { dmz } })
 
     // when we modify it, it should point the provenance at the previous
     parent = await parent.crush()
@@ -50,21 +50,32 @@ describe('Pulse', () => {
     parent = await parent.crush()
     assert(parent.isVerified())
 
-    // create child chain using the interpulse
-    console.dir(parent, { depth: Infinity })
     // generate a genesis pulse using the params in the action
-    const { txs } = parent.provenance.dmz.network.channels
-    assert.strictEqual(txs.length, 1)
-    const tx = await parent.provenance.dmz.network.channels.getTx(0)
+    const { channels } = parent.provenance.dmz.network
+    assert.strictEqual(channels.txs.length, 1)
+    const childChannelId = 0
+    const tx = await channels.getTx(childChannelId)
     assert(tx.isGenesisRequest())
-    const params = tx.getGenesisParams()
-    console.log(params)
-    // make the new pulse
-    // confirm the hash matches the channel address
+    const { validators } = parent.provenance
+    const { timestamp } = parent.provenance.dmz
+    let child = await tx.extractChildGenesis(validators, timestamp)
+    assert(child.isGenesis())
+    const { publicKeys } = child.provenance.validators
+    assert.strictEqual(publicKeys.length, 1)
+    assert.deepEqual(publicKeys[0], keypair.publicKey)
+    const channel = await channels.getChannel(0)
+    assert(channel.address.equals(child.getAddress()))
 
-    // reply to the parents action
-
-    // blank the parent transmissions
+    // reply to the parents action with a signed block
+    child = child.generateSoftPulse(parent.getAddress())
+    const interpulse = Interpulse.extract(parent, child.getAddress())
+    child = await child.ingestInterpulse(interpulse)
+    console.dir(parent, { depth: Infinity })
+    console.dir(child, { depth: Infinity })
+    // set the lineage to refer to the current pulse
+    // then can start to insert interpulses from elsewhere
+    // check the lineage before adding new interpulses
+    // do the accounting to keep track of the send counters
   })
   test.todo('loopback transmissions')
   test.todo('loopback promises')

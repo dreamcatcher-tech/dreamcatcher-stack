@@ -1,7 +1,6 @@
 import { Hamt } from './Hamt'
-import { Channel } from '.'
+import { Address, Channel } from '.'
 import assert from 'assert-fast'
-import { IpldStruct } from './IpldStruct'
 /**
  * Children are always fully resolved.
  * When crush occurs, should check the channels are next.
@@ -18,6 +17,10 @@ export class AddressesHamt extends Hamt {
   delete(channelId) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0 && channelId < this.counter)
+  }
+  get(address) {
+    assert(address instanceof Address)
+    return super.get(address.cid.toString())
   }
   async updateChannel(channelId, channel) {
     // assumes this channel is present already

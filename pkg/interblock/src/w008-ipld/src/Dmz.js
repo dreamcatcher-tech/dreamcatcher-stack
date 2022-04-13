@@ -1,7 +1,8 @@
 import assert from 'assert-fast'
 import {
+  Provenance,
+  Pulse,
   PulseLink,
-  Validators,
   Config,
   Binary,
   Timestamp,
@@ -30,11 +31,10 @@ const getDefaultParams = () => {
 }
 let ciTimestamp
 export const setCiTimestamp = () => {
-  ciTimestamp = Timestamp.create(new Date('2022-04-07T04:39:08.511Z'))
+  ciTimestamp = Timestamp.createCI()
 }
 export class Dmz extends IpldStruct {
   static classMap = {
-    validators: Validators,
     config: Config,
     timestamp: Timestamp,
     network: Network,
@@ -63,5 +63,22 @@ export class Dmz extends IpldStruct {
     const { network, config } = this
     // TODO verify that the pending buffers map to legit channels
     assert(!network.getIo() || config.isPierced)
+  }
+  async addChild(path, params = {}) {
+    assert(typeof path === 'string')
+    assert(path)
+    assert(!path.includes('/'))
+    assert(typeof params === 'object')
+    if (await this.network.children.has(path)) {
+      throw new Error(`child exists: ${path}`)
+    }
+    const { timestamp } = this
+
+    const dmz = Dmz.create({ ...params, timestamp })
+    const provenance = Provenance.createGenesis(dmz)
+    const genesis = await Pulse.create(provenance).crush()
+    const address = genesis.getAddress()
+    const network = await this.network.txGenesis(path, address, params)
+    return this.setMap({ network })
   }
 }

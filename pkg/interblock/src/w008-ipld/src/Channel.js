@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Rx, Tx, Request, Pulse } from '.'
+import { Address, Rx, Tx, Request, Interpulse } from '.'
 import Debug from 'debug'
 import { IpldStruct } from './IpldStruct'
 import { deepFreeze } from './utils'
@@ -27,9 +27,10 @@ Channel stores rx and tx only after all the activity has been wrung out of them.
 
 ```sh
 type Channel struct {
-    tx Tx
+    address Address                 # The remote chainId
+    tx &Tx
     rx Rx
-    aliases [String]    # all aliases except the address string
+    aliases [String]                # reverse lookup
 }
 ```
  */
@@ -40,8 +41,8 @@ export class Channel extends IpldStruct {
   static create(address = Address.createUnknown()) {
     assert(address instanceof Address)
     const rx = Rx.create()
-    const tx = Tx.create(address)
-    return super.clone({ rx, tx, aliases: [] })
+    const tx = Tx.create()
+    return super.clone({ address, rx, tx, aliases: [] })
   }
   static createRoot() {
     const root = Address.createRoot()
@@ -55,26 +56,31 @@ export class Channel extends IpldStruct {
     assert(address instanceof Address)
     assert(address.isRemote())
     assert(this.isUnknown(), `Can only resolve unknown channels`)
-    const tx = this.tx.resolve(address)
-    return this.constructor.clone({ ...this, tx })
+    return this.setMap({ address })
   }
   isUnknown() {
-    return this.tx.address.isUnknown()
+    return this.address.isUnknown()
   }
   isRemote() {
-    return this.tx.address.isRemote()
+    return this.address.isRemote()
   }
   getAddress() {
-    return this.tx.address
+    return this.address
   }
   assertLogic() {
-    const { tip, rx, tx } = this
+    const { rx, tx, address } = this
     if (this.isUnknown()) {
       assert(rx.isEmpty(), 'Replies to Unknown are impossible')
-      assert(!tip)
+      assert(!rx.tip)
     }
-    if (tip) {
-      assert(!tx.isLoopback())
+    if (rx.tip) {
+      assert(!address.isLoopback())
+    }
+    if (address.isLoopback()) {
+      assert(!tx.precedent)
+      const banned = ['@@OPEN_CHILD']
+      const systemRequests = tx.system.requests
+      assert(systemRequests.every(({ type }) => !banned.includes(type)))
     }
   }
   txGenesis(params = {}) {
@@ -88,16 +94,16 @@ export class Channel extends IpldStruct {
     return this.setMap({ tx })
   }
   rxReducerRequest() {
-    const { requestsTip } = this.rxReducer
-    if (this.tx.isLoopback()) {
-      assert(this.tx.reducer.requestsStart >= requestsTip)
-      return this.tx.reducer.rxRequest(requestsTip)
+    const { requestsRemaining } = this.rxReducer
+    if (this.address.isLoopback()) {
+      assert(this.tx.reducer.requestsStart >= requestsRemaining)
+      return this.tx.reducer.rxRequest(requestsRemaining)
     }
   }
   txReducerReply(reply) {
     const tx = this.tx.txReducerReply(reply)
     const rxReducer = this.rxReducer.incrementRequests()
-    return this.constructor.clone({ ...this, tx, rxReducer })
+    return this.setMap({ tx, rxReducer })
   }
   rxReducerReply() {
     const { repliesTip } = this.rxReducer
@@ -115,5 +121,11 @@ export class Channel extends IpldStruct {
     assert(channel instanceof Channel)
     // TODO verify the logic follows
     return true
+  }
+  ingestInterpulse(interpulse) {
+    assert(interpulse instanceof Interpulse)
+    let { rx } = this
+    rx = rx.addTip(interpulse)
+    return this.setMap({ rx })
   }
 }

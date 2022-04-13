@@ -1,6 +1,9 @@
 import assert from 'assert-fast'
 
 export class Timestamp {
+  static createCI() {
+    return this.create(new Date('2022-02-22T02:22:22.222Z'))
+  }
   static create(now = new Date()) {
     assert(now instanceof Date)
     // '2011-10-05T14:48:00.000Z'

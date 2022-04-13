@@ -25,10 +25,13 @@ export class IpldInterface {
       return !!this.constructor.classMap[key]
     }
   }
+  static defaultClass
   static classMap = {} // keys to Class mappings
   static getClassFor(key) {
-    assert(this.classMap[key], `key ${key} not mapped to class`)
-    return this.classMap[key]
+    if (!this.defaultClass) {
+      assert(this.classMap[key], `key ${key} not mapped to class`)
+    }
+    return this.classMap[key] || this.defaultClass
   }
   get ipldBlock() {
     throw new Error('Not Implemented')

@@ -133,6 +133,10 @@ export class Address extends IpldInterface {
     }
     return map
   }
+  equals(address) {
+    assert(address instanceof Address)
+    return this.cid.equals(address.cid)
+  }
   getChainId() {
     if (this.#cid === LOOPBACK) {
       return 'LOOPBACK'

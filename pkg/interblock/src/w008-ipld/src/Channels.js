@@ -1,5 +1,5 @@
 import { Hamt } from './Hamt'
-import { Channel, Address } from '.'
+import { Channel, Address, Interpulse } from '.'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 
@@ -25,12 +25,18 @@ export class Channels extends IpldStruct {
   }
   async hasAddress(address) {
     assert(address instanceof Address)
+    assert(address.isRemote())
     return await this.addresses.has(address.cid.toString())
   }
-  async delete(channelId) {
+  async getByAddress(address) {
+    assert(address instanceof Address)
+    const channelId = await this.addresses.get(address.cid.toString())
+    return await this.list.get(channelId)
+  }
+  async deleteChannel(channelId) {
     await this.assertChannelIdValid(channelId)
     const list = this.list.delete(channelId)
-    return this.constructor.clone({ ...this, list })
+    return this.setMap({ list })
   }
   async getChannel(channelId) {
     await this.assertChannelIdValid(channelId)
@@ -48,11 +54,11 @@ export class Channels extends IpldStruct {
     assert(this.counter >= 0)
     let { counter, addresses } = this
     const channelId = counter++
-    const list = this.list.set(channelId, channel)
+    const list = await this.list.set(channelId, channel)
     if (channel.isRemote()) {
       const key = channel.getAddress().cid.toString()
       assert(!(await this.addresses.has(key)))
-      addresses = this.addresses.set(key, channelId)
+      addresses = await this.addresses.set(key, channelId)
     }
     const next = this.setMap({ counter, list, addresses })
     return next.updateActives(channelId, channel)
@@ -100,5 +106,16 @@ export class Channels extends IpldStruct {
     const { tx } = await this.list.get(channelId)
     assert(!tx.isEmpty())
     return tx
+  }
+  blankTxs() {
+    return this.delete('txs')
+  }
+  async ingestInterpulse(interpulse) {
+    assert(interpulse instanceof Interpulse)
+    const { source } = interpulse
+    const channelId = await this.addresses.get(source)
+    let channel = await this.getByAddress(source)
+    channel = channel.ingestInterpulse(interpulse)
+    return this.updateChannel(channelId, channel)
   }
 }

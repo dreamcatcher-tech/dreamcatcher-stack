@@ -11,9 +11,7 @@ import {
   AddressesHamt,
   Request,
   Io,
-  Dmz,
-  Pulse,
-  Provenance,
+  Interpulse,
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
@@ -56,35 +54,24 @@ export class Network extends IpldStruct {
   }
 
   static createRoot() {
-    // TODO make the parent be a root address
+    const instance = Network.create()
+    const parent = Channel.createRoot()
+    return instance.setMap({ parent })
   }
   static create() {
     const channels = Channels.create()
     const downlinks = DownlinksHamt.create()
     const uplinks = UplinksHamt.create()
     const children = ChildrenHamt.create()
-    let instance = super.clone({ channels, downlinks, uplinks, children })
+    const parent = Channel.create()
+    let instance = super.clone({
+      channels,
+      downlinks,
+      uplinks,
+      children,
+      parent,
+    })
     return instance
-  }
-  async addChild(path, params = {}) {
-    assert(typeof path === 'string')
-    assert(path)
-    assert(!path.includes('/'))
-    assert(typeof params === 'object')
-    if (await this.children.has(path)) {
-      throw new Error(`child exists: ${path}`)
-    }
-    const dmz = Dmz.create(params)
-    const provenance = Provenance.createGenesis(dmz)
-    const genesis = await Pulse.create(provenance).crush()
-    const address = genesis.getAddress()
-    const channel = Channel.create(address).txGenesis(params)
-
-    const channelId = this.channels.counter
-    const channels = await this.channels.addChannel(channel)
-    const children = await this.children.addChild(path, channelId)
-
-    return this.setMap({ channels, children })
   }
   async addUplink(address) {
     assert(address instanceof Address)
@@ -265,21 +252,21 @@ export class Network extends IpldStruct {
   async hasByAlias(alias) {
     return await this.aliases.has(alias)
   }
-  async delete(alias) {
-    // TODO check if any other aliases refer to this channel
-    assert.strictEqual(typeof alias, 'string', `Alias must be a string`)
-    assert(alias)
-    if (alias === '..') {
-      throw new Error(`Cannot delete parent`)
-    }
-    if (alias === '.') {
-      throw new Error(`Cannot delete loopback`)
-    }
-    const { channelId } = await this.aliases.get(alias)
-    assert(Number.isInteger(channelId))
-    const channels = this.channels.delete(channelId)
-    return this.constructor.clone({ ...this, channels })
-  }
+  // async delete(alias) {
+  //   // TODO check if any other aliases refer to this channel
+  //   assert.strictEqual(typeof alias, 'string', `Alias must be a string`)
+  //   assert(alias)
+  //   if (alias === '..') {
+  //     throw new Error(`Cannot delete parent`)
+  //   }
+  //   if (alias === '.') {
+  //     throw new Error(`Cannot delete loopback`)
+  //   }
+  //   const { channelId } = await this.aliases.get(alias)
+  //   assert(Number.isInteger(channelId))
+  //   const channels = this.channels.delete(channelId)
+  //   return this.constructor.clone({ ...this, channels })
+  // }
   assertLogic() {
     // assert(this.counter >= 2)
     // assert(this.aliases.has('..'))
@@ -298,15 +285,21 @@ export class Network extends IpldStruct {
 
     // TODO use channelIds to make rename easy
   }
-  getByAddress(address) {
+  async hasAddress(address) {
     assert(address instanceof Address)
-    assert(address.isResolved())
-    const channelId = this.addresses.get(address.cid.toString())
-    const msg = `no channel found for address: ${address.getChainId()}`
-    assert(Number.isInteger(channelId), msg)
-    const channel = this.channels.get(channelId)
-    assert(channel instanceof Channel)
-    return channel
+    assert(address.isRemote())
+    if (this.parent.getAddress().equals(address)) {
+      return true
+    }
+    return await this.channels.hasAddress(address)
+  }
+  async getByAddress(address) {
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    if (this.parent.getAddress().equals(address)) {
+      return this.parent
+    }
+    return await this.channels.getByAddress(address)
   }
   getParent() {
     return this.parent
@@ -359,5 +352,36 @@ export class Network extends IpldStruct {
     }
     // TODO
     return true
+  }
+  async txGenesis(path, address, params = {}) {
+    assert(typeof path === 'string')
+    assert(path)
+    assert(!path.includes('/'))
+    assert(address instanceof Address)
+    assert.strictEqual(typeof params, 'object')
+    const channel = Channel.create(address).txGenesis(params)
+
+    const channelId = this.channels.counter
+    const channels = await this.channels.addChannel(channel)
+    const children = await this.children.addChild(path, channelId)
+
+    return this.setMap({ channels, children })
+  }
+  setParent(parentAddress) {
+    assert(parentAddress instanceof Address)
+    assert(this.parent.getAddress().isUnknown())
+    const parent = this.parent.resolve(parentAddress)
+    return this.setMap({ parent })
+  }
+  async ingestInterpulse(interpulse) {
+    assert(interpulse instanceof Interpulse)
+    const { source } = interpulse
+    assert(await this.hasAddress(source))
+    if (this.parent.getAddress().equals(source)) {
+      const parent = this.parent.ingestInterpulse(interpulse)
+      return this.setMap({ parent })
+    }
+    const channels = await this.channels.ingestInterpulse(interpulse)
+    return this.setMap({ channels })
   }
 }

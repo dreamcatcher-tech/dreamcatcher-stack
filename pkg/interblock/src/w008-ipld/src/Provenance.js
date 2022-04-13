@@ -1,37 +1,62 @@
 import assert from 'assert-fast'
-import { Address, Dmz, Pulse, PulseLink } from '.'
+import { Address, Dmz, Pulse, PulseLink, Transmissions } from '.'
 import { IpldStruct } from './IpldStruct'
 import Debug from 'debug'
+import { Validators } from './Validators'
 const debug = Debug('interblock:classes:Provenance')
 /**
- type StateTreeNode struct {
+## Provenance
+
+Basically answers where did the current snapshot of the `Dmz` come from.
+
+A `StateTreeNode` is used to provide an overlay tree to separate the covenant defined knowledge from the activity that the system operations generate while tending to the covenants intentions.
+
+`lineageTree` is a tree now, not a chain, and this link points to the root of the tree.
+
+`turnoversTree` lists all the `Pulse`s that changed the validator set or quorum threshold, to allow rapid validation without seeing every block in the chain.
+
+The only Pulse that does not have a transmissions slice is the genesis Pulse.
+
+```sh
+type StateTreeNode struct {
     state &State
     binary &Binary
     children { String : &StateTreeNode }
 }
 type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
-type Turnovers [PulseLink]      # TODO make into a tree
+type Turnovers [PulseLink]   # TODO make into a tree
 type Provenance struct {
-    stateTree &StateTreeNode
-    lineageTree &Lineage     # Must allow merging of N parents
+    dmz &Dmz
+    states &StateTreeNode
+    lineages &Lineage     # Must allow merging of N parents
+
+    validators &Validators
     turnovers &Turnovers
     address Address
-    contents Dmz
+    transmissions { String: Tx }
 }
+```
  */
 export class Provenance extends IpldStruct {
-  static classMap = { address: Address, dmz: Dmz, lineages: PulseLink }
-  static createGenesis(dmz = Dmz.create()) {
-    // used to make genesis
+  static classMap = {
+    dmz: Dmz,
+    lineages: PulseLink,
+    validators: Validators,
+    address: Address,
+    transmissions: Transmissions,
+  }
+  static createGenesis(dmz = Dmz.create(), validators = Validators.createCI()) {
     assert(dmz instanceof Dmz)
     const address = Address.createGenesis()
     const provenance = {
+      dmz,
       states: 'TODO',
       // later, will allow foreign chains as prefixes to the provenance index
       lineages: [],
+
+      validators,
       turnovers: 'TODO',
       address,
-      dmz,
     }
     return super.clone(provenance)
   }
@@ -51,6 +76,23 @@ export class Provenance extends IpldStruct {
     assert(pulseLink.cid.equals(pulse.cid))
     return this.setMap({ lineages })
   }
+  async crush(resolver) {
+    if (this.address.isGenesis() || this.transmissions) {
+      return super.crush(resolver)
+    }
+    // create the transmissions slice
+    const { channels } = this.dmz.network
+    const { txs } = channels
+    assert(Array.isArray(txs))
+    assert(txs.length)
+    let transmissions = Transmissions.create()
+    for (const channelId of txs) {
+      const { address, tx } = await channels.getChannel(channelId)
+      transmissions = transmissions.addTx(address, tx)
+    }
+    const next = this.setMap({ transmissions })
+    return await next.crush(resolver)
+  }
 
   // isNextProvenance(child) {
   //   assert(child instanceof Provenance)
@@ -59,30 +101,5 @@ export class Provenance extends IpldStruct {
   //     parentLineage && parentLineage.deepEquals(this.reflectIntegrity())
   //   const isHigher = child.height > this.height
   //   return isParent && isHigher
-  // }
-  // static generateIntegrity(obj) {
-  //   const checkKeys = ['dmzIntegrity', 'height', 'address', 'lineage']
-  //   const check = {}
-  //   for (const key of checkKeys) {
-  //     assert(typeof obj[key] !== undefined, `missing integrity key: ${key}`)
-  //     check[key] = obj[key]
-  //   }
-  //   check.dmzIntegrity = check.dmzIntegrity.hashString()
-  //   check.address = check.address.hashString()
-  //   if (obj.lineage instanceof Base) {
-  //     check.lineage = {}
-  //     for (const [key, value] of obj.lineage.entries()) {
-  //       check.lineage[key] = value
-  //     }
-  //   } else {
-  //     // in provenanceProducer, we cannot make a map, so used a plain object
-  //     check.lineage = { ...obj.lineage }
-  //   }
-  //   for (const key of Object.keys(check.lineage)) {
-  //     check.lineage[key] = check.lineage[key].hashString()
-  //   }
-  //   assert(!check.height || Object.keys(check.lineage).length)
-  //   const integrity = Integrity.create(check)
-  //   return integrity
   // }
 }

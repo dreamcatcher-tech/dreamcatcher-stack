@@ -71,7 +71,6 @@ export class IpldStruct extends IpldInterface {
     for (const key in crushed) {
       const slice = crushed[key]
       if (slice instanceof IpldInterface) {
-        await slice.crush(resolver)
         crushed[key] = await slice.crush(resolver)
         if (this.isCidLink(key)) {
           dagTree[key] = crushed[key].cid
@@ -181,21 +180,16 @@ export class IpldStruct extends IpldInterface {
     Object.assign(next, inflated)
     return next
   }
-  set(key, value) {
-    if (this[key] === value) {
+  delete(key) {
+    assert.strictEqual(typeof key, 'string')
+    assert(key)
+    if (this[key] === undefined) {
       return this
     }
-    if (this.constructor.getClassFor(key) !== value.constructor) {
-      throw new Error(`Cannot set ${key} to ${value.constructor.name}`)
-    }
-    const schema = this.constructor.schema
-    assert.strictEqual(schema.kind, 'struct')
-    assert(schema.fields[key])
-    // TODO check type of value
-
-    // copy all values over
-    // update this key
-    // return this
+    const next = this.#clone()
+    delete next[key]
+    next.#ipldBlock = undefined // this is now modified
+    return next
   }
 }
 
