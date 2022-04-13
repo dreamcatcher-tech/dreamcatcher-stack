@@ -140,7 +140,6 @@ At the start of each block, all transmitting channels are zeroed and the precede
 
 ```js
 const TxExample = {
-    address: CIDGenesis,
     precedent: CIDPrecedent,
     system: {
         requestsStart: 23423,
@@ -178,7 +177,6 @@ type TxQueue struct {
     promisedReplies optional [PromisedReply]
 }
 type Tx struct {
-    address Address                 # The remote chainId
     precedent optional PulseLink    # The last Pulse this chain sent
     system TxQueue                  # System messages
     reducer TxQueue                 # Reducer messages
@@ -193,8 +191,8 @@ Once Rx is no longer active, trimmed to be nothing.
 
 ```sh
 type RxRemaining struct {
-    requestsTip Int
-    repliesTip Int
+    requestsRemaining Int
+    repliesRemaining Int
 }
 type Rx struct {
     tip optional PulseLink          # The last Pulse this chain received
@@ -224,8 +222,10 @@ Channel stores rx and tx only after all the activity has been wrung out of them.
 
 ```sh
 type Channel struct {
+    address Address                 # The remote chainId
     tx &Tx
     rx Rx
+    aliases [String]                # reverse lookup
 }
 ```
 
@@ -430,7 +430,6 @@ An example of where such backtracking might occur if designed poorly is in the i
 
 ```sh
 type Dmz struct {
-    validators &Validators
     config &Config
     timestamp Timestamp                 # changes every block
     network Network                     # block implies network changed
@@ -452,6 +451,8 @@ A `StateTreeNode` is used to provide an overlay tree to separate the covenant de
 
 `turnoversTree` lists all the `Pulse`s that changed the validator set or quorum threshold, to allow rapid validation without seeing every block in the chain.
 
+The only Pulse that does not have a transmissions slice is the genesis Pulse.
+
 ```sh
 type StateTreeNode struct {
     state &State
@@ -461,11 +462,14 @@ type StateTreeNode struct {
 type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
 type Turnovers [PulseLink]   # TODO make into a tree
 type Provenance struct {
+    dmz &Dmz
     states &StateTreeNode
     lineages &Lineage     # Must allow merging of N parents
+
+    validators &Validators
     turnovers &Turnovers
     address Address
-    dmz Dmz
+    transmissions { String: Tx }
 }
 ```
 
@@ -492,4 +496,22 @@ If the program needs to dereference the actual Pulse, then it needs to do so exp
 
 ```sh
 type PulseLink link
+```
+
+## InterPulse
+
+Structurally this is a Pulse, however for use within the model system, it is a Pulse that is not fully inflated. The Interpulse class is strictly a subset of the data contained in the Pulse class.
+Note that the CID of an Interpulse is exactly the same as the Pulse that created it.
+
+```sh
+type InterProvenance struct {
+    validators optional &Validators
+    turnovers optional &Turnovers
+    address Address
+    transmissions { String: Tx }        # string addresses mapped to Tx's
+}
+type InterPulse struct {
+    provenance &InterProvenance
+    signatures Signatures
+}
 ```

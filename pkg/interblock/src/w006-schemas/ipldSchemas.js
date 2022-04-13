@@ -248,14 +248,8 @@ export default {
     Tx: {
       kind: 'struct',
       fields: {
-        genesis: {
-          type: 'Address',
-        },
         precedent: {
-          type: {
-            kind: 'link',
-            expectedType: 'Pulse',
-          },
+          type: 'PulseLink',
           optional: true,
         },
         system: {
@@ -269,13 +263,13 @@ export default {
         map: {},
       },
     },
-    RxTracker: {
+    RxRemaining: {
       kind: 'struct',
       fields: {
-        requestsTip: {
+        requestsRemaining: {
           type: 'Int',
         },
-        repliesTip: {
+        repliesRemaining: {
           type: 'Int',
         },
       },
@@ -287,18 +281,15 @@ export default {
       kind: 'struct',
       fields: {
         tip: {
-          type: {
-            kind: 'link',
-            expectedType: 'Pulse',
-          },
+          type: 'PulseLink',
           optional: true,
         },
         system: {
-          type: 'RxTracker',
+          type: 'RxRemaining',
           optional: true,
         },
         reducer: {
-          type: 'RxTracker',
+          type: 'RxRemaining',
           optional: true,
         },
       },
@@ -309,8 +300,14 @@ export default {
     Channel: {
       kind: 'struct',
       fields: {
+        address: {
+          type: 'Address',
+        },
         tx: {
-          type: 'Tx',
+          type: {
+            kind: 'link',
+            expectedType: 'Tx',
+          },
         },
         rx: {
           type: 'Rx',
@@ -326,32 +323,31 @@ export default {
         map: {},
       },
     },
-    SystemRoles: {
-      kind: 'enum',
-      members: {
-        PARENT: null,
-        LOOPBACK: null,
-        CHILD: null,
-        UP_LINK: null,
-        DOWN_LINK: null,
-        PIERCE: null,
-      },
-      representation: {
-        string: {
-          PARENT: '..',
-          LOOPBACK: '.',
-          CHILD: './',
-        },
-      },
-    },
-    Alias: {
+    Channels: {
       kind: 'struct',
       fields: {
-        systemRole: {
-          type: 'SystemRoles',
-        },
-        channelId: {
+        counter: {
           type: 'Int',
+        },
+        list: {
+          type: 'HashMapRoot',
+        },
+        addresses: {
+          type: 'HashMapRoot',
+        },
+        rxs: {
+          type: {
+            kind: 'list',
+            valueType: 'Int',
+          },
+          optional: true,
+        },
+        txs: {
+          type: {
+            kind: 'list',
+            valueType: 'Int',
+          },
+          optional: true,
         },
       },
       representation: {
@@ -361,32 +357,41 @@ export default {
     Network: {
       kind: 'struct',
       fields: {
-        counter: {
-          type: 'Int',
-        },
-        channels: {
-          type: 'HashMapRoot',
-        },
-        aliases: {
-          type: 'HashMapRoot',
+        parent: {
+          type: 'Channel',
+          optional: true,
         },
         loopback: {
           type: 'Channel',
+          optional: true,
         },
-        parent: {
+        io: {
           type: 'Channel',
+          optional: true,
         },
-        rxs: {
+        channels: {
+          type: 'Channels',
+          optional: true,
+        },
+        children: {
           type: 'HashMapRoot',
+          optional: true,
         },
-        txs: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'Tx',
-            },
-          },
+        uplinks: {
+          type: 'HashMapRoot',
+          optional: true,
+        },
+        downlinks: {
+          type: 'HashMapRoot',
+          optional: true,
+        },
+        symlinks: {
+          type: 'HashMapRoot',
+          optional: true,
+        },
+        hardlinks: {
+          type: 'HashMapRoot',
+          optional: true,
         },
       },
       representation: {
@@ -429,14 +434,11 @@ export default {
     Covenant: {
       kind: 'struct',
       fields: {
-        genesis: {
+        address: {
           type: 'Address',
         },
         pulse: {
-          type: {
-            kind: 'link',
-            expectedType: 'Pulse',
-          },
+          type: 'PulseLink',
         },
         info: {
           type: {
@@ -529,6 +531,7 @@ export default {
         },
         id: {
           type: 'RequestId',
+          optional: true,
         },
       },
       representation: {
@@ -538,7 +541,7 @@ export default {
     Pending: {
       kind: 'struct',
       fields: {
-        pendingRequest: {
+        rxPendingRequest: {
           type: 'RequestId',
         },
         requests: {
@@ -633,12 +636,6 @@ export default {
     Dmz: {
       kind: 'struct',
       fields: {
-        validators: {
-          type: {
-            kind: 'link',
-            expectedType: 'Validators',
-          },
-        },
         config: {
           type: {
             kind: 'link',
@@ -719,37 +716,50 @@ export default {
     },
     Turnovers: {
       kind: 'list',
-      valueType: {
-        kind: 'link',
-        expectedType: 'Pulse',
-      },
+      valueType: 'PulseLink',
     },
     Provenance: {
       kind: 'struct',
       fields: {
-        stateTree: {
+        dmz: {
+          type: {
+            kind: 'link',
+            expectedType: 'Dmz',
+          },
+        },
+        states: {
           type: {
             kind: 'link',
             expectedType: 'StateTreeNode',
           },
         },
-        lineageTree: {
+        lineages: {
           type: {
             kind: 'link',
             expectedType: 'Lineage',
           },
         },
-        turnoversTree: {
+        validators: {
+          type: {
+            kind: 'link',
+            expectedType: 'Validators',
+          },
+        },
+        turnovers: {
           type: {
             kind: 'link',
             expectedType: 'Turnovers',
           },
         },
-        genesis: {
+        address: {
           type: 'Address',
         },
-        contents: {
-          type: 'Dmz',
+        transmissions: {
+          type: {
+            kind: 'map',
+            keyType: 'String',
+            valueType: 'Tx',
+          },
         },
       },
       representation: {
@@ -775,6 +785,55 @@ export default {
     },
     PulseLink: {
       kind: 'link',
+    },
+    InterProvenance: {
+      kind: 'struct',
+      fields: {
+        validators: {
+          type: {
+            kind: 'link',
+            expectedType: 'Validators',
+          },
+          optional: true,
+        },
+        turnovers: {
+          type: {
+            kind: 'link',
+            expectedType: 'Turnovers',
+          },
+          optional: true,
+        },
+        address: {
+          type: 'Address',
+        },
+        transmissions: {
+          type: {
+            kind: 'map',
+            keyType: 'String',
+            valueType: 'Tx',
+          },
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    InterPulse: {
+      kind: 'struct',
+      fields: {
+        provenance: {
+          type: {
+            kind: 'link',
+            expectedType: 'InterProvenance',
+          },
+        },
+        signatures: {
+          type: 'Signatures',
+        },
+      },
+      representation: {
+        map: {},
+      },
     },
   },
 }
