@@ -133,160 +133,6 @@ May be CID'd if space becomes an issue.
 type Signatures [String]
 ```
 
-## Tx
-
-A transmission that is destined for some chainId, which might be as yet unresolved.  
-At the start of each block, all transmitting channels are zeroed and the precedent is updated. Validators may coordinate transmission workloads by sharing the pooled softblock where they each zero out channels as they get sent, to ensure all interblocks are sent, and to parallelize the work.
-
-```js
-const TxExample = {
-    precedent: CIDPrecedent,
-    system: {
-        requestsStart: 23423,
-        requests: [request1, request2, request3],
-        repliesStart: 3324,
-        replies: [reply1, reply2, reply3, reply4]
-        promisedIds: [ 32, 434, 435 ],
-        promisedReplies: [
-            { requestId: 12, reply: reply5 },
-            { requestId: 9, reply: reply6 }
-        ]
-    },
-    reducer: {
-        requestsStart: 84587,
-        requests: [],
-        repliesStart: 868594,
-        replies: [reply1]
-        promisedIds: [ 3, 562, 9923 ],
-        promisedReplies: []
-    }
-}
-```
-
-```sh
-type PromisedReply struct {
-    requestId Int
-    reply &Reply
-}
-type TxQueue struct {
-    requestsStart Int
-    requests optional [&Request]
-    repliesStart Int
-    replies optional [&Reply]
-    promisedIds [Int]
-    promisedReplies optional [PromisedReply]
-}
-type Tx struct {
-    precedent optional PulseLink    # The last Pulse this chain sent
-    system TxQueue                  # System messages
-    reducer TxQueue                 # Reducer messages
-}
-```
-
-## Rx
-
-After each block is made, tip chain precedents are trimmed to free up memory.
-Once Rx is no longer active, trimmed to be nothing.
-`RxRemaining` tracks how many actions remain to be processed. Storing only the difference removes the redundancy of storing any cursor information.
-
-```sh
-type RxRemaining struct {
-    requestsRemaining Int
-    repliesRemaining Int
-}
-type Rx struct {
-    tip optional PulseLink          # The last Pulse this chain received
-    system optional RxRemaining
-    reducer optional RxRemaining
-}
-```
-
-## Channel
-
-`tip` matches up with precedent on the other side.
-
-Tx and Rx are split out so that they can be stored on the block separately.
-Tx needs to be separate so that remote fetching does not expose the channelId.
-Rx needs to be separate to allow the ingestion of messages to be halted at any point.
-Both are separate from Channel so that the potentially large HAMT that stores
-all the Channel instances is updated as little as possible, whilst providing rapid
-lookup to get channels that are active.
-
-Tx needs to be hashed as it is an independent transmission, but Rx does not
-need to be hashed.
-
-The structure implements the design goal of making the Pulse be the context
-of the state machine that processes all the actions.
-
-Channel stores rx and tx only after all the activity has been wrung out of them.
-
-```sh
-type Channel struct {
-    address Address                 # The remote chainId
-    tx &Tx
-    rx Rx
-    aliases [String]                # reverse lookup
-}
-```
-
-## Network
-
-Every channel is given an index, which is monotonic since the start of the chain.
-This ID stays with the channel for its entire lifecycle.
-Internally, everything references channels by this id, with the advantage being communications are unaffected by renames or resolving the chainId, and when actions are dispatched, a unique identifier can be given to the action sender regardless of the current point in the lifecycle of the chain.
-
-There may be many aliases mapped to the same channelId.
-
-A HAMT is used to track large amounts of data whilst storing only diffs.
-
-Channel is not stored as a link, but as a full object, since inside of the channel the Tx key will be stored as a link anyway, so no point double linking.
-
-Rxs may use a hamt.
-
-Txs are blanked each block, so no need to use a HAMT.
-
-Uplinks should never include any channels that are in the other hamts.
-
-Constraints:
-
-1. same alias name cannot be in multiple tables
-1. remote addresses have exactly 1 channelId
-1. uplinks cannot be tranmsitted to
-
-Channel Types
-
-1. children - by alias, bidirectional
-1. uplink - by address, the rx side of downlink
-1. downlink - by path resolved to address, the tx side of uplink
-1. symlink - permanent link by path, resolution refreshed each tx
-1. hardlink - permanent link by address, acts as a shared child
-
-This does introduce non-determinism, as the timing of when something occurred can now affect what address it was resolved to.
-
-```sh
-type Channels struct {
-    counter Int
-    list HashMapRoot           # Map of channelIds to Channels
-    addresses HashMapRoot          # reverse lookup of channels
-    rxs optional [ Int ]
-    txs optional [ Int ]
-}
-type Network struct {
-    parent optional Channel
-    loopback optional Channel
-    io optional Channel
-
-    channels optional Channels
-
-    # alias maps to channelIds
-    children optional HashMapRoot           # keys are local paths
-    uplinks optional HashMapRoot            # keys are channelIds, value=true
-    downlinks optional HashMapRoot          # keys are remote paths
-    symlinks optional HashMapRoot           # local paths : any paths
-    hardlinks optional HashMapRoot          # local paths : any paths
-}
-```
-
 ## Covenant
 
 The Covenant system uses a PulseChain to represent a code package and its various revisions. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod.
@@ -438,6 +284,160 @@ type Dmz struct {
     pending optional &Pending
     approot optional PulseLink          # The latest known approot
     binary optional Binary
+}
+```
+
+## Tx
+
+A transmission that is destined for some chainId, which might be as yet unresolved.  
+At the start of each block, all transmitting channels are zeroed and the precedent is updated. Validators may coordinate transmission workloads by sharing the pooled softblock where they each zero out channels as they get sent, to ensure all interblocks are sent, and to parallelize the work.
+
+```js
+const TxExample = {
+    precedent: CIDPrecedent,
+    system: {
+        requestsStart: 23423,
+        requests: [request1, request2, request3],
+        repliesStart: 3324,
+        replies: [reply1, reply2, reply3, reply4]
+        promisedIds: [ 32, 434, 435 ],
+        promisedReplies: [
+            { requestId: 12, reply: reply5 },
+            { requestId: 9, reply: reply6 }
+        ]
+    },
+    reducer: {
+        requestsStart: 84587,
+        requests: [],
+        repliesStart: 868594,
+        replies: [reply1]
+        promisedIds: [ 3, 562, 9923 ],
+        promisedReplies: []
+    }
+}
+```
+
+```sh
+type PromisedReply struct {
+    requestId Int
+    reply &Reply
+}
+type TxQueue struct {
+    requestsStart Int
+    requests optional [&Request]
+    repliesStart Int
+    replies optional [&Reply]
+    promisedIds [Int]
+    promisedReplies optional [PromisedReply]
+}
+type Tx struct {
+    precedent optional PulseLink    # The last Pulse this chain sent
+    system TxQueue                  # System messages
+    reducer TxQueue                 # Reducer messages
+}
+```
+
+## Rx
+
+After each block is made, tip chain precedents are trimmed to free up memory.
+Once Rx is no longer active, trimmed to be nothing.
+`RxRemaining` tracks how many actions remain to be processed. Storing only the difference removes the redundancy of storing any cursor information.
+
+```sh
+type RxRemaining struct {
+    requestsRemaining Int
+    repliesRemaining Int
+}
+type Rx struct {
+    tip optional PulseLink          # The last Pulse this chain received
+    system optional RxRemaining
+    reducer optional RxRemaining
+}
+```
+
+## Channel
+
+`tip` matches up with precedent on the other side.
+
+Tx and Rx are split out so that they can be stored on the block separately.
+Tx needs to be separate so that remote fetching does not expose the channelId.
+Rx needs to be separate to allow the ingestion of messages to be halted at any point.
+Both are separate from Channel so that the potentially large HAMT that stores
+all the Channel instances is updated as little as possible, whilst providing rapid
+lookup to get channels that are active.
+
+Tx needs to be hashed as it is an independent transmission, but Rx does not
+need to be hashed.
+
+The structure implements the design goal of making the Pulse be the context
+of the state machine that processes all the actions.
+
+Channel stores rx and tx only after all the activity has been wrung out of them.
+
+```sh
+type Channel struct {
+    address Address                 # The remote chainId
+    tx &Tx
+    rx Rx
+    aliases [String]                # reverse lookup
+}
+```
+
+## Network
+
+Every channel is given an index, which is monotonic since the start of the chain.
+This ID stays with the channel for its entire lifecycle.
+Internally, everything references channels by this id, with the advantage being communications are unaffected by renames or resolving the chainId, and when actions are dispatched, a unique identifier can be given to the action sender regardless of the current point in the lifecycle of the chain.
+
+There may be many aliases mapped to the same channelId.
+
+A HAMT is used to track large amounts of data whilst storing only diffs.
+
+Channel is not stored as a link, but as a full object, since inside of the channel the Tx key will be stored as a link anyway, so no point double linking.
+
+Rxs may use a hamt.
+
+Txs are blanked each block, so no need to use a HAMT.
+
+Uplinks should never include any channels that are in the other hamts.
+
+Constraints:
+
+1. same alias name cannot be in multiple tables
+1. remote addresses have exactly 1 channelId
+1. uplinks cannot be tranmsitted to
+
+Channel Types
+
+1. children - by alias, bidirectional
+1. uplink - by address, the rx side of downlink
+1. downlink - by path resolved to address, the tx side of uplink
+1. symlink - permanent link by path, resolution refreshed each tx
+1. hardlink - permanent link by address, acts as a shared child
+
+This does introduce non-determinism, as the timing of when something occurred can now affect what address it was resolved to.
+
+```sh
+type Channels struct {
+    counter Int
+    list HashMapRoot           # Map of channelIds to Channels
+    addresses HashMapRoot          # reverse lookup of channels
+    rxs optional [ Int ]
+    txs optional [ Int ]
+}
+type Network struct {
+    parent optional Channel
+    loopback optional Channel
+    io optional Channel
+
+    channels optional Channels
+
+    # alias maps to channelIds
+    children optional HashMapRoot           # keys are local paths
+    uplinks optional HashMapRoot            # keys are channelIds, value=true
+    downlinks optional HashMapRoot          # keys are remote paths
+    symlinks optional HashMapRoot           # local paths : any paths
+    hardlinks optional HashMapRoot          # local paths : any paths
 }
 ```
 

@@ -181,223 +181,6 @@ export default {
       kind: 'list',
       valueType: 'String',
     },
-    PromisedReply: {
-      kind: 'struct',
-      fields: {
-        requestId: {
-          type: 'Int',
-        },
-        reply: {
-          type: {
-            kind: 'link',
-            expectedType: 'Reply',
-          },
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    TxQueue: {
-      kind: 'struct',
-      fields: {
-        requestsStart: {
-          type: 'Int',
-        },
-        requests: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'Request',
-            },
-          },
-          optional: true,
-        },
-        repliesStart: {
-          type: 'Int',
-        },
-        replies: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'Reply',
-            },
-          },
-          optional: true,
-        },
-        promisedIds: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
-          },
-        },
-        promisedReplies: {
-          type: {
-            kind: 'list',
-            valueType: 'PromisedReply',
-          },
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    Tx: {
-      kind: 'struct',
-      fields: {
-        precedent: {
-          type: 'PulseLink',
-          optional: true,
-        },
-        system: {
-          type: 'TxQueue',
-        },
-        reducer: {
-          type: 'TxQueue',
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    RxRemaining: {
-      kind: 'struct',
-      fields: {
-        requestsRemaining: {
-          type: 'Int',
-        },
-        repliesRemaining: {
-          type: 'Int',
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    Rx: {
-      kind: 'struct',
-      fields: {
-        tip: {
-          type: 'PulseLink',
-          optional: true,
-        },
-        system: {
-          type: 'RxRemaining',
-          optional: true,
-        },
-        reducer: {
-          type: 'RxRemaining',
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    Channel: {
-      kind: 'struct',
-      fields: {
-        address: {
-          type: 'Address',
-        },
-        tx: {
-          type: {
-            kind: 'link',
-            expectedType: 'Tx',
-          },
-        },
-        rx: {
-          type: 'Rx',
-        },
-        aliases: {
-          type: {
-            kind: 'list',
-            valueType: 'String',
-          },
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    Channels: {
-      kind: 'struct',
-      fields: {
-        counter: {
-          type: 'Int',
-        },
-        list: {
-          type: 'HashMapRoot',
-        },
-        addresses: {
-          type: 'HashMapRoot',
-        },
-        rxs: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
-          },
-          optional: true,
-        },
-        txs: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
-          },
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    Network: {
-      kind: 'struct',
-      fields: {
-        parent: {
-          type: 'Channel',
-          optional: true,
-        },
-        loopback: {
-          type: 'Channel',
-          optional: true,
-        },
-        io: {
-          type: 'Channel',
-          optional: true,
-        },
-        channels: {
-          type: 'Channels',
-          optional: true,
-        },
-        children: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        uplinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        downlinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        symlinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        hardlinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
     PackageTypes: {
       kind: 'enum',
       members: {
@@ -673,6 +456,223 @@ export default {
         },
         binary: {
           type: 'Binary',
+          optional: true,
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    PromisedReply: {
+      kind: 'struct',
+      fields: {
+        requestId: {
+          type: 'Int',
+        },
+        reply: {
+          type: {
+            kind: 'link',
+            expectedType: 'Reply',
+          },
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    TxQueue: {
+      kind: 'struct',
+      fields: {
+        requestsStart: {
+          type: 'Int',
+        },
+        requests: {
+          type: {
+            kind: 'list',
+            valueType: {
+              kind: 'link',
+              expectedType: 'Request',
+            },
+          },
+          optional: true,
+        },
+        repliesStart: {
+          type: 'Int',
+        },
+        replies: {
+          type: {
+            kind: 'list',
+            valueType: {
+              kind: 'link',
+              expectedType: 'Reply',
+            },
+          },
+          optional: true,
+        },
+        promisedIds: {
+          type: {
+            kind: 'list',
+            valueType: 'Int',
+          },
+        },
+        promisedReplies: {
+          type: {
+            kind: 'list',
+            valueType: 'PromisedReply',
+          },
+          optional: true,
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Tx: {
+      kind: 'struct',
+      fields: {
+        precedent: {
+          type: 'PulseLink',
+          optional: true,
+        },
+        system: {
+          type: 'TxQueue',
+        },
+        reducer: {
+          type: 'TxQueue',
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    RxRemaining: {
+      kind: 'struct',
+      fields: {
+        requestsRemaining: {
+          type: 'Int',
+        },
+        repliesRemaining: {
+          type: 'Int',
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Rx: {
+      kind: 'struct',
+      fields: {
+        tip: {
+          type: 'PulseLink',
+          optional: true,
+        },
+        system: {
+          type: 'RxRemaining',
+          optional: true,
+        },
+        reducer: {
+          type: 'RxRemaining',
+          optional: true,
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Channel: {
+      kind: 'struct',
+      fields: {
+        address: {
+          type: 'Address',
+        },
+        tx: {
+          type: {
+            kind: 'link',
+            expectedType: 'Tx',
+          },
+        },
+        rx: {
+          type: 'Rx',
+        },
+        aliases: {
+          type: {
+            kind: 'list',
+            valueType: 'String',
+          },
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Channels: {
+      kind: 'struct',
+      fields: {
+        counter: {
+          type: 'Int',
+        },
+        list: {
+          type: 'HashMapRoot',
+        },
+        addresses: {
+          type: 'HashMapRoot',
+        },
+        rxs: {
+          type: {
+            kind: 'list',
+            valueType: 'Int',
+          },
+          optional: true,
+        },
+        txs: {
+          type: {
+            kind: 'list',
+            valueType: 'Int',
+          },
+          optional: true,
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Network: {
+      kind: 'struct',
+      fields: {
+        parent: {
+          type: 'Channel',
+          optional: true,
+        },
+        loopback: {
+          type: 'Channel',
+          optional: true,
+        },
+        io: {
+          type: 'Channel',
+          optional: true,
+        },
+        channels: {
+          type: 'Channels',
+          optional: true,
+        },
+        children: {
+          type: 'HashMapRoot',
+          optional: true,
+        },
+        uplinks: {
+          type: 'HashMapRoot',
+          optional: true,
+        },
+        downlinks: {
+          type: 'HashMapRoot',
+          optional: true,
+        },
+        symlinks: {
+          type: 'HashMapRoot',
+          optional: true,
+        },
+        hardlinks: {
+          type: 'HashMapRoot',
           optional: true,
         },
       },
