@@ -9,7 +9,7 @@ type Rx struct {
     reducer optional RxTracker
 }
 */
-
+import Immutable from 'immutable'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 import { TxQueue, PulseLink, Interpulse } from '.'
@@ -34,7 +34,7 @@ class RxRemaining {
   decrementReplies() {
     return new this.constructor(this.requestsRemain, this.repliesRemain - 1)
   }
-  addTip(txQueue) {
+  increaseRemaining(txQueue) {
     assert(txQueue instanceof TxQueue)
     const { requests, replies } = txQueue
     const requestsRemain = this.requestsRemain + requests.length
@@ -42,8 +42,49 @@ class RxRemaining {
     return new this.constructor(requestsRemain, repliesRemain)
   }
 }
-
+class TipCache {
+  #resolver
+  #tips = Immutable.Map()
+  constructor(resolver) {
+    this.#resolver = resolver
+  }
+  #clone() {
+    const next = new this.constructor(this.#resolver)
+    next.#tips = this.#tips
+    return next
+  }
+  addTip(interpulse) {
+    assert(interpulse instanceof Interpulse)
+    const key = interpulse.cid.toString()
+    const next = this.#clone()
+    next.#tips = this.#tips.set(key, interpulse)
+    return next
+  }
+  removeTip(interpulse) {
+    assert(interpulse instanceof Interpulse)
+    const key = interpulse.cid.toString()
+    const next = this.#clone()
+    next.#tips = this.#tips.delete(key)
+    return next
+  }
+  async resolvePulseLink(pulseLink) {
+    assert(pulseLink instanceof PulseLink)
+    const key = pulseLink.cid.toString()
+    if (!this.#tips.has(key)) {
+      assert.strictEqual(typeof this.#resolver, 'function')
+      const prior = await Interpulse.uncrush(pulseLink.cid, this.#resolver)
+      this.#tips = this.#tips.set(key, prior)
+    }
+    return this.#tips.get(key)
+  }
+  async resolvePrecedent(interpulse) {
+    assert(interpulse instanceof Interpulse)
+    const { precedent } = interpulse.tx
+    return await this.resolvePulseLink(precedent)
+  }
+}
 export class Rx extends IpldStruct {
+  #tipCache = new TipCache()
   static classMap = {
     tip: PulseLink,
     system: RxRemaining,
@@ -54,6 +95,16 @@ export class Rx extends IpldStruct {
       system: new RxRemaining(),
       reducer: new RxRemaining(),
     })
+  }
+  static async uncrush(rootCid, resolver, options) {
+    const instance = await super.uncrush(rootCid, resolver, options)
+    instance.#tipCache = new TipCache(resolver)
+    return instance
+  }
+  clone() {
+    const next = super.clone()
+    next.#tipCache = this.#tipCache
+    return next
   }
   isEmpty() {
     // empty means that both trackers both match the tip
@@ -79,8 +130,40 @@ export class Rx extends IpldStruct {
       // TODO retrieve the current tip
       // check that it comes next with the sequence numbers
     }
-    const system = this.system.addTip(tx.system)
-    const reducer = this.reducer.addTip(tx.reducer)
-    return next.setMap({ tip: interpulse, system, reducer })
+    const system = this.system.increaseRemaining(tx.system)
+    const reducer = this.reducer.increaseRemaining(tx.reducer)
+    const tip = interpulse.getPulseLink()
+    next = next.setMap({ tip, system, reducer })
+    next.#tipCache = next.#tipCache.addTip(interpulse)
+    return next
+  }
+  // when shifting the counters, check if the tip should be ejected
+  async rxSystemRequest() {
+    return await this.#rx('system', 'requests')
+  }
+  async #rx(queueType, actionType) {
+    assert(queueType === 'system' || queueType === 'reducer')
+    assert(actionType === 'replies' || actionType === 'requests')
+    const queue = this[queueType]
+    let remain = queue[`${actionType}Remain`]
+    assert(Number.isInteger(remain))
+    assert(remain >= 0)
+    if (!this.tip || !remain) {
+      return
+    }
+
+    let index, array, interpulse
+    do {
+      if (!interpulse) {
+        interpulse = await this.#tipCache.resolvePulseLink(this.tip)
+      } else {
+        interpulse = await this.#tipCache.resolvePrecedent(interpulse)
+      }
+      assert(interpulse instanceof Interpulse)
+      array = interpulse.tx[queueType][actionType]
+      index = array.length - remain
+      remain -= array.length
+    } while (index < 0)
+    return array[index]
   }
 }

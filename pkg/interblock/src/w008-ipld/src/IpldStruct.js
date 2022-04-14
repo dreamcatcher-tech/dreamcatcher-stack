@@ -19,7 +19,7 @@ export class IpldStruct extends IpldInterface {
     }
     return instance
   }
-  #clone() {
+  clone() {
     const next = new this.constructor()
     Object.assign(next, this)
     next.#ipldBlock = this.#ipldBlock
@@ -54,7 +54,7 @@ export class IpldStruct extends IpldInterface {
       assert(this.#ipldBlock)
       assert(this === this.#crushed)
       if (this !== this.#previous) {
-        const next = this.#clone()
+        const next = this.clone()
         next.#previous = next
         next.#crushed = next
         return next
@@ -165,7 +165,10 @@ export class IpldStruct extends IpldInterface {
       }
       if (this.constructor.classMap[key]) {
         if (this[key] instanceof IpldStruct) {
-          const next = this[key].setMap(map[key])
+          let next = map[key]
+          if (!(next instanceof IpldStruct)) {
+            next = this[key].setMap(map[key])
+          }
           assert(next instanceof this.constructor.classMap[key])
           inflated[key] = next
         }
@@ -175,7 +178,7 @@ export class IpldStruct extends IpldInterface {
     if (Object.keys(inflated).length === 0) {
       return this
     }
-    const next = this.#clone()
+    const next = this.clone()
     next.#ipldBlock = undefined // this is now modified
     Object.assign(next, inflated)
     return next
@@ -186,7 +189,7 @@ export class IpldStruct extends IpldInterface {
     if (this[key] === undefined) {
       return this
     }
-    const next = this.#clone()
+    const next = this.clone()
     delete next[key]
     next.#ipldBlock = undefined // this is now modified
     return next

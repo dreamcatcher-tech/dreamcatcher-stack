@@ -420,10 +420,10 @@ This does introduce non-determinism, as the timing of when something occurred ca
 ```sh
 type Channels struct {
     counter Int
-    list HashMapRoot           # Map of channelIds to Channels
+    list HashMapRoot               # Map of channelIds to Channels
     addresses HashMapRoot          # reverse lookup of channels
-    rxs optional [ Int ]
-    txs optional [ Int ]
+    rxs [ Int ]
+    txs [ Int ]
 }
 type Network struct {
     parent optional Channel

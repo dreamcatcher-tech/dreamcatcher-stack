@@ -6,8 +6,10 @@ import { IpldStruct } from './IpldStruct'
 /**
 type Channels struct {
     counter Int
-    list HashMapRoot           # Map of channelIds to Channels
+    list HashMapRoot               # Map of channelIds to Channels
     addresses HashMapRoot          # reverse lookup of channels
+    rxs [ Int ]
+    txs [ Int ]
 }
  */
 export class Channels extends IpldStruct {

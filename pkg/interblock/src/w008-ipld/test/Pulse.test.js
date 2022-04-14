@@ -72,10 +72,13 @@ describe('Pulse', () => {
     child = await child.ingestInterpulse(interpulse)
     console.dir(parent, { depth: Infinity })
     console.dir(child, { depth: Infinity })
-    // set the lineage to refer to the current pulse
-    // then can start to insert interpulses from elsewhere
-    // check the lineage before adding new interpulses
-    // do the accounting to keep track of the send counters
+
+    const rxRequest = await child.getNetwork().rxSystemRequest()
+    assert.strictEqual(rxRequest.type, '@@GENESIS')
+
+    // default reply to the request in the child
+    // const network = await child.getNetwork().txSystemReply()
+    // then send it back to the parent
   })
   test.todo('loopback transmissions')
   test.todo('loopback promises')

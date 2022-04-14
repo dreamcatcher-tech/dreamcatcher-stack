@@ -89,6 +89,9 @@ export class Pulse extends IpldStruct {
     network = await network.ingestInterpulse(interpulse)
     return this.setMap({ provenance: { dmz: { network } } })
   }
+  getNetwork() {
+    return this.provenance.dmz.network
+  }
 }
 
 const isFormatCorrect = (signature) => {

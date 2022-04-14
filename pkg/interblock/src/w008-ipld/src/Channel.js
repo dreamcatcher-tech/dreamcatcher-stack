@@ -94,22 +94,23 @@ export class Channel extends IpldStruct {
     return this.setMap({ tx })
   }
   rxReducerRequest() {
-    const { requestsRemaining } = this.rxReducer
+    const { requestsRemain } = this.rxReducer
     if (this.address.isLoopback()) {
-      assert(this.tx.reducer.requestsStart >= requestsRemaining)
-      return this.tx.reducer.rxRequest(requestsRemaining)
+      assert(this.tx.reducer.requestsStart >= requestsRemain)
+      return this.tx.reducer.rxRequest(requestsRemain)
     }
   }
   txReducerReply(reply) {
+    // TODO determine if system based on what the current request is ?
     const tx = this.tx.txReducerReply(reply)
     const rxReducer = this.rxReducer.incrementRequests()
     return this.setMap({ tx, rxReducer })
   }
   rxReducerReply() {
-    const { repliesTip } = this.rxReducer
+    const { repliesRemaining } = this.rxReducer
     if (this.tx.isLoopback()) {
-      assert(this.tx.reducer.repliesStart >= repliesTip)
-      return this.tx.reducer.rxReply(repliesTip)
+      assert(this.tx.reducer.repliesStart >= repliesRemaining)
+      return this.tx.reducer.rxReply(repliesRemaining)
     }
   }
   shiftReducerReplies() {

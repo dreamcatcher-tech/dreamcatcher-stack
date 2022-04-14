@@ -384,4 +384,35 @@ export class Network extends IpldStruct {
     const channels = await this.channels.ingestInterpulse(interpulse)
     return this.setMap({ channels })
   }
+  async rxSystemReply() {
+    // check parent, check io,
+  }
+  async rxReducerReply() {}
+  async rxSystemRequest() {
+    for await (const channel of this.#rxChannels()) {
+      const rxRequest = channel.rx.rxSystemRequest()
+      if (rxRequest) {
+        return rxRequest
+      }
+    }
+  }
+  async rxReducerRequest() {}
+  async #rxSystemChannels() {
+    // make a function that iterates over all the rx channels that are active
+  }
+  async #rxReducerChannels() {}
+  async *#rxChannels() {
+    if (this.loopback && !this.loopback.rx.isEmpty()) {
+      yield this.loopback
+    }
+    if (this.parent && !this.parent.rx.isEmpty()) {
+      yield this.parent
+    }
+    if (this.io && !this.io.rx.isEmpty()) {
+      yield this.io
+    }
+    for (const channelId of this.channels.rxs) {
+      yield await this.channels.getChannel(channelId)
+    }
+  }
 }

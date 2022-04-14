@@ -1,6 +1,8 @@
 export { Binary } from './Binary'
 export { Request } from './Request'
+export { RxRequest } from './RxRequest'
 export { Reply } from './Reply'
+export { RxReply } from './RxReply'
 export { Address } from './Address'
 export { PulseLink } from './PulseLink'
 export { TxQueue } from './TxQueue'

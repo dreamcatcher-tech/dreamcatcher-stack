@@ -19,7 +19,6 @@ At the start of each block, all transmitting channels are zeroed and the precede
 
 ```js
 const TxExample = {
-    address: CIDGenesis,
     precedent: CIDPrecedent,
     system: {
         requestsStart: 23423,
@@ -45,7 +44,6 @@ const TxExample = {
 
 
 type Tx struct {
-    address Address        # The remote chainId
     precedent optional &Pulse       # The last Pulse this chain sent
     system TxQueue         # System messages
     reducer TxQueue       # Covenant messages
@@ -64,6 +62,9 @@ export class Tx extends IpldStruct {
       system: TxQueue.create(),
       reducer: TxQueue.create(),
     })
+  }
+  assertLogic() {
+    // TODO all promise indices have to be less than the repliesStart counter
   }
   txRequest(request) {
     assert(request instanceof Request)

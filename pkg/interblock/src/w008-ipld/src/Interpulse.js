@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Pulse } from '.'
+import { Address, Pulse, PulseLink } from '.'
 import { IpldStruct } from './IpldStruct'
 
 /**
@@ -23,7 +23,8 @@ type InterPulse struct {
 
  */
 
-export class Interpulse extends IpldStruct {
+export class Interpulse {
+  #pulse
   static extract(pulse, target) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified())
@@ -34,8 +35,8 @@ export class Interpulse extends IpldStruct {
     const chainId = target.getChainId()
     assert(transmissions[chainId])
     const tx = transmissions[chainId]
-
-    return super.clone({
+    const instance = new this()
+    Object.assign(instance, {
       signatures,
       validators,
       turnovers,
@@ -43,6 +44,11 @@ export class Interpulse extends IpldStruct {
       target,
       tx,
     })
+    instance.#pulse = pulse
+    return instance
+  }
+  get cid() {
+    return this.#pulse.cid
   }
   crush() {
     return this // always crushed
@@ -51,12 +57,19 @@ export class Interpulse extends IpldStruct {
     throw new Error('cannot modify an Interpulse')
   }
   set() {
-    this.setMap()
+    throw new Error('cannot modify an Interpulse')
   }
   delete() {
-    this.setMap()
+    throw new Error('cannot modify an Interpulse')
   }
   getTargetAddress() {
     return this.tx.address
+  }
+  async uncrush(address) {
+    // custom function that pieces together the Interpulse from the Pulse
+    // resolves only the paths that it cares about
+  }
+  getPulseLink() {
+    return PulseLink.generate(this.#pulse)
   }
 }
