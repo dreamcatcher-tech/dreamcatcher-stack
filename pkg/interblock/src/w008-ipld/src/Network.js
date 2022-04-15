@@ -1,6 +1,8 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
 import {
+  RxRequest,
+  RxReply,
   Channel,
   Address,
   Loopback,
@@ -12,6 +14,7 @@ import {
   Request,
   Io,
   Interpulse,
+  Reply,
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
@@ -414,5 +417,12 @@ export class Network extends IpldStruct {
     for (const channelId of this.channels.rxs) {
       yield await this.channels.getChannel(channelId)
     }
+  }
+  // fundamentally, once you pass the request to us, we'll never give it back again
+  async txSystemReply(reply = Reply.create()) {
+    // by default, this resolves the current request
+    // ? could we 
+    const rxRequest = await this.rxSystemReply()
+    assert(rxRequest instanceof RxRequest)
   }
 }

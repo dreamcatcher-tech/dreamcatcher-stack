@@ -77,7 +77,7 @@ describe('Pulse', () => {
     assert.strictEqual(rxRequest.type, '@@GENESIS')
 
     // default reply to the request in the child
-    // const network = await child.getNetwork().txSystemReply()
+    const network = await child.getNetwork().txSystemReply()
     // then send it back to the parent
   })
   test.todo('loopback transmissions')
