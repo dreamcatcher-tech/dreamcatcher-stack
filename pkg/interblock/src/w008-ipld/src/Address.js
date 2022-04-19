@@ -121,6 +121,9 @@ export class Address extends IpldInterface {
   get cid() {
     return this.#cid
   }
+  [Symbol.for('nodejs.util.inspect.custom')]() {
+    return this.cid
+  }
   crush() {
     const instance = new Address()
     instance.#setCid(this.#cid)

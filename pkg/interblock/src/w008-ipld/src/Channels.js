@@ -1,5 +1,6 @@
 import { Hamt } from './Hamt'
-import { Channel, Address, Interpulse } from '.'
+import { AddressesHamt } from './AddressesHamt'
+import { PulseLink, Channel, Address, Interpulse } from '.'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 
@@ -11,78 +12,93 @@ type Channels struct {
     rxs [ Int ]
     txs [ Int ]
 }
+
+
+
  */
+const FIXED_CHANNEL_COUNT = 3
+
 export class Channels extends IpldStruct {
   static classMap = {
     list: Hamt,
-    addresses: Hamt,
+    addresses: AddressesHamt,
   }
   static create() {
     const isMutable = true
     const list = Hamt.create(Channel, isMutable)
-    const addresses = Hamt.create()
+    const counter = FIXED_CHANNEL_COUNT
+    const addresses = AddressesHamt.create()
     const rxs = []
     const txs = []
-    return super.clone({ counter: 0, list, addresses, rxs, txs })
+    return super.clone({ counter, list, addresses, rxs, txs })
+  }
+  async has(channelId) {
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    assert(channelId < this.counter)
+    return await this.list.has(channelId)
   }
   async hasAddress(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
-    return await this.addresses.has(address.cid.toString())
+    return await this.addresses.has(address)
   }
   async getByAddress(address) {
     assert(address instanceof Address)
-    const channelId = await this.addresses.get(address.cid.toString())
-    return await this.list.get(channelId)
+    const channelId = await this.addresses.get(address)
+    return await this.getChannel(channelId)
   }
   async deleteChannel(channelId) {
-    await this.assertChannelIdValid(channelId)
+    await this.#assertChannelIdValid(channelId)
     const list = this.list.delete(channelId)
     return this.setMap({ list })
   }
   async getChannel(channelId) {
-    await this.assertChannelIdValid(channelId)
+    await this.#assertChannelIdValid(channelId)
     return await this.list.get(channelId)
   }
-  async assertChannelIdValid(channelId) {
+  async #assertChannelIdValid(channelId) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)
     assert(channelId < this.counter)
-    assert(await this.list.has(channelId), `channelId not present`)
+    if (channelId >= FIXED_CHANNEL_COUNT) {
+      assert(await this.list.has(channelId), `channelId not present`)
+    }
   }
   async addChannel(channel) {
     assert(channel instanceof Channel)
     assert(Number.isInteger(this.counter))
-    assert(this.counter >= 0)
+    assert(this.counter >= FIXED_CHANNEL_COUNT)
     let { counter, addresses } = this
     const channelId = counter++
     const list = await this.list.set(channelId, channel)
     if (channel.isRemote()) {
-      const key = channel.getAddress().cid.toString()
-      assert(!(await this.addresses.has(key)))
-      addresses = await this.addresses.set(key, channelId)
+      const address = channel.getAddress()
+      addresses = await this.addresses.set(address, channelId)
     }
     const next = this.setMap({ counter, list, addresses })
     return next.updateActives(channelId, channel)
   }
   async updateChannel(channelId, channel) {
-    assert(Number.isInteger(channelId))
-    assert(channelId >= 0)
-    assert(channelId < this.counter)
-    assert(channel instanceof Channel)
-    assert(await this.list.has(channelId), `channelId not present`)
+    await this.#assertChannelIdValid(channelId)
 
-    const previous = await this.list.get(channelId)
-    assert(previous.isNext(channel))
-    const list = this.list.set(channelId, channel)
+    let previous
+    const isPrevious = await this.list.has(channelId)
+    if (channelId >= FIXED_CHANNEL_COUNT || isPrevious) {
+      previous = await this.list.get(channelId)
+      assert(previous.isNext(channel))
+    }
+    const list = await this.list.set(channelId, channel)
+
     let { addresses } = this
-    if (!previous.isRemote() && channel.isRemote()) {
-      const key = channel.getAddress().cid.toString()
-      assert(!(await this.addresses.has(key)))
-      addresses = addresses.set(key, channelId)
+    const isResolved = previous && !previous.isRemote() && channel.isRemote()
+    const isNewResolved = !previous && channel.isRemote()
+    if (isResolved || isNewResolved) {
+      const address = channel.getAddress()
+      addresses = await addresses.set(address, channelId)
     }
     const next = this.setMap({ list, addresses })
-    return next.updateActives(channelId, channel, previous)
+    return next.updateActives(channelId, channel)
   }
   updateActives(channelId, channel) {
     assert(Number.isInteger(channelId))
@@ -93,10 +109,18 @@ export class Channels extends IpldStruct {
       if (!rxs.includes(channelId)) {
         rxs = [...rxs, channelId]
       }
+    } else {
+      if (rxs.includes(channelId)) {
+        rxs = rxs.filter((id) => id !== channelId)
+      }
     }
     if (!channel.tx.isEmpty()) {
       if (!txs.includes(channelId)) {
         txs = [...txs, channelId]
+      }
+    } else {
+      if (txs.includes(channelId)) {
+        txs = txs.filter((id) => id !== channelId)
       }
     }
     return this.setMap({ rxs, txs })
@@ -109,15 +133,31 @@ export class Channels extends IpldStruct {
     assert(!tx.isEmpty())
     return tx
   }
-  blankTxs() {
-    return this.delete('txs')
+  async blankTxs(precedent) {
+    assert(precedent instanceof PulseLink)
+    let { list } = this
+    for (const channelId of this.txs) {
+      let channel = await list.get(channelId)
+      const tx = channel.tx.blank(precedent)
+      channel = channel.setMap({ tx })
+      list = await list.set(channelId, channel)
+    }
+    return this.setMap({ list, txs: [] })
   }
   async ingestInterpulse(interpulse) {
     assert(interpulse instanceof Interpulse)
     const { source } = interpulse
+    assert(await this.hasAddress(source), `No address: ${source.cid}`)
     const channelId = await this.addresses.get(source)
     let channel = await this.getByAddress(source)
     channel = channel.ingestInterpulse(interpulse)
-    return this.updateChannel(channelId, channel)
+    return await this.updateChannel(channelId, channel)
+  }
+  async *rxChannels() {
+    for (const channelId of this.rxs) {
+      const channel = await this.getChannel(channelId)
+      assert(!channel.rx.isEmpty())
+      yield [channelId, channel]
+    }
   }
 }

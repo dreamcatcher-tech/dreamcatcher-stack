@@ -84,13 +84,18 @@ export class Provenance extends IpldStruct {
     const { channels } = this.dmz.network
     const { txs } = channels
     assert(Array.isArray(txs))
-    assert(txs.length)
+    let next = this
+    if (!txs.length) {
+      // TODO define rules on block tighter
+      // may require at least one tick forwards
+      return super.crush(resolver)
+    }
     let transmissions = Transmissions.create()
     for (const channelId of txs) {
       const { address, tx } = await channels.getChannel(channelId)
       transmissions = transmissions.addTx(address, tx)
     }
-    const next = this.setMap({ transmissions })
+    next = this.setMap({ transmissions })
     return await next.crush(resolver)
   }
 

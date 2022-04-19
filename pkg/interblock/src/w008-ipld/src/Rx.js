@@ -12,8 +12,16 @@ type Rx struct {
 import Immutable from 'immutable'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
-import { TxQueue, PulseLink, Interpulse } from '.'
-
+import {
+  RxReply,
+  Reply,
+  RxRequest,
+  Request,
+  TxQueue,
+  PulseLink,
+  Interpulse,
+} from '.'
+const STREAMS = { SYSTEM: 'system', REDUCER: 'reducer' }
 class RxRemaining {
   requestsRemain
   repliesRemain
@@ -138,8 +146,35 @@ export class Rx extends IpldStruct {
     return next
   }
   // when shifting the counters, check if the tip should be ejected
-  async rxSystemRequest() {
-    return await this.#rx('system', 'requests')
+  async rxSystemRequest(channelId) {
+    const result = await this.#rx(STREAMS.SYSTEM, 'requests')
+    if (!result) {
+      return
+    }
+    const [request, index] = result
+    assert(request instanceof Request)
+    assert(Number.isInteger(index))
+    assert(index >= 0)
+    return RxRequest.create(request, channelId, STREAMS.SYSTEM, index)
+  }
+  async rxSystemReply(channelId) {
+    const result = await this.#rx(STREAMS.SYSTEM, 'replies')
+    if (!result) {
+      return
+    }
+    const [reply, index] = result
+    assert(reply instanceof Reply)
+    assert(Number.isInteger(index))
+    assert(index >= 0)
+    return RxReply.create(reply, channelId, STREAMS.SYSTEM, index)
+  }
+  shiftSystemReply() {
+    const system = this.system.decrementReplies()
+    return this.setMap({ system })
+  }
+  shiftSystemRequest() {
+    const system = this.system.decrementRequests()
+    return this.setMap({ system })
   }
   async #rx(queueType, actionType) {
     assert(queueType === 'system' || queueType === 'reducer')
@@ -164,6 +199,7 @@ export class Rx extends IpldStruct {
       index = array.length - remain
       remain -= array.length
     } while (index < 0)
-    return array[index]
+    const action = array[index]
+    return [action, index]
   }
 }

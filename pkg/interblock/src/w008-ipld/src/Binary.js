@@ -37,6 +37,9 @@ export class Binary extends IpldInterface {
   get ipldBlock() {
     return this.#ipldBlock
   }
+  [Symbol.for('nodejs.util.inspect.custom')]() {
+    return this.cid
+  }
   crush() {
     return this
   }

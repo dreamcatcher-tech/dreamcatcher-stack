@@ -1,18 +1,19 @@
 import { Hamt } from './Hamt'
-import { Address, Channel } from '.'
+import { Address } from '.'
 import assert from 'assert-fast'
-/**
- * Children are always fully resolved.
- * When crush occurs, should check the channels are next.
- * Alias cannot have '/' character in it.
- * Channels have to have an address on them.
- */
 export class AddressesHamt extends Hamt {
-  static create() {
-    return super.create(Channel)
+  async set(address, channelId) {
+    assert(address instanceof Address)
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    assert(address.isRemote())
+    const key = address.cid.toString()
+    return await super.set(key, channelId)
   }
-  set() {
-    throw new Error('not implemented')
+  async has(address) {
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    return await super.has(address.cid.toString())
   }
   delete(channelId) {
     assert(Number.isInteger(channelId))
@@ -21,12 +22,5 @@ export class AddressesHamt extends Hamt {
   get(address) {
     assert(address instanceof Address)
     return super.get(address.cid.toString())
-  }
-  async updateChannel(channelId, channel) {
-    // assumes this channel is present already
-    assert()
-  }
-  setChannel(channelId, channel) {
-    // when go to crush, ensure we are not reinstating something that has been deleted
   }
 }

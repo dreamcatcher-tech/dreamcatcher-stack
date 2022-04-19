@@ -32,6 +32,9 @@ export class PulseLink extends IpldInterface {
   get cid() {
     return this.#cid
   }
+  [Symbol.for('nodejs.util.inspect.custom')]() {
+    return this.cid
+  }
   crush() {
     return this
   }

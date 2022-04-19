@@ -60,7 +60,7 @@ export class TxQueue extends IpldStruct {
   txRequest(request) {
     assert(request instanceof Request)
     const requests = [...this.requests, request]
-    return this.constructor.clone({ ...this, requests })
+    return this.setMap({ requests })
   }
   rxRequest(requestId) {
     assert(requestId >= this.requestsStart)
@@ -73,13 +73,13 @@ export class TxQueue extends IpldStruct {
   txReply(reply) {
     assert(reply instanceof Reply)
     const replies = [...this.replies, reply]
-    return this.constructor.clone({ ...this, replies })
+    return this.setMap({ replies })
   }
   shiftRequestsStart() {
     assert(this.requests.length)
     const requestsStart = this.requestsStart + 1
     const [, ...requests] = this.requests
-    return this.constructor.clone({ ...this, requestsStart, requests })
+    return this.setMap({ requestsStart, requests })
   }
   rxReply(replyId) {
     assert(replyId >= this.repliesStart)
@@ -89,7 +89,7 @@ export class TxQueue extends IpldStruct {
     assert(this.replies.length)
     const repliesStart = this.repliesStart + 1
     const [, ...replies] = this.replies
-    return this.constructor.clone({ ...this, repliesStart, replies })
+    return this.setMap({ repliesStart, replies })
   }
   isEmpty() {
     return (
@@ -106,5 +106,19 @@ export class TxQueue extends IpldStruct {
       !this.promisedIds.length &&
       !this.promisedReplies.length
     )
+  }
+  blank() {
+    const promisedReplies = []
+    const requests = []
+    const requestsStart = this.requestsStart + this.requests.length
+    const replies = []
+    const repliesStart = this.repliesStart + this.replies.length
+    return this.setMap({
+      promisedReplies,
+      requests,
+      requestsStart,
+      replies,
+      repliesStart,
+    })
   }
 }

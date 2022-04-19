@@ -5,20 +5,19 @@ import {
   RxReply,
   Channel,
   Address,
-  Loopback,
   Channels,
   ChildrenHamt,
   DownlinksHamt,
   UplinksHamt,
   AddressesHamt,
   Request,
-  Io,
-  Interpulse,
   Reply,
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
 const debug = Debug('interblock:ipld:Network')
+const FIXED = { PARENT: 0, LOOPBACK: 1, IO: 2 }
+
 /**
 type Network struct {
     parent optional Channel
@@ -42,10 +41,6 @@ type Network struct {
  */
 export class Network extends IpldStruct {
   static classMap = {
-    parent: Channel,
-    loopback: Loopback,
-    io: Io,
-
     channels: Channels,
     addresses: AddressesHamt,
 
@@ -56,25 +51,38 @@ export class Network extends IpldStruct {
     hardlinks: Hamt,
   }
 
-  static createRoot() {
-    const instance = Network.create()
+  static async createRoot() {
     const parent = Channel.createRoot()
-    return instance.setMap({ parent })
+    let instance = Network.create()
+    instance = await instance.updateParent(parent)
+    return instance
   }
   static create() {
     const channels = Channels.create()
     const downlinks = DownlinksHamt.create()
     const uplinks = UplinksHamt.create()
     const children = ChildrenHamt.create()
-    const parent = Channel.create()
-    let instance = super.clone({
-      channels,
-      downlinks,
-      uplinks,
-      children,
-      parent,
-    })
+    let instance = super.clone({ channels, downlinks, uplinks, children })
     return instance
+  }
+  async getParent() {
+    if (await this.channels.has(FIXED.PARENT)) {
+      return await this.channels.getChannel(FIXED.PARENT)
+    }
+    return Channel.create()
+  }
+  async resolveParent(parentAddress) {
+    assert(parentAddress instanceof Address)
+    assert(parentAddress.isRemote())
+    let parent = await this.getParent()
+    assert(parent.getAddress().isUnknown())
+    parent = parent.resolve(parentAddress)
+    return await this.updateParent(parent)
+  }
+  async updateParent(parent) {
+    assert(parent instanceof Channel)
+    const channels = await this.channels.updateChannel(FIXED.PARENT, parent)
+    return this.setMap({ channels })
   }
   async addUplink(address) {
     assert(address instanceof Address)
@@ -181,7 +189,7 @@ export class Network extends IpldStruct {
 
     const { channelId } = await this.aliases.get(alias) // throws if not present
     const channels = this.channels.set(channelId, channel)
-    return this.constructor.clone({ ...this, channels })
+    return this.setMap({ channels })
   }
 
   aliasChannel(alias, channelId, systemRole = './') {
@@ -255,29 +263,6 @@ export class Network extends IpldStruct {
   async hasByAlias(alias) {
     return await this.aliases.has(alias)
   }
-  // async delete(alias) {
-  //   // TODO check if any other aliases refer to this channel
-  //   assert.strictEqual(typeof alias, 'string', `Alias must be a string`)
-  //   assert(alias)
-  //   if (alias === '..') {
-  //     throw new Error(`Cannot delete parent`)
-  //   }
-  //   if (alias === '.') {
-  //     throw new Error(`Cannot delete loopback`)
-  //   }
-  //   const { channelId } = await this.aliases.get(alias)
-  //   assert(Number.isInteger(channelId))
-  //   const channels = this.channels.delete(channelId)
-  //   return this.constructor.clone({ ...this, channels })
-  // }
-  assertLogic() {
-    // assert(this.counter >= 2)
-    // assert(this.aliases.has('..'))
-    // assert(this.has('.'))
-    // assert(this.get('.') instanceof Channel, 'channel invalid')
-    // assert(this.get('.').systemRole === '.', `self not loopback channel`)
-    // assert(this.get('..').systemRole === '..', `parent role invalid`)
-  }
   rename(srcAlias, destAlias) {
     // needed to preserve the hash tree efficiently
     assert.strictEqual(typeof srcAlias, 'string')
@@ -291,22 +276,14 @@ export class Network extends IpldStruct {
   async hasAddress(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
-    if (this.parent.getAddress().equals(address)) {
-      return true
-    }
     return await this.channels.hasAddress(address)
   }
   async getByAddress(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
-    if (this.parent.getAddress().equals(address)) {
-      return this.parent
-    }
     return await this.channels.getByAddress(address)
   }
-  getParent() {
-    return this.parent
-  }
+
   getLoopback() {
     return this.loopback
   }
@@ -370,59 +347,48 @@ export class Network extends IpldStruct {
 
     return this.setMap({ channels, children })
   }
-  setParent(parentAddress) {
-    assert(parentAddress instanceof Address)
-    assert(this.parent.getAddress().isUnknown())
-    const parent = this.parent.resolve(parentAddress)
-    return this.setMap({ parent })
-  }
+
   async ingestInterpulse(interpulse) {
-    assert(interpulse instanceof Interpulse)
-    const { source } = interpulse
-    assert(await this.hasAddress(source))
-    if (this.parent.getAddress().equals(source)) {
-      const parent = this.parent.ingestInterpulse(interpulse)
-      return this.setMap({ parent })
-    }
     const channels = await this.channels.ingestInterpulse(interpulse)
     return this.setMap({ channels })
   }
-  async rxSystemReply() {
-    // check parent, check io,
-  }
-  async rxReducerReply() {}
   async rxSystemRequest() {
-    for await (const channel of this.#rxChannels()) {
-      const rxRequest = channel.rx.rxSystemRequest()
+    for await (const [channelId, channel] of this.channels.rxChannels()) {
+      const rxRequest = channel.rx.rxSystemRequest(channelId)
       if (rxRequest) {
         return rxRequest
       }
     }
   }
+  async rxSystemReply() {
+    for await (const [channelId, channel] of this.channels.rxChannels()) {
+      const rxReply = channel.rx.rxSystemReply(channelId)
+      if (rxReply) {
+        return rxReply
+      }
+    }
+  }
   async rxReducerRequest() {}
-  async #rxSystemChannels() {
-    // make a function that iterates over all the rx channels that are active
-  }
-  async #rxReducerChannels() {}
-  async *#rxChannels() {
-    if (this.loopback && !this.loopback.rx.isEmpty()) {
-      yield this.loopback
-    }
-    if (this.parent && !this.parent.rx.isEmpty()) {
-      yield this.parent
-    }
-    if (this.io && !this.io.rx.isEmpty()) {
-      yield this.io
-    }
-    for (const channelId of this.channels.rxs) {
-      yield await this.channels.getChannel(channelId)
-    }
-  }
+  async rxReducerReply() {}
+
   // fundamentally, once you pass the request to us, we'll never give it back again
   async txSystemReply(reply = Reply.create()) {
     // by default, this resolves the current request
-    // ? could we 
-    const rxRequest = await this.rxSystemReply()
+    const rxRequest = await this.rxSystemRequest()
     assert(rxRequest instanceof RxRequest)
+    const { channelId } = rxRequest
+    let channel = await this.channels.getChannel(channelId)
+    channel = channel.txSystemReply(reply)
+    const channels = await this.channels.updateChannel(channelId, channel)
+    return this.setMap({ channels })
+  }
+  async shiftSystemReply() {
+    const rxReply = await this.rxSystemReply()
+    assert(rxReply instanceof RxReply)
+    const { channelId } = rxReply
+    let channel = await this.channels.getChannel(channelId)
+    channel = channel.shiftSystemReply()
+    const channels = await this.channels.updateChannel(channelId, channel)
+    return this.setMap({ channels })
   }
 }

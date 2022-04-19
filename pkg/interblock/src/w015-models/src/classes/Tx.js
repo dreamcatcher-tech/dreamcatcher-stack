@@ -5,7 +5,7 @@ import { MerkleArray } from './MerkleArray'
  * Generated inside of the Network object.
  * Used to allow more focused queries against a block to determine
  * which channels are transmitting.
- * Makes the proofs for interblocks smaller in tranmission size.
+ * Makes the proofs for interblocks smaller in transmission size.
  * Can be ignored from meta updates being pushed to parent, since
  * we always know it will be deleted in the next block, so no need
  * to report this change up the tree higher, as the transmission change

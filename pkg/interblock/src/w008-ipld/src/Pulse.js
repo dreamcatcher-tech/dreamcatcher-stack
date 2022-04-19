@@ -2,6 +2,7 @@ import { IpldStruct } from './IpldStruct'
 import { Interpulse, Address, Provenance, PublicKey, Dmz, Network } from '.'
 import assert from 'assert-fast'
 import { fromString as from } from 'uint8arrays/from-string'
+import { PulseLink } from './PulseLink'
 /**
  type Pulse struct {
     provenance &Provenance
@@ -10,8 +11,8 @@ import { fromString as from } from 'uint8arrays/from-string'
  */
 export class Pulse extends IpldStruct {
   static classMap = { provenance: Provenance }
-  static createCI = () => {
-    const network = Network.createRoot()
+  static async createCI() {
+    const network = await Network.createRoot()
     const dmz = Dmz.create({ network })
     const provenance = Provenance.createGenesis(dmz)
     return Pulse.create(provenance)
@@ -24,8 +25,12 @@ export class Pulse extends IpldStruct {
   isGenesis() {
     return this.provenance.address.isGenesis()
   }
-  isRoot() {
-    return this.provenance.dmz.network.parent.getAddress().isRoot()
+  async isRoot() {
+    const parent = await this.provenance.dmz.network.getParent()
+    if (parent) {
+      return parent.getAddress().isRoot()
+    }
+    return false
   }
   addSignature(publicKey, signature) {
     assert(publicKey instanceof PublicKey)
@@ -55,42 +60,77 @@ export class Pulse extends IpldStruct {
     const signatureCount = this.signatures.filter((s) => !!s).length
     return signatureCount >= this.provenance.validators.quorumThreshold
   }
-  generateSoftPulse(parentAddress) {
+  async generateGenesisSoftPulse(parent) {
     assert(!this.isModified())
     assert.strictEqual(this.currentCrush, this)
+    assert(this.isGenesis())
+    assert(!this.provenance.transmissions)
+    const isRoot = await this.isRoot()
     // blank the parent transmissions
     let next = this
-    if (this.isGenesis()) {
-      // if this is the second pulse in the train, set the address
-      const address = Address.generate(this)
-      next = next.setMap({ provenance: { address } })
-      if (!this.isRoot()) {
-        assert(parentAddress instanceof Address)
-        assert(parentAddress.isRemote())
-        const network = next.provenance.dmz.network.setParent(parentAddress)
-        next = next.setMap({ provenance: { dmz: { network } } })
-      }
+    // if this is the second pulse in the train, set the address
+    const address = Address.generate(this)
+    next = next.setMap({ provenance: { address } })
+    if (isRoot) {
+      assert.strictEqual(parent, undefined)
     } else {
-      const provenance = next.provenance.setLineage(next)
-      next = next.setMap({ provenance })
+      assert(parent instanceof Pulse)
+      assert(!parent.isGenesis())
+      const parentAddress = parent.getAddress()
+      assert(parentAddress.isRemote())
+      let { network } = next.provenance.dmz
+      network = await network.resolveParent(parentAddress)
+      next = next.setMap({ provenance: { dmz: { network } } })
     }
-    if (next.tranmissions) {
-      const provenance = next.provenance.delete('transmissions')
-      next = next.setMap({ provenance })
+    let provenance = next.provenance.setLineage(this)
+    if (next.transmissions) {
+      provenance = next.provenance.delete('transmissions')
     }
-    const channels = next.provenance.dmz.network.channels.blankTxs()
-    return next.setMap({ provenance: { dmz: { network: { channels } } } })
+    const precedent = this.getPulseLink()
+    const channels = await provenance.dmz.network.channels.blankTxs(precedent)
+    provenance = provenance.setMap({ dmz: { network: { channels } } })
+    return next.setMap({ provenance })
+  }
+
+  async generateSoftPulse() {
+    assert(!this.isModified())
+    assert.strictEqual(this.currentCrush, this)
+    assert(!this.isGenesis())
+    // blank the parent transmissions
+    let next = this
+    let provenance = next.provenance.setLineage(next)
+    if (provenance.transmissions) {
+      provenance = provenance.delete('transmissions')
+    } else {
+      assert.strictEqual(provenance.dmz.network.channels.txs.length, 0)
+    }
+    const precedent = this.getPulseLink()
+    const channels = await provenance.dmz.network.channels.blankTxs(precedent)
+    provenance = provenance.setMap({ dmz: { network: { channels } } })
+    next = next.setMap({ provenance })
+    return next
   }
   async ingestInterpulse(interpulse) {
+    let next = this
+    if (!this.isModified()) {
+      next = await this.generateSoftPulse()
+    }
     assert(interpulse instanceof Interpulse)
     const { target } = interpulse
-    assert(this.getAddress().equals(target))
-    let { network } = this.provenance.dmz
+    assert(next.getAddress().equals(target))
+    let { network } = next.provenance.dmz
     network = await network.ingestInterpulse(interpulse)
-    return this.setMap({ provenance: { dmz: { network } } })
+    return next.setMap({ provenance: { dmz: { network } } })
   }
   getNetwork() {
     return this.provenance.dmz.network
+  }
+  setNetwork(network) {
+    assert(network instanceof Network)
+    return this.setMap({ provenance: { dmz: { network } } })
+  }
+  getPulseLink() {
+    return PulseLink.generate(this)
   }
 }
 

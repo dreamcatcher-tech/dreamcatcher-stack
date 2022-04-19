@@ -159,6 +159,8 @@ export class IpldStruct extends IpldInterface {
     assert.strictEqual(typeof map, 'object')
     const inflated = { ...map }
     for (const key in map) {
+      assert(map[key] !== undefined, `${key} is undefined`)
+      assert(typeof map[key].then !== 'function', `${key} is a promise`)
       if (map[key] === this[key]) {
         delete inflated[key]
         continue

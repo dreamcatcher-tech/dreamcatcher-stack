@@ -47,7 +47,7 @@ export class Hamt extends IpldInterface {
     if (this.#valueClass) {
       assert(value instanceof this.#valueClass, `Not correct class type`)
     }
-    if (!this.#isMutable && (await this.has(key))) {
+    if (!this.#isMutable && (await this.#has(key))) {
       throw new Error(`Cannot overwrite key: ${key}`)
     }
     const next = this.#clone()
@@ -67,7 +67,7 @@ export class Hamt extends IpldInterface {
     next.#deletes = this.#deletes.add(key)
     return next
   }
-  async has(key) {
+  async #has(key) {
     assertKey(key)
     if (this.#gets.has(key)) {
       return true
@@ -80,9 +80,12 @@ export class Hamt extends IpldInterface {
     }
     return await this.#hashmap.has(key)
   }
+  async has(key) {
+    return await this.#has(key)
+  }
   async get(key) {
     assertKey(key)
-    if (!(await this.has(key))) {
+    if (!(await this.#has(key))) {
       throw new Error(`key not present: ${key}`)
     }
     if (this.#gets.has(key)) {
@@ -135,7 +138,7 @@ export class Hamt extends IpldInterface {
     }
     for (const [key, value] of next.#sets) {
       debug('set:', key, value)
-      if (await hashmap.has(key)) {
+      if (!this.#isMutable && (await hashmap.has(key))) {
         throw new Error(`cannot overwrite key: ${key}`)
       }
       if (next.#valueClass) {

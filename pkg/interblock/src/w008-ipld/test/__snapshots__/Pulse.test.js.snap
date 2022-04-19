@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Pulse birth child 1`] = `
+RxReply {
+  "channelId": 3,
+  "index": 0,
+  "payload": Object {},
+  "stream": "system",
+  "type": "@@RESOLVE",
+}
+`;

@@ -52,7 +52,6 @@ type Tx struct {
 export class Tx extends IpldStruct {
   static cidLinks = ['address', 'precedent']
   static classMap = {
-    address: Address,
     precedent: PulseLink,
     system: TxQueue,
     reducer: TxQueue,
@@ -75,6 +74,10 @@ export class Tx extends IpldStruct {
       reducer = reducer.txRequest(request)
     }
     return this.setMap({ reducer, system })
+  }
+  txSystemReply(reply) {
+    let system = this.system.txReply(reply)
+    return this.setMap({ system })
   }
   txReducerReply(reply) {
     let reducer = this.reducer.txReply(reply)
@@ -114,5 +117,14 @@ export class Tx extends IpldStruct {
     const dmz = Dmz.create({ ...params, timestamp })
     const genesis = Provenance.createGenesis(dmz, validators)
     return await Pulse.create(genesis).crush()
+  }
+  blank(precedent) {
+    assert(precedent instanceof PulseLink)
+    assert(!this.isEmpty())
+    return this.setMap({
+      precedent,
+      system: this.system.blank(),
+      reducer: this.reducer.blank(),
+    })
   }
 }

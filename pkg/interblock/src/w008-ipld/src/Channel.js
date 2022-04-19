@@ -1,8 +1,7 @@
 import assert from 'assert-fast'
-import { Address, Rx, Tx, Request, Interpulse } from '.'
+import { Reply, Address, Rx, Tx, Request, Interpulse } from '.'
 import Debug from 'debug'
 import { IpldStruct } from './IpldStruct'
-import { deepFreeze } from './utils'
 const debug = Debug('interblock:models:channel')
 
 /**
@@ -93,6 +92,13 @@ export class Channel extends IpldStruct {
     const tx = this.tx.txRequest(request)
     return this.setMap({ tx })
   }
+  rxSystemReply() {}
+  txSystemReply(reply) {
+    assert(reply instanceof Reply)
+    const tx = this.tx.txSystemReply(reply)
+    const rx = this.rx.shiftSystemRequest()
+    return this.setMap({ tx, rx })
+  }
   rxReducerRequest() {
     const { requestsRemain } = this.rxReducer
     if (this.address.isLoopback()) {
@@ -116,7 +122,11 @@ export class Channel extends IpldStruct {
   shiftReducerReplies() {
     const tx = this.tx.shiftReducerReplies()
     const rxReducer = this.rxReducer.incrementReplies()
-    return this.constructor.clone({ ...this, tx, rxReducer })
+    return this.setMap({ tx, rxReducer })
+  }
+  shiftSystemReply() {
+    const rx = this.rx.shiftSystemReply()
+    return this.setMap({ rx })
   }
   isNext(channel) {
     assert(channel instanceof Channel)
