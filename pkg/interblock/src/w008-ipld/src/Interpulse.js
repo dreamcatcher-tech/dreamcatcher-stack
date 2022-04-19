@@ -51,7 +51,7 @@ export class Interpulse {
     return this.#pulse.cid
   }
   crush() {
-    return this // always crushed
+    throw new Error(`InterPulse cannot be crushed`)
   }
   setMap() {
     throw new Error('cannot modify an Interpulse')
