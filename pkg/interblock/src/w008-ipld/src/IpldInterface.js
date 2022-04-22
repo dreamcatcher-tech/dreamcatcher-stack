@@ -56,10 +56,13 @@ export class IpldInterface {
   }
   async logDiff() {
     const diffmap = await this.getDiffBlocks()
-    const log = []
+    const log = {}
     for (const { cid, value } of diffmap.values()) {
-      log.push([cid, value])
+      log[cid.toString().substring(0, 13)] = value
     }
     console.dir(log, { depth: Infinity })
+  }
+  dir() {
+    console.dir(this, { depth: Infinity })
   }
 }

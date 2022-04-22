@@ -15,7 +15,7 @@ export class Pulse extends IpldStruct {
     const network = await Network.createRoot()
     const dmz = Dmz.create({ network })
     const provenance = Provenance.createGenesis(dmz)
-    return Pulse.create(provenance)
+    return await Pulse.create(provenance).crush()
   }
   static create(provenance) {
     assert(provenance instanceof Provenance)

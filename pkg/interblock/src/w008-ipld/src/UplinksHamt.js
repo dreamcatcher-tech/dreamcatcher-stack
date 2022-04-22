@@ -35,11 +35,4 @@ export class UplinksHamt extends Hamt {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0 && channelId < this.counter)
   }
-  async updateChannel(channelId, channel) {
-    // assumes this channel is present already
-    assert()
-  }
-  setChannel(channelId, channel) {
-    // when go to crush, ensure we are not reinstating something that has been deleted
-  }
 }

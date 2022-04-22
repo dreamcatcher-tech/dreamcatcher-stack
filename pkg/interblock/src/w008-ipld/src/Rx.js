@@ -23,13 +23,11 @@ import {
 } from '.'
 const STREAMS = { SYSTEM: 'system', REDUCER: 'reducer' }
 class RxRemaining {
-  requestsRemain
-  repliesRemain
   constructor(requestsRemain = 0, repliesRemain = 0) {
-    assert(Number.isInteger(requestsRemain))
-    assert(Number.isInteger(repliesRemain))
-    assert(requestsRemain >= 0)
-    assert(repliesRemain >= 0)
+    assert(Number.isInteger(requestsRemain), `requestsRemain not integer`)
+    assert(Number.isInteger(repliesRemain), `repliesRemain not integer`)
+    assert(requestsRemain >= 0, `requestsRemain: ${requestsRemain}`)
+    assert(repliesRemain >= 0, `repliesRemain: ${repliesRemain}`)
     this.requestsRemain = requestsRemain
     this.repliesRemain = repliesRemain
   }
@@ -42,7 +40,13 @@ class RxRemaining {
   decrementReplies() {
     return new this.constructor(this.requestsRemain, this.repliesRemain - 1)
   }
-  increaseRemaining(txQueue) {
+  loopbackAddRequest() {
+    return new this.constructor(this.requestsRemain + 1, this.repliesRemain)
+  }
+  loopbackAddReply() {
+    return new this.constructor(this.requestsRemain, this.repliesRemain + 1)
+  }
+  ingestTxQueue(txQueue) {
     assert(txQueue instanceof TxQueue)
     const { requests, replies } = txQueue
     const requestsRemain = this.requestsRemain + requests.length
@@ -98,6 +102,7 @@ export class Rx extends IpldStruct {
     system: RxRemaining,
     reducer: RxRemaining,
   }
+  static cidLinks = []
   static create() {
     return super.clone({
       system: new RxRemaining(),
@@ -138,8 +143,8 @@ export class Rx extends IpldStruct {
       // TODO retrieve the current tip
       // check that it comes next with the sequence numbers
     }
-    const system = this.system.increaseRemaining(tx.system)
-    const reducer = this.reducer.increaseRemaining(tx.reducer)
+    const system = this.system.ingestTxQueue(tx.system)
+    const reducer = this.reducer.ingestTxQueue(tx.reducer)
     const tip = interpulse.getPulseLink()
     next = next.setMap({ tip, system, reducer })
     next.#tipCache = next.#tipCache.addTip(interpulse)
@@ -176,6 +181,26 @@ export class Rx extends IpldStruct {
     const system = this.system.decrementRequests()
     return this.setMap({ system })
   }
+  shiftReducerReply() {
+    const reducer = this.reducer.decrementReplies()
+    return this.setMap({ reducer })
+  }
+  shiftReducerRequest() {
+    const reducer = this.reducer.decrementRequests()
+    return this.setMap({ reducer })
+  }
+  async rxReducerRequest(channelId) {
+    const result = await this.#rx(STREAMS.SYSTEM, 'requests')
+    if (!result) {
+      return
+    }
+    const [request, index] = result
+    assert(request instanceof Request)
+    assert(Number.isInteger(index))
+    assert(index >= 0)
+    return RxRequest.create(request, channelId, STREAMS.SYSTEM, index)
+  }
+
   async #rx(queueType, actionType) {
     assert(queueType === 'system' || queueType === 'reducer')
     assert(actionType === 'replies' || actionType === 'requests')

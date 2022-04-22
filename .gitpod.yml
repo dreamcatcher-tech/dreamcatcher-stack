@@ -4,5 +4,10 @@
 
 tasks:
   - init: yarn install
+vscode:
+  extensions:
+    - wallabyjs.wallaby-vscode
+    - esbenp.prettier-vscode
+    - dbaeumer.vscode-eslint
 
 

@@ -12,7 +12,7 @@ describe('address', () => {
     assert.throws(() => genesis.getChainId(), 'Address not resolved')
   })
   test('generate from Pulse', async () => {
-    const pulse = await Pulse.create().crush()
+    const pulse = await Pulse.createCI()
     const address = Address.generate(pulse)
     assert.strictEqual(address.cid.version, 0)
     assert(address.ipldBlock)

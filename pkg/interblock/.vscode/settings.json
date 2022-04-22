@@ -10,5 +10,7 @@
     "ipldsch",
     "kinded",
     "struct"
-  ]
+  ],
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

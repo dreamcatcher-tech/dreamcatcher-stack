@@ -47,10 +47,6 @@ export class Channel extends IpldStruct {
     const root = Address.createRoot()
     return Channel.create(root)
   }
-  static createLoopback() {
-    const loopback = Address.createLoopback()
-    return Channel.create(loopback)
-  }
   resolve(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
@@ -67,7 +63,7 @@ export class Channel extends IpldStruct {
     return this.address
   }
   assertLogic() {
-    const { rx, tx, address } = this
+    const { rx, tx, address, aliases } = this
     if (this.isUnknown()) {
       assert(rx.isEmpty(), 'Replies to Unknown are impossible')
       assert(!rx.tip)
@@ -80,53 +76,8 @@ export class Channel extends IpldStruct {
       const banned = ['@@OPEN_CHILD']
       const systemRequests = tx.system.requests
       assert(systemRequests.every(({ type }) => !banned.includes(type)))
+      assert(!aliases.length)
     }
-  }
-  txGenesis(params = {}) {
-    assert(typeof params === 'object')
-    const request = Request.create('@@GENESIS', { params })
-    return this.txRequest(request)
-  }
-  txRequest(request) {
-    assert(request instanceof Request)
-    const tx = this.tx.txRequest(request)
-    return this.setMap({ tx })
-  }
-  rxSystemReply() {}
-  txSystemReply(reply) {
-    assert(reply instanceof Reply)
-    const tx = this.tx.txSystemReply(reply)
-    const rx = this.rx.shiftSystemRequest()
-    return this.setMap({ tx, rx })
-  }
-  rxReducerRequest() {
-    const { requestsRemain } = this.rxReducer
-    if (this.address.isLoopback()) {
-      assert(this.tx.reducer.requestsStart >= requestsRemain)
-      return this.tx.reducer.rxRequest(requestsRemain)
-    }
-  }
-  txReducerReply(reply) {
-    // TODO determine if system based on what the current request is ?
-    const tx = this.tx.txReducerReply(reply)
-    const rxReducer = this.rxReducer.incrementRequests()
-    return this.setMap({ tx, rxReducer })
-  }
-  rxReducerReply() {
-    const { repliesRemaining } = this.rxReducer
-    if (this.tx.isLoopback()) {
-      assert(this.tx.reducer.repliesStart >= repliesRemaining)
-      return this.tx.reducer.rxReply(repliesRemaining)
-    }
-  }
-  shiftReducerReplies() {
-    const tx = this.tx.shiftReducerReplies()
-    const rxReducer = this.rxReducer.incrementReplies()
-    return this.setMap({ tx, rxReducer })
-  }
-  shiftSystemReply() {
-    const rx = this.rx.shiftSystemReply()
-    return this.setMap({ rx })
   }
   isNext(channel) {
     assert(channel instanceof Channel)
@@ -138,5 +89,46 @@ export class Channel extends IpldStruct {
     let { rx } = this
     rx = rx.addTip(interpulse)
     return this.setMap({ rx })
+  }
+  txGenesis(params = {}) {
+    assert(typeof params === 'object')
+    const request = Request.create('@@GENESIS', { params })
+    return this.txRequest(request)
+  }
+  txRequest(request) {
+    assert(request instanceof Request)
+    const tx = this.tx.txRequest(request)
+    return this.setMap({ tx })
+  }
+  txSystemReply(reply) {
+    assert(reply instanceof Reply)
+    const tx = this.tx.txSystemReply(reply)
+    const rx = this.rx.shiftSystemRequest()
+    return this.setMap({ tx, rx })
+  }
+  txReducerReply(reply) {
+    assert(!this.address.isUnknown(), `Address is unknown`)
+    assert(reply instanceof Reply)
+    const tx = this.tx.txReducerReply(reply)
+    const rx = this.rx.shiftReducerRequest()
+    return this.setMap({ tx, rx })
+  }
+  shiftReducerReply() {
+    const rx = this.rx.shiftReducerReply()
+    return this.setMap({ rx })
+  }
+  shiftSystemReply() {
+    const rx = this.rx.shiftSystemReply()
+    return this.setMap({ rx })
+  }
+  rxSystemRequest() {
+    throw new Error('not implemented')
+  }
+  rxSystemReply() {
+    throw new Error('not implemented')
+  }
+  rxReducerRequest() {}
+  rxReducerReply() {
+    throw new Error('not implemented')
   }
 }

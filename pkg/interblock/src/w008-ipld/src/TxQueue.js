@@ -64,7 +64,9 @@ export class TxQueue extends IpldStruct {
   }
   rxRequest(requestId) {
     assert(requestId >= this.requestsStart)
-    return this.requests[requestId - this.requestsStart]
+    const index = requestId - this.requestsStart
+    assert(this.requests[index])
+    return this.requests[index]
   }
   getRequestId() {
     assert(this.requests.length, `No requests to ID`)

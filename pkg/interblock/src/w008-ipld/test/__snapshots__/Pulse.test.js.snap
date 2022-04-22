@@ -1,5 +1,48 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Pulse basic 1`] = `
+Object {
+  "code": 112,
+  "hash": Uint8Array [
+    18,
+    32,
+    187,
+    254,
+    33,
+    128,
+    178,
+    80,
+    27,
+    138,
+    29,
+    221,
+    53,
+    93,
+    26,
+    193,
+    144,
+    80,
+    230,
+    139,
+    255,
+    66,
+    86,
+    32,
+    183,
+    140,
+    170,
+    130,
+    190,
+    44,
+    77,
+    254,
+    239,
+    1,
+  ],
+  "version": 0,
+}
+`;
+
 exports[`Pulse birth child 1`] = `
 RxReply {
   "channelId": 3,

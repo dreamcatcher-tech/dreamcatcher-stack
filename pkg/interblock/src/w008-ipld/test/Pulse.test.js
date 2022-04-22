@@ -16,21 +16,12 @@ import { setCiTimestamp } from '../src/Dmz'
 describe('Pulse', () => {
   setCiTimestamp()
   test('basic', async () => {
-    const pulse = await Pulse.create().crush()
+    let pulse = await Pulse.createCI()
+    pulse = await pulse.crush()
     const address = Address.generate(pulse)
-
-    const channel = Channel.create(address)
-    const request = Request.create('TEST')
-    const { dmz } = pulse.provenance
-    assert(dmz instanceof Dmz)
-
-    const network = await dmz.network.setChannel('child', channel)
-    console.dir(network, { depth: Infinity })
-    // make a genesis pulse
-    // make it transmit something
-    // have it received by a remote pulse
+    expect(address.cid).toMatchSnapshot()
   })
-  test.only('birth child', async () => {
+  test('birth child', async () => {
     let parent = await Pulse.createCI()
     parent = await parent.crush()
     const config = { entropy: { seed: 'test' } }
@@ -83,7 +74,6 @@ describe('Pulse', () => {
     assert(!childParentChannel.rx.system.isEmpty())
     const network = await child.getNetwork().txSystemReply()
     childParentChannel = await network.getParent()
-    console.dir(childParentChannel, { depth: Infinity })
     assert(childParentChannel.rx.system.isEmpty())
     assert.strictEqual(childParentChannel.tx.system.replies.length, 1)
     assert.strictEqual(network.channels.txs.length, 1)
@@ -96,7 +86,6 @@ describe('Pulse', () => {
     child = child.addSignature(keypair.publicKey, signature)
     child = await child.crush()
     interpulse = Interpulse.extract(child, parent.getAddress())
-    console.dir(interpulse, { depth: Infinity })
 
     parent = await parent.ingestInterpulse(interpulse)
     const rxReply = await parent.getNetwork().rxSystemReply()
@@ -106,7 +95,6 @@ describe('Pulse', () => {
     const parentNetwork = await parent.getNetwork().shiftSystemReply()
     parent = parent.setNetwork(parentNetwork)
     parent = await parent.crush()
-    console.dir(parentNetwork, { depth: Infinity })
   })
   test.todo('loopback transmissions')
   test.todo('loopback promises')

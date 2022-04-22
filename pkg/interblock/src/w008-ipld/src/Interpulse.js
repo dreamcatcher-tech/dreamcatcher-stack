@@ -29,7 +29,6 @@ export class Interpulse {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified())
     assert(target instanceof Address)
-    console.dir(pulse.provenance.transmissions, { depth: Infinity })
     let { provenance, signatures } = pulse
     const { validators, turnovers, address, transmissions } = provenance
     const chainId = target.getChainId()

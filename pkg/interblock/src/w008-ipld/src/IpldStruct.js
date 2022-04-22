@@ -104,27 +104,29 @@ export class IpldStruct extends IpldInterface {
     // diffs since the last time we crushed
     assert(!this.isModified())
     const blocks = new Map()
-    const from = this.#previous
-    if (from === this) {
+    const previous = this.#previous
+    if (previous === this) {
       return blocks
     }
     blocks.set(this.ipldBlock.cid.toString(), this.ipldBlock)
     for (const key in this) {
       const thisValue = this[key]
-      const fromValue = from && from[key]
-      if (thisValue instanceof IpldInterface) {
-        assert(fromValue === undefined || fromValue instanceof IpldInterface)
-        if (!fromValue || !thisValue.cid.equals(fromValue.cid)) {
-          const valueBlocks = await thisValue.getDiffBlocks(fromValue)
+      const previousValue = previous && previous[key]
+      if (this.isCidLink(key)) {
+        assert(
+          previousValue === undefined || previousValue instanceof IpldInterface
+        )
+        if (!previousValue || !thisValue.cid.equals(previousValue.cid)) {
+          const valueBlocks = await thisValue.getDiffBlocks(previousValue)
           merge(blocks, valueBlocks)
         }
       } else if (Array.isArray(thisValue)) {
         const awaits = thisValue.map(async (v, i) => {
-          if (!fromValue || !fromValue[i]) {
+          if (!previousValue || !previousValue[i]) {
             return await v.getDiffBlocks()
           }
-          if (!v.cid.equals(fromValue[i].cid)) {
-            return await v.getDiffBlocks(fromValue[i])
+          if (!v.cid.equals(previousValue[i].cid)) {
+            return await v.getDiffBlocks(previousValue[i])
           }
         })
         const valueBlocks = await Promise.all(awaits)

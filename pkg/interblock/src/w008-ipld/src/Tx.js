@@ -81,14 +81,9 @@ export class Tx extends IpldStruct {
   }
   txReducerReply(reply) {
     let reducer = this.reducer.txReply(reply)
-    if (this.isLoopback()) {
-      // TODO move to the loopback object
-      // modify the requests start
-      reducer = reducer.shiftRequestsStart()
-    }
     return this.setMap({ reducer })
   }
-  shiftReducerReplies() {
+  shiftReducerReply() {
     assert(this.isLoopback())
     const reducer = this.reducer.shiftRepliesStart()
     return this.setMap({ reducer })

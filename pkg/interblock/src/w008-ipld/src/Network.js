@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
 import {
+  Io,
   RxRequest,
   RxReply,
   Channel,
@@ -12,12 +13,12 @@ import {
   AddressesHamt,
   Request,
   Reply,
+  Loopback,
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
 const debug = Debug('interblock:ipld:Network')
 const FIXED = { PARENT: 0, LOOPBACK: 1, IO: 2 }
-
 /**
 type Network struct {
     parent optional Channel
@@ -40,6 +41,7 @@ type Network struct {
 }
  */
 export class Network extends IpldStruct {
+  static FIXED_IDS = FIXED
   static classMap = {
     channels: Channels,
     addresses: AddressesHamt,
@@ -84,6 +86,40 @@ export class Network extends IpldStruct {
     const channels = await this.channels.updateChannel(FIXED.PARENT, parent)
     return this.setMap({ channels })
   }
+  async getLoopback() {
+    if (await this.channels.has(FIXED.LOOPBACK)) {
+      const loopback = await this.channels.getChannel(FIXED.LOOPBACK)
+      if (loopback) {
+        if (loopback instanceof Loopback) {
+          return loopback
+        }
+        return Loopback.clone(loopback)
+      }
+    }
+    return Loopback.create()
+  }
+  async getIo() {
+    if (await this.channels.has(FIXED.IO)) {
+      const io = await this.channels.getChannel(FIXED.IO)
+      if (io) {
+        if (io instanceof Io) {
+          return io
+        }
+        return Io.clone(io)
+      }
+    }
+  }
+  async updateLoopback(loopback) {
+    assert(loopback instanceof Loopback)
+    const channels = await this.channels.updateChannel(FIXED.LOOPBACK, parent)
+    return this.setMap({ channels })
+  }
+  async updateIo(io) {
+    assert(io instanceof Io)
+    const channels = await this.channels.updateChannel(FIXED.IO, parent)
+    return this.setMap({ channels })
+  }
+
   async addUplink(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
@@ -109,7 +145,7 @@ export class Network extends IpldStruct {
     assert(path)
     assert(address instanceof Address)
     assert(address.isRemote())
-    assert(this.isForeign(path))
+    assert(this.#isForeign(path))
     if (await this.downlinks.has(path)) {
       const channelId = await this.downlinks.get(path)
       let channel = await this.channels.getChannel(channelId)
@@ -145,7 +181,7 @@ export class Network extends IpldStruct {
     // if local, check children, then sym, then hard
     let channelId
     let { channels, downlinks } = this
-    if (this.isForeign(path)) {
+    if (this.#isForeign(path)) {
       if (await this.downlinks.has(path)) {
         channelId = await this.downlinks.get(path)
       } else {
@@ -181,11 +217,11 @@ export class Network extends IpldStruct {
   // there are limits on what the next channel can contain if one exists already
   async updateChannel(alias, channel) {
     // use any alias to get a channelId out
-    assert(channel instanceof Channel)
     assert(typeof alias === 'string')
     assert(alias)
     assert(alias !== '.')
     assert(alias !== '..')
+    assert(channel instanceof Channel, `Not channel`)
 
     const { channelId } = await this.aliases.get(alias) // throws if not present
     const channels = this.channels.set(channelId, channel)
@@ -197,61 +233,6 @@ export class Network extends IpldStruct {
     // updates the channel with the aliases
   }
   addChannel(alias, channel, systemRole = './') {}
-
-  async setChannel(alias, channel, systemRole = './') {
-    assert.strictEqual(typeof alias, 'string')
-    assert(alias)
-    assert(channel instanceof Channel, `must supply Channel`)
-    assert.strictEqual(typeof systemRole, 'string')
-    debug(`setChannel`, alias, channel, systemRole)
-    const { address } = channel.tx
-    if (alias === '.') {
-      assert(address.isLoopback())
-      assert.strictEqual(systemRole, '.')
-      assert(this.loopback.isNext(channel))
-      return this.set('loopback', channel)
-    }
-    if (alias === '..') {
-      assert.strictEqual(systemRole, '..')
-      assert(this.parent.isNext(channel))
-      return this.set('parent', channel)
-    }
-    if (alias === '.@@io') {
-      assert.strictEqual(systemRole, 'PIERCE')
-      assert(!this.io || this.io.isNext(channel))
-      return this.set('io', channel)
-    }
-    assert(!address.isRoot())
-    assert(!address.isLoopback())
-
-    if (await this.hasByAlias(alias)) {
-      const previous = await this.getByAlias(alias)
-      assert(previous.isNext(channel))
-    }
-
-    // update to reflect a resolved address
-    if (address.isRemote()) {
-      // then we need to store the address in the alias map
-    }
-
-    if (alias !== address && !channel.hasAlias(alias)) {
-      channel = channel.setAlias(alias)
-    }
-
-    let { channels, aliases, counter } = this
-    const ref = await aliases.has(address)
-    if (ref) {
-      // means we have a channelId already
-      if (ref.systemRole !== systemRole) {
-        aliases = aliases.set(alias, { ...ref, systemRole })
-      }
-    } else {
-      const channelId = counter++
-      channels = channels.set(channelId, channel)
-    }
-
-    return Network.clone({ ...this, counter, channels, aliases })
-  }
   async getByAlias(alias) {
     const { channelId } = await this.aliases.get(alias)
     assert(Number.isInteger(channelId))
@@ -284,40 +265,7 @@ export class Network extends IpldStruct {
     return await this.channels.getByAddress(address)
   }
 
-  getLoopback() {
-    return this.loopback
-  }
-  getIo() {
-    return this.io
-  }
-  getResponse(request) {
-    // TODO move to use channelIds
-    assert(request instanceof RxRequest)
-    const address = request.getAddress()
-    const channel = this.getByAddress(address)
-    const replyKey = request.getReplyKey()
-    if (!channel.replies.has(replyKey)) {
-      return
-    }
-    const reply = channel.replies.get(replyKey)
-    return reply
-  }
-  isInterblockAddable(interblock) {
-    assert(interblock instanceof Interblock)
-    const address = interblock.provenance.getAddress()
-    const channel = this.network.getByAddress(address)
-    if (!channel) {
-      return false
-    }
-    // TODO check against tip parameters fully
-    // TODO check turnovers
-    if (!Number.isInteger(channel.tipHeight)) {
-      return true
-    }
-    return channel.tipHeight < interblock.provenance.height
-  }
-
-  isForeign(path) {
+  #isForeign(path) {
     assert(typeof path === 'string')
     assert(path)
     if (path.startsWith('.')) {
@@ -354,7 +302,7 @@ export class Network extends IpldStruct {
   }
   async rxSystemRequest() {
     for await (const [channelId, channel] of this.channels.rxChannels()) {
-      const rxRequest = channel.rx.rxSystemRequest(channelId)
+      const rxRequest = channel.rxSystemRequest(channelId)
       if (rxRequest) {
         return rxRequest
       }
@@ -362,14 +310,28 @@ export class Network extends IpldStruct {
   }
   async rxSystemReply() {
     for await (const [channelId, channel] of this.channels.rxChannels()) {
-      const rxReply = channel.rx.rxSystemReply(channelId)
+      const rxReply = channel.rxSystemReply(channelId)
       if (rxReply) {
         return rxReply
       }
     }
   }
-  async rxReducerRequest() {}
-  async rxReducerReply() {}
+  async rxReducerRequest() {
+    for await (const [channelId, channel] of this.channels.rxChannels()) {
+      const rxRequest = channel.rxReducerRequest(channelId)
+      if (rxRequest) {
+        return rxRequest
+      }
+    }
+  }
+  async rxReducerReply() {
+    for await (const [channelId, channel] of this.channels.rxChannels()) {
+      const rxReply = channel.rxReducerReply(channelId)
+      if (rxReply) {
+        return rxReply
+      }
+    }
+  }
 
   // fundamentally, once you pass the request to us, we'll never give it back again
   async txSystemReply(reply = Reply.create()) {
@@ -388,6 +350,25 @@ export class Network extends IpldStruct {
     const { channelId } = rxReply
     let channel = await this.channels.getChannel(channelId)
     channel = channel.shiftSystemReply()
+    const channels = await this.channels.updateChannel(channelId, channel)
+    return this.setMap({ channels })
+  }
+  async txReducerReply(reply = Reply.create()) {
+    // by default, this resolves the current request
+    const rxRequest = await this.rxReducerRequest()
+    assert(rxRequest instanceof RxRequest)
+    const { channelId } = rxRequest
+    let channel = await this.channels.getChannel(channelId)
+    channel = channel.txReducerReply(reply)
+    const channels = await this.channels.updateChannel(channelId, channel)
+    return this.setMap({ channels })
+  }
+  async shiftReducerReply() {
+    const rxReply = await this.rxReducerReply()
+    assert(rxReply instanceof RxReply)
+    const { channelId } = rxReply
+    let channel = await this.channels.getChannel(channelId)
+    channel = channel.shiftReducerReply()
     const channels = await this.channels.updateChannel(channelId, channel)
     return this.setMap({ channels })
   }

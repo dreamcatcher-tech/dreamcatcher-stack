@@ -374,6 +374,8 @@ of the state machine that processes all the actions.
 
 Channel stores rx and tx only after all the activity has been wrung out of them.
 
+Channel has functions to transmit actions, because it needs to update both tx and rx to shift the next reply to be processed. In contrast, receiving actions is done by calling the rx slice directly, as no modifications occur.
+
 ```sh
 type Channel struct {
     address Address                 # The remote chainId
@@ -381,6 +383,15 @@ type Channel struct {
     rx Rx
     aliases [String]                # reverse lookup
 }
+```
+
+## Loopback
+
+Subclass of Channel that reverses Tx around on itself.
+Loopback is never counted as transmitting, but if it has activity on its Tx slice, it is counted as receiving
+
+```sh
+type Loopback = Channel
 ```
 
 ## Network
