@@ -1,14 +1,7 @@
 import assert from 'assert-fast'
 import { Network, Channel, Address, Rx, Tx, RxRequest, RxReply } from '.'
 
-/**
- *
- * ids have to match, just like every other channel
- *    but we can skip ahead and be permitted to join tip
- * later, can make an efficient loopback, but now we just rehash when it changes
- */
 export class Loopback extends Channel {
-  // flip the channel around so it can receive
   static create() {
     const address = Address.createLoopback()
     const rx = Rx.create()

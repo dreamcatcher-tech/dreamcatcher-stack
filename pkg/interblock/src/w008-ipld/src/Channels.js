@@ -105,7 +105,7 @@ export class Channels extends IpldStruct {
     assert(channelId >= 0)
     assert(channel instanceof Channel)
     let { rxs, txs } = this
-    if (!channel.rx.isEmpty()) {
+    if (!channel.rxIsEmpty()) {
       if (!rxs.includes(channelId)) {
         rxs = [...rxs, channelId]
       }
@@ -122,6 +122,10 @@ export class Channels extends IpldStruct {
       if (txs.includes(channelId)) {
         txs = txs.filter((id) => id !== channelId)
       }
+    }
+    if (rxs !== this.rxs) {
+      // ensure loopback, parent, and io come before others
+      rxs.sort((a, b) => a - b)
     }
     return this.setMap({ rxs, txs })
   }
@@ -156,7 +160,7 @@ export class Channels extends IpldStruct {
   async *rxChannels() {
     for (const channelId of this.rxs) {
       const channel = await this.getChannel(channelId)
-      assert(!channel.rx.isEmpty())
+      assert(!channel.rxIsEmpty())
       yield [channelId, channel]
     }
   }

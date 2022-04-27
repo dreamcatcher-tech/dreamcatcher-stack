@@ -127,8 +127,13 @@ export class Channel extends IpldStruct {
   rxSystemReply() {
     throw new Error('not implemented')
   }
-  rxReducerRequest() {}
+  rxReducerRequest() {
+    throw new Error('not implemented')
+  }
   rxReducerReply() {
     throw new Error('not implemented')
+  }
+  rxIsEmpty() {
+    return this.rx.isEmpty()
   }
 }

@@ -108,6 +108,7 @@
     "autoDetect": true,
     "tests": [
       "**/w008-ipld/**/*.test.js",
+      "**/w210-engine/**/*.test.js",
       "!package.test.js"
     ],
     "env": {

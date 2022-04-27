@@ -1,5 +1,13 @@
 import { IpldStruct } from './IpldStruct'
-import { Interpulse, Address, Provenance, PublicKey, Dmz, Network } from '.'
+import {
+  Config,
+  Interpulse,
+  Address,
+  Provenance,
+  PublicKey,
+  Dmz,
+  Network,
+} from '.'
 import assert from 'assert-fast'
 import { fromString as from } from 'uint8arrays/from-string'
 import { PulseLink } from './PulseLink'
@@ -11,16 +19,17 @@ import { PulseLink } from './PulseLink'
  */
 export class Pulse extends IpldStruct {
   static classMap = { provenance: Provenance }
-  static async createCI() {
+  static async createRoot(CI = false) {
     const network = await Network.createRoot()
-    const dmz = Dmz.create({ network })
+    const config = Config.createPierced()
+    const dmz = Dmz.create({ network, config }, CI)
     const provenance = Provenance.createGenesis(dmz)
-    return await Pulse.create(provenance).crush()
+    return await Pulse.create(provenance)
   }
-  static create(provenance) {
+  static async create(provenance) {
     assert(provenance instanceof Provenance)
     const instance = super.clone({ provenance, signatures: [] })
-    return instance
+    return await instance.crush()
   }
   isGenesis() {
     return this.provenance.address.isGenesis()
@@ -61,6 +70,7 @@ export class Pulse extends IpldStruct {
     return signatureCount >= this.provenance.validators.quorumThreshold
   }
   async generateGenesisSoftPulse(parent) {
+    // TODO merge with generateSoftPulse( parent )
     assert(!this.isModified())
     assert.strictEqual(this.currentCrush, this)
     assert(this.isGenesis())
@@ -82,23 +92,20 @@ export class Pulse extends IpldStruct {
       network = await network.resolveParent(parentAddress)
       next = next.setMap({ provenance: { dmz: { network } } })
     }
-    let provenance = next.provenance.setLineage(this)
-    if (next.transmissions) {
-      provenance = next.provenance.delete('transmissions')
-    }
-    const precedent = this.getPulseLink()
-    const channels = await provenance.dmz.network.channels.blankTxs(precedent)
-    provenance = provenance.setMap({ dmz: { network: { channels } } })
-    return next.setMap({ provenance })
+    return await next.generateSoftPulse()
   }
 
   async generateSoftPulse() {
     assert(!this.isModified())
     assert.strictEqual(this.currentCrush, this)
-    assert(!this.isGenesis())
-    // blank the parent transmissions
     let next = this
-    let provenance = next.provenance.setLineage(next)
+    if (this.isGenesis()) {
+      assert(await this.isRoot())
+      const address = Address.generate(this)
+      next = next.setMap({ provenance: { address } })
+    }
+    // blank the parent transmissions
+    let provenance = next.provenance.setLineage(this)
     if (provenance.transmissions) {
       provenance = provenance.delete('transmissions')
     } else {

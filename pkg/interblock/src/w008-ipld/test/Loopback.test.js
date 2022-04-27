@@ -5,7 +5,7 @@ const debug = Debug('interblock:tests:Channel')
 Debug.enable()
 
 describe('loopback', () => {
-  test.only('basic', async () => {
+  test('basic', async () => {
     let loopback = Loopback.create()
     loopback = await loopback.crush()
     const ping = Request.create('PING')

@@ -19,6 +19,10 @@ type Config struct {
 }
  */
 export class Config extends IpldStruct {
+  static createPierced() {
+    const instance = Config.create()
+    return instance.setMap({ isPierced: true })
+  }
   static create(opts = {}) {
     const sideEffects = { networkPatterns: [''], asyncTimeoutMs: 0 }
     opts = { ...opts, sideEffects: { ...sideEffects, ...opts.sideEffects } }

@@ -13,25 +13,22 @@ import {
 } from '.'
 import { IpldStruct } from './IpldStruct'
 
+const ciTimestamp = Timestamp.createCI()
 let defaultParams
-const getDefaultParams = () => {
+const getDefaultParams = (CI = false) => {
   if (!defaultParams) {
     defaultParams = {
       config: Config.create(),
-      timestamp: Timestamp.create(),
       network: Network.create(),
       state: State.create(),
       meta: Meta.create(),
     }
   }
-  if (ciTimestamp) {
+  if (CI) {
     return { ...defaultParams, timestamp: ciTimestamp }
+  } else {
+    return { ...defaultParams, timestamp: Timestamp.create() }
   }
-  return defaultParams
-}
-let ciTimestamp
-export const setCiTimestamp = () => {
-  ciTimestamp = Timestamp.createCI()
 }
 export class Dmz extends IpldStruct {
   static classMap = {
@@ -44,10 +41,10 @@ export class Dmz extends IpldStruct {
     approot: PulseLink,
     binary: Binary,
   }
-  static create(params = {}) {
+  static create(params = {}, CI = false) {
     assert.strictEqual(typeof params, 'object')
     params = { ...params }
-    const defaultParams = getDefaultParams()
+    const defaultParams = getDefaultParams(CI)
     for (const key in params) {
       assert(this.classMap[key], `key ${key} not mapped to CID class`)
       const isInstanceOf = params[key] instanceof this.classMap[key]
@@ -77,7 +74,7 @@ export class Dmz extends IpldStruct {
 
     const dmz = Dmz.create({ ...params, timestamp })
     const provenance = Provenance.createGenesis(dmz)
-    const genesis = await Pulse.create(provenance).crush()
+    const genesis = await Pulse.create(provenance)
     const address = genesis.getAddress()
     const network = await this.network.txGenesis(path, address, params)
     return this.setMap({ network })

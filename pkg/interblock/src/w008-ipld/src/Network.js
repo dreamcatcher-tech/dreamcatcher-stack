@@ -18,7 +18,8 @@ import {
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
 const debug = Debug('interblock:ipld:Network')
-const FIXED = { PARENT: 0, LOOPBACK: 1, IO: 2 }
+// values are significant in that they dictate order of exhaustion
+const FIXED = { LOOPBACK: 0, PARENT: 1, IO: 2 }
 /**
 type Network struct {
     parent optional Channel
@@ -108,15 +109,16 @@ export class Network extends IpldStruct {
         return Io.clone(io)
       }
     }
+    return Io.create()
   }
   async updateLoopback(loopback) {
     assert(loopback instanceof Loopback)
-    const channels = await this.channels.updateChannel(FIXED.LOOPBACK, parent)
+    const channels = await this.channels.updateChannel(FIXED.LOOPBACK, loopback)
     return this.setMap({ channels })
   }
   async updateIo(io) {
     assert(io instanceof Io)
-    const channels = await this.channels.updateChannel(FIXED.IO, parent)
+    const channels = await this.channels.updateChannel(FIXED.IO, io)
     return this.setMap({ channels })
   }
 

@@ -1,14 +1,30 @@
+import { jest } from '@jest/globals'
 import { assert } from 'chai/index.mjs'
-describe('engine', () => {
-  test('basic', async () => {
-    const opts = {}
-    const engine = await Engine.create(opts)
-    // gives use a root chain, which is pierced
-    // dispatch, so actions can be put in
-    // and an interface that we can perform functions on the chain complex with
+import { Engine } from '..'
+import { Request } from '../../w008-ipld'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:engine')
+Debug.enable('*engine')
 
-    // ? how does engine subscribe to new blocks ?
-    // subscribe to the thing that announces to the dht that a new chain is made ?
-    //    when receives new chain, it fetches the Pulse, and checks for responses ?
+describe('engine', () => {
+  jest.setTimeout(300)
+  test.only('basic', async () => {
+    const opts = { CI: true }
+    const engine = await Engine.create(opts)
+    debug(engine.address)
+    expect(engine.address.toString()).toMatchSnapshot()
+
+    const request = Request.create('PING')
+    const response = await engine.pierce(request)
+    assert.deepEqual(response, {})
+
+    // get latest pulselink
+    // recover the Pulse from the PulseLink
+    // test assertions against the pulse
+    const pulselink = await engine.mutable.getLatest(engine.address)
   })
+  test('override covenants', async () => {
+    // engine with overridden custom covenant
+  })
+  test('reject pierce', async () => {})
 })

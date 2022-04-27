@@ -122,7 +122,10 @@ export class Address extends IpldInterface {
     return this.#cid
   }
   [Symbol.for('nodejs.util.inspect.custom')]() {
-    return this.cid
+    return this.toString()
+  }
+  toString() {
+    return `Address(${this.cid.toString().substring(0, 14)})`
   }
   crush() {
     const instance = new Address()

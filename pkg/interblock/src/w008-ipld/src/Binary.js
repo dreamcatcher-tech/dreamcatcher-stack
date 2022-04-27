@@ -38,7 +38,10 @@ export class Binary extends IpldInterface {
     return this.#ipldBlock
   }
   [Symbol.for('nodejs.util.inspect.custom')]() {
-    return this.cid
+    return this.toString()
+  }
+  toString() {
+    return `Binary(${this.cid.toString().substring(0, 14)})`
   }
   crush() {
     return this

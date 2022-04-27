@@ -13,6 +13,17 @@ import {
 } from '..'
 import { setCiTimestamp } from '../src/Dmz'
 
+let previousLabel
+const timer = (label) => {
+  if (previousLabel) {
+    console.timeEnd(previousLabel)
+  }
+  if (label) {
+    console.time(label)
+  }
+  previousLabel = label
+}
+
 describe('Pulse', () => {
   setCiTimestamp()
   test('basic', async () => {
@@ -22,25 +33,34 @@ describe('Pulse', () => {
     expect(address.cid).toMatchSnapshot()
   })
   test('birth child', async () => {
+    timer('create CI')
     let parent = await Pulse.createCI()
+    timer('recrush')
     parent = await parent.crush()
+    timer()
     const config = { entropy: { seed: 'test' } }
     let { dmz } = parent.provenance
     dmz = await dmz.addChild('child1', { config })
+    timer('softpulse')
     parent = await parent.generateGenesisSoftPulse()
     parent = parent.setMap({ provenance: { dmz } })
-
+    timer('crush')
     // when we modify it, it should point the provenance at the previous
     parent = await parent.crush()
+    timer()
     assert.throws(() => Address.generate(parent), 'must be genesis')
+    timer('keypair')
     const keypair = Keypair.createCI()
+    timer('sign')
     let signature = await keypair.sign(parent.provenance)
+    timer('add sig')
 
     assert(!parent.isVerified())
     parent = parent.addSignature(keypair.publicKey, signature)
     assert(!parent.isVerified())
     parent = await parent.crush()
     assert(parent.isVerified())
+    timer()
 
     // generate a genesis pulse using the params in the action
     const { channels } = parent.provenance.dmz.network

@@ -97,6 +97,7 @@ const ramIsolate = (ioConsistency, preloadedCovenants = {}) => {
       // used to allow hardware access during blocktime
       // but more commonly to allow effects to have access to network
       // TODO allow this to be set per effect
+      // TODO read this from the block config
     },
     executeEffect: async ({ containerId, effectId, timeout }) => {
       // executes and awaits the result of a previously returned promise

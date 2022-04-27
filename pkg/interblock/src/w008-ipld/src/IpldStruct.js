@@ -97,7 +97,6 @@ export class IpldStruct extends IpldInterface {
     crushed.#crushed = crushed
     crushed.#previous = this.#crushed
     IpldInterface.deepFreeze(crushed.#ipldBlock)
-    crushed.deepFreeze()
     return crushed
   }
   async getDiffBlocks() {

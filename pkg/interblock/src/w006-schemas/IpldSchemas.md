@@ -464,6 +464,8 @@ A `StateTreeNode` is used to provide an overlay tree to separate the covenant de
 
 The only Pulse that does not have a transmissions slice is the genesis Pulse.
 
+WARNING state tree needs to use a HAMT for size
+
 ```sh
 type StateTreeNode struct {
     state &State

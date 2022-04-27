@@ -111,7 +111,7 @@ export class Tx extends IpldStruct {
 
     const dmz = Dmz.create({ ...params, timestamp })
     const genesis = Provenance.createGenesis(dmz, validators)
-    return await Pulse.create(genesis).crush()
+    return await Pulse.create(genesis)
   }
   blank(precedent) {
     assert(precedent instanceof PulseLink)
