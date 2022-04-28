@@ -1,11 +1,9 @@
 import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
 import { Request, Pulse, Network, Channel, Address } from '..'
-import { fromString } from '../src/Address'
-import * as utils from '../src/IpldUtils'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
-Debug.enable('*ipld:Network')
+Debug.enable('*network')
 chai.use(chaiAsPromised)
 
 describe('network', () => {
@@ -20,13 +18,6 @@ describe('network', () => {
     assert(loopback.address.isLoopback())
     assert.strictEqual(network.channels.counter, 3)
   })
-  test('cannot delete parent or self', async () => {
-    const network = Network.create()
-    await assert.isRejected(network.delete('..'), 'Cannot delete parent')
-    await assert.isRejected(network.delete('.'), 'Cannot delete loopback')
-    await assert.isRejected(network.delete('else'), 'key not present')
-    await assert.isRejected(network.delete(4), 'Alias must be a string')
-  })
   test('parent is unknown by default', async () => {
     const network = Network.create()
     const parent = await network.getParent()
@@ -35,9 +26,9 @@ describe('network', () => {
   })
   test('can only set Channel instances', async () => {
     const network = Network.create()
-    await assert.isRejected(network.updateChannel('else', 't'), 'Not channel')
-    const o = { key: 'value' }
-    await assert.isRejected(network.updateChannel('e', o), 'Not channel')
+    await assert.isRejected(network.updateChannel('a string'), 'Not channel')
+    const object = { key: 'value' }
+    await assert.isRejected(network.updateChannel(object), 'Alias not string')
   })
   test('transmit to downlink', async () => {
     let network = Network.create()
@@ -62,35 +53,27 @@ describe('network', () => {
   })
   test('open uplink', async () => {
     let network = Network.create()
-    const upAddress = fromString('test uplink')
+    const upAddress = Address.createCI('test uplink')
     network = await network.addUplink(upAddress)
     const uplink = await network.getUplink(upAddress)
     assert(uplink instanceof Channel)
     assert.strictEqual(uplink.getAddress(), upAddress)
-  })
-  test('create child', async () => {
-    let network = Network.create()
-    network = await network.addChild('child1')
-
-    // TODO
   })
   test.todo('transmit to child')
   test.todo('same channel results in same channelId')
   test.todo('diffs only give difference to previous crush')
   test('large network', async () => {
     let network = Network.create()
-    let channel = Channel.create()
     const count = 20
     let start = Date.now()
     for (let i = 0; i < count; i++) {
-      const alias = `alias${i}`
-      const address = Address.createGenesis()
-      channel = Channel.create(address)
-      network = await network.addChannel(alias, channel)
+      const alias = `/foreign/path/alias${i}`
+      const address = Address.createCI(alias)
+      network = await network.addDownlink(alias, address)
     }
     debug(`time to %o: %o ms`, count, Date.now() - start)
     start = Date.now()
-    network = await network.addChannel('addOne', channel)
+    network = await network.addDownlink('addOne', Address.createCI('addOne'))
     debug(`add one time %o ms`, Date.now() - start)
     start = Date.now()
     network = await network.crush()
@@ -99,7 +82,7 @@ describe('network', () => {
     const diffs1 = await network.getDiffBlocks()
     debug(`diffs: %o ms length: %o`, Date.now() - start, diffs1.size)
     start = Date.now()
-    network = await network.addChannel('addTwo', channel)
+    network = await network.addDownlink('addTwo', Address.createCI('addTwo'))
     network = await network.crush()
     debug(`crush second time: %o ms %o`, Date.now() - start, network.cid)
     start = Date.now()

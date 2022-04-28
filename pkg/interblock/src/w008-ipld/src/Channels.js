@@ -55,7 +55,9 @@ export class Channels extends IpldStruct {
   }
   async getChannel(channelId) {
     await this.#assertChannelIdValid(channelId)
-    return await this.list.get(channelId)
+    const channel = await this.list.get(channelId)
+    assert.strictEqual(channelId, channel.channelId)
+    return channel
   }
   async #assertChannelIdValid(channelId) {
     assert(Number.isInteger(channelId))
@@ -71,6 +73,7 @@ export class Channels extends IpldStruct {
     assert(this.counter >= FIXED_CHANNEL_COUNT)
     let { counter, addresses } = this
     const channelId = counter++
+    assert.strictEqual(channelId, channel.channelId)
     const list = await this.list.set(channelId, channel)
     if (channel.isRemote()) {
       const address = channel.getAddress()
@@ -79,9 +82,9 @@ export class Channels extends IpldStruct {
     const next = this.setMap({ counter, list, addresses })
     return next.updateActives(channelId, channel)
   }
-  async updateChannel(channelId, channel) {
+  async updateChannel(channel) {
+    const { channelId } = channel
     await this.#assertChannelIdValid(channelId)
-
     let previous
     const isPrevious = await this.list.has(channelId)
     if (channelId >= FIXED_CHANNEL_COUNT || isPrevious) {
@@ -152,16 +155,15 @@ export class Channels extends IpldStruct {
     assert(interpulse instanceof Interpulse)
     const { source } = interpulse
     assert(await this.hasAddress(source), `No address: ${source.cid}`)
-    const channelId = await this.addresses.get(source)
     let channel = await this.getByAddress(source)
     channel = channel.ingestInterpulse(interpulse)
-    return await this.updateChannel(channelId, channel)
+    return await this.updateChannel(channel)
   }
   async *rxChannels() {
     for (const channelId of this.rxs) {
       const channel = await this.getChannel(channelId)
       assert(!channel.rxIsEmpty())
-      yield [channelId, channel]
+      yield channel
     }
   }
 }

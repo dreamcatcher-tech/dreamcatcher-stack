@@ -19,6 +19,10 @@ import { PulseLink } from './PulseLink'
  */
 export class Pulse extends IpldStruct {
   static classMap = { provenance: Provenance }
+  static async createCI() {
+    const CI = true
+    return Pulse.createRoot(CI)
+  }
   static async createRoot(CI = false) {
     const network = await Network.createRoot()
     const config = Config.createPierced()
@@ -69,40 +73,29 @@ export class Pulse extends IpldStruct {
     const signatureCount = this.signatures.filter((s) => !!s).length
     return signatureCount >= this.provenance.validators.quorumThreshold
   }
-  async generateGenesisSoftPulse(parent) {
-    // TODO merge with generateSoftPulse( parent )
-    assert(!this.isModified())
-    assert.strictEqual(this.currentCrush, this)
-    assert(this.isGenesis())
-    assert(!this.provenance.transmissions)
-    const isRoot = await this.isRoot()
-    // blank the parent transmissions
-    let next = this
-    // if this is the second pulse in the train, set the address
-    const address = Address.generate(this)
-    next = next.setMap({ provenance: { address } })
-    if (isRoot) {
-      assert.strictEqual(parent, undefined)
-    } else {
-      assert(parent instanceof Pulse)
-      assert(!parent.isGenesis())
-      const parentAddress = parent.getAddress()
-      assert(parentAddress.isRemote())
-      let { network } = next.provenance.dmz
-      network = await network.resolveParent(parentAddress)
-      next = next.setMap({ provenance: { dmz: { network } } })
-    }
-    return await next.generateSoftPulse()
-  }
 
-  async generateSoftPulse() {
+  async generateSoftPulse(parent) {
     assert(!this.isModified())
     assert.strictEqual(this.currentCrush, this)
     let next = this
     if (this.isGenesis()) {
-      assert(await this.isRoot())
+      assert(!this.provenance.transmissions)
+      // set our own address
       const address = Address.generate(this)
       next = next.setMap({ provenance: { address } })
+      const isRoot = await this.isRoot()
+      if (isRoot) {
+        assert.strictEqual(parent, undefined)
+      } else {
+        // must set parent as part of next pulse creation
+        assert(parent instanceof Pulse)
+        assert(!parent.isGenesis())
+        const parentAddress = parent.getAddress()
+        assert(parentAddress.isRemote())
+        let { network } = next.provenance.dmz
+        network = await network.resolveParent(parentAddress)
+        next = next.setMap({ provenance: { dmz: { network } } })
+      }
     }
     // blank the parent transmissions
     let provenance = next.provenance.setLineage(this)

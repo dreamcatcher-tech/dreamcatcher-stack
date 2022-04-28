@@ -31,6 +31,15 @@ const getDefaultParams = (CI = false) => {
   }
 }
 export class Dmz extends IpldStruct {
+  static cidLinks = [
+    'config',
+    'network',
+    'state',
+    'meta',
+    'pending',
+    'approot',
+    'binary',
+  ]
   static classMap = {
     config: Config,
     timestamp: Timestamp,

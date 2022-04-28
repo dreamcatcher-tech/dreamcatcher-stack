@@ -110,26 +110,29 @@ export class IpldStruct extends IpldInterface {
     blocks.set(this.ipldBlock.cid.toString(), this.ipldBlock)
     for (const key in this) {
       const thisValue = this[key]
-      const previousValue = previous && previous[key]
+      const prevValue = previous && previous[key]
       if (this.isCidLink(key)) {
-        assert(
-          previousValue === undefined || previousValue instanceof IpldInterface
-        )
-        if (!previousValue || !thisValue.cid.equals(previousValue.cid)) {
-          const valueBlocks = await thisValue.getDiffBlocks(previousValue)
-          merge(blocks, valueBlocks)
+        if (Array.isArray(thisValue)) {
+          // what if the array is an ipldstruct type, included in classMap ?
+          // what if it is plain primitive values ?
+          // what if I wanted an array of ipld, but not crush ?
+          const awaits = thisValue.map(async (v, i) => {
+            if (!prevValue || !prevValue[i]) {
+              return await v.getDiffBlocks()
+            }
+            if (!v.cid.equals(prevValue[i].cid)) {
+              return await v.getDiffBlocks(prevValue[i])
+            }
+          })
+          const valueBlocks = await Promise.all(awaits)
+          valueBlocks.forEach((map) => merge(blocks, map))
+        } else {
+          assert(prevValue === undefined || prevValue instanceof IpldInterface)
+          if (!prevValue || !thisValue.cid.equals(prevValue.cid)) {
+            const valueBlocks = await thisValue.getDiffBlocks(prevValue)
+            merge(blocks, valueBlocks)
+          }
         }
-      } else if (Array.isArray(thisValue)) {
-        const awaits = thisValue.map(async (v, i) => {
-          if (!previousValue || !previousValue[i]) {
-            return await v.getDiffBlocks()
-          }
-          if (!v.cid.equals(previousValue[i].cid)) {
-            return await v.getDiffBlocks(previousValue[i])
-          }
-        })
-        const valueBlocks = await Promise.all(awaits)
-        valueBlocks.forEach((map) => merge(blocks, map))
       }
     }
     return blocks

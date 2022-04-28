@@ -1,7 +1,8 @@
 import assert from 'assert-fast'
-import { Reply, Address, Rx, Tx, Request, Interpulse } from '.'
+import { Network, Reply, Address, Rx, Tx, Request, Interpulse } from '.'
 import Debug from 'debug'
 import { IpldStruct } from './IpldStruct'
+import { RxRequest } from './RxRequest'
 const debug = Debug('interblock:models:channel')
 
 /**
@@ -37,15 +38,18 @@ type Channel struct {
 export class Channel extends IpldStruct {
   static cidLinks = ['tx']
   static classMap = { tx: Tx, rx: Rx }
-  static create(address = Address.createUnknown()) {
+  static create(channelId, address = Address.createUnknown()) {
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
     assert(address instanceof Address)
+
     const rx = Rx.create()
     const tx = Tx.create()
-    return super.clone({ address, rx, tx, aliases: [] })
+    return super.clone({ address, rx, tx, aliases: [], channelId })
   }
   static createRoot() {
     const root = Address.createRoot()
-    return Channel.create(root)
+    return Channel.create(Network.FIXED_IDS.PARENT, root)
   }
   resolve(address) {
     assert(address instanceof Address)
@@ -63,7 +67,7 @@ export class Channel extends IpldStruct {
     return this.address
   }
   assertLogic() {
-    const { rx, tx, address, aliases } = this
+    const { rx, tx, address, aliases, channelId } = this
     if (this.isUnknown()) {
       assert(rx.isEmpty(), 'Replies to Unknown are impossible')
       assert(!rx.tip)
@@ -77,6 +81,9 @@ export class Channel extends IpldStruct {
       const systemRequests = tx.system.requests
       assert(systemRequests.every(({ type }) => !banned.includes(type)))
       assert(!aliases.length)
+    }
+    if (address.isRoot()) {
+      assert.strictEqual(channelId, Network.FIXED_IDS.PARENT, 'Root not parent')
     }
   }
   isNext(channel) {
@@ -122,7 +129,14 @@ export class Channel extends IpldStruct {
     return this.setMap({ rx })
   }
   rxSystemRequest() {
-    throw new Error('not implemented')
+    const request = this.rx.system.rxRequest()
+    if (request) {
+      assert(request instanceof Request)
+      const { channelId } = this
+      const index = this.rx.system.getIndex()
+      const stream = 'system'
+      return RxRequest.create(request, channelId, stream, index)
+    }
   }
   rxSystemReply() {
     throw new Error('not implemented')

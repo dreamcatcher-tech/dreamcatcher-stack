@@ -1,15 +1,14 @@
 import assert from 'assert-fast'
-import dagPB, { prepare } from '@ipld/dag-pb'
+import { encode, prepare } from '@ipld/dag-pb'
 import { CID } from 'multiformats/cid'
 import { Block } from 'multiformats/block'
 import { IpldInterface } from './IpldInterface'
 import { sha256 } from 'multiformats/hashes/sha2'
 import { Pulse } from '.'
-import * as utils from './IpldUtils'
 
 export const cidV0FromString = (string) => {
   assert.strictEqual(typeof string, 'string')
-  const bytes = dagPB.encode(prepare(string))
+  const bytes = encode(prepare(string))
   const hash = sha256.digest(bytes)
   const cid = CID.createV0(hash)
   return cid
@@ -20,7 +19,8 @@ export const generateConstantCids = () => {
   const LOOPBACK = cidV0FromString('LOOPBACK')
   const INVALID = cidV0FromString('INVALID')
   const GENESIS = cidV0FromString('GENESIS')
-  console.log({ UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS })
+  const IO = cidV0FromString('IO')
+  console.log({ UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS, IO })
 }
 // generateConstantCids()
 
@@ -29,34 +29,34 @@ const ROOT = CID.parse('QmSawJHmTNpaUjDYWCE9RgoHTpKbi6JD7TuGESFbtZ4ZLc')
 const LOOPBACK = CID.parse('Qme2gGBx8EnSrXc5shQF867KPQd4jwubNov67KEKZbo4p3')
 const INVALID = CID.parse('QmYSWwmJ4w1pZ6igGRNKcVHpBU68iaumYEjsdbMpxfAQaj')
 const GENESIS = CID.parse('QmZTKF2kuFHy8isKWXpNeNa5zjeJwsHUbPbTNF1fS8HkpB')
-const defines = [UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS]
+const IO = CID.parse('QmapFBxqMFEFxSqGE45yVYKid471NoegxSriH1GpCMfUa6')
+const defines = [UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS, IO]
 
 const addressBlock = (cidV1) => {
   assert(cidV1 instanceof CID)
   assert.strictEqual(cidV1.version, 1)
   const value = prepare({ Links: [cidV1] })
-  const bytes = dagPB.encode(value)
+  const bytes = encode(value)
   const hash = sha256.digest(bytes)
   const cid = CID.createV0(hash)
   assert.strictEqual(cid.version, 0)
   return new Block({ cid, bytes, value })
 }
 
-export const fromString = (string) => {
-  assert.strictEqual(typeof string, 'string')
-  assert(string)
-  const value = prepare({ Data: string })
-  const bytes = dagPB.encode(value)
-  const hash = sha256.digest(bytes)
-  const cid = CID.createV0(hash)
-  assert.strictEqual(cid.version, 0)
-  const block = new Block({ cid, bytes, value })
-  return Address.createFromBlock(block)
-}
-
 export class Address extends IpldInterface {
   #cid
   #ipldBlock
+  static createCI(string) {
+    assert.strictEqual(typeof string, 'string')
+    assert(string)
+    const value = prepare({ Data: string })
+    const bytes = encode(value)
+    const hash = sha256.digest(bytes)
+    const cid = CID.createV0(hash)
+    assert.strictEqual(cid.version, 0)
+    const block = new Block({ cid, bytes, value })
+    return Address.#createFromBlock(block)
+  }
   static createUnknown() {
     return this.#createPredefined(UNKNOWN)
   }
@@ -72,15 +72,18 @@ export class Address extends IpldInterface {
   static createGenesis() {
     return this.#createPredefined(GENESIS)
   }
+  static createIo() {
+    return this.#createPredefined(IO)
+  }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified(), `Pulse must be crushed already`)
     assert(pulse.isGenesis(), `Pulse must be genesis`)
     // TODO check the pulse is genesis
     const block = addressBlock(pulse.cid)
-    return this.createFromBlock(block)
+    return this.#createFromBlock(block)
   }
-  static createFromBlock(block) {
+  static #createFromBlock(block) {
     assert(block instanceof Block)
     const instance = new this()
     instance.#setCid(block.cid)
@@ -108,7 +111,7 @@ export class Address extends IpldInterface {
     }
     const block = await resolver(rootCid)
     assert(block instanceof Block)
-    const instance = this.createFromBlock(block)
+    const instance = this.#createFromBlock(block)
     instance.#ipldBlock = undefined
     return instance
   }

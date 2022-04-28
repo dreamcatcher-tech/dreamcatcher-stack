@@ -72,7 +72,7 @@ export class Network extends IpldStruct {
     if (await this.channels.has(FIXED.PARENT)) {
       return await this.channels.getChannel(FIXED.PARENT)
     }
-    return Channel.create()
+    return Channel.create(FIXED.PARENT)
   }
   async resolveParent(parentAddress) {
     assert(parentAddress instanceof Address)
@@ -84,7 +84,7 @@ export class Network extends IpldStruct {
   }
   async updateParent(parent) {
     assert(parent instanceof Channel)
-    const channels = await this.channels.updateChannel(FIXED.PARENT, parent)
+    const channels = await this.channels.updateChannel(parent)
     return this.setMap({ channels })
   }
   async getLoopback() {
@@ -113,23 +113,24 @@ export class Network extends IpldStruct {
   }
   async updateLoopback(loopback) {
     assert(loopback instanceof Loopback)
-    const channels = await this.channels.updateChannel(FIXED.LOOPBACK, loopback)
+    const channels = await this.channels.updateChannel(loopback)
     return this.setMap({ channels })
   }
   async updateIo(io) {
     assert(io instanceof Io)
-    const channels = await this.channels.updateChannel(FIXED.IO, io)
+    const channels = await this.channels.updateChannel(io)
     return this.setMap({ channels })
   }
 
+  // CHANNEL TYPES: Uplink, Downlink, Child
   async addUplink(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
     if (await this.channels.hasAddress(address)) {
       throw new Error(`address already present: ${address.cid}`)
     }
-    const channel = Channel.create(address)
     const channelId = this.channels.counter
+    const channel = Channel.create(channelId, address)
     const channels = await this.channels.addChannel(channel)
     const uplinks = await this.uplinks.set(address, channelId)
     return this.setMap({ channels, uplinks })
@@ -140,6 +141,20 @@ export class Network extends IpldStruct {
     assert(await this.uplinks.hasUplink(address))
     const channelId = await this.uplinks.get(address)
     return await this.channels.getChannel(channelId)
+  }
+  async addDownlink(path, address) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    if (await this.downlinks.has(path)) {
+      throw new Error(`path already present: ${path}`)
+    }
+    const channelId = this.channels.counter
+    const channel = Channel.create(channelId, address)
+    const channels = await this.channels.addChannel(channel)
+    const downlinks = await this.downlinks.setDownlink(path, channelId)
+    return this.setMap({ channels, downlinks })
   }
 
   async resolveDownlink(path, address) {
@@ -152,16 +167,22 @@ export class Network extends IpldStruct {
       const channelId = await this.downlinks.get(path)
       let channel = await this.channels.getChannel(channelId)
       channel = channel.resolve(address)
-      const channels = await this.channels.updateChannel(channelId, channel)
+      const channels = await this.channels.updateChannel(channel)
       return this.setMap({ channels })
     } else {
-      const channel = Channel.create(address)
       const channelId = this.channels.counter
+      const channel = Channel.create(channelId, address)
       const channels = await this.channels.addChannel(channel)
       assert.strictEqual(await channels.getChannel(channelId), channel)
-      const downlinks = this.downlinks.setDownlink(path, channelId)
+      const downlinks = await this.downlinks.setDownlink(path, channelId)
       return this.setMap({ downlinks, channels })
     }
+  }
+
+  rm(alias) {
+    // if it was a child, then we can only fully terminate the chain
+    // if it was a link, then we remove the alias mapping
+    // if this is the only mapping, then we can remove the channel
   }
 
   async txRequest(request, path) {
@@ -187,11 +208,11 @@ export class Network extends IpldStruct {
       if (await this.downlinks.has(path)) {
         channelId = await this.downlinks.get(path)
       } else {
-        const channel = Channel.create()
         channelId = this.channels.counter
+        const channel = Channel.create(channelId)
         channels = await this.channels.addChannel(channel)
         assert.strictEqual(await channels.getChannel(channelId), channel)
-        downlinks = downlinks.setDownlink(path, channelId)
+        downlinks = await downlinks.setDownlink(path, channelId)
       }
     } else {
       if (await this.children.has(path)) {
@@ -204,13 +225,8 @@ export class Network extends IpldStruct {
     }
     let channel = await channels.getChannel(channelId)
     channel = channel.txRequest(request)
-    channels = await channels.updateChannel(channelId, channel)
+    channels = await channels.updateChannel(channel)
     return await this.setMap({ channels, downlinks })
-  }
-  rm(alias) {
-    // if it was a child, then we can only fully terminate the chain
-    // if it was a link, then we remove the alias mapping
-    // if this is the only mapping, then we can remove the channel
   }
 
   //
@@ -219,20 +235,16 @@ export class Network extends IpldStruct {
   // there are limits on what the next channel can contain if one exists already
   async updateChannel(alias, channel) {
     // use any alias to get a channelId out
-    assert(typeof alias === 'string')
-    assert(alias)
+    assert(typeof alias === 'string', 'Alias not string')
+    assert(alias, 'Alias not string')
     assert(alias !== '.')
     assert(alias !== '..')
     assert(channel instanceof Channel, `Not channel`)
 
     const { channelId } = await this.aliases.get(alias) // throws if not present
-    const channels = this.channels.set(channelId, channel)
+    assert.strictEqual(channelId, channel.channelId)
+    const channels = this.channels.updateChannel(channel)
     return this.setMap({ channels })
-  }
-
-  aliasChannel(alias, channelId, systemRole = './') {
-    // set any number of aliases to a channel
-    // updates the channel with the aliases
   }
   addChannel(alias, channel, systemRole = './') {}
   async getByAlias(alias) {
@@ -289,9 +301,9 @@ export class Network extends IpldStruct {
     assert(!path.includes('/'))
     assert(address instanceof Address)
     assert.strictEqual(typeof params, 'object')
-    const channel = Channel.create(address).txGenesis(params)
-
     const channelId = this.channels.counter
+    const channel = Channel.create(channelId, address).txGenesis(params)
+
     const channels = await this.channels.addChannel(channel)
     const children = await this.children.addChild(path, channelId)
 
@@ -303,32 +315,32 @@ export class Network extends IpldStruct {
     return this.setMap({ channels })
   }
   async rxSystemRequest() {
-    for await (const [channelId, channel] of this.channels.rxChannels()) {
-      const rxRequest = channel.rxSystemRequest(channelId)
+    for await (const channel of this.channels.rxChannels()) {
+      const rxRequest = channel.rxSystemRequest()
       if (rxRequest) {
         return rxRequest
       }
     }
   }
   async rxSystemReply() {
-    for await (const [channelId, channel] of this.channels.rxChannels()) {
-      const rxReply = channel.rxSystemReply(channelId)
+    for await (const channel of this.channels.rxChannels()) {
+      const rxReply = channel.rxSystemReply()
       if (rxReply) {
         return rxReply
       }
     }
   }
   async rxReducerRequest() {
-    for await (const [channelId, channel] of this.channels.rxChannels()) {
-      const rxRequest = channel.rxReducerRequest(channelId)
+    for await (const channel of this.channels.rxChannels()) {
+      const rxRequest = channel.rxReducerRequest()
       if (rxRequest) {
         return rxRequest
       }
     }
   }
   async rxReducerReply() {
-    for await (const [channelId, channel] of this.channels.rxChannels()) {
-      const rxReply = channel.rxReducerReply(channelId)
+    for await (const channel of this.channels.rxChannels()) {
+      const rxReply = channel.rxReducerReply()
       if (rxReply) {
         return rxReply
       }
@@ -343,7 +355,7 @@ export class Network extends IpldStruct {
     const { channelId } = rxRequest
     let channel = await this.channels.getChannel(channelId)
     channel = channel.txSystemReply(reply)
-    const channels = await this.channels.updateChannel(channelId, channel)
+    const channels = await this.channels.updateChannel(channel)
     return this.setMap({ channels })
   }
   async shiftSystemReply() {
@@ -352,7 +364,7 @@ export class Network extends IpldStruct {
     const { channelId } = rxReply
     let channel = await this.channels.getChannel(channelId)
     channel = channel.shiftSystemReply()
-    const channels = await this.channels.updateChannel(channelId, channel)
+    const channels = await this.channels.updateChannel(channel)
     return this.setMap({ channels })
   }
   async txReducerReply(reply = Reply.create()) {
@@ -362,7 +374,7 @@ export class Network extends IpldStruct {
     const { channelId } = rxRequest
     let channel = await this.channels.getChannel(channelId)
     channel = channel.txReducerReply(reply)
-    const channels = await this.channels.updateChannel(channelId, channel)
+    const channels = await this.channels.updateChannel(channel)
     return this.setMap({ channels })
   }
   async shiftReducerReply() {
@@ -371,7 +383,7 @@ export class Network extends IpldStruct {
     const { channelId } = rxReply
     let channel = await this.channels.getChannel(channelId)
     channel = channel.shiftReducerReply()
-    const channels = await this.channels.updateChannel(channelId, channel)
+    const channels = await this.channels.updateChannel(channel)
     return this.setMap({ channels })
   }
 }

@@ -12,7 +12,7 @@ describe('Hamt', () => {
   test('basic', async () => {
     const base = Hamt.create()
     assert(base.isModified())
-    let hamt = base.set('testkey', 'testvalue')
+    let hamt = await base.set('testkey', 'testvalue')
     assert(hamt.isModified())
     assert(base !== hamt)
     assert.strictEqual(await hamt.get('testkey'), 'testvalue')
@@ -34,7 +34,7 @@ describe('Hamt', () => {
     const resolver = (cid) => diffs.get(cid.toString())
     hamt = await Hamt.uncrush(hamt.cid, resolver)
     for (let i = 0; i < 100; i++) {
-      hamt = hamt.set('test-' + i, { test: 'test-' + i })
+      hamt = await hamt.set('test-' + i, { test: 'test-' + i })
     }
     let start = Date.now()
     hamt = await hamt.crush()
@@ -58,9 +58,10 @@ describe('Hamt', () => {
   test('with class', async () => {
     class TestClass extends IpldStruct {}
     let hamt = Hamt.create(TestClass)
-    assert.throws(() => hamt.set('test', { a: 'b' }), 'Not correct class type')
+    const msg = 'Not correct class type'
+    await assert.isRejected(hamt.set('test', { a: 'b' }), msg)
     const testInstance = new TestClass()
-    hamt = hamt.set('test', testInstance)
+    hamt = await hamt.set('test', testInstance)
     assert((await hamt.get('test')) instanceof TestClass)
     hamt = await hamt.crush()
     const diffs = await hamt.getDiffBlocks()
@@ -74,9 +75,9 @@ describe('Hamt', () => {
   test('throws on existing key', async () => {
     let hamt = Hamt.create()
     await assert.isRejected(hamt.get('bogus key'), 'bogus key')
-    hamt = hamt.set('some key', 'some value')
+    hamt = await hamt.set('some key', 'some value')
     assert.strictEqual(await hamt.get('some key'), 'some value')
-    assert.throws(() => hamt.set('some key', 'over'), 'Cannot overwrite')
+    assert.isRejected(hamt.set('some key', 'over'), 'Cannot overwrite')
   })
   test.todo('recursive crush')
 })

@@ -12,7 +12,10 @@ describe('provenance', () => {
     let provenance = Provenance.createGenesis(dmz)
     provenance = await provenance.crush()
     const diffs = await provenance.getDiffBlocks()
-    expect(diffs).toMatchSnapshot()
+    const cids = [...diffs.keys()]
+    expect(cids).toMatchSnapshot()
+    const values = [...diffs.values()].map((b) => b.value)
+    expect(values).toMatchSnapshot()
   })
   test.todo('remove chainId as part of lineage')
   test.todo('non genesis lineage always has at least one hash')

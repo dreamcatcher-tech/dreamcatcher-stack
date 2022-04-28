@@ -3,18 +3,18 @@ import { Request, Address, Channel, Reply } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
 Debug.enable()
-
+const fakeChannelId = 100
 describe('channel', () => {
   describe('create', () => {
     test('basic', async () => {
-      const channel = Channel.create()
+      const channel = Channel.create(fakeChannelId)
       const crushed = await channel.crush()
       const diff = await crushed.getDiffBlocks()
       assert.strictEqual(diff.size, 2)
-      expect(diff).toMatchSnapshot()
+      expect([...diff.keys()]).toMatchSnapshot()
     })
     test('create', async () => {
-      let channel = Channel.create()
+      let channel = Channel.create(fakeChannelId)
       assert(channel.address.isUnknown())
       assert(!channel.tx.precedent)
       assert(!channel.rx.tip)
@@ -33,10 +33,16 @@ describe('channel', () => {
       const recrushed = await channel.crush()
       assert(recrushed)
     })
-    test('includes known address', () => {
-      const address = Address.createRoot()
-      const channel = Channel.create(address)
+    test('address is not modified', () => {
+      const address = Address.createUnknown()
+      const channel = Channel.create(fakeChannelId, address)
       assert.strictEqual(channel.address, address)
+    })
+    test('root can only be parent', () => {
+      const address = Address.createRoot()
+      const notParentChannelId = fakeChannelId
+      const msg = 'Root not parent'
+      assert.throws(() => Channel.create(notParentChannelId, address), msg)
     })
     test.todo('loopback bans @@OPEN_CHILD action')
   })

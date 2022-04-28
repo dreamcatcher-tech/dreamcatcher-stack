@@ -1,66 +1,48 @@
 import { assert } from 'chai/index.mjs'
-import {
-  Interpulse,
-  Request,
-  Channel,
-  Dmz,
-  Provenance,
-  Pulse,
-  Address,
-  Config,
-  Keypair,
-  Validators,
-} from '..'
-import { setCiTimestamp } from '../src/Dmz'
+import { Interpulse, Pulse, Address, Keypair } from '..'
+import Debug from 'debug'
+const debug = Debug('interblock:tests:Pulse')
 
-let previousLabel
-const timer = (label) => {
-  if (previousLabel) {
-    console.timeEnd(previousLabel)
-  }
-  if (label) {
-    console.time(label)
-  }
-  previousLabel = label
-}
+Debug.enable('*tests*')
 
+const CI = true
 describe('Pulse', () => {
-  setCiTimestamp()
   test('basic', async () => {
     let pulse = await Pulse.createCI()
     pulse = await pulse.crush()
     const address = Address.generate(pulse)
-    expect(address.cid).toMatchSnapshot()
+    expect(address.toString()).toMatchSnapshot()
   })
   test('birth child', async () => {
-    timer('create CI')
+    const timer = debug.extend('timer')
+    timer('start')
     let parent = await Pulse.createCI()
-    timer('recrush')
+    timer('create CI')
     parent = await parent.crush()
-    timer()
+    timer('recrush')
     const config = { entropy: { seed: 'test' } }
     let { dmz } = parent.provenance
     dmz = await dmz.addChild('child1', { config })
+    timer('add child')
+    parent = await parent.generateSoftPulse()
     timer('softpulse')
-    parent = await parent.generateGenesisSoftPulse()
     parent = parent.setMap({ provenance: { dmz } })
-    timer('crush')
     // when we modify it, it should point the provenance at the previous
     parent = await parent.crush()
-    timer()
+    timer('crush')
     assert.throws(() => Address.generate(parent), 'must be genesis')
-    timer('keypair')
+    timer('')
     const keypair = Keypair.createCI()
-    timer('sign')
+    timer('ci keypair')
     let signature = await keypair.sign(parent.provenance)
-    timer('add sig')
+    timer('sign')
 
     assert(!parent.isVerified())
     parent = parent.addSignature(keypair.publicKey, signature)
     assert(!parent.isVerified())
     parent = await parent.crush()
+    timer('add sig')
     assert(parent.isVerified())
-    timer()
 
     // generate a genesis pulse using the params in the action
     const { channels } = parent.provenance.dmz.network
@@ -79,7 +61,7 @@ describe('Pulse', () => {
     assert(channel.address.equals(child.getAddress()))
 
     // reply to the parents action with a signed block
-    child = await child.generateGenesisSoftPulse(parent)
+    child = await child.generateSoftPulse(parent)
     let interpulse = Interpulse.extract(parent, child.getAddress())
     child = await child.ingestInterpulse(interpulse)
 

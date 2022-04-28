@@ -378,6 +378,7 @@ Channel has functions to transmit actions, because it needs to update both tx an
 
 ```sh
 type Channel struct {
+    channelId Int
     address Address                 # The remote chainId
     tx &Tx
     rx Rx

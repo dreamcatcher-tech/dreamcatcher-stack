@@ -11,9 +11,10 @@ describe('loopback', () => {
     const ping = Request.create('PING')
     loopback = loopback.txRequest(ping)
     const channelId = Network.FIXED_IDS.LOOPBACK
+    assert.strictEqual(channelId, loopback.channelId)
     const rxRequest = loopback.rxReducerRequest(channelId)
     assert.strictEqual(rxRequest.index, 0)
-    assert.strictEqual(rxRequest.channelId, 1)
+    assert.strictEqual(rxRequest.channelId, channelId)
     assert.strictEqual(rxRequest.stream, 'reducer')
     assert.strictEqual(rxRequest.type, ping.type)
 

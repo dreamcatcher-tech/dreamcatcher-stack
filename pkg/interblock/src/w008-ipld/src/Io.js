@@ -1,10 +1,15 @@
 import assert from 'assert-fast'
-import { Network, Channel, Request, Tx } from '.'
+import { Network, Channel, Request, Tx, Address } from '.'
 
 export class Io extends Channel {
   static cidLinks = [...super.cidLinks, 'piercings']
   static classMap = { ...super.classMap, piercings: Tx }
-
+  static create() {
+    const address = Address.createIo()
+    const io = super.create(Network.FIXED_IDS.IO, address)
+    assert(io instanceof Io)
+    return io
+  }
   pierceRequest(request) {
     assert(request instanceof Request)
     let { piercings = Tx.create() } = this
@@ -20,17 +25,15 @@ export class Io extends Channel {
   }
   getId(request) {
     assert(request instanceof Request)
-    const channelId = Network.FIXED_IDS.IO
+    const { channelId } = this
     const stream = request.isSystem() ? 'system' : 'reducer'
     const index = this.piercings ? this.piercings[stream].getRequestId() : 0
     return { channelId, stream, index }
   }
-  rxSystemRequest(channelId) {
-    assert.strictEqual(channelId, Network.FIXED_IDS.IO)
-    // throw new Error('not implemented')
+  rxSystemRequest() {
+    throw new Error('not implemented')
   }
-  rxSystemReply(channelId) {
-    assert.strictEqual(channelId, Network.FIXED_IDS.IO)
+  rxSystemReply() {
     const { system } = this.tx
     const { repliesStart, replies } = system
     if (replies.length) {
@@ -40,8 +43,7 @@ export class Io extends Channel {
       // return RxRequest.create(request, channelId, 'reducer', index)
     }
   }
-  rxReducerRequest(channelId) {
-    assert.strictEqual(channelId, Network.FIXED_IDS.IO)
+  rxReducerRequest() {
     if (!this.piercings) {
       return
     }
@@ -54,9 +56,8 @@ export class Io extends Channel {
     }
     throw new Error('not implemented')
   }
-  rxReducerReply(channelId) {
-    assert.strictEqual(channelId, Network.FIXED_IDS.IO)
-    const { system } = this.tx 
+  rxReducerReply() {
+    const { system } = this.tx
     const { repliesStart, replies } = system
     if (replies.length) {
       throw new Error('not implemented')

@@ -4,9 +4,9 @@ import { Network, Channel, Address, Rx, Tx, RxRequest, RxReply } from '.'
 export class Loopback extends Channel {
   static create() {
     const address = Address.createLoopback()
-    const rx = Rx.create()
-    const tx = Tx.create()
-    return super.clone({ address, rx, tx, aliases: [] })
+    const loopback = super.create(Network.FIXED_IDS.LOOPBACK, address)
+    assert(loopback instanceof Loopback)
+    return loopback
   }
   // TODO reject any attempts to alias loopback
   txGenesis() {
@@ -50,25 +50,25 @@ export class Loopback extends Channel {
   rxSystemReply() {
     throw new Error('not implemented')
   }
-  rxReducerRequest(channelId) {
+  rxReducerRequest() {
     // keep track of what number we are up to, since need to use this for ids
     // tx a reply shifts the request and updates the requestsStart counter
     // when shift the reply, shift the replies
     // can ignore the rx counters, as we pull from the front of the array every time
-    assert.strictEqual(channelId, Network.FIXED_IDS.LOOPBACK)
     const { reducer } = this.tx
     const { requestsStart, requests } = reducer
     if (requests.length) {
+      const { channelId } = this
       const index = requestsStart
       const [request] = requests
       return RxRequest.create(request, channelId, 'reducer', index)
     }
   }
-  rxReducerReply(channelId) {
-    assert.strictEqual(channelId, Network.FIXED_IDS.LOOPBACK)
+  rxReducerReply() {
     const { reducer } = this.tx
     const { repliesStart, replies } = reducer
     if (replies.length) {
+      const { channelId } = this
       const index = repliesStart
       const [reply] = replies
       return RxReply.create(reply, channelId, 'reducer', index)

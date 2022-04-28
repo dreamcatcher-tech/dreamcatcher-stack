@@ -8,7 +8,7 @@ Debug.enable('*engine')
 
 describe('engine', () => {
   jest.setTimeout(300)
-  test.only('basic', async () => {
+  test('basic', async () => {
     const opts = { CI: true }
     const engine = await Engine.create(opts)
     debug(engine.address)
