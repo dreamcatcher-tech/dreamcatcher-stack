@@ -9,7 +9,6 @@ type Rx struct {
     reducer optional RxTracker
 }
 */
-import Immutable from 'immutable'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 import {
@@ -22,102 +21,79 @@ import {
   Interpulse,
 } from '.'
 const STREAMS = { SYSTEM: 'system', REDUCER: 'reducer' }
-class RxRemaining {
-  constructor(requestsRemain = 0, repliesRemain = 0) {
-    assert(Number.isInteger(requestsRemain), `requestsRemain not integer`)
-    assert(Number.isInteger(repliesRemain), `repliesRemain not integer`)
-    assert(requestsRemain >= 0, `requestsRemain: ${requestsRemain}`)
-    assert(repliesRemain >= 0, `repliesRemain: ${repliesRemain}`)
-    this.requestsRemain = requestsRemain
-    this.repliesRemain = repliesRemain
+class RxQueue extends TxQueue {
+  txRequest() {
+    throw new Error('cannot tx in rx')
   }
-  isEmpty() {
-    return this.requestsRemain === 0 && this.repliesRemain === 0
+  txReply() {
+    throw new Error('cannot tx in rx')
   }
-  decrementRequests() {
-    return new this.constructor(this.requestsRemain - 1, this.repliesRemain)
+  blank() {
+    throw new Error('cannot tx in rx')
   }
-  decrementReplies() {
-    return new this.constructor(this.requestsRemain, this.repliesRemain - 1)
+  ingestTxQueue(q) {
+    assert(q instanceof TxQueue)
+    const priorRequestsLength = q.requestsLength - q.requests.length
+    assert.strictEqual(priorRequestsLength, this.requestsLength)
+    const priorRepliesLength = q.repliesLength - q.replies.length
+    assert.strictEqual(priorRepliesLength, this.repliesLength)
+
+    const requestsLength = this.requestsLength + q.requestsLength
+    const requests = [...this.requests, ...q.requests]
+    const repliesLength = this.repliesLength + q.repliesLength
+    const replies = [...this.replies, ...q.replies]
+
+    // TODO receive promise updates too
+    return this.setMap({ requests, requestsLength, replies, repliesLength })
   }
-  loopbackAddRequest() {
-    return new this.constructor(this.requestsRemain + 1, this.repliesRemain)
-  }
-  loopbackAddReply() {
-    return new this.constructor(this.requestsRemain, this.repliesRemain + 1)
-  }
-  ingestTxQueue(txQueue) {
-    assert(txQueue instanceof TxQueue)
-    const { requests, replies } = txQueue
-    const requestsRemain = this.requestsRemain + requests.length
-    const repliesRemain = this.repliesRemain + replies.length
-    return new this.constructor(requestsRemain, repliesRemain)
-  }
-}
-class TipCache {
-  #resolver
-  #tips = Immutable.Map()
-  constructor(resolver) {
-    this.#resolver = resolver
-  }
-  #clone() {
-    const next = new this.constructor(this.#resolver)
-    next.#tips = this.#tips
-    return next
-  }
-  addTip(interpulse) {
-    assert(interpulse instanceof Interpulse)
-    const key = interpulse.cid.toString()
-    const next = this.#clone()
-    next.#tips = this.#tips.set(key, interpulse)
-    return next
-  }
-  removeTip(interpulse) {
-    assert(interpulse instanceof Interpulse)
-    const key = interpulse.cid.toString()
-    const next = this.#clone()
-    next.#tips = this.#tips.delete(key)
-    return next
-  }
-  async resolvePulseLink(pulseLink) {
-    assert(pulseLink instanceof PulseLink)
-    const key = pulseLink.cid.toString()
-    if (!this.#tips.has(key)) {
-      assert.strictEqual(typeof this.#resolver, 'function')
-      const prior = await Interpulse.uncrush(pulseLink.cid, this.#resolver)
-      this.#tips = this.#tips.set(key, prior)
+  rxRequest(channelId, stream) {
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    assert(stream === 'system' || stream === 'reducer')
+    if (this.requests.length) {
+      const request = this.requests[0]
+      const requestId = this.requestsLength - this.requests.length
+      return RxRequest.create(request, channelId, stream, requestId)
     }
-    return this.#tips.get(key)
   }
-  async resolvePrecedent(interpulse) {
-    assert(interpulse instanceof Interpulse)
-    const { precedent } = interpulse.tx
-    return await this.resolvePulseLink(precedent)
+  rxReply(channelId, stream) {
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    assert(stream === 'system' || stream === 'reducer')
+    if (this.promisedReplies.length) {
+      const { requestIndex, reply } = this.promisedReplies[0]
+      return RxReply.create(reply, channelId, stream, requestIndex)
+    } else if (this.replies.length) {
+      const reply = this.replies[0]
+      const requestId = this.repliesLength - this.replies.length
+      return RxReply.create(reply, channelId, stream, requestId)
+    }
+  }
+  shiftRequests() {
+    assert(this.requests.length)
+    const requestsLength = this.requestsLength + 1
+    const [, ...requests] = this.requests
+    return this.setMap({ requestsLength, requests })
+  }
+  shiftReplies() {
+    assert(this.replies.length)
+    const repliesLength = this.repliesLength + 1
+    const [, ...replies] = this.replies
+    return this.setMap({ repliesLength, replies })
   }
 }
 export class Rx extends IpldStruct {
-  #tipCache = new TipCache()
   static classMap = {
-    tip: PulseLink,
-    system: RxRemaining,
-    reducer: RxRemaining,
+    tip: PulseLink, // TODO check pulselink is only used for tips
+    system: RxQueue,
+    reducer: RxQueue,
   }
   static cidLinks = []
   static create() {
     return super.clone({
-      system: new RxRemaining(),
-      reducer: new RxRemaining(),
+      system: RxQueue.create(),
+      reducer: RxQueue.create(),
     })
-  }
-  static async uncrush(rootCid, resolver, options) {
-    const instance = await super.uncrush(rootCid, resolver, options)
-    instance.#tipCache = new TipCache(resolver)
-    return instance
-  }
-  clone() {
-    const next = super.clone()
-    next.#tipCache = this.#tipCache
-    return next
   }
   isEmpty() {
     // empty means that both trackers both match the tip
@@ -133,8 +109,7 @@ export class Rx extends IpldStruct {
     const { tx } = interpulse
     let next = this
     if (!this.tip) {
-      assert(this.system.isEmpty())
-      assert(this.reducer.isEmpty())
+      assert(this.isEmpty())
       assert(!tx.precedent)
     } else {
       if (!this.tip.cid.equals(tx.precedent)) {
@@ -142,17 +117,17 @@ export class Rx extends IpldStruct {
       }
       // TODO retrieve the current tip
       // check that it comes next with the sequence numbers
+      // ? may supply the previous tip to the function call
     }
     const system = this.system.ingestTxQueue(tx.system)
     const reducer = this.reducer.ingestTxQueue(tx.reducer)
     const tip = interpulse.getPulseLink()
     next = next.setMap({ tip, system, reducer })
-    next.#tipCache = next.#tipCache.addTip(interpulse)
     return next
   }
   // when shifting the counters, check if the tip should be ejected
-  async rxSystemRequest(channelId) {
-    const result = await this.#rx(STREAMS.SYSTEM, 'requests')
+  rxSystemRequest(channelId) {
+    const result = this.#rx(STREAMS.SYSTEM, 'requests')
     if (!result) {
       return
     }
@@ -162,8 +137,8 @@ export class Rx extends IpldStruct {
     assert(index >= 0)
     return RxRequest.create(request, channelId, STREAMS.SYSTEM, index)
   }
-  async rxSystemReply(channelId) {
-    const result = await this.#rx(STREAMS.SYSTEM, 'replies')
+  rxSystemReply(channelId) {
+    const result = this.#rx(STREAMS.SYSTEM, 'replies')
     if (!result) {
       return
     }
@@ -174,23 +149,23 @@ export class Rx extends IpldStruct {
     return RxReply.create(reply, channelId, STREAMS.SYSTEM, index)
   }
   shiftSystemReply() {
-    const system = this.system.decrementReplies()
+    const system = this.system.shiftReplies()
     return this.setMap({ system })
   }
   shiftSystemRequest() {
-    const system = this.system.decrementRequests()
+    const system = this.system.shiftRequests()
     return this.setMap({ system })
   }
   shiftReducerReply() {
-    const reducer = this.reducer.decrementReplies()
+    const reducer = this.reducer.shiftReplies()
     return this.setMap({ reducer })
   }
   shiftReducerRequest() {
-    const reducer = this.reducer.decrementRequests()
+    const reducer = this.reducer.shiftRequests()
     return this.setMap({ reducer })
   }
-  async rxReducerRequest(channelId) {
-    const result = await this.#rx(STREAMS.SYSTEM, 'requests')
+  rxReducerRequest(channelId) {
+    const result = this.#rx(STREAMS.SYSTEM, 'requests')
     if (!result) {
       return
     }
@@ -201,7 +176,7 @@ export class Rx extends IpldStruct {
     return RxRequest.create(request, channelId, STREAMS.SYSTEM, index)
   }
 
-  async #rx(queueType, actionType) {
+  #rx(queueType, actionType) {
     assert(queueType === 'system' || queueType === 'reducer')
     assert(actionType === 'replies' || actionType === 'requests')
     const queue = this[queueType]
@@ -213,17 +188,6 @@ export class Rx extends IpldStruct {
     }
 
     let index, array, interpulse
-    do {
-      if (!interpulse) {
-        interpulse = await this.#tipCache.resolvePulseLink(this.tip)
-      } else {
-        interpulse = await this.#tipCache.resolvePrecedent(interpulse)
-      }
-      assert(interpulse instanceof Interpulse)
-      array = interpulse.tx[queueType][actionType]
-      index = array.length - remain
-      remain -= array.length
-    } while (index < 0)
     const action = array[index]
     return [action, index]
   }

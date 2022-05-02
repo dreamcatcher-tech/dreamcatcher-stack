@@ -67,9 +67,9 @@ describe('Pulse', () => {
 
     const rxRequest = await child.getNetwork().rxSystemRequest()
     assert.strictEqual(rxRequest.type, '@@GENESIS')
-    assert.strictEqual(rxRequest.channelId, 0)
+    assert.strictEqual(rxRequest.channelId, 1)
     assert.strictEqual(rxRequest.stream, 'system')
-    assert.strictEqual(rxRequest.index, 0)
+    assert.strictEqual(rxRequest.requestIndex, 0)
 
     // default reply to the request in the child
     let childParentChannel = await child.getNetwork().getParent()

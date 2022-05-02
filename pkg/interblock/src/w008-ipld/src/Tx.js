@@ -76,23 +76,18 @@ export class Tx extends IpldStruct {
     return this.setMap({ reducer, system })
   }
   txSystemReply(reply) {
-    let system = this.system.txReply(reply)
+    const system = this.system.txReply(reply)
     return this.setMap({ system })
   }
   txReducerReply(reply) {
-    let reducer = this.reducer.txReply(reply)
-    return this.setMap({ reducer })
-  }
-  shiftReducerReply() {
-    assert(this.isLoopback())
-    const reducer = this.reducer.shiftRepliesStart()
+    const reducer = this.reducer.txReply(reply)
     return this.setMap({ reducer })
   }
   isEmpty() {
     return this.system.isEmpty() && this.reducer.isEmpty()
   }
   isGenesisRequest() {
-    const request = this.system.rxRequest(0)
+    const request = this.system.requests[0]
     const isGenesis =
       request && request.type === '@@GENESIS' && request.payload.params
     return (
@@ -106,7 +101,7 @@ export class Tx extends IpldStruct {
     assert(validators instanceof Validators)
     assert(timestamp instanceof Timestamp)
     assert(this.isGenesisRequest())
-    const request = this.system.rxRequest(0)
+    const request = this.system.requests[0]
     const { params } = request.payload
 
     const dmz = Dmz.create({ ...params, timestamp })

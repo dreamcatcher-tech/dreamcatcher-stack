@@ -319,15 +319,15 @@ const TxExample = {
 
 ```sh
 type PromisedReply struct {
-    requestId Int
+    requestIndex Int
     reply &Reply
 }
 type TxQueue struct {
-    requestsStart Int
+    requestsLength Int
     requests optional [&Request]
-    repliesStart Int
+    repliesLength Int
     replies optional [&Reply]
-    promisedIds [Int]
+    promisedRequestIds [Int]
     promisedReplies optional [PromisedReply]
 }
 type Tx struct {
@@ -339,19 +339,16 @@ type Tx struct {
 
 ## Rx
 
-After each block is made, tip chain precedents are trimmed to free up memory.
-Once Rx is no longer active, trimmed to be nothing.
-`RxRemaining` tracks how many actions remain to be processed. Storing only the difference removes the redundancy of storing any cursor information.
+Tip represents the hash of the last interpulse that was accepted into this channel.
+When ingesting an interpulse, the RxQueue is extended to include the TxQueue that came with the interpulse.
+The data structure of RxQueue and TxQueue is identical, but the functions presented to the system are different.
 
 ```sh
-type RxRemaining struct {
-    requestsRemaining Int
-    repliesRemaining Int
-}
+RxQueue = TxQueue
 type Rx struct {
     tip optional PulseLink          # The last Pulse this chain received
-    system optional RxRemaining
-    reducer optional RxRemaining
+    system optional RxQueue
+    reducer optional RxQueue
 }
 ```
 

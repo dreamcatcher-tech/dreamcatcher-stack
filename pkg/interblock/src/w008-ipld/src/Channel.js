@@ -129,17 +129,14 @@ export class Channel extends IpldStruct {
     return this.setMap({ rx })
   }
   rxSystemRequest() {
-    const request = this.rx.system.rxRequest()
-    if (request) {
-      assert(request instanceof Request)
-      const { channelId } = this
-      const index = this.rx.system.getIndex()
-      const stream = 'system'
-      return RxRequest.create(request, channelId, stream, index)
-    }
+    const { channelId } = this
+    const stream = 'system'
+    return this.rx.system.rxRequest(channelId, stream)
   }
   rxSystemReply() {
-    throw new Error('not implemented')
+    const { channelId } = this
+    const stream = 'system'
+    return this.rx.system.rxReply(channelId, stream)
   }
   rxReducerRequest() {
     throw new Error('not implemented')
