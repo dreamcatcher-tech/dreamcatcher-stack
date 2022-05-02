@@ -12,26 +12,28 @@ describe('loopback', () => {
     loopback = loopback.txRequest(ping)
     const channelId = Network.FIXED_IDS.LOOPBACK
     assert.strictEqual(channelId, loopback.channelId)
-    const rxRequest = loopback.rxReducerRequest(channelId)
-    assert.strictEqual(rxRequest.index, 0)
+    const rxRequest = loopback.rxReducerRequest()
+    assert.strictEqual(rxRequest.requestIndex, 0)
     assert.strictEqual(rxRequest.channelId, channelId)
     assert.strictEqual(rxRequest.stream, 'reducer')
     assert.strictEqual(rxRequest.type, ping.type)
 
-    const requestId = loopback.tx.reducer.getRequestId()
-    assert.strictEqual(requestId, 0)
-
     const pong = Reply.create()
     loopback = loopback.txReducerReply(pong)
-    assert(!loopback.rxReducerRequest(channelId))
-    const rxReply = loopback.rxReducerReply(channelId)
+    assert(!loopback.rxReducerRequest())
+    const rxReply = loopback.rxReducerReply()
     assert.strictEqual(rxReply.type, pong.type)
 
     loopback = loopback.shiftReducerReply()
     assert(!loopback.rxReducerReply(channelId))
+    const { reducer: rxReducer } = loopback.rx
+    assert.strictEqual(rxReducer.requestsLength, 1)
+    assert.strictEqual(rxReducer.repliesLength, 1)
+    const { reducer: txReducer } = loopback.tx
+    assert.strictEqual(txReducer.requestsLength, 0)
+    assert.strictEqual(txReducer.repliesLength, 0)
 
     const last = await loopback.crush()
-    last.dir()
-    last.logDiff()
+    expect(last).toMatchSnapshot()
   })
 })

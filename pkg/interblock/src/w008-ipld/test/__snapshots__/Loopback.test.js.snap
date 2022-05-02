@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loopback basic 1`] = `
+Loopback {
+  "address": Address {},
+  "aliases": Array [],
+  "channelId": 0,
+  "rx": Rx {
+    "reducer": RxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 1,
+      "requests": Array [],
+      "requestsLength": 1,
+    },
+    "system": RxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 0,
+      "requests": Array [],
+      "requestsLength": 0,
+    },
+  },
+  "tx": Tx {
+    "reducer": TxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 0,
+      "requests": Array [],
+      "requestsLength": 0,
+    },
+    "system": TxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 0,
+      "requests": Array [],
+      "requestsLength": 0,
+    },
+  },
+}
+`;

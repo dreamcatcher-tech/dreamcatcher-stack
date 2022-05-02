@@ -51,14 +51,12 @@ export class RxQueue extends TxQueue {
   }
   shiftRequests() {
     assert(this.requests.length)
-    const requestsLength = this.requestsLength + 1
     const [, ...requests] = this.requests
-    return this.setMap({ requestsLength, requests })
+    return this.setMap({ requests })
   }
   shiftReplies() {
     assert(this.replies.length)
-    const repliesLength = this.repliesLength + 1
     const [, ...replies] = this.replies
-    return this.setMap({ repliesLength, replies })
+    return this.setMap({ replies })
   }
 }

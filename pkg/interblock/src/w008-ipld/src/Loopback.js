@@ -1,5 +1,20 @@
 import assert from 'assert-fast'
-import { Network, Channel, Address, Rx, Tx, RxRequest, RxReply } from '.'
+import { Network, Channel, Address, RxQueue, Request, Reply } from '.'
+
+const addRequest = (rxQueue, request) => {
+  assert(rxQueue instanceof RxQueue)
+  assert(request instanceof Request)
+  const requestsLength = rxQueue.requestsLength + 1
+  const requests = [...rxQueue.requests, request]
+  return rxQueue.setMap({ requestsLength, requests })
+}
+const addReply = (rxQueue, reply) => {
+  assert(rxQueue instanceof RxQueue)
+  assert(reply instanceof Reply)
+  const repliesLength = rxQueue.repliesLength + 1
+  const replies = [...rxQueue.replies, reply]
+  return rxQueue.setMap({ repliesLength, replies })
+}
 
 export class Loopback extends Channel {
   static create() {
@@ -13,72 +28,26 @@ export class Loopback extends Channel {
     throw new Error('Loopback cannot birth children')
   }
   txRequest(request) {
-    const next = super.txRequest(request)
-    let { system, reducer } = next.rx
+    let { system, reducer } = this.rx
+    let { tx } = this
     if (request.isSystem()) {
-      system = system.loopbackAddRequest()
+      system = addRequest(system, request)
     } else {
-      reducer = reducer.loopbackAddRequest()
+      reducer = addRequest(reducer, request)
     }
-    return next.setMap({ rx: { system, reducer } })
+
+    return this.setMap({ rx: { system, reducer } })
   }
   txReducerReply(reply) {
-    const next = super.txReducerReply(reply)
-    const reducer = next.rx.reducer.loopbackAddReply()
-    const rx = next.rx.setMap({ reducer })
-
-    const requestsStart = next.tx.reducer.requestsStart + 1
-    const [, ...requests] = next.tx.reducer.requests
-    const tx = next.tx.setMap({ reducer: { requestsStart, requests } })
-
-    return next.setMap({ tx, rx })
+    let { reducer } = this.rx
+    reducer = addReply(reducer, reply)
+    reducer = reducer.shiftRequests()
+    return this.setMap({ rx: { reducer } })
   }
   txSystemReply(reply) {
-    const next = super.txSystemReply(reply)
-    const system = next.rx.system.loopbackAddReply()
-    const rx = next.rx.setMap({ system })
-
-    const requestsStart = next.tx.system.requestsStart + 1
-    const [, ...requests] = next.tx.system.requests
-    const tx = next.tx.setMap({ system: { requestsStart, requests } })
-
-    return next.setMap({ tx, rx })
-  }
-  rxSystemRequest() {
-    throw new Error('not implemented')
-  }
-  rxSystemReply() {
-    throw new Error('not implemented')
-  }
-  rxReducerRequest() {
-    // keep track of what number we are up to, since need to use this for ids
-    // tx a reply shifts the request and updates the requestsStart counter
-    // when shift the reply, shift the replies
-    // can ignore the rx counters, as we pull from the front of the array every time
-    const { reducer } = this.tx
-    const { requestsStart, requests } = reducer
-    if (requests.length) {
-      const { channelId } = this
-      const index = requestsStart
-      const [request] = requests
-      return RxRequest.create(request, channelId, 'reducer', index)
-    }
-  }
-  rxReducerReply() {
-    const { reducer } = this.tx
-    const { repliesStart, replies } = reducer
-    if (replies.length) {
-      const { channelId } = this
-      const index = repliesStart
-      const [reply] = replies
-      return RxReply.create(reply, channelId, 'reducer', index)
-    }
-  }
-  shiftReducerReply() {
-    const next = super.shiftReducerReply()
-    const { reducer } = next.tx
-    const repliesStart = reducer.repliesStart + 1
-    const [, ...replies] = reducer.replies
-    return next.setMap({ tx: { reducer: { repliesStart, replies } } })
+    let { system } = this.rx
+    system = addReply(system, reply)
+    system = system.shiftRequests()
+    return this.setMap({ rx: { system } })
   }
 }

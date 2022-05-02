@@ -120,12 +120,12 @@ export class Channel extends IpldStruct {
     const rx = this.rx.shiftReducerRequest()
     return this.setMap({ tx, rx })
   }
-  shiftReducerReply() {
-    const rx = this.rx.shiftReducerReply()
-    return this.setMap({ rx })
-  }
   shiftSystemReply() {
     const rx = this.rx.shiftSystemReply()
+    return this.setMap({ rx })
+  }
+  shiftReducerReply() {
+    const rx = this.rx.shiftReducerReply()
     return this.setMap({ rx })
   }
   rxSystemRequest() {
@@ -139,10 +139,14 @@ export class Channel extends IpldStruct {
     return this.rx.system.rxReply(channelId, stream)
   }
   rxReducerRequest() {
-    throw new Error('not implemented')
+    const { channelId } = this
+    const stream = 'reducer'
+    return this.rx.reducer.rxRequest(channelId, stream)
   }
   rxReducerReply() {
-    throw new Error('not implemented')
+    const { channelId } = this
+    const stream = 'reducer'
+    return this.rx.reducer.rxReply(channelId, stream)
   }
   rxIsEmpty() {
     return this.rx.isEmpty()
