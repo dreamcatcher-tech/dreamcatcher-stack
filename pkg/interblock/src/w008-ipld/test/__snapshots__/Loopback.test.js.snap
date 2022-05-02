@@ -22,15 +22,17 @@ Loopback {
       "requests": Array [],
       "requestsLength": 0,
     },
+    "tip": PulseLink {},
   },
   "tx": Tx {
+    "precedent": PulseLink {},
     "reducer": TxQueue {
       "promisedReplies": Array [],
       "promisedRequestIds": Array [],
       "replies": Array [],
-      "repliesLength": 0,
+      "repliesLength": 1,
       "requests": Array [],
-      "requestsLength": 0,
+      "requestsLength": 1,
     },
     "system": TxQueue {
       "promisedReplies": Array [],

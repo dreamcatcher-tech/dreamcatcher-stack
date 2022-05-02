@@ -438,6 +438,7 @@ type Network struct {
     parent optional Channel
     loopback optional Channel
     io optional Channel
+    piercings optional Tx
 
     channels optional Channels
 

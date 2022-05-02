@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
-import { Pulse } from '.'
+import { Pulse, Address } from '.'
 import { IpldInterface } from './IpldInterface'
 /**
 type PulseLink link
@@ -8,6 +8,18 @@ type PulseLink link
 
 export class PulseLink extends IpldInterface {
   #cid
+  static createLoopback() {
+    const address = Address.createLoopback()
+    const instance = new this()
+    instance.#setCid(address.cid.toV1())
+    return instance
+  }
+  static createIo() {
+    const address = Address.createIo()
+    const instance = new this()
+    instance.#setCid(address.cid.toV1())
+    return instance
+  }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified(), `Pulse must be crushed already`)

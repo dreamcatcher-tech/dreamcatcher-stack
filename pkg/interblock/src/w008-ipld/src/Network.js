@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
 import {
+  PulseLink,
   Io,
   RxRequest,
   RxReply,
@@ -14,6 +15,7 @@ import {
   Request,
   Reply,
   Loopback,
+  Tx,
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
@@ -52,6 +54,8 @@ export class Network extends IpldStruct {
     downlinks: DownlinksHamt,
     symLinks: Hamt,
     hardlinks: Hamt,
+
+    piercings: Tx,
   }
 
   static async createRoot() {
@@ -99,6 +103,21 @@ export class Network extends IpldStruct {
     }
     return Loopback.create()
   }
+  async updateLoopback(loopback) {
+    assert(loopback instanceof Loopback)
+    if (!loopback.tx.isEmpty()) {
+      let { tx, rx } = loopback
+      const system = rx.system.ingestTxQueue(tx.system)
+      const reducer = rx.reducer.ingestTxQueue(tx.reducer)
+      const tip = PulseLink.createLoopback()
+      rx = rx.setMap({ system, reducer, tip })
+      tx = tx.blank(tip)
+      loopback = loopback.setMap({ tx, rx })
+    }
+
+    const channels = await this.channels.updateChannel(loopback)
+    return this.setMap({ channels })
+  }
   async getIo() {
     if (await this.channels.has(FIXED.IO)) {
       const io = await this.channels.getChannel(FIXED.IO)
@@ -111,13 +130,12 @@ export class Network extends IpldStruct {
     }
     return Io.create()
   }
-  async updateLoopback(loopback) {
-    assert(loopback instanceof Loopback)
-    const channels = await this.channels.updateChannel(loopback)
-    return this.setMap({ channels })
-  }
+
   async updateIo(io) {
     assert(io instanceof Io)
+    // flip around tx and rx
+    // stopre the piercings
+
     const channels = await this.channels.updateChannel(io)
     return this.setMap({ channels })
   }
@@ -302,7 +320,8 @@ export class Network extends IpldStruct {
     assert(address instanceof Address)
     assert.strictEqual(typeof params, 'object')
     const channelId = this.channels.counter
-    const channel = Channel.create(channelId, address).txGenesis(params)
+    let channel = Channel.create(channelId, address)
+    channel = channel.txGenesis(params)
 
     const channels = await this.channels.addChannel(channel)
     const children = await this.children.addChild(path, channelId)

@@ -18,9 +18,8 @@ export class RxQueue extends TxQueue {
     const priorRepliesLength = q.repliesLength - q.replies.length
     assert.strictEqual(priorRepliesLength, this.repliesLength)
 
-    const requestsLength = this.requestsLength + q.requestsLength
+    const { requestsLength, repliesLength } = q
     const requests = [...this.requests, ...q.requests]
-    const repliesLength = this.repliesLength + q.repliesLength
     const replies = [...this.replies, ...q.replies]
 
     // TODO receive promise updates too

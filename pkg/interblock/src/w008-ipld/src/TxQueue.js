@@ -68,15 +68,11 @@ export class TxQueue extends IpldStruct {
   blank() {
     const promisedReplies = []
     const requests = []
-    const requestsLength = this.requestsLength + this.requests.length
     const replies = []
-    const repliesLength = this.repliesLength + this.replies.length
     return this.setMap({
       promisedReplies,
       requests,
-      requestsLength,
       replies,
-      repliesLength,
     })
   }
 }

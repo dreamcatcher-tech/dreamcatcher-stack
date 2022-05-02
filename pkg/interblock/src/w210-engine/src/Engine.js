@@ -152,11 +152,10 @@ export class Engine {
 
     let io = await dmz.network.getIo()
     assert(io instanceof Io)
-    const requestId = io.getId(request)
-    io = io.pierceRequest(request)
-    io.dir()
+    io = io.txRequest(request)
+    const rxRequest = io.getTipRequest(request)
+    rxRequest.dir()
 
-    // get out the RxRequest so we can get the id
     // hook the id so we can process
 
     const network = await dmz.network.updateIo(io)

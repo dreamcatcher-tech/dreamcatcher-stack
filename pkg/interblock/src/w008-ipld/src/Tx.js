@@ -109,8 +109,10 @@ export class Tx extends IpldStruct {
     return await Pulse.create(genesis)
   }
   blank(precedent) {
-    assert(precedent instanceof PulseLink)
     assert(!this.isEmpty())
+    assert(precedent instanceof PulseLink)
+    // TODO check precedent is not the same as the current one
+    // unless loopback or io
     return this.setMap({
       precedent,
       system: this.system.blank(),
