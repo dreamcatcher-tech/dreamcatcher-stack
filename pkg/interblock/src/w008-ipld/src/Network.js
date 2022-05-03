@@ -2,7 +2,6 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 import {
   PulseLink,
-  Io,
   RxRequest,
   RxReply,
   Channel,
@@ -14,7 +13,6 @@ import {
   AddressesHamt,
   Request,
   Reply,
-  Loopback,
   Tx,
 } from '.'
 import { Hamt } from './Hamt'
@@ -93,54 +91,36 @@ export class Network extends IpldStruct {
   }
   async getLoopback() {
     if (await this.channels.has(FIXED.LOOPBACK)) {
-      const loopback = await this.channels.getChannel(FIXED.LOOPBACK)
-      if (loopback) {
-        if (loopback instanceof Loopback) {
-          return loopback
-        }
-        return Loopback.clone(loopback)
-      }
+      return await this.channels.getChannel(FIXED.LOOPBACK)
     }
-    return Loopback.create()
+    return Channel.createLoopback()
   }
   async updateLoopback(loopback) {
-    assert(loopback instanceof Loopback)
-    if (!loopback.tx.isEmpty()) {
-      let { tx, rx } = loopback
-      const system = rx.system.ingestTxQueue(tx.system)
-      const reducer = rx.reducer.ingestTxQueue(tx.reducer)
-      const tip = PulseLink.createLoopback()
-      rx = rx.setMap({ system, reducer, tip })
-      tx = tx.blank(tip)
-      loopback = loopback.setMap({ tx, rx })
-    }
-
+    assert(loopback instanceof Channel)
+    loopback = crossover(loopback)
     const channels = await this.channels.updateChannel(loopback)
     return this.setMap({ channels })
   }
   async getIo() {
     if (await this.channels.has(FIXED.IO)) {
-      const io = await this.channels.getChannel(FIXED.IO)
-      if (io) {
-        if (io instanceof Io) {
-          return io
-        }
-        return Io.clone(io)
-      }
+      return await this.channels.getChannel(FIXED.IO)
     }
-    return Io.create()
+    return Channel.createIo()
   }
 
   async updateIo(io) {
-    assert(io instanceof Io)
-    // flip around tx and rx
-    // stopre the piercings
-
-    const channels = await this.channels.updateChannel(io)
-    return this.setMap({ channels })
+    assert(io instanceof Channel)
+    const { tx } = io
+    const next = this
+    if (!tx.isEmpty()) {
+      io = crossover(io)
+      const { rx: piercings } = io
+      next.setMap({ piercings })
+    }
+    const channels = await next.channels.updateChannel(io)
+    return next.setMap({ channels })
   }
 
-  // CHANNEL TYPES: Uplink, Downlink, Child
   async addUplink(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
@@ -405,4 +385,16 @@ export class Network extends IpldStruct {
     const channels = await this.channels.updateChannel(channel)
     return this.setMap({ channels })
   }
+}
+const crossover = (channel) => {
+  if (!channel.tx.isEmpty()) {
+    let { tx, rx, address } = channel
+    const system = rx.system.ingestTxQueue(tx.system)
+    const reducer = rx.reducer.ingestTxQueue(tx.reducer)
+    const { tip = PulseLink.createCrossover(address) } = rx
+    rx = rx.setMap({ tip, system, reducer })
+    tx = tx.blank(tip)
+    channel = channel.setMap({ tx, rx })
+  }
+  return channel
 }

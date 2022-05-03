@@ -227,19 +227,25 @@ Each rerun must produce the exact same requests each time, in the exact same ord
 
 This structure consists of two arrays - one of all the outbound requests the covenant made, and another of all the so far received replies. The reducer should not be invoked until all the empty slots in the `replies` array have been filled.
 
+Replies must be tracked too, else we may retransmit them
+
+`replies` is indexed by the pendingTxs array filtered for only Requests.
+
 ```sh
 type RequestId struct {
     channelId Int
-    requestId Int
+    stream String
+    requestIndex Int
 }
-type PendingRequest struct {
-    request &Request
-    to String                   # Alias at time of invocation
+type PendingTx struct {
+    request optional &Request
+    reply optional &Reply
+    to optional String                   # Alias at time of invocation
     id optional RequestId       # Not known at time of creation
 }
 type Pending struct {
     rxPendingRequest RequestId    # The request that triggered pending mode
-    requests [PendingRequest]
+    pendingTxs [PendingTx]
     replies [&Reply]
 }
 ```

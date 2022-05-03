@@ -51,6 +51,16 @@ export class Channel extends IpldStruct {
     const root = Address.createRoot()
     return Channel.create(Network.FIXED_IDS.PARENT, root)
   }
+  static createIo() {
+    const address = Address.createIo()
+    return Channel.create(Network.FIXED_IDS.IO, address)
+    // TODO stop Io from being aliased
+  }
+  static createLoopback() {
+    const address = Address.createLoopback()
+    return Channel.create(Network.FIXED_IDS.LOOPBACK, address)
+  }
+  // TODO reject any attempts to alias loopback
   resolve(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
@@ -98,6 +108,11 @@ export class Channel extends IpldStruct {
     return this.setMap({ rx })
   }
   txGenesis(params = {}) {
+    assert(this.channelId !== Network.FIXED_IDS.LOOPBACK)
+    assert(this.channelId !== Network.FIXED_IDS.PARENT)
+    assert(this.channelId !== Network.FIXED_IDS.IO)
+    assert(this.tx.isEmpty())
+    assert(this.rx.isEmpty())
     assert(typeof params === 'object')
     const request = Request.create('@@GENESIS', { params })
     return this.txRequest(request)
@@ -150,5 +165,16 @@ export class Channel extends IpldStruct {
   }
   rxIsEmpty() {
     return this.rx.isEmpty()
+  }
+  getTipRequest(request) {
+    // rx the last added request, so can use to match up ids
+    assert(this instanceof Channel)
+    assert(request instanceof Request)
+    const { channelId } = this
+    const stream = request.isSystem() ? 'system' : 'reducer'
+    assert(this.tx[stream].requests.length, `no tip found`)
+    const requestIndex = this.tx[stream].requestsLength - 1
+    assert.strictEqual(request, this.tx[stream].requests[requestIndex])
+    return RxRequest.create(request, channelId, stream, requestIndex)
   }
 }

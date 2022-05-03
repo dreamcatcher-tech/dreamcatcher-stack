@@ -75,4 +75,20 @@ export class TxQueue extends IpldStruct {
       replies,
     })
   }
+  hasReply(requestIndex) {
+    return !!this.#getReply(requestIndex)
+  }
+  getReply(requestIndex) {
+    const reply = this.#getReply(requestIndex)
+    assert(reply)
+    return reply
+  }
+  #getReply(requestIndex) {
+    assert(Number.isInteger(requestIndex))
+    assert(requestIndex >= 0)
+    // TODO walk the promises to see if contains it
+    const index = requestIndex - (this.repliesLength - this.replies.length)
+    const reply = this.replies[index]
+    return reply
+  }
 }

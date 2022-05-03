@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Loopback, Request, Address, Channel, Reply, Network } from '..'
+import { Request, Reply, Network } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
 Debug.enable()

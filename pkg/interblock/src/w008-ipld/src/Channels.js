@@ -90,6 +90,7 @@ export class Channels extends IpldStruct {
     if (channelId >= FIXED_CHANNEL_COUNT || isPrevious) {
       previous = await this.list.get(channelId)
       assert(previous.isNext(channel))
+      // TODO if channel is identical, return
     }
     const list = await this.list.set(channelId, channel)
 

@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import { Request } from '.'
+import { deepFreeze } from './utils'
 export class RxRequest extends Request {
   // same as request, but has id info attached so it can be replied to
   static create(request, channelId, stream, requestIndex) {
@@ -15,5 +16,11 @@ export class RxRequest extends Request {
   }
   crush() {
     throw new Error(`Transients cannot be crushed`)
+  }
+  getAction() {
+    const { type, payload } = this
+    const action = { type, payload }
+    deepFreeze(action)
+    return action
   }
 }

@@ -8,8 +8,9 @@ type PulseLink link
 
 export class PulseLink extends IpldInterface {
   #cid
-  static createLoopback() {
-    const address = Address.createLoopback()
+  static createCrossover(address) {
+    assert(address instanceof Address)
+    assert(address.isResolved())
     const instance = new this()
     instance.#setCid(address.cid.toV1())
     return instance

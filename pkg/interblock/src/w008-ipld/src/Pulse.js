@@ -1,5 +1,6 @@
 import { IpldStruct } from './IpldStruct'
 import {
+  State,
   Config,
   Interpulse,
   Address,
@@ -97,16 +98,25 @@ export class Pulse extends IpldStruct {
         next = next.setMap({ provenance: { dmz: { network } } })
       }
     }
-    // blank the parent transmissions
+    // blank the prior transmissions
     let provenance = next.provenance.setLineage(this)
     if (provenance.transmissions) {
       provenance = provenance.delete('transmissions')
     } else {
+      // TODO only allow non transmissions when genesis ?
       assert.strictEqual(provenance.dmz.network.channels.txs.length, 0)
     }
     const precedent = this.getPulseLink()
     const channels = await provenance.dmz.network.channels.blankTxs(precedent)
     provenance = provenance.setMap({ dmz: { network: { channels } } })
+
+    // blank piercings
+    if (provenance.dmz.network.piercings) {
+      assert(provenance.dmz.config.isPierced)
+      const network = provenance.dmz.network.delete('piercings')
+      provenance = provenance.setMap({ dmz: { network } })
+    }
+
     next = next.setMap({ provenance })
     return next
   }
@@ -131,6 +141,13 @@ export class Pulse extends IpldStruct {
   }
   getPulseLink() {
     return PulseLink.generate(this)
+  }
+  getState() {
+    return this.provenance.dmz.state
+  }
+  setState(state) {
+    assert(state instanceof State)
+    return this.setMap({ provenance: { dmz: { state } } })
   }
 }
 

@@ -128,7 +128,24 @@ export class Address extends IpldInterface {
     return this.toString()
   }
   toString() {
-    return `Address(${this.cid.toString().substring(0, 14)})`
+    let string
+    if (this.isUnknown()) {
+      string = 'UNKNOWN'
+    } else if (this.isRoot()) {
+      string = 'ROOT'
+    } else if (this.isLoopback()) {
+      string = 'LOOPBACK'
+    } else if (this.isInvalid()) {
+      string = 'INVALID'
+    } else if (this.isGenesis()) {
+      string = 'GENESIS'
+    } else if (this.isIo()) {
+      string = 'IO'
+    } else {
+      string = this.cid.toString().substring(0, 14)
+    }
+
+    return `Address(${string})`
   }
   crush() {
     const instance = new Address()
@@ -170,6 +187,9 @@ export class Address extends IpldInterface {
   }
   isUnknown() {
     return this.#cid === UNKNOWN
+  }
+  isIo() {
+    return this.#cid === IO
   }
   isInvalid() {
     return this.#cid === INVALID

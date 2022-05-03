@@ -1,5 +1,7 @@
 import assert from 'assert-fast'
-import { Address, Pulse, PulseLink, Request } from '../../w008-ipld'
+import { Keypair, Address, Pulse, PulseLink } from '../../w008-ipld'
+import Debug from 'debug'
+const debug = Debug('interblock:engine')
 
 /**
 
@@ -62,6 +64,7 @@ export class Hints {
   announce(address, pulselink) {
     assert(address instanceof Address)
     assert(pulselink instanceof PulseLink)
+    debug('announce', address, pulselink)
     // TODO enforce approot announces only
     this.#mockLatestDht.set(address.cid.toString(), pulselink)
   }
@@ -101,6 +104,8 @@ export class Endurance {
   #mockIpfs = new Map()
   async endure(pulse) {
     assert(pulse instanceof Pulse)
+    assert(!pulse.isModified())
+    assert(pulse.isVerified())
     // stores ipfs blocks, with optional distribution minimums
     // could be a softpulse, or a verified pulse
     this.#mockIpfs.set(pulse.cid.toString(), pulse)
@@ -135,29 +140,71 @@ export class Endurance {
 }
 
 export class Crypto {
-  constructor(keypair) {}
+  #keypair
+  constructor(keypair = Keypair.createCI()) {
+    this.#keypair = keypair
+  }
   lock(softpulse) {
+    debug('lock')
+    // get the address out of the softpulse
     // includes a new timestamp, and has the chainId in it
   }
   unlock(pulse) {
     // must be a signed pulse
   }
-  sign(provenance) {
-    // can compare to the locks it has ?
+  async sign(softpulse) {
+    // verify this is the natural successor of the lock currently held
+    debug('sign')
+    // do the signature
+    // insert back into the softpulse
+    // return the softpulse
+    const signature = await this.#keypair.sign(softpulse.provenance)
+    return [this.#keypair.publicKey, signature]
   }
 }
 
+class IsolateContainer {
+  #reducer
+  #timeout
+  static async create(pulse, overloads, timeout) {
+    const reducer = (state, action) => {
+      debug('state', state, 'action', action)
+      return state
+    }
+    return new IsolateContainer(reducer, timeout)
+  }
+  constructor(reducer, timeout) {
+    // get the covenant out of the pulse
+    this.#reducer = reducer
+    this.#timeout = timeout
+  }
+  async unload() {
+    debug('unload')
+  }
+  async reduce(state, rxRequest, accumulator) {
+    debug('reduce')
+    // moves the isolate forwards, returns a reduction
+    // wrap the reducer in the hook function
+    const action = rxRequest.getAction()
+    const reduction = await this.#reducer(state, action)
+    // get the state out of the reduction and cache it
+
+    return reduction
+  }
+  async effects() {
+    // cannot modify the state at all
+    // after invocation, can never call reduce again
+    debug('effects')
+  }
+}
 export class Isolate {
   constructor(overloads) {
     // the dev supplied covenants to override blockchained ones
     this.overloads = overloads
   }
-  load(pulse, tickTimeout) {
-    // returns an isolateId to refer to this running isolation
+  async load(pulse, timeout) {
+    debug('load')
+    const { overloads } = this
+    return await IsolateContainer.create(pulse, overloads, timeout)
   }
-  unload(isolateId) {}
-  tick(isolateId, state, action, accumulator) {
-    // moves the isolate forwards, returns a reduction
-  }
-  effects() {}
 }

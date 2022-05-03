@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`loopback basic 1`] = `
-Loopback {
+Channel {
   "address": Address {},
   "aliases": Array [],
   "channelId": 0,

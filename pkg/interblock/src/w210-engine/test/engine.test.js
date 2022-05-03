@@ -18,10 +18,9 @@ describe('engine', () => {
     const response = await engine.pierce(request)
     assert.deepEqual(response, {})
 
-    // get latest pulselink
-    // recover the Pulse from the PulseLink
+    const pulse = engine.latest
+    pulse.dir()
     // test assertions against the pulse
-    const pulselink = await engine.mutable.getLatest(engine.address)
   })
   test('override covenants', async () => {
     // engine with overridden custom covenant

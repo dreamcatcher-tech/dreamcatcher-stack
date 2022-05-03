@@ -1,6 +1,13 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { Address, Io, Pulse, PulseLink, Request } from '../../w008-ipld'
+import {
+  Channel,
+  RxRequest,
+  Address,
+  Pulse,
+  PulseLink,
+  Request,
+} from '../../w008-ipld'
 import { Isolate, Crypto, Endurance, Scale, Hints } from './Services'
 const debug = Debug('interblock:engine')
 /**
@@ -82,28 +89,24 @@ export class Engine {
     // process as many actions as possible before run out of resource
     // create a new block
     // perform all notification requirements, or scale them out to others
-    const pulse = await this.#hints.softLatest(address)
+    let softpulse = await this.#hints.softLatest(address)
+    const lock = await this.#crypto.lock(softpulse)
     // TODO should return a pulselink, not a pulse
-    if (!pulse) {
+    if (!softpulse) {
       debug(`no softpulse found`)
       return
     }
-    assert(pulse instanceof Pulse)
+    assert(softpulse instanceof Pulse)
 
-    // create a state machine that will exhaust the pulse, using the services
+    // load up the isolation - uses none if this is trusted code
+    const isolate = await this.#isolate.load(softpulse)
+
+    let network = softpulse.getNetwork()
     // while (pulse.getNetwork().channels.rxs.length){
 
-    const network = pulse.getNetwork()
-    // get the next system reply
     const rxSystemReply = await network.rxSystemReply()
-    // process in dmz
     if (rxSystemReply) {
       debug('system reply')
-    }
-
-    const rxReducerReply = await network.rxReducerReply()
-    if (rxReducerReply) {
-      debug('reducer reply')
     }
 
     const rxSystemRequest = await network.rxSystemRequest()
@@ -111,22 +114,82 @@ export class Engine {
       debug('system request')
     }
 
+    const state = softpulse.getState()
+    const rxReducerReply = await network.rxReducerReply()
+    if (rxReducerReply) {
+      debug('reducer reply')
+      // check pending to see if this should be accumulated
+      // if accumulation is completed by this reply, execute it
+      // else discard the reply by doing shift
+    }
+
     const rxReducerRequest = await network.rxReducerRequest()
     if (rxReducerRequest) {
-      debug('reducer request')
+      debug('reducer request', rxReducerRequest)
+      const replies = []
+      const reduction = await isolate.reduce(state, rxReducerRequest, replies)
+      // possibly go pending
+      // do the transmissions
+      // if reduction includes a reply to orign request, use instead
+      network = await network.txReducerReply()
     }
-    // get the next reducer reply
-    // process in isolate
-    // possibly go pending
-    // get the next system request
-    // process in dmz
-    // get the next reducer request
-    // process in isolate
-    // possibly go pending
 
     // }
+
+    // after processing, crush and sign the pulse
+    softpulse = softpulse.setNetwork(network)
+    softpulse = await softpulse.crush()
+    const [publicKey, signature] = await this.#crypto.sign(softpulse)
+    const pulse = await softpulse.addSignature(publicKey, signature).crush()
+
+    // then store the new blocks created
+    await this.#endurance.endure(pulse)
+
+    // then send out all the transmissions
+    await this.#transmit(pulse)
+    // release the lock
+
+    if (pulse.getAddress().equals(this.#address)) {
+      this.#latest = pulse
+      // if the pulse has this address, then check if any piercings are resolved
+      const { tx } = await pulse.getNetwork().getIo()
+      if (!tx.isEmpty()) {
+        // get all the replies out
+        // see if any of them are being waited upon
+        // resolve and clear from #promises any that are
+        for (const tracker of this.#promises) {
+          debug('tracker', tracker)
+          const { stream, requestIndex } = tracker.txRequest
+          // see if the replies contain a settle
+          if (tx[stream].hasReply(requestIndex)) {
+            const reply = tx[stream].getReply(requestIndex)
+            if (reply.isPromise()) {
+              continue
+            }
+            this.#promises.delete(tracker)
+            if (reply.isResolve()) {
+              tracker.resolve(reply.payload)
+            } else {
+              assert(reply.isRejection())
+              tracker.reject(reply.payload)
+            }
+          }
+        }
+      }
+    }
   }
   #promises = new Set()
+  async #transmit(pulse) {
+    assert(pulse instanceof Pulse)
+    assert(pulse.isVerified())
+    const pulselink = pulse.getPulseLink()
+    const network = pulse.getNetwork()
+    for (const channelId of network.channels.txs) {
+      const { address } = await network.channels.getChannel(channelId)
+      assert(address.isRemote())
+      this.#hints.announce(address, pulselink)
+    }
+  }
   async pierce(request, address = this.#address) {
     // the origin of external stimulus across all engines
     // return a promise that resolves when the promise returns AND
@@ -151,12 +214,14 @@ export class Engine {
     assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
 
     let io = await dmz.network.getIo()
-    assert(io instanceof Io)
     io = io.txRequest(request)
-    const rxRequest = io.getTipRequest(request)
-    rxRequest.dir()
-
-    // hook the id so we can process
+    const txRequest = io.getTipRequest(request)
+    const tracker = { txRequest }
+    const promise = new Promise((resolve, reject) => {
+      tracker.resolve = resolve
+      tracker.reject = reject
+    })
+    this.#promises.add(tracker)
 
     const network = await dmz.network.updateIo(io)
     soft = soft.setNetwork(network)
@@ -165,14 +230,6 @@ export class Engine {
     await this.#hints.softAnnounce(soft)
 
     await this.#increase(address)
-    // channelId, stream, index
-
-    const promise = new Promise((resolve, reject) => {
-      // insert these functions
-      requestId.resolve = resolve
-      requestId.reject = reject
-    })
-    this.#promises.add(requestId)
 
     return promise
   }
