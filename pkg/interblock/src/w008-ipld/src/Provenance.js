@@ -3,6 +3,7 @@ import { Address, Dmz, Pulse, PulseLink, Transmissions } from '.'
 import { IpldStruct } from './IpldStruct'
 import Debug from 'debug'
 import { Validators } from './Validators'
+import { Network } from './Network'
 const debug = Debug('interblock:classes:Provenance')
 /**
 ## Provenance
@@ -82,8 +83,8 @@ export class Provenance extends IpldStruct {
     }
     // create the transmissions slice
     const { channels } = this.dmz.network
-    const { txs } = channels
-    assert(Array.isArray(txs))
+    assert(Array.isArray(channels.txs))
+    const txs = channels.txs.filter((i) => i !== Network.FIXED_IDS.IO)
     let next = this
     if (!txs.length) {
       // TODO define rules on block tighter

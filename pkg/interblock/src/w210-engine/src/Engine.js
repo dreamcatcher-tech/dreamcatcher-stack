@@ -138,9 +138,11 @@ export class Engine {
 
     // after processing, crush and sign the pulse
     softpulse = softpulse.setNetwork(network)
-    softpulse = await softpulse.crush()
-    const [publicKey, signature] = await this.#crypto.sign(softpulse)
-    const pulse = await softpulse.addSignature(publicKey, signature).crush()
+    const provenance = await softpulse.provenance.crush()
+    const [publicKey, signature] = await this.#crypto.sign(provenance)
+    softpulse = softpulse.addSignature(publicKey, signature)
+    // do not add crushed provenance else diffBlocks will be wiped
+    const pulse = await softpulse.crush()
 
     // then store the new blocks created
     await this.#endurance.endure(pulse)

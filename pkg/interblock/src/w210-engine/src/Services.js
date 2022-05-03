@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Keypair, Address, Pulse, PulseLink } from '../../w008-ipld'
+import { Provenance, Keypair, Address, Pulse, PulseLink } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:engine')
 
@@ -152,13 +152,14 @@ export class Crypto {
   unlock(pulse) {
     // must be a signed pulse
   }
-  async sign(softpulse) {
+  async sign(provenance) {
+    assert(provenance instanceof Provenance)
     // verify this is the natural successor of the lock currently held
     debug('sign')
     // do the signature
     // insert back into the softpulse
     // return the softpulse
-    const signature = await this.#keypair.sign(softpulse.provenance)
+    const signature = await this.#keypair.sign(provenance)
     return [this.#keypair.publicKey, signature]
   }
 }

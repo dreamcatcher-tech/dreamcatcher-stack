@@ -71,6 +71,9 @@ export class Pulse extends IpldStruct {
       assert(this.provenance.validators.publicKeys.length)
       return true
     }
+    return this.#isQuorum()
+  }
+  #isQuorum() {
     const signatureCount = this.signatures.filter((s) => !!s).length
     return signatureCount >= this.provenance.validators.quorumThreshold
   }
