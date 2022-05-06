@@ -105,13 +105,15 @@
     ],
     "roots": [
       "src/w008-ipld",
-      "src/w210-engine"
+      "src/w210-engine",
+      "src/w017-system-reducer"
     ]
   },
   "wallaby": {
     "autoDetect": true,
     "tests": [
       "**/w008-ipld/**/*.test.js",
+      "**/w017-system-reducer/**/*.test.js",
       "**/w210-engine/**/*.test.js",
       "!package.test.js"
     ],

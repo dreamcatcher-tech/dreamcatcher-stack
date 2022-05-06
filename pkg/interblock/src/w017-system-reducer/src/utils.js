@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import pad from 'pad-left'
-import { Block, Channel, Network } from '../../w015-models'
+import { Channel, Network } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:utils')
 

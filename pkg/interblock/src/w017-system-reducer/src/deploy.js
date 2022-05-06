@@ -1,9 +1,8 @@
 import assert from 'assert-fast'
-import { RxReply, Dmz, CovenantId, RxRequest } from '../../w015-models'
+import { RxReply, Dmz, RxRequest } from '../../w008-ipld'
 import { spawn, spawnRequester } from './spawn'
 import { interchain, replyResolve, replyPromise } from '../../w002-api'
 import Debug from 'debug'
-import { metaProducer } from '../../w016-producers'
 const debug = Debug('interblock:dmz:deploy')
 
 const install = (installer) => ({
@@ -24,6 +23,7 @@ const deployReducer = (dmz, action) => {
   // TODO check format of payload.installer against schema
   // TODO check top level matches this current state
   // TODO clean up failed partial deployments ?
+
   // TODO ? allow specify state in the topmost chain ?
   // TODO accomodate existing children already ? or throw ?
   const { children: directChildren = {} } = installer

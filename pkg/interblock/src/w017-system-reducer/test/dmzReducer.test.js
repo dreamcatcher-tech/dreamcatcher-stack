@@ -1,9 +1,9 @@
 import { assert } from 'chai/index.mjs'
 import { interchain, _hook as hook } from '../../w002-api'
-import { Dmz, RxRequest, Address, CovenantId } from '../../w015-models'
+import { Dmz, RxRequest, Address } from '../../w008-ipld'
 import { actions } from '..'
-import { metrologyFactory } from '../../w018-standard-engine'
 import { spawnReducer, spawn } from '../src/spawn'
+import { Engine } from '../../w210-engine'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
@@ -27,11 +27,12 @@ describe('dmzReducer', () => {
       }
       const covenantId = CovenantId.create('hyper')
       const hyper = { reducer, covenantId }
-      const base = await metrologyFactory('multi', { hyper })
-      base.enableLogging()
-      await base.pierce({ type: 'TEST_SPAWN' })
-      await base.settle()
-      const state = await base.getBlock(1)
+      const opts = { overloads: { hyper }, id: 'multi' }
+      const engine = await Engine.createCI(opts)
+      engine.enableLogging()
+      await engine.pierce({ type: 'TEST_SPAWN' })
+      await engine.settle()
+      const state = await engine.getBlock(1)
       const requests = state.network.get('child1').requests
       assert.strictEqual(requests.length, 2)
     })

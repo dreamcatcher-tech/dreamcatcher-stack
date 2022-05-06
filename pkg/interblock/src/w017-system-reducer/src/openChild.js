@@ -1,7 +1,6 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
-import { Action, RxRequest, RxReply, Dmz, Meta } from '../../w015-models'
-import { channelProducer, metaProducer } from '../../w016-producers'
+import { RxRequest, RxReply, Dmz, Meta } from '../../w008-ipld'
 import {
   replyPromise,
   replyResolve,

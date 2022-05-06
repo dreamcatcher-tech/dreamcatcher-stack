@@ -90,10 +90,11 @@ export class Hints {
 export class Scale {
   // fires up more engine instances to form a distributed engine
   // in a trusted environment
-  watchdog(address) {
+  watchdog(pulse) {
     // notify the watchdog whenever lock is aquired, or lock was taken
     // watchdog is responsible for continuity of operations.
     // may be superseded by running multiple engines
+    debug('watchdog')
   }
 }
 /**
@@ -138,18 +139,14 @@ export class Endurance {
     // remove the pulse from local storage any time
   }
 }
-
-export class Crypto {
+class CryptoLock {
   #keypair
-  constructor(keypair = Keypair.createCI()) {
-    this.#keypair = keypair
+  static async create(softpulse, keypair) {
+    const instance = new this()
+    instance.#keypair = keypair
+    return instance
   }
-  lock(softpulse) {
-    debug('lock')
-    // get the address out of the softpulse
-    // includes a new timestamp, and has the chainId in it
-  }
-  unlock(pulse) {
+  release(pulse) {
     // must be a signed pulse
   }
   async sign(provenance) {
@@ -161,6 +158,18 @@ export class Crypto {
     // return the softpulse
     const signature = await this.#keypair.sign(provenance)
     return [this.#keypair.publicKey, signature]
+  }
+}
+export class Crypto {
+  #keypair
+  constructor(keypair = Keypair.createCI()) {
+    this.#keypair = keypair
+  }
+  lock(softpulse) {
+    debug('lock')
+    // get the address out of the softpulse
+    // includes a new timestamp, and has the chainId in it
+    return CryptoLock.create(softpulse, this.#keypair)
   }
 }
 

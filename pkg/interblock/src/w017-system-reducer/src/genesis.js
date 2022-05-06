@@ -4,10 +4,9 @@ import {
   replyResolve,
   replyReject,
 } from '../../w002-api'
-import { Dmz, RxReply } from '../../w015-models'
+import { Dmz, RxReply } from '../../w008-ipld'
 import Debug from 'debug'
 import assert from 'assert-fast'
-import { metaProducer } from '../../w016-producers'
 const debug = Debug('interblock:dmz:genesis')
 
 const genesisReducer = (dmz, action) => {

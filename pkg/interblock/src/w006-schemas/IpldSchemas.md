@@ -135,15 +135,17 @@ type Signatures [String]
 
 ## Covenant
 
-The Covenant system uses a PulseChain to represent a code package and its various revisions. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod.
+This is the most important part of the system. This model is how we go from content addressable storage to content addressable execution. Covenants are how behaviour is introduced to the system.
+
+The Covenant system uses a PulseChain to represent a code package and its various revisions. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod. A Covenant represents the loaded piece of language specific code.
 
 The PulseChain will include CID links to the git repos that the code was generated from, strengthening the link between running code and committed code.
 
 To determine what packages to load, we need to be told what chainId to look for, and then which specific Pulse in that PulseChain contains the version we will be running. In development mode, we override this lookup by developer supplied functions at runtime, to allow rapid feedback.
 
-Publishing new versions of your code is done by making a new Pulse in the PulseChain. Your software package may be connected to, or listed on an aggregator PulseChain, to allow centralized searching. Permissions and other management concerns are handled with the standard PulseChain methods.
+Publishing new versions of your code is done by making a new Pulse in the PulseChain. Your software package may be connected to, or listed on an aggregator PulseChain, to allow convenient discovery. Permissions and other management concerns are handled with the standard PulseChain methods.
 
-To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the schema below. System covenants are loaded from the chain that they publish from, the same as user supplied covenants, except we shortcut the lookup and load process, and we also skip containment.
+To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the schema below. System covenants are loaded from the chain that they publish from, the same as user supplied covenants, except we shortcut the lookup and load process, and we also skip containment by default, instead of requiring config options to skip containment for user supplied covenants.
 
 We have 3 types of dependencies in the system:
 
@@ -151,8 +153,54 @@ We have 3 types of dependencies in the system:
 2. ChainModule - these are pieces of code that are managed by the in chain code publication system. These can be spliced into existing package managers, and represent a hash based reference to a code package and a code executable. In nodejs, an executable is an npm package that has all its modules installed and optionally some transpilation applied. Covenants as dependencies are in this category.
 3. ChainInstance - this is a reference to a running chain, and is referenced by chainId. These can be oracles, services, people, or any other object in the chain based multiverse.
 
+Goal is that each package should itself be a package manager like npm, so there is no difference between a large cloud package host and an individual package, except child chain count.
+
+Given that covenants are a pulsechain, and interpulse itself is published as a pulsechain, our design goal is that running interpulse on interpulse is possible by specifying interpulse as the covenant of a chain, and configuring the engine to run optimally within chain land.
+
+In all languages, a reducer must be supplied. This is a practically pure function that takes a json state, and a json action, and returns a json state or a promise.
+
+Optionally, a list of async functions that are invoked by the side effect system may be supplied in a map, keyed by name.
+
+Actions are supplied in the form of json-schema, which are used to specify the data structure of each of the actions that the covenant expects to receive. An installer can be provided, which indicates that this.
+
+May optionally specify the initial state.
+
+May specify another covenant within it, or refer to the reducer of another covenant. If both covenants specify an initial state, only the highest state is used.
+
+Migrations to the next version should be supplied if this is a major or minor bump, and these should be tested using our supplied tools for historical correctness.
+
+Contains a pointer to its previous version within the state tree of the publishing chain.
+
+Covenant dependencies have paths too.
+
+Inside the referenced PulseLink is a Binary that contains the executable code.
+
+Name of Covenant is for internal reference to the approot, and aims to be the same as what the covenant author chooses, but it remains stable during author renames.
+
+Registry is set as default that we choose unless approot specifies it. Multiple registries can be blended together.
+
+When a plain string is used, it resolves using the registry stack. This starts with the local 'Covenants' key,
+
+If a pulse is used, it resolves directly.
+
+It is vitally important the covenant system become part of the state system at the earliest possible architectural moment. Otherwise two separate name resolution systems exist.
+
+### The Covenant Covenant
+
+the published thing with the live code in a Binary
+type Covenant struct { # the state of a chain that manages a covenant package
+name String
+version String
+loader PackageTypes
+api { String: Any } # the api of this package # it ints binary object is the package it represents, or as its children
+}
+
+### Covenant Resolution System
+
+In each chain, there is a string key named covenant, which states a name to be looked up in the covenant resolution system, and then loaded to execute the actions of this chain against its current state.
+
 ```sh
-type PackageTypes enum {
+type PackageTypes enum { # intended to be like multiformats in ipfs, for languages
     | javascript
     | javascript_xstate
     | python
@@ -162,23 +210,26 @@ type PackageTypes enum {
     | c
     | cpp
 }
-type PackageState struct {  # Basically package.json excerpts
+
+type Registry struct {
     name String
-    version String
-    type PackageTypes
-}
-type Covenant struct {
     address Address
-    pulse PulseLink
-    info &PackageState      # Link to the info in the Pulse
-    package Binary          # link to the binary of the Pulse
 }
+type AppRoot struct {
+    registries: [ Registry ] # covenant resolution priority
+}
+
+covenant        # A string, which is resolved using the approot
+.covenants      # child folder, used for covenant resolution - can be anywhere
+                # contains children running the Covenant covenant
+                # acts like a packagelock file
 
 ```
 
 ## Timestamp
 
-Date example `2011-10-05T14:48:00.000Z`
+Date example `2011-10-05T14:48:00.000Z`.
+In CI mode, the constant timestamp is: `2022-02-22T02:22:22.222Z`, which allows for predictable chainIds to be generated to take advantage of jests snapshot testing tooling.
 
 ```sh
 type Timestamp struct {
@@ -253,6 +304,14 @@ type Pending struct {
 ## Config
 
 Entropy is a seed used to provide pseudorandomness to the chain. Initially it is used to ensure the genesis blocks are strongly unique, but every time a function requests some random data, we increment the count, then run a twister function that many times to generate the randomness. The count is zeroed each Pulse by storing the current value of the twister. If the covenant is pending, this count is not increased, but rather the count in Pending slice is increased temporarily.
+
+### AppRoot requirements
+
+AppRoot is a system chain, and contains within it some required config items that can be deferred in child chains. It must also have some extra state.
+
+It holds the registry of what covenant names resolve to what pulselinks. To upgrade a package, this allows every chain in the complex to upgrade simultaneously.
+
+Individual chains may override `interpulse` and `covenant` but if they do not, the approot version is the required version.
 
 ```sh
 type SideEffectsConfig struct {

@@ -14,8 +14,7 @@ import {
 import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer, genesisReply, initReply } from './genesis'
 import { getStateReducer, getState } from './getState'
-import { Dmz, RxRequest, RxReply } from '../../w015-models'
-import { metaProducer } from '../../w016-producers'
+import { Dmz, RxRequest, RxReply } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz')
 /**

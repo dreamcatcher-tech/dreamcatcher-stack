@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
 import {
+  Network,
   Channel,
   RxRequest,
   Address,
@@ -34,6 +35,10 @@ export class Engine {
   }
   get latest() {
     return this.#latest
+  }
+  static async createCI(opts = {}) {
+    const ciOptions = { ...opts, CI: true }
+    return await this.create(ciOptions)
   }
   static async create(opts = {}) {
     const instance = new Engine(opts)
@@ -89,104 +94,116 @@ export class Engine {
     // process as many actions as possible before run out of resource
     // create a new block
     // perform all notification requirements, or scale them out to others
-    let softpulse = await this.#hints.softLatest(address)
-    const lock = await this.#crypto.lock(softpulse)
     // TODO should return a pulselink, not a pulse
+    let softpulse = await this.#hints.softLatest(address)
     if (!softpulse) {
       debug(`no softpulse found`)
       return
     }
     assert(softpulse instanceof Pulse)
+    assert(softpulse.getNetwork().channels.rxs.length)
 
-    // load up the isolation - uses none if this is trusted code
-    const isolate = await this.#isolate.load(softpulse)
+    const lock = await this.#crypto.lock(softpulse)
+    await this.#scale.watchdog(softpulse)
 
-    let network = softpulse.getNetwork()
-    // while (pulse.getNetwork().channels.rxs.length){
-
-    const rxSystemReply = await network.rxSystemReply()
-    if (rxSystemReply) {
-      debug('system reply')
-    }
-
-    const rxSystemRequest = await network.rxSystemRequest()
-    if (rxSystemRequest) {
-      debug('system request')
-    }
-
-    const state = softpulse.getState()
-    const rxReducerReply = await network.rxReducerReply()
-    if (rxReducerReply) {
-      debug('reducer reply')
-      // check pending to see if this should be accumulated
-      // if accumulation is completed by this reply, execute it
-      // else discard the reply by doing shift
-    }
-
-    const rxReducerRequest = await network.rxReducerRequest()
-    if (rxReducerRequest) {
-      debug('reducer request', rxReducerRequest)
-      const replies = []
-      const reduction = await isolate.reduce(state, rxReducerRequest, replies)
-      // possibly go pending
-      // do the transmissions
-      // if reduction includes a reply to orign request, use instead
-      network = await network.txReducerReply()
-    }
-
-    // }
-
-    // after processing, crush and sign the pulse
-    softpulse = softpulse.setNetwork(network)
+    softpulse = await this.#reducer(softpulse)
     const provenance = await softpulse.provenance.crush()
-    const [publicKey, signature] = await this.#crypto.sign(provenance)
+    const [publicKey, signature] = await lock.sign(provenance)
     softpulse = softpulse.addSignature(publicKey, signature)
     // do not add crushed provenance else diffBlocks will be wiped
     const pulse = await softpulse.crush()
 
     // then store the new blocks created
     await this.#endurance.endure(pulse)
-
+    await this.#checkPierceTracker(pulse) // but should be subscription based
     // then send out all the transmissions
     await this.#transmit(pulse)
     // release the lock
-
-    if (pulse.getAddress().equals(this.#address)) {
-      this.#latest = pulse
-      // if the pulse has this address, then check if any piercings are resolved
-      const { tx } = await pulse.getNetwork().getIo()
-      if (!tx.isEmpty()) {
-        // get all the replies out
-        // see if any of them are being waited upon
-        // resolve and clear from #promises any that are
-        for (const tracker of this.#promises) {
-          debug('tracker', tracker)
-          const { stream, requestIndex } = tracker.txRequest
-          // see if the replies contain a settle
-          if (tx[stream].hasReply(requestIndex)) {
-            const reply = tx[stream].getReply(requestIndex)
-            if (reply.isPromise()) {
-              continue
-            }
-            this.#promises.delete(tracker)
-            if (reply.isResolve()) {
-              tracker.resolve(reply.payload)
-            } else {
-              assert(reply.isRejection())
-              tracker.reject(reply.payload)
-            }
+    await lock.release()
+  }
+  #promises = new Set()
+  async #checkPierceTracker(pulse) {
+    if (!pulse.getAddress().equals(this.#address)) {
+      return
+    }
+    this.#latest = pulse
+    // if the pulse has this address, then check if any piercings are resolved
+    const { tx } = await pulse.getNetwork().getIo()
+    if (!tx.isEmpty()) {
+      for (const tracker of this.#promises) {
+        const { stream, requestIndex } = tracker.txRequest
+        // see if the replies contain a settle
+        if (tx[stream].hasReply(requestIndex)) {
+          debug('tracker match', requestIndex)
+          const reply = tx[stream].getReply(requestIndex)
+          if (reply.isPromise()) {
+            continue
+          }
+          this.#promises.delete(tracker)
+          if (reply.isResolve()) {
+            tracker.resolve(reply.payload)
+          } else {
+            assert(reply.isRejection())
+            tracker.reject(reply.payload)
           }
         }
       }
     }
   }
-  #promises = new Set()
+  async #reducer(softpulse) {
+    assert(softpulse instanceof Pulse)
+    assert(softpulse.isModified())
+    const isolate = await this.#isolate.load(softpulse)
+    let network = softpulse.getNetwork()
+    let counter = 0
+    while (softpulse.getNetwork().channels.rxs.length && counter++ < 10) {
+      const rxSystemReply = await network.rxSystemReply()
+      if (rxSystemReply) {
+        debug('system reply')
+      }
+
+      const rxSystemRequest = await network.rxSystemRequest()
+      if (rxSystemRequest) {
+        debug('system request')
+      }
+
+      const state = softpulse.getState()
+      const rxReducerReply = await network.rxReducerReply()
+      if (rxReducerReply) {
+        debug('reducer reply')
+        // check pending to see if this should be accumulated
+        // if accumulation is completed by this reply, execute it
+        // else discard the reply by doing shift
+      }
+
+      const rxReducerRequest = await network.rxReducerRequest()
+      if (rxReducerRequest) {
+        debug('reducer request', rxReducerRequest)
+        const replies = []
+        const reduction = await isolate.reduce(state, rxReducerRequest, replies)
+
+        // figure out what has already been transmitted
+        // resolve the ids of the pending requests, so they can be matched
+
+        // possibly go pending
+        // do the transmissions
+        // if reduction includes a reply to orign request, use instead
+        network = await network.txReducerReply()
+      }
+    }
+
+    softpulse = softpulse.setNetwork(network)
+    return softpulse
+  }
   async #transmit(pulse) {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
     const pulselink = pulse.getPulseLink()
     const network = pulse.getNetwork()
     for (const channelId of network.channels.txs) {
+      if (channelId === Network.FIXED_IDS.IO) {
+        continue
+      }
       const { address } = await network.channels.getChannel(channelId)
       assert(address.isRemote())
       this.#hints.announce(address, pulselink)
@@ -241,7 +258,7 @@ export class Engine {
  * The top level ORM object.
  * Assembles an Engine with all the services it needs to operate.
  * Wraps engine with useful functions for devs.
- * Requires the shell to be loaded at the root block.
+ * Loads the shell to be loaded at the root block.
  * Works with paths, whereas engine works with addresses.
  * Manages subscriptions to chains for view purposes only.
  */

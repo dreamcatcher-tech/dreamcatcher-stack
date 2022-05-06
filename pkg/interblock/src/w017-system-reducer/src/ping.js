@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { replyResolve } from '../../w002-api'
-import { RxRequest } from '../../w015-models'
+import { RxRequest } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:ping')
 

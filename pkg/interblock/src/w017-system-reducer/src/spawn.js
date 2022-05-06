@@ -1,14 +1,5 @@
 import assert from 'assert-fast'
-import {
-  Block,
-  Action,
-  Channel,
-  Network,
-  Dmz,
-  RxRequest,
-  CovenantId,
-} from '../../w015-models'
-import { channelProducer, metaProducer } from '../../w016-producers'
+import { Channel, Network, Dmz, RxRequest } from '../../w008-ipld'
 import { autoAlias } from './utils'
 import { replyPromise } from '../../w002-api'
 import Debug from 'debug'

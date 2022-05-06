@@ -1,6 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Channel, Dmz, RxRequest } from '../../w015-models'
-import { channelProducer } from '../../w016-producers'
+import { Address, Channel, Dmz, RxRequest } from '../../w008-ipld'
 
 const connect = (alias, chainId) => ({
   type: '@@CONNECT',

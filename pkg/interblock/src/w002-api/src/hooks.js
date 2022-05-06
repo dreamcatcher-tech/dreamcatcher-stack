@@ -2,7 +2,6 @@ import assert from 'assert-fast'
 import setImmediate from 'set-immediate-shim'
 import { request, promise, resolve, reject, isReplyType } from './api'
 import Debug from 'debug'
-import { RxReply } from '../../w015-models' // TODO remove this import somehow
 const debug = Debug('interblock:api:hooks')
 
 // TODO error if promise called more than once
