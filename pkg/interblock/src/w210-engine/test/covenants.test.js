@@ -9,6 +9,7 @@ describe('covenants', () => {
     test.todo('overriding deeply nested initial state')
     test.todo('overriding a deeply nested installers children')
     test.todo('install with covenants written in multiple languages')
+    test.todo('upgrade of multiple chains simultaneously')
   })
   describe('system library', () => {
     test.todo('override system library in development')

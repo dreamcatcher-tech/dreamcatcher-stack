@@ -181,61 +181,8 @@ export default {
       kind: 'list',
       valueType: 'String',
     },
-    PackageTypes: {
-      kind: 'enum',
-      members: {
-        javascript: null,
-        javascript_xstate: null,
-        python: null,
-        go: null,
-        rust: null,
-        haskell: null,
-        c: null,
-        cpp: null,
-      },
-      representation: {
-        string: {},
-      },
-    },
-    PackageState: {
-      kind: 'struct',
-      fields: {
-        name: {
-          type: 'String',
-        },
-        version: {
-          type: 'String',
-        },
-        type: {
-          type: 'PackageTypes',
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
     Covenant: {
-      kind: 'struct',
-      fields: {
-        address: {
-          type: 'Address',
-        },
-        pulse: {
-          type: 'PulseLink',
-        },
-        info: {
-          type: {
-            kind: 'link',
-            expectedType: 'PackageState',
-          },
-        },
-        package: {
-          type: 'Binary',
-        },
-      },
-      representation: {
-        map: {},
-      },
+      kind: 'string',
     },
     Timestamp: {
       kind: 'struct',
@@ -292,7 +239,10 @@ export default {
         channelId: {
           type: 'Int',
         },
-        requestId: {
+        stream: {
+          type: 'String',
+        },
+        requestIndex: {
           type: 'Int',
         },
       },
@@ -300,7 +250,7 @@ export default {
         map: {},
       },
     },
-    PendingRequest: {
+    PendingTx: {
       kind: 'struct',
       fields: {
         request: {
@@ -308,9 +258,18 @@ export default {
             kind: 'link',
             expectedType: 'Request',
           },
+          optional: true,
+        },
+        reply: {
+          type: {
+            kind: 'link',
+            expectedType: 'Reply',
+          },
+          optional: true,
         },
         to: {
           type: 'String',
+          optional: true,
         },
         id: {
           type: 'RequestId',
@@ -327,10 +286,10 @@ export default {
         rxPendingRequest: {
           type: 'RequestId',
         },
-        requests: {
+        pendingTxs: {
           type: {
             kind: 'list',
-            valueType: 'PendingRequest',
+            valueType: 'PendingTx',
           },
         },
         replies: {
@@ -466,7 +425,7 @@ export default {
     PromisedReply: {
       kind: 'struct',
       fields: {
-        requestId: {
+        requestIndex: {
           type: 'Int',
         },
         reply: {
@@ -483,7 +442,7 @@ export default {
     TxQueue: {
       kind: 'struct',
       fields: {
-        requestsStart: {
+        requestsLength: {
           type: 'Int',
         },
         requests: {
@@ -496,7 +455,7 @@ export default {
           },
           optional: true,
         },
-        repliesStart: {
+        repliesLength: {
           type: 'Int',
         },
         replies: {
@@ -509,7 +468,7 @@ export default {
           },
           optional: true,
         },
-        promisedIds: {
+        promisedRequestIds: {
           type: {
             kind: 'list',
             valueType: 'Int',
@@ -545,19 +504,9 @@ export default {
         map: {},
       },
     },
-    RxRemaining: {
-      kind: 'struct',
-      fields: {
-        requestsRemaining: {
-          type: 'Int',
-        },
-        repliesRemaining: {
-          type: 'Int',
-        },
-      },
-      representation: {
-        map: {},
-      },
+    RxQueue: {
+      kind: 'copy',
+      fromType: 'TxQueue',
     },
     Rx: {
       kind: 'struct',
@@ -567,11 +516,11 @@ export default {
           optional: true,
         },
         system: {
-          type: 'RxRemaining',
+          type: 'RxQueue',
           optional: true,
         },
         reducer: {
-          type: 'RxRemaining',
+          type: 'RxQueue',
           optional: true,
         },
       },
@@ -582,6 +531,9 @@ export default {
     Channel: {
       kind: 'struct',
       fields: {
+        channelId: {
+          type: 'Int',
+        },
         address: {
           type: 'Address',
         },
@@ -605,6 +557,10 @@ export default {
         map: {},
       },
     },
+    Loopback: {
+      kind: 'copy',
+      fromType: 'Channel',
+    },
     Channels: {
       kind: 'struct',
       fields: {
@@ -622,14 +578,12 @@ export default {
             kind: 'list',
             valueType: 'Int',
           },
-          optional: true,
         },
         txs: {
           type: {
             kind: 'list',
             valueType: 'Int',
           },
-          optional: true,
         },
       },
       representation: {
@@ -649,6 +603,10 @@ export default {
         },
         io: {
           type: 'Channel',
+          optional: true,
+        },
+        piercings: {
+          type: 'Tx',
           optional: true,
         },
         channels: {

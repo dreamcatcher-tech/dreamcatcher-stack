@@ -271,7 +271,7 @@ Publishing to an Interblock registry would be as simple as making a chain, and p
 All this is to say that, the schema for representing Covenants on chain is:
 
 ```sh
-type Covenant String
+type Covenant string
 ```
 
 ## Timestamp
@@ -457,7 +457,7 @@ When ingesting an interpulse, the RxQueue is extended to include the TxQueue tha
 The data structure of RxQueue and TxQueue is identical, but the functions presented to the system are different.
 
 ```sh
-RxQueue = TxQueue
+type RxQueue = TxQueue
 type Rx struct {
     tip optional PulseLink          # The last Pulse this chain received
     system optional RxQueue
