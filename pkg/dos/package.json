@@ -39,14 +39,14 @@
     "util": "^0.12.4"
   },
   "devDependencies": {
-    "eslint": "^8.14.0",
+    "eslint": "^8.15.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.29.3",
-    "jest": "^28.0.2",
-    "nodemon": "^2.0.15",
+    "jest": "^28.1.0",
+    "nodemon": "^2.0.16",
     "prettier": "^2.6.2",
-    "vite": "^2.9.6"
+    "vite": "^2.9.8"
   },
   "publishConfig": {
     "access": "public"
