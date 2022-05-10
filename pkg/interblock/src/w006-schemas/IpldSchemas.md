@@ -175,8 +175,11 @@ By way of example, the format of the state within the Covenant is:
     },
     registries: [ // ordered registries to look up any unresolved covenant names
         'interblock://registry1',
-        'interblock://reg2'
-        '/some/local/path'
+        'interblock://reg2',
+        '/some/local/path',
+        // referring to a specific pulse in a registry is the same as
+        // using a package-lock.json
+        'PulseLink(bafyreig3w5cuffzshczi5xzwnp4igna5wehxcisr53jcjtrfxcnbgzwrui)
     ]
 }
 ```
