@@ -245,8 +245,15 @@ export class Network extends IpldStruct {
     return this.setMap({ channels })
   }
   addChannel(alias, channel, systemRole = './') {}
-  async getByAlias(alias) {
-    const { channelId } = await this.aliases.get(alias)
+  async hasChild(alias) {
+    assert(typeof alias === 'string', 'Alias not string')
+    assert(alias)
+    return this.children.has(alias)
+  }
+  async getChild(alias) {
+    assert(typeof alias === 'string', 'Alias not string')
+    assert(alias)
+    const channelId = await this.children.get(alias)
     assert(Number.isInteger(channelId))
     assert(channelId >= 0 && channelId < this.counter)
     const channel = await this.channels.get(channelId)

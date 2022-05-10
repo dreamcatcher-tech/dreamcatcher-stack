@@ -41,4 +41,9 @@ export class Reply extends Request {
   isResolve() {
     return this.type === '@@RESOLVE'
   }
+  static isReplyType(type) {
+    assert.strictEqual(typeof type, 'string')
+    assert(type)
+    return type === '@@RESOLVE' || type === '@@REJECT' || type === '@@PROMISE'
+  }
 }

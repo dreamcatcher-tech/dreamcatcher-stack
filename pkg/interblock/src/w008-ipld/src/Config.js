@@ -30,6 +30,7 @@ export class Config extends IpldStruct {
       isPierced: false,
       sideEffects,
       isPublicChannelOpen: false,
+      covenant: 'unity', // TODO hashlock to unity
     }
     return super.clone({ ...config, ...opts })
   }

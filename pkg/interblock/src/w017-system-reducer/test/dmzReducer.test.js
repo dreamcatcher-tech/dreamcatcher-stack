@@ -1,13 +1,13 @@
 import { assert } from 'chai/index.mjs'
 import { interchain, _hook as hook } from '../../w002-api'
-import { Dmz, RxRequest, Address } from '../../w008-ipld'
+import { Dmz, RxRequest, Address, Request } from '../../w008-ipld'
 import { actions } from '..'
 import { spawnReducer, spawn } from '../src/spawn'
 import { Engine } from '../../w210-engine'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
-Debug.enable()
+Debug.enable('*dmzReducer *hooks *engine')
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')
@@ -15,7 +15,7 @@ describe('dmzReducer', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
-    test('spawn is implicitly awaited', async () => {
+    test.only('spawn is implicitly awaited', async () => {
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)
         if (action.type === 'TEST_SPAWN') {
@@ -25,15 +25,16 @@ describe('dmzReducer', () => {
         }
         return {}
       }
-      const covenantId = CovenantId.create('hyper')
-      const hyper = { reducer, covenantId }
-      const opts = { overloads: { hyper }, id: 'multi' }
-      const engine = await Engine.createCI(opts)
+      const root = { reducer }
+      const engine = await Engine.createCI()
+      engine.overload({ root })
       engine.enableLogging()
-      await engine.pierce({ type: 'TEST_SPAWN' })
-      await engine.settle()
-      const state = await engine.getBlock(1)
-      const requests = state.network.get('child1').requests
+      const request = Request.create({ type: 'TEST_SPAWN' })
+      await engine.pierce(request)
+      const state = engine.latest
+      state.getNetwork().dir()
+      const channel = await state.getNetwork().getChild('child1')
+      channel.dir()
       assert.strictEqual(requests.length, 2)
     })
     test('spawn uses hash for seeding inside action', async () => {
@@ -51,6 +52,7 @@ describe('dmzReducer', () => {
       const hash = action.hashString()
       // TODO hard to test if the actual path used genesis other than stepping
     })
+    test.todo('spawn moved to the tip of the channel')
   })
   describe('openPaths', () => {
     test.todo('cannot be more than one outstanding @@OPEN request in a channel')

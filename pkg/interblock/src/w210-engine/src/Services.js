@@ -173,13 +173,25 @@ export class Crypto {
   }
 }
 
+import { _hook as hook } from '../../w002-api'
 class IsolateContainer {
   #reducer
   #timeout
   static async create(pulse, overloads, timeout) {
-    const reducer = (state, action) => {
+    assert(pulse instanceof Pulse)
+    assert(pulse.isModified())
+    assert.strictEqual(typeof overloads, 'object')
+    assert(Number.isInteger(timeout))
+    const { covenant } = pulse.provenance.dmz.config
+
+    // have fun: https://github.com/dreamcatcher-tech/dreamcatcher-stack/blob/master/pkg/interblock/src/w006-schemas/IpldSchemas.md#covenant
+
+    let reducer = (state, action) => {
       debug('state', state, 'action', action)
       return state
+    }
+    if (overloads[covenant]) {
+      reducer = overloads[covenant].reducer
     }
     return new IsolateContainer(reducer, timeout)
   }
@@ -188,6 +200,7 @@ class IsolateContainer {
     this.#reducer = reducer
     this.#timeout = timeout
   }
+
   async unload() {
     debug('unload')
   }
@@ -196,7 +209,9 @@ class IsolateContainer {
     // moves the isolate forwards, returns a reduction
     // wrap the reducer in the hook function
     const action = rxRequest.getAction()
-    const reduction = await this.#reducer(state, action)
+    const tick = () => this.#reducer(state, action)
+    const queries = () => console.log('queries')
+    const reduction = await hook(tick, accumulator, queries)
     // get the state out of the reduction and cache it
 
     return reduction
@@ -208,13 +223,16 @@ class IsolateContainer {
   }
 }
 export class Isolate {
-  constructor(overloads) {
+  #overloads = {}
+  constructor() {}
+  overload(overloads) {
+    assert.strictEqual(typeof overloads, 'object')
     // the dev supplied covenants to override blockchained ones
-    this.overloads = overloads
+    this.#overloads = overloads
   }
   async load(pulse, timeout) {
     debug('load')
-    const { overloads } = this
+    const overloads = this.#overloads
     return await IsolateContainer.create(pulse, overloads, timeout)
   }
 }

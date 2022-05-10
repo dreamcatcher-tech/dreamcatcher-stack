@@ -231,8 +231,8 @@ Once the binary image contained by the Covenant instance is loaded, we expect at
 
 1. `reducer( state, action ) -> nextState + transmissions` (this function is required)
 1. `effect( state, action ) -> transmissions`
-1. `upgrade( state ) -> nextState`
-1. `downgrade( state ) -> nextState`
+1. `upgrade( state ) -> nextState + transmissions`
+1. `downgrade( state ) -> nextState + transmissions`
 
 Transmissions are actions that need routing to remote chains. The optional `upgrade` function transitions from the previous state version to the current one. It is recommended to supply this function separately from the reducer because it gets different timeout settings, and it can be chained by the engine if multiple upgrades need to occur at once, rather than the reducer having to handle arbitrary upgrade paths. `downgrade` does the reverse, and again is optional. Both these functions will be checked for correctness during publish verification where semver is automatically calculated too.
 

@@ -8,6 +8,7 @@ import {
   Pulse,
   PulseLink,
   Request,
+  Reply,
 } from '../../w008-ipld'
 import { Isolate, Crypto, Endurance, Scale, Hints } from './Services'
 const debug = Debug('interblock:engine')
@@ -24,6 +25,7 @@ const debug = Debug('interblock:engine')
 export class Engine {
   #address // the address of the base chain of this engine
   #latest // latest block in the base chain of this engine
+  #logging = false
 
   #isolate
   #crypto
@@ -52,6 +54,10 @@ export class Engine {
     this.#endurance = endurance || new Endurance()
     this.#scale = scale || new Scale()
     this.#hints = hints || new Hints()
+  }
+  overload(overloads) {
+    assert.strictEqual(typeof overloads, 'object')
+    this.#isolate.overload(overloads)
   }
   async #init(CI) {
     // check if a base exists already, if so, get the latest block fully
@@ -153,7 +159,8 @@ export class Engine {
   async #reducer(softpulse) {
     assert(softpulse instanceof Pulse)
     assert(softpulse.isModified())
-    const isolate = await this.#isolate.load(softpulse)
+    const timeout = 2000
+    const isolate = await this.#isolate.load(softpulse, timeout)
     let network = softpulse.getNetwork()
     let counter = 0
     while (softpulse.getNetwork().channels.rxs.length && counter++ < 10) {
@@ -188,6 +195,14 @@ export class Engine {
         // possibly go pending
         // do the transmissions
         // if reduction includes a reply to orign request, use instead
+        for (const action of reduction.transmissions) {
+          console.log('action', action)
+          if (Reply.isReplyType(action.type)){
+
+          } else {
+            const request = 
+          }
+        }
         network = await network.txReducerReply()
       }
     }
@@ -208,6 +223,10 @@ export class Engine {
       assert(address.isRemote())
       this.#hints.announce(address, pulselink)
     }
+  }
+  subscribe(callback) {
+    assert.strictEqual(typeof callback, 'function')
+    // TODO gets called each time a new block is made
   }
   async pierce(request, address = this.#address) {
     // the origin of external stimulus across all engines
@@ -251,6 +270,9 @@ export class Engine {
     await this.#increase(address)
 
     return promise
+  }
+  enableLogging() {
+    this.#logging = true
   }
 }
 
