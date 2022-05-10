@@ -135,95 +135,140 @@ type Signatures [String]
 
 ## Covenant
 
-This is the most important part of the system. This model is how we go from content addressable storage to content addressable execution. Covenants are how behaviour is introduced to the system.
+This is the most important part of the system in setting us apart from IPFS. This model is how we go from content addressable storage to content addressable execution. Covenants are how programmable behaviour is introduced to IPFS, approaching IPEX - the InterPlanetaryExecutable™.
 
-The Covenant system uses a PulseChain to represent a code package and its various revisions. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod. A Covenant represents the loaded piece of language specific code.
+The Covenant system uses a PulseChain to represent an executable code package, using the chain data structure to capture revisions of the software. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod. A Covenant represents the executable piece of language specific code and its provenance. By way of parents running `repo` Covenants, the PulseChain may include hash links to the git repos that the code was generated from, strengthening the link between running code and committed code.
 
-The PulseChain will include CID links to the git repos that the code was generated from, strengthening the link between running code and committed code.
+To determine what packages to load, we need to be told what chainId to look for, and then which specific Pulse in that PulseChain contains the version we will be running. This determination requires a Covenant Resolution Strategy. In development mode, we override this strategy with developer supplied functions at runtime, to allow rapid feedback.
 
-To determine what packages to load, we need to be told what chainId to look for, and then which specific Pulse in that PulseChain contains the version we will be running. In development mode, we override this lookup by developer supplied functions at runtime, to allow rapid feedback.
+To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the example below. System covenants are loaded from the chain that they publish from, the same as user supplied covenants, except we shortcut the lookup and load process, and we also skip containment for them by default, instead of requiring config options to skip containment for vendor supplied covenants.
 
-Publishing new versions of your code is done by making a new Pulse in the PulseChain. Your software package may be connected to, or listed on an aggregator PulseChain, to allow convenient discovery. Permissions and other management concerns are handled with the standard PulseChain methods.
+By way of example, the format of the state within the Covenant is:
 
-To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the schema below. System covenants are loaded from the chain that they publish from, the same as user supplied covenants, except we shortcut the lookup and load process, and we also skip containment by default, instead of requiring config options to skip containment for user supplied covenants.
-
-We have 3 types of dependencies in the system:
-
-1. Conventional - these are specified using the package manager that your code type uses. Eg: npm, pip, cargo
-2. ChainModule - these are pieces of code that are managed by the in chain code publication system. These can be spliced into existing package managers, and represent a hash based reference to a code package and a code executable. In nodejs, an executable is an npm package that has all its modules installed and optionally some transpilation applied. Covenants as dependencies are in this category.
-3. ChainInstance - this is a reference to a running chain, and is referenced by chainId. These can be oracles, services, people, or any other object in the chain based multiverse.
-
-Goal is that each package should itself be a package manager like npm, so there is no difference between a large cloud package host and an individual package, except child chain count.
-
-Given that covenants are a pulsechain, and interpulse itself is published as a pulsechain, our design goal is that running interpulse on interpulse is possible by specifying interpulse as the covenant of a chain, and configuring the engine to run optimally within chain land.
-
-In all languages, a reducer must be supplied. This is a practically pure function that takes a json state, and a json action, and returns a json state or a promise.
-
-Optionally, a list of async functions that are invoked by the side effect system may be supplied in a map, keyed by name.
-
-Actions are supplied in the form of json-schema, which are used to specify the data structure of each of the actions that the covenant expects to receive. An installer can be provided, which indicates that this.
-
-May optionally specify the initial state.
-
-May specify another covenant within it, or refer to the reducer of another covenant. If both covenants specify an initial state, only the highest state is used.
-
-Migrations to the next version should be supplied if this is a major or minor bump, and these should be tested using our supplied tools for historical correctness.
-
-Contains a pointer to its previous version within the state tree of the publishing chain.
-
-Covenant dependencies have paths too.
-
-Inside the referenced PulseLink is a Binary that contains the executable code.
-
-Name of Covenant is for internal reference to the approot, and aims to be the same as what the covenant author chooses, but it remains stable during author renames.
-
-Registry is set as default that we choose unless approot specifies it. Multiple registries can be blended together.
-
-When a plain string is used, it resolves using the registry stack. This starts with the local 'Covenants' key,
-
-If a pulse is used, it resolves directly.
-
-It is vitally important the covenant system become part of the state system at the earliest possible architectural moment. Otherwise two separate name resolution systems exist.
-
-### The Covenant Covenant
-
-the published thing with the live code in a Binary
-type Covenant struct { # the state of a chain that manages a covenant package
-name String
-version String
-loader PackageTypes
-api { String: Any } # the api of this package # it ints binary object is the package it represents, or as its children
+```js
+{
+    name: `some-internal-sluggified-name`, // a hint for consumers
+    version: `0.3.2` // semver version string
+    loader: `javascript` // which interblock loader to use on the binary image
+    api: { // the actions api of this covenant
+        TEST: {
+            type: 'object',
+            properties: {
+                anything: { type: 'string', description: 'literally anything'}
+            }
+        }
+    },
+    state: {}, // optional starting state of the covenant, may be overridden
+    installer: { // any required children are specified here
+        customers: {
+            covenant: 'collection',
+            state: { datum: { }},
+            installer: {
+                customer123: {} // can load some initial customers
+            }
+        },
+        remoteChain: 'Address(QmYMKzxgro9NTb)'
+    },
+    importMap: { // specify paths and the imports to override
+        datum: 'interblock://privateRegistry1/datum',
+        collection: 'sneakyNameChange',
+    },
+    registries: [ // ordered registries to look up any unresolved covenant names
+        'interblock://registry1',
+        'interblock://reg2'
+        '/some/local/path'
+    ]
 }
+```
+
+The lifecycle of the usage of a Covenant is:
+
+1. Develop: code is loaded live while the developer makes changes, to remove publishing from the feedback loop
+1. Publish: here the code is transformed into a filesystem image that can be loaded up and executed. Code dependencies are fetched here, and build steps are run
+1. Resolve: A string in config is resolved into a pulselink that contains a Covenant
+1. Install: A covenant is set as the running covenant of a new chain, and any children that are part of the installation are created. Note this may trigger nested covenants to begin their own installation process.
+1. Load: A Covenants binary image is reified and within the isolation boundaries turned into executable code
+1. Execute: Loaded code from the Covenants binary image is executed within the isolation boundary
+1. Effects: Optionally side effects supplied from the binary image are executed
+
+### Dependency Management
+
+Modern code carries many dependencies. Here dependencies are split into 3 types:
+
+1. Code level: these are specified using the package manager that your code type uses. Eg: npm, pip, cargo dependencies and are bundled together during the publish step. Only the loader and the publisher need to be aware of these.
+2. Covenant level: these are pieces of code that represent a hash based reference to executable code. In nodejs, an executable is an npm package that has all its modules installed and optionally some transpilation applied.
+3. Chain level: - this is a reference to a running chain, and is referenced by chainId. These can be oracles, services, people, or any other object in the chain based multiverse. These are interacted with using their json based API.
+
+Each `covenant` instance is, by way of the chains that house them, are capable of an unlimited number of children. This in effect makes them a registry unto themselves. The code that runs a large registry is intended to be exactly the same as what runs a simple hello world covenant, differing only in child chain count.
+
+Given that covenants are a pulsechain, and interpulse itself is published as a pulsechain, our design goal is that running interpulse on interpulse is possible by specifying interpulse as the covenant of a chain, and configuring the engine to run optimally within chain land. Furthermore the loader can be supplied as a covenant, allowing custom loaders and publishers to be created.
+
+The Covenant System is made of at least two distinct Covenants. The `covenant` Covenant, which is the final step before the binary it contains is executed, and the `repo` covenant, which acts as a parent for the Covenant, holding reference to its source code, lineage, and other published artefacts. Ideally a Repo is a general purpose object used to model all kinds of code projects, whereas a Covenant is the minimum interface we need to be able to use ipfs data as executable code in a safe and chargeable way.
+
+### The `repo` Covenant
+
+A Repo chain represents a top level code repository that is used to produce executable assets of various kinds. In order to not constrain its use to solely interblock, the repo represents any kind of code that is version controlled by git. It will hopefully be able to run build steps triggered by commit, similar to github actions.
+
+Under the `releases` child of the repo, there is another child for each type of asset being released. For npm packages, this child is named `npm`, for python packages `pip` and for Rust crates `crate` and so on. Likely, a build step would have been required to produce each child.
+
+The Repo can have any number of children that are also Repo covenants, which allows monorepos to be managed in this fashion, or other types of relationship to be expressed.
+
+One of the interblock specific children under the `releases` child is the `covenant` child, which contains a chain running the covenant of type `covenant`
+
+### The `covenant` Covenant
+
+Covenants are the way in which interblock specifies what transitional behaviours are needed to model some useful object. Inevitably we need to model covenants themselves, and the `covenant` Covenant is how we do that.
+
+This covenant is duck typed, even tho we provide a reference implementation.
+The reference Covenant does not allow having any children, as child relationships must be managed by the `repo` Covenant, which should be the parent of a Covenant.
+
+The Binary of the Covenant is code that is ready to be instantly executed by the isolator, to generate the next block. This is the place where binary data becomes executable code. The Binary is equivalent to filesystem data, that a programming language can load and execute without any remote fetching.
+
+Once the binary image contained by the Covenant instance is loaded, we expect at least one function to be provided, and can utilize up to four functions:
+
+1. `reducer( state, action ) -> nextState + transmissions` (this function is required)
+1. `effect( state, action ) -> transmissions`
+1. `upgrade( state ) -> nextState`
+1. `downgrade( state ) -> nextState`
+
+Transmissions are actions that need routing to remote chains. The optional `upgrade` function transitions from the previous state version to the current one. It is recommended to supply this function separately from the reducer because it gets different timeout settings, and it can be chained by the engine if multiple upgrades need to occur at once, rather than the reducer having to handle arbitrary upgrade paths. `downgrade` does the reverse, and again is optional. Both these functions will be checked for correctness during publish verification where semver is automatically calculated too.
+
+Note that literally anything can be the executable - an RPC call, a docker image - anything.
 
 ### Covenant Resolution System
 
-In each chain, there is a string key named covenant, which states a name to be looked up in the covenant resolution system, and then loaded to execute the actions of this chain against its current state.
+In each chain, there is a string key named covenant, which states a name to be looked up in the covenant resolution system, and then its binary is loaded to execute the actions of this chain against its current state. This string needs to be resolved to a specific pulse in a specific chain. It is vitally important the covenant system become part of the state system at the earliest possible architectural moment. Otherwise two separate name resolution systems exist with the same purpose - turning bytes into cpu instructions.
+
+For JS we endeavour to follow Deno where possible, as their module resolution strategy results from lessons and regrets they had about the nodejs module system, and also aligns directly with the browser module system. Deeper, we aim to follow the guidance given by the [import maps draft](https://github.com/WICG/import-maps#the-import-map).
+
+The purpose of this system is to enable all the covenants of an app complex to upgrade in a single point in time, as each chain in the complex has its covenant resolution status checked before each pulse is made.
+
+Given a pulse with a string as its covenant, the resolution process is:
+
+1. get the approot out of the pulse
+1. get the latest approot
+1. assert the approot pulse has a resolvable covenant
+1. get the covenant string out of the pulse
+1. if the string is an absolute or relative path:
+   1. assert it points to a valid covenant
+   1. return
+1. the string is bare, so begin the resolution walk
+1. walk from the approot down to the child, checking each importMap of each covenant of each chain on the way down
+1. If nothing found, check the registries specified in the approot
+1. If still nothing, throw
+
+### Covenant Registries
+
+Registries exist to convert names of covenants into Pulses. Any Interblock chain can be used as a registry and can respond to scale invariant requests for any of its children. These are not actions, but are read requests, where the aliases of children are used to represent covenants that match a name query.
+
+Any resolution system has to go initially from a plain text string and resolve that to something hashlockable. This is a weakness of all resolution systems, from urls, to npm, to pip, to docker, and is a type of supply chain provenance problem. We aim to minimize this problem by automatically hashlocking code as early as possible, and making this so trivial for developers that they need to actively opt out of the system. Further we aim to mitigate this problem by economic incentives provided by pools. Pools will be set up that charge a fee to have assurance that name to hash resolution is correct, and the pools pay out a penalty if they are proven to be in error.
+
+Publishing to an Interblock registry would be as simple as making a chain, and pushing your git commits to it. You could optionally connect this chain to a public chain that we supply to ensure replication and advertisement of your changes. Hopefully we can later implement a language server that will allow browsing covenant registries from the comfort of vscode [Deno handles registries](https://deno.land/manual/language_server/imports)
+
+All this is to say that, the schema for representing Covenants on chain is:
 
 ```sh
-type PackageTypes enum { # intended to be like multiformats in ipfs, for languages
-    | javascript
-    | javascript_xstate
-    | python
-    | go
-    | rust
-    | haskell
-    | c
-    | cpp
-}
-
-type Registry struct {
-    name String
-    address Address
-}
-type AppRoot struct {
-    registries: [ Registry ] # covenant resolution priority
-}
-
-covenant        # A string, which is resolved using the approot
-.covenants      # child folder, used for covenant resolution - can be anywhere
-                # contains children running the Covenant covenant
-                # acts like a packagelock file
-
+type Covenant String
 ```
 
 ## Timestamp
