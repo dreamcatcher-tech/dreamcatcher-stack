@@ -262,11 +262,19 @@ Given a pulse with a string as its covenant, the resolution process is:
 
 ### Covenant Registries
 
-Registries exist to convert names of covenants into Pulses. Any Interblock chain can be used as a registry and can respond to scale invariant requests for any of its children. These are not actions, but are read requests, where the aliases of children are used to represent covenants that match a name query.
+Registries exist to convert names of covenants into Pulses. Any Interblock chain can be used as a registry and can respond to scale invariant requests for any of its children. These are not actions, but are read requests, where the aliases of children are used to represent covenants that match a name query. All that is required to use this is the read permission.
 
 Any resolution system has to go initially from a plain text string and resolve that to something hashlockable. This is a weakness of all resolution systems, from urls, to npm, to pip, to docker, and is a type of supply chain provenance problem. We aim to minimize this problem by automatically hashlocking code as early as possible, and making this so trivial for developers that they need to actively opt out of the system. Further we aim to mitigate this problem by economic incentives provided by pools. Pools will be set up that charge a fee to have assurance that name to hash resolution is correct, and the pools pay out a penalty if they are proven to be in error.
 
+The engine is seeded with a default registry, but eventually we hope to move to a /etc/hosts type of model, allowing the engine to have nothing hardcoded, and to allow nodes to share their view of the hosts file, allowing context aware lookups, which are based on who you know, not some brittle absolute view.
+
+### Publishing
+
 Publishing to an Interblock registry would be as simple as making a chain, and pushing your git commits to it. You could optionally connect this chain to a public chain that we supply to ensure replication and advertisement of your changes. Hopefully we can later implement a language server that will allow browsing covenant registries from the comfort of vscode [Deno handles registries](https://deno.land/manual/language_server/imports)
+
+Publishing the binary image for a Covenant leverages that all modern languages can store their code on a posix based filesystem. IPFS has good native utilities for hashing a posix folder. Most package managers appear to allocate one folder per dependency installed, and so deduplication will naturally occur using IPFS in this simple way. Deno for instance allows the `--vendor` command to do this. Npm does this naturally.
+
+### Conclusion
 
 All this is to say that, the schema for representing Covenants on chain is:
 
