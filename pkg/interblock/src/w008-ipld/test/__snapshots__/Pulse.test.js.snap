@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Pulse basic 1`] = `"Address(QmYMKzxgro9NTb)"`;
+exports[`Pulse basic 1`] = `"Address(QmWPF2CFTTPs6y)"`;
 
 exports[`Pulse birth child 1`] = `
 RxReply {

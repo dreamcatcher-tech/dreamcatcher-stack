@@ -121,6 +121,7 @@ export class Engine {
 
     // then store the new blocks created
     await this.#endurance.endure(pulse)
+    // TODO update all the subscriptions, including the pierceTracker
     await this.#checkPierceTracker(pulse) // but should be subscription based
     // then send out all the transmissions
     await this.#transmit(pulse)
@@ -180,7 +181,7 @@ export class Engine {
         debug('reducer reply')
         // check pending to see if this should be accumulated
         // if accumulation is completed by this reply, execute it
-        // else discard the reply by doing shift
+        // else discard reply via shift as reducers never receive replies
       }
 
       const rxReducerRequest = await network.rxReducerRequest()

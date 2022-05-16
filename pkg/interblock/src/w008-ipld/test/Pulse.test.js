@@ -5,7 +5,6 @@ const debug = Debug('interblock:tests:Pulse')
 
 Debug.enable('*tests*')
 
-const CI = true
 describe('Pulse', () => {
   test('basic', async () => {
     let pulse = await Pulse.createCI()
