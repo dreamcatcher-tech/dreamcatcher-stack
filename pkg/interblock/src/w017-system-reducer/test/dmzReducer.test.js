@@ -7,7 +7,7 @@ import { Engine } from '../../w210-engine'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
-Debug.enable('*dmzReducer *hooks *engine')
+Debug.enable('*dmz* *hooks *engine')
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')
@@ -16,6 +16,29 @@ describe('dmzReducer', () => {
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
     test.only('spawn is implicitly awaited', async () => {
+      const reducer = async (state, action) => {
+        debug(`reducer %o`, action)
+        if (action.type === 'TEST_SPAWN') {
+          await interchain(actions.spawn('child1'))
+          const result = await interchain('PING', { test: 'ping' }, 'child1')
+          debug(`result`, result)
+        }
+        return {}
+      }
+      const root = { reducer }
+      const engine = await Engine.createCI()
+      engine.overload({ root })
+      engine.enableLogging()
+      const request = Request.create({ type: 'TEST_SPAWN' })
+      const result = await engine.pierce(request)
+      debug(`result`, result)
+      const state = engine.latest
+      state.getNetwork().dir()
+      const channel = await state.getNetwork().getChild('child1')
+      channel.dir()
+      assert.strictEqual(requests.length, 2)
+    })
+    test('error if no spawn await', async () => {
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)
         if (action.type === 'TEST_SPAWN') {
@@ -28,14 +51,9 @@ describe('dmzReducer', () => {
       const root = { reducer }
       const engine = await Engine.createCI()
       engine.overload({ root })
-      engine.enableLogging()
       const request = Request.create({ type: 'TEST_SPAWN' })
-      await engine.pierce(request)
-      const state = engine.latest
-      state.getNetwork().dir()
-      const channel = await state.getNetwork().getChild('child1')
-      channel.dir()
-      assert.strictEqual(requests.length, 2)
+      // TODO add reason test
+      await expect(engine.pierce(request)).rejects.toThrow()
     })
     test('spawn uses hash for seeding inside action', async () => {
       const dmz = Dmz.create()

@@ -1,9 +1,10 @@
 import assert from 'assert-fast'
-import { Request } from '.'
+import { Request, RequestId } from '.'
 import { deepFreeze } from './utils'
 export class RxRequest extends Request {
   // same as request, but has id info attached so it can be replied to
   static create(request, channelId, stream, requestIndex) {
+    // TODO hold the original request too ?
     assert(request instanceof Request)
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)

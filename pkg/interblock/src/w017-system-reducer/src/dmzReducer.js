@@ -14,7 +14,7 @@ import {
 import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer, genesisReply, initReply } from './genesis'
 import { getStateReducer, getState } from './getState'
-import { Dmz, RxRequest, RxReply } from '../../w008-ipld'
+import { Dmz, RxRequest, RxReply, Provenance } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz')
 /**
@@ -45,11 +45,12 @@ const actions = {
   getState,
 }
 
-const reducer = (dmz, action) => {
+const reducer = (provenance, action) => {
   // TODO check the ACL each time ?
   debug(`reducer( ${action.type} )`)
-  assert(dmz instanceof Dmz)
+  assert(provenance instanceof Provenance)
   assert(action instanceof RxReply || action instanceof RxRequest)
+  let { dmz } = provenance
 
   if (!isSystemReply(dmz, action)) {
     switch (action.type) {
@@ -57,7 +58,7 @@ const reducer = (dmz, action) => {
         pingReducer(action)
         break
       case '@@SPAWN':
-        return spawnReducer(dmz, action)
+        return spawnReducer(provenance, action)
       case '@@CONNECT':
         return connectReducer(dmz, action)
       case '@@UPLINK':

@@ -10,6 +10,7 @@ import {
   Request,
   Reply,
 } from '../../w008-ipld'
+import { actions, reducer } from '../../w017-system-reducer'
 import { Isolate, Crypto, Endurance, Scale, Hints } from './Services'
 const debug = Debug('interblock:engine')
 /**
@@ -138,7 +139,7 @@ export class Engine {
     const { tx } = await pulse.getNetwork().getIo()
     if (!tx.isEmpty()) {
       for (const tracker of this.#promises) {
-        const { stream, requestIndex } = tracker.txRequest
+        const { stream, requestIndex } = tracker.requestId
         // see if the replies contain a settle
         if (tx[stream].hasReply(requestIndex)) {
           debug('tracker match', requestIndex)
@@ -165,46 +166,83 @@ export class Engine {
     let network = softpulse.getNetwork()
     let counter = 0
     while (softpulse.getNetwork().channels.rxs.length && counter++ < 10) {
+      // SYSTEM
       const rxSystemReply = await network.rxSystemReply()
       if (rxSystemReply) {
         debug('system reply')
+        break
       }
 
       const rxSystemRequest = await network.rxSystemRequest()
       if (rxSystemRequest) {
-        debug('system request')
-      }
+        debug('system request', rxSystemRequest)
+        let { provenance } = softpulse
+        const tick = () => reducer(provenance, rxSystemRequest)
+        provenance = wrapper(tick)
 
-      const state = softpulse.getState()
-      const rxReducerReply = await network.rxReducerReply()
-      if (rxReducerReply) {
-        debug('reducer reply')
-        // check pending to see if this should be accumulated
-        // if accumulation is completed by this reply, execute it
-        // else discard reply via shift as reducers never receive replies
-      }
-
-      const rxReducerRequest = await network.rxReducerRequest()
-      if (rxReducerRequest) {
-        debug('reducer request', rxReducerRequest)
-        const replies = []
         const reduction = await isolate.reduce(state, rxReducerRequest, replies)
 
+        break
+      }
+
+      // REDUCER
+      const state = softpulse.getState()
+      const _isPending = false
+      const rxReducerReply = await network.rxReducerReply()
+      if (rxReducerReply) {
+        debug('reducer reply', rxReducerReply)
+        if (_isPending) {
+          // accumulate this reply
+        }
+        // discard reply via shift as reducers never receive replies
+        network = await network.shiftReducerReply()
+        break
+      }
+
+      let rxReducerRequest, replies
+      if (_isPending) {
+        const isAccumulated = false
+        if (isAccumulated) {
+          //  fetch replies, and execute origin
+        } else {
+          break
+        }
+      } else {
+        rxReducerRequest = await network.rxReducerRequest()
+        replies = []
+      }
+
+      if (rxReducerRequest) {
         // figure out what has already been transmitted
         // resolve the ids of the pending requests, so they can be matched
-
+        debug('reducer request', rxReducerRequest.type)
+        const reduction = await isolate.reduce(state, rxReducerRequest, replies)
+        debug(reduction)
         // possibly go pending
         // do the transmissions
-        // if reduction includes a reply to orign request, use instead
+        let defaultReply
         for (const action of reduction.transmissions) {
-          console.log('action', action)
-          if (Reply.isReplyType(action.type)){
-
+          if (Reply.isReplyType(action.type)) {
+            debug('reply', action)
+            // if reduction includes a reply to orign request, use instead
+            // send the action into the appropriate channel
           } else {
-            const request = 
+            const { type, payload, binary } = action
+            const request = Request.create(type, payload, binary)
+            debug('request', request)
+            // resolve the name to a channelId
+            const { to } = action
+            debug('to', to)
+            if (!(await network.hasChannel(to))) {
+              network = await network.addDownlink(to)
+            }
+            let channel = await network.getChannel(to)
+            channel = channel.txRequest(request)
+            // network handles turning strings into channelIds
+            network = await network.updateChannel(channel)
           }
         }
-        network = await network.txReducerReply()
+        network = await network.txReducerReply(defaultReply)
       }
     }
 
@@ -253,9 +291,9 @@ export class Engine {
     assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
 
     let io = await dmz.network.getIo()
+    const requestId = io.getNextRequestId(request)
     io = io.txRequest(request)
-    const txRequest = io.getTipRequest(request)
-    const tracker = { txRequest }
+    const tracker = { requestId }
     const promise = new Promise((resolve, reject) => {
       tracker.resolve = resolve
       tracker.reject = reject

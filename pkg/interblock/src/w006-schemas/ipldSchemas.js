@@ -250,7 +250,7 @@ export default {
         map: {},
       },
     },
-    PendingTx: {
+    PendingRequest: {
       kind: 'struct',
       fields: {
         request: {
@@ -258,26 +258,42 @@ export default {
             kind: 'link',
             expectedType: 'Request',
           },
-          optional: true,
         },
+        to: {
+          type: 'String',
+        },
+        id: {
+          type: 'RequestId',
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    PendingReply: {
+      kind: 'struct',
+      fields: {
         reply: {
           type: {
             kind: 'link',
             expectedType: 'Reply',
           },
-          optional: true,
-        },
-        to: {
-          type: 'String',
-          optional: true,
         },
         id: {
           type: 'RequestId',
-          optional: true,
         },
       },
       representation: {
         map: {},
+      },
+    },
+    PendingTx: {
+      kind: 'union',
+      representation: {
+        keyed: {
+          request: 'PendingRequest',
+          reply: 'PendingReply',
+        },
       },
     },
     Pending: {

@@ -71,21 +71,4 @@ export class Dmz extends IpldStruct {
     // TODO find how to not infect everything with async
     // assert(!network.getIo() || config.isPierced)
   }
-  async addChild(path, params = {}) {
-    assert(typeof path === 'string')
-    assert(path)
-    assert(!path.includes('/'))
-    assert(typeof params === 'object')
-    if (await this.network.children.has(path)) {
-      throw new Error(`child exists: ${path}`)
-    }
-    const { timestamp } = this
-
-    const dmz = Dmz.create({ ...params, timestamp })
-    const provenance = Provenance.createGenesis(dmz)
-    const genesis = await Pulse.create(provenance)
-    const address = genesis.getAddress()
-    const network = await this.network.txGenesis(path, address, params)
-    return this.setMap({ network })
-  }
 }

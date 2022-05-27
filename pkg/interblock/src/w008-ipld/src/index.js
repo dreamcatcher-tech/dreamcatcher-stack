@@ -1,4 +1,5 @@
 export { Binary } from './Binary'
+export { RequestId } from './RequestId'
 export { Request } from './Request'
 export { RxRequest } from './RxRequest'
 export { Reply } from './Reply'

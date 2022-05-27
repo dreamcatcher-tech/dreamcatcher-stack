@@ -38,6 +38,7 @@
     "ansi-colors-browserify": "^4.1.2",
     "assert-fast": "^1.0.1",
     "buffer": "^6.0.3",
+    "callsites": "^4.0.0",
     "chai": "^4.3.6",
     "columnify": "^1.6.0",
     "debug": "^4.3.3",

@@ -108,4 +108,23 @@ export class Provenance extends IpldStruct {
   //   const isHigher = child.height > this.height
   //   return isParent && isHigher
   // }
+  async addChild(alias, params = {}) {
+    // TODO insert repeatable randomness to child
+    assert(typeof alias === 'string')
+    assert(alias)
+    assert(!alias.includes('/'))
+    assert(typeof params === 'object')
+    if (await this.dmz.network.children.has(alias)) {
+      // TODO check if the path exists at all ?
+      throw new Error(`child exists: ${alias}`)
+    }
+    const { timestamp } = this.dmz
+
+    const dmz = Dmz.create({ ...params, timestamp })
+    const provenance = Provenance.createGenesis(dmz, this.validators)
+    const genesis = await Pulse.create(provenance)
+    const address = genesis.getAddress()
+    const network = await this.dmz.network.txGenesis(alias, address, params)
+    return this.setMap({ dmz: { network } })
+  }
 }

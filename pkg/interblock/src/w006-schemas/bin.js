@@ -1,4 +1,4 @@
-import collect from 'ipld-schema/bin/collect-input'
+import collect from 'ipld-schema/bin/collect-input.js'
 import { parse } from 'ipld-schema'
 import { writeFileSync } from 'fs'
 import Debug from 'debug'

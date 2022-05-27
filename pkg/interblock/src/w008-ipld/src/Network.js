@@ -10,7 +10,6 @@ import {
   ChildrenHamt,
   DownlinksHamt,
   UplinksHamt,
-  AddressesHamt,
   Request,
   Reply,
   Tx,
@@ -21,31 +20,30 @@ const debug = Debug('interblock:ipld:Network')
 // values are significant in that they dictate order of exhaustion
 const FIXED = { LOOPBACK: 0, PARENT: 1, IO: 2 }
 /**
+type Channels struct {
+    counter Int
+    list HashMapRoot               # Map of channelIds to Channels
+    addresses HashMapRoot          # reverse lookup of channels
+    rxs [ Int ]
+    txs [ Int ]
+}
 type Network struct {
-    parent optional Channel
-    loopback optional Channel
-    io optional Io
-
-    counter optional Int
-    channels optional HashMapRoot           # Map of channelIds to Channels
-    addresses optional HashMapRoot          # reverse lookup of channels
+    channels Channels
 
     # alias maps to channelIds
-    children optional HashMapRoot
-    uplinks optional HashMapRoot            # keys are channelIds
-    downlinks optional HashMapRoot          # keys are paths
-    symlinks optional HashMapRoot           # keys are paths without "/"
-    hardlinks optional HashMapRoot          # keys are addresses
+    children optional HashMapRoot           # keys are local paths
+    downlinks HashMapRoot                   # keys are remote paths
+    uplinks optional HashMapRoot            # keys are channelIds, value=true
+    symlinks optional HashMapRoot           # local paths : any paths
+    hardlinks optional HashMapRoot          # local paths : any paths
 
-    rxs optional [ Int ]
-    txs optional [ Int ]
+    piercings optional Tx
 }
  */
 export class Network extends IpldStruct {
   static FIXED_IDS = FIXED
   static classMap = {
     channels: Channels,
-    addresses: AddressesHamt,
 
     children: ChildrenHamt,
     uplinks: UplinksHamt,
@@ -64,10 +62,19 @@ export class Network extends IpldStruct {
   }
   static create() {
     const channels = Channels.create()
+    const children = ChildrenHamt.create()
     const downlinks = DownlinksHamt.create()
     const uplinks = UplinksHamt.create()
-    const children = ChildrenHamt.create()
-    let instance = super.clone({ channels, downlinks, uplinks, children })
+    const symlinks = Hamt.create() // TODO move to own class
+    const hardlinks = Hamt.create() // TODO move to own class
+    let instance = super.clone({
+      channels,
+      children,
+      downlinks,
+      uplinks,
+      symlinks,
+      hardlinks,
+    })
     return instance
   }
   async getParent() {
@@ -86,6 +93,7 @@ export class Network extends IpldStruct {
   }
   async updateParent(parent) {
     assert(parent instanceof Channel)
+    assert.strictEqual(parent.channelId, FIXED.PARENT)
     const channels = await this.channels.updateChannel(parent)
     return this.setMap({ channels })
   }
@@ -97,6 +105,7 @@ export class Network extends IpldStruct {
   }
   async updateLoopback(loopback) {
     assert(loopback instanceof Channel)
+    assert.strictEqual(loopback.channelId, FIXED.LOOPBACK)
     loopback = crossover(loopback)
     const channels = await this.channels.updateChannel(loopback)
     return this.setMap({ channels })
@@ -110,12 +119,13 @@ export class Network extends IpldStruct {
 
   async updateIo(io) {
     assert(io instanceof Channel)
+    assert.strictEqual(io.channelId, FIXED.IO)
     const { tx } = io
-    const next = this
+    let next = this
     if (!tx.isEmpty()) {
       io = crossover(io)
       const { rx: piercings } = io
-      next.setMap({ piercings })
+      next = next.setMap({ piercings })
     }
     const channels = await next.channels.updateChannel(io)
     return next.setMap({ channels })
@@ -140,27 +150,13 @@ export class Network extends IpldStruct {
     const channelId = await this.uplinks.get(address)
     return await this.channels.getChannel(channelId)
   }
-  async addDownlink(path, address) {
-    assert.strictEqual(typeof path, 'string')
-    assert(path)
-    assert(address instanceof Address)
-    assert(address.isRemote())
-    if (await this.downlinks.has(path)) {
-      throw new Error(`path already present: ${path}`)
-    }
-    const channelId = this.channels.counter
-    const channel = Channel.create(channelId, address)
-    const channels = await this.channels.addChannel(channel)
-    const downlinks = await this.downlinks.setDownlink(path, channelId)
-    return this.setMap({ channels, downlinks })
-  }
 
   async resolveDownlink(path, address) {
     assert.strictEqual(typeof path, 'string')
     assert(path)
     assert(address instanceof Address)
     assert(address.isRemote())
-    assert(this.#isForeign(path))
+    assert(isForeign(path))
     if (await this.downlinks.has(path)) {
       const channelId = await this.downlinks.get(path)
       let channel = await this.channels.getChannel(channelId)
@@ -202,7 +198,7 @@ export class Network extends IpldStruct {
     // if local, check children, then sym, then hard
     let channelId
     let { channels, downlinks } = this
-    if (this.#isForeign(path)) {
+    if (isForeign(path)) {
       if (await this.downlinks.has(path)) {
         channelId = await this.downlinks.get(path)
       } else {
@@ -227,24 +223,6 @@ export class Network extends IpldStruct {
     return await this.setMap({ channels, downlinks })
   }
 
-  //
-  // ie: do not store them in the channel
-  // can alter any channel by providing any given alias and replacement channel
-  // there are limits on what the next channel can contain if one exists already
-  async updateChannel(alias, channel) {
-    // use any alias to get a channelId out
-    assert(typeof alias === 'string', 'Alias not string')
-    assert(alias, 'Alias not string')
-    assert(alias !== '.')
-    assert(alias !== '..')
-    assert(channel instanceof Channel, `Not channel`)
-
-    const { channelId } = await this.aliases.get(alias) // throws if not present
-    assert.strictEqual(channelId, channel.channelId)
-    const channels = this.channels.updateChannel(channel)
-    return this.setMap({ channels })
-  }
-  addChannel(alias, channel, systemRole = './') {}
   async hasChild(alias) {
     assert(typeof alias === 'string', 'Alias not string')
     assert(alias)
@@ -284,22 +262,6 @@ export class Network extends IpldStruct {
     return await this.channels.getByAddress(address)
   }
 
-  #isForeign(path) {
-    assert(typeof path === 'string')
-    assert(path)
-    if (path.startsWith('.')) {
-      assert(path.length > 1)
-      if (path.startsWith('..')) {
-        assert(path.startsWith('../'))
-        assert(path.length > 3)
-      }
-    }
-    if (path.startsWith('/')) {
-      // if (path.)
-    }
-    // TODO
-    return true
-  }
   async txGenesis(path, address, params = {}) {
     assert(typeof path === 'string')
     assert(path)
@@ -392,6 +354,90 @@ export class Network extends IpldStruct {
     const channels = await this.channels.updateChannel(channel)
     return this.setMap({ channels })
   }
+
+  // OPERATIONS BY PATH FROM REDUCER
+  async hasChannel(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    const fixeds = ['.', '..', '.@@io']
+    if (fixeds.includes(path)) {
+      return true
+    }
+    if (await this.children.has(path)) {
+      return true
+    }
+    if (await this.downlinks.has(path)) {
+      return true
+    }
+    if (await this.symlinks.has(path)) {
+      return true
+    }
+    if (await this.hardlinks.has(path)) {
+      return true
+    }
+    return false
+  }
+  async addDownlink(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    assert(isForeign(path), `path must be foreign: ${path}`)
+    if (await this.downlinks.has(path)) {
+      throw new Error(`path already present: ${path}`)
+    }
+    const channelId = this.channels.counter
+    const channel = Channel.create(channelId)
+    const channels = await this.channels.addChannel(channel)
+    const downlinks = await this.downlinks.setDownlink(path, channelId)
+    return this.setMap({ channels, downlinks })
+  }
+  async getChannel(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    if (path === '.') {
+      return await this.getLoopback()
+    } else if (path === '..') {
+      return await this.getParent()
+    } else if (path === '.@@io') {
+      return await this.getIo()
+    }
+
+    let hamt
+    if (await this.children.has(path)) {
+      hamt = this.children
+    }
+    if (await this.downlinks.has(path)) {
+      hamt = this.downlinks
+    }
+    if (await this.symlinks.has(path)) {
+      hamt = this.symlinks
+    }
+    if (await this.hardlinks.has(path)) {
+      hamt = this.hardlinks
+    }
+    if (!hamt) {
+      throw new Error(`non existent path: ${path}`)
+    }
+    const channelId = await hamt.get(path)
+    return await this.channels.getChannel(channelId)
+  }
+  async updateChannel(channel) {
+    assert(channel instanceof Channel)
+    switch (channel.channelId) {
+      case FIXED.PARENT: {
+        return this.updateParent(channel)
+      }
+      case FIXED.LOOPBACK: {
+        return this.updateLoopback(channel)
+      }
+      case FIXED.IO: {
+        return this.updateIo(channel)
+      }
+      default: {
+        const channels = await this.channels.updateChannel(channel)
+        return this.setMap({ channels })
+      }
+    }
+  }
 }
 const crossover = (channel) => {
   if (!channel.tx.isEmpty()) {
@@ -404,4 +450,20 @@ const crossover = (channel) => {
     channel = channel.setMap({ tx, rx })
   }
   return channel
+}
+const isForeign = (path) => {
+  assert(typeof path === 'string')
+  assert(path)
+  if (path.startsWith('.')) {
+    assert(path.length > 1)
+    if (path.startsWith('..')) {
+      assert(path.startsWith('../'))
+      assert(path.length > 3)
+    }
+  }
+  if (path.startsWith('/')) {
+    // if (path.)
+  }
+  // TODO
+  return true
 }

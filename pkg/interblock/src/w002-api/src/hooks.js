@@ -2,6 +2,8 @@ import assert from 'assert-fast'
 import setImmediate from 'set-immediate-shim'
 import { request, promise, resolve, reject, isReplyType } from './api'
 import Debug from 'debug'
+import callsites from 'callsites'
+
 const debug = Debug('interblock:api:hooks')
 
 // TODO error if promise called more than once
@@ -13,6 +15,17 @@ const replyReject = (error, identifier) =>
   _pushGlobalReply(reject(error, identifier))
 
 const interchain = (type, payload, to) => {
+  const cym = `@@5 \\`
+  const weird = {
+    [cym]() {
+      console.time('callsites')
+      const stack = callsites()
+      console.timeEnd('callsites')
+      console.log(stack.map((c) => c.getFunctionName()))
+    },
+  }
+  weird[cym]()
+
   // make an async call to another chain
   const standardRequest = request(type, payload, to)
   assert(standardRequest.to !== '.@@io')
@@ -83,8 +96,6 @@ const _promise = (requestRaw) => {
   const request = { type, payload, to }
   const promise = new Promise((resolve, reject) => {
     // TODO allow direct resolving of interchain promises between block boundaries
-    request.resolve = resolve
-    request.reject = reject
   })
   if (exec) {
     // TODO somehow handle inband promises without hook ever async waiting
@@ -98,15 +109,6 @@ const _promise = (requestRaw) => {
   _pushGlobalRequest(request)
   return promise
 }
-/**
- * TODO To make multiple hooks that are concurrent and do not rely on being
- * the same piece of code as what the hooks function is calling,
- * each API function shall have a symbol that it generated, and passes
- * down as an arg, so when global is hooked, can be separated by symbol
- * as a queue identifier, eliminating the need to wait for global.
- *
- * OR rely on running single threaded so we are always in charge of the global ?
- */
 const _hookGlobal = async (accumulator) => {
   assert(Array.isArray(accumulator))
   globalThis['@@interblock'] = globalThis['@@interblock'] || {}
@@ -269,7 +271,7 @@ const inbandPromises = async (pending, accumulator, queries) => {
 
     await _hookGlobal(accumulator)
     try {
-      settlePromises(inbandPromises, results)
+      settleInbandPromises(inbandPromises, results)
     } catch (e) {
       _unhookGlobal()
       throw e
@@ -280,7 +282,7 @@ const inbandPromises = async (pending, accumulator, queries) => {
   return { ...pending, transmissions }
 }
 
-const settlePromises = (promises, results) => {
+const settleInbandPromises = (promises, results) => {
   for (const action of promises) {
     const result = results.shift()
     assert(action.inBand)

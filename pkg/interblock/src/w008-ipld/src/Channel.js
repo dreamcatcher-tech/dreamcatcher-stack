@@ -1,5 +1,14 @@
 import assert from 'assert-fast'
-import { Network, Reply, Address, Rx, Tx, Request, Interpulse } from '.'
+import {
+  RequestId,
+  Network,
+  Reply,
+  Address,
+  Rx,
+  Tx,
+  Request,
+  Interpulse,
+} from '.'
 import Debug from 'debug'
 import { IpldStruct } from './IpldStruct'
 import { RxRequest } from './RxRequest'
@@ -166,15 +175,17 @@ export class Channel extends IpldStruct {
   rxIsEmpty() {
     return this.rx.isEmpty()
   }
-  getTipRequest(request) {
+  getNextRequestId(request) {
     // rx the last added request, so can use to match up ids
-    assert(this instanceof Channel)
     assert(request instanceof Request)
     const { channelId } = this
     const stream = request.isSystem() ? 'system' : 'reducer'
-    assert(this.tx[stream].requests.length, `no tip found`)
-    const requestIndex = this.tx[stream].requestsLength - 1
-    assert.strictEqual(request, this.tx[stream].requests[requestIndex])
-    return RxRequest.create(request, channelId, stream, requestIndex)
+    const requestIndex = this.tx[stream].requestsLength
+    return RequestId.create(channelId, stream, requestIndex)
+  }
+  getGenesisRequestId() {
+    const highestFixedId = 2
+    assert(this.channelId > highestFixedId)
+    return RequestId.create(this.channelId, 'system', 0)
   }
 }

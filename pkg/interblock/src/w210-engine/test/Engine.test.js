@@ -9,7 +9,7 @@ Debug.enable('*engine')
 
 describe('engine', () => {
   jest.setTimeout(300)
-  test.only('basic', async () => {
+  test('basic', async () => {
     const engine = await Engine.createCI()
     debug(engine.address)
     expect(engine.address.toString()).toMatchSnapshot()

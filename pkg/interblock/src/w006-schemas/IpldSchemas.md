@@ -330,13 +330,13 @@ type Meta struct {
 
 Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and requestId. It then keeps track of all requests made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.
 
-Each rerun must produce the exact same requests each time, in the exact same order.
+Each rerun must produce the exact same requests and replies each time, in the exact same order.
 
 This structure consists of two arrays - one of all the outbound requests the covenant made, and another of all the so far received replies. The reducer should not be invoked until all the empty slots in the `replies` array have been filled.
 
 Replies must be tracked too, else we may retransmit them
 
-`replies` is indexed by the pendingTxs array filtered for only Requests.
+Replies that are received are stored in the `settled` key in the PendingRequest object.
 
 ```sh
 type RequestId struct {
@@ -344,16 +344,27 @@ type RequestId struct {
     stream String
     requestIndex Int
 }
-type PendingTx struct {
-    request optional &Request
-    reply optional &Reply
-    to optional String                   # Alias at time of invocation
-    id optional RequestId       # Not known at time of creation
+type PendingRequest struct {
+    request &Request
+    to String
+    id RequestId
+    settled optional &Reply
+}
+type PendingReply struct {
+    reply &Reply
+    id RequestId
+}
+type PendingTx union {
+    | PendingRequest "request"
+    | PendingReply "reply"
+} representation keyed
+type RxRequest struct {
+    request &Request
+    requestId RequestId
 }
 type Pending struct {
-    rxPendingRequest RequestId    # The request that triggered pending mode
+    origin RxRequest
     pendingTxs [PendingTx]
-    replies [&Reply]
 }
 ```
 
@@ -556,25 +567,22 @@ type Channels struct {
     txs [ Int ]
 }
 type Network struct {
-    parent optional Channel
-    loopback optional Channel
-    io optional Channel
-    piercings optional Tx
-
-    channels optional Channels
+    channels Channels
 
     # alias maps to channelIds
     children optional HashMapRoot           # keys are local paths
+    downlinks HashMapRoot                   # keys are remote paths
     uplinks optional HashMapRoot            # keys are channelIds, value=true
-    downlinks optional HashMapRoot          # keys are remote paths
     symlinks optional HashMapRoot           # local paths : any paths
     hardlinks optional HashMapRoot          # local paths : any paths
+
+    piercings optional Tx
 }
 ```
 
 ## Provenance
 
-Basically answers where did the current snapshot of the `Dmz` come from.
+Provenance answers where did the current snapshot of the `Dmz` come from.
 
 A `StateTreeNode` is used to provide an overlay tree to separate the covenant defined knowledge from the activity that the system operations generate while tending to the covenants intentions.
 
