@@ -42,6 +42,9 @@ export class Hamt extends IpldInterface {
     }
     return next
   }
+  [Symbol.for('nodejs.util.inspect.custom')]() {
+    return this.#gets.toJS()
+  }
   async set(key, value) {
     assertKey(key)
     if (this.#valueClass) {

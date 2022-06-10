@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { interchain, _hook as hook } from '../../w002-api'
+import { interchain, wrapReduce as hook } from '../../w002-api'
 import { Dmz, RxRequest, Address, Request } from '../../w008-ipld'
 import { actions } from '..'
 import { spawnReducer, spawn } from '../src/spawn'
@@ -7,7 +7,7 @@ import { Engine } from '../../w210-engine'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
-Debug.enable('*dmz* *hooks *engine')
+Debug.enable('*dmz* *hooks *engine* *callsites')
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')
@@ -15,6 +15,7 @@ describe('dmzReducer', () => {
   test.todo('connect on existing unknown transmits all queued actions')
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
+    jest.setTimeout(500)
     test.only('spawn is implicitly awaited', async () => {
       const reducer = async (state, action) => {
         debug(`reducer %o`, action)
@@ -33,7 +34,7 @@ describe('dmzReducer', () => {
       const result = await engine.pierce(request)
       debug(`result`, result)
       const state = engine.latest
-      state.getNetwork().dir()
+      // state.getNetwork().dir()
       const channel = await state.getNetwork().getChild('child1')
       channel.dir()
       assert.strictEqual(requests.length, 2)

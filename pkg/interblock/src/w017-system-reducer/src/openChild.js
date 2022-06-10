@@ -5,7 +5,7 @@ import {
   replyPromise,
   replyResolve,
   replyReject,
-  effectInBand,
+  // effectInBand,
   interchain,
 } from '../../w002-api'
 import { uplink } from './uplink'

@@ -9,9 +9,12 @@ import {
   PulseLink,
   Request,
   Reply,
+  Provenance,
 } from '../../w008-ipld'
+import { wrapReduce } from '../../w002-api'
 import { actions, reducer } from '../../w017-system-reducer'
 import { Isolate, Crypto, Endurance, Scale, Hints } from './Services'
+import { Reduction } from './Reduction'
 const debug = Debug('interblock:engine')
 /**
  * The Engine of Permanence
@@ -178,9 +181,8 @@ export class Engine {
         debug('system request', rxSystemRequest)
         let { provenance } = softpulse
         const tick = () => reducer(provenance, rxSystemRequest)
-        provenance = wrapper(tick)
-
-        const reduction = await isolate.reduce(state, rxReducerRequest, replies)
+        const { result, txs } = await wrapReduce(tick)
+        assert(result instanceof Provenance)
 
         break
       }
@@ -217,28 +219,28 @@ export class Engine {
         // resolve the ids of the pending requests, so they can be matched
         debug('reducer request', rxReducerRequest.type)
         const reduction = await isolate.reduce(state, rxReducerRequest, replies)
-        debug(reduction)
+        assert(reduction instanceof Reduction)
+        debug('reduction', reduction)
         // possibly go pending
         // do the transmissions
         let defaultReply
-        for (const action of reduction.transmissions) {
-          if (Reply.isReplyType(action.type)) {
-            debug('reply', action)
+        for (const tx of reduction.transmissions) {
+          if (Reply.isReplyType(tx.type)) {
+            debug('reply', tx)
             // if reduction includes a reply to orign request, use instead
-            // send the action into the appropriate channel
           } else {
-            const { type, payload, binary } = action
+            const { type, payload, binary } = tx
             const request = Request.create(type, payload, binary)
-            debug('request', request)
+            debug('tx request', request)
             // resolve the name to a channelId
-            const { to } = action
+            const { to } = tx
             debug('to', to)
             if (!(await network.hasChannel(to))) {
               network = await network.addDownlink(to)
             }
             let channel = await network.getChannel(to)
+            const requestId = channel.getNextRequestId(request)
             channel = channel.txRequest(request)
-            // network handles turning strings into channelIds
             network = await network.updateChannel(channel)
           }
         }

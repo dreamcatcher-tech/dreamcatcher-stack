@@ -11,6 +11,7 @@ type PendingRequest struct {
     request &Request
     to String
     id RequestId
+    settled optional &Reply
 }
 type PendingReply struct {
     reply &Reply
@@ -20,10 +21,13 @@ type PendingTx union {
     | PendingRequest "request"
     | PendingReply "reply"
 } representation keyed
+type RxRequest struct {
+    request &Request
+    requestId RequestId
+}
 type Pending struct {
     origin RxRequest
     pendingTxs [PendingTx]
-    replies [&Reply]
 }
  */
 export class Pending extends IpldStruct {

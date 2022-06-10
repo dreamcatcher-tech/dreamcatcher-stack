@@ -49,67 +49,41 @@ const reducer = (provenance, action) => {
   // TODO check the ACL each time ?
   debug(`reducer( ${action.type} )`)
   assert(provenance instanceof Provenance)
-  assert(action instanceof RxReply || action instanceof RxRequest)
+  assert(action instanceof RxRequest)
   let { dmz } = provenance
 
-  if (!isSystemReply(dmz, action)) {
-    switch (action.type) {
-      case '@@PING':
-        pingReducer(action)
-        break
-      case '@@SPAWN':
-        return spawnReducer(provenance, action)
-      case '@@CONNECT':
-        return connectReducer(dmz, action)
-      case '@@UPLINK':
-        return uplinkReducer(dmz, action)
-      case '@@GENESIS':
-        return genesisReducer(dmz, action)
-      case '@@OPEN_CHILD':
-        return openChildReducer(dmz, action)
-      case '@@INTRO':
-        break
-      case '@@ACCEPT':
-        // just default responding is enough to trigger lineage catchup
-        break
-      case '@@INSTALL': // user can connect with recursive deployment calls
-      case '@@DEPLOY':
-        return deployReducer(dmz, action)
-      case '@@GET_CHAN':
-        getChannelReducer(dmz.network, action)
-        break
-      case '@@CAT':
-        getStateReducer(dmz)
-        break
-      default:
-        throw new Error(`Unrecognized type: ${action.type}`)
-    }
-  } else {
-    assert(dmz.meta.isAwaiting(action))
-    const metaSlice = dmz.meta.getMetaSlice(action)
-    const meta = metaProducer.withoutReply(dmz.meta, action)
-    dmz = dmz.update({ meta })
-
-    switch (metaSlice.type) {
-      case '@@INIT':
-        initReply(metaSlice, action)
-        break
-      case '@@GENESIS':
-        genesisReply(metaSlice, action)
-        break
-      case '@@UPLINK':
-        uplinkReply(metaSlice, action, dmz)
-        break
-      case '@@OPEN_CHILD':
-        return openChildReply(metaSlice, action, dmz)
-      case '@@DEPLOY_GENESIS':
-        return deployGenesisReply(metaSlice, action, dmz)
-      case '@@DEPLOY':
-        return deployReply(metaSlice, action, dmz)
-      default:
-        throw new Error(`Unrecognized type: ${action.type}`)
-    }
+  switch (action.type) {
+    case '@@PING':
+      pingReducer(action)
+      break
+    case '@@SPAWN':
+      return spawnReducer(provenance, action)
+    case '@@CONNECT':
+      return connectReducer(dmz, action)
+    case '@@UPLINK':
+      return uplinkReducer(dmz, action)
+    case '@@GENESIS':
+      return genesisReducer(dmz, action)
+    case '@@OPEN_CHILD':
+      return openChildReducer(dmz, action)
+    case '@@INTRO':
+      break
+    case '@@ACCEPT':
+      // just default responding is enough to trigger lineage catchup
+      break
+    case '@@INSTALL': // user can connect with recursive deployment calls
+    case '@@DEPLOY':
+      return deployReducer(dmz, action)
+    case '@@GET_CHAN':
+      getChannelReducer(dmz.network, action)
+      break
+    case '@@CAT':
+      getStateReducer(dmz)
+      break
+    default:
+      throw new Error(`Unrecognized type: ${action.type}`)
   }
+
   return dmz
 }
 

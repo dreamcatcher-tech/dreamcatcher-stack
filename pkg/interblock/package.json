@@ -105,6 +105,7 @@
       "trace-unhandled/register"
     ],
     "roots": [
+      "src/w002-api",
       "src/w008-ipld",
       "src/w210-engine",
       "src/w017-system-reducer"

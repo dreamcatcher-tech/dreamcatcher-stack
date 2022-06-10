@@ -1,7 +1,15 @@
 import assert from 'assert-fast'
-import { Provenance, Keypair, Address, Pulse, PulseLink } from '../../w008-ipld'
+import {
+  Provenance,
+  Keypair,
+  Address,
+  Pulse,
+  PulseLink,
+  State,
+  RxRequest,
+} from '../../w008-ipld'
 import Debug from 'debug'
-const debug = Debug('interblock:engine')
+const debug = Debug('interblock:engine:services')
 
 /**
 
@@ -157,6 +165,7 @@ class CryptoLock {
     // insert back into the softpulse
     // return the softpulse
     const signature = await this.#keypair.sign(provenance)
+    provenance.dir()
     return [this.#keypair.publicKey, signature]
   }
 }
@@ -173,7 +182,8 @@ export class Crypto {
   }
 }
 
-import { _hook as hook } from '../../w002-api'
+import { wrapReduce } from '../../w002-api'
+import { Reduction } from './Reduction'
 class IsolateContainer {
   #reducer
   #timeout
@@ -205,14 +215,18 @@ class IsolateContainer {
     debug('unload')
   }
   async reduce(state, rxRequest, accumulator) {
+    assert(state instanceof State)
+    assert(rxRequest instanceof RxRequest)
+    assert(Array.isArray(accumulator))
     debug('reduce')
     // moves the isolate forwards, returns a reduction
     // wrap the reducer in the hook function
     const action = rxRequest.getAction()
     const tick = () => this.#reducer(state, action)
     const queries = () => console.log('queries')
-    const reduction = await hook(tick, accumulator, queries)
-    // get the state out of the reduction and cache it
+    const { result, txs } = await wrapReduce(tick, accumulator, queries)
+    // TODO get the state out of the reduction and cache it
+    const reduction = Reduction.create(rxRequest, result, txs)
 
     return reduction
   }

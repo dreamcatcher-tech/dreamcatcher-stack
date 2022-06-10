@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { RxReply, Dmz, RxRequest } from '../../w008-ipld'
-import { spawn, spawnRequester } from './spawn'
+import { spawn, spawnReducer } from './spawn'
 import { interchain, replyResolve, replyPromise } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:deploy')
@@ -46,6 +46,7 @@ const deployReducer = (dmz, action) => {
     const covenantId = CovenantId.create(covenant)
     spawnOptions = { ...spawnOptions, covenantId, state }
     const spawnRequest = spawn(installPath, spawnOptions)
+    // probably completely broken
     const [nextDmz, spawnId, alias, chainId] = spawnRequester(dmz, spawnRequest)
     assert.strictEqual(nextDmz.meta, dmz.meta)
     assert(!meta.replies[spawnId])

@@ -350,7 +350,7 @@ type PendingRequest struct {
     id RequestId
     settled optional &Reply
 }
-type PendingReply struct {
+type PendingReply struct {  # there can be only one of these per Pending
     reply &Reply
     id RequestId
 }
@@ -557,6 +557,8 @@ Channel Types
 1. hardlink - permanent link by address, acts as a shared child
 
 This does introduce non-determinism, as the timing of when something occurred can now affect what address it was resolved to.
+
+Network handles turning strings into channelIds
 
 ```sh
 type Channels struct {

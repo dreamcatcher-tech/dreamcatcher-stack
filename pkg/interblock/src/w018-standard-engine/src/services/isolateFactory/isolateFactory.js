@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { _hook as hook } from '../../../../w002-api'
+import { wrapReduce as hook } from '../../../../w002-api'
 import { Block, RxReply, RxRequest, State } from '../../../../w015-models'
 import * as systemCovenants from '../../../../w212-system-covenants'
 import * as appCovenants from '../../../../w301-user-apps'

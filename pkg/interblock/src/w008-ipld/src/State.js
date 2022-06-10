@@ -67,6 +67,7 @@ export class State extends IpldInterface {
     assert.strictEqual(typeof this.#state, 'object')
     assert(this.#state !== null)
     assertNoUndefined(this.#state)
+    // TODO assert no functions either
   }
   update(updatedState) {
     assert.strictEqual(typeof updatedState, 'object')

@@ -19,19 +19,6 @@ const spawn = (alias, spawnOpts = {}) => {
 const spawnReducer = async (provenance, rxRequest) => {
   assert(provenance instanceof Provenance)
   assert(rxRequest instanceof RxRequest)
-  const [nextProvenance, requestId] = await spawnRequester(
-    provenance,
-    rxRequest
-  )
-  replyPromise() // allows spawnReducer to be reused by deploy reducer
-  const originRequestId = rxRequest.requestId
-  const slice = { type: '@@GENESIS', originRequestId }
-  const meta = metaProducer.withSlice(dmz.meta, requestId, slice)
-  return nextDmz.update({ meta })
-}
-const spawnRequester = async (provenance, rxRequest) => {
-  assert(provenance instanceof Provenance)
-  assert(rxRequest instanceof RxRequest)
   assert.strictEqual(rxRequest.type, '@@SPAWN')
   let { alias, spawnOpts } = rxRequest.payload
   assert(!alias || typeof alias === 'string')
@@ -49,10 +36,7 @@ const spawnRequester = async (provenance, rxRequest) => {
   if (alias === '.' || alias === '..' || alias == '.@@io') {
     throw new Error(`Alias uses reserved name: ${alias}`)
   }
-  provenance = await provenance.addChild(alias, spawnOpts)
-  const channel = await provenance.dmz.network.getChannel(alias)
-  const requestId = channel.getGenesisRequestId()
-  return [provenance, requestId]
+  return await provenance.addChild(alias, spawnOpts)
 }
 
-export { spawn, spawnReducer, spawnRequester }
+export { spawn, spawnReducer }
