@@ -183,7 +183,8 @@ export class Engine {
         const tick = () => reducer(provenance, rxSystemRequest)
         const { result, txs } = await wrapReduce(tick)
         assert(result instanceof Provenance)
-
+        // do the transmissions
+        // update the accumulator
         break
       }
 
@@ -223,6 +224,7 @@ export class Engine {
         debug('reduction', reduction)
         // possibly go pending
         // do the transmissions
+        // update the accumulator
         let defaultReply
         for (const tx of reduction.transmissions) {
           if (Reply.isReplyType(tx.type)) {

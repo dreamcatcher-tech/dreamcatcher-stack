@@ -114,6 +114,7 @@
   "wallaby": {
     "autoDetect": true,
     "tests": [
+      "**/w002-api/**/*.test.js",
       "**/w008-ipld/**/*.test.js",
       "**/w017-system-reducer/**/*.test.js",
       "**/w210-engine/**/*.test.js",

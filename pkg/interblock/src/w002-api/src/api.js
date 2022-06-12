@@ -1,10 +1,3 @@
-/**
- * ACTION CREATORS FOR USE INSIDE COVENANTS
- *
- * These functions will produce actions that should be
- * put into the array named "actions" on the returned state.
- */
-
 const request = (type, payload = {}, to = '.') => {
   if (!type) {
     throw new Error('Must supply at least one arg')
@@ -78,4 +71,4 @@ const resolve = (payload, identifier) =>
 const reject = (error, identifier) => _txReply('@@REJECT', error, identifier)
 const isReplyType = (type) =>
   ['@@RESOLVE', '@@REJECT', '@@PROMISE'].includes(type)
-export { request, promise, resolve, reject, isReplyType }
+export { request, resolve, reject, isReplyType }

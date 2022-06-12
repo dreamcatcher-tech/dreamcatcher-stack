@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import setImmediate from 'set-immediate-shim'
-import { request, promise, resolve, reject, isReplyType } from './api'
+import { request, resolve, reject, isReplyType } from './api'
 import Debug from 'debug'
 import callsites from 'callsites'
 

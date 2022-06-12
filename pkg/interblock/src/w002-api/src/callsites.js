@@ -1,4 +1,4 @@
-import { request, promise, resolve, reject, isReplyType } from './api'
+import { request, resolve, reject, isReplyType } from './api'
 import assert from 'assert-fast'
 import callsites from 'callsites'
 import Debug from 'debug'
@@ -7,6 +7,12 @@ const debug = Debug('interblock:api:callsites')
 // hook global as soon as we are loadedd - throw if double loaded
 // api functions should throw if they are loaded without hook being available
 // first instance to load secures the global hook - all others should yield
+
+/**
+ * Deals only with POJOs, not with models.
+ * Operates entirely on the shape of objects.
+ * Handles throws.
+ */
 
 let invokeId = 0
 let activeInvocations = new Map()
@@ -23,17 +29,25 @@ export const wrapReduce = async (tick, accumulator = []) => {
   activeInvocations.set(id, invocation)
 
   // run the function
-  const result = wrapper[id]()
-  // determine if we are pending or not
-  return await awaitActivity(result, id)
+  try {
+    const result = wrapper[id]()
+    // determine if we are pending or not
+    return await awaitActivity(result, id)
+  } catch (error) {
+    return { error }
+  }
 }
 const awaitActivity = async (result, id) => {
   assert.strictEqual(typeof result, 'object', `Must return object from reducer`)
   assert(activeInvocations.has(id))
   const isPending = typeof result.then === 'function'
-  const { transmissions } = activeInvocations.get(id)
-  if (transmissions.length || !isPending) {
-    return { result, txs: transmissions }
+  const { transmissions: txs } = activeInvocations.get(id)
+  if (txs.length || !isPending) {
+    if (isPending) {
+      return { isPending, txs }
+    } else {
+      return { state: result, txs }
+    }
   } else {
     // TODO  await the results until the timeout occurs
     // or as soon as we regain the thread and some interchains are unresolved
@@ -48,8 +62,8 @@ export const interchainHook = (type, payload, to) => {
   const action = request(type, payload, to)
   assert(action.to !== '.@@io')
 
+  Error.stackTraceLimit = Infinity
   const stack = callsites()
-  stack.reverse()
   let id
   for (const callsite of stack) {
     const name = callsite.getFunctionName()
