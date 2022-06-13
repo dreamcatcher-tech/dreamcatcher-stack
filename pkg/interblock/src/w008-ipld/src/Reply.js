@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import equals from 'fast-deep-equal'
-import { serializeError } from 'serialize-error'
+import { serializeError, deserializeError } from 'serialize-error'
 import { Request } from '.'
 
 export class Reply extends Request {
@@ -40,6 +40,10 @@ export class Reply extends Request {
   }
   isResolve() {
     return this.type === '@@RESOLVE'
+  }
+  getRejectionError() {
+    assert(this.isRejection())
+    return deserializeError(this.payload)
   }
   static isReplyType(type) {
     assert.strictEqual(typeof type, 'string')

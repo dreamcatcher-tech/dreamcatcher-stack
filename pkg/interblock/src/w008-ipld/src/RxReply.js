@@ -1,15 +1,11 @@
 import assert from 'assert-fast'
-import { Reply } from '.'
+import { Reply, RequestId } from '.'
 export class RxReply extends Reply {
-  static create(reply, channelId, stream, requestIndex) {
+  static create(reply, requestId) {
     assert(reply instanceof Reply)
-    assert(Number.isInteger(channelId))
-    assert(channelId >= 0)
-    assert(stream === 'system' || stream === 'reducer')
-    assert(Number.isInteger(requestIndex))
-    assert(requestIndex >= 0)
+    assert(requestId instanceof RequestId)
     const instance = new RxReply()
-    Object.assign(instance, { ...reply, channelId, stream, requestIndex })
+    Object.assign(instance, { reply, requestId })
     return instance
   }
   crush() {

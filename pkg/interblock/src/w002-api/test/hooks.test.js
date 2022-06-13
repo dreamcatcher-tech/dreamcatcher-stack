@@ -1,6 +1,6 @@
 import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
-import { wrapReduce as hook, interchain, effect } from '..'
+import { interchain } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:hooks')
 chai.use(chaiAsPromised)

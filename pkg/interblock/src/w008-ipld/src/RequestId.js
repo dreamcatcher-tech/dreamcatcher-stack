@@ -2,6 +2,9 @@ import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 
 export class RequestId extends IpldStruct {
+  static createCI() {
+    return this.create(0, 'reducer', 0)
+  }
   static create(channelId, stream, requestIndex) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)

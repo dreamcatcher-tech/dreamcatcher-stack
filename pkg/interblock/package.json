@@ -107,6 +107,7 @@
     "roots": [
       "src/w002-api",
       "src/w008-ipld",
+      "src/w010-hooks",
       "src/w210-engine",
       "src/w017-system-reducer"
     ]
@@ -116,6 +117,7 @@
     "tests": [
       "**/w002-api/**/*.test.js",
       "**/w008-ipld/**/*.test.js",
+      "**/w010-hooks/**/*.test.js",
       "**/w017-system-reducer/**/*.test.js",
       "**/w210-engine/**/*.test.js",
       "!package.test.js"

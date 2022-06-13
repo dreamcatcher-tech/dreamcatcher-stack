@@ -1,15 +1,8 @@
 import assert from 'assert-fast'
-import { deepFreeze } from './utils'
 
 export class IpldInterface {
   get schema() {
     throw new Error('Not Implemented')
-  }
-  deepFreeze() {
-    deepFreeze(this)
-  }
-  static deepFreeze(obj) {
-    deepFreeze(obj)
   }
   isModified() {
     throw new Error('Not Implemented')

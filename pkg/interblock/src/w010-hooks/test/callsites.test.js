@@ -1,7 +1,8 @@
-import chai, { assert } from 'chai/index.mjs'
-import chaiAsPromised from 'chai-as-promised'
-import { wrapReduce, interchain } from '..'
+import { assert } from 'chai/index.mjs'
+import { interchain, respond } from '../../w002-api'
+import { wrapReduce } from '..'
 import Debug from 'debug'
+import { PendingRequest, Reply, RequestId, RxReply } from '../../w008-ipld'
 const debug = Debug('interblock:tests:hooks')
 Debug.enable()
 /**
@@ -54,7 +55,7 @@ describe.only('callsites', () => {
       expect(results).toMatchSnapshot()
     })
     test('reduction must be an object', async () => {
-      const msg = 'Must return object from reducer'
+      const msg = 'Must return either undefined, or an object'
       const e1 = await wrapReduce(() => () => 'arrow fn')
       assert.strictEqual(e1.error.message, msg)
       const e2 = await wrapReduce(() => true)
@@ -97,32 +98,93 @@ describe.only('callsites', () => {
       assert.strictEqual(error.message, 'rejected')
       assert.strictEqual(isPending, undefined)
     })
+    test('respond to request', async () => {
+      const replier = () => {
+        respond({ response: true })
+        return { response: true }
+      }
+      const { state, txs, isPending, error } = await wrapReduce(replier)
+      assert(state.response)
+      assert.strictEqual(txs.length, 1)
+      assert.strictEqual(isPending, undefined)
+      assert.strictEqual(error, undefined)
+      const [reply] = txs
+      assert(reply instanceof Reply)
+      assert(reply.isResolve())
+      assert.deepEqual(reply.payload, { response: true })
+    })
+    test('reply twice rejects', async () => {
+      let isThrown = false
+      const replier = () => {
+        respond({ response: 1 })
+        try {
+          respond({ response: 2 })
+        } catch (error) {
+          isThrown = true
+        }
+        return { response: 'after throw' }
+      }
+      const { state, txs, isPending, error } = await wrapReduce(replier)
+      assert(isThrown)
+      assert.deepEqual(state, { response: 'after throw' })
+      assert.strictEqual(txs.length, 1)
+      assert.strictEqual(isPending, undefined)
+    })
+    test('timeout exceeded', async () => {
+      const slowest = () => {
+        return new Promise(() => Infinity)
+      }
+      const result = await wrapReduce(slowest)
+      assert.strictEqual(result.error.message, 'timeout exceeded: 500 ms')
+    })
     test.todo('duplicate requests permitted in different calls')
   })
   describe('with accumulator', () => {
     test('single await', async () => {
+      let interchainResult
       const single = async () => {
-        const result = await interchain('single')
-        assert(result.single)
+        interchainResult = await interchain('single')
+        return { state: 'test' }
       }
       const { isPending, txs } = await wrapReduce(single)
+      assert.strictEqual(interchainResult, undefined)
       assert.strictEqual(isPending, true)
       assert.strictEqual(txs.length, 1)
-      /**
-       * type PendingRequest struct {
-    request &Request
-    to String
-    id RequestId
-    settled optional &Reply
-}
-       */
-      const [request] = txs
-      expect(request).toMatchSnapshot()
-      const { to } = request
-      const settled = { type: '@@RESOLVE', payload: { single: true } }
-      const accumulator = [{ request, to, settled }]
-      const { state } = await wrapReduce(single, accumulator)
-      state
+      let [pendingRequest] = txs
+      assert(pendingRequest instanceof PendingRequest)
+      expect(pendingRequest).toMatchSnapshot()
+      const requestId = RequestId.createCI()
+      const reply = Reply.create('@@RESOLVE', { single: true })
+      pendingRequest = pendingRequest.setId(requestId).settle(reply)
+      const accumulator = [pendingRequest]
+      const { error, state, txs: txs2 } = await wrapReduce(single, accumulator)
+      assert.strictEqual(error, undefined, error)
+      assert.deepEqual(state, { state: 'test' })
+      assert.strictEqual(txs2.length, 0)
+      assert.strictEqual(interchainResult.single, true)
     })
+    test('rejection', async () => {
+      let interchainResult
+      const reject = async () => {
+        try {
+          interchainResult = await interchain('single')
+        } catch (error) {
+          interchainResult = error
+          throw error
+        }
+      }
+      const { txs } = await wrapReduce(reject)
+      assert.strictEqual(interchainResult, undefined)
+      let [pendingRequest] = txs
+      const reply = Reply.create('@@REJECT', new Error('test rejection'))
+      pendingRequest = pendingRequest.settle(reply)
+      const accumulator = [pendingRequest]
+      const { error, state } = await wrapReduce(reject, accumulator)
+      assert.strictEqual(error.message, 'test rejection')
+      assert.strictEqual(state, undefined)
+      assert(interchainResult instanceof Error)
+      assert.strictEqual(interchainResult, error)
+    })
+    test.todo('throw on incomplete accumulator')
   })
 })

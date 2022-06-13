@@ -13,10 +13,6 @@ export class IpldStruct extends IpldInterface {
     assert.strictEqual(typeof map, 'object')
     const instance = new this()
     Object.assign(instance, map)
-    instance.deepFreeze()
-    if (typeof instance.assertLogic === 'function') {
-      instance.assertLogic()
-    }
     return instance
   }
   clone() {
@@ -96,7 +92,6 @@ export class IpldStruct extends IpldInterface {
     crushed.#ipldBlock = await encode(dagTree)
     crushed.#crushed = crushed
     crushed.#previous = this.#crushed
-    IpldInterface.deepFreeze(crushed.#ipldBlock)
     return crushed
   }
   async getDiffBlocks() {
@@ -156,7 +151,9 @@ export class IpldStruct extends IpldInterface {
     instance.#ipldBlock = block
     instance.#crushed = instance
     instance.#previous = instance
-    instance.deepFreeze()
+    if (typeof instance.assertLogic === 'function') {
+      instance.assertLogic()
+    }
     return instance
   }
   setMap(map) {

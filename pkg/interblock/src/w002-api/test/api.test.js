@@ -1,6 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { deserializeError } from 'serialize-error'
-import { request, promise, resolve, reject } from '..'
+import { request, resolve, reject } from '..'
 describe('api', () => {
   describe('request', () => {
     test('action with "to" added', () => {
