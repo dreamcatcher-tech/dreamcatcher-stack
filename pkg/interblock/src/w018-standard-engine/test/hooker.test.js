@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { interchain, replyResolve } from '../../w002-api'
+import { interchain } from '../../w002-api'
 import { actions } from '../../w017-dmz-producer'
 import { metrologyFactory } from '../src/metrologyFactory'
 import { jest } from '@jest/globals'

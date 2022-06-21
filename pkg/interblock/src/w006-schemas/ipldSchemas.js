@@ -250,7 +250,7 @@ export default {
         map: {},
       },
     },
-    PendingRequest: {
+    AsyncRequest: {
       kind: 'struct',
       fields: {
         request: {
@@ -265,56 +265,51 @@ export default {
         id: {
           type: 'RequestId',
         },
+        settled: {
+          type: {
+            kind: 'link',
+            expectedType: 'Reply',
+          },
+          optional: true,
+        },
       },
       representation: {
         map: {},
       },
     },
-    PendingReply: {
+    RxRequest: {
       kind: 'struct',
       fields: {
-        reply: {
+        request: {
           type: {
             kind: 'link',
-            expectedType: 'Reply',
+            expectedType: 'Request',
           },
         },
-        id: {
+        requestId: {
           type: 'RequestId',
         },
       },
       representation: {
         map: {},
-      },
-    },
-    PendingTx: {
-      kind: 'union',
-      representation: {
-        keyed: {
-          request: 'PendingRequest',
-          reply: 'PendingReply',
-        },
       },
     },
     Pending: {
       kind: 'struct',
       fields: {
-        rxPendingRequest: {
-          type: 'RequestId',
+        origin: {
+          type: 'RxRequest',
         },
-        pendingTxs: {
+        settles: {
           type: {
             kind: 'list',
-            valueType: 'PendingTx',
+            valueType: 'AsyncRequest',
           },
         },
-        replies: {
+        txs: {
           type: {
             kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'Reply',
-            },
+            valueType: 'AsyncRequest',
           },
         },
       },
@@ -609,35 +604,17 @@ export default {
     Network: {
       kind: 'struct',
       fields: {
-        parent: {
-          type: 'Channel',
-          optional: true,
-        },
-        loopback: {
-          type: 'Channel',
-          optional: true,
-        },
-        io: {
-          type: 'Channel',
-          optional: true,
-        },
-        piercings: {
-          type: 'Tx',
-          optional: true,
-        },
         channels: {
           type: 'Channels',
-          optional: true,
         },
         children: {
           type: 'HashMapRoot',
           optional: true,
         },
-        uplinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
         downlinks: {
+          type: 'HashMapRoot',
+        },
+        uplinks: {
           type: 'HashMapRoot',
           optional: true,
         },
@@ -647,6 +624,10 @@ export default {
         },
         hardlinks: {
           type: 'HashMapRoot',
+          optional: true,
+        },
+        piercings: {
+          type: 'Tx',
           optional: true,
         },
       },

@@ -336,7 +336,7 @@ This structure consists of two arrays - one of all the outbound requests the cov
 
 Replies must be tracked too, else we may retransmit them
 
-Replies that are received are stored in the `settled` key in the PendingRequest object.
+Replies that are received are stored in the `settled` key in the AsyncRequest object.
 
 ```sh
 type RequestId struct {
@@ -344,27 +344,20 @@ type RequestId struct {
     stream String
     requestIndex Int
 }
-type PendingRequest struct {
+type AsyncRequest struct {
     request &Request
     to String
     id RequestId
     settled optional &Reply
 }
-type PendingReply struct {  # there can be only one of these per Pending
-    reply &Reply
-    id RequestId
-}
-type PendingTx union {
-    | PendingRequest "request"
-    | PendingReply "reply"
-} representation keyed
 type RxRequest struct {
     request &Request
     requestId RequestId
 }
 type Pending struct {
     origin RxRequest
-    pendingTxs [PendingTx]
+    settles [AsyncRequest]
+    txs [AsyncRequest]
 }
 ```
 

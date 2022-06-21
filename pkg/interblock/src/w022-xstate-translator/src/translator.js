@@ -8,10 +8,7 @@ import {
   promise,
   resolve,
   reject,
-  replyPromise,
-  replyReject,
   isReplyType,
-  replyResolve,
   interchain,
 } from '../../w002-api'
 

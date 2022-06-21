@@ -4,6 +4,10 @@ import { serializeError, deserializeError } from 'serialize-error'
 import { Request } from '.'
 
 export class Reply extends Request {
+  static createError(error) {
+    assert(error instanceof Error)
+    return Reply.create('@@REJECT', error)
+  }
   static create(type = '@@RESOLVE', payload = {}, binary) {
     if (type === '@@REJECT' && payload instanceof Error) {
       if (payload.name === 'AssertionError') {

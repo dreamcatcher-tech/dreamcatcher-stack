@@ -4,19 +4,19 @@ import { IpldStruct } from './IpldStruct'
 import equals from 'fast-deep-equal'
 
 /**
-    type PendingRequest struct {
+    type AsyncRequest struct {
         request &Request
         to String
         id RequestId
         settled optional &Reply
     }
 */
-export class PendingRequest extends IpldStruct {
+export class AsyncRequest extends IpldStruct {
   static create(request, to) {
     assert(request instanceof Request)
     assert.strictEqual(typeof to, 'string')
     assert(to)
-    const instance = new PendingRequest()
+    const instance = new AsyncRequest()
     instance.request = request
     instance.to = to
     return instance
@@ -27,10 +27,15 @@ export class PendingRequest extends IpldStruct {
   }
   settle(reply) {
     assert(reply instanceof Reply)
+    assert(this.id !== undefined)
+    assert(!this.isSettled())
     return this.setMap({ settled: reply })
   }
   isRequestMatch(request) {
     assert(request instanceof Request)
     return equals(this.request, request)
+  }
+  isSettled() {
+    return this.settled !== undefined
   }
 }

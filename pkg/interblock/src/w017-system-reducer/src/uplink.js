@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import { replyResolve, replyReject } from '../../w002-api'
 import { Address, Channel, Dmz, RxRequest, RxReply } from '../../w008-ipld'
 import { autoAlias } from './utils'
 import Debug from 'debug'

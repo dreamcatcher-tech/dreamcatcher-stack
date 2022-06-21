@@ -9,7 +9,6 @@
  */
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:dpkg')
-import { replyResolve } from '../../w002-api'
 import { CovenantId } from '../../w015-models'
 const covenantId = CovenantId.create('dpkg')
 

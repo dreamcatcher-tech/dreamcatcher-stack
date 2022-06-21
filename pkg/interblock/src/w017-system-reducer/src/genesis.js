@@ -1,9 +1,4 @@
-import {
-  interchain,
-  replyPromise,
-  replyResolve,
-  replyReject,
-} from '../../w002-api'
+import { interchain } from '../../w002-api'
 import { Dmz, RxReply } from '../../w008-ipld'
 import Debug from 'debug'
 import assert from 'assert-fast'

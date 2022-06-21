@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import { RxReply, Dmz, RxRequest } from '../../w008-ipld'
 import { spawn, spawnReducer } from './spawn'
-import { interchain, replyResolve, replyPromise } from '../../w002-api'
+import { interchain } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:deploy')
 

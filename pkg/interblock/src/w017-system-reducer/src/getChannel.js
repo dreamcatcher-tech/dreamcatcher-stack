@@ -1,6 +1,5 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
-import { replyResolve } from '../../w002-api'
 import { getChannelParams } from './utils'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:getChannel')

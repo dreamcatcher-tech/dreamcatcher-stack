@@ -48,6 +48,7 @@ const actions = {
 const reducer = (provenance, action) => {
   // TODO check the ACL each time ?
   debug(`reducer( ${action.type} )`)
+  // TODO remove provenance, and make it fetched by useBlock
   assert(provenance instanceof Provenance)
   assert(action instanceof RxRequest)
   let { dmz } = provenance

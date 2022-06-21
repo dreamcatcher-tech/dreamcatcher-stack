@@ -17,7 +17,6 @@
  *          hyper1
  *          hyper2
  */
-import { replyResolve } from '../../w002-api'
 import { CovenantId } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:hyper')

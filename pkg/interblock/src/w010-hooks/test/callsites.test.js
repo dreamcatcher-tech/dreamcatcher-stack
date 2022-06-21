@@ -1,8 +1,14 @@
 import { assert } from 'chai/index.mjs'
-import { interchain, respond } from '../../w002-api'
+import { interchain } from '../../w002-api'
 import { wrapReduce } from '..'
 import Debug from 'debug'
-import { PendingRequest, Reply, RequestId, RxReply } from '../../w008-ipld'
+import {
+  AsyncRequest,
+  Reply,
+  Request,
+  RequestId,
+  RxReply,
+} from '../../w008-ipld'
 const debug = Debug('interblock:tests:hooks')
 Debug.enable()
 /**
@@ -30,17 +36,22 @@ describe.only('callsites', () => {
     test('nested hooks awaited', async () => {
       const id = 57
       const depth = 1000
-      const { state, txs, isPending } = await wrapReduce(nested(id, depth))
+      const reduction = await wrapReduce(nested(id, depth))
+      assert(reduction.isPending())
+      const { state, txs, reply, ...rest } = reduction
+      assert.deepEqual(rest, {})
       assert.strictEqual(state, undefined)
-      assert.strictEqual(isPending, true)
+      assert.strictEqual(reply, undefined)
       assert(Array.isArray(txs))
       assert.strictEqual(txs.length, depth)
     })
-    test('plain state', async () => {
+    test.only('plain reply', async () => {
       const plain = () => ({ plain: true })
-      const { state, isPending } = await wrapReduce(plain)
+      const request = Request.create('TEST')
+      const reduction = await wrapReduce(request, plain)
+      const { state } = reduction
       assert(state.plain)
-      assert.strictEqual(isPending, undefined)
+      assert(!reduction.isPending())
     })
     test.todo('nested calls to wrapReduce')
     test('nested parallel hooks do not collide', async () => {
@@ -57,13 +68,13 @@ describe.only('callsites', () => {
     test('reduction must be an object', async () => {
       const msg = 'Must return either undefined, or an object'
       const e1 = await wrapReduce(() => () => 'arrow fn')
-      assert.strictEqual(e1.error.message, msg)
+      assert.strictEqual(e1.getError().message, msg)
       const e2 = await wrapReduce(() => true)
-      assert.strictEqual(e2.error.message, msg)
+      assert.strictEqual(e2.getError().message, msg)
       const e3 = await wrapReduce(() => 'string')
-      assert.strictEqual(e3.error.message, msg)
+      assert.strictEqual(e3.getError().message, msg)
       const e4 = await wrapReduce(() => 5)
-      assert.strictEqual(e4.error.message, msg)
+      assert.strictEqual(e4.getError().message, msg)
     })
     test('duplicate requests permitted in same call', async () => {
       const double = async () => {
@@ -72,38 +83,41 @@ describe.only('callsites', () => {
         // TODO supply a response, and verify the second request gets a different response
         return {}
       }
-      const { state, txs, isPending } = await wrapReduce(double)
+      const reduction = await wrapReduce(double)
+      const { state, txs } = reduction
       assert.strictEqual(txs.length, 2)
       assert.strictEqual(state, undefined)
-      assert.strictEqual(isPending, true)
+      assert.strictEqual(reduction.isPending(), true)
     })
     test('resolved result', async () => {
       const resolved = async () => {
         await Promise.resolve()
         return { resolved: true }
       }
-      const { state, txs, isPending } = await wrapReduce(resolved)
+      const reduction = await wrapReduce(resolved)
+      const { state, txs } = reduction
       assert.strictEqual(txs.length, 0)
       assert.strictEqual(state.then, undefined)
       assert.strictEqual(state.resolved, true)
-      assert.strictEqual(isPending, undefined)
+      assert.strictEqual(reduction.isPending(), false)
     })
     test('reject', async () => {
       const rejector = async () => {
         throw new Error('rejected')
       }
-      const { state, txs, error, isPending } = await wrapReduce(rejector)
+      const reduction = await wrapReduce(rejector)
+      const { state, txs, reply } = reduction
       assert.strictEqual(state, undefined)
-      assert.strictEqual(txs, undefined)
-      assert.strictEqual(error.message, 'rejected')
-      assert.strictEqual(isPending, undefined)
+      assert.strictEqual(reduction.getError().message, 'rejected')
+      assert.strictEqual(reduction.isPending(), false)
     })
     test('respond to request', async () => {
       const replier = () => {
         respond({ response: true })
         return { response: true }
       }
-      const { state, txs, isPending, error } = await wrapReduce(replier)
+      const reduction = await wrapReduce(replier)
+      const { state, txs } = reduction
       assert(state.response)
       assert.strictEqual(txs.length, 1)
       assert.strictEqual(isPending, undefined)
@@ -139,7 +153,7 @@ describe.only('callsites', () => {
     })
     test.todo('duplicate requests permitted in different calls')
   })
-  describe('with accumulator', () => {
+  describe.skip('with accumulator', () => {
     test('single await', async () => {
       let interchainResult
       const single = async () => {

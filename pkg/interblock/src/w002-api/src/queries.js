@@ -6,7 +6,7 @@ import Debug from 'debug'
 import { query } from './hooks'
 const debug = Debug('interblock:api:queries')
 const useFind = (pathPattern, query) => {
-  // find within the json data, treating mathing paths as a collection
+  // find within the json data, treating matching paths as a collection
 }
 const useFindBinary = (pathPattern, query) => {
   // search within the binary of different objects

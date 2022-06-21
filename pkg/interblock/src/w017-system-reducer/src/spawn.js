@@ -1,7 +1,6 @@
 import assert from 'assert-fast'
 import { Channel, Network, Dmz, RxRequest, Provenance } from '../../w008-ipld'
 import { autoAlias } from './utils'
-import { replyPromise } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:spawn')
 

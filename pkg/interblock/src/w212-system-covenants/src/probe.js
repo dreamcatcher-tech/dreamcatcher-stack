@@ -3,7 +3,6 @@
  * exercise the entire system from within.
  */
 
-import { replyResolve, request } from '../../w002-api'
 import { CovenantId } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:probe')

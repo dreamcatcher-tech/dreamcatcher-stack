@@ -182,8 +182,8 @@ export class Crypto {
   }
 }
 
-import { wrapReduce } from '../../w002-api'
-import { Reduction } from './Reduction'
+import { wrapReduce } from '../../w010-hooks'
+import { Reduction } from '../../w010-hooks/src/Reduction'
 class IsolateContainer {
   #reducer
   #timeout

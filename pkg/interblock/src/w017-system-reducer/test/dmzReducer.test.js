@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { interchain, wrapReduce as hook } from '../../w002-api'
+import { interchain } from '../../w002-api'
 import { Dmz, RxRequest, Address, Request } from '../../w008-ipld'
 import { actions } from '..'
 import { spawnReducer, spawn } from '../src/spawn'

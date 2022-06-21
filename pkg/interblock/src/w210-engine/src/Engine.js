@@ -11,10 +11,9 @@ import {
   Reply,
   Provenance,
 } from '../../w008-ipld'
-import { wrapReduce } from '../../w002-api'
+import { wrapReduce, Reduction } from '../../w010-hooks'
 import { actions, reducer } from '../../w017-system-reducer'
 import { Isolate, Crypto, Endurance, Scale, Hints } from './Services'
-import { Reduction } from './Reduction'
 const debug = Debug('interblock:engine')
 /**
  * The Engine of Permanence
