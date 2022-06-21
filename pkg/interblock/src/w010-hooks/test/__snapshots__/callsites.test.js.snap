@@ -3,29 +3,33 @@
 exports[`callsites basics nested parallel hooks do not collide 1`] = `
 Array [
   Reduction {
+    "reply": Reply {
+      "payload": Object {},
+      "type": "@@PROMISE",
+    },
     "txs": Array [
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 0 depth: 4",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 0 depth: 3",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 0 depth: 2",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 0 depth: 1",
@@ -35,36 +39,40 @@ Array [
     ],
   },
   Reduction {
+    "reply": Reply {
+      "payload": Object {},
+      "type": "@@PROMISE",
+    },
     "txs": Array [
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 1 depth: 5",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 1 depth: 4",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 1 depth: 3",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 1 depth: 2",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 1 depth: 1",
@@ -74,43 +82,47 @@ Array [
     ],
   },
   Reduction {
+    "reply": Reply {
+      "payload": Object {},
+      "type": "@@PROMISE",
+    },
     "txs": Array [
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 2 depth: 6",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 2 depth: 5",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 2 depth: 4",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 2 depth: 3",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 2 depth: 2",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 2 depth: 1",
@@ -120,50 +132,54 @@ Array [
     ],
   },
   Reduction {
+    "reply": Reply {
+      "payload": Object {},
+      "type": "@@PROMISE",
+    },
     "txs": Array [
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 3 depth: 7",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 3 depth: 6",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 3 depth: 5",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 3 depth: 4",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 3 depth: 3",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 3 depth: 2",
         },
         "to": ".",
       },
-      PendingRequest {
+      AsyncRequest {
         "request": Request {
           "payload": Object {},
           "type": "id: 3 depth: 1",
@@ -176,7 +192,7 @@ Array [
 `;
 
 exports[`callsites with accumulator single await 1`] = `
-PendingRequest {
+AsyncRequest {
   "request": Request {
     "payload": Object {},
     "type": "single",

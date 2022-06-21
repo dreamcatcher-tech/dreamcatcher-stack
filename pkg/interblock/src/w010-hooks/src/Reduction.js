@@ -1,43 +1,27 @@
 import assert from 'assert-fast'
-import { Reply, AsyncRequest, Pending } from '../../w008-ipld'
+import { Reply, AsyncRequest } from '../../w008-ipld'
 
 export class Reduction {
-  static createError(error, state, txs) {
-    assert(error instanceof Error)
+  static createError(txs, error) {
     const reply = Reply.createError(error)
-    return Reduction.createResolve(state, txs, reply)
+    return Reduction.createResolve(txs, reply)
   }
   static createPending(txs) {
+    const reply = Reply.createPromise()
+    return Reduction.createResolve(txs, reply)
+  }
+  static createResolve(txs, reply) {
     assert(Array.isArray(txs))
     assert(txs.every((tx) => tx instanceof AsyncRequest))
+    assert(txs.every((tx) => !tx.isSettled()))
+    assert(reply instanceof Reply)
     const instance = new Reduction()
-    Object.assign(instance, { txs })
-    return instance
-  }
-  static createResolve(state, txs, reply) {
-    const instance = new Reduction()
-    if (state) {
-      assert(state instanceof Object)
-      Object.assign(instance, { state })
-    }
-    if (txs) {
-      assert(Array.isArray(txs))
-      assert(txs.every((tx) => tx instanceof AsyncRequest))
-      Object.assign(instance, { txs })
-    }
-    if (reply) {
-      assert(reply instanceof Reply)
-      assert(reply.isResolve() || reply.isRejection())
-      Object.assign(instance, { reply })
-    }
+    Object.assign(instance, { txs, reply })
     return instance
   }
   isPending() {
-    return !this.reply && !this.state
-  }
-  generatePending(origin, settles) {
-    assert(!this.isPending())
-    return Pending.create(origin, settles, this.txs)
+    assert(this.reply instanceof Reply)
+    return this.reply.isPromise()
   }
   getError() {
     assert(this.reply)

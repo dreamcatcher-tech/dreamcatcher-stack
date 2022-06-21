@@ -9,23 +9,13 @@ const debug = Debug('interblock:api:callsites')
 
 let invokeId = 0
 let activeInvocations = new Map()
-
 /**
- * If a throw occurs at any point, only the `error` key is returned.
- * If the function is pending, then only `txs` key is returned.
- * If the function has settled with no reply, only the `state` key is returned.
- * If the function has settled with a reply, both `state` and `reply` key return
- *
- * It is an error to return `reply` but no `state`
- *
- * This structure is used in ipld schema to store the pending states.
- *
- * ? can remove the error key if we use reply to hold the error ?
- * it is useful to return a state, and some txs, and reject as well
- *
- * @param {*} tick
- * @param {*} asyncs
- * @returns { state, reply, txs }
+ * 
+ * @param {*} request 
+ * @param {*} reducer 
+ * @param {*} asyncs 
+ * @returns { Reply, txs }
+
  */
 export const wrapReduce = async (request, reducer, asyncs = []) => {
   assert(request instanceof Request)
@@ -36,8 +26,7 @@ export const wrapReduce = async (request, reducer, asyncs = []) => {
   const id = `@@INVOKE\\ ${invokeId++}` // basically just a difficult name
   const wrapper = {
     [id]() {
-      const pojo = request.getAction()
-      const result = reducer(pojo)
+      const result = reducer(request)
       return result
     },
   }
@@ -50,9 +39,8 @@ export const wrapReduce = async (request, reducer, asyncs = []) => {
     const result = wrapper[id]()
     return await awaitActivity(result, id)
   } catch (error) {
-    const { txs, state } = activeInvocations.get(id)
-
-    return Reduction.createError(error, state, txs)
+    const { txs } = activeInvocations.get(id)
+    return Reduction.createError(txs, error)
   }
 }
 const awaitActivity = async (result, id) => {
@@ -61,16 +49,17 @@ const awaitActivity = async (result, id) => {
   }
   assert(activeInvocations.has(id))
   const isPending = result && typeof result.then === 'function'
-  const { txs, reply } = activeInvocations.get(id)
+  const { txs } = activeInvocations.get(id)
   if (txs.length || !isPending) {
     if (isPending) {
       return Reduction.createPending(txs)
     } else {
-      return Reduction.createResolve(result, txs, reply)
+      const reply = Reply.create('@@RESOLVE', result)
+      return Reduction.createResolve(txs, reply)
     }
   } else {
     const racecar = Symbol()
-    const timeout = 500
+    const timeout = 100
     const racecarPromise = new Promise((resolve) => {
       setTimeout(() => resolve(racecar), timeout)
     })
@@ -104,18 +93,18 @@ const interchain = (type, payload, to = '.', binary) => {
   // handle all kinds of shorthands from the devs
   const request = Request.create(type, payload, binary)
   assert(to !== '.@@io')
-  const { settles, txs } = getInvocation()
-  if (!settles.length) {
-    const pendingRequest = PendingRequest.create(request, to)
-    txs.push(pendingRequest)
+  const { asyncs, txs } = getInvocation()
+  if (!asyncs.length) {
+    const asyncRequest = AsyncRequest.create(request, to)
+    txs.push(asyncRequest)
     // TODO early exit for quiting after the first external request
     // race against the event loop, then exit as soon as we have a tx
     // TODO hook .then, so we can know if something *might* be waiting for us
     // otherwise we know that something async is happening that isn't us
     return new Promise(() => Infinity)
   }
-  const prior = settles.shift()
-  assert(prior instanceof PendingRequest)
+  const prior = asyncs.shift()
+  assert(prior instanceof AsyncRequest)
   assert(prior.isRequestMatch(request))
   assert(prior.settled)
   const reply = prior.settled

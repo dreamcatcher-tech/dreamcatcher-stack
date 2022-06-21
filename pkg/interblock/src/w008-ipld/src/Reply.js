@@ -4,6 +4,9 @@ import { serializeError, deserializeError } from 'serialize-error'
 import { Request } from '.'
 
 export class Reply extends Request {
+  static createPromise() {
+    return Reply.create('@@PROMISE')
+  }
   static createError(error) {
     assert(error instanceof Error)
     return Reply.create('@@REJECT', error)
