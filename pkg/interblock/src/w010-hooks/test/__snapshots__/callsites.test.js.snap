@@ -200,3 +200,13 @@ AsyncRequest {
   "to": ".",
 }
 `;
+
+exports[`callsites with asyncs single await 1`] = `
+AsyncRequest {
+  "request": Request {
+    "payload": Object {},
+    "type": "single",
+  },
+  "to": ".",
+}
+`;

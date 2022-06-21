@@ -28,4 +28,7 @@ export class Reduction {
     assert(this.reply.isRejection())
     return this.reply.getRejectionError()
   }
+  dir() {
+    console.dir(this, { depth: Infinity })
+  }
 }

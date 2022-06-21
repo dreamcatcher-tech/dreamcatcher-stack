@@ -27,7 +27,6 @@ export class AsyncRequest extends IpldStruct {
   }
   settle(reply) {
     assert(reply instanceof Reply)
-    assert(this.id !== undefined)
     assert(!this.isSettled())
     return this.setMap({ settled: reply })
   }
@@ -37,5 +36,10 @@ export class AsyncRequest extends IpldStruct {
   }
   isSettled() {
     return this.settled !== undefined
+  }
+  assertLogic() {
+    if (this.settled) {
+      assert(this.id !== undefined, `cannot settle unidentified requests`)
+    }
   }
 }

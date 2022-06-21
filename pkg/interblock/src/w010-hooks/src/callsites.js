@@ -14,7 +14,7 @@ let activeInvocations = new Map()
  * @param {*} request 
  * @param {*} reducer 
  * @param {*} asyncs 
- * @returns { Reply, txs }
+ * @returns { reply, txs }
 
  */
 export const wrapReduce = async (request, reducer, asyncs = []) => {
@@ -23,10 +23,11 @@ export const wrapReduce = async (request, reducer, asyncs = []) => {
   assert(Array.isArray(asyncs))
   assert(asyncs.every((async) => async instanceof AsyncRequest))
   assert(asyncs.every((async) => async.isSettled()))
+  asyncs = [...asyncs]
   const id = `@@INVOKE\\ ${invokeId++}` // basically just a difficult name
   const wrapper = {
-    [id]() {
-      const result = reducer(request)
+    async [id]() {
+      const result = await reducer(request)
       return result
     },
   }
@@ -49,7 +50,8 @@ const awaitActivity = async (result, id) => {
   }
   assert(activeInvocations.has(id))
   const isPending = result && typeof result.then === 'function'
-  const { txs } = activeInvocations.get(id)
+  const invocation = activeInvocations.get(id)
+  const { txs } = invocation
   if (txs.length || !isPending) {
     if (isPending) {
       return Reduction.createPending(txs)
@@ -58,14 +60,21 @@ const awaitActivity = async (result, id) => {
       return Reduction.createResolve(txs, reply)
     }
   } else {
-    const racecar = Symbol()
+    const racecarSymbol = Symbol()
+    const ripcordSymbol = Symbol()
     const timeout = 100
-    const racecarPromise = new Promise((resolve) => {
-      setTimeout(() => resolve(racecar), timeout)
-    })
-    const nextResult = await Promise.race([racecarPromise, result])
-    if (nextResult === racecar) {
+    const racecar = new Promise((resolve) =>
+      setTimeout(() => resolve(racecarSymbol), timeout)
+    )
+    const ripcord = new Promise(
+      (resolve) => (invocation.ripcord = () => resolve(ripcordSymbol))
+    )
+    const nextResult = await Promise.race([racecar, result, ripcord])
+    if (nextResult === racecarSymbol) {
       throw new Error(`timeout exceeded: ${timeout} ms`)
+    }
+    if (nextResult === ripcordSymbol) {
+      return awaitActivity(result, id)
     }
     return awaitActivity(nextResult, id)
   }
@@ -77,7 +86,6 @@ const getInvocation = () => {
   for (const callsite of stack) {
     const name = callsite.getFunctionName()
     if (name && name.startsWith(`@@INVOKE\\ `)) {
-      // we have found our hook
       invokeId = name
       break
     }
@@ -90,15 +98,15 @@ const getInvocation = () => {
   return activeInvocations.get(invokeId)
 }
 const interchain = (type, payload, to = '.', binary) => {
-  // handle all kinds of shorthands from the devs
   const request = Request.create(type, payload, binary)
   assert(to !== '.@@io')
-  const { asyncs, txs } = getInvocation()
+  const { asyncs, txs, ripcord } = getInvocation()
   if (!asyncs.length) {
+    if (ripcord) {
+      ripcord()
+    }
     const asyncRequest = AsyncRequest.create(request, to)
     txs.push(asyncRequest)
-    // TODO early exit for quiting after the first external request
-    // race against the event loop, then exit as soon as we have a tx
     // TODO hook .then, so we can know if something *might* be waiting for us
     // otherwise we know that something async is happening that isn't us
     return new Promise(() => Infinity)
@@ -117,22 +125,28 @@ const interchain = (type, payload, to = '.', binary) => {
   }
 }
 
-const respond = (payload, binary) => {
-  const { settles, txs } = getInvocation()
-  if (txs.some((tx) => tx instanceof Reply)) {
-    throw new Error('cannot respond twice')
+const useState = async (path) => {
+  assert.strictEqual(typeof path, 'string', `path must be a string`)
+  assert(path, `path cannot be null`)
+  const getState = Request.createGetState(path)
+  const state = await interchain(getState)
+  const setState = (nextState) => {
+    if (typeof nextState !== 'object') {
+      throw new Error(`state must be an object, but was: ${typeof nextState}`)
+    }
+    if (nextState === state) {
+      return
+    }
+    if (equals(nextState, state)) {
+      return
+    }
+    const setStateRequest = Request.createSetState(nextState)
+    return interchain(setStateRequest, path)
   }
-  const reply = Reply.create('@@RESOLVE', payload, binary)
-  if (!settles.length) {
-    txs.push(reply)
-    return
-  }
-  const prior = settles.shift()
-  assert(prior instanceof Reply)
-  assert(equals(reply, prior))
+  return [state, setState]
 }
 
 if (globalThis[Symbol.for('interblock:api:hook')]) {
   console.error('interblock:api:hook already defined')
 }
-globalThis[Symbol.for('interblock:api:hook')] = { interchain, respond }
+globalThis[Symbol.for('interblock:api:hook')] = { interchain, useState }

@@ -16,7 +16,7 @@ const request = Request.create('TEST')
  *
  *
  */
-describe.only('callsites', () => {
+describe('callsites', () => {
   describe('basics', () => {
     const nested =
       (id, depth = 0) =>
@@ -126,7 +126,7 @@ describe.only('callsites', () => {
     })
     test.todo('duplicate requests permitted in different calls')
   })
-  describe('with accumulator', () => {
+  describe('with asyncs', () => {
     test('single await', async () => {
       let interchainResult
       const single = async () => {
@@ -139,9 +139,8 @@ describe.only('callsites', () => {
       let [pendingRequest] = reduction.txs
       assert(pendingRequest instanceof AsyncRequest)
       expect(pendingRequest).toMatchSnapshot()
-      const requestId = RequestId.createCI()
       const resolve = Reply.create('@@RESOLVE', { single: true })
-      pendingRequest = pendingRequest.setId(requestId).settle(resolve)
+      pendingRequest = pendingRequest.settle(resolve)
       const asyncs = [pendingRequest]
       const { reply, txs: txs2 } = await wrapReduce(request, single, asyncs)
       assert.strictEqual(txs2.length, 0)
@@ -162,9 +161,8 @@ describe.only('callsites', () => {
       const { txs } = await wrapReduce(request, reject)
       assert.strictEqual(interchainResult, undefined)
       let [pendingRequest] = txs
-      const requestId = RequestId.createCI()
       const rejection = Reply.create('@@REJECT', new Error('test rejection'))
-      pendingRequest = pendingRequest.setId(requestId).settle(rejection)
+      pendingRequest = pendingRequest.settle(rejection)
       const asyncs = [pendingRequest]
       const reduction = await wrapReduce(request, reject, asyncs)
       const error = reduction.getError()

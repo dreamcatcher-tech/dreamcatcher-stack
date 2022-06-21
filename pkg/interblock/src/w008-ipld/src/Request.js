@@ -42,13 +42,19 @@ export class Request extends IpldStruct {
     '@@INTRO',
     '@@ACCEPT',
     '@@OPEN_CHILD',
-    '@@GET_GIVEN_NAME', // TODO may delete ?
     '@@DEPLOY',
     '@@INSTALL',
-    '@@GET_CHAN', // TODO may delete ?
-    '@@CAT',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
+  }
+  static createGetState(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    return this.create('@@GET_STATE', { path })
+  }
+  static createSetState(state, binary) {
+    assert.strictEqual(typeof state, 'object')
+    return this.create('@@SET_STATE', { state }, binary)
   }
 }

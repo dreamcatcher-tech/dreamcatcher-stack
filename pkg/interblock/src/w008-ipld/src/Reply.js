@@ -11,6 +11,9 @@ export class Reply extends Request {
     assert(error instanceof Error)
     return Reply.create('@@REJECT', error)
   }
+  static createResolve(payload, binary) {
+    return this.create('@@RESOLVE', payload, binary)
+  }
   static create(type = '@@RESOLVE', payload = {}, binary) {
     if (type === '@@REJECT' && payload instanceof Error) {
       if (payload.name === 'AssertionError') {

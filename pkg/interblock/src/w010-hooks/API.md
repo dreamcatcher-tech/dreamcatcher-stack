@@ -36,15 +36,15 @@ In order to respond with a binary object, we need to use a hooked function to pr
 
 ## Reducer Signature
 
-On the backend, the signature is:
+On the backend, the signature is (roughly - needs improvement):
 
 > `( state, request, resolvedRequests[] ) => ( state', requests[], reply )`
 
-The reply is the only required item, and it may be either resolved, rejected, or promised, indicating that the function needs to continue running after all of its requests are resolved.
+The reply may be either resolved, rejected, or promised, indicating that the function needs to continue running after all of its requests are resolved.
 
 It is an error to send back a promise but no new requests, as this state can never settle.
 
-Reply is the return value of the function, and may be an empty object for returning nothing, or if the function throws, it is a rejection. If the function returns a promise, then the reply object is a promise also.
+Reply is the return value of the function, and may be an empty object for returning `undefined`, or if the function throws, it is a rejection. If the function returns a promise, then the reply object is a promise also.
 
 state' is technically sent back via requests, and so the front end signature is:
 
