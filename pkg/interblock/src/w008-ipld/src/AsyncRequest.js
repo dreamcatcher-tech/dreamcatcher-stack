@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Request, RequestId, Reply } from '.'
+import { Request, RequestId, RxReply } from '.'
 import { IpldStruct } from './IpldStruct'
 import equals from 'fast-deep-equal'
 
@@ -8,7 +8,7 @@ import equals from 'fast-deep-equal'
         request &Request
         to String
         id RequestId
-        settled optional &Reply
+        reply optional &Reply
     }
 */
 export class AsyncRequest extends IpldStruct {
@@ -21,25 +21,33 @@ export class AsyncRequest extends IpldStruct {
     instance.to = to
     return instance
   }
-  setId(id) {
-    assert(id instanceof RequestId)
-    return this.setMap({ id })
+  setId(requestId) {
+    assert(requestId instanceof RequestId)
+    return this.setMap({ requestId })
   }
-  settle(reply) {
-    assert(reply instanceof Reply)
+  settle(rxReply) {
+    assert(rxReply instanceof RxReply)
     assert(!this.isSettled())
-    return this.setMap({ settled: reply })
+    assert(this.isIdMatch(rxReply))
+    const settled = rxReply.reply
+    return this.setMap({ settled })
   }
   isRequestMatch(request) {
     assert(request instanceof Request)
     return equals(this.request, request)
   }
+  isIdMatch(rxReply) {
+    assert(rxReply instanceof RxReply)
+    if (this.requestId) {
+      return rxReply.requestId.equals(this.requestId)
+    }
+    return false
+  }
   isSettled() {
     return this.settled !== undefined
   }
   assertLogic() {
-    if (this.settled) {
-      assert(this.id !== undefined, `cannot settle unidentified requests`)
-    }
+    // cannot crush or uncrush with a RequestId
+    assert(this.id instanceof RequestId)
   }
 }

@@ -8,7 +8,6 @@ import {
   Timestamp,
   Network,
   State,
-  Meta,
   Pending,
 } from '.'
 import { IpldStruct } from './IpldStruct'
@@ -21,7 +20,6 @@ const getDefaultParams = (CI = false) => {
       config: Config.create(),
       network: Network.create(),
       state: State.create(),
-      meta: Meta.create(),
     }
   }
   if (CI) {
@@ -35,7 +33,6 @@ export class Dmz extends IpldStruct {
     'config',
     'network',
     'state',
-    'meta',
     'pending',
     'approot',
     'binary',
@@ -45,7 +42,6 @@ export class Dmz extends IpldStruct {
     timestamp: Timestamp,
     network: Network,
     state: State,
-    meta: Meta,
     pending: Pending,
     approot: PulseLink,
     binary: Binary,

@@ -17,5 +17,13 @@ export class RequestId extends IpldStruct {
     instance.requestIndex = requestIndex
     return instance
   }
-  toString() {}
+  equals(requestId) {
+    assert(requestId instanceof RequestId)
+    const { channelId: c1, stream: s1, requestIndex: i1 } = this
+    const { channelId: c2, stream: s2, requestIndex: i2 } = requestId
+    return c1 === c2 && s1 === s2 && i1 === i2
+  }
+  toString() {
+    return `c${this.channelId}-${this.stream}-i${this.requestIndex}`
+  }
 }

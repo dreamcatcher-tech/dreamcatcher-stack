@@ -207,32 +207,6 @@ export default {
       keyType: 'String',
       valueType: 'Any',
     },
-    Meta: {
-      kind: 'struct',
-      fields: {
-        replies: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: {
-              kind: 'map',
-              keyType: 'String',
-              valueType: 'Any',
-            },
-          },
-        },
-        deploy: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Any',
-          },
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
     RequestId: {
       kind: 'struct',
       fields: {
@@ -265,7 +239,7 @@ export default {
         id: {
           type: 'RequestId',
         },
-        settled: {
+        reply: {
           type: {
             kind: 'link',
             expectedType: 'Reply',
@@ -294,7 +268,7 @@ export default {
         map: {},
       },
     },
-    Pending: {
+    AsyncTrail: {
       kind: 'struct',
       fields: {
         origin: {
@@ -310,6 +284,30 @@ export default {
           type: {
             kind: 'list',
             valueType: 'AsyncRequest',
+          },
+        },
+        reply: {
+          type: {
+            kind: 'link',
+            expectedType: 'Reply',
+          },
+          optional: true,
+        },
+      },
+      representation: {
+        map: {},
+      },
+    },
+    Pending: {
+      kind: 'struct',
+      fields: {
+        trails: {
+          type: {
+            kind: 'list',
+            valueType: {
+              kind: 'link',
+              expectedType: 'AsyncTrail',
+            },
           },
         },
       },
@@ -405,12 +403,6 @@ export default {
           type: {
             kind: 'link',
             expectedType: 'State',
-          },
-        },
-        meta: {
-          type: {
-            kind: 'link',
-            expectedType: 'Meta',
           },
         },
         pending: {

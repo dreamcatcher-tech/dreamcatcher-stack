@@ -14,7 +14,7 @@ export class RxRequest extends Request {
   crush() {
     throw new Error(`Transients cannot be crushed`)
   }
-  getAction() {
+  getRequestObject() {
     const { type, payload } = this
     const action = { type, payload }
     deepFreeze(action)

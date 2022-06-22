@@ -315,17 +315,6 @@ State is special in that it wraps an object directly, with no predefined keys.
 type State { String : Any }
 ```
 
-## Meta
-
-A storage area used to track information used by the system as it manages its own chain and the interactions with other chains. Eg: used to track genesis actions so it knows which action to reply to.
-
-```sh
-type Meta struct {
-    replies { String: { String : Any }}
-    deploy { String : Any }     # track ongoing deploy operations
-}
-```
-
 ## Pending
 
 Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and requestId. It then keeps track of all requests made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.
@@ -348,16 +337,20 @@ type AsyncRequest struct {
     request &Request
     to String
     id RequestId
-    settled optional &Reply
+    reply optional &Reply
 }
 type RxRequest struct {
     request &Request
     requestId RequestId
 }
-type Pending struct {
+type AsyncTrail struct {
     origin RxRequest
     settles [AsyncRequest]
     txs [AsyncRequest]
+    reply optional &Reply
+}
+type Pending struct {
+    trails [&AsyncTrail]
 }
 ```
 
@@ -405,7 +398,6 @@ type Dmz struct {
     timestamp Timestamp                 # changes every block
     network Network                     # block implies network changed
     state &State
-    meta &Meta
     pending optional &Pending
     approot optional PulseLink          # The latest known approot
     binary optional Binary

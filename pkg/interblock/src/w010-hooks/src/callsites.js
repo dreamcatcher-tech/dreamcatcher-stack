@@ -1,8 +1,7 @@
-import { Request, AsyncRequest, Reply } from '../../w008-ipld'
+import { Request, AsyncRequest, Reply, AsyncTrail } from '../../w008-ipld'
 import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 import callsites from 'callsites'
-import { Reduction } from '..'
 import Debug from 'debug'
 
 const debug = Debug('interblock:api:callsites')
@@ -13,27 +12,26 @@ let activeInvocations = new Map()
  * 
  * @param {*} request 
  * @param {*} reducer 
- * @param {*} asyncs 
+ * @param {*} settles 
  * @returns { reply, txs }
 
  */
-export const wrapReduce = async (request, reducer, asyncs = []) => {
-  assert(request instanceof Request)
+export const wrapReduce = async (trail, reducer) => {
+  assert(trail instanceof AsyncTrail)
+  assert(trail.isPending())
+  assert(trail.isFulfilled())
   assert.strictEqual(typeof reducer, 'function')
-  assert(Array.isArray(asyncs))
-  assert(asyncs.every((async) => async instanceof AsyncRequest))
-  assert(asyncs.every((async) => async.isSettled()))
-  asyncs = [...asyncs]
   const id = `@@INVOKE\\ ${invokeId++}` // basically just a difficult name
   const wrapper = {
     async [id]() {
+      const request = trail.getRequestObject()
       const result = await reducer(request)
       return result
     },
   }
+  const settles = trail.getSettles()
   const txs = []
-  // TODO should this be passed in, or intercepted from loopback settles ?
-  const invocation = { asyncs, txs }
+  const invocation = { settles, txs, trail }
   activeInvocations.set(id, invocation)
 
   try {
@@ -41,7 +39,7 @@ export const wrapReduce = async (request, reducer, asyncs = []) => {
     return await awaitActivity(result, id)
   } catch (error) {
     const { txs } = activeInvocations.get(id)
-    return Reduction.createError(txs, error)
+    return trail.setError(txs, error)
   }
 }
 const awaitActivity = async (result, id) => {
@@ -51,13 +49,13 @@ const awaitActivity = async (result, id) => {
   assert(activeInvocations.has(id))
   const isPending = result && typeof result.then === 'function'
   const invocation = activeInvocations.get(id)
-  const { txs } = invocation
+  const { txs, trail } = invocation
   if (txs.length || !isPending) {
     if (isPending) {
-      return Reduction.createPending(txs)
+      return trail.setTxs(txs)
     } else {
-      const reply = Reply.create('@@RESOLVE', result)
-      return Reduction.createResolve(txs, reply)
+      const reply = Reply.createResolve(result)
+      return trail.setTxs(txs).settleOrigin(reply)
     }
   } else {
     const racecarSymbol = Symbol()
@@ -100,8 +98,8 @@ const getInvocation = () => {
 const interchain = (type, payload, to = '.', binary) => {
   const request = Request.create(type, payload, binary)
   assert(to !== '.@@io')
-  const { asyncs, txs, ripcord } = getInvocation()
-  if (!asyncs.length) {
+  const { settles, txs, ripcord } = getInvocation()
+  if (!settles.length) {
     if (ripcord) {
       ripcord()
     }
@@ -111,7 +109,7 @@ const interchain = (type, payload, to = '.', binary) => {
     // otherwise we know that something async is happening that isn't us
     return new Promise(() => Infinity)
   }
-  const prior = asyncs.shift()
+  const prior = settles.shift()
   assert(prior instanceof AsyncRequest)
   assert(prior.isRequestMatch(request))
   assert(prior.settled)
