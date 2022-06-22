@@ -3,7 +3,7 @@ import { wrapReduce } from '..'
 import { Reply, RequestId, AsyncTrail, RxReply } from '../../w008-ipld'
 import assert from 'assert-fast'
 
-describe.only('api', () => {
+describe('api', () => {
   describe('useState', () => {
     test('basic', async () => {
       const reducer = async () => {
