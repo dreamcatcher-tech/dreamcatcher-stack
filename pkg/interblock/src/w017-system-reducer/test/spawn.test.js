@@ -1,4 +1,4 @@
-import { actions, reducer } from '..'
+import { reducer } from '..'
 import {
   AsyncTrail,
   RequestId,
@@ -30,19 +30,16 @@ describe('spawn', () => {
     local = await wrapReduce(local, reducer)
     trail = trail.settleTx(local.rxReply)
 
-    // BUT does not bubble up rejections to @@GENESIS
-    // so we need to send the genesis action from inside spawn
-
     trail = await wrapReduce(trail, reducer)
     assert(trail.isPending())
     let [add] = trail.txs
-    assert.strictEqual(add.request.type, '@@PING')
+    assert.strictEqual(add.request.type, '@@GENESIS')
     add = add.setId(requestId)
     const reply = Reply.createResolve()
     trail = trail.updateTxs([add]).settleTx(RxReply.create(reply, requestId))
 
     trail = await wrapReduce(trail, reducer)
-    const result = trail.result()
-    expect(result).toMatchSnapshot()
+    assert(trail.result())
+    expect(trail).toMatchSnapshot()
   })
 })

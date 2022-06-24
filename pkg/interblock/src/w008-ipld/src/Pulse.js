@@ -167,10 +167,11 @@ export class Pulse extends IpldStruct {
     const { timestamp } = this.provenance.dmz
 
     const dmz = Dmz.create({ ...spawnOptions, timestamp })
+    // TODO what if the validators change during this block creation ?
     const genesis = Provenance.createGenesis(dmz, this.validators)
     const pulse = await Pulse.create(genesis)
     const address = pulse.getAddress()
-    network = await network.txGenesis(alias, address, spawnOptions)
+    network = await network.addChild(alias, address)
     return this.setMap({ provenance: { dmz: { network } } })
   }
 }

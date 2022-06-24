@@ -1,8 +1,76 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`spawn basic 1`] = `
-Object {
-  "alias": "file_00001",
-  "chainId": "QmT3pwbGdxXBjZeJNniUbA2wJDh9bRYxDFeUZspWFAHx5t",
+AsyncTrail {
+  "origin": RxRequest {
+    "request": Request {
+      "payload": Object {
+        "spawnOptions": Object {},
+      },
+      "type": "@@SPAWN",
+    },
+    "requestId": RequestId {
+      "channelId": 0,
+      "requestIndex": 0,
+      "stream": "reducer",
+    },
+  },
+  "rxReply": RxReply {
+    "reply": Reply {
+      "payload": Object {
+        "alias": "file_00001",
+        "chainId": "QmT3pwbGdxXBjZeJNniUbA2wJDh9bRYxDFeUZspWFAHx5t",
+      },
+      "type": "@@RESOLVE",
+    },
+    "requestId": RequestId {
+      "channelId": 0,
+      "requestIndex": 0,
+      "stream": "reducer",
+    },
+  },
+  "settles": Array [
+    AsyncRequest {
+      "request": Request {
+        "payload": Object {
+          "alias": "",
+          "spawnOptions": Object {},
+        },
+        "type": "@@ADD_CHILD",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 1,
+        "stream": "reducer",
+      },
+      "settled": Reply {
+        "payload": Object {
+          "alias": "file_00001",
+          "chainId": "QmT3pwbGdxXBjZeJNniUbA2wJDh9bRYxDFeUZspWFAHx5t",
+        },
+        "type": "@@RESOLVE",
+      },
+      "to": ".",
+    },
+    AsyncRequest {
+      "request": Request {
+        "payload": Object {
+          "spawnOptions": Object {},
+        },
+        "type": "@@GENESIS",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 0,
+        "stream": "reducer",
+      },
+      "settled": Reply {
+        "payload": Object {},
+        "type": "@@RESOLVE",
+      },
+      "to": ".",
+    },
+  ],
+  "txs": Array [],
 }
 `;

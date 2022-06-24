@@ -93,7 +93,6 @@ const pulseReducer = async (type, payload) => {
       assert(address instanceof Address)
       assert(address.isRemote())
       const chainId = address.getChainId()
-      // return the alias used
       return { alias, chainId }
     }
     default:

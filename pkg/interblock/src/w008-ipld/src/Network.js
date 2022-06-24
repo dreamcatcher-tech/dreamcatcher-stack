@@ -222,7 +222,18 @@ export class Network extends IpldStruct {
     channels = await channels.updateChannel(channel)
     return await this.setMap({ channels, downlinks })
   }
+  async addChild(path, address) {
+    assert(typeof path === 'string')
+    assert(path)
+    assert(!path.includes('/'))
+    assert(address instanceof Address)
+    const channelId = this.channels.counter
+    let channel = Channel.create(channelId, address)
 
+    const channels = await this.channels.addChannel(channel)
+    const children = await this.children.addChild(path, channelId)
+    return this.setMap({ channels, children })
+  }
   async hasChild(alias) {
     assert(typeof alias === 'string', 'Alias not string')
     assert(alias)
@@ -257,23 +268,6 @@ export class Network extends IpldStruct {
     assert(address.isRemote())
     return await this.channels.getByAddress(address)
   }
-
-  async txGenesis(path, address, spawnOptions = {}) {
-    assert(typeof path === 'string')
-    assert(path)
-    assert(!path.includes('/'))
-    assert(address instanceof Address)
-    assert.strictEqual(typeof spawnOptions, 'object')
-    const channelId = this.channels.counter
-    let channel = Channel.create(channelId, address)
-    channel = channel.txGenesis(spawnOptions)
-
-    const channels = await this.channels.addChannel(channel)
-    const children = await this.children.addChild(path, channelId)
-
-    return this.setMap({ channels, children })
-  }
-
   async ingestInterpulse(interpulse) {
     const channels = await this.channels.ingestInterpulse(interpulse)
     return this.setMap({ channels })

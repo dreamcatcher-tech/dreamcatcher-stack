@@ -116,16 +116,6 @@ export class Channel extends IpldStruct {
     rx = rx.addTip(interpulse)
     return this.setMap({ rx })
   }
-  txGenesis(params = {}) {
-    assert(this.channelId !== Network.FIXED_IDS.LOOPBACK)
-    assert(this.channelId !== Network.FIXED_IDS.PARENT)
-    assert(this.channelId !== Network.FIXED_IDS.IO)
-    assert(this.tx.isEmpty())
-    assert(this.rx.isEmpty())
-    assert(typeof params === 'object')
-    const request = Request.create('@@GENESIS', { params })
-    return this.txRequest(request)
-  }
   txRequest(request) {
     assert(request instanceof Request)
     const tx = this.tx.txRequest(request)
