@@ -1,6 +1,14 @@
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
-import { RxReply, AsyncRequest, Reply, Request, RxRequest, RequestId } from '.'
+import {
+  Pulse,
+  RxReply,
+  AsyncRequest,
+  Reply,
+  Request,
+  RxRequest,
+  RequestId,
+} from '.'
 /**
 type RequestId struct {
     channelId Int
@@ -21,7 +29,7 @@ type AsyncTrail struct {
     origin RxRequest
     settles [AsyncRequest]
     txs [AsyncRequest]
-    reply optional &Reply
+    rxReply optional &RxReply 
 }
  */
 export class AsyncTrail extends IpldStruct {
@@ -39,25 +47,26 @@ export class AsyncTrail extends IpldStruct {
     Object.assign(instance, { origin })
     return instance
   }
-  static createPending(txs) {
-    const reply = Reply.createPromise()
-    return this.createResolve(txs, reply)
-  }
-  static createResolve(txs, reply) {
-    assert(Array.isArray(txs))
-    assert(txs.every((tx) => tx instanceof AsyncRequest))
-    assert(txs.every((tx) => !tx.isSettled()))
-    assert(reply instanceof Reply)
-    const instance = new this.constructor()
-    Object.assign(instance, { txs, reply })
-    return instance
+  static createWithPulse(origin, pulse) {
+    /** used when we need the response pattern, but want to make
+     * one time only synchronized changes to a state variable.
+     * If this mode is used, settles are disallowed, and txs
+     * are disallowed, as the prescence of these items means
+     * repeated execution will occur, which is counter to purpose
+     * of this function.
+     */
+    assert(origin instanceof RxRequest)
+    assert(pulse instanceof Pulse)
+    return super.clone({ origin, pulse })
   }
   isPending() {
-    return !this.reply
+    return !this.rxReply
   }
   assertLogic() {
-    // cannot crush or uncrush if all asyncs are settled
-    // cannot store with a reply object, since can only store promises
+    assert(!this.pulse)
+    assert(!this.txs.every((tx) => tx.isSettled()))
+    assert(this.settles.every((tx) => tx.isSettled()))
+    assert(!this.rxReply, `can only crush promised trails`)
   }
   isFulfilled() {
     // check that all settles are in fact settled
@@ -79,8 +88,9 @@ export class AsyncTrail extends IpldStruct {
   }
   settleOrigin(reply) {
     assert(reply instanceof Reply)
-    assert(!this.reply)
-    return this.setMap({ reply })
+    assert(!this.rxReply)
+    const rxReply = RxReply.create(reply, this.origin.requestId)
+    return this.setMap({ rxReply })
   }
   settleTx(rxReply) {
     assert(rxReply instanceof RxReply)
@@ -111,8 +121,19 @@ export class AsyncTrail extends IpldStruct {
     return this.setTxs(txs).settleOrigin(reply)
   }
   getError() {
-    assert(this.reply)
-    assert(this.reply.isRejection())
-    return this.reply.getRejectionError()
+    assert(this.rxReply)
+    assert(this.rxReply.reply.isRejection())
+    return this.rxReply.reply.getRejectionError()
+  }
+  result() {
+    if (this.isPending()) {
+      return
+    }
+    const { reply } = this.rxReply
+    if (reply.isResolve()) {
+      return reply.payload
+    } else {
+      throw reply.getRejectionError()
+    }
   }
 }

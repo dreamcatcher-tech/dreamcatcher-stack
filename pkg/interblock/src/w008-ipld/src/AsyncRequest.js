@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Request, RequestId, RxReply } from '.'
+import { Request, RequestId, RxReply, RxRequest } from '.'
 import { IpldStruct } from './IpldStruct'
 import equals from 'fast-deep-equal'
 
@@ -11,7 +11,7 @@ import equals from 'fast-deep-equal'
         reply optional &Reply
     }
 */
-export class AsyncRequest extends IpldStruct {
+export class AsyncRequest extends RxRequest {
   static create(request, to) {
     assert(request instanceof Request)
     assert.strictEqual(typeof to, 'string')

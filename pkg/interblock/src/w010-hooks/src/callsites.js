@@ -1,4 +1,10 @@
-import { Request, AsyncRequest, Reply, AsyncTrail } from '../../w008-ipld'
+import {
+  Request,
+  AsyncRequest,
+  Reply,
+  AsyncTrail,
+  Pulse,
+} from '../../w008-ipld'
 import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 import callsites from 'callsites'
@@ -96,7 +102,12 @@ const getInvocation = () => {
   return activeInvocations.get(invokeId)
 }
 const interchain = (type, payload, to = '.', binary) => {
-  const request = Request.create(type, payload, binary)
+  let request
+  if (type instanceof Request) {
+    request = type
+  } else {
+    request = Request.create(type, payload, binary)
+  }
   assert(to !== '.@@io')
   const { settles, txs, ripcord } = getInvocation()
   if (!settles.length) {
@@ -148,3 +159,23 @@ if (globalThis[Symbol.for('interblock:api:hook')]) {
   console.error('interblock:api:hook already defined')
 }
 globalThis[Symbol.for('interblock:api:hook')] = { interchain, useState }
+
+export const usePulse = () => {
+  // only used by the system reducer
+  const invocation = getInvocation()
+  const { settles, txs, ripcord, trail } = invocation
+  assert(!txs.length)
+  assert(!settles.length)
+  assert(!ripcord)
+  assert(trail instanceof AsyncTrail)
+  const { pulse } = trail
+  assert(pulse instanceof Pulse)
+
+  const setPulse = (nextPulse) => {
+    assert(nextPulse instanceof Pulse)
+    assert(nextPulse !== pulse, `no change`)
+    assert.strictEqual(trail, invocation.trail)
+    invocation.trail = trail.setMap({ pulse: nextPulse })
+  }
+  return [pulse, setPulse]
+}

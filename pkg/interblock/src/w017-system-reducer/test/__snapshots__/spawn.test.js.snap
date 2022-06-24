@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`spawn basic 1`] = `
+Object {
+  "alias": "file_00001",
+  "chainId": "QmT3pwbGdxXBjZeJNniUbA2wJDh9bRYxDFeUZspWFAHx5t",
+}
+`;

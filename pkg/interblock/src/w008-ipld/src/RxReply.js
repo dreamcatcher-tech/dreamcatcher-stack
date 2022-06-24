@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import { Reply, RequestId } from '.'
-export class RxReply extends Reply {
+import { IpldStruct } from './IpldStruct'
+export class RxReply extends IpldStruct {
   static create(reply, requestId) {
     assert(reply instanceof Reply)
     assert(requestId instanceof RequestId)
@@ -10,5 +11,11 @@ export class RxReply extends Reply {
   }
   crush() {
     throw new Error(`Transients cannot be crushed`)
+  }
+  isRejection() {
+    return this.reply.isRejection()
+  }
+  getRejectionError() {
+    return this.reply.getRejectionError()
   }
 }

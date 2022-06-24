@@ -183,7 +183,6 @@ export class Crypto {
 }
 
 import { wrapReduce } from '../../w010-hooks'
-import { Reduction } from '../../w010-hooks/src/Reduction'
 class IsolateContainer {
   #reducer
   #timeout

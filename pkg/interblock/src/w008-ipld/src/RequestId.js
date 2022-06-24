@@ -26,4 +26,8 @@ export class RequestId extends IpldStruct {
   toString() {
     return `c${this.channelId}-${this.stream}-i${this.requestIndex}`
   }
+  next() {
+    const requestIndex = this.requestIndex + 1
+    return this.setMap({ requestIndex })
+  }
 }

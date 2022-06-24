@@ -233,13 +233,9 @@ export class Network extends IpldStruct {
     assert(alias)
     const channelId = await this.children.get(alias)
     assert(Number.isInteger(channelId))
-    assert(channelId >= 0 && channelId < this.counter)
-    const channel = await this.channels.get(channelId)
+    assert(channelId >= 0 && channelId < this.channels.counter)
+    const channel = await this.channels.getChannel(channelId)
     return channel
-  }
-
-  async hasByAlias(alias) {
-    return await this.aliases.has(alias)
   }
   rename(srcAlias, destAlias) {
     // needed to preserve the hash tree efficiently
@@ -262,15 +258,15 @@ export class Network extends IpldStruct {
     return await this.channels.getByAddress(address)
   }
 
-  async txGenesis(path, address, params = {}) {
+  async txGenesis(path, address, spawnOptions = {}) {
     assert(typeof path === 'string')
     assert(path)
     assert(!path.includes('/'))
     assert(address instanceof Address)
-    assert.strictEqual(typeof params, 'object')
+    assert.strictEqual(typeof spawnOptions, 'object')
     const channelId = this.channels.counter
     let channel = Channel.create(channelId, address)
-    channel = channel.txGenesis(params)
+    channel = channel.txGenesis(spawnOptions)
 
     const channels = await this.channels.addChannel(channel)
     const children = await this.children.addChild(path, channelId)

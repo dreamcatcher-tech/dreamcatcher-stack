@@ -153,6 +153,26 @@ export class Pulse extends IpldStruct {
     assert(state instanceof State)
     return this.setMap({ provenance: { dmz: { state } } })
   }
+  async addChild(alias, spawnOptions) {
+    // TODO insert repeatable randomness to child
+    assert(typeof alias === 'string')
+    assert(alias)
+    assert(!alias.includes('/'))
+    assert(typeof spawnOptions === 'object')
+    let network = this.getNetwork()
+    if (await network.hasChild(alias)) {
+      // TODO check if the alias exists in symlinks or hardlinks
+      throw new Error(`child exists: ${alias}`)
+    }
+    const { timestamp } = this.provenance.dmz
+
+    const dmz = Dmz.create({ ...spawnOptions, timestamp })
+    const genesis = Provenance.createGenesis(dmz, this.validators)
+    const pulse = await Pulse.create(genesis)
+    const address = pulse.getAddress()
+    network = await network.txGenesis(alias, address, spawnOptions)
+    return this.setMap({ provenance: { dmz: { network } } })
+  }
 }
 
 const isFormatCorrect = (signature) => {

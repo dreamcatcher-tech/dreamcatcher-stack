@@ -4,17 +4,13 @@ import { uplinkReducer, uplinkReply } from './uplink'
 import { connect, connectReducer } from './connect'
 import { ping, pingReducer } from './ping'
 import { spawn, spawnReducer } from './spawn'
-import {
-  install,
-  deploy,
-  deployReducer,
-  deployReply,
-  deployGenesisReply,
-} from './deploy'
+import { install, deploy, deployReducer } from './deploy'
 import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer, genesisReply, initReply } from './genesis'
 import { getStateReducer, getState } from './getState'
-import { Dmz, RxRequest, RxReply, Provenance } from '../../w008-ipld'
+import { Dmz, RxRequest, RxReply, Provenance, Address } from '../../w008-ipld'
+import { usePulse } from '../../w010-hooks'
+import { autoAlias } from './utils'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz')
 /**
@@ -45,28 +41,25 @@ const actions = {
   getState,
 }
 
-const reducer = (provenance, action) => {
+const reducer = (request) => {
   // TODO check the ACL each time ?
-  debug(`reducer( ${action.type} )`)
-  // TODO remove provenance, and make it fetched by useBlock
-  assert(provenance instanceof Provenance)
-  assert(action instanceof RxRequest)
-  let { dmz } = provenance
+  debug(`reducer( ${request.type} )`)
+  const { type, payload } = request
 
-  switch (action.type) {
+  switch (type) {
     case '@@PING':
-      pingReducer(action)
+      pingReducer(request)
       break
     case '@@SPAWN':
-      return spawnReducer(provenance, action)
+      return spawnReducer(request)
     case '@@CONNECT':
-      return connectReducer(dmz, action)
+      return connectReducer(dmz, request)
     case '@@UPLINK':
-      return uplinkReducer(dmz, action)
+      return uplinkReducer(dmz, request)
     case '@@GENESIS':
-      return genesisReducer(dmz, action)
+      return genesisReducer(dmz, request)
     case '@@OPEN_CHILD':
-      return openChildReducer(dmz, action)
+      return openChildReducer(dmz, request)
     case '@@INTRO':
       break
     case '@@ACCEPT':
@@ -74,18 +67,38 @@ const reducer = (provenance, action) => {
       break
     case '@@INSTALL': // user can connect with recursive deployment calls
     case '@@DEPLOY':
-      return deployReducer(dmz, action)
+      return deployReducer(dmz, request)
     case '@@GET_CHAN':
-      getChannelReducer(dmz.network, action)
+      getChannelReducer(dmz.network, request)
       break
     case '@@CAT':
       getStateReducer(dmz)
       break
     default:
-      throw new Error(`Unrecognized type: ${action.type}`)
+      return pulseReducer(type, payload)
   }
+}
 
-  return dmz
+const pulseReducer = async (type, payload) => {
+  let [pulse, setPulse] = usePulse()
+  switch (type) {
+    case '@@ADD_CHILD': {
+      let { alias, spawnOptions } = payload
+      if (!alias) {
+        alias = await autoAlias(pulse.getNetwork())
+      }
+      pulse = await pulse.addChild(alias, spawnOptions)
+      setPulse(pulse)
+      const { address } = await pulse.getNetwork().getChild(alias)
+      assert(address instanceof Address)
+      assert(address.isRemote())
+      const chainId = address.getChainId()
+      // return the alias used
+      return { alias, chainId }
+    }
+    default:
+      throw new Error(`Unrecognized type: ${type}`)
+  }
 }
 
 const rm = (id) => {

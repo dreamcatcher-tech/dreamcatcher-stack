@@ -32,7 +32,6 @@ export class IpldStruct extends IpldInterface {
       throw new Error('Instance must be crushed before block is encoded')
     }
     assert(this.#ipldBlock instanceof Block)
-    assert(Object.isFrozen(this.#ipldBlock))
     return this.#ipldBlock
   }
   get crushedSize() {

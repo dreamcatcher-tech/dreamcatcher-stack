@@ -1,7 +1,6 @@
 import assert from 'assert-fast'
-import { Channel, Network, Dmz, RxRequest, Provenance } from '../../w008-ipld'
-import { autoAlias } from './utils'
 import Debug from 'debug'
+import { interchain } from '../../w002-api'
 const debug = Debug('interblock:dmz:spawn')
 
 const spawn = (alias, spawnOpts = {}) => {
@@ -14,28 +13,35 @@ const spawn = (alias, spawnOpts = {}) => {
   }
   return action
 }
+const addChild = (alias, spawnOptions) => ({
+  type: '@@ADD_CHILD',
+  payload: { alias, spawnOptions },
+})
 
-const spawnReducer = async (provenance, rxRequest) => {
-  assert(provenance instanceof Provenance)
-  assert(rxRequest instanceof RxRequest)
-  assert.strictEqual(rxRequest.type, '@@SPAWN')
-  let { alias, spawnOpts } = rxRequest.payload
-  assert(!alias || typeof alias === 'string')
-  assert.strictEqual(typeof spawnOpts, 'object')
+const spawnReducer = async (request) => {
+  const { type, payload } = request
+  assert.strictEqual(type, '@@SPAWN')
+  assert.strictEqual(typeof payload, 'object')
+
+  let { alias = '', spawnOptions } = payload
+  assert(typeof alias === 'string')
+  assert.strictEqual(typeof spawnOptions, 'object')
+  assert.strictEqual(spawnOptions.validators, undefined, `no validators`)
+  assert.strictEqual(spawnOptions.timestamp, undefined, `no timestamp`)
 
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
-  assert.strictEqual(spawnOpts.validators, undefined, `cannot spec validators`)
-  assert.strictEqual(spawnOpts.timestamp, undefined, `cannot spec timestamp`)
-  // TODO check spawnOpts match a schema
+  // TODO check spawnOptions match a schema
 
-  alias = alias || autoAlias(provenance.dmz.network)
-  debug(`spawn alias: ${alias}`)
-  assert(!alias.includes('/'), `No / character allowed in "${alias}"`)
-  if (alias === '.' || alias === '..' || alias == '.@@io') {
-    throw new Error(`Alias uses reserved name: ${alias}`)
+  const result = await interchain(addChild(alias, spawnOptions))
+  if (!alias) {
+    alias = result.alias
   }
-  return await provenance.addChild(alias, spawnOpts)
+  assert.strictEqual(alias, result.alias)
+  assert(alias, `alias error`)
+  debug(`spawn alias:`, alias)
+  await interchain('@@PING', {}, alias)
+  return result
 }
 
 export { spawn, spawnReducer }

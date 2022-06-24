@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
-import { RxRequest, RxReply, Dmz, Meta } from '../../w008-ipld'
+import { RxRequest, RxReply, Dmz } from '../../w008-ipld'
 import { interchain } from '../../w002-api'
 import { uplink } from './uplink'
 import { connect } from './connect'

@@ -57,4 +57,11 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof state, 'object')
     return this.create('@@SET_STATE', { state }, binary)
   }
+  static createSpawn(alias, spawnOptions = {}) {
+    const payload = { alias, spawnOptions }
+    if (!alias) {
+      delete payload.alias
+    }
+    return this.create('@@SPAWN', payload)
+  }
 }

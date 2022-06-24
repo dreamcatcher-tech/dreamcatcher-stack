@@ -11,7 +11,7 @@ import {
   Reply,
   Provenance,
 } from '../../w008-ipld'
-import { wrapReduce, Reduction } from '../../w010-hooks'
+import { wrapReduce } from '../../w010-hooks'
 import { actions, reducer } from '../../w017-system-reducer'
 import { Isolate, Crypto, Endurance, Scale, Hints } from './Services'
 const debug = Debug('interblock:engine')
