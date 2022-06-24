@@ -12,9 +12,10 @@ import { wrapReduce } from '../../w010-hooks'
 import Debug from 'debug'
 import assert from 'assert-fast'
 Debug.enable('*spawn')
+const pulse = await Pulse.createCI()
 
 describe('spawn', () => {
-  test.only('basic', async () => {
+  test('basic', async () => {
     const request = Request.createSpawn()
     const requestId = RequestId.createCI()
     const rxRequest = RxRequest.create(request, requestId)
@@ -25,7 +26,6 @@ describe('spawn', () => {
     assert.strictEqual(get.request.type, '@@ADD_CHILD')
     get = get.setId(requestId.next())
     trail = trail.updateTxs([get])
-    const pulse = await Pulse.createCI()
     let local = AsyncTrail.createWithPulse(get, pulse)
     local = await wrapReduce(local, reducer)
     trail = trail.settleTx(local.rxReply)
@@ -41,5 +41,29 @@ describe('spawn', () => {
     trail = await wrapReduce(trail, reducer)
     assert(trail.result())
     expect(trail).toMatchSnapshot()
+  })
+  test('genesis error', async () => {
+    const request = Request.createSpawn()
+    const requestId = RequestId.createCI()
+    const rxRequest = RxRequest.create(request, requestId)
+    let trail = AsyncTrail.create(rxRequest)
+    trail = await wrapReduce(trail, reducer)
+    let [get] = trail.txs
+    get = get.setId(requestId.next())
+    trail = trail.updateTxs([get])
+    let local = AsyncTrail.createWithPulse(get, pulse)
+    local = await wrapReduce(local, reducer)
+    trail = trail.settleTx(local.rxReply)
+
+    trail = await wrapReduce(trail, reducer)
+    assert(trail.isPending())
+    let [add] = trail.txs
+    assert.strictEqual(add.request.type, '@@GENESIS')
+    add = add.setId(requestId)
+    const reply = Reply.createError(new Error('genesis error'))
+    trail = trail.updateTxs([add]).settleTx(RxReply.create(reply, requestId))
+
+    trail = await wrapReduce(trail, reducer)
+    expect(() => trail.result()).toThrowError('genesis error')
   })
 })

@@ -100,14 +100,6 @@ const pulseReducer = async (type, payload) => {
   }
 }
 
-const rm = (id) => {
-  // id either alias or address
-  // if we are parent, kill the tree
-}
-const mv = () => {
-  // tricky, as needs to handover with ability to rollback
-}
-
 const systemTypes = [
   '@@PING',
   '@@SPAWN',

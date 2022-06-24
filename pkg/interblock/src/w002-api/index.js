@@ -10,3 +10,17 @@ export const useState = (path = '.') => {
   assert(useState, `global hook detached`)
   return useState(path)
 }
+export const useBlocks = (path = '.') => {
+  assert.strictEqual(typeof path, 'string')
+  return interchain('@@USE_BLOCKS', { path })
+}
+/**
+ * End the current block, and immediately begin executing againt.
+ * Different to useTimeout(0) only because of the action name.
+ */
+const useBlockBuster = async () => {}
+
+/**
+ * Break the current block, then return after at least delayMs milliseconds
+ */
+const useTimeout = async (delayMs = 0) => {}

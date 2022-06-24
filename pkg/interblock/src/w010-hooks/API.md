@@ -56,6 +56,8 @@ All these functions are implemented via system actions to the loopback address. 
 
 Using loopback means the lookup process can be frozen at any time if taking too long and a new block made, with the operation continuing in the next block.
 
+`useBlock` and `useState` are reader functions, whose purpose is to read from the blocks of other chains and insert those results back in to the executing current block. Such reading is always relative to the root chain, so that consistency and repeatability is assured.
+
 ## Frontend Implementation
 
 Whenever an api call is made, our code does a stacktrace on it, and looks for the special name assigned to a containing function that ran this instance of the user supplied code. Upon finding its hook, it looks up any previously resolved requests, and if none are found, makes a new request that will be returned at the end of the function execution.

@@ -37,7 +37,7 @@ describe('api', () => {
 
       assert(!trail.isPending())
       assert(!trail.txs.length)
-      assert(trail.reply.payload.plain)
+      assert(trail.rxReply.payload.plain)
     })
   })
 })
