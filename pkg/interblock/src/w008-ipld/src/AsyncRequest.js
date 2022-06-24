@@ -48,6 +48,6 @@ export class AsyncRequest extends RxRequest {
   }
   assertLogic() {
     // cannot crush or uncrush with a RequestId
-    assert(this.id instanceof RequestId)
+    assert(this.requestId instanceof RequestId)
   }
 }

@@ -286,10 +286,10 @@ export default {
             valueType: 'AsyncRequest',
           },
         },
-        reply: {
+        rxReply: {
           type: {
             kind: 'link',
-            expectedType: 'Reply',
+            expectedType: 'RxReply',
           },
           optional: true,
         },

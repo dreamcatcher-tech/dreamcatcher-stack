@@ -10,6 +10,14 @@ import {
   RequestId,
 } from '.'
 /**
+ * Lifecycle increases thru five states:
+ * 1. origin      - before any reduction has taken place
+ * 2. reduced     - having txs with no requestIds attached
+ * 3. transmitted - all txs have requestIds attached
+ * 4. fulfilled   - all txs have been settled with replies
+ * 5. settled     - the trail has replied to the origin
+ * 
+ * 
 type RequestId struct {
     channelId Int
     stream String
@@ -135,5 +143,10 @@ export class AsyncTrail extends IpldStruct {
     } else {
       throw reply.getRejectionError()
     }
+  }
+  isTransmitted() {
+    assert(!this.pulse)
+    assert(this.settles.every((tx) => tx.isSettled()))
+    return this.txs.every((tx) => !!tx.requestId)
   }
 }

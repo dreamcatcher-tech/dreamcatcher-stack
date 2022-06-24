@@ -471,6 +471,18 @@ type Rx struct {
 
 ## Channel
 
+These queues and their responses are what all interchain
+communication seeks to facilitate. All the cryptography
+employed in this system is to reliably process these
+queues.
+
+Each connection side has a transmit and a receive.
+Each connection side transmits requests and replies to the other.
+
+Transmit = Sum( Channel )
+Receive = Sum( Interblock( Channel ) )
+Interblocks = Channel + Provenance
+
 `tip` matches up with precedent on the other side.
 
 Tx and Rx are split out so that they can be stored on the block separately.
