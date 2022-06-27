@@ -7,6 +7,7 @@ import {
   PulseLink,
   State,
   RxRequest,
+  AsyncTrail,
 } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:services')
@@ -79,6 +80,7 @@ export class Hints {
   subscribe(address) {
     // to get regular updates
     // should seek out the approot if possible, and subscribe to that
+    debug(`subscribe`)
   }
   async softLatest(address) {
     // the latest softpulse, or pool
@@ -160,12 +162,11 @@ class CryptoLock {
   async sign(provenance) {
     assert(provenance instanceof Provenance)
     // verify this is the natural successor of the lock currently held
-    debug('sign')
+    debug('sign', provenance.address)
     // do the signature
     // insert back into the softpulse
     // return the softpulse
     const signature = await this.#keypair.sign(provenance)
-    provenance.dir()
     return [this.#keypair.publicKey, signature]
   }
 }
@@ -185,7 +186,6 @@ export class Crypto {
 import { wrapReduce } from '../../w010-hooks'
 class IsolateContainer {
   #reducer
-  #timeout
   static async create(pulse, overloads, timeout) {
     assert(pulse instanceof Pulse)
     assert(pulse.isModified())
@@ -204,30 +204,19 @@ class IsolateContainer {
     }
     return new IsolateContainer(reducer, timeout)
   }
-  constructor(reducer, timeout) {
+  constructor(reducer) {
     // get the covenant out of the pulse
     this.#reducer = reducer
-    this.#timeout = timeout
   }
 
   async unload() {
     debug('unload')
   }
-  async reduce(state, rxRequest, accumulator) {
-    assert(state instanceof State)
-    assert(rxRequest instanceof RxRequest)
-    assert(Array.isArray(accumulator))
-    debug('reduce')
-    // moves the isolate forwards, returns a reduction
-    // wrap the reducer in the hook function
-    const action = rxRequest.getAction()
-    const tick = () => this.#reducer(state, action)
-    const queries = () => console.log('queries')
-    const { result, txs } = await wrapReduce(tick, accumulator, queries)
-    // TODO get the state out of the reduction and cache it
-    const reduction = Reduction.create(rxRequest, result, txs)
-
-    return reduction
+  async reduce(trail) {
+    assert(trail instanceof AsyncTrail)
+    debug('reduce', trail.origin.request.type)
+    trail = await wrapReduce(trail, this.#reducer)
+    return trail
   }
   async effects() {
     // cannot modify the state at all

@@ -2,6 +2,7 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 import {
   PulseLink,
+  RequestId,
   RxRequest,
   RxReply,
   Channel,
@@ -12,7 +13,7 @@ import {
   UplinksHamt,
   Request,
   Reply,
-  Tx,
+  Rx,
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
@@ -51,7 +52,7 @@ export class Network extends IpldStruct {
     symLinks: Hamt,
     hardlinks: Hamt,
 
-    piercings: Tx,
+    piercings: Rx,
   }
 
   static async createRoot() {
@@ -120,15 +121,57 @@ export class Network extends IpldStruct {
   async updateIo(io) {
     assert(io instanceof Channel)
     assert.strictEqual(io.channelId, FIXED.IO)
-    const { tx } = io
+
+    const { rx } = io
     let next = this
-    if (!tx.isEmpty()) {
-      io = crossover(io)
-      const { rx: piercings } = io
-      next = next.setMap({ piercings })
+    if (!rx.isEmpty()) {
+      // TODO expand the tip but do not decrease the tail
+      // if the tip has increased, increase the current piercings key
+      // if the tail has decreased, do nothing
+      // ensure these things don't happen at once
+
+      // if increase tip, must keep tail the same
+      // if decrause tail, must keep tip the same
+      next = next.setMap({ piercings: rx })
     }
     const channels = await next.channels.updateChannel(io)
     return next.setMap({ channels })
+  }
+
+  async pierceIo(request) {
+    assert(request instanceof Request)
+    let io = await this.getIo()
+    let { rx } = io
+    let { reducer, system, tip = PulseLink.createCrossover(io.address) } = rx
+    if (request.isSystem()) {
+      const requests = [...system.requests, request]
+      const requestsLength = system.requestsLength + 1
+      system = system.setMap({ requests, requestsLength })
+    } else {
+      const requests = [...reducer.requests, request]
+      const requestsLength = reducer.requestsLength + 1
+      reducer = reducer.setMap({ requests, requestsLength })
+    }
+
+    io = io.setMap({ rx: { system, reducer, tip } })
+    const next = await this.updateIo(io)
+    return next
+  }
+  getNextIoRequestId(request) {
+    assert(request instanceof Request)
+    const channelId = FIXED.IO
+    const stream = request.isSystem() ? 'system' : 'reducer'
+
+    let requestIndex = 0
+    if (this.pierce) {
+      requestIndex = this.pierce[stream].requestsLength
+    }
+    return RequestId.create(channelId, stream, requestIndex)
+  }
+  async pierceIoReply(reply) {
+    // TODO these can only be reducer replies, never system
+    // as making an outbound system request is nonsense.
+    throw new Error('not implemented')
   }
 
   async addUplink(address) {
@@ -178,7 +221,6 @@ export class Network extends IpldStruct {
     // if it was a link, then we remove the alias mapping
     // if this is the only mapping, then we can remove the channel
   }
-
   async txRequest(request, path) {
     assert(request instanceof Request)
     assert(typeof path === 'string')
@@ -310,30 +352,30 @@ export class Network extends IpldStruct {
     // by default, this resolves the current request
     const rxRequest = await this.rxSystemRequest()
     assert(rxRequest instanceof RxRequest)
-    const { channelId } = rxRequest
+    const { channelId } = rxRequest.requestId
     let channel = await this.channels.getChannel(channelId)
     channel = channel.txSystemReply(reply)
-    const channels = await this.channels.updateChannel(channel)
-    return this.setMap({ channels })
+    const next = await this.updateChannel(channel)
+    return next
   }
   async shiftSystemReply() {
     const rxReply = await this.rxSystemReply()
     assert(rxReply instanceof RxReply)
-    const { channelId } = rxReply
+    const { channelId } = rxReply.requestId
     let channel = await this.channels.getChannel(channelId)
     channel = channel.shiftSystemReply()
-    const channels = await this.channels.updateChannel(channel)
-    return this.setMap({ channels })
+    const next = await this.updateChannel(channel)
+    return next
   }
   async txReducerReply(reply = Reply.create()) {
     // by default, this resolves the current request
     const rxRequest = await this.rxReducerRequest()
     assert(rxRequest instanceof RxRequest)
-    const { channelId } = rxRequest
+    const { channelId } = rxRequest.requestId
     let channel = await this.channels.getChannel(channelId)
     channel = channel.txReducerReply(reply)
-    const channels = await this.channels.updateChannel(channel)
-    return this.setMap({ channels })
+    const next = await this.updateChannel(channel)
+    return next
   }
   async shiftReducerReply() {
     const rxReply = await this.rxReducerReply()
@@ -341,8 +383,8 @@ export class Network extends IpldStruct {
     const { channelId } = rxReply
     let channel = await this.channels.getChannel(channelId)
     channel = channel.shiftReducerReply()
-    const channels = await this.channels.updateChannel(channel)
-    return this.setMap({ channels })
+    const next = await this.updateChannel(channel)
+    return next
   }
 
   // OPERATIONS BY PATH FROM REDUCER

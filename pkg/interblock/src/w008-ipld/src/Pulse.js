@@ -164,15 +164,19 @@ export class Pulse extends IpldStruct {
       // TODO check if the alias exists in symlinks or hardlinks
       throw new Error(`child exists: ${alias}`)
     }
+    const pulse = await this.deriveChildGenesis(spawnOptions)
+    const address = pulse.getAddress()
+    network = await network.addChild(alias, address)
+    return this.setMap({ provenance: { dmz: { network } } })
+  }
+  async deriveChildGenesis(spawnOptions) {
+    assert.strictEqual(typeof spawnOptions, 'object')
     const { timestamp } = this.provenance.dmz
-
     const dmz = Dmz.create({ ...spawnOptions, timestamp })
     // TODO what if the validators change during this block creation ?
     const genesis = Provenance.createGenesis(dmz, this.validators)
     const pulse = await Pulse.create(genesis)
-    const address = pulse.getAddress()
-    network = await network.addChild(alias, address)
-    return this.setMap({ provenance: { dmz: { network } } })
+    return pulse
   }
 }
 

@@ -67,6 +67,13 @@ export class AsyncTrail extends IpldStruct {
     assert(pulse instanceof Pulse)
     return super.clone({ origin, pulse })
   }
+  isSystem() {
+    return this.origin.requestId.isSystem()
+  }
+  isSameOrigin(trail) {
+    assert(trail instanceof AsyncTrail)
+    return this.origin.requestId.equals(trail.origin.requestId)
+  }
   isPending() {
     return !this.rxReply
   }
@@ -89,8 +96,10 @@ export class AsyncTrail extends IpldStruct {
   updateTxs(txs) {
     // used for adding requestIds to txs
     assert(Array.isArray(txs))
-    assert(this.txs.length)
     assert.strictEqual(this.txs.length, txs.length)
+    if (!txs.length) {
+      return this
+    }
     // TODO check requests match
     return this.setTxs(txs)
   }
@@ -99,6 +108,15 @@ export class AsyncTrail extends IpldStruct {
     assert(!this.rxReply)
     const rxReply = RxReply.create(reply, this.origin.requestId)
     return this.setMap({ rxReply })
+  }
+  hasTx(rxReply) {
+    assert(rxReply instanceof RxReply)
+    for (const tx of this.txs) {
+      if (tx.isIdMatch(rxReply)) {
+        return true
+      }
+    }
+    return false
   }
   settleTx(rxReply) {
     assert(rxReply instanceof RxReply)
@@ -144,9 +162,18 @@ export class AsyncTrail extends IpldStruct {
       throw reply.getRejectionError()
     }
   }
+  isOriginTrail() {
+    return !this.settles.length
+  }
   isTransmitted() {
     assert(!this.pulse)
     assert(this.settles.every((tx) => tx.isSettled()))
     return this.txs.every((tx) => !!tx.requestId)
+  }
+  getReply() {
+    if (this.isPending()) {
+      return Reply.createPromise()
+    }
+    return this.rxReply.reply
   }
 }

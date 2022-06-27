@@ -16,15 +16,14 @@ describe('dmzReducer', () => {
   test.todo('connect on operational channel empties the channel')
   describe('spawn', () => {
     jest.setTimeout(500)
-    test('spawn is implicitly awaited', async () => {
-      const reducer = async (state, action) => {
-        debug(`reducer %o`, action)
-        if (action.type === 'TEST_SPAWN') {
+    test.only('spawn is implicitly awaited', async () => {
+      const reducer = async (request) => {
+        debug(`reducer %o`, request)
+        if (request.type === 'TEST_SPAWN') {
           await interchain(actions.spawn('child1'))
           const result = await interchain('PING', { test: 'ping' }, 'child1')
           debug(`result`, result)
         }
-        return {}
       }
       const root = { reducer }
       const engine = await Engine.createCI()

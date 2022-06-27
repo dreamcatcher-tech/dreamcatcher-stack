@@ -4,13 +4,10 @@ import { interchain } from '../../w002-api'
 import { Request } from '../../w008-ipld'
 const debug = Debug('interblock:dmz:spawn')
 
-const spawn = (alias, spawnOpts = {}) => {
+const spawn = (alias = '', spawnOptions = {}) => {
   const action = {
     type: '@@SPAWN',
-    payload: { alias, spawnOpts },
-  }
-  if (!alias) {
-    delete action.payload.alias
+    payload: { alias, spawnOptions },
   }
   return action
 }

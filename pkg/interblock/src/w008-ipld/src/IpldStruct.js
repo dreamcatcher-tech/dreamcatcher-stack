@@ -171,7 +171,7 @@ export class IpldStruct extends IpldInterface {
           if (!(next instanceof IpldStruct)) {
             next = this[key].setMap(map[key])
           }
-          assert(next instanceof this.constructor.classMap[key])
+          assert(next instanceof this.constructor.classMap[key], key)
           inflated[key] = next
         }
       }

@@ -17,6 +17,9 @@ export class RequestId extends IpldStruct {
     instance.requestIndex = requestIndex
     return instance
   }
+  isSystem() {
+    return this.stream === 'system'
+  }
   equals(requestId) {
     assert(requestId instanceof RequestId)
     const { channelId: c1, stream: s1, requestIndex: i1 } = this

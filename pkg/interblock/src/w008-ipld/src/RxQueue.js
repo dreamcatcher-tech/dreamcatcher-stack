@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { RxReply, RxRequest, TxQueue } from '.'
+import { RequestId, RxReply, RxRequest, TxQueue } from '.'
 
 export class RxQueue extends TxQueue {
   txRequest() {
@@ -31,8 +31,9 @@ export class RxQueue extends TxQueue {
     assert(stream === 'system' || stream === 'reducer')
     if (this.requests.length) {
       const request = this.requests[0]
-      const requestId = this.requestsLength - this.requests.length
-      return RxRequest.create(request, channelId, stream, requestId)
+      const requestIndex = this.requestsLength - this.requests.length
+      const requestId = RequestId.create(channelId, stream, requestIndex)
+      return RxRequest.create(request, requestId)
     }
   }
   rxReply(channelId, stream) {
@@ -44,8 +45,9 @@ export class RxQueue extends TxQueue {
       return RxReply.create(reply, channelId, stream, requestIndex)
     } else if (this.replies.length) {
       const reply = this.replies[0]
-      const requestId = this.repliesLength - this.replies.length
-      return RxReply.create(reply, channelId, stream, requestId)
+      const requestIndex = this.repliesLength - this.replies.length
+      const requestId = RequestId.create(channelId, stream, requestIndex)
+      return RxReply.create(reply, requestId)
     }
   }
   shiftRequests() {

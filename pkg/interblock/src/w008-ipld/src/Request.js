@@ -36,6 +36,7 @@ export class Request extends IpldStruct {
   static SYSTEM_TYPES = [
     '@@PING',
     '@@SPAWN',
+    '@@ADD_CHILD',
     '@@GENESIS',
     '@@CONNECT',
     '@@UPLINK',

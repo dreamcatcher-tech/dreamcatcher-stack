@@ -166,16 +166,10 @@ export class Channel extends IpldStruct {
     return this.rx.isEmpty()
   }
   getNextRequestId(request) {
-    // rx the last added request, so can use to match up ids
     assert(request instanceof Request)
     const { channelId } = this
     const stream = request.isSystem() ? 'system' : 'reducer'
     const requestIndex = this.tx[stream].requestsLength
     return RequestId.create(channelId, stream, requestIndex)
-  }
-  getGenesisRequestId() {
-    const highestFixedId = 2
-    assert(this.channelId > highestFixedId)
-    return RequestId.create(this.channelId, 'system', 0)
   }
 }

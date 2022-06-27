@@ -10,6 +10,8 @@ import {
   Request,
   Reply,
   Provenance,
+  AsyncTrail,
+  AsyncRequest,
 } from '../../w008-ipld'
 import { wrapReduce } from '../../w010-hooks'
 import { actions, reducer } from '../../w017-system-reducer'
@@ -57,6 +59,7 @@ export class Engine {
     this.#endurance = endurance || new Endurance()
     this.#scale = scale || new Scale()
     this.#hints = hints || new Hints()
+    this.#hints.subscribe((...args) => this.#hints(...args))
   }
   overload(overloads) {
     assert.strictEqual(typeof overloads, 'object')
@@ -90,12 +93,13 @@ export class Engine {
       pulse.dir()
     })
   }
-  #hint(address, pulselink) {
+  #hint(targetAddress, remotePulselink) {
     // gets hinted that a chain has updated, so begins seeking confirmation
     // looks up what chains it is hosting, and gets what chains are subscribed ?
     // gets told because a foreign validator has seen a block increase,
     // and has been proven to that we are hosting a targetted chain ?
     // Adds the interpulses into the softpulse and calls increase
+    debug(`#hint`, targetAddress, remotePulselink)
   }
   async #increase(address) {
     // given a particular softpulse, attempt to advance it into a block
@@ -144,8 +148,8 @@ export class Engine {
         const { stream, requestIndex } = tracker.requestId
         // see if the replies contain a settle
         if (tx[stream].hasReply(requestIndex)) {
-          debug('tracker match', requestIndex)
           const reply = tx[stream].getReply(requestIndex)
+          debug('tracker match', reply.type)
           if (reply.isPromise()) {
             continue
           }
@@ -166,90 +170,87 @@ export class Engine {
     const timeout = 2000
     const isolate = await this.#isolate.load(softpulse, timeout)
     let network = softpulse.getNetwork()
+    let { pending } = softpulse.provenance.dmz
     let counter = 0
     while (softpulse.getNetwork().channels.rxs.length && counter++ < 10) {
       // SYSTEM
+      let systemTrail
       const rxSystemReply = await network.rxSystemReply()
       if (rxSystemReply) {
-        debug('system reply')
-        break
+        debug('system reply', rxSystemReply.reply.type)
+        network = await network.shiftSystemReply()
+        softpulse = softpulse.setNetwork(network)
+        if (!rxSystemReply.isPromise()) {
+          systemTrail = pending.findTrail(rxSystemReply)
+          assert(systemTrail)
+          systemTrail = systemTrail.settleTx(rxSystemReply)
+          systemTrail = systemTrail.setMap({ pulse: softpulse })
+        }
       }
 
-      const rxSystemRequest = await network.rxSystemRequest()
-      if (rxSystemRequest) {
-        debug('system request', rxSystemRequest)
-        let { provenance } = softpulse
-        const tick = () => reducer(provenance, rxSystemRequest)
-        const { result, txs } = await wrapReduce(tick)
-        assert(result instanceof Provenance)
-        // do the transmissions
-        // update the accumulator
-        break
+      if (!systemTrail) {
+        const rxSystemRequest = await network.rxSystemRequest()
+        if (rxSystemRequest) {
+          systemTrail = AsyncTrail.createWithPulse(rxSystemRequest, softpulse)
+          pending = pending.addTrail(systemTrail)
+        }
+      }
+
+      if (systemTrail) {
+        debug('system request', systemTrail.origin.request.type)
+        systemTrail = await wrapReduce(systemTrail, reducer)
+        softpulse = systemTrail.pulse
+        network = softpulse.getNetwork()
+        const [nextTrail, nextNetwork] = await txTrail(systemTrail, network)
+        systemTrail = nextTrail
+        network = nextNetwork
+        if (systemTrail.isOriginTrail() || !systemTrail.isPending()) {
+          const reply = systemTrail.getReply()
+          debug(`transmit trail reply`, reply.type)
+          network = await network.txSystemReply(reply)
+        }
+        pending = pending.updateTrail(systemTrail)
       }
 
       // REDUCER
-      const state = softpulse.getState()
-      const _isPending = false
+      let reducerTrail
       const rxReducerReply = await network.rxReducerReply()
       if (rxReducerReply) {
-        debug('reducer reply', rxReducerReply)
+        debug('reducer reply', rxReducerReply.reply.type)
         if (_isPending) {
           // accumulate this reply
         }
         // discard reply via shift as reducers never receive replies
         network = await network.shiftReducerReply()
-        break
       }
 
-      let rxReducerRequest, replies
-      if (_isPending) {
-        const isAccumulated = false
-        if (isAccumulated) {
-          //  fetch replies, and execute origin
-        } else {
-          break
+      if (!reducerTrail) {
+        const rxReducerRequest = await network.rxReducerRequest()
+        if (rxReducerRequest) {
+          reducerTrail = AsyncTrail.create(rxReducerRequest)
         }
-      } else {
-        rxReducerRequest = await network.rxReducerRequest()
-        replies = []
       }
 
-      if (rxReducerRequest) {
+      if (reducerTrail) {
         // figure out what has already been transmitted
         // resolve the ids of the pending requests, so they can be matched
-        debug('reducer request', rxReducerRequest.type)
-        const reduction = await isolate.reduce(state, rxReducerRequest, replies)
-        assert(reduction instanceof Reduction)
-        debug('reduction', reduction)
-        // possibly go pending
-        // do the transmissions
-        // update the accumulator
-        let defaultReply
-        for (const tx of reduction.transmissions) {
-          if (Reply.isReplyType(tx.type)) {
-            debug('reply', tx)
-            // if reduction includes a reply to orign request, use instead
-          } else {
-            const { type, payload, binary } = tx
-            const request = Request.create(type, payload, binary)
-            debug('tx request', request)
-            // resolve the name to a channelId
-            const { to } = tx
-            debug('to', to)
-            if (!(await network.hasChannel(to))) {
-              network = await network.addDownlink(to)
-            }
-            let channel = await network.getChannel(to)
-            const requestId = channel.getNextRequestId(request)
-            channel = channel.txRequest(request)
-            network = await network.updateChannel(channel)
-          }
+        debug('reducer request', reducerTrail.origin.request.type)
+        reducerTrail = await isolate.reduce(reducerTrail)
+        assert(reducerTrail instanceof AsyncTrail)
+
+        // do the transmissions, setting IDs as we go
+        const [nextTrail, nextNetwork] = await txTrail(reducerTrail, network)
+        reducerTrail = nextTrail
+        network = nextNetwork
+
+        if (reducerTrail.isOriginTrail() || !reducerTrail.isPending()) {
+          const reply = reducerTrail.getReply()
+          network = await network.txReducerReply(reply)
         }
-        network = await network.txReducerReply(defaultReply)
       }
+      softpulse = softpulse.setNetwork(network)
     }
 
-    softpulse = softpulse.setNetwork(network)
     return softpulse
   }
   async #transmit(pulse) {
@@ -261,8 +262,15 @@ export class Engine {
       if (channelId === Network.FIXED_IDS.IO) {
         continue
       }
-      const { address } = await network.channels.getChannel(channelId)
+      const channel = await network.channels.getChannel(channelId)
+      const { address, tx } = channel
       assert(address.isRemote())
+      if (tx.isGenesisRequest()) {
+        const spawnOptions = tx.getGenesisSpawnOptions()
+        const genesis = await pulse.deriveChildGenesis(spawnOptions)
+        await this.#endurance.endure(genesis)
+        debug(`genesis endured`, genesis.getAddress())
+      }
       this.#hints.announce(address, pulselink)
     }
   }
@@ -293,9 +301,7 @@ export class Engine {
     const { dmz } = soft.provenance
     assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
 
-    let io = await dmz.network.getIo()
-    const requestId = io.getNextRequestId(request)
-    io = io.txRequest(request)
+    const requestId = dmz.network.getNextIoRequestId(request)
     const tracker = { requestId }
     const promise = new Promise((resolve, reject) => {
       tracker.resolve = resolve
@@ -303,7 +309,7 @@ export class Engine {
     })
     this.#promises.add(tracker)
 
-    const network = await dmz.network.updateIo(io)
+    const network = await dmz.network.pierceIo(request)
     soft = soft.setNetwork(network)
     await this.#endurance.softEndure(soft)
     // TODO retry if multithread or multi validator and fail
@@ -316,6 +322,32 @@ export class Engine {
   enableLogging() {
     this.#logging = true
   }
+}
+
+const txTrail = async (trail, network) => {
+  assert(trail instanceof AsyncTrail)
+  assert(network instanceof Network)
+  const txs = []
+  for (const tx of trail.txs) {
+    assert(tx instanceof AsyncRequest)
+    assert(!tx.isSettled())
+    assert(!tx.requestId)
+    assert(tx.to)
+    const { request, to } = tx
+    debug('tx request: %s to: %s', request.type, to)
+
+    // resolve the name to a channelId
+    if (!(await network.hasChannel(to))) {
+      network = await network.addDownlink(to)
+    }
+    let channel = await network.getChannel(to)
+    const requestId = channel.getNextRequestId(request)
+    txs.push(tx.setId(requestId))
+    channel = channel.txRequest(request)
+    network = await network.updateChannel(channel)
+  }
+  trail = trail.updateTxs(txs)
+  return [trail, network]
 }
 
 /**

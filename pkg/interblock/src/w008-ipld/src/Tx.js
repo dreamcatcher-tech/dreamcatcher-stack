@@ -89,7 +89,7 @@ export class Tx extends IpldStruct {
   isGenesisRequest() {
     const request = this.system.requests[0]
     const isGenesis =
-      request && request.type === '@@GENESIS' && request.payload.params
+      request && request.type === '@@GENESIS' && request.payload.spawnOptions
     return (
       isGenesis &&
       !this.precedent &&
@@ -97,16 +97,12 @@ export class Tx extends IpldStruct {
       this.reducer.isStart()
     )
   }
-  async extractChildGenesis(validators, timestamp) {
-    assert(validators instanceof Validators)
-    assert(timestamp instanceof Timestamp)
+  getGenesisSpawnOptions() {
     assert(this.isGenesisRequest())
     const request = this.system.requests[0]
-    const { params } = request.payload
-
-    const dmz = Dmz.create({ ...params, timestamp })
-    const genesis = Provenance.createGenesis(dmz, validators)
-    return await Pulse.create(genesis)
+    const { spawnOptions } = request.payload
+    assert.strictEqual(typeof spawnOptions, 'object')
+    return spawnOptions
   }
   blank(precedent) {
     assert(!this.isEmpty())

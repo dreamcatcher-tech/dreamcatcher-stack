@@ -12,6 +12,12 @@ export class RxReply extends IpldStruct {
   crush() {
     throw new Error(`Transients cannot be crushed`)
   }
+  isPromise() {
+    return this.reply.isPromise()
+  }
+  isResolve() {
+    return this.reply.isResolve()
+  }
   isRejection() {
     return this.reply.isRejection()
   }

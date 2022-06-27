@@ -20,6 +20,7 @@ const getDefaultParams = (CI = false) => {
       config: Config.create(),
       network: Network.create(),
       state: State.create(),
+      pending: Pending.create(),
     }
   }
   if (CI) {

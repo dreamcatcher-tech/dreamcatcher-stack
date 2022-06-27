@@ -16,10 +16,7 @@ export class AsyncRequest extends RxRequest {
     assert(request instanceof Request)
     assert.strictEqual(typeof to, 'string')
     assert(to)
-    const instance = new AsyncRequest()
-    instance.request = request
-    instance.to = to
-    return instance
+    return super.clone({ request, to })
   }
   setId(requestId) {
     assert(requestId instanceof RequestId)
