@@ -109,7 +109,7 @@
       "src/w008-ipld",
       "src/w010-hooks",
       "src/w210-engine",
-      "src/w017-system-reducer"
+      "src/w023-system-reducer"
     ]
   },
   "wallaby": {
@@ -118,7 +118,7 @@
       "**/w002-api/**/*.test.js",
       "**/w008-ipld/**/*.test.js",
       "**/w010-hooks/**/*.test.js",
-      "**/w017-system-reducer/**/*.test.js",
+      "**/w023-system-reducer/**/*.test.js",
       "**/w210-engine/**/*.test.js",
       "!package.test.js"
     ],
