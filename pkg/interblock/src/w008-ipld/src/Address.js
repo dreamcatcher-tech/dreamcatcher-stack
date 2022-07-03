@@ -198,6 +198,8 @@ export class Address extends IpldInterface {
     return !this.isUnknown() && !this.isInvalid() && !this.isGenesis()
   }
   isRemote() {
-    return this.isResolved() && !this.isRoot() && !this.isLoopback()
+    return (
+      this.isResolved() && !this.isRoot() && !this.isLoopback() && !this.isIo()
+    )
   }
 }

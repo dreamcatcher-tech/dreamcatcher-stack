@@ -22,8 +22,18 @@ export class RxQueue extends TxQueue {
     const requests = [...this.requests, ...q.requests]
     const replies = [...this.replies, ...q.replies]
 
-    // TODO receive promise updates too
-    return this.setMap({ requests, requestsLength, replies, repliesLength })
+    // TODO verify the logic of the replies accounting checks out
+    let { promisedReplies } = this
+    for (const promised of q.promisedReplies) {
+      promisedReplies = [...promisedReplies, promised]
+    }
+    return this.setMap({
+      requests,
+      requestsLength,
+      replies,
+      repliesLength,
+      promisedReplies,
+    })
   }
   rxRequest(channelId, stream) {
     assert(Number.isInteger(channelId))
@@ -40,12 +50,17 @@ export class RxQueue extends TxQueue {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)
     assert(stream === 'system' || stream === 'reducer')
-    if (this.promisedReplies.length) {
-      const { requestIndex, reply } = this.promisedReplies[0]
-      return RxReply.create(reply, channelId, stream, requestIndex)
-    } else if (this.replies.length) {
+    if (this.replies.length) {
       const reply = this.replies[0]
       const requestIndex = this.repliesLength - this.replies.length
+      const requestId = RequestId.create(channelId, stream, requestIndex)
+      return RxReply.create(reply, requestId)
+    }
+    if (this.promisedReplies.length) {
+      // promises must be last, since don't know when they occured
+      // and last is the only safe place to guarantee no request gets
+      // resolved before it was made in the computation timeline
+      const { requestIndex, reply } = this.promisedReplies[0]
       const requestId = RequestId.create(channelId, stream, requestIndex)
       return RxReply.create(reply, requestId)
     }
@@ -56,8 +71,13 @@ export class RxQueue extends TxQueue {
     return this.setMap({ requests })
   }
   shiftReplies() {
-    assert(this.replies.length)
-    const [, ...replies] = this.replies
-    return this.setMap({ replies })
+    if (this.replies.length) {
+      const [, ...replies] = this.replies
+      return this.setMap({ replies })
+    }
+    if (this.promisedReplies.length) {
+      const [, ...promisedReplies] = this.promisedReplies
+      return this.setMap({ promisedReplies })
+    }
   }
 }

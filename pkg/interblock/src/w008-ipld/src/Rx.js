@@ -52,7 +52,7 @@ export class Rx extends IpldStruct {
       assert(this.isEmpty())
       assert(!tx.precedent)
     } else {
-      if (!this.tip.cid.equals(tx.precedent)) {
+      if (!this.tip.cid.equals(tx.precedent.cid)) {
         throw new Error(`tip ${this.tip.cid} not precedent ${interpulse.cid}`)
       }
       // TODO retrieve the current tip

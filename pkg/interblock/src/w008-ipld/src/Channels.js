@@ -146,6 +146,7 @@ export class Channels extends IpldStruct {
     let { list } = this
     for (const channelId of this.txs) {
       let channel = await list.get(channelId)
+      assert(!channel.tx.isEmpty())
       const tx = channel.tx.blank(precedent)
       channel = channel.setMap({ tx })
       list = await list.set(channelId, channel)
@@ -155,7 +156,7 @@ export class Channels extends IpldStruct {
   async ingestInterpulse(interpulse) {
     assert(interpulse instanceof Interpulse)
     const { source } = interpulse
-    assert(await this.hasAddress(source), `No address: ${source.cid}`)
+    assert(await this.hasAddress(source), `No address: ${source}`)
     let channel = await this.getByAddress(source)
     channel = channel.ingestInterpulse(interpulse)
     return await this.updateChannel(channel)

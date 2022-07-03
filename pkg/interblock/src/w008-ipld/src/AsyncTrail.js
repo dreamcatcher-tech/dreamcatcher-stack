@@ -68,24 +68,27 @@ export class AsyncTrail extends IpldStruct {
     return super.clone({ origin, pulse })
   }
   isSystem() {
-    return this.origin.requestId.isSystem()
+    return this.origin.request.isSystem()
   }
   isSameOrigin(trail) {
     assert(trail instanceof AsyncTrail)
     return this.origin.requestId.equals(trail.origin.requestId)
   }
   isPending() {
-    return !this.rxReply
+    return !this.reply
   }
   assertLogic() {
     assert(!this.pulse)
     assert(!this.txs.every((tx) => tx.isSettled()))
     assert(this.settles.every((tx) => tx.isSettled()))
-    assert(!this.rxReply, `can only crush promised trails`)
+    assert(!this.reply, `can only crush promised trails`)
   }
   isFulfilled() {
     // check that all settles are in fact settled
     return !this.txs.length && this.settles.every((s) => s.isSettled())
+  }
+  isSettled() {
+    return this.isFulfilled() && !this.isPending()
   }
   setTxs(txs) {
     assert(Array.isArray(txs))
@@ -105,9 +108,8 @@ export class AsyncTrail extends IpldStruct {
   }
   settleOrigin(reply) {
     assert(reply instanceof Reply)
-    assert(!this.rxReply)
-    const rxReply = RxReply.create(reply, this.origin.requestId)
-    return this.setMap({ rxReply })
+    assert(!this.reply)
+    return this.setMap({ reply })
   }
   hasTx(rxReply) {
     assert(rxReply instanceof RxReply)
@@ -147,15 +149,15 @@ export class AsyncTrail extends IpldStruct {
     return this.setTxs(txs).settleOrigin(reply)
   }
   getError() {
-    assert(this.rxReply)
-    assert(this.rxReply.reply.isRejection())
-    return this.rxReply.reply.getRejectionError()
+    assert(this.reply)
+    assert(this.reply.isRejection())
+    return this.reply.getRejectionError()
   }
   result() {
     if (this.isPending()) {
       return
     }
-    const { reply } = this.rxReply
+    const { reply } = this
     if (reply.isResolve()) {
       return reply.payload
     } else {
@@ -164,6 +166,10 @@ export class AsyncTrail extends IpldStruct {
   }
   isOriginTrail() {
     return !this.settles.length
+  }
+  isPreviouslyPending() {
+    // was this trail pending at one stage
+    return this.settles.length
   }
   isTransmitted() {
     assert(!this.pulse)
@@ -174,6 +180,14 @@ export class AsyncTrail extends IpldStruct {
     if (this.isPending()) {
       return Reply.createPromise()
     }
-    return this.rxReply.reply
+    return this.reply
+  }
+  getSettleReply() {
+    assert(!this.isPending(), `not fulfilled`)
+    assert(this.isPreviouslyPending(), `was never promised`)
+    assert(this.reply)
+    const { requestId } = this.origin
+    const rxReply = RxReply.create(this.reply, requestId)
+    return rxReply
   }
 }

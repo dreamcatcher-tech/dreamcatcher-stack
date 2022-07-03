@@ -71,4 +71,7 @@ export class Interpulse {
   getPulseLink() {
     return PulseLink.generate(this.#pulse)
   }
+  dir() {
+    console.dir(this, { depth: Infinity })
+  }
 }

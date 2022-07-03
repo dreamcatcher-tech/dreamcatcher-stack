@@ -6,9 +6,9 @@ import { ping, pingReducer } from './ping'
 import { spawn, spawnReducer } from './spawn'
 import { install, deploy, deployReducer } from './deploy'
 import { getChannel, getChannelReducer } from './getChannel'
-import { genesisReducer, genesisReply, initReply } from './genesis'
+import { genesisReducer } from './genesis'
 import { getStateReducer, getState } from './getState'
-import { Dmz, RxRequest, RxReply, Provenance, Address } from '../../w008-ipld'
+import { RxRequest, RxReply, Provenance, Address } from '../../w008-ipld'
 import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
@@ -53,13 +53,13 @@ const reducer = (request) => {
     case '@@SPAWN':
       return spawnReducer(request)
     case '@@CONNECT':
-      return connectReducer(dmz, request)
+      return connectReducer(request)
     case '@@UPLINK':
-      return uplinkReducer(dmz, request)
+      return uplinkReducer(request)
     case '@@GENESIS':
-      return genesisReducer(dmz, request)
+      return genesisReducer(request)
     case '@@OPEN_CHILD':
-      return openChildReducer(dmz, request)
+      return openChildReducer(request)
     case '@@INTRO':
       break
     case '@@ACCEPT':
@@ -67,12 +67,9 @@ const reducer = (request) => {
       break
     case '@@INSTALL': // user can connect with recursive deployment calls
     case '@@DEPLOY':
-      return deployReducer(dmz, request)
+      return deployReducer(request)
     case '@@GET_CHAN':
-      getChannelReducer(dmz.network, request)
-      break
-    case '@@CAT':
-      getStateReducer(dmz)
+      getChannelReducer(request)
       break
     default:
       return pulseReducer(type, payload)
@@ -100,40 +97,4 @@ const pulseReducer = async (type, payload) => {
   }
 }
 
-const systemTypes = [
-  '@@PING',
-  '@@SPAWN',
-  '@@GENESIS',
-  '@@CONNECT',
-  '@@UPLINK',
-  '@@INTRO',
-  '@@ACCEPT',
-  '@@OPEN_CHILD',
-  '@@GET_GIVEN_NAME', // TODO may delete ?
-  '@@DEPLOY',
-  '@@INSTALL',
-  '@@GET_CHAN', // TODO may delete ?
-  '@@CAT',
-]
-
-const isSystemReply = (dmz, action) => {
-  assert(dmz instanceof Dmz)
-  if (!(action instanceof RxReply)) {
-    assert(action instanceof RxRequest)
-    return false
-  }
-  const isSystemReply = dmz.meta.isAwaiting(action)
-  debug(`isSystemReply: ${isSystemReply} type: ${action.type}`)
-  return isSystemReply
-}
-
-const isSystemRequest = (request) => {
-  if (!(request instanceof RxRequest)) {
-    return false
-  }
-  const isSystemAction = systemTypes.includes(request.type)
-  debug(`isSystemAction: ${isSystemAction} type: ${request.type}`)
-  return isSystemAction
-}
-
-export { actions, reducer, isSystemRequest, isSystemReply, openPaths }
+export { actions, reducer, openPaths }

@@ -269,6 +269,7 @@ export class Network extends IpldStruct {
     assert(path)
     assert(!path.includes('/'))
     assert(address instanceof Address)
+    assert(address.isRemote())
     const channelId = this.channels.counter
     let channel = Channel.create(channelId, address)
 
@@ -347,7 +348,6 @@ export class Network extends IpldStruct {
     }
   }
 
-  // fundamentally, once you pass the request to us, we'll never give it back again
   async txSystemReply(reply = Reply.create()) {
     // by default, this resolves the current request
     const rxRequest = await this.rxSystemRequest()
@@ -380,9 +380,18 @@ export class Network extends IpldStruct {
   async shiftReducerReply() {
     const rxReply = await this.rxReducerReply()
     assert(rxReply instanceof RxReply)
-    const { channelId } = rxReply
+    const { channelId } = rxReply.requestId
     let channel = await this.channels.getChannel(channelId)
     channel = channel.shiftReducerReply()
+    const next = await this.updateChannel(channel)
+    return next
+  }
+  async settlePromise(rxReply) {
+    assert(rxReply instanceof RxReply)
+    assert(!rxReply.isPromise())
+    const { channelId } = rxReply.requestId
+    let channel = await this.channels.getChannel(channelId)
+    channel = channel.settlePromise(rxReply)
     const next = await this.updateChannel(channel)
     return next
   }
@@ -469,6 +478,18 @@ export class Network extends IpldStruct {
         return this.setMap({ channels })
       }
     }
+  }
+  async blankTxs(precedent) {
+    assert(precedent instanceof PulseLink)
+    let io = await this.getIo()
+    let next = this
+    if (!io.tx.isEmpty()) {
+      const tx = io.tx.blank(precedent)
+      io = io.setMap({ tx })
+      next = await next.updateIo(io)
+    }
+    const channels = await next.channels.blankTxs(precedent)
+    return next.setMap({ channels })
   }
 }
 const crossover = (channel) => {

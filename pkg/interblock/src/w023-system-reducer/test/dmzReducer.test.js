@@ -7,7 +7,7 @@ import { Engine } from '../../w210-engine'
 import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
-Debug.enable('*dmz* *hooks *engine* *callsites')
+// Debug.enable('*dmz* *hooks *engine* *callsites')
 
 describe('dmzReducer', () => {
   test.todo('connect on existing is the same as move')
@@ -23,6 +23,7 @@ describe('dmzReducer', () => {
           await interchain(actions.spawn('child1'))
           const result = await interchain('PING', { test: 'ping' }, 'child1')
           debug(`result`, result)
+          return { test: true }
         }
       }
       const root = { reducer }
@@ -30,13 +31,12 @@ describe('dmzReducer', () => {
       engine.overload({ root })
       engine.enableLogging()
       const request = Request.create({ type: 'TEST_SPAWN' })
+      // 5 blocks 103ms, 3 blocks 79ms = 20ms / block
       const result = await engine.pierce(request)
       debug(`result`, result)
       const state = engine.latest
-      // state.getNetwork().dir()
       const channel = await state.getNetwork().getChild('child1')
-      channel.dir()
-      assert.strictEqual(requests.length, 2)
+      expect(channel).toMatchSnapshot()
     })
     test('error if no spawn await', async () => {
       const reducer = async (state, action) => {

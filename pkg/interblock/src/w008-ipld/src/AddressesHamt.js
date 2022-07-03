@@ -7,20 +7,21 @@ export class AddressesHamt extends Hamt {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)
     assert(address.isRemote())
-    const key = address.cid.toString()
+    const key = address.getChainId()
     return await super.set(key, channelId)
   }
   async has(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
-    return await super.has(address.cid.toString())
+    return await super.has(address.getChainId())
   }
-  delete(channelId) {
+  async delete(channelId) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0 && channelId < this.counter)
+    throw new Error('not implemented')
   }
-  get(address) {
+  async get(address) {
     assert(address instanceof Address)
-    return super.get(address.cid.toString())
+    return await super.get(address.getChainId())
   }
 }

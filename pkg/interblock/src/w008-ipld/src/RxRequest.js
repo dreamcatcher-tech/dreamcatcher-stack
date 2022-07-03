@@ -11,9 +11,6 @@ export class RxRequest extends Request {
     Object.assign(instance, { request, requestId })
     return instance
   }
-  crush() {
-    throw new Error(`Transients cannot be crushed`)
-  }
   getRequestObject() {
     const { type, payload } = this.request
     const action = { type, payload }

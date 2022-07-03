@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import {
+  RxReply,
   TxQueue,
   Dmz,
   Provenance,
@@ -82,6 +83,18 @@ export class Tx extends IpldStruct {
   txReducerReply(reply) {
     const reducer = this.reducer.txReply(reply)
     return this.setMap({ reducer })
+  }
+  settlePromise(rxReply) {
+    assert(rxReply instanceof RxReply)
+    assert(!rxReply.isPromise())
+    const { reply, requestId } = rxReply
+    let { reducer, system } = this
+    if (requestId.isSystem()) {
+      system = system.settlePromise(reply, requestId.requestIndex)
+    } else {
+      reducer = reducer.settlePromise(reply, requestId.requestIndex)
+    }
+    return this.setMap({ reducer, system })
   }
   isEmpty() {
     return this.system.isEmpty() && this.reducer.isEmpty()

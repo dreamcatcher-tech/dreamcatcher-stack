@@ -2,6 +2,7 @@ import { IpldStruct } from './IpldStruct'
 import {
   State,
   Config,
+  Pending,
   Interpulse,
   Address,
   Provenance,
@@ -85,6 +86,7 @@ export class Pulse extends IpldStruct {
     let next = this
     if (this.isGenesis()) {
       assert(!this.provenance.transmissions)
+      assert(!this.signatures.length)
       // set our own address
       const address = Address.generate(this)
       next = next.setMap({ provenance: { address } })
@@ -111,8 +113,8 @@ export class Pulse extends IpldStruct {
       assert.strictEqual(provenance.dmz.network.channels.txs.length, 0)
     }
     const precedent = this.getPulseLink()
-    const channels = await provenance.dmz.network.channels.blankTxs(precedent)
-    provenance = provenance.setMap({ dmz: { network: { channels } } })
+    const network = await provenance.dmz.network.blankTxs(precedent)
+    provenance = provenance.setMap({ dmz: { network } })
 
     // blank piercings
     if (provenance.dmz.network.piercings) {
@@ -122,19 +124,18 @@ export class Pulse extends IpldStruct {
     }
 
     next = next.setMap({ provenance })
+    next = next.setMap({ signatures: [] })
     return next
   }
   async ingestInterpulse(interpulse) {
-    let next = this
-    if (!this.isModified()) {
-      next = await this.generateSoftPulse()
-    }
     assert(interpulse instanceof Interpulse)
+    let next = this
+    assert(next.isModified())
     const { target } = interpulse
     assert(next.getAddress().equals(target))
-    let { network } = next.provenance.dmz
+    let network = next.getNetwork()
     network = await network.ingestInterpulse(interpulse)
-    return next.setMap({ provenance: { dmz: { network } } })
+    return next.setNetwork(network)
   }
   getNetwork() {
     return this.provenance.dmz.network
@@ -142,6 +143,13 @@ export class Pulse extends IpldStruct {
   setNetwork(network) {
     assert(network instanceof Network)
     return this.setMap({ provenance: { dmz: { network } } })
+  }
+  getPending() {
+    return this.provenance.dmz.pending
+  }
+  setPending(pending) {
+    assert(pending instanceof Pending)
+    return this.setMap({ provenance: { dmz: { pending } } })
   }
   getPulseLink() {
     return PulseLink.generate(this)
@@ -167,7 +175,7 @@ export class Pulse extends IpldStruct {
     const pulse = await this.deriveChildGenesis(spawnOptions)
     const address = pulse.getAddress()
     network = await network.addChild(alias, address)
-    return this.setMap({ provenance: { dmz: { network } } })
+    return this.setNetwork(network)
   }
   async deriveChildGenesis(spawnOptions) {
     assert.strictEqual(typeof spawnOptions, 'object')

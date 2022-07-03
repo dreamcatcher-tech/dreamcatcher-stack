@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import {
+  RxReply,
   RequestId,
   Network,
   Reply,
@@ -141,6 +142,10 @@ export class Channel extends IpldStruct {
   shiftReducerReply() {
     const rx = this.rx.shiftReducerReply()
     return this.setMap({ rx })
+  }
+  settlePromise(rxReply) {
+    const tx = this.tx.settlePromise(rxReply)
+    return this.setMap({ tx })
   }
   rxSystemRequest() {
     const { channelId } = this

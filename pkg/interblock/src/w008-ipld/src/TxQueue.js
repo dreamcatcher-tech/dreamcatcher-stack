@@ -7,7 +7,7 @@ export class PromisedReply extends IpldStruct {
     assert(Number.isInteger(requestIndex))
     assert(requestIndex >= 0)
     assert(reply instanceof Reply)
-    return super.create({ requestIndex, reply })
+    return super.clone({ requestIndex, reply })
   }
   static classMap = { reply: Reply }
 }
@@ -40,14 +40,39 @@ export class TxQueue extends IpldStruct {
     const requestsLength = this.requestsLength + 1
     return this.setMap({ requests, requestsLength })
   }
-
   txReply(reply) {
     assert(reply instanceof Reply)
     const replies = [...this.replies, reply]
     const repliesLength = this.repliesLength + 1
-    return this.setMap({ replies, repliesLength })
+    let { promisedRequestIds } = this
+    if (reply.isPromise()) {
+      const requestId = this.repliesLength
+      promisedRequestIds = [...this.promisedRequestIds, requestId]
+    }
+    return this.setMap({ replies, repliesLength, promisedRequestIds })
   }
-
+  settlePromise(reply, requestIndex) {
+    assert(reply instanceof Reply)
+    assert(!reply.isPromise())
+    assert(Number.isInteger(requestIndex))
+    assert(this.promisedRequestIds.includes(requestIndex))
+    let { promisedRequestIds, promisedReplies, replies, repliesLength } = this
+    promisedRequestIds = promisedRequestIds.filter((id) => id !== requestIndex)
+    const isReplyTip = repliesLength - 1 === requestIndex
+    const isReplyTipPresent = !!replies[0]
+    if (isReplyTip && isReplyTipPresent) {
+      // we are at tip, so directly resolve
+      replies = [...replies]
+      const promise = replies.pop()
+      assert(promise.isPromise())
+      replies.push(reply)
+    } else {
+      const promisedReply = PromisedReply.create(requestIndex, reply)
+      promisedReplies = [...promisedReplies, promisedReply]
+    }
+    const next = { promisedRequestIds, promisedReplies, replies, repliesLength }
+    return this.setMap(next)
+  }
   isEmpty() {
     return (
       !this.requests.length &&
@@ -86,7 +111,11 @@ export class TxQueue extends IpldStruct {
   #getReply(requestIndex) {
     assert(Number.isInteger(requestIndex))
     assert(requestIndex >= 0)
-    // TODO walk the promises to see if contains it
+    for (const promised of this.promisedReplies) {
+      if (promised.requestIndex === requestIndex) {
+        return promised.reply
+      }
+    }
     const index = requestIndex - (this.repliesLength - this.replies.length)
     const reply = this.replies[index]
     return reply
