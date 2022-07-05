@@ -88,7 +88,7 @@ export class Network extends IpldStruct {
     assert(parentAddress instanceof Address)
     assert(parentAddress.isRemote())
     let parent = await this.getParent()
-    assert(parent.getAddress().isUnknown())
+    assert(parent.address.isUnknown())
     parent = parent.resolve(parentAddress)
     return await this.updateParent(parent)
   }
@@ -516,6 +516,9 @@ const isForeign = (path) => {
   }
   if (path.startsWith('/')) {
     // if (path.)
+  }
+  if (!path.includes('/')) {
+    return false
   }
   // TODO
   return true

@@ -269,7 +269,7 @@ export class Engine {
             tracker.resolve(reply.payload)
           } else {
             assert(reply.isRejection())
-            tracker.reject(reply.payload)
+            tracker.reject(reply.getRejectionError())
           }
         }
       }

@@ -83,8 +83,8 @@ export class Provenance extends IpldStruct {
     }
     // create the transmissions slice
     const { channels } = this.dmz.network
-    assert(Array.isArray(channels.txs))
-    const txs = channels.txs.filter((i) => i !== Network.FIXED_IDS.IO)
+    const { txs } = channels
+    assert(Array.isArray(txs))
     let next = this
     if (!txs.length) {
       // TODO define rules on block tighter

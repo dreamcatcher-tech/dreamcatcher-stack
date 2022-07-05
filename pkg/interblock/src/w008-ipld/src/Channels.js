@@ -75,8 +75,8 @@ export class Channels extends IpldStruct {
     const channelId = counter++
     assert.strictEqual(channelId, channel.channelId)
     const list = await this.list.set(channelId, channel)
-    if (channel.isRemote()) {
-      const address = channel.getAddress()
+    const { address } = channel
+    if (address.isRemote()) {
       addresses = await this.addresses.set(address, channelId)
     }
     const next = this.setMap({ counter, list, addresses })
@@ -98,7 +98,7 @@ export class Channels extends IpldStruct {
     const isResolved = previous && !previous.isRemote() && channel.isRemote()
     const isNewResolved = !previous && channel.isRemote()
     if (isResolved || isNewResolved) {
-      const address = channel.getAddress()
+      const { address } = channel
       addresses = await addresses.set(address, channelId)
     }
     const next = this.setMap({ list, addresses })
@@ -108,8 +108,10 @@ export class Channels extends IpldStruct {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)
     assert(channel instanceof Channel)
+    const { address } = channel
     let { rxs, txs } = this
     if (!channel.rxIsEmpty()) {
+      assert(!address.isRoot())
       if (!rxs.includes(channelId)) {
         rxs = [...rxs, channelId]
       }
@@ -118,18 +120,19 @@ export class Channels extends IpldStruct {
         rxs = rxs.filter((id) => id !== channelId)
       }
     }
+    if (rxs !== this.rxs) {
+      // ensure loopback, parent, and io come before others
+      rxs.sort((a, b) => a - b)
+    }
     if (!channel.tx.isEmpty()) {
-      if (!txs.includes(channelId)) {
+      assert(!address.isRoot())
+      if (!txs.includes(channelId) && !address.isIo() && address.isResolved()) {
         txs = [...txs, channelId]
       }
     } else {
       if (txs.includes(channelId)) {
         txs = txs.filter((id) => id !== channelId)
       }
-    }
-    if (rxs !== this.rxs) {
-      // ensure loopback, parent, and io come before others
-      rxs.sort((a, b) => a - b)
     }
     return this.setMap({ rxs, txs })
   }

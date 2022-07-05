@@ -83,9 +83,6 @@ export class Channel extends IpldStruct {
   isRemote() {
     return this.address.isRemote()
   }
-  getAddress() {
-    return this.address
-  }
   assertLogic() {
     const { rx, tx, address, aliases, channelId } = this
     if (this.isUnknown()) {

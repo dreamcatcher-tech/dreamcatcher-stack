@@ -44,7 +44,7 @@ export class Pulse extends IpldStruct {
   async isRoot() {
     const parent = await this.provenance.dmz.network.getParent()
     if (parent) {
-      return parent.getAddress().isRoot()
+      return parent.address.isRoot()
     }
     return false
   }
