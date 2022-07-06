@@ -61,7 +61,5 @@ describe('Request', () => {
     const crushed1 = await request1.crush()
     const crushed2 = await request2.crush()
     assert.deepEqual(crushed1, crushed2)
-    // assert.strictEqual(crushed1, crushed2)
-    // disable the crush cache, then show that the actions are different
   })
 })

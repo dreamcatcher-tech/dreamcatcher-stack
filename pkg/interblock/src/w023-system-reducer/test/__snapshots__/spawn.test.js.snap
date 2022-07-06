@@ -15,19 +15,12 @@ AsyncTrail {
       "stream": "reducer",
     },
   },
-  "rxReply": RxReply {
-    "reply": Reply {
-      "payload": Object {
-        "alias": "file_00001",
-        "chainId": "QmT3pwbGdxXBjZeJNniUbA2wJDh9bRYxDFeUZspWFAHx5t",
-      },
-      "type": "@@RESOLVE",
+  "reply": Reply {
+    "payload": Object {
+      "alias": "file_00001",
+      "chainId": "QmSZeGpyifh7CqWWoDkVWDDoYkTzp2kiGA7MzhPdWMsRW2",
     },
-    "requestId": RequestId {
-      "channelId": 0,
-      "requestIndex": 0,
-      "stream": "reducer",
-    },
+    "type": "@@RESOLVE",
   },
   "settles": Array [
     AsyncRequest {
@@ -46,7 +39,7 @@ AsyncTrail {
       "settled": Reply {
         "payload": Object {
           "alias": "file_00001",
-          "chainId": "QmT3pwbGdxXBjZeJNniUbA2wJDh9bRYxDFeUZspWFAHx5t",
+          "chainId": "QmSZeGpyifh7CqWWoDkVWDDoYkTzp2kiGA7MzhPdWMsRW2",
         },
         "type": "@@RESOLVE",
       },
@@ -68,7 +61,7 @@ AsyncTrail {
         "payload": Object {},
         "type": "@@RESOLVE",
       },
-      "to": ".",
+      "to": "file_00001",
     },
   ],
   "txs": Array [],

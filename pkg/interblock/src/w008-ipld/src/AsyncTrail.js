@@ -37,12 +37,18 @@ type AsyncTrail struct {
     origin RxRequest
     settles [AsyncRequest]
     txs [AsyncRequest]
-    rxReply optional &RxReply 
+    reply optional &Reply 
 }
  */
 export class AsyncTrail extends IpldStruct {
   settles = []
   txs = []
+  static classMap = {
+    origin: RxRequest,
+    settles: AsyncRequest,
+    txs: AsyncRequest,
+    reply: Reply,
+  }
   static createCI() {
     const requestId = RequestId.createCI()
     const request = Request.create('TEST')
@@ -51,9 +57,7 @@ export class AsyncTrail extends IpldStruct {
   }
   static create(origin) {
     assert(origin instanceof RxRequest)
-    const instance = new this()
-    Object.assign(instance, { origin })
-    return instance
+    return super.clone({ origin })
   }
   static createWithPulse(origin, pulse) {
     /** used when we need the response pattern, but want to make

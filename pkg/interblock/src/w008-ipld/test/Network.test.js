@@ -1,6 +1,6 @@
 import chai, { assert } from 'chai/index.mjs'
 import chaiAsPromised from 'chai-as-promised'
-import { Request, Pulse, Network, Channel, Address } from '..'
+import { Request, Network, Channel, Address } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
 Debug.enable('*network')
@@ -11,7 +11,6 @@ describe('network', () => {
     const network = Network.create()
     const crush = await network.crush()
     const diffs = await crush.getDiffBlocks()
-    debug(diffs.size)
     const parent = await network.getParent()
     assert(parent.address.isUnknown())
     const loopback = await network.getLoopback()
@@ -28,18 +27,19 @@ describe('network', () => {
     const network = Network.create()
     await assert.isRejected(network.updateChannel('a string'), 'Not channel')
     const object = { key: 'value' }
-    await assert.isRejected(network.updateChannel(object), 'Alias not string')
+    await assert.isRejected(network.updateChannel(object), 'Not channel')
   })
   test('transmit to downlink', async () => {
     let network = Network.create()
-    let pulse = await Pulse.createCI()
-    const address = Address.generate(pulse)
+    const address = Address.createCI()
     assert(!address.isUnknown())
     assert(address.isRemote())
 
     network = await network.resolveDownlink('/some/testalias', address)
     const request = Request.create('TEST')
-    network = await network.txRequest(request, 'testalias')
+    let channel = await network.getChannel('/some/testalias')
+    channel = channel.txRequest(request)
+    network = await network.updateChannel(channel)
     network = await network.crush()
     const diffs = await network.getDiffBlocks()
     const resolver = (cid) => diffs.get(cid.toString())
@@ -53,15 +53,13 @@ describe('network', () => {
   })
   test('open uplink', async () => {
     let network = Network.create()
-    const upAddress = Address.createCI('test uplink')
+    const upAddress = Address.createCI()
     network = await network.addUplink(upAddress)
     const uplink = await network.getUplink(upAddress)
     assert(uplink instanceof Channel)
-    assert.strictEqual(uplink.getAddress(), upAddress)
+    assert.strictEqual(uplink.address, upAddress)
   })
-  test.todo('transmit to child')
-  test.todo('same channel results in same channelId')
-  test.todo('diffs only give difference to previous crush')
+  test.todo('channel cannot have address changed once resolved')
   test('large network', async () => {
     let network = Network.create()
     const count = 20
@@ -73,7 +71,7 @@ describe('network', () => {
     }
     debug(`time to %o: %o ms`, count, Date.now() - start)
     start = Date.now()
-    network = await network.addDownlink('addOne', Address.createCI('addOne'))
+    network = await network.addDownlink('remote/one', Address.createCI('one'))
     debug(`add one time %o ms`, Date.now() - start)
     start = Date.now()
     network = await network.crush()
@@ -82,7 +80,7 @@ describe('network', () => {
     const diffs1 = await network.getDiffBlocks()
     debug(`diffs: %o ms length: %o`, Date.now() - start, diffs1.size)
     start = Date.now()
-    network = await network.addDownlink('addTwo', Address.createCI('addTwo'))
+    network = await network.addDownlink('remote/two', Address.createCI('two'))
     network = await network.crush()
     debug(`crush second time: %o ms %o`, Date.now() - start, network.cid)
     start = Date.now()

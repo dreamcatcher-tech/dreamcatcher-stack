@@ -215,54 +215,10 @@ export class Network extends IpldStruct {
       return this.setMap({ downlinks, channels })
     }
   }
-
   rm(alias) {
     // if it was a child, then we can only fully terminate the chain
     // if it was a link, then we remove the alias mapping
     // if this is the only mapping, then we can remove the channel
-  }
-  async txRequest(request, path) {
-    assert(request instanceof Request)
-    assert(typeof path === 'string')
-    assert(path)
-    if (path === '.') {
-      const loopback = this.loopback.txRequest(request)
-      return Network.setMap({ loopback })
-    } else if (path === '..') {
-      const parent = this.parent.txRequest(request)
-      return Network.setMap({ parent })
-    } else if (path === '.@@io') {
-      const io = this.io.txRequest(request)
-      return Network.setMap({ io })
-    }
-
-    // if the path is a remote path, send it on the downlinks
-    // if local, check children, then sym, then hard
-    let channelId
-    let { channels, downlinks } = this
-    if (isForeign(path)) {
-      if (await this.downlinks.has(path)) {
-        channelId = await this.downlinks.get(path)
-      } else {
-        channelId = this.channels.counter
-        const channel = Channel.create(channelId)
-        channels = await this.channels.addChannel(channel)
-        assert.strictEqual(await channels.getChannel(channelId), channel)
-        downlinks = await downlinks.setDownlink(path, channelId)
-      }
-    } else {
-      if (await this.children.has(path)) {
-        channelId = await this.children.get(path)
-      } else if (await this.symlinks.has(path)) {
-        channelId = await this.symlinks.get(path)
-      } else if (await this.hardlinks.has(path)) {
-        channelId = await this.hardlinks.get(path)
-      }
-    }
-    let channel = await channels.getChannel(channelId)
-    channel = channel.txRequest(request)
-    channels = await channels.updateChannel(channel)
-    return await this.setMap({ channels, downlinks })
   }
   async addChild(path, address) {
     assert(typeof path === 'string')
@@ -349,7 +305,6 @@ export class Network extends IpldStruct {
   }
 
   async txSystemReply(reply = Reply.create()) {
-    // by default, this resolves the current request
     const rxRequest = await this.rxSystemRequest()
     assert(rxRequest instanceof RxRequest)
     const { channelId } = rxRequest.requestId
@@ -368,7 +323,6 @@ export class Network extends IpldStruct {
     return next
   }
   async txReducerReply(reply = Reply.create()) {
-    // by default, this resolves the current request
     const rxRequest = await this.rxReducerRequest()
     assert(rxRequest instanceof RxRequest)
     const { channelId } = rxRequest.requestId
@@ -462,7 +416,7 @@ export class Network extends IpldStruct {
     return await this.channels.getChannel(channelId)
   }
   async updateChannel(channel) {
-    assert(channel instanceof Channel)
+    assert(channel instanceof Channel, `Not channel`)
     switch (channel.channelId) {
       case FIXED.PARENT: {
         return this.updateParent(channel)

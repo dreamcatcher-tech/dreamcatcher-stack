@@ -11,8 +11,9 @@ import {
 import { wrapReduce } from '../../w010-hooks'
 import Debug from 'debug'
 import assert from 'assert-fast'
-Debug.enable('*spawn')
-const pulse = await Pulse.createCI()
+
+const genesis = await Pulse.createCI()
+let pulse = await genesis.generateSoftPulse()
 
 describe('spawn', () => {
   test('basic', async () => {
@@ -21,14 +22,14 @@ describe('spawn', () => {
     const rxRequest = RxRequest.create(request, requestId)
     let trail = AsyncTrail.create(rxRequest)
     trail = await wrapReduce(trail, reducer)
-    trail.result()
     let [get] = trail.txs
     assert.strictEqual(get.request.type, '@@ADD_CHILD')
     get = get.setId(requestId.next())
     trail = trail.updateTxs([get])
     let local = AsyncTrail.createWithPulse(get, pulse)
     local = await wrapReduce(local, reducer)
-    trail = trail.settleTx(local.rxReply)
+    const rxReply = RxReply.create(local.reply, get.requestId)
+    trail = trail.settleTx(rxReply)
 
     trail = await wrapReduce(trail, reducer)
     assert(trail.isPending())
@@ -53,7 +54,8 @@ describe('spawn', () => {
     trail = trail.updateTxs([get])
     let local = AsyncTrail.createWithPulse(get, pulse)
     local = await wrapReduce(local, reducer)
-    trail = trail.settleTx(local.rxReply)
+    const rxReply = RxReply.create(local.reply, get.requestId)
+    trail = trail.settleTx(rxReply)
 
     trail = await wrapReduce(trail, reducer)
     assert(trail.isPending())

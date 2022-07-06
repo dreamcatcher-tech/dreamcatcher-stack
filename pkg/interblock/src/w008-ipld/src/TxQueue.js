@@ -32,7 +32,7 @@ export class TxQueue extends IpldStruct {
     })
   }
   assertLogic() {
-    // TODO promiseRequestIds cannot be higher than lowest replyId ?
+    // TODO promiseRequestIds cannot be higher than highest replyId ?
   }
   txRequest(request) {
     assert(request instanceof Request)

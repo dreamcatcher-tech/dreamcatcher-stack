@@ -106,7 +106,7 @@ const interchain = (type, payload, to = '.', binary) => {
   if (type instanceof Request) {
     request = type
     binary = to
-    to = payload
+    to = payload || '.'
   } else {
     request = Request.create(type, payload, binary)
   }

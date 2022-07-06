@@ -17,17 +17,7 @@ const request = Request.create('TEST')
 const requestId = RequestId.createCI()
 const rxRequest = RxRequest.create(request, requestId)
 const init = AsyncTrail.create(rxRequest)
-/**
- * Test callsites for resolve and for multiple promises
- * Test using prepopulated accumulators
- *
- * Then test the engine using prepop accumulators for specific actions
- * to avoid code relooping and making it hard to trace
- *
- * test the engine incrementally with each new system function
- *
- *
- */
+
 describe('callsites', () => {
   describe('basics', () => {
     const nested =

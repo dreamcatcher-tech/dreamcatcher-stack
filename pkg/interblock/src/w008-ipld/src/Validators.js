@@ -18,7 +18,9 @@ export class Validators extends IpldStruct {
     assert(Number.isInteger(quorumThreshold))
     assert(quorumThreshold > 0)
 
-    return super.clone({ publicKeys, quorumThreshold })
+    const instance = super.clone({ publicKeys, quorumThreshold })
+    instance.assertLogic()
+    return instance
   }
   static classMap = {
     publicKeys: PublicKey,

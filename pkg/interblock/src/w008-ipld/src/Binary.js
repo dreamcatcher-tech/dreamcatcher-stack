@@ -20,8 +20,6 @@ export class Binary extends IpldInterface {
     assert.strictEqual(ipldBlock.value, ipldBlock.bytes)
     const instance = new this()
     instance.#ipldBlock = ipldBlock
-    instance.deepFreeze()
-    IpldInterface.deepFreeze(ipldBlock)
     return instance
   }
   static async uncrush(rootCid, resolver, options) {

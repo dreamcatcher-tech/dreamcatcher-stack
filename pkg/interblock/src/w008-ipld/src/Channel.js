@@ -52,6 +52,9 @@ export class Channel extends IpldStruct {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)
     assert(address instanceof Address)
+    if (address.isRoot()) {
+      assert.strictEqual(channelId, Network.FIXED_IDS.PARENT, `root not parent`)
+    }
 
     const rx = Rx.create()
     const tx = Tx.create()

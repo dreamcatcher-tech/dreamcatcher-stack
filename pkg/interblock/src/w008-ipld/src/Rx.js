@@ -65,29 +65,6 @@ export class Rx extends IpldStruct {
     next = next.setMap({ tip, system, reducer })
     return next
   }
-  // when shifting the counters, check if the tip should be ejected
-  rxSystemRequest(channelId) {
-    const result = this.#rx(STREAMS.SYSTEM, 'requests')
-    if (!result) {
-      return
-    }
-    const [request, index] = result
-    assert(request instanceof Request)
-    assert(Number.isInteger(index))
-    assert(index >= 0)
-    return RxRequest.create(request, channelId, STREAMS.SYSTEM, index)
-  }
-  rxSystemReply(channelId) {
-    const result = this.#rx(STREAMS.SYSTEM, 'replies')
-    if (!result) {
-      return
-    }
-    const [reply, index] = result
-    assert(reply instanceof Reply)
-    assert(Number.isInteger(index))
-    assert(index >= 0)
-    return RxReply.create(reply, channelId, STREAMS.SYSTEM, index)
-  }
   shiftSystemReply() {
     const system = this.system.shiftReplies()
     return this.setMap({ system })
@@ -103,32 +80,5 @@ export class Rx extends IpldStruct {
   shiftReducerRequest() {
     const reducer = this.reducer.shiftRequests()
     return this.setMap({ reducer })
-  }
-  rxReducerRequest(channelId) {
-    const result = this.#rx(STREAMS.SYSTEM, 'requests')
-    if (!result) {
-      return
-    }
-    const [request, index] = result
-    assert(request instanceof Request)
-    assert(Number.isInteger(index))
-    assert(index >= 0)
-    return RxRequest.create(request, channelId, STREAMS.SYSTEM, index)
-  }
-
-  #rx(queueType, actionType) {
-    assert(queueType === 'system' || queueType === 'reducer')
-    assert(actionType === 'replies' || actionType === 'requests')
-    const queue = this[queueType]
-    let remain = queue[`${actionType}Remain`]
-    assert(Number.isInteger(remain))
-    assert(remain >= 0)
-    if (!this.tip || !remain) {
-      return
-    }
-
-    let index, array, interpulse
-    const action = array[index]
-    return [action, index]
   }
 }

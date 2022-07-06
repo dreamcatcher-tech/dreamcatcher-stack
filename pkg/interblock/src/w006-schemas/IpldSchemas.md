@@ -347,10 +347,11 @@ type AsyncTrail struct {
     origin RxRequest
     settles [AsyncRequest]
     txs [AsyncRequest]
-    rxReply optional &RxReply
+    reply optional &reply
 }
 type Pending struct {
-    trails [&AsyncTrail]
+    system [&AsyncTrail]
+    reducer [&AsyncTrail]
 }
 ```
 

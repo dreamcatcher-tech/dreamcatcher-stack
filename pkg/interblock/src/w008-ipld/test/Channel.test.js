@@ -41,7 +41,7 @@ describe('channel', () => {
     test('root can only be parent', () => {
       const address = Address.createRoot()
       const notParentChannelId = fakeChannelId
-      const msg = 'Root not parent'
+      const msg = 'root not parent'
       assert.throws(() => Channel.create(notParentChannelId, address), msg)
     })
     test.todo('loopback bans @@OPEN_CHILD action')

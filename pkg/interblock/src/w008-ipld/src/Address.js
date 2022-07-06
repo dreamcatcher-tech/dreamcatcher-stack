@@ -46,7 +46,7 @@ const addressBlock = (cidV1) => {
 export class Address extends IpldInterface {
   #cid
   #ipldBlock
-  static createCI(string) {
+  static createCI(string = 'test') {
     assert.strictEqual(typeof string, 'string')
     assert(string)
     const value = prepare({ Data: string })

@@ -3,6 +3,7 @@ import { CID } from 'multiformats/cid'
 import { Block } from 'multiformats/block'
 import { encode } from './IpldUtils'
 import { IpldInterface } from './IpldInterface'
+import { deepFreeze } from './utils'
 
 export class IpldStruct extends IpldInterface {
   #ipldBlock
@@ -13,6 +14,7 @@ export class IpldStruct extends IpldInterface {
     assert.strictEqual(typeof map, 'object')
     const instance = new this()
     Object.assign(instance, map)
+    deepFreeze(instance)
     return instance
   }
   clone() {

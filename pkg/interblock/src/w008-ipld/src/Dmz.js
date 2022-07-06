@@ -63,7 +63,6 @@ export class Dmz extends IpldStruct {
   }
   assertLogic() {
     // TODO if isSideEffectCapable ensure the validators list is singular
-    const { network, config } = this
     // TODO verify that the pending buffers map to legit channels
     // TODO find how to not infect everything with async
     // assert(!network.getIo() || config.isPierced)

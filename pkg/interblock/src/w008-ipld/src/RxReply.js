@@ -5,9 +5,7 @@ export class RxReply extends IpldStruct {
   static create(reply, requestId) {
     assert(reply instanceof Reply)
     assert(requestId instanceof RequestId)
-    const instance = new RxReply()
-    Object.assign(instance, { reply, requestId })
-    return instance
+    return super.clone({ reply, requestId })
   }
   crush() {
     throw new Error(`Transients cannot be crushed`)

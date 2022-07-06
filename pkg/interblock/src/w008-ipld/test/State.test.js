@@ -4,8 +4,6 @@ import Debug from 'debug'
 const debug = Debug('interblock:tests:State')
 Debug.enable()
 
-// TODO add in the covenant api tools, and make some actions
-
 describe('state', () => {
   test('basic', async () => {
     let state = State.create()

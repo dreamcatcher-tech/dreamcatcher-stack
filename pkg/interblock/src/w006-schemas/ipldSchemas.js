@@ -286,10 +286,10 @@ export default {
             valueType: 'AsyncRequest',
           },
         },
-        rxReply: {
+        reply: {
           type: {
             kind: 'link',
-            expectedType: 'RxReply',
+            expectedType: 'reply',
           },
           optional: true,
         },
@@ -301,7 +301,16 @@ export default {
     Pending: {
       kind: 'struct',
       fields: {
-        trails: {
+        system: {
+          type: {
+            kind: 'list',
+            valueType: {
+              kind: 'link',
+              expectedType: 'AsyncTrail',
+            },
+          },
+        },
+        reducer: {
           type: {
             kind: 'list',
             valueType: {

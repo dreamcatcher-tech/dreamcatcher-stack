@@ -3,15 +3,13 @@ import { interchain } from '../../w002-api'
 import { Request } from '../../w008-ipld'
 import { actions } from '..'
 import { Engine } from '../../w210-engine'
-import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
 // Debug.enable('*dmz* *hooks *engine* *callsites')
 
 describe('dmzReducer', () => {
   describe('spawn', () => {
-    jest.setTimeout(500)
-    test.only('spawn is implicitly awaited', async () => {
+    test('spawn is implicitly awaited', async () => {
       const reducer = async (request) => {
         debug(`reducer %o`, request)
         if (request.type === 'TEST_SPAWN') {

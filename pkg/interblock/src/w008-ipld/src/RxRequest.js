@@ -7,9 +7,7 @@ export class RxRequest extends Request {
     // TODO hold the original request too ?
     assert(request instanceof Request)
     assert(requestId instanceof RequestId)
-    const instance = new RxRequest()
-    Object.assign(instance, { request, requestId })
-    return instance
+    return super.clone({ request, requestId })
   }
   getRequestObject() {
     const { type, payload } = this.request

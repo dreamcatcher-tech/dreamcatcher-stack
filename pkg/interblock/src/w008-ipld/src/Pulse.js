@@ -163,6 +163,7 @@ export class Pulse extends IpldStruct {
   }
   async addChild(alias, spawnOptions) {
     // TODO insert repeatable randomness to child
+    assert(this.isModified())
     assert(typeof alias === 'string')
     assert(alias)
     assert(!alias.includes('/'))
