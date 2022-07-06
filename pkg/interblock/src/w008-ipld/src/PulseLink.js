@@ -15,12 +15,6 @@ export class PulseLink extends IpldInterface {
     instance.#setCid(address.cid.toV1())
     return instance
   }
-  static createIo() {
-    const address = Address.createIo()
-    const instance = new this()
-    instance.#setCid(address.cid.toV1())
-    return instance
-  }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified(), `Pulse must be crushed already`)

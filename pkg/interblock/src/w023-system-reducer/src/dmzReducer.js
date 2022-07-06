@@ -7,8 +7,7 @@ import { spawn, spawnReducer } from './spawn'
 import { install, deploy, deployReducer } from './deploy'
 import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer } from './genesis'
-import { getStateReducer, getState } from './getState'
-import { RxRequest, RxReply, Provenance, Address } from '../../w008-ipld'
+import { Address } from '../../w008-ipld'
 import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
@@ -38,18 +37,15 @@ const actions = {
   install,
   deploy,
   getChannel,
-  getState,
 }
 
 const reducer = (request) => {
-  // TODO check the ACL each time ?
   debug(`reducer( ${request.type} )`)
   const { type, payload } = request
 
   switch (type) {
     case '@@PING':
-      pingReducer(request)
-      break
+      return pingReducer(request)
     case '@@SPAWN':
       return spawnReducer(request)
     case '@@CONNECT':

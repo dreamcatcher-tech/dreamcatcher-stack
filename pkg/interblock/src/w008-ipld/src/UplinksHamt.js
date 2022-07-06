@@ -1,13 +1,7 @@
 import { Hamt } from './Hamt'
-import { Channel, Address } from '.'
+import { Address } from '.'
 import assert from 'assert-fast'
-import { IpldStruct } from './IpldStruct'
-/**
- * Children are always fully resolved.
- * When crush occurs, should check the channels are next.
- * Alias cannot have '/' character in it.
- * Channels have to have an address on them.
- */
+
 export class UplinksHamt extends Hamt {
   static create() {
     return super.create()

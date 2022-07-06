@@ -14,11 +14,4 @@ export class Transmissions extends IpldStruct {
     const chainId = address.getChainId()
     return this.setMap({ [chainId]: tx })
   }
-  getTx(address) {
-    assert(address instanceof Address)
-    const chainId = address.getChainId()
-    const tx = this[chainId]
-    assert(tx instanceof Tx)
-    return tx
-  }
 }

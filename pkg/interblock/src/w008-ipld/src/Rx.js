@@ -11,16 +11,7 @@ type Rx struct {
 */
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
-import {
-  RxReply,
-  Reply,
-  RxRequest,
-  Request,
-  RxQueue,
-  PulseLink,
-  Interpulse,
-} from '.'
-const STREAMS = { SYSTEM: 'system', REDUCER: 'reducer' }
+import { RxQueue, PulseLink, Interpulse } from '.'
 
 export class Rx extends IpldStruct {
   static classMap = {

@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { RxRequest } from '../../w008-ipld'
+import { Request } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:ping')
 
@@ -10,11 +10,11 @@ const ping = (payload = {}) => {
   return { type: '@@PING', payload }
 }
 const pingReducer = (request) => {
-  assert(request instanceof RxRequest)
+  assert(request instanceof Request)
   assert.strictEqual(request.type, '@@PING')
   const { payload } = request
   debug(`ping: %O`, payload)
-  replyResolve(payload)
+  return payload
 }
 
 export { ping, pingReducer }
