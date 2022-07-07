@@ -25,7 +25,6 @@ const debug = Debug('interblock:engine')
 export class Engine {
   #address // the address of the base chain of this engine
   #latest // latest block in the base chain of this engine
-  #logging = false
 
   #isolate
   #crypto
@@ -37,6 +36,9 @@ export class Engine {
   }
   get latest() {
     return this.#latest
+  }
+  get logger() {
+    return this.#endurance.logger
   }
   static async createCI(opts = {}) {
     const ciOptions = { ...opts, CI: true }
@@ -275,7 +277,8 @@ export class Engine {
       }
     }
   }
-  enableLogging() {
-    this.#logging = true
-  }
+  async multiThreadStart(threadCount) {}
+  async multiThreadStop() {}
+  async ipfsStart(privateNetworkKey) {}
+  async ipfsStop() {}
 }

@@ -5,7 +5,6 @@ import { actions } from '..'
 import { Engine } from '../../w210-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
-// Debug.enable('*dmz* *hooks *engine* *callsites')
 
 describe('dmzReducer', () => {
   describe('spawn', () => {
@@ -22,7 +21,6 @@ describe('dmzReducer', () => {
       const root = { reducer }
       const engine = await Engine.createCI()
       engine.overload({ root })
-      engine.enableLogging()
       const request = Request.create({ type: 'TEST_SPAWN' })
       // 5 blocks 103ms, 3 blocks 79ms = 20ms / block
       const result = await engine.pierce(request)
@@ -45,8 +43,10 @@ describe('dmzReducer', () => {
       const engine = await Engine.createCI()
       engine.overload({ root })
       const request = Request.create({ type: 'TEST_SPAWN' })
-      const msg = 'path must be foreign'
+      const msg = 'path must be foreign: child1'
+      assert.strictEqual(engine.logger.pulseCount, 1)
       await expect(engine.pierce(request)).rejects.toThrow(msg)
+      assert.strictEqual(engine.logger.pulseCount, 5)
     })
     test.todo('spawn uses hash for seeding inside action')
   })

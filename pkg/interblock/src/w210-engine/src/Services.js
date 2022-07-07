@@ -23,15 +23,22 @@ export class Scale {
   }
 }
 
+import { Logger } from './Logger'
+
 export class Endurance {
+  #logger = new Logger()
   #mockIpfs = new Map()
   #mockSoftIpfs = new Map()
+  get logger() {
+    return this.#logger
+  }
   async endure(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified())
     assert(pulse.isVerified())
     // stores ipfs blocks, with optional distribution minimums
     this.#mockIpfs.set(pulse.cid.toString(), pulse)
+    await this.#logger.pulse(pulse)
     const address = pulse.getAddress().getChainId().substring(0, 14)
     const pulselink = pulse.getPulseLink().cid.toString().substring(0, 14)
     debug(`endure`, address, pulselink)

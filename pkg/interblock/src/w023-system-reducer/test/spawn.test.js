@@ -9,8 +9,8 @@ import {
   RxReply,
 } from '../../w008-ipld'
 import { wrapReduce } from '../../w010-hooks'
-import Debug from 'debug'
 import assert from 'assert-fast'
+import Debug from 'debug'
 
 const genesis = await Pulse.createCI()
 let pulse = await genesis.generateSoftPulse()

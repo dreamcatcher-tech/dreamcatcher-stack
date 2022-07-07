@@ -146,15 +146,20 @@ const transmitTrailTxs = async (trail, network) => {
     const { request, to } = tx
     debug('tx request: %s to: %s', request.type, to)
 
-    // resolve the name to a channelId
-    if (!(await network.hasChannel(to))) {
-      network = await network.addDownlink(to)
+    try {
+      // resolve the name to a channelId
+      if (!(await network.hasChannel(to))) {
+        network = await network.addDownlink(to)
+      }
+      let channel = await network.getChannel(to)
+      const requestId = channel.getNextRequestId(request)
+      channel = channel.txRequest(request)
+      network = await network.updateChannel(channel)
+      txs.push(tx.setId(requestId))
+    } catch (error) {
+      // TODO should that error the whole trail, before anything is started ?
+      txs.push(tx.settleError(error))
     }
-    let channel = await network.getChannel(to)
-    const requestId = channel.getNextRequestId(request)
-    txs.push(tx.setId(requestId))
-    channel = channel.txRequest(request)
-    network = await network.updateChannel(channel)
   }
   trail = trail.updateTxs(txs)
   return [trail, network]

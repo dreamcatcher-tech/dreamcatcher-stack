@@ -1,6 +1,5 @@
 import assert from 'assert-fast'
-import { Request, RequestId, RxReply, RxRequest } from '.'
-import { IpldStruct } from './IpldStruct'
+import { Reply, Request, RequestId, RxReply, RxRequest } from '.'
 import equals from 'fast-deep-equal'
 
 /**
@@ -29,6 +28,12 @@ export class AsyncRequest extends RxRequest {
     const settled = rxReply.reply
     return this.setMap({ settled })
   }
+  settleError(error) {
+    assert(error instanceof Error)
+    assert(!this.isSettled())
+    const settled = Reply.createError(error)
+    return this.setMap({ settled })
+  }
   isRequestMatch(request) {
     assert(request instanceof Request)
     return equals(this.request, request)
@@ -39,6 +44,9 @@ export class AsyncRequest extends RxRequest {
       return rxReply.requestId.equals(this.requestId)
     }
     return false
+  }
+  isRejection() {
+    return this.settled && this.settled.isRejection()
   }
   isSettled() {
     return this.settled !== undefined

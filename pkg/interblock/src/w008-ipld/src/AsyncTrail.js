@@ -97,7 +97,7 @@ export class AsyncTrail extends IpldStruct {
   setTxs(txs) {
     assert(Array.isArray(txs))
     assert(txs.every((tx) => tx instanceof AsyncRequest))
-    assert(txs.every((tx) => !tx.isSettled()))
+    assert(txs.every((tx) => !tx.isSettled() || tx.isRejection()))
     return this.setMap({ txs })
   }
   updateTxs(txs) {
