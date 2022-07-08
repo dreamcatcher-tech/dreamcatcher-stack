@@ -6,7 +6,6 @@ import chaiAsPromised from 'chai-as-promised'
 chai.use(chaiAsPromised)
 
 const debug = Debug('interblock:tests:ipld:hamt')
-Debug.enable('*tests*')
 
 describe('Hamt', () => {
   test('basic', async () => {

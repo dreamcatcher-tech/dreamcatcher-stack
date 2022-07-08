@@ -80,6 +80,9 @@ export class TxQueue extends IpldStruct {
       !this.promisedReplies.length
     )
   }
+  isSettled() {
+    return !this.promisedRequestIds.length
+  }
   isStart() {
     const isRequestsStart = this.requestsLength === this.requests.length
     const isRepliesStart = this.repliesLength === this.replies.length

@@ -3,7 +3,6 @@ import chaiAsPromised from 'chai-as-promised'
 import { Request, Network, Channel, Address } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
-Debug.enable('*network')
 chai.use(chaiAsPromised)
 
 describe('network', () => {

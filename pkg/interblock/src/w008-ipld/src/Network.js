@@ -143,11 +143,16 @@ export class Network extends IpldStruct {
     let io = await this.getIo()
     let { rx } = io
     let { reducer, system, tip = PulseLink.createCrossover(io.address) } = rx
+    let requestId
     if (request.isSystem()) {
+      const requestIndex = system.requestsLength
+      requestId = RequestId.create(io.channelId, 'system', requestIndex)
       const requests = [...system.requests, request]
       const requestsLength = system.requestsLength + 1
       system = system.setMap({ requests, requestsLength })
     } else {
+      const requestIndex = reducer.requestsLength
+      requestId = RequestId.create(io.channelId, 'reducer', requestIndex)
       const requests = [...reducer.requests, request]
       const requestsLength = reducer.requestsLength + 1
       reducer = reducer.setMap({ requests, requestsLength })
@@ -155,18 +160,7 @@ export class Network extends IpldStruct {
 
     io = io.setMap({ rx: { system, reducer, tip } })
     const next = await this.updateIo(io)
-    return next
-  }
-  getNextIoRequestId(request) {
-    assert(request instanceof Request)
-    const channelId = FIXED.IO
-    const stream = request.isSystem() ? 'system' : 'reducer'
-
-    let requestIndex = 0
-    if (this.pierce) {
-      requestIndex = this.pierce[stream].requestsLength
-    }
-    return RequestId.create(channelId, stream, requestIndex)
+    return [next, requestId]
   }
   async pierceIoReply(reply) {
     // TODO these can only be reducer replies, never system

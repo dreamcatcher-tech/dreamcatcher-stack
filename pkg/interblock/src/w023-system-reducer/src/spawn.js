@@ -4,18 +4,6 @@ import { interchain } from '../../w002-api'
 import { Request } from '../../w008-ipld'
 const debug = Debug('interblock:dmz:spawn')
 
-const spawn = (alias = '', spawnOptions = {}) => {
-  const action = {
-    type: '@@SPAWN',
-    payload: { alias, spawnOptions },
-  }
-  return action
-}
-const addChild = (alias, spawnOptions) => ({
-  type: '@@ADD_CHILD',
-  payload: { alias, spawnOptions },
-})
-
 const spawnReducer = async (request) => {
   const { type, payload } = request
   assert.strictEqual(type, '@@SPAWN')
@@ -31,7 +19,8 @@ const spawnReducer = async (request) => {
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
 
-  const addChildResult = await interchain(addChild(alias, spawnOptions))
+  const addChild = Request.createAddChild(alias, spawnOptions)
+  const addChildResult = await interchain(addChild)
   if (!alias) {
     alias = addChildResult.alias
   }
@@ -44,4 +33,4 @@ const spawnReducer = async (request) => {
   return addChildResult
 }
 
-export { spawn, spawnReducer }
+export { spawnReducer }

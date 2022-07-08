@@ -65,4 +65,16 @@ export class Request extends IpldStruct {
     }
     return this.create('@@SPAWN', payload)
   }
+  static createAddChild(alias, spawnOptions) {
+    return {
+      type: '@@ADD_CHILD',
+      payload: { alias, spawnOptions },
+    }
+  }
+  static createPing(payload) {
+    if (typeof payload === 'string') {
+      payload = { string: payload }
+    }
+    return this.create('@@PING', payload)
+  }
 }

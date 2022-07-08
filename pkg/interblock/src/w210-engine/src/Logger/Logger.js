@@ -1,10 +1,9 @@
 import assert from 'assert-fast'
-import { pulsePrint, interPrint } from './printer'
+import { pulsePrint } from './printer'
 import { Pulse } from '../../../w008-ipld'
 import Debug from 'debug'
 
 export class Logger {
-  #isOn = true
   #options = {}
   #debugPulse
   #cache = new Map()
@@ -13,38 +12,17 @@ export class Logger {
   constructor(prefix = 'iplog') {
     this.#debugPulse = Debug(prefix)
   }
-  on(options = {}) {
-    this.#isOn = true
+  setOptions(options = {}) {
     this.#options = options
   }
-  off() {
-    this.#isOn = false
-  }
   isOn() {
-    this.#isOn && this.#debugPulse.enabled
-  }
-
-  interpulseAnnounce(interpulse) {
-    if (!isOn()) {
-      return
-    }
-    const formatted = this.interpulsePrint(interblock)
-    debugTran(formatted)
-  }
-
-  interpulsePrint(interpulse) {
-    assert(interpulse instanceof Interblock)
-    let msg = msg //chalk.yellow('LIGHT')
-    // let forPath = chalk.gray(getPath(interblock, cache))
-    let forPath = getPath(interpulse, cache)
-    const remote = interpulse.getRemote()
-    if (remote) {
-      // msg = chalk.yellow('HEAVY')
-    }
-    const formatted = interPrint(interpulse, msg, forPath, 'bgYellow', 'yellow')
-    return formatted
+    return this.#debugPulse.enabled
   }
   async pulse(pulse) {
+    this.#pulseCount++
+    if (!this.isOn()) {
+      return
+    }
     assert(pulse instanceof Pulse)
     const chainId = pulse.getAddress().getChainId()
     const latest = this.#cache.get(chainId)
@@ -54,9 +32,6 @@ export class Logger {
       return
     }
     this.#insertPulse(pulse)
-    if (!this.isOn) {
-      return
-    }
     const path = await this.#getPath(pulse)
     const formatted = await pulsePrint(
       pulse,
@@ -77,18 +52,22 @@ export class Logger {
     if (!latest) {
       this.#cache.set(chainId, { cid })
       this.#chainCount++ // TODO decrement on delete chain
-      this.#pulseCount++
       return
     }
     if (!latest.cid.equals(pulse.cid)) {
       this.#cache.set(chainId, { cid })
-      this.#pulseCount++
     }
   }
   async #getPath(pulse) {
     const unknown = '(unknown)'
     if (!this.#cache.has(pulse.getAddress().getChainId())) {
       return unknown
+    }
+    const parentChannel = await pulse.getNetwork().getParent()
+    if (parentChannel.address.isRoot()) {
+      return '/'
+    } else {
+      return '(not root)'
     }
     const path = []
     let child = pulse

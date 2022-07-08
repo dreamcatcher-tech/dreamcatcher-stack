@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`hooker loopback cleared immediately 1`] = `
+Channel {
+  "address": Address {},
+  "aliases": Array [],
+  "channelId": 0,
+  "rx": Rx {
+    "reducer": RxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 1,
+      "requests": Array [],
+      "requestsLength": 1,
+    },
+    "system": RxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 2,
+      "requests": Array [],
+      "requestsLength": 2,
+    },
+    "tip": PulseLink {},
+  },
+  "tx": Tx {
+    "precedent": PulseLink {},
+    "reducer": TxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 1,
+      "requests": Array [],
+      "requestsLength": 1,
+    },
+    "system": TxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 2,
+      "requests": Array [],
+      "requestsLength": 2,
+    },
+  },
+}
+`;

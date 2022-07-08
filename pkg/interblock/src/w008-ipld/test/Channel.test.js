@@ -28,7 +28,6 @@ describe('channel', () => {
       const reply = Reply.create()
       channel = channel.txRequest(request)
       assert(channel.address.isUnknown())
-      channel.dir()
       assert.throws(() => channel.txReducerReply(reply), 'Address is')
       const recrushed = await channel.crush()
       assert(recrushed)

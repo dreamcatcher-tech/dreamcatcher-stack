@@ -1,9 +1,9 @@
 import assert from 'assert-fast'
-import { openChildReducer, openChildReply, openPaths } from './openChild'
-import { uplinkReducer, uplinkReply } from './uplink'
+import { openChildReducer, openPaths } from './openChild'
+import { uplinkReducer } from './uplink'
 import { connect, connectReducer } from './connect'
-import { ping, pingReducer } from './ping'
-import { spawn, spawnReducer } from './spawn'
+import { pingReducer } from './ping'
+import { spawnReducer } from './spawn'
 import { install, deploy, deployReducer } from './deploy'
 import { getChannel, getChannelReducer } from './getChannel'
 import { genesisReducer } from './genesis'
@@ -32,8 +32,6 @@ const debug = Debug('interblock:dmz')
 
 const actions = {
   connect,
-  ping,
-  spawn,
   install,
   deploy,
   getChannel,

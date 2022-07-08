@@ -20,4 +20,15 @@ describe('engine', () => {
     const [reply] = io.tx.reducer.replies
     assert.strictEqual(reply.type, '@@RESOLVE')
   })
+  test.todo('two engines have different addresses')
+  describe('deleteChain', () => {
+    test.todo('removes a chain')
+    test.todo('removes the binary assosciated with a chain')
+    test.todo('removes binary that has changed twice')
+    test.todo('removes multiple blocks of a chain')
+    test.todo('chain killing rejects subscriptions')
+  })
+  describe('funds', () => {
+    test.todo('checks funds available')
+  })
 })

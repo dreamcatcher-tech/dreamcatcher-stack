@@ -99,6 +99,9 @@ export class Tx extends IpldStruct {
   isEmpty() {
     return this.system.isEmpty() && this.reducer.isEmpty()
   }
+  isSettled() {
+    return this.system.isSettled() && this.reducer.isSettled()
+  }
   isGenesisRequest() {
     const request = this.system.requests[0]
     const isGenesis =

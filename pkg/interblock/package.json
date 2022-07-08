@@ -109,8 +109,8 @@
       "src/w002-api",
       "src/w008-ipld",
       "src/w010-hooks",
-      "src/w210-engine",
-      "src/w023-system-reducer"
+      "src/w023-system-reducer",
+      "src/w210-engine"
     ]
   },
   "wallaby": {

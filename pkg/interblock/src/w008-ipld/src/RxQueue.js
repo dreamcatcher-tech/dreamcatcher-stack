@@ -27,12 +27,14 @@ export class RxQueue extends TxQueue {
     for (const promised of q.promisedReplies) {
       promisedReplies = [...promisedReplies, promised]
     }
+    const { promisedRequestIds } = q
     return this.setMap({
       requests,
       requestsLength,
       replies,
       repliesLength,
       promisedReplies,
+      promisedRequestIds,
     })
   }
   rxRequest(channelId, stream) {

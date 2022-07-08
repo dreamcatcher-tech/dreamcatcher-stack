@@ -27,13 +27,10 @@ export class Rx extends IpldStruct {
     })
   }
   isEmpty() {
-    // empty means that both trackers both match the tip
-    if (!this.tip) {
-      assert(this.system.isEmpty())
-      assert(this.reducer.isEmpty())
-      return true
-    }
     return this.system.isEmpty() && this.reducer.isEmpty()
+  }
+  isSettled() {
+    return this.system.isSettled() && this.reducer.isSettled()
   }
   addTip(interpulse) {
     assert(interpulse instanceof Interpulse)

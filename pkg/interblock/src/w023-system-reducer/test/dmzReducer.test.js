@@ -12,7 +12,7 @@ describe('dmzReducer', () => {
       const reducer = async (request) => {
         debug(`reducer %o`, request)
         if (request.type === 'TEST_SPAWN') {
-          await interchain(actions.spawn('child1'))
+          await interchain(Request.createSpawn('child1'))
           const result = await interchain('PING', { test: 'ping' }, 'child1')
           debug(`result`, result)
           return { test: true }
@@ -34,7 +34,7 @@ describe('dmzReducer', () => {
       const reducer = async (request) => {
         debug(`reducer %o`, request)
         if (request.type === 'TEST_SPAWN') {
-          interchain(actions.spawn('child1'))
+          interchain(Request.createSpawn('child1'))
           const result = await interchain('PING', { test: 'ping' }, 'child1')
           debug(`result`, result)
         }
@@ -48,6 +48,11 @@ describe('dmzReducer', () => {
       await expect(engine.pierce(request)).rejects.toThrow(msg)
       assert.strictEqual(engine.logger.pulseCount, 5)
     })
+    test('system ping', async () => {
+      const engine = await Engine.createCI()
+      const result = await engine.pierce(Request.createPing('test'))
+      assert.deepEqual(result, { string: 'test' })
+    })
     test.todo('spawn uses hash for seeding inside action')
   })
   describe('openPaths', () => {
@@ -59,5 +64,11 @@ describe('dmzReducer', () => {
   })
   describe('uplink', () => {
     test.todo('multiple requests from same chain result in single uplink')
+  })
+  describe('connect', () => {
+    test.todo('connect on existing is the same as move')
+    test.todo('connect resolves an address without purging queued actions')
+    test.todo('connect on existing unknown transmits all queued actions')
+    test.todo('connect on operational channel throws')
   })
 })

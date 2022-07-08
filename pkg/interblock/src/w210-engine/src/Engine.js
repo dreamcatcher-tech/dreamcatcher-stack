@@ -233,7 +233,8 @@ export class Engine {
     const { dmz } = soft.provenance
     assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
 
-    const requestId = dmz.network.getNextIoRequestId(request)
+    const [network, requestId] = await dmz.network.pierceIo(request)
+    soft = soft.setNetwork(network)
     const tracker = { requestId }
     const promise = new Promise((resolve, reject) => {
       tracker.resolve = resolve
@@ -241,8 +242,6 @@ export class Engine {
     })
     this.#promises.add(tracker)
 
-    const network = await dmz.network.pierceIo(request)
-    soft = soft.setNetwork(network)
     // TODO retry if multithread or multi validator and fail
     await this.#hints.softAnnounce(soft)
 
@@ -259,6 +258,7 @@ export class Engine {
     if (!tx.isEmpty()) {
       for (const tracker of this.#promises) {
         const { stream, requestIndex } = tracker.requestId
+        debug(tracker)
         // see if the replies contain a settle
         if (tx[stream].hasReply(requestIndex)) {
           const reply = tx[stream].getReply(requestIndex)
