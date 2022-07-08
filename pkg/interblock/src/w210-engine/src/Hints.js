@@ -1,14 +1,5 @@
 import assert from 'assert-fast'
-import {
-  Provenance,
-  Keypair,
-  Address,
-  Pulse,
-  PulseLink,
-  State,
-  RxRequest,
-  AsyncTrail,
-} from '../../w008-ipld'
+import { Address, Pulse, PulseLink } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Hints')
 class MockPubsub {
@@ -142,8 +133,8 @@ export class Hints {
     debug(`softAnnounce`, address)
     this.#mockSoftLatestDht.set(address.getChainId(), softpulse)
     // TODO when multivalidator, trigger increase and seek
-    if (this.#softSubscriber) {
-      await this.#softSubscriber(address)
+    if (this.#poolSubscriber) {
+      await this.#poolSubscriber(address)
     }
   }
   async softRemove(address) {
@@ -152,10 +143,10 @@ export class Hints {
     assert(await this.#mockSoftLatestDht.has(chainId))
     await this.#mockSoftLatestDht.delete(chainId)
   }
-  #softSubscriber
-  softSubscribe(callback) {
+  #poolSubscriber
+  poolSubscribe(callback) {
     // to get notified when the pool updates, subscribe to this function
-    assert(!this.#softSubscriber)
-    this.#softSubscriber = callback
+    assert(!this.#poolSubscriber)
+    this.#poolSubscriber = callback
   }
 }

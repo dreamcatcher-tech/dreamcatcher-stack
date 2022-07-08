@@ -15,7 +15,7 @@ describe('pierce', () => {
     const io = await network.getIo()
     assert.strictEqual(io.tx.system.replies.length, 1)
   })
-  test('multiple simultaneous pings maintain order', async () => {
+  test.only('multiple simultaneous pings maintain order', async () => {
     const engine = await Engine.createCI()
     const p1 = engine.pierce(Request.createPing('ping1'))
     const p2 = engine.pierce(Request.createPing('ping2'))

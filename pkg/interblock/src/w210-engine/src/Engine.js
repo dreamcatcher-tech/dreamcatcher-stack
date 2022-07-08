@@ -9,7 +9,8 @@ import {
   Interpulse,
 } from '../../w008-ipld'
 import { reducer } from './reducer'
-import { Isolate, Crypto, Endurance, Scale } from './Services'
+import { Isolate, Endurance, Scale } from './Services'
+import { Crypto } from './Crypto'
 import { Hints } from './Hints'
 const debug = Debug('interblock:engine')
 /**
@@ -61,6 +62,23 @@ export class Engine {
     assert.strictEqual(typeof overloads, 'object')
     this.#isolate.overload(overloads)
   }
+  /**
+   * when an interpulse event is received:
+   *    it is already vetted, so know it is valid
+   *    get the pool, and attempt to fit it into the pool
+   *    if it does not fit, search its precedents until we find one that fits
+   *    wait until we have lock on the chain
+   *    modify the pool
+   *    send a pool event
+   *
+   * when a pool event is received:
+   *    wait until we have lock on the chain
+   *      we might already have it from the interpulse subscription
+   *    ? ensure the pool is sane based on the latest pulse ?
+   *
+   * when a pulse event is received:
+   *    update the pool storage
+   */
   async #init(CI) {
     // check if a base exists already, if so, get the latest block fully
     const { self } = await this.#hints
@@ -83,9 +101,9 @@ export class Engine {
     this.#hints.self = this.#address
     this.#latest = base
     await this.#endurance.endure(base)
-    this.#hints.softSubscribe((address) => {
+    this.#hints.poolSubscribe((address) => {
       assert(address instanceof Address)
-      debug(`softSubscribe`, address)
+      debug(`poolSubscribe`, address)
       // check if anything transmitted to io
       // if replies were sent, walk the whole lot, using *rx()
       return this.#increase(address)
@@ -97,6 +115,7 @@ export class Engine {
     this.#hints.pulseSubscribe((pulse) => {
       assert(pulse instanceof Pulse)
       debug(`pulseSubscribe`, pulse.getAddress())
+      // TODO recalculate the pool, store this pulse
     })
     await this.#hints.pulseAnnounce(base)
   }
@@ -148,28 +167,23 @@ export class Engine {
     return this.#hints.softAnnounce(pool)
   }
   async #increase(address) {
-    // given a particular softpulse, attempt to advance it into a block
-    // gain lock on it, or just notify the watchdog that you tried
-    // process as many actions as possible before run out of resource
-    // from the execution, create a new block
-    // perform all notification requirements, or scale them out to others
     // TODO should return a pulselink, not a pulse
-    let softpulse = await this.#hints.softLatest(address)
-    if (!softpulse) {
+    let pool = await this.#hints.softLatest(address)
+    if (!pool) {
       debug(`no softpulse found`)
       return
     }
-    assert(softpulse instanceof Pulse)
-    assert(softpulse.getNetwork().channels.rxs.length)
+    assert(pool instanceof Pulse)
+    assert(pool.getNetwork().channels.rxs.length)
 
-    const lock = await this.#crypto.lock(softpulse)
-    await this.#scale.watchdog(softpulse)
+    const lock = await this.#crypto.lock(address)
+    await this.#scale.watchdog(pool)
 
-    softpulse = await this.#reducer(softpulse)
-    const provenance = await softpulse.provenance.crush()
-    const [publicKey, signature] = await lock.sign(provenance)
-    softpulse = softpulse.addSignature(publicKey, signature)
-    const pulse = await softpulse.crush()
+    pool = await this.#reducer(pool)
+    const provenance = await pool.provenance.crush()
+    const signature = await lock.sign(provenance)
+    pool = pool.addSignature(lock.publicKey, signature)
+    const pulse = await pool.crush()
 
     // then store the new blocks created
     await this.#endurance.endure(pulse)

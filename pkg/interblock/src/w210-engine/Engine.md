@@ -1,31 +1,34 @@
-Executions are the condensation of the effect pool
-and interblock pool into new blocks, and/or new
-broadcasts of existing blocks.
+## Overview
 
-Execution primarily deals with the DMZ against a reducer,
-the execution of which is the same in all three modes: 1. proposing 2. validating 3. witnessing
+The purpose of the Engine is to execute and coordinate all possible chain behaviours that are valid. Behaviours include: merging, forking, consensus conflicts, verification, multi chain interaction, versioning, covenant upgrades
 
-Execution secondarily deals with the running of side
-effects. This is because the loading of a covenant is
-the same for block making as it is for effects.
+The Engine has 3 types of event that it can process:
 
-The execution environment is the only place that malicious
-3rd party code can damage the system.
+1. Interpulse updates - new interpulse for a chain we validate has occured
+1. Pool updates - where there is a new pool for a chain
+1. Pulse updates - a new Pulse as been formed
 
-Execution forms the metrology toolkit, which tests the
-interaction of the execution with the models, across all
-possible chain behaviours that are valid. Behaviours include:
-merging, forking, consensus conflicts, verification
-multi chain interaction, versioning, covenant upgrades
+The Engine operates in local mode by default, meaning that it uses javascripts single threaded nature to guarantee locks. The engine can be connected to a hints service, which does the job of sharing the work of this engine with other engines, and can sometimes trigger the 3 engine events out of turn because they were caused externally. Interpulse updates trigger a pool update which triggers a pulse update. Pool updates trigger a Pulse update. Pulse updates trigger a pool update as the pool need to be reconciled with the new Pulse.
 
-The FSMs are for running these same tools at scale, with network,
-in multithread hostile environments, with permanent storage,
-but. the logic they use are the execution functions only.
+Pools are used to propose the next pulse, with a Pool update being used to send round something with your signature on it
 
-## Ongoing Monitoring
+## Pierce
 
-The Engine controls active monitoring of what the latest block is, and it undertakes to resolve the hints it gets about there being new interpulses available for it to process.
+Pierce is the means by which external Requests and Replies enter into chainland. Pierce is considered a form of pool update.
 
-This service is not started by default, must be switched on, and must also be shutdown to conclude testing.
+## Subscriptions
 
-If the service is not turned on, then the engine operates in local mode only. In local mode it can have some activity injected into it, and it responds to its own generated events and piercings, but that is all. The service is the network.
+Clients will normally subscribe to Pulse updates. Validators will always subscribe to Interpulse updates, and in a multivalidator group, will also subscribe to Pool updates.
+
+## TODO
+
+Engines operate in one of four roles relative to a given chain:
+
+1. proposing
+2. validating
+3. witnessing
+4. consuming
+
+## Effects
+
+Execution secondarily deals with the running of side effects. This is because the loading of a covenant is the same for block making as it is for effects.

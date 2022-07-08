@@ -15,11 +15,12 @@ const debug = Debug('interblock:engine:services')
 export class Scale {
   // fires up more engine instances to form a distributed engine
   // in a trusted environment such as multicore cpu or aws lambda
-  watchdog(pulse) {
+  watchdog(lock) {
     // notify the watchdog whenever lock is aquired, or lock was taken
     // watchdog is responsible for continuity of operations.
     // may be superseded by running multiple engines
     debug('watchdog')
+    // TODO watchdog and lock should be the same
   }
 }
 
@@ -71,42 +72,6 @@ export class Endurance {
   }
   async fade(pulse) {
     // remove the pulse from local storage whenever next convenience arises
-  }
-}
-class CryptoLock {
-  #keypair
-  #softpulse
-  static async create(softpulse, keypair) {
-    assert(softpulse instanceof Pulse)
-    assert(softpulse.isModified())
-    const instance = new this()
-    instance.#keypair = keypair
-    instance.#softpulse = softpulse
-    return instance
-  }
-  release(pulse) {
-    // must be a signed pulse
-    debug(`released`, pulse.getAddress(), pulse.getPulseLink())
-  }
-  async sign(provenance) {
-    assert(provenance instanceof Provenance)
-    // verify this is the natural successor of the lock currently held
-    debug('sign', provenance.address)
-    const signature = await this.#keypair.sign(provenance)
-    return [this.#keypair.publicKey, signature]
-  }
-}
-export class Crypto {
-  #keypair
-  constructor(keypair = Keypair.createCI()) {
-    this.#keypair = keypair
-  }
-  lock(softpulse) {
-    debug('lock')
-    // get the address out of the softpulse
-    // includes a new timestamp, and has the chainId in it
-    // timestamp is taken from the softpulse, and must be within delta
-    return CryptoLock.create(softpulse, this.#keypair)
   }
 }
 
