@@ -31,6 +31,9 @@ export class CryptoLock {
     debug(`release`)
     this.#resolve()
   }
+  isValid() {
+    return true // TODO expire based on timestamp
+  }
   async sign(provenance) {
     assert(provenance instanceof Provenance)
     assert(provenance.address.equals(this.#address))

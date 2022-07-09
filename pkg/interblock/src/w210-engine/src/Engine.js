@@ -10,7 +10,7 @@ import {
 } from '../../w008-ipld'
 import { reducer } from './reducer'
 import { Isolate, Endurance, Scale } from './Services'
-import { Crypto } from './Crypto'
+import { Crypto, CryptoLock } from './Crypto'
 import { Hints } from './Hints'
 const debug = Debug('interblock:engine')
 /**
@@ -119,42 +119,35 @@ export class Engine {
     })
     await this.#hints.pulseAnnounce(base)
   }
-  async #interpulse(target, source, pulselink) {
+  async #interpulse(target, source, pulse) {
     // gets hinted that a chain has updated, so begins seeking confirmation
     // looks up what chains it is hosting, and gets what chains are subscribed ?
     assert(target instanceof Address)
     assert(target.isRemote())
     assert(source instanceof Address)
     assert(source.isRemote())
-    assert(pulselink instanceof PulseLink)
-    debug(`interpulse hint received`, target, source, pulselink)
+    assert(pulse instanceof Pulse)
+    debug(`interpulse hint received`, target, source, pulse)
 
-    // go get the remote pulselink
-    const sourcePulse = await this.#endurance.recoverPulse(pulselink)
-    const interpulse = Interpulse.extract(sourcePulse, target)
-    // TODO walk backwards if this interpulse is too far forwards
-
+    const interpulse = Interpulse.extract(pulse, target)
+    // TODO get the softpulse and see if we are still relevant ?
+    // TODO insert a queue to capture interpulses before block making
+    const lock = await this.#crypto.lock(target)
     if (interpulse.tx.isGenesisRequest()) {
       const spawnOptions = interpulse.tx.getGenesisSpawnOptions()
-      const genesis = await sourcePulse.deriveChildGenesis(spawnOptions)
+      const genesis = await pulse.deriveChildGenesis(spawnOptions)
       await this.#endurance.endure(genesis)
       await this.#hints.pulseAnnounce(genesis)
       debug(`genesis endured`, genesis.getAddress())
-      let poolWithParent = await genesis.generateSoftPulse(sourcePulse)
+      // TODO ? make a unified way to fetch the latest pool item ?
+      // pools are always processed as soon as they are modified
+      let poolWithParent = await genesis.generateSoftPulse(pulse)
       poolWithParent = await poolWithParent.ingestInterpulse(interpulse)
-      return await this.#hints.softAnnounce(poolWithParent)
+      await this.#hints.poolAnnounce(poolWithParent)
+      return this.#increase(poolWithParent, lock)
     }
 
-    // TODO this should use pulselinks, or some other reference
-    let pool = await this.#hints.softLatest(target)
-    /**
-     * How can a softpulse be updated while pulse is being executed upon ?
-     * How can it be reset once a new pulse is made, and no modifications have been made ?
-     * When would it ever happen ?
-     * How are multiple interpulse hints handled while still blocking ?
-     *
-     * locking should be done with an array or some other primitive
-     */
+    let pool = await this.#hints.poolLatest(target)
     if (pool) {
       assert(pool instanceof Pulse)
     } else {
@@ -164,19 +157,14 @@ export class Engine {
       pool = await pulse.generateSoftPulse()
     }
     pool = await pool.ingestInterpulse(interpulse)
-    return this.#hints.softAnnounce(pool)
+    await this.#hints.poolAnnounce(pool)
+    return this.#increase(pool, lock)
   }
-  async #increase(address) {
-    // TODO should return a pulselink, not a pulse
-    let pool = await this.#hints.softLatest(address)
-    if (!pool) {
-      debug(`no softpulse found`)
-      return
-    }
+  async #increase(pool, lock) {
     assert(pool instanceof Pulse)
     assert(pool.getNetwork().channels.rxs.length)
-
-    const lock = await this.#crypto.lock(address)
+    assert(lock instanceof CryptoLock)
+    assert(lock.isValid())
     await this.#scale.watchdog(pool)
 
     pool = await this.#reducer(pool)
@@ -185,16 +173,13 @@ export class Engine {
     pool = pool.addSignature(lock.publicKey, signature)
     const pulse = await pool.crush()
 
-    // then store the new blocks created
     await this.#endurance.endure(pulse)
     await this.#hints.pulseAnnounce(pulse)
     await this.#hints.softRemove(pulse.getAddress())
     // TODO update all the subscriptions, including the pierceTracker
     await this.#checkPierceTracker(pulse) // but should be subscription based
-    // then send out all the transmissions
     await this.#transmit(pulse)
-    // release the lock
-    await lock.release(pulse)
+    await lock.release()
   }
   async #reducer(softpulse) {
     assert(softpulse instanceof Pulse)
@@ -206,59 +191,78 @@ export class Engine {
   async #transmit(pulse) {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
-    const pulselink = pulse.getPulseLink()
     const network = pulse.getNetwork()
     for (const channelId of network.channels.txs) {
       if (channelId === Network.FIXED_IDS.IO) {
+        // TODO could call pierceTracker here ?
         continue
       }
       const channel = await network.channels.getChannel(channelId)
-      const { address, tx } = channel
+      const { address } = channel
       assert(address.isRemote())
       const target = address
       const source = pulse.getAddress()
-      this.#hints.interpulseAnnounce(target, source, pulselink)
+      this.#hints.interpulseAnnounce(target, source, pulse)
+      // TODO check if we are the validator, else rely on announce
+      this.#interpulse(target, source, pulse)
     }
   }
   subscribe(callback) {
     assert.strictEqual(typeof callback, 'function')
     // TODO gets called each time a new block is made
   }
+  #pierceLocks = new Map()
   async pierce(request, address = this.#address) {
     // the origin of external stimulus across all engines
     // return a promise that resolves when the promise returns AND
     // the engine has settled
     assert(address instanceof Address)
+    assert(address.isRemote())
     assert(request instanceof Request)
+    debug(`pierce`, request.type, address)
+    const chainId = address.getChainId()
+    const tracker = { request }
+    const promise = new Promise((resolve, reject) =>
+      Object.assign(tracker, { resolve, reject })
+    )
+    if (this.#pierceLocks.has(chainId)) {
+      const pierceQueue = this.#pierceLocks.get(chainId)
+      pierceQueue.push(tracker)
+      return promise
+    }
+    const pierceQueue = [tracker]
+    this.#pierceLocks.set(chainId, pierceQueue)
+
+    const lock = await this.#crypto.lock(address)
 
     // get the latest softpulse from the dht
     // repeatedly attempt to insert the pierce
-    let pulselink = await this.#hints.softLatest(address)
+    let pulselink = await this.#hints.poolLatest(address)
     if (!pulselink) {
       pulselink = await this.#hints.pulseLatest(address)
     }
     assert(pulselink instanceof PulseLink, `No chain found: ${address}`)
-    let soft = await this.#endurance.recoverPulse(pulselink)
-    assert(soft instanceof Pulse)
-    assert(address.equals(soft.getAddress()))
-    if (soft.isVerified()) {
-      soft = await soft.generateSoftPulse()
+    let pool = await this.#endurance.recoverPulse(pulselink)
+    assert(pool instanceof Pulse)
+    assert(address.equals(pool.getAddress()))
+    if (pool.isVerified()) {
+      pool = await pool.generateSoftPulse()
     }
-    const { dmz } = soft.provenance
+    const { dmz } = pool.provenance
     assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
-
-    const [network, requestId] = await dmz.network.pierceIo(request)
-    soft = soft.setNetwork(network)
-    const tracker = { requestId }
-    const promise = new Promise((resolve, reject) => {
-      tracker.resolve = resolve
-      tracker.reject = reject
-    })
-    this.#promises.add(tracker)
-
-    // TODO retry if multithread or multi validator and fail
-    await this.#hints.softAnnounce(soft)
-
+    while (pierceQueue.length) {
+      debug(`pierceQueue.length`, pierceQueue.length)
+      const tracker = pierceQueue.shift()
+      const { request } = tracker
+      const [network, requestId] = await pool.getNetwork().pierceIo(request)
+      pool = pool.setNetwork(network)
+      tracker.requestId = requestId
+      delete tracker.request
+      this.#promises.add(tracker)
+    }
+    this.#pierceLocks.delete(chainId)
+    await this.#hints.poolAnnounce(pool)
+    this.#increase(pool, lock)
     return promise
   }
   #promises = new Set()

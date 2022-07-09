@@ -125,14 +125,12 @@ export class Network extends IpldStruct {
     const { rx } = io
     let next = this
     if (!rx.isEmpty()) {
-      // TODO expand the tip but do not decrease the tail
-      // if the tip has increased, increase the current piercings key
-      // if the tail has decreased, do nothing
-      // ensure these things don't happen at once
-
-      // if increase tip, must keep tail the same
-      // if decrause tail, must keep tip the same
-      next = next.setMap({ piercings: rx })
+      let { piercings = rx } = next
+      let { system, reducer } = piercings
+      system = system.expandPiercings(rx.system)
+      reducer = reducer.expandPiercings(rx.reducer)
+      piercings = piercings.setMap({ system, reducer })
+      next = next.setMap({ piercings })
     }
     const channels = await next.channels.updateChannel(io)
     return next.setMap({ channels })
@@ -187,7 +185,6 @@ export class Network extends IpldStruct {
     const channelId = await this.uplinks.get(address)
     return await this.channels.getChannel(channelId)
   }
-
   async resolveDownlink(path, address) {
     assert.strictEqual(typeof path, 'string')
     assert(path)

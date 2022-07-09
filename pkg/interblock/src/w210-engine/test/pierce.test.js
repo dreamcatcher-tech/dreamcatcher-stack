@@ -3,7 +3,6 @@ import { Engine } from '..'
 import Debug from 'debug'
 import { Request } from '../../w008-ipld'
 const debug = Debug('interblock:tests:pierce')
-Debug.enable()
 
 describe('pierce', () => {
   test('do not txInterblocks to .@@io channel', async () => {
@@ -15,15 +14,10 @@ describe('pierce', () => {
     const io = await network.getIo()
     assert.strictEqual(io.tx.system.replies.length, 1)
   })
-  test.only('multiple simultaneous pings maintain order', async () => {
+  test('multiple simultaneous pings maintain order', async () => {
     const engine = await Engine.createCI()
     const p1 = engine.pierce(Request.createPing('ping1'))
     const p2 = engine.pierce(Request.createPing('ping2'))
-
-    // problem is locking the soft update, while buffering
-    // we need a softlock, with buffer
-
-    // this buffer is only for piercings and interpulses
     const results = await Promise.all([p1, p2])
     assert.deepEqual(results[0], { string: 'ping1' })
     assert.deepEqual(results[1], { string: 'ping2' })

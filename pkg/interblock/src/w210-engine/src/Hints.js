@@ -98,44 +98,38 @@ export class Hints {
    * if all remotes are within the same chaincomplex, do not announce
    * if the foreign chain has access to the approot, do not announce
    */
-  async interpulseAnnounce(target, source, pulselink) {
+  async interpulseAnnounce(target, source, pulse) {
     assert(target instanceof Address)
     assert(target.isRemote())
     assert(source instanceof Address)
     assert(source.isRemote())
-    assert(pulselink instanceof PulseLink)
-    debug('interpulseAnnounce', target, source, pulselink)
+    assert(pulse instanceof Pulse)
+    debug('interpulseAnnounce', target, source, pulse)
     // TODO enforce approot announces only
     const key = `${target.getChainId()}_${source.getChainId()}`
-    this.#mockInterpulseDht.set(key, pulselink)
-    if (this.#interpulseSubscriber) {
-      await this.#interpulseSubscriber(target, source, pulselink)
-    }
+    this.#mockInterpulseDht.set(key, pulse.getPulseLink())
   }
   #interpulseSubscriber
   interpulseSubscribe(callback) {
     assert(!this.#interpulseSubscriber)
     this.#interpulseSubscriber = callback
   }
-  async softLatest(address) {
+  async poolLatest(address) {
     // the latest softpulse, or pool
     assert(address instanceof Address)
     const chainId = address.getChainId()
     const softPulselink = await this.#mockSoftLatestDht.get(chainId)
     return softPulselink
   }
-  async softAnnounce(softpulse) {
+  async poolAnnounce(pool) {
     // TODO WARNING ensure no conflict with the current soft pulse
-    assert(softpulse instanceof Pulse)
-    assert(softpulse.isModified())
-    assert(!softpulse.isVerified())
-    const address = softpulse.getAddress()
-    debug(`softAnnounce`, address)
-    this.#mockSoftLatestDht.set(address.getChainId(), softpulse)
+    assert(pool instanceof Pulse)
+    assert(pool.isModified())
+    assert(!pool.isVerified())
+    const address = pool.getAddress()
+    debug(`poolAnnounce`, address)
+    this.#mockSoftLatestDht.set(address.getChainId(), pool)
     // TODO when multivalidator, trigger increase and seek
-    if (this.#poolSubscriber) {
-      await this.#poolSubscriber(address)
-    }
   }
   async softRemove(address) {
     assert(address instanceof Address)

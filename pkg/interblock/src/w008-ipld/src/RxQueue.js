@@ -11,6 +11,19 @@ export class RxQueue extends TxQueue {
   blank() {
     throw new Error('cannot tx in rx')
   }
+  expandPiercings(q) {
+    assert(q instanceof RxQueue)
+    let { requests, requestsLength, replies, repliesLength } = this
+    if (requestsLength !== q.requestsLength) {
+      const difference = q.requestsLength - this.requestsLength
+      assert(difference >= 0)
+      requestsLength = q.requestsLength
+      const expansion = q.requests.slice(-1 * difference)
+      requests = [...requests, ...expansion]
+    }
+    // TODO do replies and promises
+    return this.setMap({ requests, requestsLength, replies, repliesLength })
+  }
   ingestTxQueue(q) {
     assert(q instanceof TxQueue)
     const priorRequestsLength = q.requestsLength - q.requests.length
