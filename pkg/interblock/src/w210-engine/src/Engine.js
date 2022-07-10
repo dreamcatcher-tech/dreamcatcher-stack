@@ -7,6 +7,7 @@ import {
   PulseLink,
   Request,
   Interpulse,
+  Channel,
 } from '../../w008-ipld'
 import { reducer } from './reducer'
 import { Isolate, Endurance, Scale } from './Services'
@@ -114,7 +115,8 @@ export class Engine {
     })
     this.#hints.pulseSubscribe((pulse) => {
       assert(pulse instanceof Pulse)
-      debug(`pulseSubscribe`, pulse.getAddress())
+      const address = pulse.getAddress()
+      debug(`pulseSubscribe`, address)
       // TODO recalculate the pool, store this pulse
     })
     await this.#hints.pulseAnnounce(base)
@@ -133,6 +135,7 @@ export class Engine {
     // TODO get the softpulse and see if we are still relevant ?
     // TODO insert a queue to capture interpulses before block making
     const lock = await this.#crypto.lock(target)
+    // TODO check that the change we want to make is still valid
     if (interpulse.tx.isGenesisRequest()) {
       const spawnOptions = interpulse.tx.getGenesisSpawnOptions()
       const genesis = await pulse.deriveChildGenesis(spawnOptions)
@@ -174,12 +177,14 @@ export class Engine {
     const pulse = await pool.crush()
 
     await this.#endurance.endure(pulse)
+    if (pulse.getAddress().equals(this.address)) {
+      this.#latest = pulse
+    }
     await this.#hints.pulseAnnounce(pulse)
     await this.#hints.softRemove(pulse.getAddress())
-    // TODO update all the subscriptions, including the pierceTracker
-    await this.#checkPierceTracker(pulse) // but should be subscription based
-    await this.#transmit(pulse)
+    // TODO update all the subscriptions
     await lock.release()
+    await this.#transmit(pulse)
   }
   async #reducer(softpulse) {
     assert(softpulse instanceof Pulse)
@@ -193,10 +198,6 @@ export class Engine {
     assert(pulse.isVerified())
     const network = pulse.getNetwork()
     for (const channelId of network.channels.txs) {
-      if (channelId === Network.FIXED_IDS.IO) {
-        // TODO could call pierceTracker here ?
-        continue
-      }
       const channel = await network.channels.getChannel(channelId)
       const { address } = channel
       assert(address.isRemote())
@@ -205,6 +206,10 @@ export class Engine {
       this.#hints.interpulseAnnounce(target, source, pulse)
       // TODO check if we are the validator, else rely on announce
       this.#interpulse(target, source, pulse)
+    }
+    if (pulse.getAddress().equals(this.address)) {
+      const io = await network.getIo()
+      await this.#checkPierceTracker(io, this.address)
     }
   }
   subscribe(callback) {
@@ -258,23 +263,30 @@ export class Engine {
       pool = pool.setNetwork(network)
       tracker.requestId = requestId
       delete tracker.request
-      this.#promises.add(tracker)
+      this.#piercePromises.add(tracker)
     }
     this.#pierceLocks.delete(chainId)
     await this.#hints.poolAnnounce(pool)
     this.#increase(pool, lock)
     return promise
   }
-  #promises = new Set()
-  async #checkPierceTracker(pulse) {
-    if (!pulse.getAddress().equals(this.#address)) {
-      return
-    }
-    this.#latest = pulse
-    // if the pulse has this address, then check if any piercings are resolved
-    const { tx } = await pulse.getNetwork().getIo()
+  /**
+   * If endurance was the reference store of things like latest, and pool
+   * And if it was controlled by having a lock to access it
+   * endure(pulse, lock)
+   * pool(pool, lock)
+   * But it has to be able to have ipfs plugged in to it easily
+   */
+  #piercePromises = new Set()
+  async #checkPierceTracker(io, address) {
+    assert(io instanceof Channel)
+    assert.strictEqual(io.channelId, Network.FIXED_IDS.IO)
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    assert(address.equals(this.address))
+    const { tx } = io
     if (!tx.isEmpty()) {
-      for (const tracker of this.#promises) {
+      for (const tracker of this.#piercePromises) {
         const { stream, requestIndex } = tracker.requestId
         debug(tracker)
         // see if the replies contain a settle
@@ -284,7 +296,7 @@ export class Engine {
           if (reply.isPromise()) {
             continue
           }
-          this.#promises.delete(tracker)
+          this.#piercePromises.delete(tracker)
           if (reply.isResolve()) {
             tracker.resolve(reply.payload)
           } else {
