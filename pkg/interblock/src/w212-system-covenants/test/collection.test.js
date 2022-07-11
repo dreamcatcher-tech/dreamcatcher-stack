@@ -1,6 +1,4 @@
 import { assert } from 'chai/index.mjs'
-import { effectorFactory } from '../../index.mjs'
-import { jest } from '@jest/globals'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
 Debug.enable()

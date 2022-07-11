@@ -159,6 +159,7 @@ export class Pulse extends IpldStruct {
   }
   setState(state) {
     assert(state instanceof State)
+
     return this.setMap({ provenance: { dmz: { state } } })
   }
   async addChild(alias, spawnOptions) {
@@ -173,13 +174,20 @@ export class Pulse extends IpldStruct {
       // TODO check if the alias exists in symlinks or hardlinks
       throw new Error(`child exists: ${alias}`)
     }
+    const config = await this.provenance.dmz.config.increaseEntropy()
+    const { entropy } = config
+    const next = this.setMap({ provenance: { dmz: { config } } })
+    spawnOptions = injectEntropy(spawnOptions, entropy)
     const pulse = await this.deriveChildGenesis(spawnOptions)
     const address = pulse.getAddress()
     network = await network.addChild(alias, address)
-    return this.setNetwork(network)
+    return next.setNetwork(network)
   }
   async deriveChildGenesis(spawnOptions) {
     assert.strictEqual(typeof spawnOptions, 'object')
+    const { entropy } = spawnOptions.config
+    assert.strictEqual(typeof entropy, 'string')
+    assert.strictEqual(entropy.length, 46)
     const { timestamp } = this.provenance.dmz
     const dmz = Dmz.create({ ...spawnOptions, timestamp })
     // TODO what if the validators change during this block creation ?
@@ -187,6 +195,12 @@ export class Pulse extends IpldStruct {
     const pulse = await Pulse.create(genesis)
     return pulse
   }
+}
+const injectEntropy = (spawnOptions, entropy) => {
+  let { config = {} } = spawnOptions
+  config = { ...config, entropy }
+  spawnOptions = { ...spawnOptions, config }
+  return spawnOptions
 }
 
 const isFormatCorrect = (signature) => {

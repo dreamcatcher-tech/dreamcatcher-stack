@@ -79,7 +79,7 @@ export class State extends IpldInterface {
     next.#state = updatedState
     return next
   }
-  getState() {
+  toJS() {
     return this.#state
   }
 }

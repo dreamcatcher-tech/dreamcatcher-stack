@@ -2,8 +2,6 @@ import assert from 'assert-fast'
 // const faker from 'faker/locale/en')
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
-import * as dmzReducer from '../../w017-dmz-producer'
-import { CovenantId } from '../../w015-models'
 import { interchain, useBlocks } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:datum')
@@ -265,7 +263,6 @@ const actions = {
   unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
   setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
 }
-const covenantId = CovenantId.create('datum')
 
 export {
   actions,
@@ -274,6 +271,5 @@ export {
   demuxFormData,
   validateDatumTemplate,
   muxTemplateWithFormData,
-  covenantId,
   validateFormData,
 }

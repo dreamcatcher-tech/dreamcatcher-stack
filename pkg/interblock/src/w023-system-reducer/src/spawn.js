@@ -4,9 +4,7 @@ import { interchain } from '../../w002-api'
 import { Request } from '../../w008-ipld'
 const debug = Debug('interblock:dmz:spawn')
 
-const spawnReducer = async (request) => {
-  const { type, payload } = request
-  assert.strictEqual(type, '@@SPAWN')
+const spawnReducer = async (payload) => {
   assert.strictEqual(typeof payload, 'object')
 
   let { alias = '', spawnOptions } = payload
@@ -26,11 +24,18 @@ const spawnReducer = async (request) => {
   }
   assert.strictEqual(alias, addChildResult.alias)
   assert(alias, `alias error`)
-  debug(`spawn alias:`, alias)
+  const { chainId, entropy } = addChildResult
+  debug(`spawn alias:`, alias, entropy)
 
+  spawnOptions = injectEntropy(spawnOptions, entropy)
   const genesis = Request.create('@@GENESIS', { spawnOptions })
   await interchain(genesis, alias)
-  return addChildResult
+  return { alias, chainId }
 }
-
+const injectEntropy = (spawnOptions, entropy) => {
+  let { config = {} } = spawnOptions
+  config = { ...config, entropy }
+  spawnOptions = { ...spawnOptions, config }
+  return spawnOptions
+}
 export { spawnReducer }

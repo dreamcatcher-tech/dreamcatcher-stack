@@ -349,6 +349,12 @@ export class Network extends IpldStruct {
     if (fixeds.includes(path)) {
       return true
     }
+    if (path === '/') {
+      const parent = await this.getParent()
+      if (parent.address.isRoot()) {
+        return true
+      }
+    }
     if (await this.children.has(path)) {
       return true
     }
@@ -385,6 +391,11 @@ export class Network extends IpldStruct {
       return await this.getParent()
     } else if (path === '.@@io') {
       return await this.getIo()
+    } else if (path === '/') {
+      const parent = await this.getParent()
+      if (parent.address.isRoot()) {
+        return await this.getLoopback()
+      }
     }
 
     let hamt

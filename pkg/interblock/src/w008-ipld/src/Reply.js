@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import equals from 'fast-deep-equal'
 import { serializeError, deserializeError } from 'serialize-error'
-import { Request } from '.'
+import { Request, Pulse } from '.'
 
 export class Reply extends Request {
   static createPromise() {
@@ -13,6 +13,13 @@ export class Reply extends Request {
   }
   static createResolve(payload, binary) {
     return this.create('@@RESOLVE', payload, binary)
+  }
+  static createPulse(pulse) {
+    assert(pulse instanceof Pulse)
+    assert(pulse.isVerified())
+    const type = '@@RESOLVE'
+    const payload = { pulse }
+    return super.clone({ type, payload })
   }
   static create(type = '@@RESOLVE', payload = {}, binary) {
     if (type === '@@REJECT' && payload instanceof Error) {

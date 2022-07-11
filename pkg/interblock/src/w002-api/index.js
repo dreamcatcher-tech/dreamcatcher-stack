@@ -12,5 +12,6 @@ export const useState = (path = '.') => {
 }
 export const useBlocks = (path = '.') => {
   assert.strictEqual(typeof path, 'string')
+  assert(path)
   return interchain('@@USE_BLOCKS', { path })
 }

@@ -1,4 +1,7 @@
 import { IpldStruct } from './IpldStruct'
+import { sha256 } from 'multiformats/hashes/sha2'
+import { fromString as from } from 'uint8arrays/from-string'
+import { toString as to } from 'uint8arrays/to-string'
 /**
  type SideEffectsConfig struct {
     networkAccess [String]
@@ -36,5 +39,13 @@ export class Config extends IpldStruct {
   }
   assertLogic() {
     // TODO check that if no async, network is also disabled
+  }
+  async increaseEntropy() {
+    // TODO inject something unique to the block here, so cannot
+    // predict if you had a single example, such as the blockhash
+    let { entropy = '0123456789abcdef' } = this
+    const { bytes } = await sha256.digest(from(entropy, 'base64'))
+    entropy = to(bytes, 'base64')
+    return this.setMap({ entropy })
   }
 }

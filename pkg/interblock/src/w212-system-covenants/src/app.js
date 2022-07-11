@@ -3,8 +3,6 @@
  * Created by the installer based on a dpkg
  */
 
-import { CovenantId } from '../../w015-models'
-
 const reducer = (state = {}) => {
   return state
 }

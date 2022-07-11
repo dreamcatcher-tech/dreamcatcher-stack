@@ -3,10 +3,8 @@
  * exercise the entire system from within.
  */
 
-import { CovenantId } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:probe')
-const covenantId = CovenantId.create('probe')
 
 const initialState = {}
 const reducer = async (state = initialState, action) => {
@@ -21,4 +19,4 @@ const reducer = async (state = initialState, action) => {
 }
 const actions = {}
 
-export { reducer, actions, covenantId }
+export { reducer, actions }

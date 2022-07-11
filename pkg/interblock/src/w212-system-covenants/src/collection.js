@@ -1,11 +1,8 @@
 import assert from 'assert-fast'
 import * as datum from './datum'
 import { interchain } from '../../w002-api'
-import * as dmzReducer from '../../w017-dmz-producer'
-import { CovenantId } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
-const covenantId = CovenantId.create('collection')
 
 const {
   convertToTemplate,
@@ -139,4 +136,4 @@ const actions = {
   delete: () => ({ type: 'DELETE' }), // or can delete the child directly ?
 }
 
-export { reducer, actions, covenantId }
+export { reducer, actions }

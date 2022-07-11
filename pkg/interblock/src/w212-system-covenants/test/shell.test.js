@@ -1,13 +1,9 @@
 import chai, { assert } from 'chai/index.mjs'
-import chaiAsPromised from 'chai-as-promised'
 import posix from 'path-browserify'
 import { shell } from '..'
-import { jest } from '@jest/globals'
-import { metrologyFactory } from '../../w018-standard-engine'
 import Debug from 'debug'
+import { Engine } from '../../w210-engine'
 const debug = Debug('interblock:tests:shell')
-chai.use(chaiAsPromised)
-Debug.enable()
 
 describe('machine validation', () => {
   describe('state machine', () => {
@@ -29,29 +25,27 @@ describe('machine validation', () => {
   test.todo('coordinates with simultaneous path openings')
   test.todo('detects changes in filesystem')
   describe('cd', () => {
-    test('cd to valid nested path', async () => {
-      const base = await metrologyFactory('cd', { hyper: shell })
-      await base.spawn('child1')
-      base.enableLogging()
+    test.only('cd to valid nested path', async () => {
+      const engine = await Engine.createCI({ overloads: { root: shell } })
+      const addResult = await engine.pierce(shell.actions.add('child1'))
+      debug(addResult)
 
-      const cd = shell.actions.cd('child1')
-      const result = await base.pierce(cd)
-      assert.strictEqual(result.absolutePath, '/child1')
-      debug(`result`, result)
+      const cdAction = shell.actions.cd('child1')
+      const cdResult = await engine.pierce(cdAction)
+      assert.strictEqual(cdResult.absolutePath, '/child1')
+      debug(`result`, cdResult)
 
-      const context = base.getContext()
-      debug(`context:`, context)
-      const { wd } = await base.getContext()
+      const { wd } = engine.latest.getState().toJS()
       assert.strictEqual(wd, '/child1')
 
-      await base.pierce(shell.actions.add('nested1'))
+      await engine.pierce(shell.actions.add('nested1'))
       const cdNested = shell.actions.cd('nested1')
-      const nestedResult = await base.pierce(cdNested)
-      debug(`nestedResult`, nestedResult)
-      const { wd: wdNested } = await base.getContext()
-      assert.strictEqual(wdNested, '/child1/nested1')
 
-      await base.shutdown()
+      const nestedResult = await engine.pierce(cdNested)
+      debug(`nestedResult`, nestedResult)
+      const { wd: wdNested } = engine.latest.getState().toJS()
+      assert.strictEqual(wdNested, '/child1/nested1')
+      assert.strictEqual(engine.logger.pulseCount, 14)
     })
     test('cd errors on garbage path', async () => {
       const base = await metrologyFactory('e', { hyper: shell })

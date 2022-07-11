@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import posix from 'path-browserify'
 import {
   AsyncRequest,
   AsyncTrail,
@@ -8,12 +9,12 @@ import {
 } from '../../w008-ipld'
 import { IsolateContainer } from './Services'
 import { wrapReduce } from '../../w010-hooks'
-import { actions, reducer as systemReducer } from '../../w023-system-reducer'
+import { reducer as systemReducer } from '../../w023-system-reducer'
 
 import Debug from 'debug'
 const debug = Debug('interblock:engine:reducer')
 
-export const reducer = async (pulse, isolate) => {
+export const reducer = async (pulse, isolate, latest) => {
   assert(pulse instanceof Pulse)
   assert(pulse.isModified())
   assert(isolate instanceof IsolateContainer)
@@ -39,12 +40,12 @@ export const reducer = async (pulse, isolate) => {
   }
   const reduceWithPulse = async (trail) => {
     pulse = pulse.setNetwork(network).setPending(pending)
-    trail = trail.setMap({ pulse })
+    trail = trail.setMap({ pulse, latest })
     trail = await wrapReduce(trail, systemReducer)
     pulse = trail.pulse
     network = pulse.getNetwork()
+    trail = trail.delete('pulse').delete('latest')
     pending = pulse.getPending()
-    trail = trail.delete('pulse')
     return trail
   }
 
@@ -59,9 +60,10 @@ export const reducer = async (pulse, isolate) => {
       debug('reducer trail', trail.origin.request.type)
       trail = await isolate.reduce(trail)
     }
+    network = await transmitTrailReply(trail, network)
     const [nextTrail, nextNetwork] = await transmitTrailTxs(trail, network)
     trail = nextTrail
-    network = await transmitTrailReply(trail, nextNetwork)
+    network = nextNetwork
     pending = pending.updateTrail(trail)
   }
   // reassigns: pending, network, softpulse
@@ -138,13 +140,25 @@ const transmitTrailTxs = async (trail, network) => {
   assert(trail instanceof AsyncTrail)
   assert(network instanceof Network)
   const txs = []
+  const parent = await network.getParent()
+  const isRoot = parent.address.isRoot()
   for (const tx of trail.txs) {
     assert(tx instanceof AsyncRequest)
     assert(!tx.isSettled())
     assert(!tx.requestId)
     assert(tx.to)
-    const { request, to } = tx
+    let { request, to } = tx
     debug('tx request: %s to: %s', request.type, to)
+    to = posix.normalize(to)
+    if (to.startsWith('./')) {
+      to = to.substring(2)
+    }
+    if (isRoot && to.startsWith('/')) {
+      to = to.substring(1)
+    }
+    if (!to) {
+      to = '.'
+    }
 
     try {
       // resolve the name to a channelId

@@ -17,10 +17,8 @@
  *          hyper1
  *          hyper2
  */
-import { CovenantId } from '../../w015-models'
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:hyper')
-const covenantId = CovenantId.create('hyper')
 
 const initialState = {}
 const reducer = async (state = initialState, action) => {
@@ -35,4 +33,4 @@ const reducer = async (state = initialState, action) => {
 }
 const actions = {}
 
-export { reducer, actions, covenantId }
+export { reducer, actions }

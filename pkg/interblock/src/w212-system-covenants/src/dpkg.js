@@ -9,8 +9,6 @@
  */
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:dpkg')
-import { CovenantId } from '../../w015-models'
-const covenantId = CovenantId.create('dpkg')
 
 const reducer = async (state, action) => {
   // TODO verify the state against schema
@@ -33,4 +31,4 @@ const actions = {
   getInstaller: () => ({ type: 'GET_INSTALL' }),
 }
 
-export { reducer, actions, covenantId }
+export { reducer, actions }

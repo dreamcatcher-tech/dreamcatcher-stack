@@ -45,6 +45,9 @@ export class Request extends IpldStruct {
     '@@OPEN_CHILD',
     '@@DEPLOY',
     '@@INSTALL',
+    '@@GET_STATE',
+    '@@SET_STATE',
+    '@@USE_BLOCKS',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)

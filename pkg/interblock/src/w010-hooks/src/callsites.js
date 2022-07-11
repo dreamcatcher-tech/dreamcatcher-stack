@@ -60,7 +60,12 @@ const awaitActivity = async (result, id) => {
     if (isPending) {
       return trail.setTxs(txs)
     } else {
-      const reply = Reply.createResolve(result)
+      let reply
+      if (trail.origin.request.type === '@@USE_BLOCKS') {
+        reply = Reply.createPulse(result)
+      } else {
+        reply = Reply.createResolve(result)
+      }
       return trail.setTxs(txs).settleOrigin(reply)
     }
   } else {
@@ -140,7 +145,7 @@ const useState = async (path) => {
   assert.strictEqual(typeof path, 'string', `path must be a string`)
   assert(path, `path cannot be null`)
   const getState = Request.createGetState(path)
-  const state = await interchain(getState)
+  const { state } = await interchain(getState)
   const setState = (nextState) => {
     if (typeof nextState !== 'object') {
       throw new Error(`state must be an object, but was: ${typeof nextState}`)
@@ -179,5 +184,7 @@ export const usePulse = () => {
     assert.strictEqual(trail, invocation.trail)
     invocation.trail = trail.setMap({ pulse: nextPulse })
   }
-  return [pulse, setPulse]
+  const { latest } = trail
+  assert.strictEqual(typeof latest, 'function')
+  return [pulse, setPulse, latest]
 }

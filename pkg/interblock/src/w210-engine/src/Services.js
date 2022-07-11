@@ -51,10 +51,6 @@ export class Endurance {
     assert(this.#mockIpfs.has(pulselink.cid.toString()))
     return this.#mockIpfs.get(pulselink.cid.toString())
   }
-  async recoverInterpulse(pulselink, target) {
-    assert(pulselink instanceof PulseLink)
-    assert(target instanceof Address)
-  }
   async softEndure(pulse) {
     assert(pulse instanceof Pulse)
     assert(pulse.isModified())

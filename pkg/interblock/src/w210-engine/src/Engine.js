@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import Debug from 'debug'
+import posix from 'path-browserify'
 import {
   Network,
   Address,
@@ -13,6 +13,7 @@ import { reducer } from './reducer'
 import { Isolate, Endurance, Scale } from './Services'
 import { Crypto, CryptoLock } from './Crypto'
 import { Hints } from './Hints'
+import Debug from 'debug'
 const debug = Debug('interblock:engine')
 /**
  * The Engine of Permanence
@@ -48,6 +49,10 @@ export class Engine {
   }
   static async create(opts = {}) {
     const instance = new Engine(opts)
+    const { overloads } = opts
+    if (overloads) {
+      instance.overload(overloads)
+    }
     const { CI = false } = opts // make deterministic chain addresses
     await instance.#init(CI)
     return instance
@@ -101,7 +106,6 @@ export class Engine {
     this.#address = base.getAddress()
     this.#hints.self = this.#address
     this.#latest = base
-    await this.#endurance.endure(base)
     this.#hints.poolSubscribe((address) => {
       assert(address instanceof Address)
       debug(`poolSubscribe`, address)
@@ -119,6 +123,7 @@ export class Engine {
       debug(`pulseSubscribe`, address)
       // TODO recalculate the pool, store this pulse
     })
+    await this.#endurance.endure(base)
     await this.#hints.pulseAnnounce(base)
   }
   async #interpulse(target, source, pulse) {
@@ -191,7 +196,32 @@ export class Engine {
     assert(softpulse.isModified())
     const timeout = 2000 // TODO move to config
     const isolate = await this.#isolate.load(softpulse, timeout)
-    return reducer(softpulse, isolate)
+    const latest = (path) => this.#latestByPath(path)
+    return reducer(softpulse, isolate, latest)
+  }
+  async #latestByPath(path, rootAddress = this.#hints.self) {
+    // TODO allow remote roots
+    assert.strictEqual(typeof path, 'string')
+    assert(posix.isAbsolute(path))
+    assert(rootAddress instanceof Address)
+    debug('latestByPath', path)
+    // get the root pulse
+    let latestPulselink = await this.#hints.pulseLatest(rootAddress)
+    assert(latestPulselink instanceof PulseLink)
+    let latest = await this.#endurance.recoverPulse(latestPulselink)
+    const [, ...segments] = path.split('/') // discard the root
+    while (segments.length) {
+      const segment = segments.shift()
+      const channel = await latest.getNetwork().getChannel(segment)
+      const { address } = channel
+      if (!address.isRemote()) {
+        throw new Error(`segment invalid: ${segments[0]} of: ${path}`)
+      }
+      // TODO approot walk should use the precedent only
+      latestPulselink = await this.#hints.pulseLatest(address)
+      latest = await this.#endurance.recoverPulse(latestPulselink)
+    }
+    return latest
   }
   async #transmit(pulse) {
     assert(pulse instanceof Pulse)
