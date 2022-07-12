@@ -91,9 +91,9 @@ const reducer = async (request) => {
         debug(`latest`, absolutePath, pulse.getPulseLink())
         state = { ...state, wd: absolutePath }
         await setState(state)
-      } catch (e) {
-        debug(`changeDirectory error:`, e.message)
-        throw new Error(`Non existent pulsechain at: ${absolutePath}`)
+      } catch (error) {
+        debug(`changeDirectory error:`, error.message)
+        throw error
       }
       return { absolutePath }
     }

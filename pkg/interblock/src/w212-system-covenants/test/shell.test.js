@@ -14,7 +14,7 @@ describe('machine validation', () => {
       const cdPromise = engine.pierce(cd)
       const ls = shell.actions.ls('/')
       const lsPromise = engine.pierce(ls)
-      await new Promise((r) => setTimeout(r, 50))
+      await new Promise((r) => setTimeout(r, 10))
       const [cdResult, lsResult] = await Promise.all([cdPromise, lsPromise])
       assert.strictEqual(cdResult.absolutePath, '/child1')
       assert.strictEqual(Object.keys(lsResult.children).length, 4)

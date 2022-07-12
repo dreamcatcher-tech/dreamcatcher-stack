@@ -96,7 +96,7 @@ const pulseReducer = async (type, payload) => {
     case '@@SET_STATE': {
       const { state } = payload
       assert.strictEqual(typeof state, 'object')
-      const nextState = pulse.getState().update(state)
+      const nextState = pulse.getState().setMap(state)
       pulse = pulse.setState(nextState)
       setPulse(pulse)
       return
