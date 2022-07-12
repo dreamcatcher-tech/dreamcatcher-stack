@@ -8,7 +8,7 @@ describe('api', () => {
     test('basic', async () => {
       const reducer = async () => {
         let [state, setState] = await useState()
-        expect(state).toEqual({})
+        expect(state).toEqual({ init: true })
         await setState({ test: true })
         return { plain: true }
       }
@@ -20,11 +20,10 @@ describe('api', () => {
       let requestId = RequestId.createCI()
       get = get.setId(requestId)
       trail = trail.updateTxs([get])
-      const reply = Reply.createResolve()
+      const reply = Reply.createResolve({ state: { init: true } })
       let rxReply = RxReply.create(reply, requestId)
       trail = trail.settleTx(rxReply)
       trail = await wrapReduce(trail, reducer)
-
       assert(trail.isPending())
       let [set] = trail.txs
       assert.strictEqual(set.request.type, '@@SET_STATE')

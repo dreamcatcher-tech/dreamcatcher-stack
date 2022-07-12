@@ -14,6 +14,9 @@ import Debug from 'debug'
 
 const genesis = await Pulse.createCI()
 let pulse = await genesis.generateSoftPulse()
+const latest = () => {
+  throw new Error('not allowed during test')
+}
 
 describe('spawn', () => {
   test('basic', async () => {
@@ -26,7 +29,7 @@ describe('spawn', () => {
     assert.strictEqual(get.request.type, '@@ADD_CHILD')
     get = get.setId(requestId.next())
     trail = trail.updateTxs([get])
-    let local = AsyncTrail.createWithPulse(get, pulse)
+    let local = AsyncTrail.create(get).setMap({ pulse, latest })
     local = await wrapReduce(local, reducer)
     const rxReply = RxReply.create(local.reply, get.requestId)
     trail = trail.settleTx(rxReply)
@@ -52,7 +55,7 @@ describe('spawn', () => {
     let [get] = trail.txs
     get = get.setId(requestId.next())
     trail = trail.updateTxs([get])
-    let local = AsyncTrail.createWithPulse(get, pulse)
+    let local = AsyncTrail.create(get).setMap({ pulse, latest })
     local = await wrapReduce(local, reducer)
     const rxReply = RxReply.create(local.reply, get.requestId)
     trail = trail.settleTx(rxReply)

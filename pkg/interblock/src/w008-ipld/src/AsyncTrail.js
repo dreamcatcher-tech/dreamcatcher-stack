@@ -59,18 +59,6 @@ export class AsyncTrail extends IpldStruct {
     assert(origin instanceof RxRequest)
     return super.clone({ origin })
   }
-  static createWithPulse(origin, pulse) {
-    /** used when we need the response pattern, but want to make
-     * one time only synchronized changes to a state variable.
-     * If this mode is used, settles are disallowed, and txs
-     * are disallowed, as the prescence of these items means
-     * repeated execution will occur, which is counter to purpose
-     * of this function.
-     */
-    assert(origin instanceof RxRequest)
-    assert(pulse instanceof Pulse)
-    return super.clone({ origin, pulse })
-  }
   isSystem() {
     return this.origin.request.isSystem()
   }

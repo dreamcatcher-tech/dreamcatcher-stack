@@ -1,5 +1,4 @@
-import chai, { assert } from 'chai/index.mjs'
-import chaiAsPromised from 'chai-as-promised'
+import { assert } from 'chai/index.mjs'
 import { Engine } from '../src/Engine'
 import Debug from 'debug'
 import { interchain } from '../../w002-api'
@@ -21,12 +20,12 @@ describe('user covenants', () => {
     const root = {
       reducer: async (request) => {
         debug(`root request`, request)
-        const spawnOptions = { config: { covenant: 'child' } }
+        const spawnOptions = { config: { covenant: '/child' } }
         return await interchain(Request.createSpawn('testalias', spawnOptions))
       },
     }
-    const engine = await Engine.createCI()
-    engine.overload({ root, child })
+    const overloads = { root, '/child': child }
+    const engine = await Engine.createCI({ overloads })
     const result = await engine.pierce(Request.create('test'))
     assert(!unreachableReached)
     assert(!result.init)
@@ -46,12 +45,12 @@ describe('user covenants', () => {
     const root = {
       reducer: async (request) => {
         debug(`root request`, request)
-        const spawnOptions = { config: { covenant: 'child' } }
+        const spawnOptions = { config: { covenant: '/child' } }
         return await interchain(Request.createSpawn('testalias', spawnOptions))
       },
     }
-    const engine = await Engine.createCI()
-    engine.overload({ root, child })
+    const overloads = { root, '/child': child }
+    const engine = await Engine.createCI({ overloads })
     const request = Request.create('test')
     await expect(engine.pierce(request)).rejects.toThrow('@@INIT test')
     assert(!unreachableReached)

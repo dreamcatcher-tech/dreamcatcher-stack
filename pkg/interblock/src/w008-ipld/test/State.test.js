@@ -15,9 +15,9 @@ describe('state', () => {
     let resolver = (cid) => diff.get(cid.toString())
     let uncrushed = await State.uncrush(state.cid, resolver)
     assert(!state.isModified())
-    assert.deepEqual(state.getState(), uncrushed.getState())
+    assert.deepEqual(state.toJS(), uncrushed.toJS())
 
-    state = uncrushed.update({ some: { nested: 'data' } })
+    state = uncrushed.setMap({ some: { nested: 'data' } })
     assert(state.isModified())
     state = await state.crush()
     diff = state.getDiffBlocks()
@@ -25,7 +25,7 @@ describe('state', () => {
     resolver = (cid) => diff.get(cid.toString())
     uncrushed = await State.uncrush(state.cid, resolver)
     assert(!state.isModified())
-    assert.deepEqual(state.getState(), uncrushed.getState())
+    assert.deepEqual(state.toJS(), uncrushed.toJS())
   })
   test('no undefined state keys during serialize', () => {
     assert(State.create({ not: 'missing' }))

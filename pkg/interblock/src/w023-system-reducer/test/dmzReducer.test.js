@@ -1,7 +1,6 @@
 import { assert } from 'chai/index.mjs'
 import { interchain } from '../../w002-api'
 import { Request } from '../../w008-ipld'
-import { actions } from '..'
 import { Engine } from '../../w210-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
