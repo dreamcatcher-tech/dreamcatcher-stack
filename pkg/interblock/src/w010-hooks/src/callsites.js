@@ -61,7 +61,8 @@ const awaitActivity = async (result, id) => {
       return trail.setTxs(txs)
     } else {
       let reply
-      if (trail.origin.request.type === '@@USE_BLOCKS') {
+      if (trail.origin.request.isPulse()) {
+        assert(result instanceof Pulse)
         reply = Reply.createPulse(result)
       } else {
         reply = Reply.createResolve(result)

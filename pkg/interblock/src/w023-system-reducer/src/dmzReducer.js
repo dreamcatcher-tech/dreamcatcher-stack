@@ -1,23 +1,19 @@
 import assert from 'assert-fast'
 import { openChildReducer, openPaths } from './openChild'
 import { uplinkReducer } from './uplink'
-import { connect, connectReducer } from './connect'
+import { connectReducer } from './connect'
 import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
-import { install, deploy, deployReducer } from './deploy'
-import { getChannel, getChannelReducer } from './getChannel'
+import { installReducer } from './install'
+import { getChannelReducer } from './getChannel'
 import { genesisReducer } from './genesis'
 import { Address } from '../../w008-ipld'
 import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
+import posix from 'path-browserify'
 const debug = Debug('interblock:dmz')
-const actions = {
-  connect,
-  install,
-  deploy,
-  getChannel,
-}
+
 /**
  * DmzReducer is responsible for:
  *  1. altering the structure of the DMZ
@@ -58,8 +54,7 @@ const reducer = (request) => {
       // just default responding is enough to trigger lineage catchup
       break
     case '@@INSTALL': // user can connect with recursive deployment calls
-    case '@@DEPLOY':
-      return deployReducer(request)
+      return installReducer(payload)
     case '@@GET_CHAN':
       getChannelReducer(request)
       break
@@ -111,9 +106,28 @@ const pulseReducer = async (type, payload) => {
       const latestPulse = await latest(path)
       return latestPulse
     }
+    case '@@GET_COVENANT': {
+      const { path } = payload
+      let latestPulse = pulse
+      if (path !== '.') {
+        latestPulse = await latest(path)
+        // but need some way to walk blocks relatively ?
+      }
+      const { covenant } = latestPulse.provenance.dmz.config
+      assert.strictEqual(typeof covenant, 'string')
+      // TODO define covenant resolution algorithm better
+      let covenantPath = covenant
+      if (!posix.isAbsolute(covenantPath)) {
+        // TODO be precise about assumption this is a system covenant
+        covenantPath = '/system:/' + covenantPath
+      }
+      debug('covenantPath', covenantPath)
+      const covenantPulse = await latest(covenantPath)
+      return covenantPulse
+    }
     default:
       throw new Error(`Unrecognized type: ${type}`)
   }
 }
 
-export { actions, reducer, openPaths }
+export { reducer, openPaths }

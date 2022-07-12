@@ -3,6 +3,7 @@ import assert from 'assert-fast'
 import { interchain, useBlocks, useState } from '../../../w002-api'
 import Debug from 'debug'
 import { Pulse, Request } from '../../../w008-ipld'
+import { listChildren } from '../../../w023-system-reducer'
 const debug = Debug('interblock:system:shell')
 
 const reducer = async (request) => {
@@ -60,14 +61,15 @@ const reducer = async (request) => {
       return addActor
     }
     case 'LS': {
-      const { path } = event.payload
+      const { path } = payload
       assert.strictEqual(typeof path, 'string')
+      const [{ wd = '/' }] = await useState()
       const absPath = posix.resolve(wd, path)
       debug(`listActors`, absPath)
-
-      const block = await useBlocks(absPath)
-      const children = listChildren(block)
-      // TODO implement useCovenant to return an inert json object
+      const pulse = await useBlocks(absPath)
+      assert(pulse instanceof Pulse)
+      const children = await listChildren(pulse)
+      // TODO implement useCovenant to return an inert json object for actions
       // const covenant = await useCovenant(block)
 
       return { children }
@@ -84,7 +86,7 @@ const reducer = async (request) => {
       const absolutePath = posix.resolve(wd, path)
       debug(`changeDirectory`, absolutePath)
       try {
-        const { pulse } = await useBlocks(absolutePath)
+        const pulse = await useBlocks(absolutePath)
         assert(pulse instanceof Pulse)
         debug(`latest`, absolutePath, pulse.getPulseLink())
         state = { ...state, wd: absolutePath }
@@ -117,75 +119,30 @@ const reducer = async (request) => {
       return
     }
     case 'PUBLISH': {
-      // TODO make covenant resolution use dpkg system
-      // TODO support external registries
-      // TODO support building images, and displaying progress
       // TODO use npm pack to bundle a package up
-      // TODO verify that all covenants are available
-      const { name, registry } = event.payload
-      let { installer } = event.payload
-      if (!Object.keys(installer).length) {
-        debug(`making default installer`, name)
-        installer = { covenant: 'app' }
-      }
-      if (!installer.covenant) {
-        // TODO formalize how covenants and installers are specified
-        installer = { ...installer, covenant: 'app' }
-      }
-      debug(`publish: `, name)
-      const covenantId = CovenantId.create('dpkg')
-      const state = { installer }
-      // TODO add registry in 'to' field, rather than using shell as reg
-      await interchain(spawn(name, { covenantId, state }))
-      return { dpkgPath: name }
-    }
-    case 'INSTALL': {
-      const { dpkgPath, installPath } = event.payload
-      debug(`install from: %o to: %o`, dpkgPath, installPath)
-      const absDpkgPath = posix.resolve(wd, dpkgPath)
-      const absInstallPath = posix.resolve(wd, installPath)
-      // TODO consider a useState function to only return the state ?
-      const latest = await useBlocks(absDpkgPath)
-      const { installer } = latest.getState()
-
-      const absInstallDir = posix.dirname(absInstallPath)
-      try {
-        await useBlocks(absInstallDir) // check path exists
-      } catch (e) {
-        throw new Error(`Install directory invalid for: ${absInstallPath}`)
-      }
-
-      // TODO check schema matches installer schema, including not null for covenant
-      // TODO pull out everything that is part of DMZ except children
-      // TODO ? make a dedicated app root for each app, so we can control cleanup ?
+      // TODO support building images, and displaying progress
       // TODO verify that all covenants in installer are available
-      let { children, covenant, ...spawnOptions } = installer
-      // TODO unify how covenants are referred to
-      covenant = 'app'
-      debug(`installing with covenant: `, covenant)
-      const covenantId = CovenantId.create(covenant)
-      spawnOptions = { ...spawnOptions, covenantId }
-      const child = posix.basename(absInstallPath)
-      const spawnAction = spawn(child, spawnOptions)
-      interchain(spawnAction, absInstallDir)
-
-      debug(`beginning install`)
-      const installAction = install(installer)
-      const installResult = await interchain(installAction, absInstallPath)
-      debug(`installResult: `, installResult)
-      return installResult
+      const { name, path, installer } = payload
+      let target = path + '/' + name
+      let [{ wd = '/' }] = await useState()
+      target = posix.resolve(wd, target)
+      debug(`publish: ${name} to: ${path} as`, target)
+      const state = { name, installer }
+      const config = { covenant: 'covenant' }
+      const result = await interchain(actions.add(target, { config, state }))
+      debug(result)
+      return { path: target }
     }
     case 'CAT': {
-      // dump the contents of the chain at the given path
-      // if offline, can use the most recent data, but color code that it is stale
-      // TODO allow auto updating subscriptions, possibly with broadcast for state
-      // TODO may use external functions to fetch blocks, rather than in chainland ?
-      const { path } = event.payload
+      // TODO add flags to get the full pulse, or portions of the state
+      const { path } = payload
+      let [{ wd = '/' }] = await useState()
       const absolutePath = posix.resolve(wd, path)
       debug(`getState: `, absolutePath)
-      const { state } = await useBlocks(absolutePath)
+      const pulse = await useBlocks(absolutePath)
+      const state = pulse.getState().toJS()
       debug(`getState result: `, state)
-      return { state: state.toJS() }
+      return state
     }
     default: {
       throw new Error(`Unrecognized action: ${type}`)
@@ -247,11 +204,11 @@ const actions = {
       type: 'ADD',
       payload: { alias, spawnOptions },
     }),
-  ls: (path = '.') => ({
-    // can only list children of the current node
-    type: 'LS',
-    payload: { path },
-  }),
+  ls: (path = '.') =>
+    Request.create({
+      type: 'LS',
+      payload: { path },
+    }),
   rm: (path) => ({
     type: 'RM',
     payload: { path },
@@ -273,21 +230,23 @@ const actions = {
       payload: { action, to },
     }
   },
-  install: (dpkgPath, installPath) => ({
-    type: 'INSTALL',
-    payload: { dpkgPath, installPath },
-  }),
-  publish: (name, installer = {}, covenantId = {}, registry = '.') => ({
-    // TODO handle nested covenants ?
-    // TODO move to using a hardware path for covenant
-    // TODO remove install file, instead generate from loading covenant in isolation
-    type: 'PUBLISH',
-    payload: { name, installer, covenantId, registry },
-  }),
-  cat: (path = '.') => ({
-    type: 'CAT',
-    payload: { path },
-  }),
+  /**
+   * Many more options are possible, this is just the bare minimum to get operational
+   * @param {string} name Hint for consumers
+   * @param {object} installer Any required children and their covenants are named here
+   * @param {*} path Path to the publication chain.  You must have permission to update this chain.  If the path does not exist but the parent does, a new child will be created
+   * @returns
+   */
+  publish: (name, installer = {}, path = '.') =>
+    Request.create({
+      type: 'PUBLISH',
+      payload: { name, installer, path },
+    }),
+  cat: (path = '.') =>
+    Request.create({
+      type: 'CAT',
+      payload: { path },
+    }),
   //   MV: 'moveActor',
   //   LN: 'linkActor',
   //   LOGOUT: 'logout',

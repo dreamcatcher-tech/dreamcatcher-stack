@@ -48,9 +48,14 @@ export class Request extends IpldStruct {
     '@@GET_STATE',
     '@@SET_STATE',
     '@@USE_BLOCKS',
+    '@@GET_COVENANT',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
+  }
+  static PULSE_TYPES = ['@@USE_BLOCKS', '@@GET_COVENANT']
+  isPulse() {
+    return Request.PULSE_TYPES.includes(this.type)
   }
   static createGetState(path) {
     assert.strictEqual(typeof path, 'string')
@@ -79,5 +84,8 @@ export class Request extends IpldStruct {
       payload = { string: payload }
     }
     return this.create('@@PING', payload)
+  }
+  static createGetCovenantPulse(path = '.') {
+    return this.create('@@GET_COVENANT', { path })
   }
 }

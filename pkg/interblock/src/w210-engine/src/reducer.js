@@ -67,7 +67,7 @@ export const reducer = async (pulse, isolate, latest) => {
     pending = pending.updateTrail(trail)
   }
   // reassigns: pending, network, softpulse
-  while (network.channels.rxs.length && counter++ < 10) {
+  while (network.channels.rxs.length && counter++ < 10000) {
     /**
      * get system reply
      * if system reply

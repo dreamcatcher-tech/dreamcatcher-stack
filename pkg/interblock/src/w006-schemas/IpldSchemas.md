@@ -135,13 +135,13 @@ type Signatures [String]
 
 ## Covenant
 
-This is the most important part of the system in setting us apart from IPFS. This model is how we go from content addressable storage to content addressable execution. Covenants are how programmable behaviour is introduced to IPFS, approaching IPEX - the InterPlanetaryExecutable™.
+This is the most important part of the system offering enhancement over IPFS. This model is how we go from content addressable storage to content addressable execution. Covenants are how programmable behaviour is introduced to IPFS, approaching IPEX - the InterPlanetaryExecutable™.
 
-The Covenant system uses a PulseChain to represent an executable code package, using the chain data structure to capture revisions of the software. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod. A Covenant represents the executable piece of language specific code and its provenance. By way of parents running `repo` Covenants, the PulseChain may include hash links to the git repos that the code was generated from, strengthening the link between running code and committed code.
+The Covenant system uses a PulseChain to represent an executable code package, using the chain data structure to capture revisions of the software. This PulseChain may have children to represent subpackages, and may include forks, representing different flavours of release such as beta, dev, and prod. A Covenant represents the executable piece of language specific code and its provenance. By way of parents running `repo` Covenants, the PulseChain may include hash links to the git repos that the code was generated from, strengthening the link between running code and source code.
 
 To determine what packages to load, we need to be told what chainId to look for, and then which specific Pulse in that PulseChain contains the version we will be running. This determination requires a Covenant Resolution Strategy. In development mode, we override this strategy with developer supplied functions at runtime, to allow rapid feedback.
 
-To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the example below. System covenants are loaded from the chain that they publish from, the same as user supplied covenants, except we shortcut the lookup and load process, and we also skip containment for them by default, instead of requiring config options to skip containment for vendor supplied covenants.
+To be a valid Pulse that we can load code from, we need some minimum information in the state, described in the example below. System covenants are loaded the same as user supplied covenants - from the chain that they publish to - except we shortcut the lookup and load process, and we also skip containment for them by default. Developers can skip containment for their covenants, but this needs to be configured in Engines they control.
 
 By way of example, the format of the state within the Covenant is:
 
@@ -158,7 +158,7 @@ By way of example, the format of the state within the Covenant is:
             }
         }
     },
-    state: {}, // optional starting state of the covenant, may be overridden
+    state: {}, // optional initial state of the covenant, may be overridden
     installer: { // any required children are specified here
         customers: {
             covenant: 'collection',
@@ -167,7 +167,7 @@ By way of example, the format of the state within the Covenant is:
                 customer123: {} // can load some initial customers
             }
         },
-        remoteChain: 'Address(QmYMKzxgro9NTb)'
+        someRemoteChain: 'Address(QmYMKzxgro9NTb)'
     },
     importMap: { // specify paths and the imports to override
         datum: 'interblock://privateRegistry1/datum',
@@ -179,7 +179,7 @@ By way of example, the format of the state within the Covenant is:
         '/some/local/path',
         // referring to a specific pulse in a registry is the same as
         // using a package-lock.json
-        'PulseLink(bafyreig3w5cuffzshczi5xzwnp4igna5wehxcisr53jcjtrfxcnbgzwrui)
+        'PulseLink(bafyreig3w5cuffzshczi5xzwnp4igna5wehxcisr53jcjtrfxcnbgzwrui)'
     ]
 }
 ```
@@ -202,7 +202,7 @@ Modern code carries many dependencies. Here dependencies are split into 3 types:
 2. Covenant level: these are pieces of code that represent a hash based reference to executable code. In nodejs, an executable is an npm package that has all its modules installed and optionally some transpilation applied.
 3. Chain level: - this is a reference to a running chain, and is referenced by chainId. These can be oracles, services, people, or any other object in the chain based multiverse. These are interacted with using their json based API.
 
-Each `covenant` instance is, by way of the chains that house them, are capable of an unlimited number of children. This in effect makes them a registry unto themselves. The code that runs a large registry is intended to be exactly the same as what runs a simple hello world covenant, differing only in child chain count.
+Each `covenant` instance is, by way of the chains that house them, capable of an unlimited number of children. This in effect makes them a registry unto themselves. The code that runs a large registry is intended to be exactly the same as what runs a simple hello world covenant, differing only in child chain count and internet popularity.
 
 Given that covenants are a pulsechain, and interpulse itself is published as a pulsechain, our design goal is that running interpulse on interpulse is possible by specifying interpulse as the covenant of a chain, and configuring the engine to run optimally within chain land. Furthermore the loader can be supplied as a covenant, allowing custom loaders and publishers to be created.
 

@@ -1,14 +1,6 @@
 import assert from 'assert-fast'
-import {
-  Provenance,
-  Keypair,
-  Address,
-  Pulse,
-  PulseLink,
-  State,
-  RxRequest,
-  AsyncTrail,
-} from '../../w008-ipld'
+import { Pulse, PulseLink, AsyncTrail } from '../../w008-ipld'
+import * as system from '../../w212-system-covenants'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:services')
 
@@ -73,36 +65,41 @@ export class Endurance {
 
 import { wrapReduce } from '../../w010-hooks'
 export class IsolateContainer {
-  #reducer
+  #covenant
   static async create(pulse, overloads, timeout) {
     assert(pulse instanceof Pulse)
     assert(pulse.isModified())
     assert.strictEqual(typeof overloads, 'object')
     assert(Number.isInteger(timeout))
-    const { covenant } = pulse.provenance.dmz.config
-
-    // have fun: https://github.com/dreamcatcher-tech/dreamcatcher-stack/blob/master/pkg/interblock/src/w006-schemas/IpldSchemas.md#covenant
-
-    let reducer = (request) => {
+    const { covenant: covenantString } = pulse.provenance.dmz.config
+    const reducer = (request) => {
       debug(`default reducer`, request)
+      console.error('default reducer', JSON.stringify(request, null, '  '))
     }
-    if (overloads[covenant]) {
-      reducer = overloads[covenant].reducer
+    let covenant = { reducer }
+    // have fun: https://github.com/dreamcatcher-tech/dreamcatcher-stack/blob/master/pkg/interblock/src/w006-schemas/IpldSchemas.md#covenant
+    if (overloads[covenantString]) {
+      covenant = overloads[covenantString]
+    } else if (system[covenantString]) {
+      covenant = system[covenantString]
     }
-    return new IsolateContainer(reducer, timeout)
+    return new IsolateContainer(covenant, timeout)
   }
-  constructor(reducer) {
-    // get the covenant out of the pulse
-    this.#reducer = reducer
+  constructor(covenant) {
+    assert.strictEqual(typeof covenant, 'object')
+    // TODO make covenant a Class
+    this.#covenant = covenant
   }
-
   async unload() {
     debug('unload')
+    assert(this.#covenant)
+    this.#covenant = undefined
   }
   async reduce(trail) {
     assert(trail instanceof AsyncTrail)
+    assert(this.#covenant, `Covenant not loaded`)
     debug('reduce', trail.origin.request.type)
-    trail = await wrapReduce(trail, this.#reducer)
+    trail = await wrapReduce(trail, this.#covenant.reducer)
     return trail
   }
   async effects() {

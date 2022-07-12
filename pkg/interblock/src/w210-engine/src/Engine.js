@@ -13,6 +13,7 @@ import { reducer } from './reducer'
 import { Isolate, Endurance, Scale } from './Services'
 import { Crypto, CryptoLock } from './Crypto'
 import { Hints } from './Hints'
+import * as system from '../../w212-system-covenants'
 import Debug from 'debug'
 const debug = Debug('interblock:engine')
 /**
@@ -28,6 +29,9 @@ const debug = Debug('interblock:engine')
 export class Engine {
   #address // the address of the base chain of this engine
   #latest // latest block in the base chain of this engine
+
+  #overloads = {}
+  #overloadPulses = new Map()
 
   #isolate
   #crypto
@@ -58,6 +62,8 @@ export class Engine {
     return instance
   }
   constructor({ isolate, crypto, endurance, scale, hints } = {}) {
+    // Aim to remove the interdependencies between services by marshalling
+    // through the engine.
     this.#isolate = isolate || new Isolate()
     this.#crypto = crypto || new Crypto()
     this.#endurance = endurance || new Endurance()
@@ -66,6 +72,7 @@ export class Engine {
   }
   overload(overloads) {
     assert.strictEqual(typeof overloads, 'object')
+    this.#overloads = overloads
     this.#isolate.overload(overloads)
   }
   /**
@@ -205,17 +212,47 @@ export class Engine {
     assert(posix.isAbsolute(path))
     assert(rootAddress instanceof Address)
     debug('latestByPath', path)
+    if (this.#overloads[path]) {
+      if (!this.#overloadPulses.has(path)) {
+        const covenant = this.#overloads[path]
+        const pulse = await Pulse.createCovenantOverload(covenant)
+        this.#overloadPulses.set(path, pulse)
+      }
+      return this.#overloadPulses.get(path)
+    }
+    if (path.startsWith('/system:/')) {
+      const systemName = path.substring('/system:/'.length)
+      assert(system[systemName], `unknown system covenant: ${systemName}`)
+      if (!this.#overloadPulses.has(path)) {
+        const covenant = system[systemName]
+        const pulse = await Pulse.createCovenantOverload(covenant)
+        this.#overloadPulses.set(path, pulse)
+      }
+      return this.#overloadPulses.get(path)
+    }
+
     // get the root pulse
     let latestPulselink = await this.#hints.pulseLatest(rootAddress)
     assert(latestPulselink instanceof PulseLink)
     let latest = await this.#endurance.recoverPulse(latestPulselink)
+    assert(latest instanceof Pulse)
+    if (path === '/') {
+      return latest
+    }
     const [, ...segments] = path.split('/') // discard the root
+    const depth = ['/']
     while (segments.length) {
       const segment = segments.shift()
-      const channel = await latest.getNetwork().getChannel(segment)
+      depth.push(segment)
+      const network = latest.getNetwork()
+      if (!(await network.hasChannel(segment))) {
+        const merged = depth.join('/').substring(1)
+        throw new Error(`Segment not present: ${merged} of: ${path}`)
+      }
+      const channel = await network.getChannel(segment)
       const { address } = channel
       if (!address.isRemote()) {
-        throw new Error(`segment invalid: ${segments[0]} of: ${path}`)
+        throw new Error(`segment not resolved: ${segment} of: ${path}`)
       }
       // TODO approot walk should use the precedent only
       latestPulselink = await this.#hints.pulseLatest(address)

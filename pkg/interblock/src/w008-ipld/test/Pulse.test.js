@@ -1,8 +1,8 @@
 import { assert } from 'chai/index.mjs'
-import { Interpulse, Pulse, Address, Keypair } from '..'
+import { Pulse, Address, Keypair } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Pulse')
-
+Debug.enable('*tests*')
 describe('Pulse', () => {
   test('basic', async () => {
     let pulse = await Pulse.createCI()

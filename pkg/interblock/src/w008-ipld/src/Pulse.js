@@ -38,6 +38,15 @@ export class Pulse extends IpldStruct {
     const instance = super.clone({ provenance, signatures: [] })
     return await instance.crush()
   }
+  static async createCovenantOverload(covenant) {
+    const config = Config.create({ covenant: 'covenant' })
+    const CI = true
+    const { name = '', api = {}, state = {}, installer = {} } = covenant
+    const covenantState = { name, api, state, installer }
+    const dmz = Dmz.create({ config, state: covenantState }, CI)
+    const provenance = Provenance.createGenesis(dmz)
+    return await Pulse.create(provenance)
+  }
   isGenesis() {
     return this.provenance.address.isGenesis()
   }

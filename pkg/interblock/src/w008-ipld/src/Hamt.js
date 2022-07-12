@@ -187,6 +187,10 @@ export class Hamt extends IpldInterface {
     debug(`get diff for CID`, cid)
     return this.#putStore.getDiffs(cid)
   }
+  entries() {
+    assert(!this.isModified())
+    return this.#hashmap.entries()
+  }
 }
 
 const assertKey = (key) => {

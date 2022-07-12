@@ -18,7 +18,7 @@ export class Reply extends Request {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
     const type = '@@RESOLVE'
-    const payload = { pulse }
+    const payload = pulse
     return super.clone({ type, payload })
   }
   static create(type = '@@RESOLVE', payload = {}, binary) {
