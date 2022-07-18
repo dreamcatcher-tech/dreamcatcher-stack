@@ -1,26 +1,34 @@
 const address = (title) => ({
-  schema: {
-    title,
-    type: 'object',
-    additionalProperties: false,
-    properties: { address: { type: 'string', faker: 'address.streetAddress' } },
+  covenant: 'datum',
+  state: {
+    schema: {
+      title,
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        address: { type: 'string', faker: 'address.streetAddress' },
+      },
+    },
   },
 })
 const gps = {
-  schema: {
-    title: 'Service GPS',
-    type: 'object',
-    description: `If no lat or long, then the location is not set yet`,
-    additionalProperties: false,
-    required: [],
-    properties: {
-      latitude: { type: 'number', faker: 'address.latitude' },
-      longitude: { type: 'number', faker: 'address.longitude' },
+  covenant: 'datum',
+  state: {
+    schema: {
+      title: 'Service GPS',
+      type: 'object',
+      description: `If no lat or long, then the location is not set yet`,
+      additionalProperties: false,
+      required: [],
+      properties: {
+        latitude: { type: 'number', faker: 'address.latitude' },
+        longitude: { type: 'number', faker: 'address.longitude' },
+      },
     },
   },
 }
 const installer = {
-  children: {
+  network: {
     schedule: {
       covenant: 'datum',
       state: {
@@ -29,7 +37,7 @@ const installer = {
         },
         uiSchema: 'schedule',
       },
-      children: {
+      network: {
         exceptions: {
           covenant: 'collection',
           state: {
@@ -88,14 +96,14 @@ const installer = {
             custNo: { 'ui:readonly': true },
           },
           namePath: ['custNo'],
-          children: {
+          network: {
             serviceAddress: address('Service Address'),
             serviceGps: gps,
             billingAddress: address('Billing Address'),
           },
         },
       },
-      children: {
+      network: {
         // bob: {},
         // charlie: {},
         // marg: {},
