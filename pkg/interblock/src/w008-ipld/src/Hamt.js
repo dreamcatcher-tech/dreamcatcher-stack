@@ -148,7 +148,7 @@ export class Hamt extends IpldInterface {
         const crushed = await value.crush()
         next.#gets = next.#gets.set(key, crushed)
         await hashmap.set(key, crushed.cid)
-        const diffs = await crushed.getDiffBlocks()
+        const diffs = crushed.getDiffBlocks()
         for (const [, ipldBlock] of diffs) {
           if (!putStore.hasBlock(ipldBlock.cid)) {
             putStore.putBlock(ipldBlock.cid, ipldBlock)
@@ -185,7 +185,7 @@ export class Hamt extends IpldInterface {
 
     const { cid } = this
     debug(`get diff for CID`, cid)
-    return this.#putStore.getDiffs(cid)
+    return this.#putStore.getDiffBlocks(cid)
   }
   entries() {
     assert(!this.isModified())

@@ -11,7 +11,7 @@ describe('provenance', () => {
     const dmz = await Dmz.create({ timestamp }).crush()
     let provenance = Provenance.createGenesis(dmz)
     provenance = await provenance.crush()
-    const diffs = await provenance.getDiffBlocks()
+    const diffs = provenance.getDiffBlocks()
     const cids = [...diffs.keys()]
     expect(cids).toMatchSnapshot()
     const values = [...diffs.values()].map((b) => b.value)

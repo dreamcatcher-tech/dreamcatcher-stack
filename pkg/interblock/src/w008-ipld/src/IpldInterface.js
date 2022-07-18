@@ -48,7 +48,7 @@ export class IpldInterface {
     throw new Error('Not Implemented')
   }
   async logDiff() {
-    const diffmap = await this.getDiffBlocks()
+    const diffmap = this.getDiffBlocks()
     const log = {}
     for (const { cid, value } of diffmap.values()) {
       log[cid.toString().substring(0, 13)] = value

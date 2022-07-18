@@ -183,7 +183,8 @@ export class Engine {
     await this.#scale.watchdog(pool)
 
     pool = await this.#reducer(pool)
-    const provenance = await pool.provenance.crush()
+    const resolver = (cid) => this.#endurance.resolveCid(cid)
+    const provenance = await pool.provenance.crush(resolver)
     const signature = await lock.sign(provenance)
     pool = pool.addSignature(lock.publicKey, signature)
     const pulse = await pool.crush()

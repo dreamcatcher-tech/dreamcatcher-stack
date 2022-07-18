@@ -44,7 +44,7 @@ describe('Request', () => {
     const crushedRequest = await request.crush()
     assert.strictEqual(crushedRequest.crushedSize, 79)
 
-    const diffBlocks = await crushedRequest.getDiffBlocks()
+    const diffBlocks = crushedRequest.getDiffBlocks()
     assert(diffBlocks instanceof Map)
     assert.strictEqual(diffBlocks.size, 2)
 

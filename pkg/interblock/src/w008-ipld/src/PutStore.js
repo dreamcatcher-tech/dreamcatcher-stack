@@ -95,7 +95,7 @@ export class PutStore {
     this.#putsMap = diffs
     this.#untrimmed = false
   }
-  getDiffs(cid) {
+  getDiffBlocks(cid) {
     assert(cid instanceof CID, `must pass rootCid`)
     assert(this.#putsMap.has(cid.toString()), `Missing hamt root ${cid}`)
     assert(!this.#untrimmed, `Must call trim() before getDiffs()`)

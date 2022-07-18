@@ -9,7 +9,7 @@ describe('channel', () => {
     test('basic', async () => {
       const channel = Channel.create(fakeChannelId)
       const crushed = await channel.crush()
-      const diff = await crushed.getDiffBlocks()
+      const diff = crushed.getDiffBlocks()
       assert.strictEqual(diff.size, 2)
       expect([...diff.keys()]).toMatchSnapshot()
     })
@@ -19,7 +19,7 @@ describe('channel', () => {
       assert(!channel.tx.precedent)
       assert(!channel.rx.tip)
       const crushed = await channel.crush()
-      const blocks = await crushed.getDiffBlocks()
+      const blocks = crushed.getDiffBlocks()
       const resolver = (cid) => blocks.get(cid.toString())
       const uncrushed = await Channel.uncrush(crushed.cid, resolver)
       assert.deepEqual(crushed, uncrushed)

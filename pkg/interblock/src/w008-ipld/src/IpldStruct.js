@@ -95,7 +95,7 @@ export class IpldStruct extends IpldInterface {
     crushed.#previous = this.#crushed
     return crushed
   }
-  async getDiffBlocks() {
+  getDiffBlocks() {
     // diffs since the last time we crushed
     assert(!this.isModified())
     const blocks = new Map()
@@ -112,20 +112,19 @@ export class IpldStruct extends IpldInterface {
           // what if the array is an ipldstruct type, included in classMap ?
           // what if it is plain primitive values ?
           // what if I wanted an array of ipld, but not crush ?
-          const awaits = thisValue.map(async (v, i) => {
+          const valueBlocks = thisValue.map((v, i) => {
             if (!prevValue || !prevValue[i]) {
-              return await v.getDiffBlocks()
+              return v.getDiffBlocks()
             }
             if (!v.cid.equals(prevValue[i].cid)) {
-              return await v.getDiffBlocks(prevValue[i])
+              return v.getDiffBlocks(prevValue[i])
             }
           })
-          const valueBlocks = await Promise.all(awaits)
           valueBlocks.forEach((map) => merge(blocks, map))
         } else {
           assert(prevValue === undefined || prevValue instanceof IpldInterface)
           if (!prevValue || !thisValue.cid.equals(prevValue.cid)) {
-            const valueBlocks = await thisValue.getDiffBlocks(prevValue)
+            const valueBlocks = thisValue.getDiffBlocks(prevValue)
             merge(blocks, valueBlocks)
           }
         }

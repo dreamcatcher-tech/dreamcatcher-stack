@@ -10,7 +10,7 @@ describe('Validators', () => {
   test('crush', async () => {
     const validators = Validators.createCI()
     const crushed = await validators.crush()
-    const diff = await crushed.getDiffBlocks()
+    const diff = crushed.getDiffBlocks()
     assert.strictEqual(diff.size, 2)
   })
   test('multiple', async () => {

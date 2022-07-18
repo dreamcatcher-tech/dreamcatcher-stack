@@ -1,11 +1,12 @@
 import { shell } from '../../w212-system-covenants'
 import { Interpulse } from '..'
 import Debug from 'debug'
+import { jest } from '@jest/globals'
 
 const debug = Debug('interblock:tests:Interpulse')
 
 describe('effector', () => {
-  test.only('ping single', async () => {
+  test('ping single', async () => {
     Debug.enable('*tests*')
     const start = Date.now()
     debug(`start`)
@@ -66,11 +67,12 @@ describe('effector', () => {
      * 2022-07-19 68ms total, 20ms RTT - blockcount 2, ipfs, move off whonix
      */
   })
-  test.skip('ping many times', async () => {
-    jest.setTimeout(10000)
+  test('ping many times', async () => {
+    Debug.enable('*tests*')
     debug(`start`)
-    const engine = await effectorFactory()
-    // client.metrology.enableLogging()
+    const engine = await Interpulse.createCI()
+    debug(`booted`)
+    const start = Date.now()
     let count = 0
     const promises = []
     while (count < 100) {
@@ -81,12 +83,10 @@ describe('effector', () => {
         await reply
       }
     }
-    const results = await Promise.all(promises)
-    await engine.shutdown()
-    assert(results.every((reply) => reply && Number.isInteger(reply.count)))
-    assert(results.every((reply, index) => reply.count === index))
-    debug(`blockcount: `, engine.metro.getBlockCount())
-    debug(`stop`)
+    const replies = await Promise.all(promises)
+    expect(replies.every((reply, index) => reply.count === index)).toBeTruthy()
+    debug(`pulseCount: `, engine.logger.pulseCount)
+    debug(`stop %i ms`, Date.now() - start)
     /**
      * 2020-05-11 7,209ms 100 pings, batchsize 10, 68 blocks in total
      * 2020-05-11 4,616ms 100 pings, batchsize 10, 36 blocks in total
@@ -96,37 +96,20 @@ describe('effector', () => {
      * 2020-09-09 4,211ms 100 pings, batchsize 10, 23 blocks in total tuning
      * 2021-01-25 2,116ms 100 pings, batchsize 10, 11 blocks in total - removed xstate
      * 2021-01-26 1,931ms 100 pings, batchsize 10, 11 blocks in total - removed birthblocks
+     * 2022-07-19 249ms 100 pings, batchsize 10, 11 blocks in total - ipfs, move off whonix
      */
   })
   test('create child', async () => {
-    const client = await effectorFactory()
-    client.metro.enableLogging()
-    const reply = await client.add('child1')
+    const engine = await Interpulse.createCI()
+    const reply = await engine.add('child1')
     debug(`reply: `, reply)
-    assert.strictEqual(reply.alias, 'child1')
-    const { network } = await client.latest()
-    const child1 = network.get('child1')
-    assert.strictEqual(child1.address.getChainId(), reply.chainId)
-    await client.shutdown()
+    expect(reply.alias).toEqual('child1')
+    const latest = await engine.latest('/')
+    const child1 = await latest.getNetwork().getChild('child1')
+    expect(child1.address.getChainId()).toStrictEqual(reply.chainId)
   })
-  test('ping created child', async () => {
-    const client = await effectorFactory()
-    await client.add('testChild')
-    const pingStart = Date.now()
-    const reply = await client.ping('testChild')
-    debug(`ping RTT: ${Date.now() - pingStart} ms`)
-    assert(reply)
-    await client.shutdown()
-  })
-  test('cannot create same child twice', async () => {
-    // TODO handle errors in the translator
-    const client = await effectorFactory()
-    await client.add('testChild')
-    await assert.isRejected(client.add('testChild'))
-    await client.shutdown()
-  })
-  test.skip('spawn many times', async () => {
-    // Debug.enable('iplog')
+  test.only('spawn many times', async () => {
+    Debug.enable('iplog')
     const engine = await Interpulse.createCI()
     let count = 0
     const awaits = []

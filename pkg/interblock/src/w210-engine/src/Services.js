@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { CID } from 'multiformats/cid'
 import { Pulse, PulseLink, AsyncTrail } from '../../w008-ipld'
 import * as system from '../../w212-system-covenants'
 import Debug from 'debug'
@@ -34,6 +35,8 @@ export class Endurance {
     await this.#logger.pulse(pulse)
     const address = pulse.getAddress().getChainId().substring(0, 14)
     const pulselink = pulse.getPulseLink().cid.toString().substring(0, 14)
+    const d = pulse.getDiffBlocks()
+    console.dir(d, { depth: Infinity })
     debug(`endure`, address, pulselink)
   }
   async recoverPulse(pulselink) {
@@ -42,6 +45,15 @@ export class Endurance {
     assert(pulselink instanceof PulseLink)
     assert(this.#mockIpfs.has(pulselink.cid.toString()))
     return this.#mockIpfs.get(pulselink.cid.toString())
+  }
+  async resolveCid(cid) {
+    assert(cid instanceof CID)
+    const key = cid.toString()
+    if (this.#mockSoftIpfs.has(key)) {
+      console.log('asdf')
+    }
+    assert(this.#mockIpfs.has(key), `No block for: ${key}`)
+    return this.#mockIpfs.get(key)
   }
   async softEndure(pulse) {
     assert(pulse instanceof Pulse)
