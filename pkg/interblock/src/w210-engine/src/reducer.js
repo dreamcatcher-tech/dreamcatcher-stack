@@ -7,7 +7,7 @@ import {
   Pulse,
   RxReply,
 } from '../../w008-ipld'
-import { IsolateContainer } from './Services'
+import { IsolateContainer } from './Isolate'
 import { wrapReduce } from '../../w010-hooks'
 import { reducer as systemReducer } from '../../w023-system-reducer'
 

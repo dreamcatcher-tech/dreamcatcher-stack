@@ -10,8 +10,10 @@ import {
   Channel,
 } from '../../w008-ipld'
 import { reducer } from './reducer'
-import { Isolate, Endurance, Scale } from './Services'
+import { Isolate } from './Isolate'
+import { Scale } from './Scale'
 import { Crypto, CryptoLock } from './Crypto'
+import { Endurance } from './Endurance'
 import { Hints } from './Hints'
 import * as system from '../../w212-system-covenants'
 import Debug from 'debug'
