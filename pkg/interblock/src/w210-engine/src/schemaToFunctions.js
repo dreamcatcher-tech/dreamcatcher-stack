@@ -1,7 +1,8 @@
 import assert from 'assert-fast'
 import Ajv from 'ajv'
 const ajv = new Ajv({ allErrors: true, verbose: true })
-ajv.compile({ type: 'object' }) // first compile is about 12ms, so burn it off
+// first compile is about 12ms, so burn it off
+ajv.compile({ type: 'object' })
 
 export const schemaToFunctions = (jsonSchema) => {
   assert.strictEqual(typeof jsonSchema, 'object')

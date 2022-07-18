@@ -198,10 +198,11 @@ const reducer = async (request) => {
  */
 
 const api = {
-  ping: (to = '.', payload = {}) => ({
-    type: 'PING',
-    payload: { ...payload, to },
-  }),
+  ping: (to = '.', payload = {}) =>
+    Request.create({
+      type: 'PING',
+      payload: { ...payload, to },
+    }),
   login: (terminalChainId, credentials) => ({
     type: 'LOGIN',
     payload: { terminalChainId, credentials },

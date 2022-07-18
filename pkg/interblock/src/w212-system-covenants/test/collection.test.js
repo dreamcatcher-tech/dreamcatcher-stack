@@ -27,7 +27,7 @@ describe('collection', () => {
     network: { address: { formData: { address: 'test address' } } },
   }
 
-  test.only('add with test data', async () => {
+  test('add with test data', async () => {
     // Debug.enable('iplog *collection interpulse')
     const shell = await Interpulse.createCI()
     await shell.add('col1', { covenant: 'collection' })

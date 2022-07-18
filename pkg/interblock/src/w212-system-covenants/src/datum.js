@@ -201,7 +201,7 @@ const convertToTemplate = (datum) => {
   let template = withDefaults(rest)
   template = _withoutFormData(template)
   validateDatumTemplate(template)
-  _validateChildSchemas(template)
+  validateChildSchemas(template)
   return template
 }
 const validateDatumTemplate = (datumTemplate) => {
@@ -228,12 +228,12 @@ const _withoutFormData = (datum) => {
   }
   return { ...rest, network }
 }
-const _validateChildSchemas = (datum) => {
+const validateChildSchemas = (datum) => {
   // compilation will throw if schemas invalid
   try {
     ajv.compile(datum.schema)
     // TODO check that datum.uiSchema is formatted correctly
-    Object.values(datum.network).every(_validateChildSchemas)
+    Object.values(datum.network).every(validateChildSchemas)
   } catch (e) {
     const errors = ajv.errorsText(ajv.errors)
     throw new Error(`Child schemas failed validation: ${errors}`)

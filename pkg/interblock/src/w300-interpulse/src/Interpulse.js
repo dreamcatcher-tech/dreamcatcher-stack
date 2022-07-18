@@ -5,9 +5,15 @@ import Debug from 'debug'
 import posix from 'path-browserify'
 const debug = Debug('interpulse')
 /**
- * Where the shell is loaded and attached.
- * Where IPFS is started.
- * Where multithreading is controlled.
+ *
+ * The top level ORM object.
+ * Assembles an Engine with all the services it needs to operate.
+ *    Where IPFS is started.
+ *    Where multithreading is controlled.
+ * Wraps engine with useful functions for devs.
+ * Loads the shell to be loaded at the root block.
+ * Works with paths, whereas engine works with addresses.
+ * Manages subscriptions to chains for view purposes only.
  */
 
 export class Interpulse {
@@ -47,6 +53,14 @@ export class Interpulse {
     const { wd = '/' } = this.#engine.latest.getState().toJS()
     const absolutePath = posix.resolve(wd, path)
     return this.#engine.latestByPath(absolutePath)
+  }
+  get logger() {
+    return this.#engine.logger
+  }
+  shutdown() {
+    // stop the ipfs agent from running
+    // persist our config down to ipfs storage
+    // shutdown multithreading
   }
 }
 const mapShell = (engine) => {
