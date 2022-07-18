@@ -1,13 +1,13 @@
 import assert from 'assert-fast'
 // const faker from 'faker/locale/en')
 import Ajv from 'ajv'
-import AjvFormats from 'ajv-formats'
+// import AjvFormats from 'ajv-formats'
 import { interchain, useBlocks } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:datum')
 const ajv = new Ajv({ allErrors: true, verbose: true })
-AjvFormats(ajv)
-ajv.addKeyword('faker')
+// AjvFormats(ajv)
+// ajv.addKeyword('faker')
 
 // const jsf from 'json-schema-faker')
 // const isBrowserBundle = !jsf.extend
@@ -45,16 +45,16 @@ const datumSchema = {
     'schema',
     'uiSchema',
     'subscribers',
-    'children',
+    'network',
   ],
   additionalProperties: false,
   properties: {
     type: { enum: ['COLLECTION', 'XSTATE', 'ARRAY', 'DATA'] },
     isEditable: { type: 'boolean' },
     namePath: { type: 'array', items: { type: 'string' } },
-    formData: { type: 'object' },
     schema: { type: 'object' },
     uiSchema: { type: 'object' },
+    formData: { type: 'object' },
     subscribers: {
       type: 'array',
       description: 'list of paths that need to be notified when changes occur',
@@ -62,7 +62,7 @@ const datumSchema = {
       items: { type: 'string' },
     },
     // does not include formData
-    children: { type: 'object', patternProperties: { '(.*?)': { $ref: '#' } } },
+    network: { type: 'object', patternProperties: { '(.*?)': { $ref: '#' } } },
   },
 }
 
@@ -74,21 +74,19 @@ const defaultDatum = {
   schema: {},
   uiSchema: {},
   subscribers: [],
-  children: {},
+  network: {},
 }
-const reducer = async (state, action) => {
+const reducer = async (request) => {
   // TODO run assertions on state shape thru schema
   // TODO assert the children match the schema definition
-  if (!Object.keys(state).length) {
-    state = defaultDatum
-  }
-  const { type, payload } = action
-  debug(`action: `, type)
+  const { type, payload } = request
+  assert.strictEqual(typeof payload, 'object')
+  debug(`reducer: `, type)
   switch (type) {
     case '@@INIT': {
       debug(`@@INIT`)
       // TODO check state and make new children
-      return state
+      return
     }
     case 'SET': {
       // TODO trouble is that if change schema, need to add data at the same time
@@ -132,18 +130,18 @@ const _isTemplateIncluded = (payload) => {
   if (payload.schema && Object.keys(payload.schema).length) {
     return true
   }
-  const { children = {} } = payload
-  return Object.values(children).some(_isTemplateIncluded)
+  const { network = {} } = payload
+  return Object.values(network).some(_isTemplateIncluded)
 }
 
 const demuxFormData = (template, payload) => {
   validateDatumTemplate(template)
   // TODO remove the mixing of setting the template and setting the data
-  const unmixed = _separateFormData(payload)
+  const unmixed = separateFormData(payload)
   validateFormData(template, unmixed)
   return unmixed
 }
-const _separateFormData = (payload) => {
+const separateFormData = (payload) => {
   if (!payload || typeof payload.formData === 'undefined') {
     return {}
   }
@@ -152,10 +150,10 @@ const _separateFormData = (payload) => {
   if (typeof formData !== 'undefined') {
     result.formData = formData
   }
-  if (payload.children && Object.keys(payload.children).length) {
-    result.children = {}
-    for (const name in payload.children) {
-      result.children[name] = _separateFormData(payload.children[name])
+  if (payload.network && Object.keys(payload.network).length) {
+    result.network = {}
+    for (const name in payload.network) {
+      result.network[name] = separateFormData(payload.network[name])
     }
   }
   return result
@@ -168,31 +166,31 @@ const validateFormData = (template, payload) => {
     debug(`error validating:`, payload)
     throw new Error(`${template.schema.title} failed validation: ${errors}`)
   }
-  for (const name in template.children) {
+  for (const name in template.network) {
     let data = { formData: {} }
-    if (payload.children && payload.children[name]) {
-      data = payload.children[name]
+    if (payload.network && payload.network[name]) {
+      data = payload.network[name]
     }
-    validateFormData(template.children[name], data)
+    validateFormData(template.network[name], data)
   }
 }
 const _generateFakeData = (template, payload = {}) => {
   // TODO existing data overrides fake, provided data overrides existing
-  const { formData = {}, children: payloadChildren = {} } = payload
+  const { formData = {}, network: payloadNetwork = {} } = payload
   const fake = {} // jsf.generate(template.schema)
   const inflated = { ...fake, ...formData }
   debug(`fake: `, inflated)
   const result = { ...payload, formData: inflated }
 
-  if (Object.keys(template.children).length) {
-    const children = {}
-    for (const name in template.children) {
-      children[name] = _generateFakeData(
-        template.children[name],
-        payloadChildren[name]
+  if (Object.keys(template.network).length) {
+    const network = {}
+    for (const name in template.network) {
+      network[name] = _generateFakeData(
+        template.network[name],
+        payloadNetwork[name]
       )
     }
-    result.children = children
+    result.network = network
   }
   return result
 }
@@ -200,7 +198,7 @@ const _generateFakeData = (template, payload = {}) => {
 const convertToTemplate = (datum) => {
   // TODO use existing template for things like uiSchema
   const { isTestData, ...rest } = datum
-  let template = _withDefaults(rest)
+  let template = withDefaults(rest)
   template = _withoutFormData(template)
   validateDatumTemplate(template)
   _validateChildSchemas(template)
@@ -213,59 +211,55 @@ const validateDatumTemplate = (datumTemplate) => {
     throw new Error(`Datum failed validation: ${errors}`)
   }
 }
-const _withDefaults = (datum) => {
+const withDefaults = (datum) => {
   const inflated = { ...defaultDatum, ...datum }
-  const { children: currentChildren } = inflated
-  const children = {}
-  for (const name in currentChildren) {
-    children[name] = _withDefaults(currentChildren[name])
+  const { network: currentNetwork } = inflated
+  const network = {}
+  for (const name in currentNetwork) {
+    network[name] = withDefaults(currentNetwork[name])
   }
-  return { ...inflated, children }
+  return { ...inflated, network }
 }
 const _withoutFormData = (datum) => {
-  const { formData, children: currentChildren = {}, ...rest } = datum
-  const children = {}
-  for (const name in currentChildren) {
-    children[name] = _withoutFormData(currentChildren[name])
+  const { formData, network: currentNetwork = {}, ...rest } = datum
+  const network = {}
+  for (const name in currentNetwork) {
+    network[name] = _withoutFormData(currentNetwork[name])
   }
-  return { ...rest, children }
+  return { ...rest, network }
 }
 const _validateChildSchemas = (datum) => {
   // compilation will throw if schemas invalid
   try {
     ajv.compile(datum.schema)
     // TODO check that datum.uiSchema is formatted correctly
-    Object.values(datum.children).every(_validateChildSchemas)
+    Object.values(datum.network).every(_validateChildSchemas)
   } catch (e) {
     const errors = ajv.errorsText(ajv.errors)
     throw new Error(`Child schemas failed validation: ${errors}`)
   }
 }
 const muxTemplateWithFormData = (template, payload) => {
-  const result = { ...template, children: {} }
+  const result = { ...template, network: {} }
   result.formData = payload.formData
-  for (const name in template.children) {
+  for (const name in template.network) {
     let data = { formData: {} }
-    if (payload.children && payload.children[name]) {
-      data = payload.children[name]
+    if (payload.network && payload.network[name]) {
+      data = payload.network[name]
     }
-    result.children[name] = muxTemplateWithFormData(
-      template.children[name],
-      data
-    )
+    result.network[name] = muxTemplateWithFormData(template.network[name], data)
   }
   return result
 }
-const actions = {
-  // create is handled by init ?
-  set: (payload) => ({ type: 'SET', payload }),
-  subscribe: (...paths) => ({ type: 'SUBSCRIBE', payload: paths }),
-  unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
-  setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
+const api = {
+  set: { type: 'object', title: 'SET', description: '' },
+  // subscribe: (...paths) => ({ type: 'SUBSCRIBE', payload: paths }),
+  // unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
+  // setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
 }
 
 export {
-  actions,
+  api,
   reducer,
   convertToTemplate,
   demuxFormData,

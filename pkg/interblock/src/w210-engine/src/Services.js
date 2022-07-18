@@ -74,7 +74,6 @@ export class IsolateContainer {
     const { covenant: covenantString } = pulse.provenance.dmz.config
     const reducer = (request) => {
       debug(`default reducer`, request)
-      console.error('default reducer', JSON.stringify(request, null, '  '))
     }
     let covenant = { reducer }
     // have fun: https://github.com/dreamcatcher-tech/dreamcatcher-stack/blob/master/pkg/interblock/src/w006-schemas/IpldSchemas.md#covenant

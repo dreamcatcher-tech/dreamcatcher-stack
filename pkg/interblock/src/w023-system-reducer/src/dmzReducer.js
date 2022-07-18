@@ -106,7 +106,7 @@ const pulseReducer = async (type, payload) => {
       const latestPulse = await latest(path)
       return latestPulse
     }
-    case '@@GET_COVENANT': {
+    case '@@COVENANT': {
       const { path } = payload
       let latestPulse = pulse
       if (path !== '.') {
@@ -123,7 +123,7 @@ const pulseReducer = async (type, payload) => {
       }
       debug('covenantPath', covenantPath)
       const covenantPulse = await latest(covenantPath)
-      return covenantPulse
+      return covenantPulse.getState().toJS()
     }
     default:
       throw new Error(`Unrecognized type: ${type}`)

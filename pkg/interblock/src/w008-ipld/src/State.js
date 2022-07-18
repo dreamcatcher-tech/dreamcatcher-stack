@@ -82,4 +82,7 @@ export class State extends IpldInterface {
   toJS() {
     return this.#state
   }
+  dir() {
+    console.dir(this.toJS(), { depth: Infinity })
+  }
 }

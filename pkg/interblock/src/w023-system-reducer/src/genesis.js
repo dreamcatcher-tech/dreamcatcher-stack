@@ -16,10 +16,14 @@ const genesisReducer = async (payload) => {
   assert(typeof payload, 'object')
   assert.strictEqual(Object.keys(payload).length, 1)
   assert(payload.spawnOptions)
-  // TODO check can only have come from parent, and must be the first action in the channel
-  const installResult = await interchain('@@INSTALL')
-  debug('installResult', installResult)
-  const initResult = await interchain('@@INIT')
+  // TODO check came from parent, and is first action
+  const initResult = await interchain('@@INIT', payload)
   debug(`initResult`, initResult)
+  let { spawnOptions = {}, installer = {} } = initResult
+  spawnOptions = { ...payload.spawnOptions, ...spawnOptions }
+  installer = { ...payload.installer, ...installer }
+  const nextPayload = { spawnOptions, installer }
+  const installResult = await interchain('@@INSTALL', nextPayload)
+  debug('installResult', installResult)
 }
 export { genesisReducer }

@@ -6,11 +6,11 @@ const debug = Debug('interblock:dmz:install')
 
 const installReducer = async (payload) => {
   assert.strictEqual(typeof payload, 'object')
-  assert.strictEqual(Object.keys(payload).length, 0)
-  const covenantPulse = await interchain(Request.createGetCovenantPulse())
-  assert(covenantPulse instanceof Pulse)
-  const { installer = {}, state = {} } = covenantPulse.getState().toJS()
-  assert.strictEqual(typeof installer, 'object')
+  assert.strictEqual(Object.keys(payload).length, 2)
+  debug(payload)
+  const covenantState = await interchain(Request.createGetCovenantState())
+  const { network = {}, state = {} } = covenantState
+  assert.strictEqual(typeof network, 'object')
   assert.strictEqual(typeof state, 'object')
 
   // TODO clean up failed partial deployments ?
@@ -21,12 +21,12 @@ const installReducer = async (payload) => {
     await setState(state)
   }
   const awaits = []
-  for (const child in installer) {
+  for (const child in network) {
     debug('installing child: ', child)
-    const { network, ...rest } = installer[child]
+    const { network, ...rest } = network[child]
     const spawnOptions = mapInstaller(rest)
-    const spawnRequest = Request.createSpawn(child, spawnOptions)
-    awaits.push(interchain(spawnRequest))
+    const spawn = Request.createSpawn(child, spawnOptions)
+    awaits.push(interchain(spawn))
   }
   await Promise.all(awaits)
 }

@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import * as datum from './datum'
-import { interchain } from '../../w002-api'
+import { interchain, useState } from '../../w002-api'
+import { Request } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
 
@@ -12,45 +13,35 @@ const {
 } = datum
 
 const add = async (payload, datumTemplate) => {
-  _checkOnlyFormData(payload)
+  assertFormData(payload)
   const formData = demuxFormData(datumTemplate, payload)
-  let name = _getChildName(datumTemplate, formData)
-  const { covenantId } = datum
-  const spawnAction = dmzReducer.actions.spawn(name, { covenantId })
-  if (name) {
-    interchain(spawnAction)
-  } else {
-    // TODO calculate name using same method as spawn, to save awaiting
-    const { alias } = await interchain(spawnAction)
-    name = alias
-  }
-  const muxed = muxTemplateWithFormData(datumTemplate, formData)
-  const set = datum.actions.set(muxed)
-  debug(`datum set action`, name)
-  // TODO set this in the state of the spawn, to reduce action count
-  const result = await interchain(set, name)
-  debug(`add completed:`, name)
+  const name = getChildName(datumTemplate, formData)
+  const state = muxTemplateWithFormData(datumTemplate, formData)
+  const config = { covenant: 'datum' }
+  const spawn = Request.createSpawn(name, { state, config })
+  const result = await interchain(spawn)
+
+  debug(`datum added`, result.alias)
   return result
 }
 
 // TODO allow collection to also store formData as tho it was a datum, without children spec
-const reducer = async (state, action) => {
-  const { type, payload } = action
-  if (type === '@@INIT') {
-    debug('init')
-    const template = state.datumTemplate || {}
-    const datumTemplate = convertToTemplate(template)
-    debug(`datumTemplate`, datumTemplate)
-    return { ...state, datumTemplate }
-  }
-  const { datumTemplate } = state
-  validateDatumTemplate(datumTemplate)
+const reducer = async (request) => {
+  const { type, payload } = request
+  assert.strictEqual(typeof type, 'string')
+  assert.strictEqual(typeof payload, 'object')
+
+  // const { datumTemplate } = state
+  // validateDatumTemplate(datumTemplate)
 
   // TODO remove test data from being inside the covenant at all
   switch (type) {
+    case '@@INIT': {
+      return
+    }
     case 'ADD': {
-      await add(payload, datumTemplate, action)
-      return state
+      const [{ datumTemplate }] = await useState()
+      return await add(payload, datumTemplate)
     }
     case 'BATCH': {
       const { batch } = payload
@@ -67,47 +58,49 @@ const reducer = async (state, action) => {
       return state
     }
     case 'SET_TEMPLATE': {
-      _checkNoFormData(payload)
+      // TODO useState() should be able to set this remotely ?
+      checkNoFormData(payload)
       const datumTemplate = convertToTemplate(payload)
-      return { ...state, datumTemplate }
+      const [state, setState] = await useState()
+      await setState({ ...state, datumTemplate })
+      return
     }
     default:
-      debug(action)
-      // throw new Error(`Unknown action type: ${action.type}`)
-      return state
+      debug(type)
+      throw new Error(`Unknown action type: ${type}`)
   }
 }
-const _checkOnlyFormData = (payload) => {
-  const { formData, children, ...rest } = payload
+const assertFormData = (payload) => {
+  const { formData, network, ...rest } = payload
   if (typeof formData === 'undefined') {
     throw new Error(`Must provide formData key`)
   }
   if (Object.keys(rest).length) {
-    throw new Error(`Only allowed keys are formData and children`)
+    throw new Error(`Only allowed keys are formData and network`)
   }
-  if (!children) {
+  if (!network) {
     return
   }
-  if (typeof children !== 'object') {
-    throw new Error(`children must be object`)
+  if (typeof network !== 'object') {
+    throw new Error(`network must be object`)
   }
-  const childValues = Object.values(children)
-  return childValues.every(_checkOnlyFormData)
+  const networkValues = Object.values(network)
+  return networkValues.every(assertFormData)
 }
-const _checkNoFormData = (datum) => {
+const checkNoFormData = (datum) => {
   if (datum.formData) {
     throw new Error(`No formData allowed on datum template`)
   }
-  if (!datum.children) {
+  if (!datum.network) {
     return
   }
-  const childValues = Object.values(datum.children)
-  return childValues.every(_checkNoFormData)
+  const networkValues = Object.values(datum.network)
+  return networkValues.every(checkNoFormData)
 }
 
-const _getChildName = (datumTemplate, payload) => {
+const getChildName = (datumTemplate, payload) => {
   if (!datumTemplate.namePath.length) {
-    debug(`_getChildName is blank`)
+    debug(`getChildName is blank`)
     return
   }
   let obj = payload.formData
@@ -124,16 +117,48 @@ const _getChildName = (datumTemplate, payload) => {
   return obj
 }
 
-const actions = {
-  add: (payload = {}) => ({ type: 'ADD', payload }),
-  batch: (batch = []) => ({ type: 'BATCH', payload: { batch } }),
-  setDatumTemplate: (datumTemplate) => ({
-    type: 'SET_TEMPLATE',
-    payload: datumTemplate,
-  }),
-  search: () => ({ type: 'SEARCH' }),
-  lock: () => ({ type: 'LOCK' }), // block changes to the schema
-  delete: () => ({ type: 'DELETE' }), // or can delete the child directly ?
+const api = {
+  add: {
+    type: 'object',
+    title: 'ADD',
+    description: 'Add an element to this collection',
+    additionalProperties: false,
+    required: ['formData'],
+    properties: {
+      formData: { type: 'object' },
+      network: {
+        type: 'object',
+        description: 'Recursively defined children',
+        patternProperties: { '(.*?)': { $ref: '#' } },
+      },
+    },
+  },
+  batch: {
+    type: 'object',
+    title: 'BATCH',
+    description: 'Add multiple elements to the collection as a batch',
+    additionalProperties: false,
+    required: ['batch'],
+    properties: {
+      batch: { type: 'array' },
+    },
+  },
+  setTemplate: {
+    type: 'object',
+    title: 'SET_TEMPLATE',
+    description: 'Change the template of the elements of this collection',
+    additionalProperties: false,
+    required: ['schema'],
+    properties: {
+      schema: { type: 'object' },
+      network: { type: 'object' },
+    },
+  },
+  search: {
+    type: 'object',
+    title: 'SEARCH',
+    description: 'Search through this collection',
+  },
 }
-
-export { reducer, actions }
+const state = convertToTemplate({ type: 'COLLECTION' })
+export { reducer, api, state }

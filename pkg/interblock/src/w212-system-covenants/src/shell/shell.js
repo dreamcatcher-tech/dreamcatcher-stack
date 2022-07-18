@@ -104,10 +104,10 @@ const reducer = async (request) => {
       return
     }
     case 'DISPATCH': {
-      const { action, to } = event.payload
-      const { type, payload } = action
+      const { action, to } = payload
+      const { type, payload: innerPayload } = action
       debug(`dispatch type: %o to: %o`, type, to)
-      const result = await interchain(type, payload, to)
+      const result = await interchain(type, innerPayload, to)
       return result
     }
     case 'MV': {
@@ -129,7 +129,7 @@ const reducer = async (request) => {
       debug(`publish: ${name} to: ${path} as`, target)
       const state = { name, installer }
       const config = { covenant: 'covenant' }
-      const result = await interchain(actions.add(target, { config, state }))
+      const result = await interchain(api.add(target, { config, state }))
       debug(result)
       return { path: target }
     }
@@ -143,6 +143,15 @@ const reducer = async (request) => {
       const state = pulse.getState().toJS()
       debug(`getState result: `, state)
       return state
+    }
+    case 'COVENANT': {
+      const { path } = payload
+      let [{ wd = '/' }] = await useState()
+      const absolutePath = posix.resolve(wd, path)
+      const request = Request.createGetCovenantState(absolutePath)
+      const covenantState = await interchain(request)
+      // want to get the covenant path, then do useState on it
+      return covenantState
     }
     default: {
       throw new Error(`Unrecognized action: ${type}`)
@@ -188,7 +197,7 @@ const reducer = async (request) => {
  * @param {*} config path to a file, object, or JSON describing the application
  */
 
-const actions = {
+const api = {
   ping: (to = '.', payload = {}) => ({
     type: 'PING',
     payload: { ...payload, to },
@@ -225,10 +234,10 @@ const actions = {
   dispatch: (action, to) => {
     assert.strictEqual(typeof action, 'object')
     assert.strictEqual(typeof to, 'string')
-    return {
+    return Request.create({
       type: 'DISPATCH',
       payload: { action, to },
-    }
+    })
   },
   /**
    * Many more options are possible, this is just the bare minimum to get operational
@@ -247,6 +256,8 @@ const actions = {
       type: 'CAT',
       payload: { path },
     }),
+  covenant: (path = '.') =>
+    Request.create({ type: 'COVENANT', payload: { path } }),
   //   MV: 'moveActor',
   //   LN: 'linkActor',
   //   LOGOUT: 'logout',
@@ -258,5 +269,6 @@ const actions = {
   //   MERGE: 'merge' // combine one chain into the target chain
   //   CP: 'copy' // fork a chain and give it a new parent
 }
+// TODO move all api actions to jsonschema
 const state = { root: '/', wd: '/' }
-export { actions, reducer, state }
+export { api, reducer, state }

@@ -203,10 +203,10 @@ export class Engine {
     assert(softpulse.isModified())
     const timeout = 2000 // TODO move to config
     const isolate = await this.#isolate.load(softpulse, timeout)
-    const latest = (path) => this.#latestByPath(path)
+    const latest = (path) => this.latestByPath(path)
     return reducer(softpulse, isolate, latest)
   }
-  async #latestByPath(path, rootAddress = this.#hints.self) {
+  async latestByPath(path, rootAddress = this.#hints.self) {
     // TODO allow remote roots
     assert.strictEqual(typeof path, 'string')
     assert(posix.isAbsolute(path))

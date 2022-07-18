@@ -34,12 +34,10 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
-import './w000-rxdb-polyfill'
 import assert from 'assert-fast'
-import { effectorFactory, awsFactory } from './w020-emulators'
-import * as engine from './w018-standard-engine'
 import * as system from './w212-system-covenants'
 import * as apps from './w301-user-apps'
+import { Interpulse } from './w300-interpulse'
 import Debug from 'debug'
 const debug = Debug('interblock')
 
@@ -57,4 +55,4 @@ const checkModules = () => {
   }
 }
 checkModules()
-export { effectorFactory, awsFactory, engine, system, apps, Debug }
+export { Interpulse, system, apps, Debug }

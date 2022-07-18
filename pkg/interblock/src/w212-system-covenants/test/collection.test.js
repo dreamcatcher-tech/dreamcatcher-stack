@@ -1,7 +1,8 @@
 import { assert } from 'chai/index.mjs'
+import { Interpulse } from '../..'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
-Debug.enable()
+Debug.enable('*collection iplog *install')
 
 describe('collection', () => {
   const schema = {
@@ -12,7 +13,7 @@ describe('collection', () => {
       firstName: { type: 'string' },
     },
   }
-  const children = {
+  const network = {
     address: {
       schema: {
         title: 'Address',
@@ -23,25 +24,30 @@ describe('collection', () => {
   }
   const customerData = {
     formData: { firstName: 'test firstname' },
-    children: { address: { formData: { address: 'test address' } } },
+    network: { address: { formData: { address: 'test address' } } },
   }
 
-  test('add with test data', async () => {
-    const shell = await effectorFactory()
-    await shell.add('col1', 'collection')
+  test.only('add with test data', async () => {
+    // Debug.enable('iplog *collection interpulse')
+    const shell = await Interpulse.createCI()
+    await shell.add('col1', { config: { covenant: 'collection' } })
     const actions = await shell.actions('col1')
-    await actions.setDatumTemplate({ schema, children })
-    const colState = await shell.latest('col1')
-    assert(!colState.getState().datumTemplate.formData)
-    assert(!colState.getState().datumTemplate.children.address.formData)
+    await actions.setTemplate({ schema, network })
+    const col = await shell.latest('col1')
+    const colState = col.getState().toJS()
+    debug(colState)
+    assert(!colState.datumTemplate.formData)
+    assert(!colState.datumTemplate.network.address.formData)
     debug('adding item to collection')
 
     await actions.add(customerData)
     const nextColState = await shell.latest('col1')
-    assert.deepEqual(nextColState.getState(), colState.getState())
+    assert.deepEqual(nextColState.getState(), col.getState())
     const customer = await shell.latest('col1/file_00001')
-    assert(customer.getState().formData.firstName)
-    assert(!customer.getState().children.address.formData)
+    customer.getState().dir()
+    assert(customer.getState().toJS().formData.firstName)
+    // all covenants to respond to install events, and ignore or respond differently
+    assert(!customer.getState().toJS().network.address.formData)
     const address = await shell.latest('col1/file_00001/address')
     assert(address.getState().formData.address)
 

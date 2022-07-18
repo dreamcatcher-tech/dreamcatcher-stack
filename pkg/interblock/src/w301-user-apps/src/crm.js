@@ -1,5 +1,3 @@
-import { CovenantId } from '../../w015-models'
-const covenantId = CovenantId.create('crm')
 const address = (title) => ({
   schema: {
     title,
@@ -181,4 +179,4 @@ const installer = {
   },
 }
 
-export { covenantId, installer }
+export { installer }
