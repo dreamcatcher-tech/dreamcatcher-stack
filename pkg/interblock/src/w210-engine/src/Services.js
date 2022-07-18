@@ -71,7 +71,7 @@ export class IsolateContainer {
     assert(pulse.isModified())
     assert.strictEqual(typeof overloads, 'object')
     assert(Number.isInteger(timeout))
-    const { covenant: covenantString } = pulse.provenance.dmz.config
+    const { covenant: covenantString } = pulse.provenance.dmz
     const reducer = (request) => {
       debug(`default reducer`, request)
     }

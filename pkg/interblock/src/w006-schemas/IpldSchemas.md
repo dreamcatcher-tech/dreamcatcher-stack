@@ -383,7 +383,6 @@ type Config struct {
     acl &ACL
     interpulse &Covenant        # What version of Interpulse is this built for
     entropy Entropy
-    covenant &Covenant
 }
 ```
 
@@ -402,6 +401,7 @@ type Dmz struct {
     pending optional &Pending
     approot optional PulseLink          # The latest known approot
     binary optional Binary
+    covenant Covenant
 }
 ```
 

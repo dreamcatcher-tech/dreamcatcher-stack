@@ -113,7 +113,7 @@ const pulseReducer = async (type, payload) => {
         latestPulse = await latest(path)
         // but need some way to walk blocks relatively ?
       }
-      const { covenant } = latestPulse.provenance.dmz.config
+      const { covenant } = latestPulse.provenance.dmz
       assert.strictEqual(typeof covenant, 'string')
       // TODO define covenant resolution algorithm better
       let covenantPath = covenant

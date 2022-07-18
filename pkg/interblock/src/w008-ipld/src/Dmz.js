@@ -21,6 +21,7 @@ const getDefaultParams = (CI = false) => {
       network: Network.create(),
       state: State.create(),
       pending: Pending.create(),
+      covenant: 'unity',
     }
   }
   if (CI) {
@@ -52,6 +53,10 @@ export class Dmz extends IpldStruct {
     params = { ...params }
     const defaultParams = getDefaultParams(CI)
     for (const key in params) {
+      if (key === 'covenant') {
+        assert.strictEqual(typeof key, 'string')
+        continue
+      }
       assert(this.classMap[key], `key ${key} not mapped to CID class`)
       const isInstanceOf = params[key] instanceof this.classMap[key]
       if (!isInstanceOf) {

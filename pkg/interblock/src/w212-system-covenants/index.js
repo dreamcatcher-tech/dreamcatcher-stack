@@ -1,6 +1,5 @@
 import * as collection from './src/collection'
 import * as datum from './src/datum'
-import * as dpkg from './src/dpkg'
 import * as shell from './src/shell'
 import * as hyper from './src/hyper'
 import * as probe from './src/probe'
@@ -9,7 +8,7 @@ import * as covenant from './src/covenant'
 
 import { Address, PulseLink } from '../w008-ipld'
 
-export { collection, datum, dpkg, hyper, probe, shell, unity, covenant }
+export { collection, datum, hyper, probe, shell, unity, covenant }
 
 /**
  * Idea here is to provide a set of functions that can be used by any covenant to lock the current version of the system covenants that are in use.

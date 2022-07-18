@@ -32,7 +32,7 @@ const TxExample = {
             { requestId: 9, reply: reply6 }
         ]
     },
-    covenant: {
+    reducer: {
         requestsStart: 84587,
         requests: [],
         repliesStart: 868594,

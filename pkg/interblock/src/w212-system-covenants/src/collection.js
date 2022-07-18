@@ -17,8 +17,8 @@ const add = async (payload, datumTemplate) => {
   const formData = demuxFormData(datumTemplate, payload)
   const name = getChildName(datumTemplate, formData)
   const state = muxTemplateWithFormData(datumTemplate, formData)
-  const config = { covenant: 'datum' }
-  const spawn = Request.createSpawn(name, { state, config })
+  const covenant = 'datum'
+  const spawn = Request.createSpawn(name, { state, covenant })
   const result = await interchain(spawn)
 
   debug(`datum added`, result.alias)

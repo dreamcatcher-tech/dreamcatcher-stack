@@ -18,7 +18,6 @@ type Config struct {
     acl &ACL
     interpulse &Covenant        # What version of Interpulse is this built for
     entropy Entropy
-    covenant &Covenant
 }
  */
 export class Config extends IpldStruct {
@@ -33,7 +32,6 @@ export class Config extends IpldStruct {
       isPierced: false,
       sideEffects,
       isPublicChannelOpen: false,
-      covenant: 'unity', // TODO hashlock to unity
     }
     return super.clone({ ...config, ...opts })
   }

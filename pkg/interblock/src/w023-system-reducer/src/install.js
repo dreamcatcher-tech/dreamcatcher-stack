@@ -23,16 +23,10 @@ const installReducer = async (payload) => {
   const awaits = []
   for (const child in network) {
     debug('installing child: ', child)
-    const { network, ...rest } = network[child]
-    const spawnOptions = mapInstaller(rest)
+    const spawnOptions = network[child]
     const spawn = Request.createSpawn(child, spawnOptions)
     awaits.push(interchain(spawn))
   }
   await Promise.all(awaits)
-}
-const mapInstaller = (options) => {
-  const { covenant = 'unity', state = {} } = options
-  const config = { covenant }
-  return { state, config }
 }
 export { installReducer }

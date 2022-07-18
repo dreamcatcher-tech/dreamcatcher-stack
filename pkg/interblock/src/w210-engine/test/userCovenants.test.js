@@ -4,7 +4,13 @@ import Debug from 'debug'
 import { interchain } from '../../w002-api'
 import { Request } from '../../w008-ipld'
 const debug = Debug('interblock:tests:covenants')
-
+const root = {
+  reducer: async (request) => {
+    debug(`root request`, request)
+    const spawnOptions = { covenant: '/child' }
+    return await interchain(Request.createSpawn('testalias', spawnOptions))
+  },
+}
 describe('user covenants', () => {
   test('@@INIT', async () => {
     let unreachableReached = false
@@ -17,13 +23,7 @@ describe('user covenants', () => {
         unreachableReached = true
       },
     }
-    const root = {
-      reducer: async (request) => {
-        debug(`root request`, request)
-        const spawnOptions = { config: { covenant: '/child' } }
-        return await interchain(Request.createSpawn('testalias', spawnOptions))
-      },
-    }
+
     const overloads = { root, '/child': child }
     const engine = await Engine.createCI({ overloads })
     const result = await engine.pierce(Request.create('test'))
@@ -40,13 +40,6 @@ describe('user covenants', () => {
           throw new Error(`@@INIT test`)
         }
         unreachableReached = true
-      },
-    }
-    const root = {
-      reducer: async (request) => {
-        debug(`root request`, request)
-        const spawnOptions = { config: { covenant: '/child' } }
-        return await interchain(Request.createSpawn('testalias', spawnOptions))
       },
     }
     const overloads = { root, '/child': child }

@@ -30,7 +30,7 @@ describe('collection', () => {
   test.only('add with test data', async () => {
     // Debug.enable('iplog *collection interpulse')
     const shell = await Interpulse.createCI()
-    await shell.add('col1', { config: { covenant: 'collection' } })
+    await shell.add('col1', { covenant: 'collection' })
     const actions = await shell.actions('col1')
     await actions.setTemplate({ schema, network })
     const col = await shell.latest('col1')

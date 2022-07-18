@@ -382,12 +382,6 @@ export default {
         entropy: {
           type: 'Entropy',
         },
-        covenant: {
-          type: {
-            kind: 'link',
-            expectedType: 'Covenant',
-          },
-        },
       },
       representation: {
         map: {},
@@ -428,6 +422,9 @@ export default {
         binary: {
           type: 'Binary',
           optional: true,
+        },
+        covenant: {
+          type: 'Covenant',
         },
       },
       representation: {

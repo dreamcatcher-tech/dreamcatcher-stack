@@ -28,8 +28,8 @@ export class Pulse extends IpldStruct {
   static async createRoot(CI = false) {
     const network = await Network.createRoot()
     const covenant = 'root'
-    const config = Config.createPierced().setMap({ covenant })
-    const dmz = Dmz.create({ network, config }, CI)
+    const config = Config.createPierced()
+    const dmz = Dmz.create({ network, config, covenant }, CI)
     const provenance = Provenance.createGenesis(dmz)
     return await Pulse.create(provenance)
   }
@@ -39,11 +39,11 @@ export class Pulse extends IpldStruct {
     return await instance.crush()
   }
   static async createCovenantOverload(covenant) {
-    const config = Config.create({ covenant: 'covenant' })
+    assert.strictEqual(typeof covenant, 'object')
     const CI = true
-    const { name = '', api = {}, state = {}, installer = {} } = covenant
-    const covenantState = { name, api, state, installer }
-    const dmz = Dmz.create({ config, state: covenantState }, CI)
+    const { name = '', api = {}, state = {}, network = {} } = covenant
+    const covenantState = { name, api, state, network }
+    const dmz = Dmz.create({ state: covenantState }, CI)
     const provenance = Provenance.createGenesis(dmz)
     return await Pulse.create(provenance)
   }

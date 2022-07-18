@@ -40,7 +40,7 @@ const datumSchema = {
   type: 'object',
   title: 'Datum',
   required: [
-    'type', // TODO type may be replaced by covenant ?
+    'type',
     'namePath',
     'schema',
     'uiSchema',
