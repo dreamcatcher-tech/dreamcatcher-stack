@@ -109,12 +109,12 @@ describe('effector', () => {
     expect(child1.address.getChainId()).toStrictEqual(reply.chainId)
   })
   test.only('spawn many times', async () => {
-    Debug.enable('iplog *tests*')
+    Debug.enable('*tests*')
     const engine = await Interpulse.createCI()
     let count = 0
     const awaits = []
     const start = Date.now()
-    while (count < 20) {
+    while (count < 10) {
       const result = engine.add(`child-${count}`)
       awaits.push(result)
       count++
@@ -129,7 +129,7 @@ describe('effector', () => {
      * need to see 1000 children spawned in under 5 seconds, with blocksize of 20kB
      *
      * 2020-07-17 1,000 seconds 800 children, 5.33 MB block size
-     * 2022-07-19 37 seconds 800 children, negligible block size
+     * 2022-07-19 26 seconds 800 children, negligible block size
      */
   })
 })

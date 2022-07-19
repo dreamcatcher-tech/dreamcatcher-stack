@@ -134,6 +134,7 @@ export class Engine {
     await this.#endurance.endure(base)
     await this.#hints.pulseAnnounce(base)
   }
+  #interpulseLocks = new Map()
   async #interpulse(target, source, pulse) {
     // gets hinted that a chain has updated, so begins seeking confirmation
     // looks up what chains it is hosting, and gets what chains are subscribed ?
@@ -144,37 +145,63 @@ export class Engine {
     assert(pulse instanceof Pulse)
     debug(`interpulse hint received`, target, source, pulse)
 
-    const interpulse = Interpulse.extract(pulse, target)
-    // TODO get the softpulse and see if we are still relevant ?
-    // TODO insert a queue to capture interpulses before block making
+    const tracker = { source, pulse }
+    const promise = new Promise((resolve, reject) => {
+      Object.assign(tracker, { resolve, reject })
+    })
+    const chainId = target.getChainId()
+    if (this.#interpulseLocks.has(chainId)) {
+      const interpulseQueue = this.#interpulseLocks.get(chainId)
+      interpulseQueue.push(tracker)
+      return promise
+    }
+    const interpulseQueue = [tracker]
+    this.#interpulseLocks.set(chainId, interpulseQueue)
     const lock = await this.#crypto.lock(target)
-    // TODO check that the change we want to make is still valid
-    if (interpulse.tx.isGenesisRequest()) {
-      const spawnOptions = interpulse.tx.getGenesisSpawnOptions()
-      const genesis = await pulse.deriveChildGenesis(spawnOptions)
-      await this.#endurance.endure(genesis)
-      await this.#hints.pulseAnnounce(genesis)
-      debug(`genesis endured`, genesis.getAddress())
-      // TODO ? make a unified way to fetch the latest pool item ?
-      // pools are always processed as soon as they are modified
-      let poolWithParent = await genesis.generateSoftPulse(pulse)
-      poolWithParent = await poolWithParent.ingestInterpulse(interpulse)
-      await this.#hints.poolAnnounce(poolWithParent)
-      return this.#increase(poolWithParent, lock)
-    }
+    await this.#interpulseQueue(lock, interpulseQueue, target)
+    assert(!interpulseQueue.length)
+    this.#interpulseLocks.delete(chainId)
+    return promise
+  }
+  async #interpulseQueue(lock, interpulseQueue, target) {
+    assert(lock instanceof CryptoLock)
+    assert(lock.isValid())
+    assert(Array.isArray(interpulseQueue))
 
-    let pool = await this.#hints.poolLatest(target)
-    if (pool) {
-      assert(pool instanceof Pulse)
-    } else {
-      const pulselink = await this.#hints.pulseLatest(target)
-      debug(`using latest`, pulselink)
-      const pulse = await this.#endurance.recoverPulse(pulselink)
-      pool = await pulse.generateSoftPulse()
+    let pool
+    const resolves = []
+    while (interpulseQueue.length) {
+      const { source, pulse, resolve, reject } = interpulseQueue.shift()
+      resolves.push(resolve)
+      const interpulse = Interpulse.extract(pulse, target)
+      // TODO check that the change we want to make is still valid
+      if (interpulse.tx.isGenesisRequest()) {
+        const spawnOptions = interpulse.tx.getGenesisSpawnOptions()
+        const genesis = await pulse.deriveChildGenesis(spawnOptions)
+        await this.#endurance.endure(genesis)
+        await this.#hints.pulseAnnounce(genesis)
+        debug(`genesis endured`, genesis.getAddress())
+        // TODO ? make a unified way to fetch the latest pool item ?
+        // pools are always processed as soon as they are modified
+        assert(!pool)
+        pool = await genesis.generateSoftPulse(pulse)
+      }
+      if (!pool) {
+        pool = await this.#hints.poolLatest(target)
+        if (pool) {
+          assert(pool instanceof Pulse)
+        } else {
+          const pulselink = await this.#hints.pulseLatest(target)
+          debug(`using latest`, pulselink)
+          const pulse = await this.#endurance.recoverPulse(pulselink)
+          pool = await pulse.generateSoftPulse()
+        }
+      }
+      pool = await pool.ingestInterpulse(interpulse)
     }
-    pool = await pool.ingestInterpulse(interpulse)
     await this.#hints.poolAnnounce(pool)
-    return this.#increase(pool, lock)
+    const result = await this.#increase(pool, lock)
+    resolves.forEach((resolve) => resolve(result))
   }
   async #increase(pool, lock) {
     assert(pool instanceof Pulse)
@@ -304,6 +331,7 @@ export class Engine {
     if (this.#pierceLocks.has(chainId)) {
       const pierceQueue = this.#pierceLocks.get(chainId)
       pierceQueue.push(tracker)
+      // TODO somehow unify with interpulse buffering
       return promise
     }
     const pierceQueue = [tracker]
