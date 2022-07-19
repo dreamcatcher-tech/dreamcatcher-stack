@@ -119,7 +119,7 @@ describe('effector', () => {
       awaits.push(result)
       count++
       if (count % 10 === 0) {
-        debug(await result)
+        await Promise.all(awaits)
       }
     }
     const bulkResult = await Promise.all(awaits)

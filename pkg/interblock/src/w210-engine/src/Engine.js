@@ -120,7 +120,6 @@ export class Engine {
       debug(`poolSubscribe`, address)
       // check if anything transmitted to io
       // if replies were sent, walk the whole lot, using *rx()
-      return this.#increase(address)
     })
     this.#hints.interpulseSubscribe((target, source, pulselink) => {
       debug(`interpulseSubscribe`)
@@ -267,6 +266,7 @@ export class Engine {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
     const network = pulse.getNetwork()
+    const awaits = []
     for (const channelId of network.channels.txs) {
       const channel = await network.channels.getChannel(channelId)
       const { address } = channel
@@ -275,8 +275,9 @@ export class Engine {
       const source = pulse.getAddress()
       this.#hints.interpulseAnnounce(target, source, pulse)
       // TODO check if we are the validator, else rely on announce
-      this.#interpulse(target, source, pulse)
+      awaits.push(this.#interpulse(target, source, pulse))
     }
+    await Promise.all(awaits)
     if (pulse.getAddress().equals(this.address)) {
       const io = await network.getIo()
       await this.#checkPierceTracker(io, this.address)
@@ -337,7 +338,7 @@ export class Engine {
     }
     this.#pierceLocks.delete(chainId)
     await this.#hints.poolAnnounce(pool)
-    this.#increase(pool, lock)
+    await this.#increase(pool, lock)
     return promise
   }
   /**
