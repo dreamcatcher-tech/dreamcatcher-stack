@@ -18,10 +18,15 @@ export class Endurance {
     assert(pulse.isVerified())
     this.#mockIpfs.set(pulse.cid.toString(), pulse)
     await this.#logger.pulse(pulse)
+    const blocks = pulse.getDiffBlocks()
+    for (const [key, value] of blocks.entries()) {
+      if (!this.#mockIpfs.has(key)) {
+        this.#mockIpfs.set(key, value)
+      }
+    }
+
     const address = pulse.getAddress().getChainId().substring(0, 14)
     const pulselink = pulse.getPulseLink().cid.toString().substring(0, 14)
-    const d = pulse.getDiffBlocks()
-    // console.dir(d, { depth: Infinity })
     debug(`endure`, address, pulselink)
   }
   async recoverPulse(pulselink) {
@@ -35,9 +40,6 @@ export class Endurance {
     // TODO WARNING permissions must be honoured
     assert(cid instanceof CID)
     const key = cid.toString()
-    if (this.#mockSoftIpfs.has(key)) {
-      console.log('asdf')
-    }
     assert(this.#mockIpfs.has(key), `No block for: ${key}`)
     return this.#mockIpfs.get(key)
   }

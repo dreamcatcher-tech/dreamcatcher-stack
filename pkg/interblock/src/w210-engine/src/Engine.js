@@ -188,7 +188,7 @@ export class Engine {
     const provenance = await pool.provenance.crush(resolver)
     const signature = await lock.sign(provenance)
     pool = pool.addSignature(lock.publicKey, signature)
-    const pulse = await pool.crush()
+    const pulse = await pool.crush(resolver)
 
     await this.#endurance.endure(pulse)
     if (pulse.getAddress().equals(this.address)) {
