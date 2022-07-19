@@ -49,7 +49,7 @@ export class Network extends IpldStruct {
     children: ChildrenHamt,
     uplinks: UplinksHamt,
     downlinks: DownlinksHamt,
-    symLinks: Hamt,
+    symlinks: Hamt,
     hardlinks: Hamt,
 
     piercings: Rx,

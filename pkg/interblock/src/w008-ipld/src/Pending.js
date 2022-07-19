@@ -6,6 +6,7 @@ export class Pending extends IpldStruct {
   // blockBuster // the AsyncTrail that caused the block to restart
   system = []
   reducer = []
+  static classMap = { system: AsyncTrail, reducer: AsyncTrail }
   static create() {
     return new Pending()
   }

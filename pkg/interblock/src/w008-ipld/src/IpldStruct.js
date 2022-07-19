@@ -72,7 +72,7 @@ export class IpldStruct extends IpldInterface {
         if (this.isCidLink(key)) {
           dagTree[key] = crushed[key].cid
         } else {
-          dagTree[key] = crushed[key]
+          dagTree[key] = crushed[key].ipldBlock.value
         }
       } else if (Array.isArray(slice)) {
         const awaits = slice.map((v) => {

@@ -14,12 +14,12 @@ import { IpldStruct } from './IpldStruct'
 import { RxQueue, PulseLink, Interpulse } from '.'
 
 export class Rx extends IpldStruct {
+  static cidLinks = ['tip']
   static classMap = {
     tip: PulseLink, // TODO check pulselink is only used for tips
     system: RxQueue,
     reducer: RxQueue,
   }
-  static cidLinks = []
   static create() {
     return super.clone({
       system: RxQueue.create(),

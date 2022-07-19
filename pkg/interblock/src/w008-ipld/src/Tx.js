@@ -51,7 +51,7 @@ type Tx struct {
   }
  */
 export class Tx extends IpldStruct {
-  static cidLinks = ['address', 'precedent']
+  static cidLinks = ['precedent']
   static classMap = {
     precedent: PulseLink,
     system: TxQueue,
