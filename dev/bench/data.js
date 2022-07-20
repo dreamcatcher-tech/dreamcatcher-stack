@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658354785043,
+  "lastUpdate": 1658355996055,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interblock Benchmark": [
@@ -1913,6 +1913,65 @@ window.BENCHMARK_DATA = {
             "range": "±2.25%",
             "unit": "ops/sec",
             "extra": "75 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "767db072295718a8fa79d5bc691a718f649b9a00",
+          "message": "clean up package.json",
+          "timestamp": "2022-07-21T10:24:46+12:00",
+          "tree_id": "098c24798d96caa7abb70a7b8f8fedc080e5c047",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/767db072295718a8fa79d5bc691a718f649b9a00"
+        },
+        "date": 1658355995314,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 231,
+            "range": "±4.79%",
+            "unit": "ops/sec",
+            "extra": "76 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 79.43,
+            "range": "±2.99%",
+            "unit": "ops/sec",
+            "extra": "75 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 136,
+            "range": "±4.02%",
+            "unit": "ops/sec",
+            "extra": "74 samples"
+          },
+          {
+            "name": "block making",
+            "value": 537,
+            "range": "±1.55%",
+            "unit": "ops/sec",
+            "extra": "78 samples"
+          },
+          {
+            "name": "unsigned block making",
+            "value": 4307,
+            "range": "±2.85%",
+            "unit": "ops/sec",
+            "extra": "74 samples"
           }
         ]
       }
