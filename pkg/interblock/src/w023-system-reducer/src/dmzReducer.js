@@ -109,26 +109,37 @@ const pulseReducer = async (type, payload) => {
     case '@@COVENANT': {
       const { path } = payload
       debug(`@@COVENANT`, path)
-      let latestPulse = pulse
-      if (path !== '.') {
-        latestPulse = await latest(path)
-        // but need some way to walk blocks relatively ?
+      const latestByPath = async (path) => {
+        if (path !== '.') {
+          // TODO apply this optimization at the engine level
+          return await latest(path)
+          // but need some way to walk blocks relatively ?
+        }
+        return pulse
       }
-      const { covenant } = latestPulse.provenance.dmz
-      assert.strictEqual(typeof covenant, 'string')
-      // TODO define covenant resolution algorithm better
-      let covenantPath = covenant
-      if (!posix.isAbsolute(covenantPath)) {
-        // TODO be precise about assumption this is a system covenant
-        covenantPath = '/system:/' + covenantPath
-      }
-      debug('covenantPath', covenantPath)
-      const covenantPulse = await latest(covenantPath)
-      return covenantPulse.getState().toJS()
+      const state = await getCovenantState(path, latestByPath)
+      return state
     }
     default:
       throw new Error(`Unrecognized type: ${type}`)
   }
 }
 
-export { reducer, openPaths }
+const getCovenantState = async (path, latest) => {
+  assert.strictEqual(typeof path, 'string')
+  assert.strictEqual(typeof latest, 'function')
+  let latestPulse = await latest(path)
+  const { covenant } = latestPulse.provenance.dmz
+  assert.strictEqual(typeof covenant, 'string')
+  // TODO define covenant resolution algorithm better
+  let covenantPath = covenant
+  if (!posix.isAbsolute(covenantPath)) {
+    // TODO be precise about assumption this is a system covenant
+    covenantPath = '/system:/' + covenantPath
+  }
+  debug('covenantPath', covenantPath)
+  const covenantPulse = await latest(covenantPath)
+  return covenantPulse.getState().toJS()
+}
+
+export { reducer, openPaths, getCovenantState }

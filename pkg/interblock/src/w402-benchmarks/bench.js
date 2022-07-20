@@ -1,5 +1,5 @@
 import Benchmark from 'benchmark'
-import { assert } from 'chai'
+import assert from 'assert-fast'
 import { Interpulse, apps } from '../index.mjs'
 import {
   Network,
@@ -32,15 +32,14 @@ const hotPing = async () => {
 
 const publish = async () => {
   const engine = await Interpulse.createCI()
-  const {
-    crm: { reducer, ...crm },
-  } = apps
-  const { dpkgPath } = await engine.publish('dpkgCrm', crm)
+  const { crm } = apps
+  const { path } = await engine.publish('dpkgCrm', crm)
+  assert.strictEqual(path, '/dpkgCrm')
   return engine
 }
 const install = async (engine) => {
-  const dpkgPath = 'dpkgCrm'
-  await engine.add(dpkgPath)
+  const covenant = '/dpkgCrm'
+  await engine.add('crm', { covenant })
 }
 
 const crmSetup = async () => {
@@ -87,23 +86,23 @@ suite
       deferred.resolve()
     },
   })
-  // .add('publish', {
-  //   defer: true,
-  //   fn: async (deferred) => {
-  //     const shell = await publish()
-  //     await shell.shutdown()
-  //     deferred.resolve()
-  //   },
-  // })
-  // .add('install', {
-  //   defer: true,
-  //   fn: async (deferred) => {
-  //     const shell = await publish()
-  //     await install(shell)
-  //     await shell.shutdown()
-  //     deferred.resolve()
-  //   },
-  // })
+  .add('publish', {
+    defer: true,
+    fn: async (deferred) => {
+      const engine = await publish()
+      await engine.shutdown()
+      deferred.resolve()
+    },
+  })
+  .add('install', {
+    defer: true,
+    fn: async (deferred) => {
+      const engine = await publish()
+      await install(engine)
+      await engine.shutdown()
+      deferred.resolve()
+    },
+  })
   // .add('add customer', {
   //   defer: true,
   //   fn: async (deferred) => {

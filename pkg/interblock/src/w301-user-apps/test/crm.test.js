@@ -1,47 +1,48 @@
 import { assert } from 'chai/index.mjs'
 import { jest } from '@jest/globals'
+import { Interpulse } from '../../w300-interpulse'
 import { crm } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test('deploys app', async () => {
+    test.only('deploys app', async () => {
       const publishStart = Date.now()
-      const shell = await effectorFactory()
-      shell.metro.enableLogging()
-      const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
-      assert.strictEqual(dpkgPath, 'dpkgCrm')
+      const engine = await Interpulse.createCI()
+      Debug.enable('iplog *tests*')
+      const { path } = await engine.publish('dpkgCrm', crm)
+      assert.strictEqual(path, '/dpkgCrm')
       const installStart = Date.now()
-
-      await shell.install(dpkgPath, 'crm')
+      await engine.add('crm', { covenant: path })
 
       debug(`publish time: ${installStart - publishStart} ms`)
       debug(`install time: ${Date.now() - installStart} ms`)
-      debug(`blockcount: ${shell.metro.getBlockCount()}`)
+      debug(`pulsecount: ${engine.logger.pulseCount}`)
       const testTime = Date.now() - publishStart
       debug(`test time: ${testTime} ms`)
-      const blockRate = Math.floor(testTime / shell.metro.getBlockCount())
-      debug(`blockrate: ${blockRate}ms per block`)
+      const pulseRate = Math.floor(testTime / engine.logger.pulseCount)
+      debug(`pulserate: ${pulseRate}ms per block`)
 
-      const latestAbout = await shell.metro.getLatestFromPath('/crm/about')
-      assert(latestAbout.state.getState().schema)
+      const about = await engine.latest('/crm/about')
+      const aboutState = about.getState().toJS()
+      expect(aboutState).toEqual(crm.installer.network.about.state)
 
-      const crmActions = await shell.actions('/crm/customers')
+      const crmActions = await engine.actions('/crm/customers')
       const add1Start = Date.now()
-      const add1BlockCount = shell.metro.getBlockCount()
+      const add1PulseCount = engine.logger.pulseCount
       await crmActions.add({ formData: { custNo: 100, name: 'test name 1' } })
       debug(`add first customer time: ${Date.now() - add1Start} ms`)
-      const add2BlockCount = shell.metro.getBlockCount()
-      debug(`add 1 block count: ${add2BlockCount - add1BlockCount}`)
+      const add2BlockCount = engine.metro.getBlockCount()
+      debug(`add 1 block count: ${add2BlockCount - add1PulseCount}`)
 
       const add2Start = Date.now()
       await crmActions.add({ formData: { custNo: 101, name: 'test name 2' } })
       debug(`add second customer time: ${Date.now() - add2Start} ms`)
-      const lastBlockCount = shell.metro.getBlockCount()
+      const lastBlockCount = engine.metro.getBlockCount()
       debug(`add 2 block count: ${lastBlockCount - add2BlockCount}`)
 
-      await shell.shutdown()
+      await engine.shutdown()
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
        * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit

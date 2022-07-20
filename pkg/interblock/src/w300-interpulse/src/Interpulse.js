@@ -1,4 +1,5 @@
 import { shell } from '../../w212-system-covenants'
+import { getCovenantState } from '../../w023-system-reducer'
 import { Engine, schemaToFunctions } from '../../w210-engine'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -37,7 +38,8 @@ export class Interpulse {
     this.#engine = engine
   }
   async actions(path = '.') {
-    const state = await this.covenant(path)
+    const latest = (path) => this.latest(path)
+    const state = await getCovenantState(path, latest)
     const { api = {} } = state
     const actions = schemaToFunctions(api)
     const dispatches = {}
@@ -70,6 +72,13 @@ const mapShell = (engine) => {
       const action = shell.api[key](...args)
       return engine.pierce(action)
     }
+  }
+  const { publish } = actions
+  assert(publish)
+  actions.publish = (name, covenant = {}, parentPath = '.') => {
+    // TODO use the covenant schema to pluck out what is valid
+    const { reducer, ...rest } = covenant
+    return publish(name, rest, parentPath)
   }
   return actions
 }

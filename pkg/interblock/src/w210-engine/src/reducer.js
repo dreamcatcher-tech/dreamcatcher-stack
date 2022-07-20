@@ -60,7 +60,7 @@ export const reducer = async (pulse, isolate, latest) => {
       debug('reducer trail', trail.origin.request.type)
       trail = await isolate.reduce(trail)
     }
-    network = await transmitTrailReply(trail, network)
+    network = await maybeTransmitTrailReply(trail, network)
     const [nextTrail, nextNetwork] = await transmitTrailTxs(trail, network)
     trail = nextTrail
     network = nextNetwork
@@ -178,7 +178,7 @@ const transmitTrailTxs = async (trail, network) => {
   trail = trail.updateTxs(txs)
   return [trail, network]
 }
-const transmitTrailReply = async (trail, network) => {
+const maybeTransmitTrailReply = async (trail, network) => {
   assert(trail instanceof AsyncTrail)
   assert(network instanceof Network)
   if (trail.isOriginTrail()) {
