@@ -5,12 +5,6 @@ import path from 'path'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const { dependencies } = require('./package.json')
-dependencies['@noble/hashes/sha256'] = true
-dependencies['@noble/hashes/utils'] = true
-dependencies['rxdb/plugins/dev-mode'] = true
-dependencies['rxdb/plugins/core'] = true
-dependencies['rxdb/plugins/lokijs'] = true
-dependencies['lokijs/src/incremental-indexeddb-adapter'] = true
 
 // https://vitejs.dev/config/
 export default defineConfig({
