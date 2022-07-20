@@ -2,7 +2,6 @@ import { assert } from 'chai/index.mjs'
 import { Request, Reply, Network } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
-Debug.enable()
 
 describe('loopback', () => {
   test('basic', async () => {

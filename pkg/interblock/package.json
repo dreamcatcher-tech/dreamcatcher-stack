@@ -11,7 +11,6 @@
   "type": "module",
   "scripts": {
     "schemas": "node --experimental-specifier-resolution=node src/w006-schemas/bin.js && prettier -w src/w006-schemas/ipldSchemas.js",
-    "schemas:dev": "nodemon --exec yarn schemas --ignore src/w006-schemas/ipldSchemas.js --ext js,md",
     "prepublishOnly": "yarn schemas && yarn build",
     "dev": "vite --force",
     "build": "vite build",
@@ -27,9 +26,7 @@
   "dependencies": {
     "@ipld/dag-cbor": "^7.0.2",
     "@ipld/dag-pb": "^2.1.17",
-    "@ipld/schema-validation": "^1.1.0",
     "ajv": "^8.11.0",
-    "ajv-formats": "^2.1.0",
     "ansi-colors-browserify": "^4.1.2",
     "assert-fast": "^1.0.1",
     "callsites": "^4.0.0",
@@ -40,8 +37,6 @@
     "ipfs-core": "^0.15.4",
     "ipld-hashmap": "^2.1.11",
     "ipld-schema": "^2.0.2",
-    "ipld-schema-validator": "^0.1.0",
-    "is-in-browser": "^2.0.0",
     "pad-left": "^2.1.0",
     "path-browserify": "^1.0.1",
     "pretty-bytes": "^6.0.0",
@@ -64,8 +59,7 @@
     "rollup-plugin-visualizer": "^5.7.1",
     "supports-color": "^9.2.2",
     "trace-unhandled": "^2.0.1",
-    "vite": "^3.0.2",
-    "vitest": "^0.18.1"
+    "vite": "^3.0.2"
   },
   "publishConfig": {
     "access": "public"
@@ -83,34 +77,18 @@
     "testTimeout": 300,
     "setupFiles": [
       "trace-unhandled/register"
-    ],
-    "roots": [
-      "src/w002-api",
-      "src/w008-ipld",
-      "src/w010-hooks",
-      "src/w023-system-reducer",
-      "src/w210-engine",
-      "src/w212-system-covenants",
-      "src/w300-interpulse"
     ]
   },
   "wallaby": {
     "autoDetect": true,
     "tests": [
-      "**/w002-api/**/*.test.js",
-      "**/w008-ipld/**/*.test.js",
-      "**/w010-hooks/**/*.test.js",
-      "**/w023-system-reducer/**/*.test.js",
-      "**/w210-engine/**/*.test.js",
-      "**/w212-system-covenants/**/*.test.js",
-      "**/w300-interpulse/**/*.test.js",
-      "!package.test.js"
+      "**/*.test.js"
     ],
     "env": {
       "type": "node",
       "runner": "node",
       "params": {
-        "runner": "--experimental-vm-modules --preserve-symlinks"
+        "runner": "--experimental-vm-modules"
       }
     }
   }

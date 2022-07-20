@@ -12,7 +12,6 @@ import {
   RxReply,
 } from '../../w008-ipld'
 const debug = Debug('interblock:tests:hooks')
-Debug.enable()
 const request = Request.create('TEST')
 const requestId = RequestId.createCI()
 const rxRequest = RxRequest.create(request, requestId)

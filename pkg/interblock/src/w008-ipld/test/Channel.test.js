@@ -2,7 +2,6 @@ import { assert } from 'chai/index.mjs'
 import { Request, Address, Channel, Reply } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Channel')
-Debug.enable()
 const fakeChannelId = 100
 describe('channel', () => {
   describe('create', () => {

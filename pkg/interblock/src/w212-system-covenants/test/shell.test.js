@@ -203,7 +203,6 @@ describe('machine validation', () => {
   })
   describe('install', () => {
     test('deep child runs custom covenant', async () => {
-      // Debug.enable('iplog *install *dmz')
       let isExecuted = false
       const dpkgTest = {
         installer: {

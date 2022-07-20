@@ -1,10 +1,8 @@
 import { assert } from 'chai/index.mjs'
 import { jest } from '@jest/globals'
-import { effectorFactory, awsFactory } from '../../w020-emulators'
 import { crm } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
-Debug.enable()
 
 describe('crm', () => {
   describe('app deploy', () => {

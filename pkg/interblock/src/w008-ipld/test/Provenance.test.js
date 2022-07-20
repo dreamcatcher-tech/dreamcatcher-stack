@@ -1,8 +1,6 @@
-import { assert } from 'chai/index.mjs'
 import Debug from 'debug'
 import { Provenance, Dmz } from '..'
 import { Timestamp } from '../src'
-Debug.enable()
 
 describe('provenance', () => {
   test('basic', async () => {

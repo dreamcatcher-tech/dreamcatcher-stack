@@ -2,7 +2,6 @@ import { assert } from 'chai/index.mjs'
 import { State } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:State')
-Debug.enable()
 
 describe('state', () => {
   test('basic', async () => {

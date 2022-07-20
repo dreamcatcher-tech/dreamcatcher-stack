@@ -5,7 +5,6 @@ const debug = Debug('interblock:tests:Interpulse')
 
 describe('effector', () => {
   test('ping single', async () => {
-    Debug.enable('*tests*')
     const start = Date.now()
     debug(`start`)
     const engine = await Interpulse.createCI()
@@ -66,7 +65,6 @@ describe('effector', () => {
      */
   })
   test('ping many times', async () => {
-    Debug.enable('*tests*')
     debug(`start`)
     const engine = await Interpulse.createCI()
     debug(`booted`)
