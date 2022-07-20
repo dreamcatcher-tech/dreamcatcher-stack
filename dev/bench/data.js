@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658355996055,
+  "lastUpdate": 1658361580541,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interblock Benchmark": [
@@ -1972,6 +1972,37 @@ window.BENCHMARK_DATA = {
             "range": "±2.85%",
             "unit": "ops/sec",
             "extra": "74 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "bda60588b18de990347bc63f1ce2a0154305f6f4",
+          "message": "more benchmarks.\nengine get covenant is passive.\nengine publish overridden for convenience.",
+          "timestamp": "2022-07-21T11:58:33+12:00",
+          "tree_id": "4f411fb5a465212e230c74d40c85e71daf995310",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/bda60588b18de990347bc63f1ce2a0154305f6f4"
+        },
+        "date": 1658361578485,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 295,
+            "range": "±5.71%",
+            "unit": "ops/sec",
+            "extra": "79 samples"
           }
         ]
       }
