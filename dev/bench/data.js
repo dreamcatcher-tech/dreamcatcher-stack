@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1645061191709,
+  "lastUpdate": 1658309173491,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interblock Benchmark": [
@@ -1750,6 +1750,51 @@ window.BENCHMARK_DATA = {
             "range": "±3.70%",
             "unit": "ops/sec",
             "extra": "82 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "631767fedd1bc0dcd34015b5367d1855b510b0d4",
+          "message": "libp2p use ipfs module.\nbench working for basic tests.",
+          "timestamp": "2022-07-20T21:24:52+12:00",
+          "tree_id": "9e194f1588cb0fd4689108c573886a7fa0e67be6",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/631767fedd1bc0dcd34015b5367d1855b510b0d4"
+        },
+        "date": 1658309172978,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 368,
+            "range": "±3.31%",
+            "unit": "ops/sec",
+            "extra": "80 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 119,
+            "range": "±2.65%",
+            "unit": "ops/sec",
+            "extra": "80 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 200,
+            "range": "±1.12%",
+            "unit": "ops/sec",
+            "extra": "85 samples"
           }
         ]
       }
