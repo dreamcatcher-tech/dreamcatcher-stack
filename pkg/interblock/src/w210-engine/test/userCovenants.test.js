@@ -7,8 +7,8 @@ const debug = Debug('interblock:tests:covenants')
 const root = {
   reducer: async (request) => {
     debug(`root request`, request)
-    const spawnOptions = { covenant: '/child' }
-    return await interchain(Request.createSpawn('testalias', spawnOptions))
+    const installer = { covenant: '/child' }
+    return await interchain(Request.createSpawn('testalias', installer))
   },
 }
 describe('user covenants', () => {

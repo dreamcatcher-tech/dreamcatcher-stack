@@ -66,17 +66,17 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof state, 'object')
     return this.create('@@SET_STATE', { state }, binary)
   }
-  static createSpawn(alias, spawnOptions = {}) {
-    const payload = { alias, spawnOptions }
+  static createSpawn(alias, installer = {}) {
+    const payload = { alias, installer }
     if (!alias) {
       delete payload.alias
     }
     return this.create('@@SPAWN', payload)
   }
-  static createAddChild(alias, spawnOptions) {
+  static createAddChild(alias, installer) {
     return {
       type: '@@ADD_CHILD',
-      payload: { alias, spawnOptions },
+      payload: { alias, installer },
     }
   }
   static createPing(payload) {

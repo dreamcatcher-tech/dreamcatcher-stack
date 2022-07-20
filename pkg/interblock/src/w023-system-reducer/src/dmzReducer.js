@@ -53,7 +53,7 @@ const reducer = (request) => {
     case '@@ACCEPT':
       // just default responding is enough to trigger lineage catchup
       break
-    case '@@INSTALL': // user can connect with recursive deployment calls
+    case '@@INSTALL':
       return installReducer(payload)
     case '@@GET_CHAN':
       getChannelReducer(request)
@@ -75,11 +75,11 @@ const pulseReducer = async (type, payload) => {
   let [pulse, setPulse, latest] = usePulse()
   switch (type) {
     case '@@ADD_CHILD': {
-      let { alias, spawnOptions } = payload
+      let { alias, installer } = payload
       if (!alias) {
         alias = await autoAlias(pulse.getNetwork())
       }
-      pulse = await pulse.addChild(alias, spawnOptions)
+      pulse = await pulse.addChild(alias, installer)
       setPulse(pulse)
       const { entropy } = pulse.provenance.dmz.config
       const { address } = await pulse.getNetwork().getChild(alias)
@@ -108,6 +108,7 @@ const pulseReducer = async (type, payload) => {
     }
     case '@@COVENANT': {
       const { path } = payload
+      debug(`@@COVENANT`, path)
       let latestPulse = pulse
       if (path !== '.') {
         latestPulse = await latest(path)

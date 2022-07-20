@@ -180,8 +180,8 @@ export class Engine {
       const interpulse = Interpulse.extract(pulse, target)
       // TODO check that the change we want to make is still valid
       if (interpulse.tx.isGenesisRequest()) {
-        const spawnOptions = interpulse.tx.getGenesisSpawnOptions()
-        const genesis = await pulse.deriveChildGenesis(spawnOptions)
+        const installer = interpulse.tx.getGenesisInstaller()
+        const genesis = await pulse.deriveChildGenesis(installer)
         await this.#endurance.endure(genesis)
         await this.#hints.pulseAnnounce(genesis)
         debug(`genesis endured`, genesis.getAddress())

@@ -172,13 +172,13 @@ export class Pulse extends IpldStruct {
     assert(state instanceof State)
     return this.setMap({ provenance: { dmz: { state } } })
   }
-  async addChild(alias, spawnOptions) {
+  async addChild(alias, installer) {
     // TODO insert repeatable randomness to child
     assert(this.isModified())
     assert(typeof alias === 'string')
     assert(alias)
     assert(!alias.includes('/'))
-    assert(typeof spawnOptions === 'object')
+    assert(typeof installer === 'object')
     let network = this.getNetwork()
     if (await network.hasChild(alias)) {
       // TODO check if the alias exists in symlinks or hardlinks
@@ -187,30 +187,31 @@ export class Pulse extends IpldStruct {
     const config = await this.provenance.dmz.config.increaseEntropy()
     const { entropy } = config
     const next = this.setMap({ provenance: { dmz: { config } } })
-    spawnOptions = injectEntropy(spawnOptions, entropy)
-    const pulse = await this.deriveChildGenesis(spawnOptions)
+    installer = injectEntropy(installer, entropy)
+    const pulse = await this.deriveChildGenesis(installer)
     const address = pulse.getAddress()
     network = await network.addChild(alias, address)
     return next.setNetwork(network)
   }
-  async deriveChildGenesis(spawnOptions) {
-    assert.strictEqual(typeof spawnOptions, 'object')
-    const { entropy } = spawnOptions.config
+  async deriveChildGenesis(installer) {
+    assert.strictEqual(typeof installer, 'object')
+    const { entropy } = installer.config
     assert.strictEqual(typeof entropy, 'string')
     assert.strictEqual(entropy.length, 46)
     const { timestamp } = this.provenance.dmz
-    const dmz = Dmz.create({ ...spawnOptions, timestamp })
+    const { network, ...rest } = installer
+    const dmz = Dmz.create({ ...rest, timestamp })
     // TODO what if the validators change during this block creation ?
     const genesis = Provenance.createGenesis(dmz, this.validators)
     const pulse = await Pulse.create(genesis)
     return pulse
   }
 }
-const injectEntropy = (spawnOptions, entropy) => {
-  let { config = {} } = spawnOptions
+const injectEntropy = (installer, entropy) => {
+  let { config = {} } = installer
   config = { ...config, entropy }
-  spawnOptions = { ...spawnOptions, config }
-  return spawnOptions
+  installer = { ...installer, config }
+  return installer
 }
 
 const isFormatCorrect = (signature) => {

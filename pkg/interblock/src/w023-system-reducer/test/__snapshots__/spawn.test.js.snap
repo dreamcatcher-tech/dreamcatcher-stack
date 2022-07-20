@@ -5,7 +5,7 @@ AsyncTrail {
   "origin": RxRequest {
     "request": Request {
       "payload": Object {
-        "spawnOptions": Object {},
+        "installer": Object {},
       },
       "type": "@@SPAWN",
     },
@@ -27,7 +27,7 @@ AsyncTrail {
       "request": Request {
         "payload": Object {
           "alias": "",
-          "spawnOptions": Object {},
+          "installer": Object {},
         },
         "type": "@@ADD_CHILD",
       },
@@ -49,7 +49,7 @@ AsyncTrail {
     AsyncRequest {
       "request": Request {
         "payload": Object {
-          "spawnOptions": Object {
+          "installer": Object {
             "config": Object {
               "entropy": "EiD1qt/osfoIBnwZup1m2BjAGzG/uIWduhXz5P2pO9hVSA",
             },

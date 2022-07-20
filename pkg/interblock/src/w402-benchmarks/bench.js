@@ -56,7 +56,6 @@ const addCustomer = async () => {
   custNo++
 }
 
-let id = 0
 const network = await Network.createRoot()
 const dmz = Dmz.create({ network })
 const keypair = await Keypair.generate('bench')
@@ -148,5 +147,3 @@ const makeUnsigned = async () => {
   pulse = pulse.setState(state)
   pulse = await pulse.crush()
 }
-
-makeUnsigned()

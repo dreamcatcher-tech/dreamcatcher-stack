@@ -40,9 +40,9 @@ const reducer = async (request) => {
       return { loginResult }
     }
     case 'ADD': {
-      let { alias, spawnOptions } = payload
+      let { alias, installer } = payload
       assert.strictEqual(typeof alias, 'string')
-      assert.strictEqual(typeof spawnOptions, 'object')
+      assert.strictEqual(typeof installer, 'object')
       const [{ wd = '/' }] = await useState()
       debug('wd', wd)
       const absolutePath = posix.resolve(wd, alias)
@@ -53,9 +53,9 @@ const reducer = async (request) => {
         debug(`resetting name to ${basename}`)
       }
       debug(`addActor: %O to: %O`, basename, to)
-      assert.strictEqual(typeof spawnOptions, 'object')
+      assert.strictEqual(typeof installer, 'object')
 
-      const spawnAction = Request.createSpawn(basename, spawnOptions)
+      const spawnAction = Request.createSpawn(basename, installer)
       const addActor = await interchain(spawnAction, to)
       debug(`addActor completed %O`, addActor)
       return addActor
@@ -127,8 +127,8 @@ const reducer = async (request) => {
       let [{ wd = '/' }] = await useState()
       path = posix.resolve(wd, path)
       debug(`publish: ${name} to: ${parentPath} as`, path)
-      const spawnOptions = { covenant: 'covenant', state: covenant }
-      const result = await interchain(api.add(path, spawnOptions))
+      const installer = { covenant: 'covenant', state: covenant }
+      const result = await interchain(api.add(path, installer))
       debug(result)
       return { path }
     }
@@ -206,12 +206,12 @@ const api = {
     type: 'LOGIN',
     payload: { terminalChainId, credentials },
   }),
-  add: (alias, spawnOptions = {}) =>
+  add: (alias, installer = {}) =>
     Request.create({
       // TODO interpret datums and ask for extra data
       // TODO use path info
       type: 'ADD',
-      payload: { alias, spawnOptions },
+      payload: { alias, installer },
     }),
   ls: (path = '.') =>
     Request.create({

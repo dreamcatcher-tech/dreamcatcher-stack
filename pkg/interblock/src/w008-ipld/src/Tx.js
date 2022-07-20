@@ -105,7 +105,7 @@ export class Tx extends IpldStruct {
   isGenesisRequest() {
     const request = this.system.requests[0]
     const isGenesis =
-      request && request.type === '@@GENESIS' && request.payload.spawnOptions
+      request && request.type === '@@GENESIS' && request.payload.installer
     return (
       isGenesis &&
       !this.precedent &&
@@ -113,12 +113,12 @@ export class Tx extends IpldStruct {
       this.reducer.isStart()
     )
   }
-  getGenesisSpawnOptions() {
+  getGenesisInstaller() {
     assert(this.isGenesisRequest())
     const request = this.system.requests[0]
-    const { spawnOptions } = request.payload
-    assert.strictEqual(typeof spawnOptions, 'object')
-    return spawnOptions
+    const { installer } = request.payload
+    assert.strictEqual(typeof installer, 'object')
+    return installer
   }
   blank(precedent) {
     assert(!this.isEmpty())
