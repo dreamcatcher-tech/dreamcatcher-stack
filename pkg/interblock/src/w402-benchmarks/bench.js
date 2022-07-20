@@ -1,7 +1,7 @@
 import Benchmark from 'benchmark'
 import { assert } from 'chai'
 import { Interpulse, apps } from '../index.mjs'
-import { Pulse, Dmz, Keypair } from '../w008-ipld'
+import { Provenance, Validators, Pulse, Dmz, Keypair } from '../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:benchmarks')
 const suite = new Benchmark.Suite()
@@ -25,13 +25,15 @@ const hotPing = async () => {
 
 const publish = async () => {
   const engine = await Interpulse.createCI()
-  const { crm } = apps
+  const {
+    crm: { reducer, ...crm },
+  } = apps
   const { dpkgPath } = await engine.publish('dpkgCrm', crm)
   return engine
 }
 const install = async (engine) => {
   const dpkgPath = 'dpkgCrm'
-  await engine.install(dpkgPath, 'crm')
+  await engine.add(dpkgPath)
 }
 
 const crmSetup = async () => {
@@ -40,7 +42,7 @@ const crmSetup = async () => {
   const crmActions = await engine.actions('/crm/customers')
   return crmActions
 }
-const crmActions = await crmSetup()
+// const crmActions = await crmSetup()
 let custNo = 100
 const addCustomer = async () => {
   await crmActions.add({ formData: { custNo, name: 'test name 1' } })
@@ -48,9 +50,12 @@ const addCustomer = async () => {
 }
 
 let id = 0
-const keypair = Keypair.create('bench')
-const dmz = Dmz.create({ validators: keypair.getValidatorEntry() })
-let pulse = Pulse.create(dmz)
+const dmz = Dmz.create()
+const keypair = await Keypair.generate('bench')
+const publicKeys = [keypair.publicKey]
+const validators = Validators.create(publicKeys)
+const provenance = Provenance.createGenesis(dmz, validators)
+let pulse = await Pulse.create(provenance)
 let stateCounter = 0
 suite
   .add('boot', {
@@ -75,51 +80,51 @@ suite
       deferred.resolve()
     },
   })
-  .add('publish', {
-    defer: true,
-    fn: async (deferred) => {
-      const shell = await publish()
-      await shell.shutdown()
-      deferred.resolve()
-    },
-  })
-  .add('install', {
-    defer: true,
-    fn: async (deferred) => {
-      const shell = await publish()
-      await install(shell)
-      await shell.shutdown()
-      deferred.resolve()
-    },
-  })
-  .add('add customer', {
-    defer: true,
-    fn: async (deferred) => {
-      await addCustomer()
-      deferred.resolve()
-    },
-  })
-  .add('block making', {
-    defer: true,
-    fn: async (deferred) => {
-      stateCounter++
-      const state = pulse.getDmz().state.update({ stateCounter })
-      const nextDmz = pulse.getDmz().update({ state })
-      const unsignedBlock = blockProducer.generateUnsigned(nextDmz, pulse)
-      const { integrity } = unsignedBlock.provenance
-      const signature = await signatureProducer.sign(integrity, keypair)
-      pulse = blockProducer.assemble(unsignedBlock, signature)
-      deferred.resolve()
-    },
-  })
-  .add('unsigned block making', {
-    fn: () => {
-      stateCounter++
-      const state = pulse.getDmz().state.update({ stateCounter })
-      const nextDmz = pulse.getDmz().update({ state })
-      pulse = blockProducer.generateUnsigned(nextDmz, pulse)
-    },
-  })
+  // .add('publish', {
+  //   defer: true,
+  //   fn: async (deferred) => {
+  //     const shell = await publish()
+  //     await shell.shutdown()
+  //     deferred.resolve()
+  //   },
+  // })
+  // .add('install', {
+  //   defer: true,
+  //   fn: async (deferred) => {
+  //     const shell = await publish()
+  //     await install(shell)
+  //     await shell.shutdown()
+  //     deferred.resolve()
+  //   },
+  // })
+  // .add('add customer', {
+  //   defer: true,
+  //   fn: async (deferred) => {
+  //     await addCustomer()
+  //     deferred.resolve()
+  //   },
+  // })
+  // .add('block making', {
+  //   defer: true,
+  //   fn: async (deferred) => {
+  //     stateCounter++
+  //     const state = pulse.getDmz().state.update({ stateCounter })
+  //     const nextDmz = pulse.getDmz().update({ state })
+  //     const unsignedBlock = blockProducer.generateUnsigned(nextDmz, pulse)
+  //     const { integrity } = unsignedBlock.provenance
+  //     const signature = await signatureProducer.sign(integrity, keypair)
+  //     pulse = blockProducer.assemble(unsignedBlock, signature)
+  //     deferred.resolve()
+  //   },
+  // })
+  // .add('unsigned block making', {
+  //   fn: () => {
+  //     stateCounter++
+  //     const state = pulse.getDmz().state.update({ stateCounter })
+  //     const nextDmz = pulse.getDmz().update({ state })
+  //     pulse = blockProducer.generateUnsigned(nextDmz, pulse)
+  //   },
+  // })
   .on('cycle', (event) => {
     console.log(String(event.target))
   })

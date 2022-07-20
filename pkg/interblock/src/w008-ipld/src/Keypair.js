@@ -1,12 +1,12 @@
 import assert from 'assert-fast'
 import { PublicKey, Provenance } from '.'
-import crypto from 'libp2p-crypto'
+import { keys } from '@libp2p/crypto'
 import { fromString as from } from 'uint8arrays/from-string'
 import { toString as to } from 'uint8arrays/to-string'
 import { deepFreeze } from './utils'
 const {
   secp256k1: { Secp256k1PrivateKey },
-} = crypto.keys.supportedKeys
+} = keys.supportedKeys
 
 const CI = {
   pri: from('FkTM75NSp94cAgNkXCgVFQADDe2eNXi7qaCHMKtrcJCW', 'base58btc'),
@@ -17,7 +17,7 @@ let CI_PRIVATE_KEY
 export class Keypair {
   static async generate(name) {
     assert.strictEqual(typeof name, 'string')
-    const privateKey = await crypto.keys.generateKeyPair('secp256k1')
+    const privateKey = await keys.generateKeyPair('secp256k1')
     return this.create(name, privateKey)
   }
   static createCI(name = 'CI') {
