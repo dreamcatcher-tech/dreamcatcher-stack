@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { deepFreeze } from './utils'
 
 export class IpldInterface {
   get schema() {
@@ -57,5 +58,31 @@ export class IpldInterface {
   }
   dir() {
     console.dir(this, { depth: Infinity })
+  }
+  static clone(map) {
+    assert.strictEqual(typeof map, 'object')
+    const instance = new this()
+    const classes = {}
+    for (const key in this.classMap) {
+      const value = map[key]
+      if (value === undefined) {
+        continue
+      }
+      const classValue = this.classMap[key]
+      if (value instanceof classValue) {
+        continue
+      }
+      if (Array.isArray(value)) {
+        if (value.every((v) => v instanceof classValue)) {
+          continue
+        }
+        classes[key] = value.map((v) => classValue.clone(v))
+      } else {
+        classes[key] = classValue.clone(value)
+      }
+    }
+    Object.assign(instance, map, classes)
+    deepFreeze(instance)
+    return instance
   }
 }

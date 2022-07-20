@@ -41,9 +41,11 @@ export class Pulse extends IpldStruct {
   static async createCovenantOverload(covenant) {
     assert.strictEqual(typeof covenant, 'object')
     const CI = true
-    const { name = '', api = {}, state = {}, network = {} } = covenant
-    const covenantState = { name, api, state, network }
-    const dmz = Dmz.create({ state: covenantState }, CI)
+    // TODO run thru covenant schema checker
+    const { name = '', api = {}, installer = {} } = covenant
+
+    const state = { name, api, installer }
+    const dmz = Dmz.create({ state }, CI)
     const provenance = Provenance.createGenesis(dmz)
     return await Pulse.create(provenance)
   }

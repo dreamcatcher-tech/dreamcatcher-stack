@@ -6,10 +6,13 @@ const debug = Debug('interblock:dmz:install')
 
 const installReducer = async (payload) => {
   assert.strictEqual(typeof payload, 'object')
-  assert.strictEqual(Object.keys(payload).length, 2)
-  debug(payload)
+  assert.strictEqual(Object.keys(payload).length, 1)
+  assert(payload.spawnOptions)
+  debug(`payload`, payload)
   const covenantState = await interchain(Request.createGetCovenantState())
-  const { network = {}, state = {} } = covenantState
+  debug(`covenantState`, covenantState)
+  const { installer } = covenantState
+  const { network = {}, state = {} } = installer
   assert.strictEqual(typeof network, 'object')
   assert.strictEqual(typeof state, 'object')
 
@@ -24,6 +27,7 @@ const installReducer = async (payload) => {
   for (const child in network) {
     debug('installing child: ', child)
     const spawnOptions = network[child]
+    debug('installing child options: ', spawnOptions)
     const spawn = Request.createSpawn(child, spawnOptions)
     awaits.push(interchain(spawn))
   }

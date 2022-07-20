@@ -38,7 +38,6 @@ describe('machine validation', () => {
 
       const { wd } = engine.latest.getState().toJS()
       assert.strictEqual(wd, '/child1')
-
       const addNestedResult = await engine.pierce(shell.api.add('nested1'))
       debug(`addNestedResult`, addNestedResult)
       const cdNested = shell.api.cd('nested1')
@@ -204,11 +203,14 @@ describe('machine validation', () => {
   })
   describe('install', () => {
     test('deep child runs custom covenant', async () => {
+      // Debug.enable('iplog *install *dmz')
       let isExecuted = false
       const dpkgTest = {
         installer: {
-          testChild: {
-            covenant: '/testChildCovenant',
+          network: {
+            testChild: {
+              covenant: '/testChildCovenant',
+            },
           },
         },
         reducer: (request) => {
@@ -227,13 +229,13 @@ describe('machine validation', () => {
         '/dpkgTest': dpkgTest,
       }
       const engine = await Engine.createCI({ overloads })
-      const publish = shell.api.publish('dpkgTest', dpkgTest.installer)
+      const { reducer, ...covenant } = dpkgTest
+      const publish = shell.api.publish('dpkgTest', covenant)
       const { path } = await engine.pierce(publish)
       debug(`dpkgPath: `, path)
       assert.strictEqual(path, '/dpkgTest')
 
-      const config = { covenant: path }
-      const add = shell.api.add('testInstall', { config })
+      const add = shell.api.add('testInstall', { covenant: path })
       const installResult = await engine.pierce(add)
       debug(`installResult`, installResult)
       assert(isExecuted)

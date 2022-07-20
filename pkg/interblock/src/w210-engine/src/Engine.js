@@ -143,7 +143,7 @@ export class Engine {
     assert(source instanceof Address)
     assert(source.isRemote())
     assert(pulse instanceof Pulse)
-    debug(`interpulse hint received`, target, source, pulse)
+    debug(`interpulse hint received`, target, source)
 
     const tracker = { source, pulse }
     const promise = new Promise((resolve, reject) => {
@@ -151,16 +151,20 @@ export class Engine {
     })
     const chainId = target.getChainId()
     if (this.#interpulseLocks.has(chainId)) {
-      const interpulseQueue = this.#interpulseLocks.get(chainId)
-      interpulseQueue.push(tracker)
+      const queue = this.#interpulseLocks.get(chainId)
+      queue.push(tracker)
+      debug(`interpulse buffered`, queue.length)
       return promise
     }
-    const interpulseQueue = [tracker]
-    this.#interpulseLocks.set(chainId, interpulseQueue)
+    const queue = [tracker]
+    this.#interpulseLocks.set(chainId, queue)
     const lock = await this.#crypto.lock(target)
-    await this.#interpulseQueue(lock, interpulseQueue, target)
-    assert(!interpulseQueue.length)
+    const [pool, resolver] = await this.#interpulseQueue(lock, queue, target)
+    assert(!queue.length)
     this.#interpulseLocks.delete(chainId)
+    await this.#hints.poolAnnounce(pool)
+    const result = await this.#increase(pool, lock)
+    resolver(result)
     return promise
   }
   async #interpulseQueue(lock, interpulseQueue, target) {
@@ -198,10 +202,10 @@ export class Engine {
         }
       }
       pool = await pool.ingestInterpulse(interpulse)
+      debug(`interpulse ingested for: %s from: %s`, target, source)
     }
-    await this.#hints.poolAnnounce(pool)
-    const result = await this.#increase(pool, lock)
-    resolves.forEach((resolve) => resolve(result))
+    const resolver = (result) => resolves.forEach((resolve) => resolve(result))
+    return [pool, resolver]
   }
   async #increase(pool, lock) {
     assert(pool instanceof Pulse)
@@ -331,7 +335,8 @@ export class Engine {
     if (this.#pierceLocks.has(chainId)) {
       const pierceQueue = this.#pierceLocks.get(chainId)
       pierceQueue.push(tracker)
-      // TODO somehow unify with interpulse buffering
+      // TODO somehow unify with interpulse buffering by making
+      // pierce look like an interpulse hint
       return promise
     }
     const pierceQueue = [tracker]

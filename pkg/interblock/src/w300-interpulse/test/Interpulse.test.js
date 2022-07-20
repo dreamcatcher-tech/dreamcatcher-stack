@@ -1,7 +1,5 @@
-import { shell } from '../../w212-system-covenants'
 import { Interpulse } from '..'
 import Debug from 'debug'
-import { jest } from '@jest/globals'
 
 const debug = Debug('interblock:tests:Interpulse')
 
@@ -108,8 +106,7 @@ describe('effector', () => {
     const child1 = await latest.getNetwork().getChild('child1')
     expect(child1.address.getChainId()).toStrictEqual(reply.chainId)
   })
-  test.only('spawn many times', async () => {
-    Debug.enable('*tests*')
+  test('spawn many times', async () => {
     const engine = await Interpulse.createCI()
     let count = 0
     const awaits = []

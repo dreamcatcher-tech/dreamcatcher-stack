@@ -47,7 +47,7 @@ type Channel struct {
 
 export class Channel extends IpldStruct {
   static cidLinks = ['tx', 'address']
-  static classMap = { tx: Tx, rx: Rx }
+  static classMap = { tx: Tx, rx: Rx, address: Address }
   static create(channelId, address = Address.createUnknown()) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)

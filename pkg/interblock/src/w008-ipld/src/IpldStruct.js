@@ -3,20 +3,12 @@ import { CID } from 'multiformats/cid'
 import { Block } from 'multiformats/block'
 import { encode } from './IpldUtils'
 import { IpldInterface } from './IpldInterface'
-import { deepFreeze } from './utils'
 
 export class IpldStruct extends IpldInterface {
   #ipldBlock
   #previous
   #crushed
   #isPreCrushed = false
-  static clone(map) {
-    assert.strictEqual(typeof map, 'object')
-    const instance = new this()
-    Object.assign(instance, map)
-    deepFreeze(instance)
-    return instance
-  }
   clone() {
     const next = new this.constructor()
     Object.assign(next, this)
@@ -144,6 +136,8 @@ export class IpldStruct extends IpldInterface {
       if (map[key] instanceof CID) {
         const childClass = this.getClassFor(key)
         map[key] = await childClass.uncrush(map[key], resolver, options)
+      } else if (this.classMap[key]) {
+        map[key] = this.classMap[key].clone(map[key])
       }
     }
     const instance = new this()

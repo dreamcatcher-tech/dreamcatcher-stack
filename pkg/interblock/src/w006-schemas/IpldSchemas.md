@@ -158,16 +158,19 @@ By way of example, the format of the state within the Covenant is:
             }
         }
     },
-    state: {}, // optional initial state of the covenant, may be overridden
-    installer: { // any required children are specified here
-        customers: {
-            covenant: 'collection',
-            state: { datum: { }},
-            installer: {
-                customer123: {} // can load some initial customers
-            }
-        },
-        someRemoteChain: 'Address(QmYMKzxgro9NTb)'
+    installer: {
+        config: {},
+        state: {}, // optional initial state of the covenant, may be overridden
+        network: { // any required children are specified here
+            customers: {
+                covenant: 'collection',
+                state: { datum: { }},
+                network: {
+                    customer123: {} // can load some initial customers
+                }
+            },
+            someRemoteChain: 'Address(QmYMKzxgro9NTb)'
+        }
     },
     importMap: { // specify paths and the imports to override
         datum: 'interblock://privateRegistry1/datum',

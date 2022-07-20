@@ -19,10 +19,10 @@ const genesisReducer = async (payload) => {
   // TODO check came from parent, and is first action
   const initResult = await interchain('@@INIT', payload)
   debug(`initResult`, initResult)
-  let { spawnOptions = {}, installer = {} } = initResult
+  // TODO rename spawnOptions as installer
+  let { spawnOptions = {} } = initResult
   spawnOptions = { ...payload.spawnOptions, ...spawnOptions }
-  installer = { ...payload.installer, ...installer }
-  const nextPayload = { spawnOptions, installer }
+  const nextPayload = { spawnOptions }
   const installResult = await interchain('@@INSTALL', nextPayload)
   debug('installResult', installResult)
 }

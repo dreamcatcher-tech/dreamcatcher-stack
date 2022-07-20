@@ -122,16 +122,15 @@ const reducer = async (request) => {
       // TODO use npm pack to bundle a package up
       // TODO support building images, and displaying progress
       // TODO verify that all covenants in installer are available
-      const { name, path, installer } = payload
-      let target = path + '/' + name
+      const { name, covenant, parentPath } = payload
+      let path = parentPath + '/' + name
       let [{ wd = '/' }] = await useState()
-      target = posix.resolve(wd, target)
-      debug(`publish: ${name} to: ${path} as`, target)
-      const state = { name, installer }
-      const config = { covenant: 'covenant' }
-      const result = await interchain(api.add(target, { config, state }))
+      path = posix.resolve(wd, path)
+      debug(`publish: ${name} to: ${parentPath} as`, path)
+      const spawnOptions = { covenant: 'covenant', state: covenant }
+      const result = await interchain(api.add(path, spawnOptions))
       debug(result)
-      return { path: target }
+      return { path }
     }
     case 'CAT': {
       // TODO add flags to get the full pulse, or portions of the state
@@ -247,10 +246,10 @@ const api = {
    * @param {*} path Path to the publication chain.  You must have permission to update this chain.  If the path does not exist but the parent does, a new child will be created
    * @returns
    */
-  publish: (name, installer = {}, path = '.') =>
+  publish: (name, covenant = {}, parentPath = '.') =>
     Request.create({
       type: 'PUBLISH',
-      payload: { name, installer, path },
+      payload: { name, covenant, parentPath },
     }),
   cat: (path = '.') =>
     Request.create({
