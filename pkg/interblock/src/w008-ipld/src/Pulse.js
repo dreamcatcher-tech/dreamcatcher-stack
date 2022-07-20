@@ -170,7 +170,6 @@ export class Pulse extends IpldStruct {
   }
   setState(state) {
     assert(state instanceof State)
-
     return this.setMap({ provenance: { dmz: { state } } })
   }
   async addChild(alias, spawnOptions) {

@@ -1,7 +1,14 @@
 import Benchmark from 'benchmark'
 import { assert } from 'chai'
 import { Interpulse, apps } from '../index.mjs'
-import { Provenance, Validators, Pulse, Dmz, Keypair } from '../w008-ipld'
+import {
+  Network,
+  Provenance,
+  Validators,
+  Pulse,
+  Dmz,
+  Keypair,
+} from '../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:benchmarks')
 const suite = new Benchmark.Suite()
@@ -50,7 +57,8 @@ const addCustomer = async () => {
 }
 
 let id = 0
-const dmz = Dmz.create()
+const network = await Network.createRoot()
+const dmz = Dmz.create({ network })
 const keypair = await Keypair.generate('bench')
 const publicKeys = [keypair.publicKey]
 const validators = Validators.create(publicKeys)
@@ -104,28 +112,41 @@ suite
   //     deferred.resolve()
   //   },
   // })
-  // .add('block making', {
-  //   defer: true,
-  //   fn: async (deferred) => {
-  //     stateCounter++
-  //     const state = pulse.getDmz().state.update({ stateCounter })
-  //     const nextDmz = pulse.getDmz().update({ state })
-  //     const unsignedBlock = blockProducer.generateUnsigned(nextDmz, pulse)
-  //     const { integrity } = unsignedBlock.provenance
-  //     const signature = await signatureProducer.sign(integrity, keypair)
-  //     pulse = blockProducer.assemble(unsignedBlock, signature)
-  //     deferred.resolve()
-  //   },
-  // })
-  // .add('unsigned block making', {
-  //   fn: () => {
-  //     stateCounter++
-  //     const state = pulse.getDmz().state.update({ stateCounter })
-  //     const nextDmz = pulse.getDmz().update({ state })
-  //     pulse = blockProducer.generateUnsigned(nextDmz, pulse)
-  //   },
-  // })
+  .add('block making', {
+    defer: true,
+    fn: async (deferred) => {
+      await makePulse()
+      deferred.resolve()
+    },
+  })
+  .add('unsigned block making', {
+    defer: true,
+    fn: async (deferred) => {
+      await makeUnsigned()
+      deferred.resolve()
+    },
+  })
   .on('cycle', (event) => {
     console.log(String(event.target))
   })
   .run({ async: false })
+
+const makePulse = async () => {
+  stateCounter++
+  pulse = await pulse.generateSoftPulse()
+  const state = pulse.getState().setMap({ stateCounter })
+  pulse = pulse.setState(state)
+  const provenance = await pulse.provenance.crush()
+  const signature = await keypair.sign(provenance)
+  pulse = pulse.addSignature(keypair.publicKey, signature)
+  pulse = await pulse.crush()
+  assert(pulse.isVerified())
+}
+const makeUnsigned = async () => {
+  stateCounter++
+  const state = pulse.getState().setMap({ stateCounter })
+  pulse = pulse.setState(state)
+  pulse = await pulse.crush()
+}
+
+makeUnsigned()
