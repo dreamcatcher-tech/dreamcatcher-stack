@@ -7,10 +7,10 @@ const debug = Debug('interblock:tests:crm')
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test.only('deploys app', async () => {
+    test('deploys app', async () => {
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
-      Debug.enable('iplog *tests*')
+      Debug.enable('iplog *tests* ')
       const { path } = await engine.publish('dpkgCrm', crm)
       assert.strictEqual(path, '/dpkgCrm')
       const installStart = Date.now()
@@ -24,6 +24,8 @@ describe('crm', () => {
       const pulseRate = Math.floor(testTime / engine.logger.pulseCount)
       debug(`pulserate: ${pulseRate}ms per block`)
 
+      const exceptions = await engine.latest('/crm/schedule/exceptions')
+      assert(exceptions.getState().toJS().datumTemplate)
       const about = await engine.latest('/crm/about')
       const aboutState = about.getState().toJS()
       expect(aboutState).toEqual(crm.installer.network.about.state)

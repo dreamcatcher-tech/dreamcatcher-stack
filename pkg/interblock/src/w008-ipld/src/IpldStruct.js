@@ -112,7 +112,7 @@ export class IpldStruct extends IpldInterface {
               return v.getDiffBlocks(prevValue[i])
             }
           })
-          valueBlocks.forEach((map) => merge(blocks, map))
+          valueBlocks.forEach((map) => map && merge(blocks, map))
         } else {
           assert(prevValue === undefined || prevValue instanceof IpldInterface)
           if (!prevValue || !thisValue.cid.equals(prevValue.cid)) {

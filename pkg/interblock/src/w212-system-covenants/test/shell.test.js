@@ -7,14 +7,13 @@ const debug = Debug('interblock:tests:shell')
 
 describe('machine validation', () => {
   describe('state machine', () => {
-    test('buffered request is processed', async () => {
+    test('parallel request is processed', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       await engine.pierce(shell.api.add('child1'))
       const cd = shell.api.cd('child1')
       const cdPromise = engine.pierce(cd)
       const ls = shell.api.ls('/')
       const lsPromise = engine.pierce(ls)
-      await new Promise((r) => setTimeout(r, 10))
       const [cdResult, lsResult] = await Promise.all([cdPromise, lsPromise])
       assert.strictEqual(cdResult.absolutePath, '/child1')
       assert.strictEqual(Object.keys(lsResult.children).length, 4)

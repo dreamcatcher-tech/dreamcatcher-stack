@@ -11,15 +11,19 @@ const installReducer = async (payload) => {
   debug(`payload`, payload)
   const covenantState = await interchain(Request.createGetCovenantState())
   debug(`covenantState`, covenantState)
-  const { installer } = covenantState
+  let { installer } = covenantState
+  installer = { ...installer, ...payload.installer }
   const { network = {}, state = {} } = installer
   assert.strictEqual(typeof network, 'object')
   assert.strictEqual(typeof state, 'object')
 
   // TODO clean up failed partial deployments ?
   // TODO accomodate existing children already ? or throw ?
-  if (Object.keys(state).length) {
+  const isPayloadState = !!payload.installer.state
+  const isCovenantState = !!covenantState.installer.state
+  if (!isPayloadState && isCovenantState) {
     const [currentState, setState] = await useState()
+    console.dir(currentState, { depth: Infinity })
     assert.strictEqual(Object.keys(currentState).length, 0)
     await setState(state)
   }
@@ -31,6 +35,6 @@ const installReducer = async (payload) => {
     const spawn = Request.createSpawn(child, installer)
     awaits.push(interchain(spawn))
   }
-  await Promise.all(awaits)
+  const results = await Promise.all(awaits)
 }
 export { installReducer }

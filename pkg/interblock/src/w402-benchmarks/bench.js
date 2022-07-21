@@ -49,7 +49,7 @@ const crmSetup = async () => {
   const crmActions = await engine.actions('/crm/customers')
   return crmActions
 }
-// const crmActions = await crmSetup()
+const crmActions = await crmSetup()
 let custNo = 100
 const addCustomer = async () => {
   await crmActions.add({ formData: { custNo, name: 'test name 1' } })
