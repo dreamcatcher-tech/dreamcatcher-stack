@@ -219,7 +219,7 @@ export class Network extends IpldStruct {
     assert(address.isRemote())
     const channelId = this.channels.counter
     let channel = Channel.create(channelId, address)
-
+    channel = channel.addAlias(path)
     const channels = await this.channels.addChannel(channel)
     const children = await this.children.addChild(path, channelId)
     return this.setMap({ channels, children })
@@ -377,9 +377,10 @@ export class Network extends IpldStruct {
       throw new Error(`path already present: ${path}`)
     }
     const channelId = this.channels.counter
-    const channel = Channel.create(channelId)
+    const channel = Channel.create(channelId).addAlias(path)
     const channels = await this.channels.addChannel(channel)
     const downlinks = await this.downlinks.setDownlink(path, channelId)
+
     return this.setMap({ channels, downlinks })
   }
   async getChannel(path) {
@@ -429,11 +430,9 @@ export class Network extends IpldStruct {
       case FIXED.IO: {
         return this.updateIo(channel)
       }
-      default: {
-        const channels = await this.channels.updateChannel(channel)
-        return this.setMap({ channels })
-      }
     }
+    const channels = await this.channels.updateChannel(channel)
+    return this.setMap({ channels })
   }
   async blankTxs(precedent) {
     assert(precedent instanceof PulseLink)

@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import posix from 'path-browserify'
 import {
   RxReply,
   RequestId,
@@ -72,6 +73,26 @@ export class Channel extends IpldStruct {
   static createLoopback() {
     const address = Address.createLoopback()
     return Channel.create(Network.FIXED_IDS.LOOPBACK, address)
+  }
+  addAlias(alias) {
+    assert.strictEqual(typeof alias, 'string')
+    if (alias.startsWith('./')) {
+      alias = alias.substring(2)
+    }
+    assert(alias)
+    assert.strictEqual(alias, posix.normalize(alias), `path not normalized`)
+    if (this.aliases.includes(alias)) {
+      return this
+    }
+    const aliases = [...this.aliases]
+    // TODO handle relative aliases by resolving ? or leave as specified ?
+    const isRemotePath = alias.includes('/')
+    if (isRemotePath) {
+      aliases.push(alias)
+    } else {
+      aliases.unshift(alias)
+    }
+    return this.setMap({ aliases })
   }
   // TODO reject any attempts to alias loopback
   resolve(address) {

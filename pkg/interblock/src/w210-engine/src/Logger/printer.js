@@ -81,6 +81,7 @@ const headerPrint = (pulse, path, isNewChain, isDuplicate, options) => {
   const rawHash = pulse.cid.toString().substring(6)
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
+  path = chalk.blue.bold.bgWhite(path)
   const header = { msg, height, path, chainId, hash }
   if (options.size) {
     header.size = getSize(pulse)
@@ -121,6 +122,7 @@ const networkPrint = async (pulse, options) => {
       hash = ''
     }
     const msg = chalk.magenta('└─channel')
+    const alias0 = channel.aliases[0]
     let path =
       channelId === 0
         ? '.'
@@ -128,7 +130,9 @@ const networkPrint = async (pulse, options) => {
         ? '..'
         : channelId === 2
         ? '.@@io'
-        : 'other'
+        : alias0 !== undefined
+        ? alias0
+        : '(other)'
     const channelHeader = {
       msg,
       height,
