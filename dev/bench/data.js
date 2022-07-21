@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658364979797,
+  "lastUpdate": 1658368707776,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interblock Benchmark": [
@@ -2074,6 +2074,79 @@ window.BENCHMARK_DATA = {
             "name": "unsigned block making",
             "value": 5647,
             "range": "±0.99%",
+            "unit": "ops/sec",
+            "extra": "78 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "ece64a9f953e315dd59d38aef5c14269a1159b38",
+          "message": "merge covenant installer with payload installer",
+          "timestamp": "2022-07-21T13:56:42+12:00",
+          "tree_id": "cb725cd46ef6fbcd8149154ca3b05d98f93929f2",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/ece64a9f953e315dd59d38aef5c14269a1159b38"
+        },
+        "date": 1658368706022,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 254,
+            "range": "±2.51%",
+            "unit": "ops/sec",
+            "extra": "76 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 82.97,
+            "range": "±2.71%",
+            "unit": "ops/sec",
+            "extra": "78 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 148,
+            "range": "±1.36%",
+            "unit": "ops/sec",
+            "extra": "77 samples"
+          },
+          {
+            "name": "publish",
+            "value": 17.02,
+            "range": "±3.56%",
+            "unit": "ops/sec",
+            "extra": "79 samples"
+          },
+          {
+            "name": "install",
+            "value": 3,
+            "range": "±1.60%",
+            "unit": "ops/sec",
+            "extra": "19 samples"
+          },
+          {
+            "name": "block making",
+            "value": 558,
+            "range": "±7.83%",
+            "unit": "ops/sec",
+            "extra": "78 samples"
+          },
+          {
+            "name": "unsigned block making",
+            "value": 4302,
+            "range": "±2.01%",
             "unit": "ops/sec",
             "extra": "78 samples"
           }
