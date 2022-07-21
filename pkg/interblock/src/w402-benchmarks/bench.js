@@ -1,5 +1,6 @@
 import Benchmark from 'benchmark'
 import assert from 'assert-fast'
+import equals from 'fast-deep-equal'
 import { Interpulse, apps } from '../index.mjs'
 import {
   Network,
@@ -19,7 +20,7 @@ const coldPing = async () => {
   const engine = await Interpulse.createCI()
   const payload = { test: 'ping' }
   const reply = await engine.ping('.', payload)
-  assert.deepEqual(reply, payload)
+  assert(equals(reply, payload))
   await engine.shutdown()
 }
 const engine = await Interpulse.createCI()
@@ -27,7 +28,7 @@ const engine = await Interpulse.createCI()
 const hotPing = async () => {
   const payload = { test: 'ping' }
   const reply = await engine.ping('.', payload)
-  assert.deepEqual(reply, payload)
+  assert(equals(reply, payload))
 }
 
 const publish = async () => {
