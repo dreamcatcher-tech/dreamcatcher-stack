@@ -32,9 +32,7 @@ export class Channels extends IpldStruct {
     const txs = []
     return super.clone({ counter, list, addresses, rxs, txs })
   }
-  assertLogic() {
-    assert(!this.uxs)
-  }
+  assertLogic() {}
   async has(channelId) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)
@@ -112,7 +110,7 @@ export class Channels extends IpldStruct {
     assert(channelId >= 0)
     assert(channel instanceof Channel)
     const { address } = channel
-    let { rxs, txs, uxs } = this
+    let { rxs, txs } = this
     if (!channel.rxIsEmpty()) {
       assert(!address.isRoot())
       if (!rxs.includes(channelId)) {
@@ -137,15 +135,7 @@ export class Channels extends IpldStruct {
         txs = txs.filter((id) => id !== channelId)
       }
     }
-    let next = this.setMap({ rxs, txs })
-    if (!address.isResolved()) {
-      uxs = uxs || []
-      if (!uxs.includes(channelId)) {
-        uxs = [...uxs, channelId]
-      }
-      next = next.setMap({ uxs })
-    }
-    return next
+    return this.setMap({ rxs, txs })
   }
   async getTx(channelId) {
     assert(Number.isInteger(channelId))

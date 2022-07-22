@@ -3,8 +3,11 @@ import posix from 'path-browserify'
 import {
   AsyncRequest,
   AsyncTrail,
+  Channel,
   Network,
+  Pending,
   Pulse,
+  Request,
   RxReply,
 } from '../../w008-ipld'
 import { IsolateContainer } from './Isolate'
@@ -61,9 +64,9 @@ export const reducer = async (pulse, isolate, latest) => {
       trail = await isolate.reduce(trail)
     }
     network = await maybeTransmitTrailReply(trail, network)
-    const [nextTrail, nextNetwork] = await transmitTrailTxs(trail, network)
+    const [nextTrail, nextNet] = await transmitTrailTxs(trail, network, pending)
     trail = nextTrail
-    network = nextNetwork
+    network = nextNet
     pending = pending.updateTrail(trail)
   }
   // reassigns: pending, network, softpulse
@@ -136,7 +139,7 @@ export const reducer = async (pulse, isolate, latest) => {
   pulse = pulse.setNetwork(network).setPending(pending)
   return pulse
 }
-const transmitTrailTxs = async (trail, network) => {
+const transmitTrailTxs = async (trail, network, pending) => {
   assert(trail instanceof AsyncTrail)
   assert(network instanceof Network)
   const txs = []
@@ -161,7 +164,6 @@ const transmitTrailTxs = async (trail, network) => {
     }
 
     try {
-      // resolve the name to a channelId
       if (!(await network.hasChannel(to))) {
         network = await network.addDownlink(to)
       }
@@ -170,13 +172,51 @@ const transmitTrailTxs = async (trail, network) => {
       channel = channel.txRequest(request)
       network = await network.updateChannel(channel)
       txs.push(tx.setId(requestId))
+
+      if (!channel.address.isResolved()) {
+        let loopback = await network.getLoopback()
+        const isOpening = isOpeningSent(to, loopback, pending)
+        if (!isOpening) {
+          const openRequest = Request.createOpenPath(to)
+          const requestId = loopback.getNextRequestId(openRequest)
+          loopback = loopback.txRequest(openRequest)
+          network = await network.updateChannel(loopback)
+          trail = trail.awaitOpenPath(requestId)
+          debug(`openPath:`, to)
+        }
+      }
     } catch (error) {
       // TODO should that error the whole trail, before anything is started ?
+      console.error(error)
       txs.push(tx.settleError(error))
     }
   }
   trail = trail.updateTxs(txs)
   return [trail, network]
+}
+const isOpeningSent = (to, loopback, pending) => {
+  assert.strictEqual(typeof to, 'string')
+  assert(to)
+  assert(loopback instanceof Channel)
+  assert(loopback.address.isLoopback())
+  assert(pending instanceof Pending)
+
+  for (const request of loopback.tx.system.requests) {
+    if (request.type === '@@OPEN_PATH') {
+      if (request.payload.to === to) {
+        return true
+      }
+    }
+  }
+  for (const trail of pending.system) {
+    const { request } = trail.origin
+    if (request.type === '@@OPEN_PATH') {
+      if (request.payload.to === to) {
+        return true
+      }
+    }
+  }
+  return false
 }
 const maybeTransmitTrailReply = async (trail, network) => {
   assert(trail instanceof AsyncTrail)

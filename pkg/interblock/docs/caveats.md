@@ -20,4 +20,7 @@ No knowledge of when the block is ending
 Introduces entropy
 Breaks independence between actions, which we reserve for parallel processing
 
-###
+### Path opening
+
+1. Path opening might be in progress during a fork, so the requested chainId will be different
+1. Path resolution might be in progress and the directory tree shifts requiring restarting of the walk

@@ -76,8 +76,11 @@ export class AsyncTrail extends IpldStruct {
     assert(!this.reply, `can only crush promised trails`)
   }
   isFulfilled() {
-    // check that all settles are in fact settled
-    return !this.txs.length && this.settles.every((s) => s.isSettled())
+    return (
+      !this.txs.length &&
+      this.settles.every((s) => s.isSettled()) &&
+      !this.openPaths
+    )
   }
   isSettled() {
     return this.isFulfilled() && !this.isPending()
@@ -110,10 +113,28 @@ export class AsyncTrail extends IpldStruct {
         return true
       }
     }
+    const { openPaths = [] } = this
+    for (const requestId of openPaths) {
+      if (requestId.equals(rxReply.requestId)) {
+        return true
+      }
+    }
     return false
   }
   settleTx(rxReply) {
     assert(rxReply instanceof RxReply)
+
+    let { openPaths = [] } = this
+    const { length } = openPaths
+    openPaths = openPaths.filter((id) => !id.equals(rxReply.requestId))
+    if (openPaths.length !== length) {
+      assert.strictEqual(openPaths.length, length - 1)
+      if (!openPaths.length) {
+        return this.delete('openPaths')
+      }
+      return this.setMap({ openPaths })
+    }
+
     let isMatched = false
     let txs = this.txs.map((tx) => {
       if (tx.isIdMatch(rxReply)) {
@@ -181,5 +202,11 @@ export class AsyncTrail extends IpldStruct {
     const { requestId } = this.origin
     const rxReply = RxReply.create(this.reply, requestId)
     return rxReply
+  }
+  awaitOpenPath(requestId) {
+    assert(requestId instanceof RequestId)
+    let { openPaths = [] } = this
+    openPaths = [...openPaths, requestId]
+    return this.setMap({ openPaths })
   }
 }

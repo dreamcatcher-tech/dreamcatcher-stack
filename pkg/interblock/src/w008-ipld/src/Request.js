@@ -42,13 +42,17 @@ export class Request extends IpldStruct {
     '@@UPLINK',
     '@@INTRO',
     '@@ACCEPT',
+    '@@OPEN_PATH',
     '@@OPEN_CHILD',
+    '@@DEEPEST_SEGMENT',
     '@@DEPLOY',
     '@@INSTALL',
     '@@GET_STATE',
     '@@SET_STATE',
     '@@USE_BLOCKS',
     '@@COVENANT',
+    '@@SELF_ID',
+    '@@RESOLVE_DOWNLINK',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
@@ -87,5 +91,10 @@ export class Request extends IpldStruct {
   }
   static createGetCovenantState(path = '.') {
     return this.create('@@COVENANT', { path })
+  }
+  static createOpenPath(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    return this.create('@@OPEN_PATH', { path })
   }
 }

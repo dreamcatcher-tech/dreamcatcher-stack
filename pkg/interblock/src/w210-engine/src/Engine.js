@@ -215,7 +215,6 @@ export class Engine {
     await this.#scale.watchdog(pool)
 
     pool = await this.#reducer(pool)
-    pool = await this.#openPaths(pool)
     const resolver = (cid) => this.#endurance.resolveCid(cid)
     const provenance = await pool.provenance.crush(resolver)
     const signature = await lock.sign(provenance)
@@ -231,39 +230,6 @@ export class Engine {
     // TODO update all the subscriptions
     await lock.release()
     await this.#transmit(pulse)
-  }
-  async #openPaths(pool) {
-    assert(pool instanceof Pulse)
-    assert(pool.isModified())
-    let network = pool.getNetwork()
-    if (!network.channels.uxs) {
-      return pool
-    }
-    const { uxs } = network.channels
-    for (const channelId of uxs) {
-      debug(`uxs`, channelId)
-      const channel = await network.channels.getChannel(channelId)
-      assert.strictEqual(channel.aliases.length, 1)
-      const path = channel.aliases[0]
-      const segments = getReversePathSegments(path)
-      debug(`segments`, segments)
-      // what if multiple downlinks point to the same channel, then one path alters ?
-      for (const segment of segments) {
-        debug(`segment: `, segment)
-        if (await network.hasChannel(segment)) {
-          const channel = await network.getChannel(segment)
-          if (channel.address.isResolved()) {
-          }
-          // are we waiting for an open request ?
-          // if not, make one now, then exit
-        }
-      }
-      // walk the path
-      // send an open request and inject it
-      // ? how to detect what we've already attempted to open ?
-    }
-    network = network.delete('uxs')
-    return pool.setNetwork(network)
   }
   async #reducer(pool) {
     assert(pool instanceof Pulse)
@@ -449,15 +415,4 @@ export class Engine {
   async multiThreadStop() {}
   async ipfsStart(privateNetworkKey) {}
   async ipfsStop() {}
-}
-
-const getReversePathSegments = (path) => {
-  let prefix = ''
-  const paths = path.split('/').map((segment) => {
-    prefix && (prefix += '/') // TODO make child naming convention avoid this check ?
-    prefix += segment
-    return prefix
-  })
-  paths.reverse()
-  return paths
 }

@@ -1,7 +1,5 @@
 import assert from 'assert-fast'
-import { openChildReducer, openPaths } from './openChild'
-import { uplinkReducer } from './uplink'
-import { connectReducer } from './connect'
+import { openPath, deepestSegment, openChild } from './openPath'
 import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
 import { installReducer } from './install'
@@ -40,14 +38,12 @@ const reducer = (request) => {
       return pingReducer(request)
     case '@@SPAWN':
       return spawnReducer(payload)
-    case '@@CONNECT':
-      return connectReducer(request)
-    case '@@UPLINK':
-      return uplinkReducer(request)
     case '@@GENESIS':
       return genesisReducer(payload)
+    case '@@OPEN_PATH':
+      return openPath(payload)
     case '@@OPEN_CHILD':
-      return openChildReducer(request)
+      return openChild(payload)
     case '@@INTRO':
       break
     case '@@ACCEPT':
@@ -120,15 +116,42 @@ const pulseReducer = async (type, payload) => {
       const state = await getCovenantState(path, latestByPath)
       return state
     }
+    case '@@DEEPEST_SEGMENT': {
+      return deepestSegment(pulse, payload)
+    }
+    case '@@CONNECT': {
+      const { chainId } = payload
+      const address = Address.fromChainId(chainId)
+      let network = pulse.getNetwork()
+      network = await network.addUplink(address)
+      pulse = pulse.setNetwork(network)
+      setPulse(pulse)
+      const childChainId = pulse.getAddress().getChainId()
+      return { childChainId }
+    }
+    case '@@SELF_ID': {
+      const chainId = pulse.getAddress().getChainId()
+      return { chainId }
+    }
+    case '@@RESOLVE_DOWNLINK': {
+      const { path, chainId } = payload
+      const address = Address.fromChainId(chainId)
+      assert(address.isRemote())
+      let network = pulse.getNetwork()
+      network = await network.resolveDownlink(path, address)
+      pulse = pulse.setNetwork(network)
+      setPulse(pulse)
+      return
+    }
     default:
       throw new Error(`Unrecognized type: ${type}`)
   }
 }
 
-const getCovenantState = async (path, latest) => {
+const getCovenantState = async (path, latestByPath) => {
   assert.strictEqual(typeof path, 'string')
-  assert.strictEqual(typeof latest, 'function')
-  let latestPulse = await latest(path)
+  assert.strictEqual(typeof latestByPath, 'function')
+  let latestPulse = await latestByPath(path)
   const { covenant } = latestPulse.provenance.dmz
   assert.strictEqual(typeof covenant, 'string')
   // TODO define covenant resolution algorithm better
@@ -138,8 +161,8 @@ const getCovenantState = async (path, latest) => {
     covenantPath = '/system:/' + covenantPath
   }
   debug('covenantPath', covenantPath)
-  const covenantPulse = await latest(covenantPath)
+  const covenantPulse = await latestByPath(covenantPath)
   return covenantPulse.getState().toJS()
 }
 
-export { reducer, openPaths, getCovenantState }
+export { reducer, getCovenantState }
