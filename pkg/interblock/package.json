@@ -60,7 +60,7 @@
     "rollup-plugin-visualizer": "^5.7.1",
     "supports-color": "^9.2.2",
     "trace-unhandled": "^2.0.1",
-    "vite": "^3.0.2"
+    "vite": "^3.0.3"
   },
   "publishConfig": {
     "access": "public"
