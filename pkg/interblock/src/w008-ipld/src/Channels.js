@@ -119,6 +119,9 @@ export class Channels extends IpldStruct {
     } else {
       if (rxs.includes(channelId)) {
         rxs = rxs.filter((id) => id !== channelId)
+        if (address.isInvalid()) {
+          // TODO delete the channel from the list and clean up aliases
+        }
       }
     }
     if (rxs !== this.rxs) {

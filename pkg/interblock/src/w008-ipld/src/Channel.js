@@ -1,6 +1,8 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import {
+  RxQueue,
+  TxQueue,
   RequestId,
   Network,
   Reply,
@@ -143,13 +145,14 @@ export class Channel extends IpldStruct {
   }
   txSystemReply(reply) {
     assert(reply instanceof Reply)
+    assert(this.address.isResolved())
     const tx = this.tx.txSystemReply(reply)
     const rx = this.rx.shiftSystemRequest()
     return this.setMap({ tx, rx })
   }
   txReducerReply(reply) {
-    assert(!this.address.isUnknown(), `Address is unknown`)
     assert(reply instanceof Reply)
+    assert(this.address.isResolved())
     const tx = this.tx.txReducerReply(reply)
     const rx = this.rx.shiftReducerRequest()
     return this.setMap({ tx, rx })
@@ -196,25 +199,32 @@ export class Channel extends IpldStruct {
     const requestIndex = this.tx[stream].requestsLength
     return RequestId.create(channelId, stream, requestIndex)
   }
-  invalidate() {
-    // TODO
+  invalidate(pathMsg) {
+    assert.strictEqual(typeof pathMsg, 'string')
+    assert(pathMsg)
     assert(!this.address.isResolved())
+    assert(this.rx.isEmpty())
+    assert(this.rx.system.isStart())
+    assert(this.rx.reducer.isStart())
+    assert.strictEqual(this.tx.system.repliesLength, 0)
+    assert.strictEqual(this.tx.reducer.repliesLength, 0)
+    assert.strictEqual(this.tx.system.promisedReplies.length, 0)
+    assert.strictEqual(this.tx.reducer.promisedReplies.length, 0)
     const address = Address.createInvalid()
     let { tx, rx } = this
-    assert(rx.isEmpty())
-    // roll thru and reject everything
-    const blank = { requests: [], replies: [] }
-    // tx = tx.setMap({ system: blank, reducer: blank })
+    const error = Reply.createError(new Error(`Invalid Path: ${pathMsg}`))
+    let system = reject(rx.system, tx.system, error)
+    let reducer = reject(rx.reducer, tx.reducer, error)
+    rx = rx.setMap({ system, reducer })
+    tx = tx.setMap({ system: tx.system.blank(), reducer: tx.reducer.blank() })
 
-    const system = rx.system.ingestTxQueue(tx.system)
-    const reducer = rx.reducer.ingestTxQueue(tx.reducer)
-    // const { tip = PulseLink.createCrossover(address) } = rx
-    // rx = rx.setMap({ tip, system, reducer })
-    // tx = tx.blank(tip)
-    // channel = channel.setMap({ tx, rx })
-    // then delete the channel during update activities
-    // need to reject all promises too
-    return this
+    return this.setMap({ address, tx, rx })
   }
 }
-const reject = (txQueue, rxQueue) => {}
+const reject = (rxQueue, txQueue, error) => {
+  assert(rxQueue instanceof RxQueue)
+  assert(txQueue instanceof TxQueue)
+  const replies = txQueue.requests.map((_) => error)
+  const repliesLength = replies.length
+  return rxQueue.setMap({ replies, repliesLength })
+}

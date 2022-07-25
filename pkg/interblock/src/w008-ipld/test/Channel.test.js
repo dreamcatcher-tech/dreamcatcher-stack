@@ -42,6 +42,22 @@ describe('channel', () => {
       const msg = 'root not parent'
       assert.throws(() => Channel.create(notParentChannelId, address), msg)
     })
+    test('invalidate', () => {
+      const channelId = 55
+      let channel = Channel.create(channelId)
+      const ping = Request.createPing()
+      const other = Request.create('OTHER')
+      channel = channel
+        .txRequest(ping)
+        .txRequest(ping)
+        .txRequest(other)
+        .txRequest(other)
+      channel = channel.invalidate('some/invalid/path')
+      assert(!channel.rxSystemRequest())
+      assert(!channel.rxReducerRequest())
+      assert(channel.rxSystemReply().isRejection())
+      assert(channel.rxReducerReply().isRejection())
+    })
     test.todo('loopback bans @@OPEN_CHILD action')
   })
   describe('clone', () => {

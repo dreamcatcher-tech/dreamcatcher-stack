@@ -12,9 +12,9 @@ describe('openPaths', () => {
     const engine = await Engine.createCI({ overloads: { root: shell } })
     await engine.pierce(shell.api.add('child1'))
     await engine.pierce(shell.api.add('child1/nested1'))
-    Debug.enable('iplog')
-    const false1 = engine.pierce(shell.api.ping('child1/nested1/false1'))
-    await expect(false1).rejects.toThrow('invalid')
+    const path = 'child1/nested1/false1'
+    const false1 = engine.pierce(shell.api.ping(path))
+    await expect(false1).rejects.toThrow(`Invalid Path: ${path}`)
   })
   test.todo('no double open')
 })

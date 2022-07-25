@@ -4,7 +4,9 @@ import * as system from '../../w212-system-covenants'
 import { wrapReduce } from '../../w010-hooks'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:services')
-
+const defaultReducer = (request) => {
+  debug(`default reducer`, request)
+}
 export class IsolateContainer {
   #covenant
   static async create(pulse, overloads, timeout) {
@@ -13,10 +15,8 @@ export class IsolateContainer {
     assert.strictEqual(typeof overloads, 'object')
     assert(Number.isInteger(timeout))
     const { covenant: covenantString } = pulse.provenance.dmz
-    const reducer = (request) => {
-      debug(`default reducer`, request)
-    }
-    let covenant = { reducer }
+
+    let covenant = { reducer: defaultReducer }
     // have fun: https://github.com/dreamcatcher-tech/dreamcatcher-stack/blob/master/pkg/interblock/src/w006-schemas/IpldSchemas.md#covenant
     if (overloads[covenantString]) {
       covenant = overloads[covenantString]
@@ -39,7 +39,8 @@ export class IsolateContainer {
     assert(trail instanceof AsyncTrail)
     assert(this.#covenant, `Covenant not loaded`)
     debug('reduce', trail.origin.request.type)
-    trail = await wrapReduce(trail, this.#covenant.reducer)
+    const reducer = this.#covenant.reducer || defaultReducer
+    trail = await wrapReduce(trail, reducer)
     return trail
   }
   async effects() {

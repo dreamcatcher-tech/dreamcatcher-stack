@@ -19,20 +19,22 @@ const debug = Debug('interpulse')
 
 export class Interpulse {
   #engine
-  static async createCI() {
-    const engine = await Engine.createCI()
+  static async createCI(options = {}) {
+    options = { ...options }
+    options.overloads = { ...options.overloads, root: shell }
+    const engine = await Engine.createCI(options)
     const instance = new Interpulse(engine)
     return instance
   }
-  static async create() {
-    const engine = await Engine.create()
+  static async create(options) {
+    options = { ...options }
+    options.overloads = { ...options.overloads, root: shell }
+    const engine = await Engine.create(options)
     const instance = new Interpulse(engine)
     return instance
   }
   constructor(engine) {
     assert(engine instanceof Engine)
-    const overloads = { root: shell }
-    engine.overload(overloads)
     const actions = mapShell(engine)
     Object.assign(this, actions)
     this.#engine = engine

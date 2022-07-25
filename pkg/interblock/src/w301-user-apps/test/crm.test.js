@@ -62,24 +62,20 @@ describe('crm', () => {
   })
   describe('list customers', () => {
     test('list customers basic', async () => {
-      const shell = await effectorFactory()
-      const { dpkgPath } = await shell.publish('dpkgCrm', crm.installer)
-      assert.strictEqual(dpkgPath, 'dpkgCrm')
-      await shell.install(dpkgPath, 'crm')
-      shell.metro.enableLogging()
-      const crmActions = await shell.actions('/crm/customers')
+      const engine = await Interpulse.createCI({ overloads: { '/crm': crm } })
+      await engine.add('crm', { covenant: '/crm' })
+      const crmActions = await engine.actions('/crm/customers')
       const newCustomer = await crmActions.add({
         formData: { custNo: 100, name: 'test name 1' },
       })
       debug(`newCustomer`, newCustomer)
-      const { children } = await shell.ls('crm/customers')
+      const { children } = await engine.ls('crm/customers')
       debug(`customers: `, children)
       const realCustomers = Object.keys(children).filter(
         (key) => !key.startsWith('.')
       )
       assert.strictEqual(realCustomers.length, 1)
       debug(realCustomers)
-      await shell.shutdown()
     })
   })
   describe('data import', () => {

@@ -14,6 +14,7 @@ export const openPath = async ({ path }) => {
     await useBlocks('/' + path)
   } catch (error) {
     await invalidate(path)
+    throw error
   }
 
   let count = 0

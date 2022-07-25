@@ -150,7 +150,7 @@ const pulseReducer = async (type, payload) => {
       debug(`invalidate`, path)
       let network = pulse.getNetwork()
       let channel = await network.getChannel(path)
-      channel = channel.invalidate()
+      channel = channel.invalidate(path)
       network = await network.updateChannel(channel)
       pulse = pulse.setNetwork(network)
       setPulse(pulse)
