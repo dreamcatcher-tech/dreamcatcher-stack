@@ -1,17 +1,17 @@
 import process from 'process'
 import ora from 'ora'
 import { assert } from 'chai'
-import { effectorFactory, apps } from '@dreamcatcher-tech/interblock'
-import interblockPackageJson from '@dreamcatcher-tech/interblock/package.json'
+import { Interpulse, apps } from '@dreamcatcher-tech/interblock'
 import { read } from './read'
 import { evaluate } from './eval'
 import { withAutoComplete } from './auto-complete'
 import { withSpin } from './spinner'
 import print from './print'
 import loop from './loop'
-import dosPackageJson from '../package.json'
+import dosPackageJson from '../package.json' assert { type: 'json' }
 import Debug from 'debug'
 const debug = Debug('dos:repl')
+import json from '@dreamcatcher-tech/interblock/package.json' assert { type: 'json' }
 
 export default async function repl(opts = {}) {
   assert.strictEqual(typeof opts, 'object')
@@ -28,7 +28,7 @@ export default async function repl(opts = {}) {
   const ctx = await getInitialCtx(opts)
   await print(
     `Welcome to the HyperNet
-  Blockchain core: v${interblockPackageJson.version}
+  Blockchain core: v${json.version}
   DOS:             v${dosPackageJson.version}
   type "help" to get started`,
     stdout,
@@ -94,11 +94,11 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
   if (!blockchain) {
     debug(`no blockchain provided`)
     spinner.text = `Initializing blockchain...`
-    blockchain = await effectorFactory('console', {}, 'dos')
+    blockchain = await Interpulse.create()
     debug('blockchain created')
   }
   const latest = await blockchain.latest()
-  const chainId = latest.getChainId()
+  const chainId = latest.getAddress().getChainId()
   spinner.info(`Blockchain initialized with chainId: ${chainId}`).start()
   spinner.text = `connecting to mainnet...`
   spinner.info(`connection to mainnet established`).start()

@@ -13,15 +13,15 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
   children = { ...children }
 
   // TODO implement this in shell, not externally
-  const { wd } = await blockchain.context()
+  const { wd } = blockchain
   const absPath = posix.resolve(wd, path)
-  const actions = await blockchain.actions(absPath)
-  debug(`actions`, actions)
-  const actionNames = Object.keys(actions).map((name) => {
-    const localName = `./${name}()`
-    children[localName] = { systemRole: 'function' }
-    return localName
-  })
+  // const actions = await blockchain.actions(absPath)
+  // debug(`actions`, actions)
+  // const actionNames = Object.keys(actions).map((name) => {
+  //   const localName = `./${name}()`
+  //   children[localName] = { systemRole: 'function' }
+  //   return localName
+  // })
 
   const ui = cliui()
   const aliases = Object.keys(children)
@@ -57,7 +57,7 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
     })
     .filter((alias) => !alias.includes('/'))
 
-  aliases.splice(0, 0, ...actionNames)
+  // aliases.splice(0, 0, ...actionNames)
   debug(`aliases: `, aliases)
   aliases.forEach((alias) => {
     debug(`child: ${alias}`)

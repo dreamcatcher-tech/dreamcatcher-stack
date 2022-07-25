@@ -12,18 +12,17 @@ export const time = async (ctx, ...args) => {
   }
   const [command, ...rest] = args
   debug(`time: `, command, rest)
-  const lastBlockCount = blockchain.metro.getBlockCount()
-  const lastChainCount = blockchain.metro.getChainCount()
+  const lastBlockCount = blockchain.logger.pulseCount
+  const lastChainCount = blockchain.logger.chainCount
 
   const start = Date.now()
   const res = (await evaluate(ctx, command, rest)) || {}
-  await blockchain.metro.settle()
   res.out = res.out ? res.out + '\n' : ''
   const options = { compact: false, separateMilliseconds: true }
   res.out = res.out + `Time: ${pretty(Date.now() - start, options)}`
 
-  const blockCount = blockchain.metro.getBlockCount()
-  const chainCount = blockchain.metro.getChainCount()
+  const blockCount = blockchain.logger.pulseCount
+  const chainCount = blockchain.logger.chainCount
   const diffBlocks = blockCount - lastBlockCount
   const diffChains = chainCount - lastChainCount
 

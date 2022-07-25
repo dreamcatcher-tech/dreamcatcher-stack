@@ -11,7 +11,7 @@ export const cat = async (
   // TODO watch for state changes
   // TODO move to be a shell command that returns a binary payload
   debug(`cat path: %O args: %O`, path, args)
-  const { wd } = await blockchain.context()
+  const { wd } = blockchain
   const absolutePath = posix.resolve(wd, path)
   debug(`absolutePath`, absolutePath)
   const latest = await blockchain.latest(absolutePath)

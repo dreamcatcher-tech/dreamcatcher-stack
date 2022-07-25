@@ -1,9 +1,9 @@
 import { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
-import { engine } from '@dreamcatcher-tech/interblock' // in build, gets aliased as @dreamcatcher-tech/interblock
+// import { engine } from '@dreamcatcher-tech/interblock' // in build, gets aliased as @dreamcatcher-tech/interblock
 import Debug from 'debug'
 const debug = Debug('dos:commands:blocks')
-const { blockPrint } = engine
+// const { blockPrint } = engine
 
 export const blocks = async (
   { blockchain },
@@ -15,7 +15,7 @@ export const blocks = async (
   // reason being so we can log all the user actions in the shell
   start = safeParseInt(start)
   stop = safeParseInt(stop)
-  const { wd } = await blockchain.context()
+  const { wd } = blockchain
   path = path || wd
   const absPath = posix.resolve(wd, path)
   debug(`using path: %o`, absPath)

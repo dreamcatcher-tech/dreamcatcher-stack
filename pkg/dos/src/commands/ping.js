@@ -5,7 +5,7 @@ const debug = Debug('dos:commands:ping')
 export const ping = async ({ spinner, blockchain }, path = '.', options) => {
   // TODO handle nested and remote paths
   // TODO make shell do wd resolution internally
-  const { wd } = await blockchain.context()
+  const { wd } = blockchain
   const absPath = posix.resolve(wd, path)
   debug(`ping path: %O options: %O`, absPath, options)
   await blockchain.ping(absPath)

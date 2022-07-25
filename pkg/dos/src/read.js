@@ -9,7 +9,7 @@ export const read = async (
   stdin,
   stdout
 ) => {
-  const { wd } = await blockchain.context()
+  const { wd } = blockchain
   const identity = `${chalk.green(`${user}@${machineId}`)}`
   const message = `${identity}:${chalk.blue(wd)}${chalk.reset('$')}`
 

@@ -61,6 +61,10 @@ export class Interpulse {
   get logger() {
     return this.#engine.logger
   }
+  get wd() {
+    const { wd = '/' } = this.#engine.latest.getState().toJS()
+    return wd
+  }
   shutdown() {
     // stop the ipfs agent from running
     // persist our config down to ipfs storage
