@@ -86,7 +86,7 @@ const assertFormData = (payload) => {
     throw new Error(`network must be object`)
   }
   const networkValues = Object.values(network)
-  return networkValues.every(assertFormData)
+  return networkValues.every((child) => assertFormData(child.state))
 }
 const checkNoFormData = (datum) => {
   if (datum.formData) {
@@ -100,7 +100,7 @@ const checkNoFormData = (datum) => {
 }
 
 const getChildName = (datumTemplate, formData) => {
-  if (!datumTemplate.namePath.length) {
+  if (!datumTemplate.namePath || !datumTemplate.namePath.length) {
     debug(`getChildName is blank`)
     return
   }
@@ -129,7 +129,7 @@ const api = {
       network: {
         type: 'object',
         description: 'Recursively defined children',
-        patternProperties: { '(.*?)': { $ref: '#' } },
+        // patternProperties: { '(.*?)': { $ref: '#' } },
       },
     },
   },
@@ -150,6 +150,7 @@ const api = {
     additionalProperties: false,
     required: ['schema'],
     properties: {
+      type: { type: 'string' },
       schema: { type: 'object' },
       network: { type: 'object' },
     },

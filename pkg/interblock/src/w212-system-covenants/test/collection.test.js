@@ -2,7 +2,6 @@ import { assert } from 'chai/index.mjs'
 import { Interpulse } from '../..'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
-Debug.enable('*collection iplog *install')
 
 describe('collection', () => {
   const schema = {
@@ -24,16 +23,17 @@ describe('collection', () => {
   }
   const customerData = {
     formData: { firstName: 'test firstname' },
-    network: { address: { formData: { address: 'test address' } } },
+    network: { address: { state: { formData: { address: 'test address' } } } },
   }
 
-  test('add with test data', async () => {
+  test.only('add with test data', async () => {
     // Debug.enable('iplog *collection interpulse')
-    const shell = await Interpulse.createCI()
-    await shell.add('col1', { covenant: 'collection' })
-    const actions = await shell.actions('col1')
-    await actions.setTemplate({ schema, network })
-    const col = await shell.latest('col1')
+    const engine = await Interpulse.createCI()
+    await engine.add('col1', { covenant: 'collection' })
+    const actions = await engine.actions('col1')
+    const type = 'DATUM'
+    await actions.setTemplate({ type, schema, network })
+    const col = await engine.latest('col1')
     const colState = col.getState().toJS()
     debug(colState)
     assert(!colState.datumTemplate.formData)
@@ -41,25 +41,24 @@ describe('collection', () => {
     debug('adding item to collection')
 
     await actions.add(customerData)
-    const nextColState = await shell.latest('col1')
+    const nextColState = await engine.latest('col1')
     assert.deepEqual(nextColState.getState(), col.getState())
-    const customer = await shell.latest('col1/file_00001')
+    const customer = await engine.latest('col1/file_00001')
     customer.getState().dir()
     assert(customer.getState().toJS().formData.firstName)
     // all covenants to respond to install events, and ignore or respond differently
     assert(!customer.getState().toJS().network.address.formData)
-    const address = await shell.latest('col1/file_00001/address')
+    const address = await engine.latest('col1/file_00001/address')
     assert(address.getState().formData.address)
 
     debug('adding second item to collection')
-    shell.metro.enableLogging()
+    engine.metro.enableLogging()
     await actions.add(customerData)
-    const customer2 = await shell.latest('col1/file_00002')
+    const customer2 = await engine.latest('col1/file_00002')
     assert.strictEqual(
       customer2.getState().formData.firstName,
       'test firstname'
     )
-    await shell.shutdown()
   })
   test('add two items concurrently to collection', async () => {
     const shell = await effectorFactory()
