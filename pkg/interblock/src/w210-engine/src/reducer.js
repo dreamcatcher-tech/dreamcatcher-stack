@@ -68,6 +68,7 @@ export const reducer = async (pulse, isolate, latest) => {
     trail = nextTrail
     network = nextNet
     pending = pending.updateTrail(trail)
+    // TODO if fulfilled by still pending due to transmit errors, reexecute
   }
   // reassigns: pending, network, softpulse
   while (network.channels.rxs.length && counter++ < 10000) {
@@ -187,7 +188,7 @@ const transmitTrailTxs = async (trail, network, pending) => {
       }
     } catch (error) {
       // TODO should that error the whole trail, before anything is started ?
-      console.error(error)
+      // console.error(error)
       txs.push(tx.settleError(error))
     }
   }

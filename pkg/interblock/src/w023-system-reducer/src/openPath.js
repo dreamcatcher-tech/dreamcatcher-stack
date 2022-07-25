@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { interchain } from '../../w002-api'
+import { interchain, useBlocks } from '../../w002-api'
 import { Address, Pulse } from '../../w008-ipld'
 const debug = Debug('interblock:dmz:openPath')
 
@@ -8,6 +8,13 @@ export const openPath = async ({ path }) => {
   assert.strictEqual(typeof path, 'string')
   assert(path)
   debug(`openPath`, path)
+
+  try {
+    // TODO resolve relative paths
+    await useBlocks('/' + path)
+  } catch (error) {
+    await invalidate(path)
+  }
 
   let count = 0
   let deepest
@@ -29,10 +36,13 @@ export const openPath = async ({ path }) => {
         debug(`opened`, child, childAddress)
       } catch (error) {
         console.log(error)
-        return invalidateAll(deepest, child)
+        return await invalidate(path)
       }
     }
   }
+}
+const invalidate = async (path) => {
+  await interchain('@@INVALIDATE', { path })
 }
 
 export const deepestSegment = async (pulse, { path }) => {

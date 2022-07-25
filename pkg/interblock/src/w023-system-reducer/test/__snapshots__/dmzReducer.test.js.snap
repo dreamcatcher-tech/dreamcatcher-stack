@@ -3,7 +3,9 @@
 exports[`dmzReducer spawn spawn is implicitly awaited 1`] = `
 Channel {
   "address": Address {},
-  "aliases": Array [],
+  "aliases": Array [
+    "child1",
+  ],
   "channelId": 3,
   "rx": Rx {
     "reducer": RxQueue {

@@ -1,7 +1,6 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import {
-  RxReply,
   RequestId,
   Network,
   Reply,
@@ -13,7 +12,6 @@ import {
 } from '.'
 import Debug from 'debug'
 import { IpldStruct } from './IpldStruct'
-import { RxRequest } from './RxRequest'
 const debug = Debug('interblock:models:channel')
 
 /**
@@ -198,4 +196,25 @@ export class Channel extends IpldStruct {
     const requestIndex = this.tx[stream].requestsLength
     return RequestId.create(channelId, stream, requestIndex)
   }
+  invalidate() {
+    // TODO
+    assert(!this.address.isResolved())
+    const address = Address.createInvalid()
+    let { tx, rx } = this
+    assert(rx.isEmpty())
+    // roll thru and reject everything
+    const blank = { requests: [], replies: [] }
+    // tx = tx.setMap({ system: blank, reducer: blank })
+
+    const system = rx.system.ingestTxQueue(tx.system)
+    const reducer = rx.reducer.ingestTxQueue(tx.reducer)
+    // const { tip = PulseLink.createCrossover(address) } = rx
+    // rx = rx.setMap({ tip, system, reducer })
+    // tx = tx.blank(tip)
+    // channel = channel.setMap({ tx, rx })
+    // then delete the channel during update activities
+    // need to reject all promises too
+    return this
+  }
 }
+const reject = (txQueue, rxQueue) => {}

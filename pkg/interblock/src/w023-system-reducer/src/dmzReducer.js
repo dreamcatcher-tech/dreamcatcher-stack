@@ -143,6 +143,19 @@ const pulseReducer = async (type, payload) => {
       setPulse(pulse)
       return
     }
+    case '@@INVALIDATE': {
+      const { path } = payload
+      assert.strictEqual(typeof path, 'string')
+      assert(path)
+      debug(`invalidate`, path)
+      let network = pulse.getNetwork()
+      let channel = await network.getChannel(path)
+      channel = channel.invalidate()
+      network = await network.updateChannel(channel)
+      pulse = pulse.setNetwork(network)
+      setPulse(pulse)
+      return
+    }
     default:
       throw new Error(`Unrecognized type: ${type}`)
   }

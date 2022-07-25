@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { convertToTemplate, demuxFormData } from '../src/datum'
+import { convertToTemplate } from '../src/datum'
 import Debug from 'debug'
 const debug = Debug('crm:tests:datum')
 

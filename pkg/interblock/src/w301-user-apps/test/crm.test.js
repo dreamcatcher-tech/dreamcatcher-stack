@@ -7,7 +7,8 @@ const debug = Debug('interblock:tests:crm')
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test.only('deploys app', async () => {
+    test('deploys app', async () => {
+      // Debug.enable('*tests*')
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
       const { path } = await engine.publish('dpkgCrm', crm)

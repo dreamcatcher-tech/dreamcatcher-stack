@@ -53,6 +53,7 @@ export class Request extends IpldStruct {
     '@@COVENANT',
     '@@SELF_ID',
     '@@RESOLVE_DOWNLINK',
+    '@@INVALIDATE',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)

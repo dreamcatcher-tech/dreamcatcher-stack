@@ -242,7 +242,7 @@ export class Engine {
   async latestByPath(path, rootAddress = this.#hints.self) {
     // TODO allow remote roots
     assert.strictEqual(typeof path, 'string')
-    assert(posix.isAbsolute(path))
+    assert(posix.isAbsolute(path), `path not absolute: ${path}`)
     assert(rootAddress instanceof Address)
     debug('latestByPath', path)
     if (this.#overloads[path]) {
