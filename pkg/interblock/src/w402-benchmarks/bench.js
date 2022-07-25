@@ -52,7 +52,7 @@ const crmSetup = async () => {
 const crmActions = await crmSetup()
 let custNo = 100
 const addCustomer = async () => {
-  await crmActions.add({ formData: { custNo, name: 'test name 1' } })
+  await crmActions.add({ formData: { custNo, name: `test name ${custNo}` } })
   custNo++
 }
 
@@ -104,13 +104,13 @@ suite
       deferred.resolve()
     },
   })
-  // .add('add customer', {
-  //   defer: true,
-  //   fn: async (deferred) => {
-  //     await addCustomer()
-  //     deferred.resolve()
-  //   },
-  // })
+  .add('add customer', {
+    defer: true,
+    fn: async (deferred) => {
+      await addCustomer()
+      deferred.resolve()
+    },
+  })
   .add('block making', {
     defer: true,
     fn: async (deferred) => {

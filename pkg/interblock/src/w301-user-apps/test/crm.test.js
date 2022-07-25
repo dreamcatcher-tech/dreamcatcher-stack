@@ -7,10 +7,9 @@ const debug = Debug('interblock:tests:crm')
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test('deploys app', async () => {
+    test.only('deploys app', async () => {
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
-      Debug.enable('iplog *tests* ')
       const { path } = await engine.publish('dpkgCrm', crm)
       assert.strictEqual(path, '/dpkgCrm')
       const installStart = Date.now()
@@ -35,16 +34,14 @@ describe('crm', () => {
       const add1PulseCount = engine.logger.pulseCount
       await crmActions.add({ formData: { custNo: 100, name: 'test name 1' } })
       debug(`add first customer time: ${Date.now() - add1Start} ms`)
-      const add2BlockCount = engine.metro.getBlockCount()
-      debug(`add 1 block count: ${add2BlockCount - add1PulseCount}`)
+      const add2PulseCount = engine.logger.pulseCount
+      debug(`add 1 pulse count: ${add2PulseCount - add1PulseCount}`)
 
       const add2Start = Date.now()
       await crmActions.add({ formData: { custNo: 101, name: 'test name 2' } })
       debug(`add second customer time: ${Date.now() - add2Start} ms`)
-      const lastBlockCount = engine.metro.getBlockCount()
-      debug(`add 2 block count: ${lastBlockCount - add2BlockCount}`)
-
-      await engine.shutdown()
+      const lastPulseCount = engine.logger.pulseCount
+      debug(`add 2 pulse count: ${lastPulseCount - add2PulseCount}`)
       /**
        * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
        * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
@@ -56,6 +53,7 @@ describe('crm', () => {
        * 2021-05-19 245ms publish, 524ms install, blockcount 27, blockrate 28ms - add queries to hooks, install uses a query instead of an action
        * 2021-11-11 129ms publish, 252ms install, blockcount 27, blockrate 14ms add1 167ms, add1 count 18, add2 128ms, add2 count 13 - remove light lineage from protocol
        * 2021-12-27 185ms publish, 420ms install, blockcount 27, blockrate 22ms add1 258ms, add1 count 17, add2 205ms, add2 count 13 - models as classes
+       * 2022-07-25 136ms publish, 330ms install, pulsecount 30, blockrate 15ms add1 218ms, add1 count 20, add2 161ms, add2 count 15 - move to ipfs
        */
     })
     test.todo('can only add customer if provide valid data')

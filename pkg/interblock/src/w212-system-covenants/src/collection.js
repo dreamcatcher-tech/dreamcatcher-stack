@@ -5,20 +5,21 @@ import { Request } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
 
-const {
-  convertToTemplate,
-  demuxFormData,
-  validateDatumTemplate,
-  muxTemplateWithFormData,
-} = datum
+const { convertToTemplate, validateDatumTemplate, validateFormData } = datum
 
 const add = async (payload, datumTemplate) => {
   assertFormData(payload)
-  const formData = demuxFormData(datumTemplate, payload)
+  validateDatumTemplate(datumTemplate)
+  validateFormData(payload, datumTemplate)
+  const { formData } = payload
   const name = getChildName(datumTemplate, formData)
-  const state = muxTemplateWithFormData(datumTemplate, formData)
+  const state = { datumTemplate: '..' }
   const covenant = 'datum'
-  const spawn = Request.createSpawn(name, { state, covenant })
+  const installer = { state, covenant }
+  if (datumTemplate.network) {
+    installer.network = datumTemplate.network
+  }
+  const spawn = Request.createSpawn(name, installer)
   const result = await interchain(spawn)
 
   debug(`datum added`, result.alias)
@@ -98,23 +99,22 @@ const checkNoFormData = (datum) => {
   return networkValues.every(checkNoFormData)
 }
 
-const getChildName = (datumTemplate, payload) => {
+const getChildName = (datumTemplate, formData) => {
   if (!datumTemplate.namePath.length) {
     debug(`getChildName is blank`)
     return
   }
-  let obj = payload.formData
   datumTemplate.namePath.forEach((name) => {
-    obj = obj[name]
+    formData = formData[name]
   })
-  if (typeof obj === 'number') {
-    obj = obj + ''
+  if (typeof formData === 'number') {
+    formData = formData + ''
   }
   const prefix = datumTemplate.namePath.join('_')
-  obj = prefix + '-' + obj
-  assert.strictEqual(typeof obj, 'string')
-  debug(`_getChildName`, obj)
-  return obj
+  formData = prefix + '-' + formData
+  assert.strictEqual(typeof formData, 'string')
+  debug(`getChildName`, formData)
+  return formData
 }
 
 const api = {
@@ -160,5 +160,5 @@ const api = {
     description: 'Search through this collection',
   },
 }
-const state = convertToTemplate({ type: 'COLLECTION' })
+const state = convertToTemplate({ type: 'COLLECTION', schema: {} })
 export { reducer, api, state }

@@ -61,18 +61,18 @@ const pulsePrint = async (pulse, path, isNew, isDupe, options = {}) => {
   const text = print(messages)
   return text
 }
+const PRINT_OPTIONS = {
+  truncate: true,
+  showHeaders: false,
+  minWidth: 3,
+  config: {
+    msg: { minWidth: 9, maxWidth: 9 },
+    height: { minWidth: 3, maxWidth: 3 },
+    path: { minWidth: 28, maxWidth: 28 },
+  },
+}
 const print = (messages) => {
-  const options = {
-    truncate: true,
-    showHeaders: false,
-    minWidth: 3,
-    config: {
-      msg: { minWidth: 9, maxWidth: 9 },
-      height: { minWidth: 3, maxWidth: 3 },
-      path: { minWidth: 18, maxWidth: 18 },
-    },
-  }
-  const formatted = columnify(messages, options)
+  const formatted = columnify(messages, { ...PRINT_OPTIONS })
   return formatted
 }
 const headerPrint = (pulse, path, isNewChain, isDuplicate, options) => {
@@ -81,6 +81,11 @@ const headerPrint = (pulse, path, isNewChain, isDuplicate, options) => {
   const rawHash = pulse.cid.toString().substring(6)
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
+  if (!PRINT_OPTIONS.config) {
+    console.log('asdf', PRINT_OPTIONS)
+  }
+  const pathMax = PRINT_OPTIONS.config.path.maxWidth
+  path = path.length > pathMax ? path.substring(0, pathMax) : path
   path = chalk.blue.bold.bgWhite(path)
   const header = { msg, height, path, chainId, hash }
   if (options.size) {

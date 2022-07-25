@@ -1,6 +1,7 @@
 const address = (title) => ({
   covenant: 'datum',
   state: {
+    type: 'DATUM',
     schema: {
       title,
       type: 'object',
@@ -53,6 +54,7 @@ const installer = {
       covenant: 'collection',
       state: {
         datumTemplate: {
+          type: 'DATUM',
           schema: {
             title: 'Details',
             type: 'object',

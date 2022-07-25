@@ -1,13 +1,13 @@
 import assert from 'assert-fast'
 // const faker from 'faker/locale/en')
 import Ajv from 'ajv'
-// import AjvFormats from 'ajv-formats'
+import AjvFormats from 'ajv-formats'
 import { interchain, useBlocks } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:datum')
 const ajv = new Ajv({ allErrors: true, verbose: true })
-// AjvFormats(ajv)
-// ajv.addKeyword('faker')
+AjvFormats(ajv)
+ajv.addKeyword('faker')
 
 // const jsf from 'json-schema-faker')
 // const isBrowserBundle = !jsf.extend
@@ -39,17 +39,10 @@ const ajv = new Ajv({ allErrors: true, verbose: true })
 const datumSchema = {
   type: 'object',
   title: 'Datum',
-  required: [
-    'type',
-    'namePath',
-    'schema',
-    'uiSchema',
-    'subscribers',
-    'network',
-  ],
+  required: ['type', 'schema'],
   additionalProperties: false,
   properties: {
-    type: { enum: ['COLLECTION', 'XSTATE', 'ARRAY', 'DATA'] },
+    type: { enum: ['COLLECTION', 'XSTATE', 'ARRAY', 'DATUM'] },
     isEditable: { type: 'boolean' },
     namePath: { type: 'array', items: { type: 'string' } },
     schema: { type: 'object' },
@@ -61,21 +54,11 @@ const datumSchema = {
       // TODO use regex for subscriber path format
       items: { type: 'string' },
     },
-    // does not include formData
-    network: { type: 'object', patternProperties: { '(.*?)': { $ref: '#' } } },
+    // TODO check schema if covenant type is 'datum'
+    network: { type: 'object' },
   },
 }
 
-const defaultDatum = {
-  type: 'DATA',
-  isEditable: true,
-  namePath: [], // array of keys into formData
-  formData: {},
-  schema: {},
-  uiSchema: {},
-  subscribers: [],
-  network: {},
-}
 const reducer = async (request) => {
   // TODO run assertions on state shape thru schema
   // TODO assert the children match the schema definition
@@ -134,13 +117,6 @@ const _isTemplateIncluded = (payload) => {
   return Object.values(network).some(_isTemplateIncluded)
 }
 
-const demuxFormData = (template, payload) => {
-  validateDatumTemplate(template)
-  // TODO remove the mixing of setting the template and setting the data
-  const unmixed = separateFormData(payload)
-  validateFormData(template, unmixed)
-  return unmixed
-}
 const separateFormData = (payload) => {
   if (!payload || typeof payload.formData === 'undefined') {
     return {}
@@ -159,19 +135,26 @@ const separateFormData = (payload) => {
   return result
 }
 
-const validateFormData = (template, payload) => {
+const validateFormData = (payload, template) => {
   const isValid = ajv.validate(template.schema, payload.formData)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
     debug(`error validating:`, payload)
     throw new Error(`${template.schema.title} failed validation: ${errors}`)
   }
+  if (!template.network) {
+    return
+  }
   for (const name in template.network) {
+    const child = template.network[name]
+    if (child.covenant !== 'datum') {
+      continue
+    }
     let data = { formData: {} }
     if (payload.network && payload.network[name]) {
       data = payload.network[name]
     }
-    validateFormData(template.network[name], data)
+    validateFormData(data, child.state)
   }
 }
 const _generateFakeData = (template, payload = {}) => {
@@ -195,11 +178,8 @@ const _generateFakeData = (template, payload = {}) => {
   return result
 }
 
-const convertToTemplate = (datum) => {
+const convertToTemplate = (template) => {
   // TODO use existing template for things like uiSchema
-  const { isTestData, ...rest } = datum
-  let template = withDefaults(rest)
-  template = _withoutFormData(template)
   validateDatumTemplate(template)
   validateChildSchemas(template)
   return template
@@ -211,45 +191,23 @@ const validateDatumTemplate = (datumTemplate) => {
     throw new Error(`Datum failed validation: ${errors}`)
   }
 }
-const withDefaults = (datum) => {
-  const inflated = { ...defaultDatum, ...datum }
-  const { network: currentNetwork } = inflated
-  const network = {}
-  for (const name in currentNetwork) {
-    network[name] = withDefaults(currentNetwork[name])
-  }
-  return { ...inflated, network }
-}
-const _withoutFormData = (datum) => {
-  const { formData, network: currentNetwork = {}, ...rest } = datum
-  const network = {}
-  for (const name in currentNetwork) {
-    network[name] = _withoutFormData(currentNetwork[name])
-  }
-  return { ...rest, network }
-}
 const validateChildSchemas = (datum) => {
   // compilation will throw if schemas invalid
   try {
     ajv.compile(datum.schema)
     // TODO check that datum.uiSchema is formatted correctly
-    Object.values(datum.network).every(validateChildSchemas)
+    if (!datum.network) {
+      return
+    }
+    Object.values(datum.network).every((installer) => {
+      if (installer.covenant === 'datum') {
+        validateChildSchemas(installer.state)
+      }
+    })
   } catch (e) {
     const errors = ajv.errorsText(ajv.errors)
     throw new Error(`Child schemas failed validation: ${errors}`)
   }
-}
-const muxTemplateWithFormData = (template, payload) => {
-  const result = { ...template, network: {} }
-  result.formData = payload.formData
-  for (const name in template.network) {
-    let data = { formData: {} }
-    if (payload.network && payload.network[name]) {
-      data = payload.network[name]
-    }
-    result.network[name] = muxTemplateWithFormData(template.network[name], data)
-  }
-  return result
 }
 const api = {
   set: { type: 'object', title: 'SET', description: '' },
@@ -262,8 +220,6 @@ export {
   api,
   reducer,
   convertToTemplate,
-  demuxFormData,
   validateDatumTemplate,
-  muxTemplateWithFormData,
   validateFormData,
 }
