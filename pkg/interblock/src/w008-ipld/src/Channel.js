@@ -145,14 +145,14 @@ export class Channel extends IpldStruct {
   }
   txSystemReply(reply) {
     assert(reply instanceof Reply)
-    assert(this.address.isResolved())
+    assert(this.address.isResolved(), `Address is unresolved`)
     const tx = this.tx.txSystemReply(reply)
     const rx = this.rx.shiftSystemRequest()
     return this.setMap({ tx, rx })
   }
   txReducerReply(reply) {
     assert(reply instanceof Reply)
-    assert(this.address.isResolved())
+    assert(this.address.isResolved(), `Address is unresolved`)
     const tx = this.tx.txReducerReply(reply)
     const rx = this.rx.shiftReducerRequest()
     return this.setMap({ tx, rx })
