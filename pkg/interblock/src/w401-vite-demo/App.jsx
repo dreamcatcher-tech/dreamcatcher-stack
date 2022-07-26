@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { effectorFactory } from '..'
+import { Interpulse } from '..'
 import './App.css'
 import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
@@ -9,7 +9,11 @@ let shell
 const pingRTT = []
 let count = 0
 function App() {
-  const [blockCount, setBlockCount] = useState(0)
+  const [engine, setEngine] = useState()
+  if (!engine) {
+    return 'ASDFASDF'
+  }
+  const [pulseCount, setPulseCount] = useState(0)
   const ping = async () => {
     if (!shell) {
       debug('shell not ready')
@@ -28,39 +32,27 @@ function App() {
     entry.rtt = rtt
     debug(`ping RTT: ${rtt} ms`)
     const blockCount = shell.metro.getBlockCount()
-    setBlockCount(blockCount)
+    setPulseCount(blockCount)
     debug(`blockcount: ${blockCount}`)
     await shell.metro.settle()
     debug(`stop`)
-  }
-  const resetDb = async () => {
-    if (!shell) {
-      debug('shell not ready')
-      return
-    }
-    await shell.shutdown({ dropDb: true })
-    debug('resetDb done')
   }
 
   useEffect(() => {
     Debug.enable('*tests*  *:provenance')
     debug(`start`)
-    const identifier = 'vite-test'
-    const overloads = {}
-    const dbName = 'test-idb'
-    effectorFactory(identifier, overloads, dbName).then(async (blockchain) => {
-      // client.enableLogging()
-      debug(`effector ready`)
-      shell = blockchain
+    const boot = async () => {
+      const engine = await Interpulse.createCI()
+      setEngine((prior) => assert(!prior) && engine)
+      debug(`Engine ready`)
       debug(`first ping`)
       await ping()
       debug(`second ping`)
       await ping()
-    })
+    }
+    boot()
     return async () => {
       debug(`shutting down...`)
-      await shell.shutdown()
-      debug(`shutdown complete`)
     }
   }, [])
   return (
@@ -87,7 +79,7 @@ function App() {
             Vite Docs
           </a>
         </p>
-        Block Count: {blockCount}
+        Block Count: {pulseCount}
         <ul>
           {pingRTT.map(({ rtt, key }) => (
             <li key={key}>Ping RTT: {rtt} ms</li>
