@@ -1,7 +1,5 @@
-import chai, { assert } from 'chai/index.mjs'
+import { assert } from 'chai/index.mjs'
 import { Keypair } from '..'
-import chaiAsPromised from 'chai-as-promised'
-chai.use(chaiAsPromised)
 import Debug from 'debug'
 const debug = Debug('interblock:tests:Keypair')
 

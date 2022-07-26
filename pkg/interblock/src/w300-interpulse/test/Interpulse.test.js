@@ -3,7 +3,7 @@ import Debug from 'debug'
 
 const debug = Debug('interblock:tests:Interpulse')
 
-describe('effector', () => {
+describe('engine', () => {
   test('ping single', async () => {
     const start = Date.now()
     debug(`start`)

@@ -3,8 +3,7 @@ import { CID } from 'multiformats/cid'
 import { encode, Block } from 'multiformats/block'
 import { IpldInterface } from './IpldInterface'
 import * as codec from 'multiformats/codecs/raw'
-import { sha256 as hasher } from 'multiformats/hashes/sha2'
-
+import { hasher } from './IpldUtils'
 export class Binary extends IpldInterface {
   // TODO use the unixFS API so these objects are browseable
   #ipldBlock

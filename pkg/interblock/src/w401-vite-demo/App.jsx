@@ -1,71 +1,84 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Interpulse } from '..'
 import './App.css'
 import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')
-let shell
-const pingRTT = []
-let count = 0
+Debug.enable('tests*')
+debug('import loaded')
+
 function App() {
   const [engine, setEngine] = useState()
-  if (!engine) {
-    return 'ASDFASDF'
-  }
   const [pulseCount, setPulseCount] = useState(0)
+  const [pingRTT, setPingRTT] = useState([])
+
   const ping = async () => {
-    if (!shell) {
-      debug('shell not ready')
-      return
-    }
-    const key = count++
+    assert(engine.latest)
+    const key = pingRTT.length
     const entry = { rtt: '(waiting...)', key }
     pingRTT.unshift(entry)
+    setPingRTT(pingRTT)
     const pingStart = Date.now()
     const payload = { test: 'ping' }
-    const reply = await shell.ping('.', payload)
+    const reply = await engine.ping('.', payload)
     debug(`reply: `, reply)
     assert(equal(reply, payload))
     debug(`pong received`)
     const rtt = Date.now() - pingStart
     entry.rtt = rtt
     debug(`ping RTT: ${rtt} ms`)
-    const blockCount = shell.metro.getBlockCount()
-    setPulseCount(blockCount)
-    debug(`blockcount: ${blockCount}`)
-    await shell.metro.settle()
+    const pulseCount = engine.logger.pulseCount
+    setPulseCount(pulseCount)
+    debug(`pulsecount: ${pulseCount}`)
     debug(`stop`)
   }
-
+  const oneShot = useRef(false)
   useEffect(() => {
-    Debug.enable('*tests*  *:provenance')
-    debug(`start`)
-    const boot = async () => {
+    if (!oneShot.current) {
+      debug(`oneshot React18 workaround`)
+      oneShot.current = true
+      return
+    }
+    // Debug.enable('*tests*  *:provenance')
+    const init = async () => {
+      debug(`init`)
       const engine = await Interpulse.createCI()
-      setEngine((prior) => assert(!prior) && engine)
+      setEngine((prior) => assert(!prior) || engine)
       debug(`Engine ready`)
+    }
+    init()
+    return async () => {
+      debug(`shutting down...`)
+      setEngine()
+    }
+  }, [])
+
+  if (!engine) {
+    return 'ENGINE LOADING...'
+  }
+  if (!pingRTT.length) {
+    const initialPings = async () => {
       debug(`first ping`)
       await ping()
       debug(`second ping`)
       await ping()
+      debug(`initialPings done`)
     }
-    boot()
-    return async () => {
-      debug(`shutting down...`)
-    }
-  }, [])
+    initialPings()
+  }
+
   return (
     <div className="App">
       <header className="App-header">
         <p>View console logs to see chain tests</p>
         <p>
           <button type="button" onClick={ping}>
-            Ping: {count}
+            Ping: {pingRTT.length}
           </button>
         </p>
         <p>
-          <button type="button" onClick={resetDb}>
+          <button type="button" onClick={() => console.log('reset')}>
             Reset DB
           </button>
         </p>
@@ -79,12 +92,12 @@ function App() {
             Vite Docs
           </a>
         </p>
-        Block Count: {pulseCount}
-        <ul>
+        Pulse Count: {pulseCount}
+        <ol>
           {pingRTT.map(({ rtt, key }) => (
             <li key={key}>Ping RTT: {rtt} ms</li>
           ))}
-        </ul>
+        </ol>
       </header>
     </div>
   )

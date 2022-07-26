@@ -3,13 +3,13 @@ import { encode, prepare } from '@ipld/dag-pb'
 import { CID } from 'multiformats/cid'
 import { Block } from 'multiformats/block'
 import { IpldInterface } from './IpldInterface'
-import { sha256 } from 'multiformats/hashes/sha2'
 import { Pulse } from '.'
+import { hasher } from './IpldUtils'
 
 export const cidV0FromString = (string) => {
   assert.strictEqual(typeof string, 'string')
   const bytes = encode(prepare(string))
-  const hash = sha256.digest(bytes)
+  const hash = hasher.digest(bytes)
   const cid = CID.createV0(hash)
   return cid
 }
@@ -37,7 +37,7 @@ const addressBlock = (cidV1) => {
   assert.strictEqual(cidV1.version, 1)
   const value = prepare({ Links: [cidV1] })
   const bytes = encode(value)
-  const hash = sha256.digest(bytes)
+  const hash = hasher.digest(bytes)
   const cid = CID.createV0(hash)
   assert.strictEqual(cid.version, 0)
   return new Block({ cid, bytes, value })
@@ -60,7 +60,7 @@ export class Address extends IpldInterface {
     assert(string)
     const value = prepare({ Data: string })
     const bytes = encode(value)
-    const hash = sha256.digest(bytes)
+    const hash = hasher.digest(bytes)
     const cid = CID.createV0(hash)
     assert.strictEqual(cid.version, 0)
     const block = new Block({ cid, bytes, value })

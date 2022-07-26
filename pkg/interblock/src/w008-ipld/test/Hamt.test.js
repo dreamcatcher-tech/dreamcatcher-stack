@@ -1,9 +1,7 @@
 import { IpldStruct } from '../src/IpldStruct'
-import chai, { assert } from 'chai/index.mjs'
+import { assert } from 'chai/index.mjs'
 import { Hamt } from '../src/Hamt'
 import Debug from 'debug'
-import chaiAsPromised from 'chai-as-promised'
-chai.use(chaiAsPromised)
 
 const debug = Debug('interblock:tests:ipld:hamt')
 
@@ -58,7 +56,7 @@ describe('Hamt', () => {
     class TestClass extends IpldStruct {}
     let hamt = Hamt.create(TestClass)
     const msg = 'Not correct class type'
-    await assert.isRejected(hamt.set('test', { a: 'b' }), msg)
+    await expect(hamt.set('test', { a: 'b' })).rejects.toThrow(msg)
     const testInstance = new TestClass()
     hamt = await hamt.set('test', testInstance)
     assert((await hamt.get('test')) instanceof TestClass)
@@ -73,10 +71,12 @@ describe('Hamt', () => {
   })
   test('throws on existing key', async () => {
     let hamt = Hamt.create()
-    await assert.isRejected(hamt.get('bogus key'), 'bogus key')
+    await expect(hamt.get('bogus key')).rejects.toThrow('bogus key')
     hamt = await hamt.set('some key', 'some value')
     assert.strictEqual(await hamt.get('some key'), 'some value')
-    assert.isRejected(hamt.set('some key', 'over'), 'Cannot overwrite')
+    await expect(hamt.set('some key', 'over')).rejects.toThrow(
+      'Cannot overwrite'
+    )
   })
   test.todo('recursive crush')
 })

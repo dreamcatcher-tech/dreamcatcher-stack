@@ -1,5 +1,5 @@
 import { IpldStruct } from './IpldStruct'
-import { sha256 } from 'multiformats/hashes/sha2'
+import { hasher } from './IpldUtils'
 import { fromString as from } from 'uint8arrays/from-string'
 import { toString as to } from 'uint8arrays/to-string'
 /**
@@ -42,7 +42,7 @@ export class Config extends IpldStruct {
     // TODO inject something unique to the block here, so cannot
     // predict if you had a single example, such as the blockhash
     let { entropy = '0123456789abcdef' } = this
-    const { bytes } = await sha256.digest(from(entropy, 'base64'))
+    const { bytes } = hasher.digest(from(entropy, 'base64'))
     entropy = to(bytes, 'base64')
     return this.setMap({ entropy })
   }

@@ -1,9 +1,7 @@
-import chai, { assert } from 'chai/index.mjs'
-import chaiAsPromised from 'chai-as-promised'
+import { assert } from 'chai/index.mjs'
 import { Request, Network, Channel, Address } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:network')
-chai.use(chaiAsPromised)
 
 describe('network', () => {
   test('creates default', async () => {
@@ -24,9 +22,11 @@ describe('network', () => {
   })
   test('can only set Channel instances', async () => {
     const network = Network.create()
-    await assert.isRejected(network.updateChannel('a string'), 'Not channel')
+    await expect(network.updateChannel('a string')).rejects.toThrow(
+      'Not channel'
+    )
     const object = { key: 'value' }
-    await assert.isRejected(network.updateChannel(object), 'Not channel')
+    await expect(network.updateChannel(object)).rejects.toThrow('Not channel')
   })
   test('transmit to downlink', async () => {
     let network = Network.create()
