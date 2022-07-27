@@ -83,6 +83,11 @@ function App() {
           </button>
         </p>
         <p>
+          <button type="button" onClick={() => engine.startIpfs()}>
+            Start IPFS
+          </button>
+        </p>
+        <p>
           <a
             className="App-link"
             href="https://vitejs.dev/guide/features.html"
