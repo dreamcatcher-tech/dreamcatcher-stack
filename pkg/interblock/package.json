@@ -39,6 +39,7 @@
     "ipfs-core": "^0.15.4",
     "ipld-hashmap": "^2.1.11",
     "ipld-schema": "^2.0.2",
+    "multiformats": "^9.7.1",
     "pad-left": "^2.1.0",
     "path-browserify": "^1.0.1",
     "pretty-bytes": "^6.0.0",

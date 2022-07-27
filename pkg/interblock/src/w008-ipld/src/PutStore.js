@@ -1,5 +1,5 @@
 import { Block, create } from 'multiformats/block'
-import { sha256 as hasher } from 'multiformats/hashes/sha2'
+import { hasher } from './IpldUtils'
 import * as codec from '@ipld/dag-cbor'
 import { CID } from 'multiformats/cid'
 import assert from 'assert-fast'
