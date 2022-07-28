@@ -28,11 +28,10 @@ const reducer = async (request) => {
       // attempt to login
       // reject if login refused
       // if pass, return positive result to requester
-      debug(`login: %O`, event.payload)
-      const { terminalChainId, credentials } = event.payload
+      debug(`login: %O`, payload)
+      const { terminalChainId, credentials } = payload
       // TODO check terminal regex is a chainId
-      const connectToTerminal = connect('terminal', terminalChainId)
-      await interchain(connectToTerminal)
+      await interchain('@@CONNECT', { terminalChainId })
 
       // TODO import from authenticator / terminal functions
       const loginResult = await interchain('@@INTRO', credentials, 'terminal')

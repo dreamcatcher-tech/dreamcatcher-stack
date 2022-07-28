@@ -6,6 +6,5 @@
 const reducer = (state = {}) => {
   return state
 }
-const covenantId = CovenantId.create('app')
 
-export { reducer, covenantId }
+export { reducer }

@@ -6,17 +6,14 @@
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:probe')
 
-const initialState = {}
-const reducer = async (state = initialState, action) => {
-  const { type, payload } = action
+const reducer = async (request) => {
+  const { type, payload } = request
   debug(`test action: `, type)
   switch (type) {
     case 'PING':
-      replyResolve({ type: 'PONG', payload })
-      break
+      return { type: 'PONG', payload }
   }
-  return { ...state }
 }
-const actions = {}
+const api = {}
 
-export { reducer, actions }
+export { reducer, api }

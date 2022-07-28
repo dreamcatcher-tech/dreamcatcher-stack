@@ -3,30 +3,31 @@ import chalk from 'ansi-colors-browserify'
 import pad from 'pad-left'
 import prettyBytes from 'pretty-bytes'
 import columnify from 'columnify'
+import { Interpulse } from '../../../w008-ipld'
 const grayUndefined = chalk.gray('undefined')
 
-const interPrint = (interblock, msg, path, bg, fg) => {
-  assert(interblock instanceof Interblock)
+const interPrint = (interpulse, msg, path, bg, fg) => {
+  assert(interpulse instanceof Interpulse)
   msg = msg || 'INTERBLOCK'
   path = path || '(unknown)'
   bg = bg || 'bgYellow'
   fg = fg || 'yellow'
-  const { provenance } = interblock
+  const { provenance } = interpulse
   let height = provenance.height
 
   const chainIdRaw = provenance.getAddress().getChainId()
   let chainId = shrink(chainIdRaw, bg)
-  const hashRaw = interblock.hashString()
+  const hashRaw = interpulse.hashString()
   let hash = chalk.dim(shrink(hashRaw, 'bgWhite', fg))
-  let size = getSize(interblock)
+  let size = getSize(interpulse)
 
   const messages = [{ msg, height, path, chainId, hash, size }]
 
-  const remote = interblock.getRemote()
+  const remote = interpulse.getRemote()
   if (remote) {
     msg = chalk.magenta('  └── channel')
     height = '-' // TODO replace with known height of remote
-    path = chalk.gray(interblock.getOriginAlias())
+    path = chalk.gray(interpulse.getOriginAlias())
     size = getSize(remote)
     messages.push({ msg, height, path, size })
 
@@ -48,7 +49,7 @@ const interPrint = (interblock, msg, path, bg, fg) => {
       messages.push({ msg, height, chainId, hash, size })
     })
   }
-  return format(messages)
+  return print(messages)
 }
 const pulsePrint = async (pulse, path, isNew, isDupe, options = {}) => {
   const header = headerPrint(pulse, path, isNew, isDupe, options)

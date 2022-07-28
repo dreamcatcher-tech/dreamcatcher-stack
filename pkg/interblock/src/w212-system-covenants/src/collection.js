@@ -32,16 +32,14 @@ const reducer = async (request) => {
   assert.strictEqual(typeof type, 'string')
   assert.strictEqual(typeof payload, 'object')
 
-  // const { datumTemplate } = state
-  // validateDatumTemplate(datumTemplate)
+  const [state, setState] = await useState()
+  const { datumTemplate } = state
 
-  // TODO remove test data from being inside the covenant at all
   switch (type) {
     case '@@INIT': {
       return
     }
     case 'ADD': {
-      const [{ datumTemplate }] = await useState()
       return await add(payload, datumTemplate)
     }
     case 'BATCH': {
@@ -62,7 +60,6 @@ const reducer = async (request) => {
       // TODO useState() should be able to set this remotely ?
       checkNoFormData(payload)
       const datumTemplate = convertToTemplate(payload)
-      const [state, setState] = await useState()
       await setState({ ...state, datumTemplate })
       return
     }

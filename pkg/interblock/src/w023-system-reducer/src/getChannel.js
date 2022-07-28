@@ -20,6 +20,6 @@ const getChannelReducer = (network, action) => {
   if (!network.has(alias)) {
     throw new Error(`Unknown channel: ${alias}`)
   }
-  replyResolve(getChannelParams(network, alias))
+  return getChannelParams(network, alias)
 }
 export { getChannel, getChannelReducer }

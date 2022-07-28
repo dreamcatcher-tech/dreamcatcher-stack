@@ -20,17 +20,14 @@
 import Debug from 'debug'
 const debug = Debug('interblock:covenants:hyper')
 
-const initialState = {}
-const reducer = async (state = initialState, action) => {
-  debug(`hyper action: `, action)
-  const { type, payload } = action
+const reducer = async (request) => {
+  debug(`hyper action: `, request)
+  const { type, payload } = request
   switch (type) {
     case 'PING':
-      replyResolve({ type: 'PONG', payload })
-      break
+      return { type: 'PONG', payload }
   }
-  return { ...state }
 }
-const actions = {}
+const api = {}
 
-export { reducer, actions }
+export { reducer, api }

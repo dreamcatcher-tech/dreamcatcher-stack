@@ -61,14 +61,13 @@ describe.skip('collection', () => {
     )
   })
   test('add two items concurrently to collection', async () => {
-    const shell = await effectorFactory()
-    await shell.add('col1', 'collection')
-    const actions = await shell.actions('col1')
+    const engine = await Interpulse.createCI()
+    await engine.add('col1', 'collection')
+    const actions = await engine.actions('col1')
     const namePath = ['firstName']
-    await actions.setDatumTemplate({ namePath, schema, children })
+    await actions.setDatumTemplate({ namePath, schema, network })
 
     debug('adding two customers concurrently')
-    shell.metro.enableLogging()
 
     const customerData1 = { ...customerData, formData: { firstName: 'A' } }
     const customerData2 = { ...customerData, formData: { firstName: 'B' } }
@@ -77,25 +76,23 @@ describe.skip('collection', () => {
     await await1
     await await2
 
-    const customer1 = await shell.latest('col1/firstName-A')
+    const customer1 = await engine.latest('col1/firstName-A')
     assert(customer1.getState().formData.firstName)
-    const address = await shell.latest('col1/firstName-A/address')
+    const address = await engine.latest('col1/firstName-A/address')
     assert(address.getState().formData.address)
 
-    const customer2 = await shell.latest('col1/firstName-B')
+    const customer2 = await engine.latest('col1/firstName-B')
     assert(customer2.getState().formData.firstName)
-    await shell.shutdown()
   })
 
   test('batch add', async () => {
-    const shell = await effectorFactory()
-    await shell.add('col1', 'collection')
-    const actions = await shell.actions('col1')
+    const engine = await Interpulse.createCI()
+    await engine.add('col1', 'collection')
+    const actions = await engine.actions('col1')
     const namePath = ['firstName']
-    await actions.setDatumTemplate({ namePath, schema, children })
+    await actions.setDatumTemplate({ namePath, schema, network })
 
     debug('batch adding customers')
-    shell.metro.enableLogging({ headersOnly: true })
 
     const c1 = { ...customerData, formData: { custNo: 1, firstName: 'A' } }
     const c2 = { ...customerData, formData: { custNo: 2, firstName: 'B' } }
@@ -105,16 +102,14 @@ describe.skip('collection', () => {
     const c5 = { ...customerData, formData: { custNo: 5, firstName: 'E' } }
     const c6 = { ...customerData, formData: { custNo: 6, firstName: 'F' } }
     const result2 = await actions.batch([c4, c5, c6])
-    await shell.metro.settle()
     debug('result', result1)
-    const customer1 = await shell.latest('col1/firstName-A')
+    const customer1 = await engine.latest('col1/firstName-A')
     assert(customer1.getState().formData.firstName)
-    const address = await shell.latest('col1/firstName-A/address')
+    const address = await engine.latest('col1/firstName-A/address')
     assert(address.getState().formData.address)
 
-    const customer2 = await shell.latest('col1/firstName-B')
+    const customer2 = await engine.latest('col1/firstName-B')
     assert(customer2.getState().formData.firstName)
-    await shell.shutdown()
   })
   test.todo('collection with initial state already set')
   test.todo('reject add with key already assigned')

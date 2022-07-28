@@ -2,8 +2,9 @@ import assert from 'assert-fast'
 // const faker from 'faker/locale/en')
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
-import { interchain, useBlocks } from '../../w002-api'
+import { interchain, useState } from '../../w002-api'
 import Debug from 'debug'
+import { Request } from '../../w008-ipld'
 const debug = Debug('interblock:apps:datum')
 const ajv = new Ajv({ allErrors: true, verbose: true })
 AjvFormats(ajv)
@@ -65,6 +66,7 @@ const reducer = async (request) => {
   const { type, payload } = request
   assert.strictEqual(typeof payload, 'object')
   debug(`reducer: `, type)
+  let [state, setState] = await useState()
   switch (type) {
     case '@@INIT': {
       debug(`@@INIT`)
@@ -77,36 +79,33 @@ const reducer = async (request) => {
       if (_isTemplateIncluded(payload)) {
         state = convertToTemplate(payload)
       }
-      const demuxed = demuxFormData(state, payload)
-      state.formData = demuxed.formData
+      state.formData = payload.formData
       if (!Object.keys(state.children).length) {
-        return state
+        return
       }
       // TODO WARNING if have changed children in current block, will be stale
       // TODO handle updating what the children should be
       const awaits = []
       for (const name in state.children) {
         debug(`creating new child: `, name)
-        const setChild = actions.set({
-          ...demuxed.children[name],
-          ...state.children[name],
-        })
-        debug(`setChild`, setChild)
+        // const setChild = actions.set({
+        //   ...demuxed.children[name],
+        //   ...state.children[name],
+        // })
+        // debug(`setChild`, setChild)
         // TODO honour type somehow, if specify a collection ?
-        const covenantId = CovenantId.create('datum')
-        const spawn = dmzReducer.actions.spawn(name, { covenantId })
+        const spawn = Request.spawn(name, { covenant: 'datum' })
         interchain(spawn)
-        const promise = interchain(setChild, name)
-        awaits.push(promise)
+        // const promise = interchain(setChild, name)
+        // awaits.push(promise)
       }
       await Promise.all(awaits)
       // TODO remove deleted children
-      return state
+      return
     }
     default:
-      debug(action)
-      // throw new Error(`Unknown action: ${type}`)
-      return state
+      debug(request)
+      throw new Error(`Unknown action: ${type}`)
   }
 }
 const _isTemplateIncluded = (payload) => {
