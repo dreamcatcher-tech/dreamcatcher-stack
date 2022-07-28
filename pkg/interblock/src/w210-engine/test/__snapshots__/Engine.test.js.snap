@@ -1,5 +1,3 @@
 // Vitest Snapshot v1
 
 exports[`engine > basic 1`] = `"Address(QmVc91JaNy3CkD)"`;
-
-exports[`engine basic 1`] = `"Address(QmVc91JaNy3CkD)"`;

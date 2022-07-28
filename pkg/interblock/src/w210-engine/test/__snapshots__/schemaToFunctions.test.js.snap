@@ -6,10 +6,3 @@ exports[`schemaToFunctions > basic 1`] = `
   "type": "ADD",
 }
 `;
-
-exports[`schemaToFunctions basic 1`] = `
-Object {
-  "payload": Object {},
-  "type": "ADD",
-}
-`;
