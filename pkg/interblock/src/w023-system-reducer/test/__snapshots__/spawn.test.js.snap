@@ -1,4 +1,77 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1
+
+exports[`spawn > basic 1`] = `
+AsyncTrail {
+  "origin": RxRequest {
+    "request": Request {
+      "payload": {
+        "installer": {},
+      },
+      "type": "@@SPAWN",
+    },
+    "requestId": RequestId {
+      "channelId": 0,
+      "requestIndex": 0,
+      "stream": "reducer",
+    },
+  },
+  "reply": Reply {
+    "payload": {
+      "alias": "file_00001",
+      "chainId": "QmTCDsB4dvHKRPnJNC9s3g8U1J6JuXpGCcaw5W7mqjFg1Z",
+    },
+    "type": "@@RESOLVE",
+  },
+  "settles": [
+    AsyncRequest {
+      "request": Request {
+        "payload": {
+          "alias": "",
+          "installer": {},
+        },
+        "type": "@@ADD_CHILD",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 1,
+        "stream": "reducer",
+      },
+      "settled": Reply {
+        "payload": {
+          "alias": "file_00001",
+          "chainId": "QmTCDsB4dvHKRPnJNC9s3g8U1J6JuXpGCcaw5W7mqjFg1Z",
+          "entropy": "EiD1qt/osfoIBnwZup1m2BjAGzG/uIWduhXz5P2pO9hVSA",
+        },
+        "type": "@@RESOLVE",
+      },
+      "to": ".",
+    },
+    AsyncRequest {
+      "request": Request {
+        "payload": {
+          "installer": {
+            "config": {
+              "entropy": "EiD1qt/osfoIBnwZup1m2BjAGzG/uIWduhXz5P2pO9hVSA",
+            },
+          },
+        },
+        "type": "@@GENESIS",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 0,
+        "stream": "reducer",
+      },
+      "settled": Reply {
+        "payload": {},
+        "type": "@@RESOLVE",
+      },
+      "to": "file_00001",
+    },
+  ],
+  "txs": [],
+}
+`;
 
 exports[`spawn basic 1`] = `
 AsyncTrail {

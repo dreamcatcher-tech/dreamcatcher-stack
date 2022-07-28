@@ -1,4 +1,50 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1
+
+exports[`hooker > loopback cleared immediately 1`] = `
+Channel {
+  "address": Address {},
+  "aliases": [],
+  "channelId": 0,
+  "rx": Rx {
+    "reducer": RxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 1,
+      "requests": [],
+      "requestsLength": 1,
+    },
+    "system": RxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 2,
+      "requests": [],
+      "requestsLength": 2,
+    },
+    "tip": PulseLink {},
+  },
+  "tx": Tx {
+    "precedent": PulseLink {},
+    "reducer": TxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 1,
+      "requests": [],
+      "requestsLength": 1,
+    },
+    "system": TxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 2,
+      "requests": [],
+      "requestsLength": 2,
+    },
+  },
+}
+`;
 
 exports[`hooker loopback cleared immediately 1`] = `
 Channel {

@@ -1,5 +1,4 @@
 import { assert } from 'chai/index.mjs'
-import { jest } from '@jest/globals'
 import { Interpulse } from '../../w300-interpulse'
 import { crm } from '..'
 import Debug from 'debug'

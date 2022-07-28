@@ -1,4 +1,52 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1
+
+exports[`dmzReducer > spawn > spawn is implicitly awaited 1`] = `
+Channel {
+  "address": Address {},
+  "aliases": [
+    "child1",
+  ],
+  "channelId": 3,
+  "rx": Rx {
+    "reducer": RxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 1,
+      "requests": [],
+      "requestsLength": 0,
+    },
+    "system": RxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 1,
+      "requests": [],
+      "requestsLength": 0,
+    },
+    "tip": PulseLink {},
+  },
+  "tx": Tx {
+    "precedent": PulseLink {},
+    "reducer": TxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 0,
+      "requests": [],
+      "requestsLength": 1,
+    },
+    "system": TxQueue {
+      "promisedReplies": [],
+      "promisedRequestIds": [],
+      "replies": [],
+      "repliesLength": 0,
+      "requests": [],
+      "requestsLength": 1,
+    },
+  },
+}
+`;
 
 exports[`dmzReducer spawn spawn is implicitly awaited 1`] = `
 Channel {

@@ -34,6 +34,7 @@
     -----END PGP PUBLIC KEY BLOCK-----
 
     */
+import './ipfsShim'
 import assert from 'assert-fast'
 import * as system from './w212-system-covenants'
 import * as apps from './w301-user-apps'

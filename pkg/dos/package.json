@@ -43,18 +43,12 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.30.1",
-    "jest": "^28.1.3",
     "nodemon": "^2.0.19",
     "prettier": "^2.7.1",
     "vite": "^3.0.3"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "transform": {},
-    "maxWorkers": "95%"
   },
   "prettier": {
     "trailingComma": "es5",

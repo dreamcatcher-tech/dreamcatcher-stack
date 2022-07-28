@@ -1,4 +1,11 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1
+
+exports[`channel > create > basic 1`] = `
+[
+  "bafyreibdaauvolrd7w2oooxnauddvnemryc5pimselt3l346ou235eyve4",
+  "bafyreibc6tiab7dyvm6gnwhwctlvgjlyhxrhvdhqyjrxcjwkfx3vcxgbki",
+]
+`;
 
 exports[`channel create basic 1`] = `
 Array [

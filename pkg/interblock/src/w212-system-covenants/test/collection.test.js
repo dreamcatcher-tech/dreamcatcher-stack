@@ -3,7 +3,7 @@ import { Interpulse } from '../..'
 import Debug from 'debug'
 const debug = Debug('crm:tests:collection')
 
-describe('collection', () => {
+describe.skip('collection', () => {
   const schema = {
     title: 'Customer',
     type: 'object',

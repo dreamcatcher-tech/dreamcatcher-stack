@@ -1,7 +1,9 @@
 import { Engine } from '../../w210-engine'
 import { shell } from '..'
 import Debug from 'debug'
-describe('openPaths', () => {
+const debug = Debug('interblock:tests:openPaths')
+
+describe.concurrent('openPaths', () => {
   test(`basic`, async () => {
     const engine = await Engine.createCI({ overloads: { root: shell } })
     await engine.pierce(shell.api.add('child1'))

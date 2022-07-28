@@ -1,4 +1,237 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1
+
+exports[`callsites > basics > nested parallel hooks do not collide 1`] = `
+[
+  AsyncTrail {
+    "origin": RxRequest {
+      "request": Request {
+        "payload": {},
+        "type": "TEST",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 0,
+        "stream": "reducer",
+      },
+    },
+    "settles": [],
+    "txs": [
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 0 depth: 4",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 0 depth: 3",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 0 depth: 2",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 0 depth: 1",
+        },
+        "to": ".",
+      },
+    ],
+  },
+  AsyncTrail {
+    "origin": RxRequest {
+      "request": Request {
+        "payload": {},
+        "type": "TEST",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 0,
+        "stream": "reducer",
+      },
+    },
+    "settles": [],
+    "txs": [
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 1 depth: 5",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 1 depth: 4",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 1 depth: 3",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 1 depth: 2",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 1 depth: 1",
+        },
+        "to": ".",
+      },
+    ],
+  },
+  AsyncTrail {
+    "origin": RxRequest {
+      "request": Request {
+        "payload": {},
+        "type": "TEST",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 0,
+        "stream": "reducer",
+      },
+    },
+    "settles": [],
+    "txs": [
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 2 depth: 6",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 2 depth: 5",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 2 depth: 4",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 2 depth: 3",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 2 depth: 2",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 2 depth: 1",
+        },
+        "to": ".",
+      },
+    ],
+  },
+  AsyncTrail {
+    "origin": RxRequest {
+      "request": Request {
+        "payload": {},
+        "type": "TEST",
+      },
+      "requestId": RequestId {
+        "channelId": 0,
+        "requestIndex": 0,
+        "stream": "reducer",
+      },
+    },
+    "settles": [],
+    "txs": [
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 3 depth: 7",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 3 depth: 6",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 3 depth: 5",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 3 depth: 4",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 3 depth: 3",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 3 depth: 2",
+        },
+        "to": ".",
+      },
+      AsyncRequest {
+        "request": Request {
+          "payload": {},
+          "type": "id: 3 depth: 1",
+        },
+        "to": ".",
+      },
+    ],
+  },
+]
+`;
+
+exports[`callsites > with asyncs > single await 1`] = `
+AsyncRequest {
+  "request": Request {
+    "payload": {},
+    "type": "single",
+  },
+  "to": ".",
+}
+`;
 
 exports[`callsites basics nested parallel hooks do not collide 1`] = `
 Array [

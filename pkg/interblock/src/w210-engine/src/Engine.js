@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { create } from 'ipfs-core'
 import posix from 'path-browserify'
 import {
   Network,
@@ -413,6 +414,12 @@ export class Engine {
   }
   async multiThreadStart(threadCount) {}
   async multiThreadStop() {}
-  async ipfsStart(privateNetworkKey) {}
+  async ipfsStart(privateNetworkKey) {
+    // const ipfs = await create({
+    //   repo: String(Math.random() + Date.now()),
+    //   init: { emptyRepo: true },
+    // })
+    // const id = await ipfs.id()
+  }
   async ipfsStop() {}
 }

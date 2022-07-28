@@ -1,4 +1,11 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1
+
+exports[`schemaToFunctions > basic 1`] = `
+{
+  "payload": {},
+  "type": "ADD",
+}
+`;
 
 exports[`schemaToFunctions basic 1`] = `
 Object {

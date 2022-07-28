@@ -4,6 +4,8 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
+
+// dependencies are split out here to test pure bundle size
 const { dependencies } = require('./package.json')
 dependencies['@noble/hashes/sha256'] = true
 dependencies['multiformats/cid'] = true
@@ -38,6 +40,6 @@ export default defineConfig({
   },
   define: {
     'process.env.NODE_DEBUG': 'false',
-    global: 'globalThis',
   },
+  test: { globals: true },
 })

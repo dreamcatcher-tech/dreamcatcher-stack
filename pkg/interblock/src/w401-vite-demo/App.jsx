@@ -5,7 +5,7 @@ import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')
-Debug.enable('tests*')
+Debug.enable('tests* ipfs interpulse')
 debug('import loaded')
 
 function App() {
@@ -83,7 +83,7 @@ function App() {
           </button>
         </p>
         <p>
-          <button type="button" onClick={() => engine.startIpfs()}>
+          <button type="button" onClick={() => engine.ipfsStart()}>
             Start IPFS
           </button>
         </p>

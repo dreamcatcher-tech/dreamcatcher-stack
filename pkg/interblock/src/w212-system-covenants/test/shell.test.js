@@ -5,8 +5,8 @@ import Debug from 'debug'
 import { Engine } from '../../w210-engine'
 const debug = Debug('interblock:tests:shell')
 
-describe('machine validation', () => {
-  describe('state machine', () => {
+describe.concurrent('shell', () => {
+  describe('execution', () => {
     test('parallel request is processed', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       await engine.pierce(shell.api.add('child1'))
@@ -24,7 +24,7 @@ describe('machine validation', () => {
   test.todo('opens up a path')
   test.todo('coordinates with simultaneous path openings')
   test.todo('detects changes in filesystem')
-  describe('cd', () => {
+  describe.concurrent('cd', () => {
     test('cd to valid nested path', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       const addResult = await engine.pierce(shell.api.add('child1'))
@@ -105,7 +105,7 @@ describe('machine validation', () => {
     test.todo('absolute path')
     test.todo('parent path')
   })
-  describe('ls', () => {
+  describe.concurrent('ls', () => {
     test('list current directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       const ls = shell.api.ls()

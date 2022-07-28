@@ -1,4 +1,3 @@
-import { create } from 'ipfs-core'
 import { shell } from '../../w212-system-covenants'
 import { getCovenantState } from '../../w023-system-reducer'
 import { Engine, schemaToFunctions } from '../../w210-engine'
@@ -71,7 +70,12 @@ export class Interpulse {
     // persist our config down to ipfs storage
     // shutdown multithreading
   }
-  async startIpfs() {}
+  async ipfsStart() {
+    debug(`starting ipfs...`)
+    const result = await this.#engine.ipfsStart()
+    debug(`ipfs started`)
+    return result
+  }
 }
 const mapShell = (engine) => {
   const actions = {}
