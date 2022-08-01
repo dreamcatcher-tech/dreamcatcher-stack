@@ -1,4 +1,7 @@
 import assert from 'assert-fast'
+import * as IPFS from 'ipfs-core'
+import { peerIdFromKeys } from '@libp2p/peer-id'
+import { keys } from '@libp2p/crypto'
 import { create } from 'ipfs-core'
 import posix from 'path-browserify'
 import {
@@ -9,6 +12,8 @@ import {
   Request,
   Interpulse,
   Channel,
+  Keypair,
+  Validators,
 } from '../../w008-ipld'
 import { reducer } from './reducer'
 import { Isolate } from './Isolate'
@@ -61,7 +66,7 @@ export class Engine {
       instance.overload(overloads)
     }
     const { CI = false } = opts // make deterministic chain addresses
-    await instance.#init(CI)
+    await instance.#init(CI, opts.repo)
     return instance
   }
   constructor({ isolate, crypto, endurance, scale, hints } = {}) {
@@ -95,27 +100,52 @@ export class Engine {
    * when a pulse event is received:
    *    update the pool storage
    */
-  async #init(CI) {
+  async #init(CI, repo) {
     // check if a base exists already, if so, get the latest block fully
-    const { self } = await this.#hints
-    if (self) {
-      assert(self instanceof Address)
-      const pulselink = await this.#hints.latest(self)
-      assert(pulselink instanceof PulseLink)
-      const latest = await this.#endurance.recoverPulse(pulselink)
-      assert(latest instanceof Pulse)
-      this.#latest = latest
-      this.#address = self
-      return
+    if (repo) {
+      // means you want some persistence, which means keys need to persist
+      // so start the full ipfs in offline mode
+
+      // get address of self if present
+      // else make a new one
+      // get latest pulse for it
+      // verify we have the keys required for it
+      const options = {
+        repo,
+        init: { emptyRepo: true },
+        start: false,
+        // offline: true,
+      }
+
+      if (!(await repo.root.has('/'))) {
+        const key = await keys.generateKeyPair('secp256k1')
+        options.init.privateKey = await peerIdFromKeys(
+          key.public.bytes,
+          key.bytes
+        )
+        const keypair = Keypair.create('ram', key)
+        const validators = Validators.create([keypair.publicKey])
+        debug(`creating ipfs....`)
+        const ipfs = await IPFS.create(options)
+        debug(`ipfs created`)
+        this.#endurance.setIpfs(ipfs)
+        this.#latest = await Pulse.createRoot({ CI, validators })
+        await repo.root.put('/', this.#latest.cid.toString())
+      } else {
+        const cidString = await repo.root.get('/')
+        console.log(cidString)
+        // ? how to get latest out of hints ? does repo need to be more active ?
+      }
+
       // TODO recover subscriptions
       // subscriptions should be written to ipfs somehow
       // store them in the latest block representing this engine ?
       // TODO verify we have the crypto keys required to be this block
+    } else {
+      this.#latest = await Pulse.createRoot(CI)
     }
-    const base = await Pulse.createRoot(CI)
-    this.#address = base.getAddress()
-    this.#hints.self = this.#address
-    this.#latest = base
+    assert(this.#latest instanceof Pulse)
+    this.#address = this.#latest.getAddress()
     this.#hints.poolSubscribe((address) => {
       assert(address instanceof Address)
       debug(`poolSubscribe`, address)
@@ -124,7 +154,6 @@ export class Engine {
     })
     this.#hints.interpulseSubscribe((target, source, pulselink) => {
       debug(`interpulseSubscribe`)
-      return this.#interpulse(target, source, pulselink)
     })
     this.#hints.pulseSubscribe((pulse) => {
       assert(pulse instanceof Pulse)
@@ -132,8 +161,8 @@ export class Engine {
       debug(`pulseSubscribe`, address)
       // TODO recalculate the pool, store this pulse
     })
-    await this.#endurance.endure(base)
-    await this.#hints.pulseAnnounce(base)
+    await this.#endurance.endure(this.#latest)
+    await this.#hints.pulseAnnounce(this.#latest)
   }
   #interpulseLocks = new Map()
   async #interpulse(target, source, pulse) {
@@ -198,7 +227,7 @@ export class Engine {
         } else {
           const pulselink = await this.#hints.pulseLatest(target)
           debug(`using latest`, pulselink)
-          const pulse = await this.#endurance.recoverPulse(pulselink)
+          const pulse = await this.#endurance.recover(pulselink)
           pool = await pulse.generateSoftPulse()
         }
       }
@@ -268,7 +297,7 @@ export class Engine {
     // get the root pulse
     let latestPulselink = await this.#hints.pulseLatest(rootAddress)
     assert(latestPulselink instanceof PulseLink)
-    let latest = await this.#endurance.recoverPulse(latestPulselink)
+    let latest = await this.#endurance.recover(latestPulselink)
     assert(latest instanceof Pulse)
     if (path === '/') {
       return latest
@@ -290,7 +319,7 @@ export class Engine {
       }
       // TODO approot walk should use the precedent only
       latestPulselink = await this.#hints.pulseLatest(address)
-      latest = await this.#endurance.recoverPulse(latestPulselink)
+      latest = await this.#endurance.recover(latestPulselink)
     }
     return latest
   }
@@ -349,10 +378,11 @@ export class Engine {
     // repeatedly attempt to insert the pierce
     let pulselink = await this.#hints.poolLatest(address)
     if (!pulselink) {
+      // pool should be stored in the repo raw
       pulselink = await this.#hints.pulseLatest(address)
     }
     assert(pulselink instanceof PulseLink, `No chain found: ${address}`)
-    let pool = await this.#endurance.recoverPulse(pulselink)
+    let pool = await this.#endurance.recover(pulselink)
     assert(pool instanceof Pulse)
     assert(address.equals(pool.getAddress()))
     if (pool.isVerified()) {

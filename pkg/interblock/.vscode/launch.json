@@ -1,16 +1,26 @@
 {
   "configurations": [
     {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Current Test File",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "program": "${workspaceRoot}/../../node_modules/vitest/vitest.mjs",
+      "args": ["run", "${relativeFile}"],
+      "smartStep": true,
+      "console": "integratedTerminal"
+    },
+    {
       "name": "Debug Jest Tests",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
-        "--experimental-vm-modules",
-        "--preserve-symlinks",
+        // "--experimental-vm-modules",
+        // "--preserve-symlinks",
         "--inspect=9229",
-        "${workspaceRoot}/node_modules/.bin/jest",
-        "--runInBand",
-        "--testTimeout=9999999",
+        "${workspaceRoot}/node_modules/.bin/vitest",
+        "run",
         "${relativeFile}"
       ],
       "skipFiles": ["<node_internals>/**/*.js"],

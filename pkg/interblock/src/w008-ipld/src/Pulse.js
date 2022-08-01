@@ -25,12 +25,12 @@ export class Pulse extends IpldStruct {
     const CI = true
     return Pulse.createRoot(CI)
   }
-  static async createRoot(CI = false) {
+  static async createRoot({ CI = false, validators }) {
     const network = await Network.createRoot()
     const covenant = 'root'
     const config = Config.createPierced()
     const dmz = Dmz.create({ network, config, covenant }, CI)
-    const provenance = Provenance.createGenesis(dmz)
+    const provenance = Provenance.createGenesis(dmz, validators)
     return await Pulse.create(provenance)
   }
   static async create(provenance) {
