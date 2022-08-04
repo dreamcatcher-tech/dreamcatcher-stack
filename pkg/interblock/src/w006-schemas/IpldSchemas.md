@@ -339,8 +339,8 @@ type RequestId struct {
 type AsyncRequest struct {
     request &Request
     to String
-    id RequestId
-    reply optional &Reply
+    requestId RequestId
+    settled optional &Reply
 }
 type RxRequest struct {
     request &Request

@@ -27,10 +27,10 @@ export class PulseLink extends IpldInterface {
     assert(cid.version === 1)
     this.#cid = cid
   }
-  static async uncrush(rootCid, resolver, options) {
-    assert(rootCid instanceof CID)
+  static async uncrush(cid) {
+    assert(cid instanceof CID)
     const instance = new this()
-    instance.#setCid(rootCid)
+    instance.#setCid(cid)
     return instance
   }
   isModified() {

@@ -1,8 +1,8 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
-import { Pulse, PulseLink } from '../../w008-ipld'
+import { decode, Pulse, PulseLink } from '../../w008-ipld'
 import { Logger } from './Logger'
-import { CarWriter, CarReader } from '@ipld/car'
+import { CarWriter } from '@ipld/car'
 import all from 'it-all'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Endurance')
@@ -61,8 +61,30 @@ export class Endurance {
     // get ipfs block any way possible
     // place a resolver function in the pulse to look up the hamt
     assert(pulselink instanceof PulseLink)
-    assert(this.#mockIpfs.has(pulselink.cid.toString()))
-    return this.#mockIpfs.get(pulselink.cid.toString())
+    const cidString = pulselink.cid.toString()
+    debug(`recover`, cidString)
+
+    // check the cache
+
+    if (this.#ipfs) {
+      const resolver = async (cid) => {
+        assert(cid instanceof CID, `not cid: ${cid}`)
+        debug(`resolve start`, cid)
+        try {
+          const bytes = await this.#ipfs.block.get(cid)
+          debug(`resolve complete`, cid)
+          return await decode(bytes)
+        } catch (e) {
+          const resetIpfsStackTrace = new Error(e.message + ' ' + cid)
+          throw resetIpfsStackTrace
+        }
+      }
+      const pulse = await Pulse.uncrush(pulselink.cid, resolver)
+      return pulse
+    } else {
+      assert(this.#mockIpfs.has(cidString))
+      return this.#mockIpfs.get(cidString)
+    }
   }
   async resolveCid(cid) {
     // TODO WARNING permissions must be honoured

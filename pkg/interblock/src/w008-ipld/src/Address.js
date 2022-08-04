@@ -45,7 +45,6 @@ const addressBlock = (cidV1) => {
 
 export class Address extends IpldInterface {
   #cid
-  #ipldBlock
   static fromChainId(chainId) {
     assert.strictEqual(typeof chainId, 'string')
     assert(chainId)
@@ -96,7 +95,6 @@ export class Address extends IpldInterface {
     assert(block instanceof Block)
     const instance = new this()
     instance.#setCid(block.cid)
-    instance.#ipldBlock = block
     return instance
   }
   static #createPredefined(cid) {
@@ -110,25 +108,23 @@ export class Address extends IpldInterface {
     assert(cid.version === 0)
     this.#cid = cid
   }
-  static async uncrush(rootCid, resolver, options) {
-    assert(rootCid instanceof CID)
+  static async uncrush(cid, resolver) {
+    assert(cid instanceof CID)
     assert.strictEqual(typeof resolver, 'function')
     for (const define of defines) {
-      if (define.equals(rootCid)) {
+      if (define.equals(cid)) {
         return this.#createPredefined(define)
       }
     }
-    const block = await resolver(rootCid)
-    assert(block instanceof Block)
-    const instance = this.#createFromBlock(block)
-    instance.#ipldBlock = undefined
+    const instance = new this()
+    instance.#setCid(cid)
     return instance
   }
   isModified() {
     return false
   }
   get ipldBlock() {
-    return this.#ipldBlock
+    throw new Error('no blocks in Addresses')
   }
   get cid() {
     return this.#cid
@@ -153,7 +149,6 @@ export class Address extends IpldInterface {
     } else {
       string = this.cid.toString().substring(0, 14)
     }
-
     return `Address(${string})`
   }
   crush() {
@@ -162,11 +157,7 @@ export class Address extends IpldInterface {
     return instance
   }
   getDiffBlocks() {
-    const map = new Map()
-    if (this.ipldBlock) {
-      map.set(this.cid, this.ipldBlock)
-    }
-    return map
+    return new Map()
   }
   equals(address) {
     assert(address instanceof Address)

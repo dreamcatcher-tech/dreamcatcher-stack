@@ -9,14 +9,14 @@ export class IpldInterface {
     throw new Error('Not Implemented')
   }
   static cidLinks // array of which keys should be crushed into CIDs
-  isCidLink(key) {
+  static isCidLink(key) {
     assert(typeof key === 'string')
     assert(key)
-    if (this.constructor.cidLinks) {
-      assert(Array.isArray(this.constructor.cidLinks))
-      return this.constructor.cidLinks.includes(key)
+    if (this.cidLinks) {
+      assert(Array.isArray(this.cidLinks))
+      return this.cidLinks.includes(key)
     } else {
-      return !!this.constructor.classMap[key]
+      return !!this.classMap[key]
     }
   }
   static defaultClass

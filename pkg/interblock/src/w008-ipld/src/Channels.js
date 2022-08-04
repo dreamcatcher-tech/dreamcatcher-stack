@@ -1,6 +1,11 @@
-import { Hamt } from './Hamt'
-import { AddressesHamt } from './AddressesHamt'
-import { PulseLink, Channel, Address, Interpulse } from '.'
+import {
+  ChannelsHamt,
+  AddressesHamt,
+  PulseLink,
+  Channel,
+  Address,
+  Interpulse,
+} from '.'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 
@@ -20,12 +25,11 @@ const FIXED_CHANNEL_COUNT = 3
 
 export class Channels extends IpldStruct {
   static classMap = {
-    list: Hamt,
+    list: ChannelsHamt,
     addresses: AddressesHamt,
   }
   static create() {
-    const isMutable = true
-    const list = Hamt.create(Channel, isMutable)
+    const list = ChannelsHamt.create()
     const counter = FIXED_CHANNEL_COUNT
     const addresses = AddressesHamt.create()
     const rxs = []

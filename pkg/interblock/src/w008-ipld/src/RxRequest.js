@@ -3,6 +3,7 @@ import { Request, RequestId } from '.'
 import { deepFreeze } from './utils'
 export class RxRequest extends Request {
   // same as request, but has id info attached so it can be replied to
+  static classMap = { request: Request, requestId: RequestId }
   static create(request, requestId) {
     // TODO hold the original request too ?
     assert(request instanceof Request)

@@ -101,40 +101,37 @@ export class Engine {
    *    update the pool storage
    */
   async #init(CI, repo) {
-    // check if a base exists already, if so, get the latest block fully
     if (repo) {
       // means you want some persistence, which means keys need to persist
       // so start the full ipfs in offline mode
 
-      // get address of self if present
-      // else make a new one
-      // get latest pulse for it
-      // verify we have the keys required for it
-      const options = {
-        repo,
-        init: { emptyRepo: true },
-        start: false,
-        // offline: true,
-      }
-
+      const options = { repo, init: { emptyRepo: true }, start: false }
+      let latest
       if (!(await repo.root.has('/'))) {
-        const key = await keys.generateKeyPair('secp256k1')
-        options.init.privateKey = await peerIdFromKeys(
-          key.public.bytes,
-          key.bytes
-        )
-        const keypair = Keypair.create('ram', key)
+        // workaround while waiting for
+        // https://github.com/ipfs/js-ipfs/pull/4172
+        let keypair
+        if (CI) {
+          keypair = Keypair.createCI()
+        } else {
+          keypair = await Keypair.generate('ipex')
+        }
+        options.init.privateKey = await keypair.generatePeerId()
         const validators = Validators.create([keypair.publicKey])
-        debug(`creating ipfs....`)
-        const ipfs = await IPFS.create(options)
-        debug(`ipfs created`)
-        this.#endurance.setIpfs(ipfs)
-        this.#latest = await Pulse.createRoot({ CI, validators })
-        await repo.root.put('/', this.#latest.cid.toString())
+        latest = await Pulse.createRoot({ CI, validators })
+        await repo.root.put('/', latest.cid.toString())
+      }
+      debug(`startingipfs....`)
+      const ipfs = await IPFS.create(options)
+      debug(`ipfs created`)
+      this.#endurance.setIpfs(ipfs)
+      if (latest) {
+        this.#latest = latest
       } else {
         const cidString = await repo.root.get('/')
         console.log(cidString)
-        // ? how to get latest out of hints ? does repo need to be more active ?
+        // build up the latest pulse and set to #latest
+        // TODO verify we have the keys required for it
       }
 
       // TODO recover subscriptions
@@ -142,15 +139,14 @@ export class Engine {
       // store them in the latest block representing this engine ?
       // TODO verify we have the crypto keys required to be this block
     } else {
+      // we are in total CI mode using no ipfs
       this.#latest = await Pulse.createRoot(CI)
     }
     assert(this.#latest instanceof Pulse)
-    this.#address = this.#latest.getAddress()
+    // endure so the cache is warmed up
     this.#hints.poolSubscribe((address) => {
       assert(address instanceof Address)
       debug(`poolSubscribe`, address)
-      // check if anything transmitted to io
-      // if replies were sent, walk the whole lot, using *rx()
     })
     this.#hints.interpulseSubscribe((target, source, pulselink) => {
       debug(`interpulseSubscribe`)
@@ -161,6 +157,7 @@ export class Engine {
       debug(`pulseSubscribe`, address)
       // TODO recalculate the pool, store this pulse
     })
+    this.#address = this.#latest.getAddress()
     await this.#endurance.endure(this.#latest)
     await this.#hints.pulseAnnounce(this.#latest)
   }
@@ -269,11 +266,11 @@ export class Engine {
     const latest = (path) => this.latestByPath(path)
     return reducer(pool, isolate, latest)
   }
-  async latestByPath(path, rootAddress = this.#hints.self) {
+  async latestByPath(path, rootAddress = this.#latest.getAddress()) {
     // TODO allow remote roots
     assert.strictEqual(typeof path, 'string')
     assert(posix.isAbsolute(path), `path not absolute: ${path}`)
-    assert(rootAddress instanceof Address)
+    assert(rootAddress instanceof Address, `no root for path: ${path}`)
     debug('latestByPath', path)
     if (this.#overloads[path]) {
       if (!this.#overloadPulses.has(path)) {

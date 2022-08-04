@@ -78,8 +78,9 @@ export class Provenance extends IpldStruct {
     return this.setMap({ lineages })
   }
   async crush(resolver) {
+    const isCidLink = true // Provenance is always a CID
     if (this.address.isGenesis() || this.transmissions) {
-      return super.crush(resolver)
+      return super.crush(resolver, isCidLink)
     }
     // create the transmissions slice
     const { channels } = this.dmz.network
@@ -89,7 +90,7 @@ export class Provenance extends IpldStruct {
     if (!txs.length) {
       // TODO define rules on block tighter
       // may require at least one tick forwards
-      return super.crush(resolver)
+      return super.crush(resolver, isCidLink)
     }
     let transmissions = Transmissions.create()
     for (const channelId of txs) {
@@ -97,6 +98,6 @@ export class Provenance extends IpldStruct {
       transmissions = transmissions.addTx(address, tx)
     }
     next = this.setMap({ transmissions })
-    return await next.crush(resolver)
+    return await next.crush(resolver, isCidLink)
   }
 }

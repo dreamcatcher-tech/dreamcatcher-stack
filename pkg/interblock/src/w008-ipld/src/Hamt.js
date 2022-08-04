@@ -94,15 +94,15 @@ export class Hamt extends IpldInterface {
     if (this.#gets.has(key)) {
       return this.#gets.get(key)
     }
-    let result = await this.#hashmap.get(key)
-    assert(result !== undefined)
+    let value = await this.#hashmap.get(key)
+    assert(value !== undefined)
     if (this.#valueClass) {
-      assert(result instanceof CID)
+      assert(value instanceof CID)
       const resolver = (cid) => this.#putStore.getBlock(cid)
-      result = await this.#valueClass.uncrush(result, resolver)
+      value = await this.#valueClass.uncrush(value, resolver)
     }
-    this.#gets = this.#gets.set(key, result)
-    return result
+    this.#gets = this.#gets.set(key, value)
+    return value
   }
   isModified() {
     return !!this.#sets.size || !!this.#deletes.size || !this.#hashmap
@@ -145,7 +145,8 @@ export class Hamt extends IpldInterface {
         throw new Error(`cannot overwrite key: ${key}`)
       }
       if (next.#valueClass) {
-        const crushed = await value.crush()
+        const isCidLink = true
+        const crushed = await value.crush(resolver, isCidLink)
         next.#gets = next.#gets.set(key, crushed)
         await hashmap.set(key, crushed.cid)
         const diffs = crushed.getDiffBlocks()
@@ -165,11 +166,11 @@ export class Hamt extends IpldInterface {
     next.#putStore = putStore
     return next
   }
-  static async uncrush(cid, resolver, valueClass) {
+  static async uncrush(cid, resolver, valueClass, isMutable) {
     assert(cid instanceof CID, `rootCid must be a CID, got ${cid}`)
     assert(typeof resolver === 'function', `resolver must be a function`)
 
-    const instance = this.create(valueClass)
+    const instance = this.create(valueClass, isMutable)
     instance.#putStore = new PutStore(resolver)
     const block = await resolver(cid)
     instance.#putStore.putBlock(cid, block)

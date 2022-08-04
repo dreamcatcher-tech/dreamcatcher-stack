@@ -99,27 +99,6 @@ export class PutStore {
     assert(cid instanceof CID, `must pass rootCid`)
     assert(this.#putsMap.has(cid.toString()), `Missing hamt root ${cid}`)
     assert(!this.#untrimmed, `Must call trim() before getDiffs()`)
-    const diffs = new Map()
-    if (!this.#putsMap.size) {
-      debug('no diffs detected')
-      return new Map()
-    }
-    let links = [cid]
-    while (links.length) {
-      const nextLinks = []
-      for (const cid of links) {
-        assert(cid instanceof CID)
-        const cidString = cid.toString()
-        if (this.#putsMap.has(cidString)) {
-          const block = this.#putsMap.get(cidString)
-          diffs.set(cidString, block)
-          for (const [, childCid] of block.links()) {
-            nextLinks.push(childCid)
-          }
-        }
-      }
-      links = nextLinks
-    }
-    return diffs
+    return this.#putsMap
   }
 }

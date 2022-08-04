@@ -49,6 +49,10 @@ export class Pulse extends IpldStruct {
     const provenance = Provenance.createGenesis(dmz)
     return await Pulse.create(provenance)
   }
+  async crush(resolver) {
+    const isCidLink = true // Pulse is always a Cidlink
+    return await super.crush(resolver, isCidLink)
+  }
   isGenesis() {
     return this.provenance.address.isGenesis()
   }

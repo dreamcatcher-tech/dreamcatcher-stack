@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { IpldStruct } from './IpldStruct'
 
 export class Timestamp {
   static createCI() {
@@ -17,5 +18,11 @@ export class Timestamp {
     // const now = Date.now()
     // const msElapsed = now - this.ms
     // return msElapsed >= expiresAfterMs
+  }
+  static uncrush(value) {
+    const instance = new this()
+    instance.isoDate = value.isoDate
+    // TODO assert date format is correct
+    return instance
   }
 }

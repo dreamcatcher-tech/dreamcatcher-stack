@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { peerIdFromKeys } from '@libp2p/peer-id'
 import { PublicKey, Provenance } from '.'
 import { keys } from '@libp2p/crypto'
 import { fromString as from } from 'uint8arrays/from-string'
@@ -37,6 +38,11 @@ export class Keypair {
     keypair.publicKey = PublicKey.create(name, privateKey.public)
     deepFreeze(keypair)
     return keypair
+  }
+  async generatePeerId() {
+    const pub = this.#privateKey.public.bytes
+    const pri = this.#privateKey.bytes
+    return await peerIdFromKeys(pub, pri)
   }
   async sign(provenance) {
     assert(provenance instanceof Provenance)

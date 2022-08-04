@@ -3,23 +3,24 @@ import { CID } from 'multiformats/cid'
 import { Block } from 'multiformats/block'
 import { encode } from './IpldUtils'
 import { IpldInterface } from './IpldInterface'
+import equals from 'fast-deep-equal'
 
 export class IpldStruct extends IpldInterface {
   #ipldBlock
+  #ipldInitial
   #previous
   #crushed
-  #isPreCrushed = false
   clone() {
     const next = new this.constructor()
     Object.assign(next, this)
     next.#ipldBlock = this.#ipldBlock
+    next.#ipldInitial = this.#ipldInitial
     next.#previous = this.#previous
     next.#crushed = this.#crushed
-    next.#isPreCrushed = this.#isPreCrushed
     return next
   }
   isModified() {
-    return this.#ipldBlock === undefined
+    return this.#ipldBlock === undefined && this.#ipldInitial === undefined
   }
   get ipldBlock() {
     if (this.isModified()) {
@@ -38,9 +39,9 @@ export class IpldStruct extends IpldInterface {
   get currentCrush() {
     return this.#crushed
   }
-  async crush(resolver) {
+  async crush(resolver, isCidLink) {
     if (!this.isModified()) {
-      assert(this.#ipldBlock)
+      assert(this.#ipldBlock || this.#ipldInitial)
       assert(this === this.#crushed)
       if (this !== this.#previous) {
         const next = this.clone()
@@ -50,39 +51,43 @@ export class IpldStruct extends IpldInterface {
       }
       return this
     }
-    if (this.#isPreCrushed) {
-      // throw new Error('TESTING Crush has already been called')
-    }
-    this.#isPreCrushed = true
     const crushed = new this.constructor()
     Object.assign(crushed, this)
-    const dagTree = { ...this }
+    const dagTree = {}
     for (const key in crushed) {
+      const isChildCidLink = this.constructor.isCidLink(key)
       const slice = crushed[key]
       if (slice instanceof IpldInterface) {
-        crushed[key] = await slice.crush(resolver)
-        if (this.isCidLink(key)) {
+        crushed[key] = await slice.crush(resolver, isChildCidLink)
+        if (isChildCidLink) {
           dagTree[key] = crushed[key].cid
         } else {
-          dagTree[key] = crushed[key].ipldBlock.value
+          dagTree[key] = crushed[key].#ipldInitial
         }
       } else if (Array.isArray(slice)) {
         const awaits = slice.map((v) => {
           if (v instanceof IpldInterface) {
-            return v.crush(resolver)
+            return v.crush(resolver, isChildCidLink)
           }
           return v
         })
-        const crushes = await Promise.all(awaits)
-        crushed[key] = crushes
-        if (this.isCidLink(key)) {
-          dagTree[key] = crushes.map((v) => v.cid)
+        crushed[key] = await Promise.all(awaits)
+        if (isChildCidLink) {
+          dagTree[key] = crushed[key].map((v) => v.cid)
         } else {
-          dagTree[key] = crushes
+          dagTree[key] = crushed[key]
         }
+      } else {
+        assert(!isChildCidLink)
+        dagTree[key] = crushed[key]
       }
     }
-    crushed.#ipldBlock = await encode(dagTree)
+    assert.strictEqual(Object.keys(dagTree).length, Object.keys(crushed).length)
+    if (isCidLink) {
+      crushed.#ipldBlock = await encode(dagTree)
+    } else {
+      crushed.#ipldInitial = dagTree
+    }
     crushed.#crushed = crushed
     crushed.#previous = this.#crushed
     return crushed
@@ -90,59 +95,84 @@ export class IpldStruct extends IpldInterface {
   getDiffBlocks() {
     // diffs since the last time we crushed
     assert(!this.isModified())
-    const blocks = new Map()
+    const blockMap = new Map()
     const previous = this.#previous
     if (previous === this) {
-      return blocks
+      return blockMap
     }
-    blocks.set(this.ipldBlock.cid.toString(), this.ipldBlock)
+    if (this.#ipldBlock) {
+      blockMap.set(this.ipldBlock.cid.toString(), this.ipldBlock)
+    }
     for (const key in this) {
-      const thisValue = this[key]
-      const prevValue = previous && previous[key]
-      if (this.isCidLink(key)) {
-        if (Array.isArray(thisValue)) {
-          // what if the array is an ipldstruct type, included in classMap ?
-          // what if it is plain primitive values ?
-          // what if I wanted an array of ipld, but not crush ?
-          const valueBlocks = thisValue.map((v, i) => {
-            if (!prevValue || !prevValue[i]) {
-              return v.getDiffBlocks()
+      const thisVal = this[key]
+      const prevVal = previous && previous[key]
+      if (Array.isArray(thisVal)) {
+        thisVal.forEach((v, i) => {
+          if (v instanceof IpldInterface) {
+            if (!prevVal || !prevVal[i]) {
+              merge(blockMap, v.getDiffBlocks())
+            } else if (!v.cid.equals(prevVal[i].cid)) {
+              merge(blockMap, v.getDiffBlocks(prevVal[i]))
             }
-            if (!v.cid.equals(prevValue[i].cid)) {
-              return v.getDiffBlocks(prevValue[i])
-            }
-          })
-          valueBlocks.forEach((map) => map && merge(blocks, map))
+          }
+        })
+      } else if (thisVal instanceof IpldInterface) {
+        assert(prevVal === undefined || prevVal instanceof IpldInterface)
+        if (this.constructor.isCidLink(key)) {
+          if (prevVal && thisVal.cid.equals(prevVal.cid)) {
+            continue
+          }
         } else {
-          assert(prevValue === undefined || prevValue instanceof IpldInterface)
-          if (!prevValue || !thisValue.cid.equals(prevValue.cid)) {
-            const valueBlocks = thisValue.getDiffBlocks(prevValue)
-            merge(blocks, valueBlocks)
+          if (prevVal && equals(prevVal.#ipldInitial, thisVal.#ipldInitial)) {
+            continue
           }
         }
+        const valueBlocks = thisVal.getDiffBlocks()
+        merge(blockMap, valueBlocks)
       }
     }
-    return blocks
+    return blockMap
   }
-  static async uncrush(rootCid, resolver, options) {
-    // throw if resolver does not have what we are looking for
-    // recursively rebuild everything, from bottom first ?
-    assert(rootCid instanceof CID, `rootCid must be a CID, got ${rootCid}`)
+  static async uncrush(initial, resolver, options) {
     assert(typeof resolver === 'function', `resolver must be a function`)
-    const block = await resolver(rootCid)
-    // TODO check the schema
-    const map = { ...block.value }
-    for (const key in map) {
-      if (map[key] instanceof CID) {
-        const childClass = this.getClassFor(key)
-        map[key] = await childClass.uncrush(map[key], resolver, options)
-      } else if (this.classMap[key]) {
-        map[key] = this.classMap[key].clone(map[key])
-      }
+    let block
+    if (initial instanceof CID) {
+      block = await resolver(initial)
+      // TODO check the schema
+      initial = { ...block.value }
+    } else {
+      assert.strictEqual(typeof initial, 'object')
+      initial = { ...initial }
     }
     const instance = new this()
-    Object.assign(instance, map)
-    instance.#ipldBlock = block
+    for (const key in initial) {
+      const value = initial[key]
+      const isChildCidLink = this.isCidLink(key)
+      if (value instanceof CID) {
+        assert(isChildCidLink)
+        const childClass = this.getClassFor(key)
+        instance[key] = await childClass.uncrush(value, resolver, options)
+      } else if (Array.isArray(value)) {
+        const awaits = value.map((v) => {
+          if (this.classMap[key]) {
+            return this.classMap[key].uncrush(v, resolver, options)
+          }
+          return v
+        })
+        instance[key] = await Promise.all(awaits)
+      } else if (this.classMap[key]) {
+        instance[key] = await this.classMap[key].uncrush(value, resolver)
+      } else {
+        instance[key] = value
+      }
+    }
+    const keyCount = Object.keys(initial).length
+    assert.strictEqual(Object.keys(instance).length, keyCount)
+    if (block) {
+      instance.#ipldBlock = block
+    } else {
+      instance.#ipldInitial = initial
+    }
     instance.#crushed = instance
     instance.#previous = instance
     if (typeof instance.assertLogic === 'function') {
@@ -176,7 +206,7 @@ export class IpldStruct extends IpldInterface {
       return this
     }
     const next = this.clone()
-    next.#ipldBlock = undefined // this is now modified
+    next.#setModified()
     Object.assign(next, inflated)
     return next
   }
@@ -188,8 +218,12 @@ export class IpldStruct extends IpldInterface {
     }
     const next = this.clone()
     delete next[key]
-    next.#ipldBlock = undefined // this is now modified
+    next.#setModified()
     return next
+  }
+  #setModified() {
+    this.#ipldBlock = undefined
+    this.#ipldInitial = undefined
   }
 }
 

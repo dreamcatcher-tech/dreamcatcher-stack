@@ -113,11 +113,8 @@ export class Channel extends IpldStruct {
       assert(rx.isEmpty(), 'Replies to Unknown are impossible')
       assert(!rx.tip)
     }
-    if (rx.tip) {
-      assert(!address.isLoopback())
-    }
     if (address.isLoopback()) {
-      assert(!tx.precedent)
+      assert(rx.tip)
       const banned = ['@@OPEN_CHILD']
       const systemRequests = tx.system.requests
       assert(systemRequests.every(({ type }) => !banned.includes(type)))
