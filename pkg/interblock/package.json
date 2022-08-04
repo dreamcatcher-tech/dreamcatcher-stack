@@ -40,16 +40,18 @@
     "ipld-hashmap": "^2.1.11",
     "ipld-schema": "^2.0.2",
     "pad-left": "^2.1.0",
+    "patch-package": "^6.4.7",
     "path-browserify": "^1.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "pretty-bytes": "^6.0.0",
     "serialize-error": "^11.0.0",
-    "uint8arrays": "^3.0.0"
+    "uint8arrays": "^3.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
     "@vitejs/plugin-react": "^2.0.0",
-    "@vitest/ui": "^0.20.2",
+    "@vitest/ui": "^0.20.3",
     "benchmark": "^2.1.4",
     "chai": "^4.3.6",
     "eslint": "^8.20.0",
@@ -63,7 +65,7 @@
     "supports-color": "^9.2.2",
     "trace-unhandled": "^2.0.1",
     "vite": "^3.0.3",
-    "vitest": "0.20.2"
+    "vitest": "0.20.3"
   },
   "publishConfig": {
     "access": "public"

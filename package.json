@@ -17,5 +17,8 @@
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true
+  },
+  "scripts": {
+    "postinstall": "patch-package"
   }
 }
