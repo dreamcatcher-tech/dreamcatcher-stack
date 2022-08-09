@@ -21,9 +21,9 @@ describe('ipfs', () => {
 
     await engine.add('child1')
     await engine.cd('child1')
-
+    await engine.shutdown()
     debug(await repo.stat())
-    const reboot = await Interpulse.create({ repo })
+    const reboot = await Interpulse.createCI({ repo })
     const latest = await reboot.latest('/')
     expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
   })

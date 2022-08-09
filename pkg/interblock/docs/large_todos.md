@@ -26,3 +26,9 @@ Optimization of inflation methods is more likely to be achieved using a generic 
 Further, this ORM can be used to implement an object cache, where hydrated objects are kept in ram, subject to memory pressure, further enhancing performance.
 
 Crush should cache its results, so calling multiple times on the same object only loads the cpu initially.
+
+## Speculative execution on client side
+
+Rather than waiting for any given validator set to respond, we should be able to execute what the validators would have computed on the client side and carry on with this speculative result. This will give true offline capability.
+
+To do this, we need a form of "state by assertion" which deviates from the current action model of state transitions. Basically saying `state` as opposed to `state + action = state'`. There is nothing wrong with this assertion style update - all that matters is that everyone agrees on it. We may trace who proposed the change. The assertion style is not so different from the action style - nobody seems to question too much where the aciton came from, it is just asserted into existence, so doing the same thing but without the action first seems a simpler proposition.

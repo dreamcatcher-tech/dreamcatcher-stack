@@ -5,7 +5,7 @@ import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')
-Debug.enable('tests* ipfs interpulse *Endurance')
+Debug.enable('tests* ipfs interpulse')
 debug('import loaded')
 const repo = 'interpulse-test'
 function App() {

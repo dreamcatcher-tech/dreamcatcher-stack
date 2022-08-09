@@ -21,11 +21,11 @@ async function createCar(blocks) {
 
 export class Endurance {
   #logger = new Logger()
-  #mockIpfs = new Map()
+  #ipfsCache = new Map()
   #ipfs
-  #cache = new Map()
+  #pulseCache = new Map()
   #cacheSize = 0
-  #lru = new Set()
+  #lru = new Set() // TODO make an LRU that calculates block size
   get logger() {
     return this.#logger
   }
@@ -33,44 +33,59 @@ export class Endurance {
     assert(ipfs)
     this.#ipfs = ipfs
   }
+  #ipfsWritePromise = Promise.resolve()
+  #ipfsWriteCount = 0
+  #ipfsWriteResolve
+  #isWriting() {
+    if (!this.#ipfsWriteCount) {
+      this.#ipfsWritePromise = new Promise((resolve) => {
+        this.#ipfsWriteResolve = resolve
+      })
+    }
+    this.#ipfsWriteCount++
+  }
+  #writingComplete() {
+    this.#ipfsWriteCount--
+    if (!this.#ipfsWriteCount) {
+      this.#ipfsWriteResolve()
+      this.#ipfsWriteResolve = undefined
+      this.#ipfsWritePromise = Promise.resolve()
+    }
+  }
   async endure(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified())
     assert(pulse.isVerified())
-    // TODO use the map always, as a cache
-    // if ipfs present, limit the cache size
+    const entries = pulse.getDiffBlocks()
+    const blocks = []
+    for (const [key, block] of entries.entries()) {
+      // TODO if ipfs present, limit the cache size
+      this.#ipfsCache.set(key, block)
+      blocks.push(block)
+      debug(`set`, key, block.value)
+    }
+    this.#pulseCache.set(pulse.cid.toString(), pulse)
     if (this.#ipfs) {
-      const blocks = [...pulse.getDiffBlocks().values()]
-      const car = await createCar(blocks)
-      await all(this.#ipfs.dag.import(car)).then(() => {
-        debug(`persist complete`, pulse.cid.toString())
+      this.#isWriting()
+      Promise.resolve().then(async () => {
+        debug(`start ipfs put`, pulse.getPulseLink())
+        const car = await createCar(blocks)
+        await all(this.#ipfs.dag.import(car))
+        debug(`finish ipfs put`, pulse.getPulseLink())
+        this.#writingComplete()
       })
-    } else {
-      const blocks = pulse.getDiffBlocks()
-      for (const [key, block] of blocks.entries()) {
-        if (!this.#mockIpfs.has(key)) {
-          this.#mockIpfs.set(key, block)
-          debug(`set`, key, block.value)
-        } else {
-          debug(`double set:`, key)
-        }
-      }
     }
     await this.#logger.pulse(pulse)
-    // TODO limit the size and implement LRU eviction
-    this.#cache.set(pulse.cid.toString(), pulse)
-
-    const address = pulse.getAddress().getChainId().substring(0, 14)
-    const pulselink = pulse.getPulseLink().cid.toString().substring(0, 14)
-    debug(`endure`, address, pulselink)
+    debug(`endure`, pulse.getAddress(), pulse.getPulseLink())
   }
   async recover(pulselink) {
     assert(pulselink instanceof PulseLink)
     const cidString = pulselink.cid.toString()
     debug(`recover`, cidString)
 
-    if (this.#cache.has(cidString)) {
-      return this.#cache.get(cidString)
+    if (this.#pulseCache.has(cidString)) {
+      // TODO update the LRU tracker
+      return this.#pulseCache.get(cidString)
     }
 
     const resolver = this.getResolver()
@@ -81,20 +96,21 @@ export class Endurance {
     // TODO WARNING permissions must be honoured
     return async (cid) => {
       assert(cid instanceof CID, `not cid: ${cid}`)
-      debug(`resolve start`, cid)
+      const key = cid.toString()
+      if (this.#ipfsCache.has(key)) {
+        return this.#ipfsCache.get(key)
+      }
+      assert(this.#ipfs, `No block for: ${key}`)
       if (this.#ipfs) {
         try {
+          debug(`ipfs resolve start`, cid)
           const bytes = await this.#ipfs.block.get(cid)
-          debug(`resolve complete`, cid)
+          debug(`ipfs resolve complete`, cid)
           return await decode(bytes)
         } catch (e) {
           const resetIpfsStackTrace = new Error(e.message + ' ' + cid)
           throw resetIpfsStackTrace
         }
-      } else {
-        const key = cid.toString()
-        assert(this.#mockIpfs.has(key), `No block for: ${key}`)
-        return this.#mockIpfs.get(key)
       }
     }
   }
@@ -111,6 +127,7 @@ export class Endurance {
     }
     const ipfs = this.#ipfs
     this.#ipfs = undefined
+    await this.#ipfsWritePromise
     await ipfs.stop()
   }
 }
