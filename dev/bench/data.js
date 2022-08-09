@@ -2,7 +2,7 @@ window.BENCHMARK_DATA = {
   "lastUpdate": 1660008515481,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
-    "Interblock Benchmark": [
+    "Interpulse Benchmark": [
       {
         "commit": {
           "author": {
