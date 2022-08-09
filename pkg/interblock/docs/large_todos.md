@@ -24,3 +24,5 @@ This should be able to do checks against a supplied schema, as well as inflate a
 Optimization of inflation methods is more likely to be achieved using a generic system than a specialized one.
 
 Further, this ORM can be used to implement an object cache, where hydrated objects are kept in ram, subject to memory pressure, further enhancing performance.
+
+Crush should cache its results, so calling multiple times on the same object only loads the cpu initially.

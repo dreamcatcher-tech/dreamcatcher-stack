@@ -44,6 +44,13 @@ export class IpldStruct extends IpldInterface {
     return this.crush(resolver, isCidLink)
   }
   async crush(resolver, isCidLink) {
+    if (!this.#cachedCrush) {
+      this.#cachedCrush = await this.#crush(resolver, isCidLink)
+    }
+    return this.#cachedCrush
+  }
+  #cachedCrush
+  async #crush(resolver, isCidLink) {
     if (!this.isModified()) {
       assert(this.#ipldBlock || this.#ipldInitial)
       assert(this === this.#crushed)

@@ -78,6 +78,14 @@ export class Provenance extends IpldStruct {
     return this.setMap({ lineages })
   }
   async crush(resolver) {
+    // TODO find how to integrate with IpldStruct cached version
+    if (!this.#cachedCrush) {
+      this.#cachedCrush = await this.#crush(resolver)
+    }
+    return this.#cachedCrush
+  }
+  #cachedCrush
+  async #crush(resolver) {
     const isCidLink = true
     if (this.address.isGenesis() || this.transmissions) {
       return super.crush(resolver, isCidLink)

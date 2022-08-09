@@ -250,7 +250,6 @@ export class Engine {
     const resolver = this.#endurance.getResolver()
     const provenance = await pool.provenance.crushToCid(resolver)
     const signature = await lock.sign(provenance)
-    // TODO do not crush provenance twice - save 7ms per block
     pool = pool.addSignature(lock.publicKey, signature)
     const pulse = await pool.crushToCid(resolver)
     assert(provenance.cid.equals(pulse.provenance.cid))
