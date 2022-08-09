@@ -7,7 +7,7 @@ describe('channel', () => {
   describe('create', () => {
     test('basic', async () => {
       const channel = Channel.create(fakeChannelId)
-      const crushed = await channel.crush()
+      const crushed = await channel.crushToCid()
       const diff = crushed.getDiffBlocks()
       assert.strictEqual(diff.size, 2)
       expect([...diff.keys()]).toMatchSnapshot()
@@ -17,7 +17,7 @@ describe('channel', () => {
       assert(channel.address.isUnknown())
       assert(!channel.tx.precedent)
       assert(!channel.rx.tip)
-      const crushed = await channel.crush()
+      const crushed = await channel.crushToCid()
       const blocks = crushed.getDiffBlocks()
       const resolver = (cid) => blocks.get(cid.toString())
       const uncrushed = await Channel.uncrush(crushed.cid, resolver)
@@ -28,7 +28,7 @@ describe('channel', () => {
       channel = channel.txRequest(request)
       assert(channel.address.isUnknown())
       assert.throws(() => channel.txReducerReply(reply), 'Address is')
-      const recrushed = await channel.crush()
+      const recrushed = await channel.crushToCid()
       assert(recrushed)
     })
     test('address is not modified', () => {

@@ -339,7 +339,7 @@ type RequestId struct {
 type AsyncRequest struct {
     request &Request
     to String
-    requestId RequestId
+    requestId optional RequestId
     settled optional &Reply
 }
 type RxRequest struct {
@@ -351,6 +351,7 @@ type AsyncTrail struct {
     settles [AsyncRequest]
     txs [AsyncRequest]
     reply optional &reply
+    openPaths optional [RequestId]
 }
 type Pending struct {
     system [&AsyncTrail]

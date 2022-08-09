@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { interchain, useBlocks } from '../../w002-api'
-import { Address, Pulse } from '../../w008-ipld'
+import { interchain } from '../../w002-api'
+import { Address, Pulse, Request } from '../../w008-ipld'
 const debug = Debug('interblock:dmz:openPath')
 
 export const openPath = async ({ path }) => {
@@ -11,7 +11,7 @@ export const openPath = async ({ path }) => {
 
   try {
     // TODO resolve relative paths
-    await useBlocks('/' + path)
+    await interchain(Request.tryPath('/' + path))
   } catch (error) {
     await invalidate(path)
     throw error
@@ -36,7 +36,6 @@ export const openPath = async ({ path }) => {
         await interchain('@@RESOLVE_DOWNLINK', { chainId: childChainId, path })
         debug(`opened`, child, childAddress)
       } catch (error) {
-        console.log(error)
         return await invalidate(path)
       }
     }

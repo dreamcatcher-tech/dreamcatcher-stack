@@ -11,14 +11,12 @@
   "type": "module",
   "scripts": {
     "schemas": "node --experimental-specifier-resolution=node src/w006-schemas/bin.js && prettier -w src/w006-schemas/ipldSchemas.js",
-    "prepublishOnly": "yarn schemas && yarn build",
     "dev": "vite --host 0.0.0.0 --port 3210 --open",
     "build": "vite build",
     "serve": "vite preview",
     "test": "eslint src && DEBUG_COLORS=1 DEBUG='' vitest run",
-    "watch": "DEBUG_COLORS=1 DEBUG='' vitest --reporter=verbose --threads=false",
-    "bench": "node --experimental-specifier-resolution=node src/w402-benchmarks/bench",
-    "bench:dev": "nodemon --exec yarn bench"
+    "watch": "clear && DEBUG_COLORS=1 DEBUG='' vitest --reporter=verbose --no-threads",
+    "bench": "node --experimental-specifier-resolution=node src/w402-benchmarks/bench"
   },
   "private": false,
   "author": "Dreamcatcher Command",
@@ -30,10 +28,10 @@
     "ajv": "^8.11.0",
     "ajv-formats": "^2.1.1",
     "ansi-colors-browserify": "^4.1.2",
-    "assert-fast": "^1.0.1",
+    "assert-fast": "^1.0.3",
     "callsites": "^4.0.0",
     "columnify": "^1.6.0",
-    "debug": "^4.3.3",
+    "debug": "^4.3.4",
     "fast-deep-equal": "^3.1.3",
     "immutable": "^4.1.0",
     "ipfs-core": "^0.15.4",
@@ -51,10 +49,10 @@
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
     "@vitejs/plugin-react": "^2.0.0",
-    "@vitest/ui": "^0.20.3",
+    "@vitest/ui": "^0.21.0",
     "benchmark": "^2.1.4",
     "chai": "^4.3.6",
-    "eslint": "^8.20.0",
+    "eslint": "^8.21.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.30.1",
@@ -64,8 +62,8 @@
     "rollup-plugin-visualizer": "^5.7.1",
     "supports-color": "^9.2.2",
     "trace-unhandled": "^2.0.1",
-    "vite": "^3.0.3",
-    "vitest": "0.20.3"
+    "vite": "^3.0.4",
+    "vitest": "0.21.0"
   },
   "publishConfig": {
     "access": "public"
@@ -75,5 +73,8 @@
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true
+  },
+  "wallaby": {
+    "autoconfigure": true
   }
 }

@@ -6,9 +6,9 @@ describe('provenance', () => {
   test('basic', async () => {
     const now = new Date('2022-03-25T03:21:34.127Z')
     const timestamp = Timestamp.create(now)
-    const dmz = await Dmz.create({ timestamp }).crush()
+    const dmz = await Dmz.create({ timestamp }).crushToCid()
     let provenance = Provenance.createGenesis(dmz)
-    provenance = await provenance.crush()
+    provenance = await provenance.crushToCid()
     const diffs = provenance.getDiffBlocks()
     const cids = [...diffs.keys()]
     expect(cids).toMatchSnapshot()

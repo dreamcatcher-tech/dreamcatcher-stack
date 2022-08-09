@@ -78,7 +78,7 @@ export class Provenance extends IpldStruct {
     return this.setMap({ lineages })
   }
   async crush(resolver) {
-    const isCidLink = true // Provenance is always a CID
+    const isCidLink = true
     if (this.address.isGenesis() || this.transmissions) {
       return super.crush(resolver, isCidLink)
     }
@@ -97,7 +97,7 @@ export class Provenance extends IpldStruct {
       const { address, tx } = await channels.getChannel(channelId)
       transmissions = transmissions.addTx(address, tx)
     }
-    next = this.setMap({ transmissions })
-    return await next.crush(resolver, isCidLink)
+    next = next.setMap({ transmissions })
+    return await next.crush(resolver)
   }
 }

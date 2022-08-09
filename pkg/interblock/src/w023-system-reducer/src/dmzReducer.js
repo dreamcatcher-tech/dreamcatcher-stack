@@ -97,7 +97,7 @@ const pulseReducer = async (type, payload) => {
       setPulse(pulse)
       return
     }
-    case '@@USE_BLOCKS': {
+    case '@@USE_PULSE': {
       const { path } = payload
       const latestPulse = await latest(path)
       return latestPulse
@@ -154,6 +154,14 @@ const pulseReducer = async (type, payload) => {
       network = await network.updateChannel(channel)
       pulse = pulse.setNetwork(network)
       setPulse(pulse)
+      return
+    }
+    case '@@TRY_PATH': {
+      const { path } = payload
+      assert.strictEqual(typeof path, 'string')
+      assert(path)
+      debug(`isValid`, path)
+      await latest(path)
       return
     }
     default:

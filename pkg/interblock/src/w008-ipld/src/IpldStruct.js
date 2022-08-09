@@ -39,6 +39,10 @@ export class IpldStruct extends IpldInterface {
   get currentCrush() {
     return this.#crushed
   }
+  async crushToCid(resolver) {
+    const isCidLink = true
+    return this.crush(resolver, isCidLink)
+  }
   async crush(resolver, isCidLink) {
     if (!this.isModified()) {
       assert(this.#ipldBlock || this.#ipldInitial)
@@ -88,6 +92,7 @@ export class IpldStruct extends IpldInterface {
     } else {
       crushed.#ipldInitial = dagTree
     }
+    // TODO run the schema check here on dagTree
     crushed.#crushed = crushed
     crushed.#previous = this.#crushed
     return crushed
@@ -178,6 +183,8 @@ export class IpldStruct extends IpldInterface {
     if (typeof instance.assertLogic === 'function') {
       instance.assertLogic()
     }
+    // TODO run the schema check here
+    // instance.constructor.name //?
     return instance
   }
   setMap(map) {

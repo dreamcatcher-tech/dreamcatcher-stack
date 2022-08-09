@@ -9,7 +9,7 @@ describe('loopback', () => {
     let loopback = await network.getLoopback()
     const channelId = Network.FIXED_IDS.LOOPBACK
     assert.strictEqual(channelId, loopback.channelId)
-    loopback = await loopback.crush()
+    loopback = await loopback.crushToCid()
     const ping = Request.create('PING')
     loopback = loopback.txRequest(ping)
     network = await network.updateLoopback(loopback)
@@ -39,7 +39,7 @@ describe('loopback', () => {
     assert.strictEqual(txReducer.requestsLength, 1)
     assert.strictEqual(txReducer.repliesLength, 1)
 
-    const last = await loopback.crush()
+    const last = await loopback.crushToCid()
     expect(last).toMatchSnapshot()
   })
 })

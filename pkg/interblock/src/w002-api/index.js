@@ -10,8 +10,9 @@ export const useState = (path = '.') => {
   assert(useState, `global hook detached`)
   return useState(path)
 }
-export const useBlocks = (path = '.') => {
+export const usePulse = async (path = '.') => {
   assert.strictEqual(typeof path, 'string')
   assert(path)
-  return interchain('@@USE_BLOCKS', { path })
+  const reply = interchain('@@USE_PULSE', { path })
+  return reply
 }

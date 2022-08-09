@@ -60,6 +60,7 @@ export class State extends IpldInterface {
   }
   getDiffBlocks() {
     const diff = new Map()
+    // TODO honour if crush had no change
     diff.set(this.cid.toString(), this.ipldBlock)
     return diff
   }

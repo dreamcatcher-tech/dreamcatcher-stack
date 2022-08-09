@@ -15,6 +15,13 @@ export class PulseLink extends IpldInterface {
     instance.#setCid(address.cid.toV1())
     return instance
   }
+  static parse(cidString) {
+    assert.strictEqual(typeof cidString, 'string')
+    assert(cidString)
+    const cid = CID.parse(cidString)
+    assert.strictEqual(cid.version, 1)
+    return this.uncrush(cid)
+  }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified(), `Pulse must be crushed already`)
@@ -27,7 +34,7 @@ export class PulseLink extends IpldInterface {
     assert(cid.version === 1)
     this.#cid = cid
   }
-  static async uncrush(cid) {
+  static uncrush(cid) {
     assert(cid instanceof CID)
     const instance = new this()
     instance.#setCid(cid)

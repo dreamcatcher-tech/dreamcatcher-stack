@@ -26,8 +26,8 @@ type RequestId struct {
 type AsyncRequest struct {
     request &Request
     to String
-    id RequestId
-    reply optional &Reply
+    requestId RequestId
+    settled optional &Reply
 }
 type RxRequest struct {
     request &Request
@@ -37,10 +37,12 @@ type AsyncTrail struct {
     origin RxRequest
     settles [AsyncRequest]
     txs [AsyncRequest]
-    reply optional &Reply 
+    reply optional &reply
+    openPaths optional [RequestId]
 }
  */
 export class AsyncTrail extends IpldStruct {
+  origin
   settles = []
   txs = []
   static classMap = {

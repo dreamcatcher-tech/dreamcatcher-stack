@@ -28,7 +28,6 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    minify: true,
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],
       external: Object.keys(dependencies),
@@ -46,7 +45,7 @@ export default defineConfig({
     deps: {
       // required workaround for 0.20.x upgrade
       // https://github.com/vitest-dev/vitest/issues/1758
-      registerNodeLoader: false,
+      // registerNodeLoader: false,
     },
   },
 })

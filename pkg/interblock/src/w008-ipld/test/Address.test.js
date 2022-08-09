@@ -15,12 +15,10 @@ describe('address', () => {
     const pulse = await Pulse.createCI()
     const address = Address.generate(pulse)
     assert.strictEqual(address.cid.version, 0)
-    assert(address.ipldBlock)
-    assert.strictEqual(address.cid, address.ipldBlock.cid)
     assert(!address.isModified())
 
     const diffs = address.getDiffBlocks()
-    assert.strictEqual(diffs.size, 1)
+    assert.strictEqual(diffs.size, 0)
 
     const crushed = address.crush()
     const nextDiffs = crushed.getDiffBlocks()

@@ -50,6 +50,7 @@ export const wrapReduce = async (trail, reducer) => {
 }
 const awaitActivity = async (result, id) => {
   if (result !== undefined && typeof result !== 'object') {
+    // TODO relax this contstraint
     throw new Error(`Must return either undefined, or an object`)
   }
   assert(activeInvocations.has(id))
@@ -90,8 +91,10 @@ const awaitActivity = async (result, id) => {
   }
 }
 const getInvocation = () => {
-  Error.stackTraceLimit = Infinity
+  const { stackTraceLimit } = Error
+  Error.stackTraceLimit = Infinity // usually defaults to 100
   const stack = callsites()
+  Error.stackTraceLimit = stackTraceLimit
   let invokeId
   for (const callsite of stack) {
     const name = callsite.getFunctionName()
@@ -124,15 +127,13 @@ const interchain = (type, payload, to = '.', binary) => {
     }
     const asyncRequest = AsyncRequest.create(request, to)
     txs.push(asyncRequest)
-    // TODO hook .then, so we can know if something *might* be waiting for us
-    // otherwise we know that something async is happening that isn't us
     return new Promise(() => Infinity)
   }
-  const prior = settles.shift()
-  assert(prior instanceof AsyncRequest)
-  assert(prior.isRequestMatch(request))
-  assert(prior.settled)
-  const reply = prior.settled
+  const priorRequest = settles.shift()
+  assert(priorRequest instanceof AsyncRequest)
+  assert(priorRequest.isRequestMatch(request))
+  assert(priorRequest.settled)
+  const reply = priorRequest.settled
   if (reply.isResolve()) {
     // TODO binary will have to be inserted into the payload ?
     return reply.payload

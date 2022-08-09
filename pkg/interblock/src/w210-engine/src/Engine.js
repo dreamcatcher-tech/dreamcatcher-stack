@@ -1,8 +1,5 @@
 import assert from 'assert-fast'
 import * as IPFS from 'ipfs-core'
-import { peerIdFromKeys } from '@libp2p/peer-id'
-import { keys } from '@libp2p/crypto'
-import { create } from 'ipfs-core'
 import posix from 'path-browserify'
 import {
   Network,
@@ -35,6 +32,7 @@ const debug = Debug('interblock:engine')
  *
  */
 export class Engine {
+  #repo
   #address // the address of the base chain of this engine
   #latest // latest block in the base chain of this engine
 
@@ -104,7 +102,7 @@ export class Engine {
     if (repo) {
       // means you want some persistence, which means keys need to persist
       // so start the full ipfs in offline mode
-
+      this.#repo = repo
       const options = { repo, init: { emptyRepo: true }, start: false }
       let latest
       if (!(await repo.root.has('/'))) {
@@ -119,7 +117,7 @@ export class Engine {
         options.init.privateKey = await keypair.generatePeerId()
         const validators = Validators.create([keypair.publicKey])
         latest = await Pulse.createRoot({ CI, validators })
-        await repo.root.put('/', latest.cid.toString())
+        await this.#updateRoot(latest)
       }
       debug(`startingipfs....`)
       const ipfs = await IPFS.create(options)
@@ -127,10 +125,11 @@ export class Engine {
       this.#endurance.setIpfs(ipfs)
       if (latest) {
         this.#latest = latest
+        await this.#endurance.endure(this.#latest)
       } else {
         const cidString = await repo.root.get('/')
-        console.log(cidString)
-        // build up the latest pulse and set to #latest
+        const pulseLink = PulseLink.parse(cidString)
+        this.#latest = await this.#endurance.recover(pulseLink)
         // TODO verify we have the keys required for it
       }
 
@@ -140,7 +139,8 @@ export class Engine {
       // TODO verify we have the crypto keys required to be this block
     } else {
       // we are in total CI mode using no ipfs
-      this.#latest = await Pulse.createRoot(CI)
+      this.#latest = await Pulse.createRoot({ CI })
+      await this.#endurance.endure(this.#latest)
     }
     assert(this.#latest instanceof Pulse)
     // endure so the cache is warmed up
@@ -158,8 +158,13 @@ export class Engine {
       // TODO recalculate the pool, store this pulse
     })
     this.#address = this.#latest.getAddress()
-    await this.#endurance.endure(this.#latest)
     await this.#hints.pulseAnnounce(this.#latest)
+  }
+  async #updateRoot(latest) {
+    assert(latest instanceof Pulse)
+    if (this.#repo) {
+      await this.#repo.root.put('/', latest.cid.toString())
+    }
   }
   #interpulseLocks = new Map()
   async #interpulse(target, source, pulse) {
@@ -242,15 +247,18 @@ export class Engine {
     await this.#scale.watchdog(pool)
 
     pool = await this.#reducer(pool)
-    const resolver = (cid) => this.#endurance.resolveCid(cid)
-    const provenance = await pool.provenance.crush(resolver)
+    const resolver = this.#endurance.getResolver()
+    const provenance = await pool.provenance.crushToCid(resolver)
     const signature = await lock.sign(provenance)
+    // TODO do not crush provenance twice - save 7ms per block
     pool = pool.addSignature(lock.publicKey, signature)
-    const pulse = await pool.crush(resolver)
+    const pulse = await pool.crushToCid(resolver)
+    assert(provenance.cid.equals(pulse.provenance.cid))
 
     await this.#endurance.endure(pulse)
     if (pulse.getAddress().equals(this.address)) {
       this.#latest = pulse
+      this.#updateRoot(pulse)
     }
     await this.#hints.pulseAnnounce(pulse)
     await this.#hints.softRemove(pulse.getAddress())

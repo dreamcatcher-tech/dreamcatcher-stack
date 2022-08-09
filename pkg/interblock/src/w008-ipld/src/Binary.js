@@ -16,7 +16,7 @@ export class Binary extends IpldInterface {
   }
   static #create(ipldBlock) {
     assert(ipldBlock instanceof Block, `#create requires a Block`)
-    assert.strictEqual(ipldBlock.value, ipldBlock.bytes)
+    assert(ipldBlock.value.every((b, i) => b === ipldBlock.bytes[i]))
     const instance = new this()
     instance.#ipldBlock = ipldBlock
     return instance

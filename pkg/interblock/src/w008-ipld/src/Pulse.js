@@ -23,20 +23,21 @@ export class Pulse extends IpldStruct {
   static classMap = { provenance: Provenance }
   static async createCI() {
     const CI = true
-    return Pulse.createRoot(CI)
+    return Pulse.createRoot({ CI })
   }
   static async createRoot({ CI = false, validators }) {
     const network = await Network.createRoot()
     const covenant = 'root'
     const config = Config.createPierced()
     const dmz = Dmz.create({ network, config, covenant }, CI)
+    // TODO assert the validators are supplied
     const provenance = Provenance.createGenesis(dmz, validators)
     return await Pulse.create(provenance)
   }
   static async create(provenance) {
     assert(provenance instanceof Provenance)
     const instance = super.clone({ provenance, signatures: [] })
-    return await instance.crush()
+    return await instance.crushToCid()
   }
   static async createCovenantOverload(covenant) {
     assert.strictEqual(typeof covenant, 'object')
@@ -48,10 +49,6 @@ export class Pulse extends IpldStruct {
     const dmz = Dmz.create({ state }, CI)
     const provenance = Provenance.createGenesis(dmz)
     return await Pulse.create(provenance)
-  }
-  async crush(resolver) {
-    const isCidLink = true // Pulse is always a Cidlink
-    return await super.crush(resolver, isCidLink)
   }
   isGenesis() {
     return this.provenance.address.isGenesis()

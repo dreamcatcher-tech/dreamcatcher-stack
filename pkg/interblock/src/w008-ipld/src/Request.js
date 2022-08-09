@@ -49,16 +49,17 @@ export class Request extends IpldStruct {
     '@@INSTALL',
     '@@GET_STATE',
     '@@SET_STATE',
-    '@@USE_BLOCKS',
+    '@@USE_PULSE',
     '@@COVENANT',
     '@@SELF_ID',
     '@@RESOLVE_DOWNLINK',
     '@@INVALIDATE',
+    '@@TRY_PATH',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
   }
-  static PULSE_TYPES = ['@@USE_BLOCKS']
+  static PULSE_TYPES = ['@@USE_PULSE']
   isPulse() {
     return Request.PULSE_TYPES.includes(this.type)
   }
@@ -97,5 +98,10 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof path, 'string')
     assert(path)
     return this.create('@@OPEN_PATH', { path })
+  }
+  static tryPath(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    return this.create('@@TRY_PATH', { path })
   }
 }

@@ -10,7 +10,6 @@ const debug = Debug('interblock:engine:Endurance')
 async function createCar(blocks) {
   const rootBlock = blocks[0]
   const { writer, out } = await CarWriter.create([rootBlock.cid])
-
   writer.put(rootBlock).then(async () => {
     for (const block of blocks.slice(1)) {
       await writer.put(block)
@@ -44,9 +43,12 @@ export class Endurance {
       await all(this.#ipfs.dag.import(car))
     } else {
       const blocks = pulse.getDiffBlocks()
-      for (const [key, value] of blocks.entries()) {
+      for (const [key, block] of blocks.entries()) {
         if (!this.#mockIpfs.has(key)) {
-          this.#mockIpfs.set(key, value)
+          this.#mockIpfs.set(key, block)
+          debug(`set`, key, block.value)
+        } else {
+          debug(`double set:`, key)
         }
       }
     }
@@ -65,11 +67,16 @@ export class Endurance {
     debug(`recover`, cidString)
 
     // check the cache
-
-    if (this.#ipfs) {
-      const resolver = async (cid) => {
-        assert(cid instanceof CID, `not cid: ${cid}`)
-        debug(`resolve start`, cid)
+    const resolver = this.getResolver()
+    const pulse = await Pulse.uncrush(pulselink.cid, resolver)
+    return pulse
+  }
+  getResolver() {
+    // TODO WARNING permissions must be honoured
+    return async (cid) => {
+      assert(cid instanceof CID, `not cid: ${cid}`)
+      debug(`resolve start`, cid)
+      if (this.#ipfs) {
         try {
           const bytes = await this.#ipfs.block.get(cid)
           debug(`resolve complete`, cid)
@@ -78,20 +85,12 @@ export class Endurance {
           const resetIpfsStackTrace = new Error(e.message + ' ' + cid)
           throw resetIpfsStackTrace
         }
+      } else {
+        const key = cid.toString()
+        assert(this.#mockIpfs.has(key), `No block for: ${key}`)
+        return this.#mockIpfs.get(key)
       }
-      const pulse = await Pulse.uncrush(pulselink.cid, resolver)
-      return pulse
-    } else {
-      assert(this.#mockIpfs.has(cidString))
-      return this.#mockIpfs.get(cidString)
     }
-  }
-  async resolveCid(cid) {
-    // TODO WARNING permissions must be honoured
-    assert(cid instanceof CID)
-    const key = cid.toString()
-    assert(this.#mockIpfs.has(key), `No block for: ${key}`)
-    return this.#mockIpfs.get(key)
   }
   async scrub(pulse, { history } = {}) {
     // walk the pulse, its interpulses, and optionally its history and binaries

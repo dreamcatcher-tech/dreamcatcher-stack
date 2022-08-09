@@ -79,3 +79,9 @@ End the current block, and immediately begin executing again. Different to useTi
 ### `async useTimeout( ms ) => void`
 
 Break the current block, then return after at least delayMs milliseconds. We might require that this contact a service to get a reply after said delay, or it might be up to the validators to monitor the chain and trigger when the time is appropriate, storing the request in state.
+
+## Unknowns
+
+1. How should binary items be sent and received / reinflated
+1. How to specify ranges of binary for recovery
+1. Can we represent a whole chain as an object and provide api methods on it ?

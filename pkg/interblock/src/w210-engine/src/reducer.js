@@ -61,6 +61,7 @@ export const reducer = async (pulse, isolate, latest) => {
       trail = await reduceWithPulse(trail)
     } else {
       debug('reducer trail', trail.origin.request.type)
+      // TODO reinflate anything that had pulses in it, like USE_PULSE
       trail = await isolate.reduce(trail)
     }
     network = await maybeTransmitTrailReply(trail, network)

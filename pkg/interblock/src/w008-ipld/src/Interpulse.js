@@ -64,10 +64,6 @@ export class Interpulse {
   getTargetAddress() {
     return this.tx.address
   }
-  async uncrush(address) {
-    // custom function that pieces together the Interpulse from the Pulse
-    // resolves only the paths that it cares about
-  }
   getPulseLink() {
     return PulseLink.generate(this.#pulse)
   }

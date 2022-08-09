@@ -145,8 +145,7 @@ export class Hamt extends IpldInterface {
         throw new Error(`cannot overwrite key: ${key}`)
       }
       if (next.#valueClass) {
-        const isCidLink = true
-        const crushed = await value.crush(resolver, isCidLink)
+        const crushed = await value.crushToCid(resolver)
         next.#gets = next.#gets.set(key, crushed)
         await hashmap.set(key, crushed.cid)
         const diffs = crushed.getDiffBlocks()

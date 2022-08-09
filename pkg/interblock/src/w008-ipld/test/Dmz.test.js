@@ -10,8 +10,8 @@ describe('dmz', () => {
       timestamp: same1.timestamp,
     })
     assert.deepEqual(same1, same2)
-    const crush1 = await same1.crush()
-    const crush2 = await same2.crush()
+    const crush1 = await same1.crushToCid()
+    const crush2 = await same2.crushToCid()
     const diff1 = crush1.getDiffBlocks()
     const diff2 = crush2.getDiffBlocks()
     assert.deepEqual(diff1, diff2)

@@ -44,7 +44,6 @@ describe.skip('collection', () => {
     const nextColState = await engine.latest('col1')
     assert.deepEqual(nextColState.getState(), col.getState())
     const customer = await engine.latest('col1/file_00001')
-    customer.getState().dir()
     assert(customer.getState().toJS().formData.firstName)
     // all covenants to respond to install events, and ignore or respond differently
     assert(!customer.getState().toJS().network.address.formData)

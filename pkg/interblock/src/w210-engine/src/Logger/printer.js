@@ -82,9 +82,6 @@ const headerPrint = (pulse, path, isNewChain, isDuplicate, options) => {
   const rawHash = pulse.cid.toString().substring(6)
   const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
-  if (!PRINT_OPTIONS.config) {
-    console.log('asdf', PRINT_OPTIONS)
-  }
   const pathMax = PRINT_OPTIONS.config.path.maxWidth
   path = path.length > pathMax ? path.substring(0, pathMax) : path
   path = chalk.blue.bold.bgWhite(path)

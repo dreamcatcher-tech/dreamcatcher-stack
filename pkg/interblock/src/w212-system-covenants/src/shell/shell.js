@@ -1,6 +1,6 @@
 import posix from 'path-browserify'
 import assert from 'assert-fast'
-import { interchain, useBlocks, useState } from '../../../w002-api'
+import { interchain, usePulse, useState } from '../../../w002-api'
 import Debug from 'debug'
 import { Pulse, Request } from '../../../w008-ipld'
 import { listChildren } from '../../../w023-system-reducer'
@@ -65,7 +65,7 @@ const reducer = async (request) => {
       const [{ wd = '/' }] = await useState()
       const absPath = posix.resolve(wd, path)
       debug(`listActors`, absPath)
-      const pulse = await useBlocks(absPath)
+      const pulse = await usePulse(absPath)
       assert(pulse instanceof Pulse)
       const children = await listChildren(pulse)
       // TODO implement useCovenant to return an inert json object for actions
@@ -85,7 +85,7 @@ const reducer = async (request) => {
       const absolutePath = posix.resolve(wd, path)
       debug(`changeDirectory`, absolutePath)
       try {
-        const pulse = await useBlocks(absolutePath)
+        const pulse = await usePulse(absolutePath)
         assert(pulse instanceof Pulse)
         debug(`latest`, absolutePath, pulse.getPulseLink())
         state = { ...state, wd: absolutePath }
@@ -137,7 +137,7 @@ const reducer = async (request) => {
       let [{ wd = '/' }] = await useState()
       const absolutePath = posix.resolve(wd, path)
       debug(`getState: `, absolutePath)
-      const pulse = await useBlocks(absolutePath)
+      const pulse = await usePulse(absolutePath)
       const state = pulse.getState().toJS()
       debug(`getState result: `, state)
       return state

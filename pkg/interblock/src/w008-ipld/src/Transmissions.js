@@ -4,6 +4,9 @@ import { IpldStruct } from './IpldStruct'
 
 export class Transmissions extends IpldStruct {
   static defaultClass = Tx
+  static isCidLink() {
+    return true
+  }
   static create() {
     return new Transmissions()
   }

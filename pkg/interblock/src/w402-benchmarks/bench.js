@@ -135,15 +135,15 @@ const makePulse = async () => {
   pulse = await pulse.generateSoftPulse()
   const state = pulse.getState().setMap({ stateCounter })
   pulse = pulse.setState(state)
-  const provenance = await pulse.provenance.crush()
+  const provenance = await pulse.provenance.crushToCid()
   const signature = await keypair.sign(provenance)
   pulse = pulse.addSignature(keypair.publicKey, signature)
-  pulse = await pulse.crush()
+  pulse = await pulse.crushToCid()
   assert(pulse.isVerified())
 }
 const makeUnsigned = async () => {
   stateCounter++
   const state = pulse.getState().setMap({ stateCounter })
   pulse = pulse.setState(state)
-  pulse = await pulse.crush()
+  pulse = await pulse.crushToCid()
 }

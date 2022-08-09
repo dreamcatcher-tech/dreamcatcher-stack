@@ -152,9 +152,7 @@ export class Address extends IpldInterface {
     return `Address(${string})`
   }
   crush() {
-    const instance = new Address()
-    instance.#setCid(this.#cid)
-    return instance
+    return this
   }
   getDiffBlocks() {
     return new Map()

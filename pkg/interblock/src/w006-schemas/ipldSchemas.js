@@ -236,10 +236,11 @@ export default {
         to: {
           type: 'String',
         },
-        id: {
+        requestId: {
           type: 'RequestId',
+          optional: true,
         },
-        reply: {
+        settled: {
           type: {
             kind: 'link',
             expectedType: 'Reply',
@@ -290,6 +291,13 @@ export default {
           type: {
             kind: 'link',
             expectedType: 'reply',
+          },
+          optional: true,
+        },
+        openPaths: {
+          type: {
+            kind: 'list',
+            valueType: 'RequestId',
           },
           optional: true,
         },

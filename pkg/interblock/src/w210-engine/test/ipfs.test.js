@@ -4,7 +4,6 @@ import { createBackend } from './fixtures/createBackend'
 import { loadCodec } from './fixtures/loadCodec'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:ipfs')
-Debug.enable('iplog ipfs*')
 Debug.log = console.log.bind(console)
 
 describe('ipfs', () => {
@@ -14,7 +13,7 @@ describe('ipfs', () => {
     await repo.open()
     debug(await repo.stat())
   })
-  test.only('reload', async () => {
+  test('reload', async () => {
     const repo = createRepo('ram', loadCodec, createBackend())
     debug(`starting engine`)
     const engine = await Interpulse.createCI({ repo })
@@ -22,11 +21,10 @@ describe('ipfs', () => {
 
     await engine.add('child1')
     await engine.cd('child1')
-    // await engine.shutdown()
-    // debug(await repo.stat())
-    // const reboot = await Interpulse.create({ repo })
-    // const latest = await engine.latest('/')
-    // console.log(latest.getState().toJS())
-    // assert(engine.latest() === reboot.latest('/'))
-  }, 5000000)
+
+    debug(await repo.stat())
+    const reboot = await Interpulse.create({ repo })
+    const latest = await reboot.latest('/')
+    expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
+  })
 })

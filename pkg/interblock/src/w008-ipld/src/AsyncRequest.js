@@ -6,7 +6,7 @@ import equals from 'fast-deep-equal'
     type AsyncRequest struct {
         request &Request
         to String
-        requestId RequestId
+        requestId optional RequestId
         settled optional &Reply
     }
 */
@@ -53,8 +53,9 @@ export class AsyncRequest extends RxRequest {
     return this.settled !== undefined
   }
   assertLogic() {
-    // cannot crush or uncrush with a RequestId
-    assert(this.requestId instanceof RequestId)
+    // TODO replace all this with schema checks
+    assert.strictEqual(typeof this.to, 'string')
+    assert(this.to)
     assert(this.request instanceof Request)
     if (this.settled) {
       assert(this.settled instanceof Reply)

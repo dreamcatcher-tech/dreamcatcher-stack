@@ -4,18 +4,21 @@
       "type": "node",
       "request": "launch",
       "name": "Debug Current Test File",
+      "showAsyncStacks": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-      "program": "${workspaceFolder}/node_modules/.bin/vitest",
-      "cwd": "${workspaceFolder}",
-      "args": [
+      "runtimeArgs": [
+        "--inspect=9229",
+        "--preserve-symlinks",
+        "${cwd}/node_modules/.bin/vitest",
         "run",
-        "${workspaceFolder}/src/w210-engine/test/ipfs.test.js",
-        "--threads=false",
+        "${relativeFile}",
+        "--no-threads",
         "--reporter=verbose"
       ],
       "env": { "DEBUG_COLORS": 1, "DEBUG": "" },
       "smartStep": true,
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     },
     {
       "name": "Debug Jest Tests",

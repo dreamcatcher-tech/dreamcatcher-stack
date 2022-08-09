@@ -6,7 +6,7 @@ const debug = Debug('interblock:tests:Pulse')
 describe('Pulse', () => {
   test('basic', async () => {
     let pulse = await Pulse.createCI()
-    pulse = await pulse.crush()
+    pulse = await pulse.crushToCid()
     const address = Address.generate(pulse)
     expect(address.toString()).toMatchSnapshot()
   })
@@ -20,7 +20,7 @@ describe('Pulse', () => {
     const config = { entropy: { seed: 'test' } }
     parent = await parent.addChild('child1', { config })
     timer('add child')
-    parent = await parent.crush()
+    parent = await parent.crushToCid()
     timer('crush')
     const keypair = Keypair.createCI()
     timer('ci keypair')
@@ -32,7 +32,7 @@ describe('Pulse', () => {
     parent = parent.addSignature(keypair.publicKey, signature)
     assert(!parent.isVerified())
     timer('add sig')
-    parent = await parent.crush()
+    parent = await parent.crushToCid()
     timer('crush')
     assert(parent.isVerified())
   })
