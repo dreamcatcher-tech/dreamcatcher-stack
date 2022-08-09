@@ -34,6 +34,16 @@ function App() {
     debug(`stop`)
   }
   const oneShot = useRef(false)
+  const init = async (engine) => {
+    if (engine) {
+      debug(`awaiting priors`)
+      await engine.shutdown()
+    }
+    debug(`init`)
+    const newEngine = await Interpulse.createCI({ repo })
+    setEngine(newEngine)
+    debug(`Engine ready`)
+  }
   useEffect(() => {
     if (!oneShot.current) {
       debug(`oneshot React18 workaround`)
@@ -41,17 +51,7 @@ function App() {
       return
     }
     // Debug.enable('*tests*  *:provenance')
-    const init = async () => {
-      if (engine) {
-        debug(`awaiting priors`)
-        await engine.shutdown()
-      }
-      debug(`init`)
-      const newEngine = await Interpulse.createCI({ repo })
-      setEngine(newEngine)
-      debug(`Engine ready`)
-    }
-    init()
+    init(engine)
   }, [])
 
   if (!engine) {
@@ -67,7 +67,19 @@ function App() {
     }
     initialPings()
   }
-
+  const reset = async () => {
+    debug(`resetting db...`)
+    setEngine()
+    await engine.shutdown()
+    const dbs = await window.indexedDB.databases()
+    for (const db of dbs) {
+      debug(`deleting`, db)
+      window.indexedDB.deleteDatabase(db)
+      debug(`deleted`, db)
+    }
+    debug(`reset complete`)
+    init()
+  }
   return (
     <div className="App">
       <header className="App-header">
@@ -78,7 +90,7 @@ function App() {
           </button>
         </p>
         <p>
-          <button type="button" onClick={() => console.log('reset')}>
+          <button type="button" onClick={reset}>
             Reset DB
           </button>
         </p>
