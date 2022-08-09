@@ -29,7 +29,7 @@ jobs:
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          name: Interblock Benchmark
+          name: Interpulse Benchmark
           tool: 'benchmarkjs'
           output-file-path: pkg/interblock/output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
