@@ -5,9 +5,9 @@ import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')
-Debug.enable('tests* ipfs interpulse')
+Debug.enable('tests* ipfs interpulse *Endurance')
 debug('import loaded')
-
+const repo = 'interpulse-test'
 function App() {
   const [engine, setEngine] = useState()
   const [pulseCount, setPulseCount] = useState(0)
@@ -43,12 +43,12 @@ function App() {
     // Debug.enable('*tests*  *:provenance')
     const init = async () => {
       debug(`init`)
-      const engine = await Interpulse.createCI()
+      const engine = await Interpulse.createCI({ repo })
       setEngine((prior) => assert(!prior) || engine)
       debug(`Engine ready`)
     }
     init()
-    return async () => {
+    return () => {
       debug(`shutting down...`)
       setEngine()
     }

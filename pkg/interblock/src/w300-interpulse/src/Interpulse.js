@@ -1,9 +1,13 @@
 import { shell } from '../../w212-system-covenants'
+// import { createRepo } from 'ipfs-repo'
 import { getCovenantState } from '../../w023-system-reducer'
 import { Engine, schemaToFunctions } from '../../w210-engine'
 import assert from 'assert-fast'
 import Debug from 'debug'
 import posix from 'path-browserify'
+import { loadCodec } from '../../w210-engine/test/fixtures/loadCodec'
+import { createRepo } from 'ipfs-core-config/repo'
+
 const debug = Debug('interpulse')
 /**
  *
@@ -21,6 +25,9 @@ export class Interpulse {
   #engine
   static async createCI(options = {}) {
     options = { ...options }
+    if (options.repo && typeof options.repo === 'string') {
+      options.repo = createRepo(debug, loadCodec, { path: options.repo })
+    }
     options.overloads = { ...options.overloads, root: shell }
     const engine = await Engine.createCI(options)
     const instance = new Interpulse(engine)

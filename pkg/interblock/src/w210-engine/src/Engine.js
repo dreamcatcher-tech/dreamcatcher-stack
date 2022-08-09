@@ -105,7 +105,7 @@ export class Engine {
       this.#repo = repo
       const options = { repo, init: { emptyRepo: true }, start: false }
       let latest
-      if (!(await repo.root.has('/'))) {
+      if (!(await repo.isInitialized())) {
         // workaround while waiting for
         // https://github.com/ipfs/js-ipfs/pull/4172
         let keypair

@@ -16,6 +16,9 @@ export class PulseLink extends IpldInterface {
     return instance
   }
   static parse(cidString) {
+    if (ArrayBuffer.isView(cidString)) {
+      cidString = cidString.toString()
+    }
     assert.strictEqual(typeof cidString, 'string')
     assert(cidString)
     const cid = CID.parse(cidString)

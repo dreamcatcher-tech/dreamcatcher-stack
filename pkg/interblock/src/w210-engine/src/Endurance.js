@@ -37,10 +37,14 @@ export class Endurance {
     assert(pulse instanceof Pulse)
     assert(!pulse.isModified())
     assert(pulse.isVerified())
+    // TODO use the map always, as a cache
+    // if ipfs present, limit the cache size
     if (this.#ipfs) {
       const blocks = [...pulse.getDiffBlocks().values()]
       const car = await createCar(blocks)
-      await all(this.#ipfs.dag.import(car))
+      await all(this.#ipfs.dag.import(car)).then(() => {
+        debug(`persist complete`, pulse.cid.toString())
+      })
     } else {
       const blocks = pulse.getDiffBlocks()
       for (const [key, block] of blocks.entries()) {
@@ -53,6 +57,7 @@ export class Endurance {
       }
     }
     await this.#logger.pulse(pulse)
+    // TODO limit the size and implement LRU eviction
     this.#cache.set(pulse.cid.toString(), pulse)
 
     const address = pulse.getAddress().getChainId().substring(0, 14)
@@ -60,13 +65,14 @@ export class Endurance {
     debug(`endure`, address, pulselink)
   }
   async recover(pulselink) {
-    // get ipfs block any way possible
-    // place a resolver function in the pulse to look up the hamt
     assert(pulselink instanceof PulseLink)
     const cidString = pulselink.cid.toString()
     debug(`recover`, cidString)
 
-    // check the cache
+    if (this.#cache.has(cidString)) {
+      return this.#cache.get(cidString)
+    }
+
     const resolver = this.getResolver()
     const pulse = await Pulse.uncrush(pulselink.cid, resolver)
     return pulse
