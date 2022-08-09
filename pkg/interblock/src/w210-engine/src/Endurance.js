@@ -105,5 +105,12 @@ export class Endurance {
     // remove the pulse from local storage whenever next convenience arises
   }
   async ipfsStart() {}
-  async ipfsStop() {}
+  async ipfsStop() {
+    if (!this.#ipfs) {
+      throw new Error(`no ipfs instance`)
+    }
+    const ipfs = this.#ipfs
+    this.#ipfs = undefined
+    await ipfs.stop()
+  }
 }

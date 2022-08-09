@@ -42,16 +42,16 @@ function App() {
     }
     // Debug.enable('*tests*  *:provenance')
     const init = async () => {
+      if (engine) {
+        debug(`awaiting priors`)
+        await engine.shutdown()
+      }
       debug(`init`)
-      const engine = await Interpulse.createCI({ repo })
-      setEngine((prior) => assert(!prior) || engine)
+      const newEngine = await Interpulse.createCI({ repo })
+      setEngine(newEngine)
       debug(`Engine ready`)
     }
     init()
-    return () => {
-      debug(`shutting down...`)
-      setEngine()
-    }
   }, [])
 
   if (!engine) {

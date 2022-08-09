@@ -72,10 +72,8 @@ export class Interpulse {
     const { wd = '/' } = this.#engine.latest.getState().toJS()
     return wd
   }
-  shutdown() {
-    // stop the ipfs agent from running
-    // persist our config down to ipfs storage
-    // shutdown multithreading
+  async shutdown() {
+    await this.#engine.ipfsStop()
   }
   async ipfsStart() {
     debug(`starting ipfs...`)

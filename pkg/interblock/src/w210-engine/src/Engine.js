@@ -455,5 +455,7 @@ export class Engine {
     // })
     // const id = await ipfs.id()
   }
-  async ipfsStop() {}
+  async ipfsStop() {
+    return await this.#endurance.ipfsStop()
+  }
 }
