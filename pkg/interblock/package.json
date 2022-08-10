@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "schemas": "node --experimental-specifier-resolution=node src/w006-schemas/bin.js && prettier -w src/w006-schemas/ipldSchemas.js",
-    "dev": "vite --host 0.0.0.0 --port 3210 --open",
+    "dev": "vite --host 0.0.0.0 --open",
     "build": "vite build",
     "serve": "vite preview",
     "test": "eslint src && DEBUG_COLORS=1 DEBUG='' vitest run",
@@ -47,10 +47,10 @@
     "uint8arrays": "^3.1.0"
   },
   "devDependencies": {
-    "@types/react": "^18.0.15",
+    "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
     "@vitejs/plugin-react": "^2.0.0",
-    "@vitest/ui": "^0.21.0",
+    "@vitest/ui": "^0.21.1",
     "benchmark": "^2.1.4",
     "chai": "^4.3.6",
     "eslint": "^8.21.0",
@@ -63,8 +63,8 @@
     "rollup-plugin-visualizer": "^5.7.1",
     "supports-color": "^9.2.2",
     "trace-unhandled": "^2.0.1",
-    "vite": "^3.0.4",
-    "vitest": "0.21.0"
+    "vite": "^3.0.5",
+    "vitest": "0.21.1"
   },
   "publishConfig": {
     "access": "public"

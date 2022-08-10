@@ -15,7 +15,7 @@
   "dependencies": {
     "@dreamcatcher-tech/dos": "^1.0.11",
     "@dreamcatcher-tech/interblock": "^1.0.11",
-    "@fontsource/roboto-mono": "^4.5.7",
+    "@fontsource/roboto-mono": "^4.5.8",
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.3",
     "@material-ui/x-grid": "^4.0.0-alpha.37",
@@ -55,7 +55,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.7.1",
-    "vite": "3.0.4"
+    "vite": "3.0.5"
   },
   "repository": "git@github.com:dreamcatcher-tech/webdos.git",
   "author": "evil_liskov <evil_liskov@protonmail.com>",
