@@ -123,6 +123,7 @@ const installer = {
         // roger: {},
       },
     },
+    routing: {},
     banking: { covenant: 'datum' },
     settings: {
       covenant: 'datum',

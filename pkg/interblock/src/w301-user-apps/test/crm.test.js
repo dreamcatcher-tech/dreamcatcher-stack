@@ -2,7 +2,25 @@ import { assert } from 'chai/index.mjs'
 import { Interpulse } from '../../w300-interpulse'
 import { crm } from '..'
 import Debug from 'debug'
+import { expect } from 'chai'
 const debug = Debug('interblock:tests:crm')
+
+const serverFactory = async ({ customerCount = 10 } = {}) => {
+  const server = await Interpulse.createCI({ overloads: { '/crm': crm } })
+  await server.add('crm', { covenant: '/crm' })
+  const crmActions = await server.actions('/crm/customers')
+  const awaits = []
+  Debug.enable('iplog')
+  Debug.log = console.log.bind(console)
+  for (let i = 1; i <= customerCount; i++) {
+    const addPromise = crmActions.add({
+      formData: { custNo: i, name: 'test name ' + i },
+    })
+    awaits.push(addPromise)
+  }
+  await Promise.all(awaits)
+  return server
+}
 
 describe('crm', () => {
   describe('app deploy', () => {
@@ -63,20 +81,80 @@ describe('crm', () => {
       assert.strictEqual(realCustomers.length, 1)
       debug(realCustomers)
     })
+    test.skip('large customer list', async () => {
+      const customerCount = 100
+      const server = serverFactory({ customerCount })
+      const { children } = await server.ls('crm/customers')
+      debug(`customers: `, children)
+      const realCustomers = Object.keys(children).filter(
+        (key) => !key.startsWith('.')
+      )
+      assert.strictEqual(realCustomers.length, customerCount)
+      debug(realCustomers)
+    })
+    test.skip('search by name', async () => {
+      const server = await serverFactory()
+      // TODO mango style queries to look inside the customers
+      const results = await server.find('/crm/customers', {
+        name: 'test name 3',
+      })
+      assert(results)
+    })
   })
   describe('data import', () => {
     test.todo('imports customer data')
-    test.todo('bulk data upload')
+    test.todo('imports only diffs with current dataset')
   })
-  describe('edit customer', () => {
+  describe('subscriptions', () => {
     test.todo('update customer name')
-    // shows tripping off a state machine to update multiple datums in response
     test.todo('add a service to a customer')
   })
-  describe('general use', () => {
-    test.todo('cannot alter the structure of the application in any way')
+  describe.skip('symlinking', () => {
+    test('rm symlink leaves original data intact', async () => {
+      const server = await serverFactory()
+      await server.cd('/crm/routing')
+      await server.rm('custNo-5')
+      const state = server.cat('/crm/customers/custNo-5')
+      assert(state)
+    })
+  })
+  describe.skip('permissioning', () => {
+    test('cannot alter app structure', async () => {
+      const server = await serverFactory({ customerCount: 10 })
+      const client = await Interpulse.createCI({ seed: 'clientRandomness' })
+      await client.mount('/remoteApp', server.address)
+      await client.cd('/remoteApp')
+      await expect(client.rm()).rejects.toThrow('access denied')
+    })
+  })
+
+  describe.skip('clients and server', () => {
+    test('basic', async () => {
+      const server = await serverFactory()
+      const client = await Interpulse.createCI({ seed: 'clientRandomness' })
+      await client.mount('/remoteApp', server.address)
+      await client.cd('/remoteApp')
+      const lsResult = await client.ls()
+      assert(lsResult)
+    })
+    test('passive client updates', async () => {
+      const server = await serverFactory()
+
+      const active = await Interpulse.createCI({ seed: 'active' })
+      await active.mount('/remoteApp', server.address)
+      await active.cd('/remoteApp/customers/custNo-5/serviceAddress')
+      const actions = await active.actions()
+      await actions.update({ street: 'some other street' })
+
+      const passive = await Interpulse.createCI({ seed: 'passive' })
+      await passive.mount('/remoteApp', server.address)
+      await passive.cd('/remoteApp/customers/custNo-5/serviceAddress')
+      const state = await passive.cat()
+      assert(state)
+    })
   })
   describe('stress test', () => {
+    test.todo('simulate multiple users putting stress on the system')
     test.todo('20,000 test customers added')
   })
 })
