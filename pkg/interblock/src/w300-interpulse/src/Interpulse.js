@@ -77,9 +77,11 @@ export class Interpulse {
   }
   async ipfsStart() {
     debug(`starting ipfs...`)
-    const result = await this.#engine.ipfsStart()
+    await this.#engine.ipfsStart()
     debug(`ipfs started`)
-    return result
+  }
+  get ipfs() {
+    return this.#engine.ipfs
   }
 }
 const mapShell = (engine) => {

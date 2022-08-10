@@ -5,7 +5,7 @@ import assert from 'assert-fast'
 import equal from 'fast-deep-equal'
 import Debug from 'debug'
 const debug = Debug('tests:demo')
-Debug.enable('tests* ipfs interpulse')
+Debug.enable('tests* ipfs* interpulse *Endurance')
 debug('import loaded')
 const repo = 'interpulse-test'
 function App() {
@@ -31,6 +31,9 @@ function App() {
     const pulseCount = engine.logger.pulseCount
     setPulseCount(pulseCount)
     debug(`pulsecount: ${pulseCount}`)
+    const latest = await engine.latest()
+    debug(`pulse hash`, latest.cid.toString())
+    debug(`https://explore.ipld.io/#/explore/${latest.cid.toString()}`)
     debug(`stop`)
   }
   const oneShot = useRef(false)
@@ -40,8 +43,9 @@ function App() {
       await engine.shutdown()
     }
     debug(`init`)
-    const newEngine = await Interpulse.createCI({ repo })
+    const newEngine = await Interpulse.createCI({ repo, preload: true })
     setEngine(newEngine)
+    await newEngine.ipfsStart()
     debug(`Engine ready`)
   }
   useEffect(() => {
@@ -95,8 +99,45 @@ function App() {
           </button>
         </p>
         <p>
-          <button type="button" onClick={() => engine.ipfsStart()}>
-            Start IPFS
+          <button
+            type="button"
+            onClick={async () => {
+              const latest = await engine.latest()
+              latest.dir()
+              debug(latest.cid.toString())
+              debug(latest.getAddress().cid.toString())
+            }}
+          >
+            Dump latest to console
+          </button>
+        </p>
+        <p>
+          <button
+            type="button"
+            onClick={async () => {
+              const latest = await engine.latest()
+              const cidString = latest.cid.toString()
+              const publicUrl = `https://explore.ipld.io/#/explore/${cidString}`
+              window.open(publicUrl)
+            }}
+          >
+            Browse latest on IPFS
+          </button>
+        </p>
+        <p>
+          <button
+            type="button"
+            onClick={async () => {
+              const { ipfs } = engine
+              console.info(await ipfs.swarm.peers())
+              const addresses = await ipfs.swarm.addrs()
+              for (const info of addresses) {
+                console.info(info.id)
+                info.addrs.forEach((addr) => console.info(addr.toString()))
+              }
+            }}
+          >
+            IPFS Stats
           </button>
         </p>
         <p>

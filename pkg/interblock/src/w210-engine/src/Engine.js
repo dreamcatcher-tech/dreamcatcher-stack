@@ -53,6 +53,9 @@ export class Engine {
   get logger() {
     return this.#endurance.logger
   }
+  get ipfs() {
+    return this.#endurance.ipfs
+  }
   static async createCI(opts = {}) {
     const ciOptions = { ...opts, CI: true }
     return await this.create(ciOptions)
@@ -117,7 +120,6 @@ export class Engine {
         options.init.privateKey = await keypair.generatePeerId()
         const validators = Validators.create([keypair.publicKey])
         latest = await Pulse.createRoot({ CI, validators })
-        await this.#updateRoot(latest)
       }
       debug(`startingipfs....`)
       const ipfs = await IPFS.create(options)
@@ -125,7 +127,8 @@ export class Engine {
       this.#endurance.setIpfs(ipfs)
       if (latest) {
         this.#latest = latest
-        await this.#endurance.endure(this.#latest)
+        const [ipfsFlushed] = await this.#endurance.endure(this.#latest)
+        this.#updateRoot(ipfsFlushed, this.#latest)
       } else {
         const cidString = await repo.root.get('/')
         const pulseLink = PulseLink.parse(cidString)
@@ -160,9 +163,14 @@ export class Engine {
     this.#address = this.#latest.getAddress()
     await this.#hints.pulseAnnounce(this.#latest)
   }
-  async #updateRoot(latest) {
+  async #updateRoot(ipfsFlushed, latest) {
+    if (!this.#repo) {
+      return
+    }
+    assert.strictEqual(typeof ipfsFlushed.then, 'function')
     assert(latest instanceof Pulse)
     if (this.#repo) {
+      await ipfsFlushed
       await this.#repo.root.put('/', latest.cid.toString())
     }
   }
@@ -254,10 +262,10 @@ export class Engine {
     const pulse = await pool.crushToCid(resolver)
     assert(provenance.cid.equals(pulse.provenance.cid))
 
-    await this.#endurance.endure(pulse)
+    const [ipfsFlushed] = await this.#endurance.endure(pulse)
     if (pulse.getAddress().equals(this.address)) {
       this.#latest = pulse
-      this.#updateRoot(pulse)
+      this.#updateRoot(ipfsFlushed, pulse)
     }
     await this.#hints.pulseAnnounce(pulse)
     await this.#hints.softRemove(pulse.getAddress())
@@ -449,11 +457,7 @@ export class Engine {
   async multiThreadStart(threadCount) {}
   async multiThreadStop() {}
   async ipfsStart(privateNetworkKey) {
-    // const ipfs = await create({
-    //   repo: String(Math.random() + Date.now()),
-    //   init: { emptyRepo: true },
-    // })
-    // const id = await ipfs.id()
+    return await this.#endurance.ipfsStart()
   }
   async ipfsStop() {
     return await this.#endurance.ipfsStop()

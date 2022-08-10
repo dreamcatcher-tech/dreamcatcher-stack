@@ -29,6 +29,9 @@ export class Endurance {
   get logger() {
     return this.#logger
   }
+  get ipfs() {
+    return this.#ipfs
+  }
   setIpfs(ipfs) {
     assert(ipfs)
     this.#ipfs = ipfs
@@ -65,6 +68,10 @@ export class Endurance {
       debug(`set`, key, block.value)
     }
     this.#pulseCache.set(pulse.cid.toString(), pulse)
+    let resolve
+    const ipfsFlushed = new Promise((_resolve) => {
+      resolve = _resolve
+    })
     if (this.#ipfs) {
       this.#isWriting()
       Promise.resolve().then(async () => {
@@ -73,10 +80,15 @@ export class Endurance {
         await all(this.#ipfs.dag.import(car))
         debug(`finish ipfs put`, pulse.getPulseLink())
         this.#writingComplete()
+        resolve()
+        // for await (const message of this.#ipfs.dht.provide(pulse.cid)) {
+        // console.log(message)
+        // }
       })
     }
     await this.#logger.pulse(pulse)
     debug(`endure`, pulse.getAddress(), pulse.getPulseLink())
+    return [ipfsFlushed]
   }
   async recover(pulselink) {
     assert(pulselink instanceof PulseLink)
@@ -120,14 +132,19 @@ export class Endurance {
   async fade(pulse) {
     // remove the pulse from local storage whenever next convenience arises
   }
-  async ipfsStart() {}
+  async ipfsStart() {
+    if (!this.#ipfs) {
+      throw new Error(`no ipfs instance`)
+    }
+    await this.#ipfs.start()
+  }
   async ipfsStop() {
     if (!this.#ipfs) {
       throw new Error(`no ipfs instance`)
     }
+    await this.#ipfsWritePromise
     const ipfs = this.#ipfs
     this.#ipfs = undefined
-    await this.#ipfsWritePromise
     await ipfs.stop()
   }
 }
