@@ -21,7 +21,6 @@ const coldPing = async () => {
   const payload = { test: 'ping' }
   const reply = await engine.ping('.', payload)
   assert(equals(reply, payload))
-  await engine.shutdown()
 }
 const engine = await Interpulse.createCI()
 
@@ -69,7 +68,6 @@ suite
     defer: true,
     fn: async (deferred) => {
       const engine = await Interpulse.createCI()
-      await engine.shutdown()
       deferred.resolve()
     },
   })
@@ -91,7 +89,6 @@ suite
     defer: true,
     fn: async (deferred) => {
       const engine = await publish()
-      await engine.shutdown()
       deferred.resolve()
     },
   })
@@ -100,7 +97,6 @@ suite
     fn: async (deferred) => {
       const engine = await publish()
       await install(engine)
-      await engine.shutdown()
       deferred.resolve()
     },
   })

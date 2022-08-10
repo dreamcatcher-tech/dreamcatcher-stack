@@ -42,19 +42,6 @@ describe('crm', () => {
       debug(`add second customer time: ${Date.now() - add2Start} ms`)
       const lastPulseCount = engine.logger.pulseCount
       debug(`add 2 pulse count: ${lastPulseCount - add2PulseCount}`)
-      /**
-       * 2021-01-18 400ms publish, 1144ms install, blockcount: 21
-       * 2021-01-18 218ms publish, 709ms install - fast-xstate on all but increasor and transmit
-       * 2021-01-25 151ms publish, 371ms install - removed xstate
-       * 2021-01-26 153ms publish, 356ms install - removed birthblocks
-       * 2021-01-28 187ms publish, 670ms install, blockcount 29 - deploy larger app with higher blockcound
-       * 2021-01-28 183ms publish, 545ms install, blockcount 29 - cache partial dmz executions
-       * 2021-02-04 176ms publish, 382ms install, blockcount 29, blockrate 19ms - remove immer, cache blank creates, reuse hashes for block and interblock
-       * 2021-05-19 245ms publish, 524ms install, blockcount 27, blockrate 28ms - add queries to hooks, install uses a query instead of an action
-       * 2021-11-11 129ms publish, 252ms install, blockcount 27, blockrate 14ms add1 167ms, add1 count 18, add2 128ms, add2 count 13 - remove light lineage from protocol
-       * 2021-12-27 185ms publish, 420ms install, blockcount 27, blockrate 22ms add1 258ms, add1 count 17, add2 205ms, add2 count 13 - models as classes
-       * 2022-07-25 136ms publish, 330ms install, pulsecount 30, blockrate 15ms add1 218ms, add1 count 20, add2 161ms, add2 count 15 - move to ipfs
-       */
     })
     test.todo('can only add customer if provide valid data')
     test.todo('add customer with test data using .processes/addTestCustomer')
