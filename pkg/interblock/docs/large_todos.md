@@ -27,8 +27,14 @@ Further, this ORM can be used to implement an object cache, where hydrated objec
 
 Crush should cache its results, so calling multiple times on the same object only loads the cpu initially.
 
+This should support an encryption layer, where each CID is encrypted, and then linked to its parent. This keeps all CIDs as a hash of encrypted data, so zero information is available without the encryption key, except for the fact that the root node exists. All CIDs within the root node would be encrypted too, and so be unwalkable without the key.
+
 ## Speculative execution on client side
 
 Rather than waiting for any given validator set to respond, we should be able to execute what the validators would have computed on the client side and carry on with this speculative result. This will give true offline capability.
 
 To do this, we need a form of "state by assertion" which deviates from the current action model of state transitions. Basically saying `state` as opposed to `state + action = state'`. There is nothing wrong with this assertion style update - all that matters is that everyone agrees on it. We may trace who proposed the change. The assertion style is not so different from the action style - nobody seems to question too much where the aciton came from, it is just asserted into existence, so doing the same thing but without the action first seems a simpler proposition.
+
+## Defining the DOS Framework
+
+Our application design model has some rather specific conventions that we need to document and justify somewhere. We also include in this framework the means by which a pool of workers can be found to build the software, how funding can be attracted for that work, and how dispersals of the purchases made by buys is balanced between all contributors.

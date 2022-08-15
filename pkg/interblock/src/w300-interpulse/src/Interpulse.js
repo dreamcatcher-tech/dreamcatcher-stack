@@ -24,19 +24,20 @@ const debug = Debug('interpulse')
 export class Interpulse {
   #engine
   static async createCI(options = {}) {
-    options = { ...options }
-    if (options.repo && typeof options.repo === 'string') {
-      options.repo = createRepo(debug, loadCodec, { path: options.repo })
-    }
-    options.overloads = { ...options.overloads, root: shell }
-    const engine = await Engine.createCI(options)
-    const instance = new Interpulse(engine)
-    return instance
+    options = { ...options, CI: true }
+    return this.create(options)
   }
   static async create(options) {
-    options = { ...options }
-    options.overloads = { ...options.overloads, root: shell }
-    const engine = await Engine.create(options)
+    const engineOptions = { ...options }
+    engineOptions.overloads = { ...engineOptions.overloads, root: shell }
+    if (engineOptions.repo && typeof engineOptions.repo === 'string') {
+      const path = engineOptions.repo
+      engineOptions.repo = createRepo(debug, loadCodec, { path })
+    }
+    const engine = await Engine.create(engineOptions)
+    if (typeof options.repo === 'string') {
+      await engine.ipfsStart()
+    }
     const instance = new Interpulse(engine)
     return instance
   }

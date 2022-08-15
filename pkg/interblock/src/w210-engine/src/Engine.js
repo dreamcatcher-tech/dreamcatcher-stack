@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import * as IPFS from 'ipfs-core'
+import { Key } from 'interface-datastore'
 import posix from 'path-browserify'
 import {
   Network,
@@ -19,8 +20,11 @@ import { Crypto, CryptoLock } from './Crypto'
 import { Endurance } from './Endurance'
 import { Hints } from './Hints'
 import * as system from '../../w212-system-covenants'
+import config from 'ipfs-core-config/config'
 import Debug from 'debug'
 const debug = Debug('interblock:engine')
+const rootRepoKey = new Key('latest')
+
 /**
  * The Engine of Permanence
  * Reacts to external stimulus.
@@ -122,6 +126,8 @@ export class Engine {
         latest = await Pulse.createRoot({ CI, validators })
       }
       debug(`startingipfs....`)
+      options.config = config()
+      options.preload = false
       const ipfs = await IPFS.create(options)
       debug(`ipfs created`)
       this.#endurance.setIpfs(ipfs)
@@ -130,7 +136,7 @@ export class Engine {
         const [ipfsFlushed] = await this.#endurance.endure(this.#latest)
         this.#updateRoot(ipfsFlushed, this.#latest)
       } else {
-        const cidString = await repo.root.get('/')
+        const cidString = await repo.root.get(rootRepoKey)
         const pulseLink = PulseLink.parse(cidString)
         this.#latest = await this.#endurance.recover(pulseLink)
         // TODO verify we have the keys required for it
@@ -171,7 +177,9 @@ export class Engine {
     assert(latest instanceof Pulse)
     if (this.#repo) {
       await ipfsFlushed
-      await this.#repo.root.put('/', latest.cid.toString())
+      const cidString = latest.cid.toString()
+      await this.#repo.root.put(rootRepoKey, cidString)
+      console.info(`https://explore.ipld.io/#/explore/${cidString}`)
     }
   }
   #interpulseLocks = new Map()

@@ -106,7 +106,6 @@ describe('crm', () => {
     test.todo('imports only diffs with current dataset')
   })
   describe('subscriptions', () => {
-    test.todo('update customer name')
     test.todo('add a service to a customer')
   })
   describe.skip('symlinking', () => {
@@ -127,7 +126,6 @@ describe('crm', () => {
       await expect(client.rm()).rejects.toThrow('access denied')
     })
   })
-
   describe.skip('clients and server', () => {
     test('basic', async () => {
       const server = await serverFactory()
@@ -152,6 +150,8 @@ describe('crm', () => {
       const state = await passive.cat()
       assert(state)
     })
+    test.todo('new client syncs with peer while server offline')
+    test.todo('two peers share local changes while server offline')
   })
   describe('stress test', () => {
     test.todo('simulate multiple users putting stress on the system')

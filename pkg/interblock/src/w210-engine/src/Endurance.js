@@ -65,7 +65,6 @@ export class Endurance {
       // TODO if ipfs present, limit the cache size
       this.#ipfsCache.set(key, block)
       blocks.push(block)
-      debug(`set`, key, block.value)
     }
     this.#pulseCache.set(pulse.cid.toString(), pulse)
     let resolve
@@ -74,17 +73,18 @@ export class Endurance {
     })
     if (this.#ipfs) {
       this.#isWriting()
-      Promise.resolve().then(async () => {
-        debug(`start ipfs put`, pulse.getPulseLink())
-        const car = await createCar(blocks)
-        await all(this.#ipfs.dag.import(car))
-        debug(`finish ipfs put`, pulse.getPulseLink())
-        this.#writingComplete()
-        resolve()
-        // for await (const message of this.#ipfs.dht.provide(pulse.cid)) {
-        // console.log(message)
-        // }
-      })
+      Promise.resolve()
+        .then(async () => {
+          debug(`start ipfs put`, pulse.getPulseLink())
+          const car = await createCar(blocks)
+          await all(this.#ipfs.dag.import(car))
+          debug(`finish ipfs put`, pulse.getPulseLink())
+          this.#writingComplete()
+          resolve()
+        })
+        .catch((error) => {
+          debug(`endurance error`, error)
+        })
     }
     await this.#logger.pulse(pulse)
     debug(`endure`, pulse.getAddress(), pulse.getPulseLink())

@@ -15,7 +15,7 @@ import json from '@dreamcatcher-tech/interblock/package.json' assert { type: 'js
 
 export default async function repl(opts = {}) {
   assert.strictEqual(typeof opts, 'object')
-  // Debug.enable('*:repl *commands* *:eval')
+  Debug.enable('*:repl *commands* *:eval *dag:import ipfs*')
   debug(`repl`)
   opts.read = opts.read || withAutoComplete(read)
   opts.evaluate = opts.evaluate || withSpin(evaluate)
@@ -94,7 +94,7 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
   if (!blockchain) {
     debug(`no blockchain provided`)
     spinner.text = `Initializing blockchain...`
-    blockchain = await Interpulse.create()
+    blockchain = await Interpulse.createCI({ repo: 'tmp/test' })
     debug('blockchain created')
   }
   const latest = await blockchain.latest()

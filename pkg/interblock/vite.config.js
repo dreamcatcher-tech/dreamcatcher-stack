@@ -47,5 +47,6 @@ export default defineConfig({
       // https://github.com/vitest-dev/vitest/issues/1758
       // registerNodeLoader: false,
     },
+    globalSetup: './src/w001-shims/vitestGlobalSetup',
   },
 })

@@ -33,6 +33,7 @@ export class Request extends IpldStruct {
   static get schema() {
     return schemas.types.Action
   }
+  // TODO replace with a single type, with payload based switch discriminator
   static SYSTEM_TYPES = [
     '@@PING',
     '@@SPAWN',
