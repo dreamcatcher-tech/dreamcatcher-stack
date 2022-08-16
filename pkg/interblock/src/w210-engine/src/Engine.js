@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import * as IPFS from 'ipfs-core'
 import { Key } from 'interface-datastore'
 import posix from 'path-browserify'
 import {
@@ -20,7 +19,6 @@ import { Crypto, CryptoLock } from './Crypto'
 import { Endurance } from './Endurance'
 import { Hints } from './Hints'
 import * as system from '../../w212-system-covenants'
-import config from 'ipfs-core-config/config'
 import Debug from 'debug'
 const debug = Debug('interblock:engine')
 const rootRepoKey = new Key('latest')

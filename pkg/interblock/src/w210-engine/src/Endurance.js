@@ -2,22 +2,9 @@ import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
 import { decode, Pulse, PulseLink } from '../../w008-ipld'
 import { Logger } from './Logger'
-import { CarWriter } from '@ipld/car'
 import all from 'it-all'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Endurance')
-
-async function createCar(blocks) {
-  const rootBlock = blocks[0]
-  const { writer, out } = await CarWriter.create([rootBlock.cid])
-  writer.put(rootBlock).then(async () => {
-    for (const block of blocks.slice(1)) {
-      await writer.put(block)
-    }
-    await writer.close()
-  })
-  return out
-}
 
 export class Endurance {
   #logger = new Logger()

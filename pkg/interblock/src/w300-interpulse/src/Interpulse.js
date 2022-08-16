@@ -1,5 +1,4 @@
 import { shell } from '../../w212-system-covenants'
-// import { createRepo } from 'ipfs-repo'
 import { getCovenantState } from '../../w023-system-reducer'
 import { Engine, schemaToFunctions } from '../../w210-engine'
 import assert from 'assert-fast'

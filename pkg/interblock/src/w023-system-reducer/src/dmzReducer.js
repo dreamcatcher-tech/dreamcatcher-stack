@@ -100,6 +100,7 @@ const pulseReducer = async (type, payload) => {
     case '@@USE_PULSE': {
       const { path } = payload
       const latestPulse = await latest(path)
+      // TODO remove the network object, to provide a static pulse
       return latestPulse
     }
     case '@@COVENANT': {
