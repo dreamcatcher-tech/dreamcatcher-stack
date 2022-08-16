@@ -28,7 +28,7 @@ describe('ipfs', () => {
     const latest = await reboot.latest('/')
     expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
   })
-  test.only('reload from disk', async () => {
+  test('reload from disk', async () => {
     const repo = `tmp/reload-${Math.random()}`
     Debug.enable('*tests* ipfs*')
     await import('trace-unhandled/register')

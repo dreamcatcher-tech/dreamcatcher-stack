@@ -36,7 +36,6 @@
     "immutable": "^4.1.0",
     "interface-datastore": "^7.0.0",
     "ipfs-core": "^0.15.4",
-    "ipfs-core-config": "^0.4.1",
     "ipld-hashmap": "^2.1.11",
     "ipld-schema": "^3.0.2",
     "pad-left": "^2.1.0",
@@ -51,10 +50,11 @@
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
     "@vitejs/plugin-react": "^2.0.1",
-    "@vitest/ui": "^0.21.1",
+    "@vitest/ui": "^0.22.0",
     "benchmark": "^2.1.4",
     "chai": "^4.3.6",
     "del": "^7.0.0",
+    "delay": "^5.0.0",
     "eslint": "^8.22.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -67,7 +67,7 @@
     "supports-color": "^9.2.2",
     "trace-unhandled": "^2.0.1",
     "vite": "^3.0.7",
-    "vitest": "0.21.1"
+    "vitest": "0.22.0"
   },
   "publishConfig": {
     "access": "public"
