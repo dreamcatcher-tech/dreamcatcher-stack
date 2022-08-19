@@ -40,13 +40,4 @@ export default defineConfig({
   define: {
     'process.env.NODE_DEBUG': 'false',
   },
-  test: {
-    globals: true,
-    deps: {
-      // required workaround for 0.20.x upgrade
-      // https://github.com/vitest-dev/vitest/issues/1758
-      // registerNodeLoader: false,
-    },
-    globalSetup: './src/w001-shims/vitestGlobalSetup',
-  },
 })
