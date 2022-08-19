@@ -1,11 +1,10 @@
 import { createRepo } from 'ipfs-repo'
 import { Interpulse } from '../../w300-interpulse/src/Interpulse'
-import { createBackend } from './fixtures/createBackend'
-import { loadCodec } from './fixtures/loadCodec'
+import { createBackend } from '../src/createBackend'
+import { loadCodec } from '../src/loadCodec'
 import { deleteAsync } from 'del'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:ipfs')
-Debug.log = console.log.bind(console)
 
 describe('ipfs', () => {
   test('repo', async () => {

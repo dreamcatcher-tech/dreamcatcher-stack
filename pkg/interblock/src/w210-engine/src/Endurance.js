@@ -63,7 +63,7 @@ export class Endurance {
       Promise.resolve()
         .then(async () => {
           debug(`start ipfs put`, pulse.getPulseLink())
-          const car = await createCar(blocks)
+          const car = 'await createCar(blocks)'
           await all(this.#ipfs.dag.import(car))
           debug(`finish ipfs put`, pulse.getPulseLink())
           this.#writingComplete()

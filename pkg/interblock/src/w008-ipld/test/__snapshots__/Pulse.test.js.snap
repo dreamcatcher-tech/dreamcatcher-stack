@@ -1,3 +1,5 @@
-// Vitest Snapshot v1
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Pulse > basic 1`] = `"Address(QmVc91JaNy3CkD)"`;
+
+exports[`Pulse basic 1`] = `"Address(QmVc91JaNy3CkD)"`;

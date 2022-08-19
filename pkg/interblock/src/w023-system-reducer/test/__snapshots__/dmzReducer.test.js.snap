@@ -1,4 +1,4 @@
-// Vitest Snapshot v1
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`dmzReducer > spawn > spawn is implicitly awaited 1`] = `
 Channel {
@@ -42,6 +42,54 @@ Channel {
       "replies": [],
       "repliesLength": 0,
       "requests": [],
+      "requestsLength": 1,
+    },
+  },
+}
+`;
+
+exports[`dmzReducer spawn spawn is implicitly awaited 1`] = `
+Channel {
+  "address": Address {},
+  "aliases": Array [
+    "child1",
+  ],
+  "channelId": 3,
+  "rx": Rx {
+    "reducer": RxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 1,
+      "requests": Array [],
+      "requestsLength": 0,
+    },
+    "system": RxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 1,
+      "requests": Array [],
+      "requestsLength": 0,
+    },
+    "tip": PulseLink {},
+  },
+  "tx": Tx {
+    "precedent": PulseLink {},
+    "reducer": TxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 0,
+      "requests": Array [],
+      "requestsLength": 1,
+    },
+    "system": TxQueue {
+      "promisedReplies": Array [],
+      "promisedRequestIds": Array [],
+      "replies": Array [],
+      "repliesLength": 0,
+      "requests": Array [],
       "requestsLength": 1,
     },
   },

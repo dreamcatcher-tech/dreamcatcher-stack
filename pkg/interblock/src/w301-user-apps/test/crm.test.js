@@ -11,7 +11,6 @@ const serverFactory = async ({ customerCount = 10 } = {}) => {
   const crmActions = await server.actions('/crm/customers')
   const awaits = []
   Debug.enable('iplog')
-  Debug.log = console.log.bind(console)
   for (let i = 1; i <= customerCount; i++) {
     const addPromise = crmActions.add({
       formData: { custNo: i, name: 'test name ' + i },

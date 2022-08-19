@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import { fromString } from 'uint8arrays/from-string'
 import { toString } from 'uint8arrays/to-string'
 import { createLibp2p } from 'libp2p'
@@ -10,7 +11,6 @@ import all from 'it-all'
 import delay from 'delay'
 import Debug from 'debug'
 import { Pulse } from '../../w008-ipld'
-Debug.log = console.log.bind(console)
 const debug = Debug('interpulse:tests:dht')
 
 Debug.enable('*tests*')
@@ -75,7 +75,7 @@ describe('dht', () => {
 
     for await (const result of node3.dht.get(key)) {
       if (result.name === 'VALUE') {
-        debug('value', toString(result.value))
+        debug('value', toString(result.value), result.type)
       }
     }
 
@@ -83,8 +83,9 @@ describe('dht', () => {
     await all(node1.dht.put(key, fromString('pickle')))
     for await (const result of node3.dht.get(key)) {
       if (result.name === 'VALUE') {
-        debug('value', toString(result.value))
+        debug('value', toString(result.value), result.type)
       }
     }
-  }, 500000)
+  }, 5000)
+  test.todo('latest is recovered from storage on reload')
 })

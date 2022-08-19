@@ -1,38 +1,21 @@
 {
   "configurations": [
     {
-      "type": "node",
-      "request": "launch",
-      "name": "Debug Current Test File",
-      "showAsyncStacks": true,
-      "skipFiles": ["<node_internals>/**"],
-      "runtimeArgs": [
-        "--inspect=9229",
-        "--preserve-symlinks",
-        "${cwd}/node_modules/.bin/vitest",
-        "run",
-        "${relativeFile}",
-        "--no-threads",
-        "--reporter=verbose"
-      ],
-      "env": { "DEBUG_COLORS": 1, "DEBUG": "" },
-      "smartStep": true,
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
-    },
-    {
       "name": "Debug Jest Tests",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
-        // "--experimental-vm-modules",
-        // "--preserve-symlinks",
+        "--experimental-vm-modules",
+        "--preserve-symlinks",
         "--inspect=9229",
-        "${workspaceRoot}/node_modules/.bin/vitest",
-        "run",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "--testTimeout=9999999",
         "${relativeFile}"
       ],
-      "skipFiles": ["<node_internals>/**/*.js"],
+      "showAsyncStacks": true,
+      "skipFiles": ["<node_internals>/**"],
+      "smartStep": true,
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },

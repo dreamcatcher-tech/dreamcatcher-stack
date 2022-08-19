@@ -15,13 +15,15 @@ export class PulseLink extends IpldInterface {
     instance.#setCid(address.cid.toV1())
     return instance
   }
-  static parse(cidString) {
-    if (ArrayBuffer.isView(cidString)) {
-      cidString = cidString.toString()
+  static parse(data) {
+    let cid
+    if (ArrayBuffer.isView(data)) {
+      cid = CID.decode(data)
+    } else {
+      assert.strictEqual(typeof data, 'string')
+      assert(data)
+      cid = CID.parse(data)
     }
-    assert.strictEqual(typeof cidString, 'string')
-    assert(cidString)
-    const cid = CID.parse(cidString)
     assert.strictEqual(cid.version, 1)
     return this.uncrush(cid)
   }

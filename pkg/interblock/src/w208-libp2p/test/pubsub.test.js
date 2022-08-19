@@ -9,7 +9,6 @@ import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import { GossipSub } from '@chainsafe/libp2p-gossipsub'
 import Debug from 'debug'
 import { assert } from 'chai'
-Debug.log = console.log.bind(console)
 const debug = Debug('interpulse:tests:network')
 Debug.enable('*tests*')
 
@@ -126,5 +125,5 @@ describe('network', () => {
     assert(!n1)
     assert(n2)
     assert(n3)
-  })
+  }, 5000)
 })
