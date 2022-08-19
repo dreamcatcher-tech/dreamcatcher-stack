@@ -1,0 +1,47 @@
+{
+  "name": "@dreamcatcher-tech/iporm",
+  "version": "1.0.11",
+  "main": "src/index.mjs",
+  "private": false,
+  "author": "Dreamcatcher Command",
+  "license": "AGPL-3.0",
+  "scripts": {
+    "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --bail"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "eslint": "^8.22.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react": "^7.30.1",
+    "jest": "^28.1.3"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "maxWorkers": "95%",
+    "testTimeout": 300,
+    "setupFiles": [
+      "trace-unhandled/register"
+    ]
+  },
+  "wallaby": {
+    "autoDetect": true,
+    "tests": [
+      "**/*.test.js"
+    ],
+    "env": {
+      "type": "node",
+      "runner": "node",
+      "params": {
+        "runner": "--experimental-vm-modules"
+      }
+    }
+  }
+}
