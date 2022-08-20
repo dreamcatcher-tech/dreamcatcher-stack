@@ -1,33 +1,46 @@
-import { Pulse } from '../../w008-ipld'
+import { PulseLink, Request } from '../../w008-ipld'
 import { PulseNet } from '..'
 import Debug from 'debug'
-import delay from 'delay'
+import assert from 'assert-fast'
+import { jest } from '@jest/globals'
+import { Engine } from '../../w210-engine'
 const debug = Debug('interpulse:tests:full')
-Debug.enable('*tests* *PulseNet libp2p:*sub* ')
+Debug.enable('*tests* *PulseNet ')
 
 describe('full', () => {
+  jest.setTimeout(3000)
   test.only('server with late client', async () => {
+    const engine = await Engine.createCI()
     // one node set up
     const server = await PulseNet.createCI()
     debug(server)
-    const genesis = await Pulse.createCI()
+    const genesis = engine.latest
     debug('address', genesis.getAddress())
     debug('pulselink', genesis.getPulseLink())
     const address = genesis.getAddress()
-
-    const result = server.endure(genesis)
+    server.endure(genesis)
 
     const client = await PulseNet.createCI()
     await client.dialCI(server)
 
     const emitter = client.subscribePulse(address)
-    await delay(500)
+    const it = emitter[Symbol.asyncIterator]()
 
-    await server.endure(genesis)
+    debug('begin waiting for announcement')
+    const { value: p1 } = await it.next()
+    assert(p1 instanceof PulseLink)
+    debug('emit', p1)
+    assert(p1.equals(genesis.getPulseLink()))
+    const pulse1 = await client.getPulse(p1)
 
-    // for await (const pulseLink of client.subscribePulse(address)) {
-    //   debug('asdf', pulseLink)
-    // }
+    await engine.pierce(Request.create('TEST'))
+    const next = engine.latest
+    debug('begin waiting for announcement')
+    server.endure(next)
+    const { value: p2 } = await it.next()
+    assert(p2 instanceof PulseLink)
+    debug('emit', p2)
+    assert(p2.equals(next.getPulseLink()))
   })
   test('server two clients', async () => {})
   test('two servers', async () => {})

@@ -1,16 +1,13 @@
-import delay from 'delay'
 import { createLibp2p } from 'libp2p'
 import { TCP } from '@libp2p/tcp'
 import { Mplex } from '@libp2p/mplex'
 import { Noise } from '@chainsafe/libp2p-noise'
-import { FloodSub } from '@libp2p/floodsub'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import { GossipSub } from '@chainsafe/libp2p-gossipsub'
 import Debug from 'debug'
 import { assert } from 'chai'
 const debug = Debug('interpulse:tests:network')
-Debug.enable('*tests*')
 
 const createNode = async () => {
   const node = await createLibp2p({
@@ -125,5 +122,5 @@ describe('network', () => {
     assert(!n1)
     assert(n2)
     assert(n3)
-  }, 5000)
+  })
 })

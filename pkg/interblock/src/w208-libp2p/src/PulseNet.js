@@ -18,6 +18,7 @@ import all from 'it-all'
 import delay from 'delay'
 import Debug from 'debug'
 const debug = Debug('interpulse:PulseNet')
+const MS_DELAY = 50
 
 export class PulseNet {
   #net
@@ -83,20 +84,20 @@ export class PulseNet {
     return promise
   }
   async awaitDhtPeers() {
+    // TODO hook into topology events, or some other way to know
+    // when new peers join dht, try insert into them, or read from them
+    // when new peers subscribe in pubsub, try publish to them
+    // TODO await pubsub peers, and race between them
     const isDhtPeers = () =>
       this.#net.dht.lan.routingTable.size > 0 ||
       this.#net.dht.wan.routingTable.size > 0
     return new Promise((resolve, reject) => {
       const wait = async () => {
-        const timeout = 30000
         let waited = 0
-        while (!isDhtPeers()) {
+        while (!isDhtPeers() && this.#net.started) {
           // TODO cancel this request if a superseding request is issued
-          await delay(10)
-          waited += 10
-          if (waited >= timeout) {
-            reject(new Error('Could not set DHT'))
-          }
+          await delay(MS_DELAY)
+          waited += MS_DELAY
         }
         resolve()
       }
@@ -110,6 +111,7 @@ export class PulseNet {
     const address = pulse.getAddress()
     assert(address.isRemote())
 
+    debug('announce\n%s\n%s', address.cid.toString(), pulse.cid.toString())
     const provide = this.awaitDhtPeers().then(() => {
       return this.#net.contentRouting.provide(address.cid)
     })
@@ -118,14 +120,27 @@ export class PulseNet {
     const dht = this.awaitDhtPeers().then(() => {
       return all(this.#net.dht.put(key, value))
     })
-    const pubsub = this.awaitDhtPeers().then(async () => {
-      await delay(100)
-      this.#net.pubsub.runHeartbeat() // without this, may publish too early
-      const topic = address.cid.toString()
-      return this.#net.pubsub.publish(topic, value)
-    })
+
+    const topic = address.cid.toString()
+    const pubsub = this.#publish(topic, value)
 
     return { provide, dht, pubsub }
+  }
+  async #publish(topic, value) {
+    // store the result, and verify how many peers we have published this to
+    // if new peers come online, and listen to this topic, we want to tell them
+    // if we restart, we want to ensure we reinflate our cache
+    await this.awaitDhtPeers()
+    try {
+      await this.#net.pubsub.publish(topic, value)
+      debug('published', topic)
+    } catch (error) {
+      if (error.message === 'PublishError.InsufficientPeers') {
+        await delay(MS_DELAY)
+        return this.#publish(topic, value)
+      }
+      throw error
+    }
   }
   async dialCI(other) {
     assert(other instanceof PulseNet)
@@ -142,14 +157,19 @@ export class PulseNet {
     assert.strictEqual(typeof topic, 'string')
     assert(topic)
     assert.strictEqual(typeof callback, 'function')
+    debug(`pubsubSubscribe to:`, topic)
+    this.#net.pubsub.subscribe(topic)
     this.#pubsubSubscribers.set(topic, callback)
-    return () => this.#pubsubSubscribers.delete(callback)
+    return () => {
+      this.#net.pubsub.unsubscribe(topic)
+      this.#pubsubSubscribers.delete(callback)
+    }
   }
   #pubsub(event) {
     const { topic } = event.detail
     // TODO handle multiple subscribers
     const subscriber = this.#pubsubSubscribers.get(topic)
-    debug('pubsub', topic)
+    debug('pubsub event received', topic)
     subscriber(event.detail.data)
   }
   subscribePulse(address) {
@@ -169,26 +189,49 @@ export class PulseNet {
     assert(address instanceof Address)
     assert(address.isRemote())
     debug('subscribing to', address.toString())
-
-    return new EventIterator(async ({ push, stop }) => {
-      // this.addEventListener(event, push, options)
-      // return () => this.removeEventListener(event, push, options)
-      await this.awaitDhtPeers()
-      this.#pubsubSubscribe(address.cid.toString(), (data) => {
-        push(data)
-      })
-      const key = address.cid.bytes
-      for await (const result of this.#net.dht.get(key)) {
-        if (result.name === 'VALUE') {
-          const pulselink = PulseLink.parse(result.value)
-          debug('dht value', pulselink, result.type)
+    const emissions = new Set()
+    return new EventIterator(({ push }) => {
+      const withAwait = async () => {
+        await this.awaitDhtPeers()
+        debug(`begin EventIterator for`, address)
+        const dedupedPush = (pulselink) => {
+          const pulseString = pulselink.cid.toString()
+          if (emissions.has(pulseString)) {
+            debug('duplicate emission ignored')
+            return
+          }
+          emissions.add(pulseString)
           push(pulselink)
         }
+        this.#pubsubSubscribe(address.cid.toString(), (data) => {
+          const pulselink = PulseLink.parse(data)
+          debug(`pubsub for %s\nreceived %s`, address, pulselink)
+          dedupedPush(pulselink)
+        })
+        const key = address.cid.bytes
+        for await (const result of this.#net.dht.get(key)) {
+          // TODO trigger when dht updates are received, too
+          // TODO if no pubsubs in some timeout, requery the dht
+          if (result.name === 'VALUE') {
+            const pulselink = PulseLink.parse(result.value)
+            debug('dht value', pulselink, result.type)
+            dedupedPush(pulselink)
+          }
+        }
+      }
+      withAwait()
+      return () => {
+        //TODO do cleanup
       }
     })
 
     // do some checks against bitswap to verify what we received
     // build this module as raw traffic, with a sanity reconciler coordinator
+  }
+  async getPulse(pulselink) {
+    assert(pulselink instanceof PulseLink)
+    // call on bitswap to get the pulse
+    // check the local repo first
   }
 }
 const isAppRoot = (pulse) => {
