@@ -14,6 +14,7 @@ import { Noise } from '@chainsafe/libp2p-noise'
 import { CID } from 'multiformats/cid'
 import { KadDHT } from '@libp2p/kad-dht'
 import { GossipSub } from '@chainsafe/libp2p-gossipsub'
+import { decode } from '../../w008-ipld'
 import all from 'it-all'
 import delay from 'delay'
 import Debug from 'debug'
@@ -32,7 +33,7 @@ export class PulseNet {
   constructor() {}
   async #init() {
     this.#net = await createLibp2p({
-      addresses: { listen: ['/ip4/127.0.0.1/tcp/0'] },
+      addresses: { listen: ['/ip4/0.0.0.0/tcp/0'] },
       transports: [new TCP()],
       streamMuxers: [new Mplex()],
       connectionEncryption: [new Noise()],
@@ -232,6 +233,13 @@ export class PulseNet {
     assert(pulselink instanceof PulseLink)
     // call on bitswap to get the pulse
     // check the local repo first
+    const resolver = async (cid) => {
+      const bytes = await this.#bitswap.get(cid)
+      const block = await decode(bytes)
+      return block
+    }
+    const pulse = await Pulse.uncrush(pulselink.cid, resolver)
+    return pulse
   }
 }
 const isAppRoot = (pulse) => {

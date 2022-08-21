@@ -1,14 +1,12 @@
-import { PulseLink, Request } from '../../w008-ipld'
+import { Pulse, PulseLink, Request } from '../../w008-ipld'
 import { PulseNet } from '..'
 import Debug from 'debug'
-import assert from 'assert-fast'
 import { jest } from '@jest/globals'
 import { Engine } from '../../w210-engine'
 const debug = Debug('interpulse:tests:full')
-Debug.enable('*tests* *PulseNet ')
 
 describe('full', () => {
-  jest.setTimeout(3000)
+  jest.setTimeout(5000)
   test.only('server with late client', async () => {
     const engine = await Engine.createCI()
     // one node set up
@@ -28,19 +26,31 @@ describe('full', () => {
 
     debug('begin waiting for announcement')
     const { value: p1 } = await it.next()
-    assert(p1 instanceof PulseLink)
+    expect(p1).toBeInstanceOf(PulseLink)
     debug('emit', p1)
-    assert(p1.equals(genesis.getPulseLink()))
+    expect(p1.equals(genesis.getPulseLink())).toBeTruthy()
+    Debug.enable('*tests* *PulseNet')
+    debug('getting pulse')
     const pulse1 = await client.getPulse(p1)
+    debug('got pulse1')
+    expect(pulse1).toBeInstanceOf(Pulse)
+    expect(pulse1).toEqual(genesis)
 
     await engine.pierce(Request.create('TEST'))
     const next = engine.latest
     debug('begin waiting for announcement')
     server.endure(next)
     const { value: p2 } = await it.next()
-    assert(p2 instanceof PulseLink)
+    expect(p2).toBeInstanceOf(PulseLink)
     debug('emit', p2)
-    assert(p2.equals(next.getPulseLink()))
+    expect(p2.equals(next.getPulseLink())).toBeTruthy()
+
+    const pulse2 = await client.getPulse(p2)
+    debug('got pulse2')
+    expect(pulse2).toBeInstanceOf(Pulse)
+    expect(pulse2).toEqual(next)
+
+    it.return()
   })
   test('server two clients', async () => {})
   test('two servers', async () => {})

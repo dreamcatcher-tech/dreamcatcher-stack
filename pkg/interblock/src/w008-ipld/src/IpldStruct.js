@@ -150,14 +150,16 @@ export class IpldStruct extends IpldInterface {
     let block
     if (initial instanceof CID) {
       block = await resolver(initial)
+      assert(block instanceof Block, `not instance of Block`)
       // TODO check the schema
       initial = { ...block.value }
     } else {
       assert.strictEqual(typeof initial, 'object')
       initial = { ...initial }
     }
+
     const instance = new this()
-    for (const key in initial) {
+    const uncrushKey = async (key) => {
       const value = initial[key]
       const isChildCidLink = this.isCidLink(key)
       if (value instanceof CID) {
@@ -178,6 +180,12 @@ export class IpldStruct extends IpldInterface {
         instance[key] = value
       }
     }
+    const awaits = [] // parallelize bitswap network requests
+    for (const key in initial) {
+      awaits.push(uncrushKey(key))
+    }
+    await Promise.all(awaits)
+
     const keyCount = Object.keys(initial).length
     assert.strictEqual(Object.keys(instance).length, keyCount)
     if (block) {
