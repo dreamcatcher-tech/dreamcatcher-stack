@@ -1,33 +1,56 @@
-import { Pulse } from '../../w008-ipld'
+import { Pulse, PulseLink, Request } from '../../w008-ipld'
 import { PulseNet } from '..'
 import Debug from 'debug'
-import delay from 'delay'
+import { jest } from '@jest/globals'
+import { Engine } from '../../w210-engine'
 const debug = Debug('interpulse:tests:full')
-Debug.enable('*tests* *PulseNet libp2p:*sub* ')
 
 describe('full', () => {
+  jest.setTimeout(5000)
   test.only('server with late client', async () => {
+    const engine = await Engine.createCI()
     // one node set up
     const server = await PulseNet.createCI()
     debug(server)
-    const genesis = await Pulse.createCI()
+    const genesis = engine.latest
     debug('address', genesis.getAddress())
     debug('pulselink', genesis.getPulseLink())
     const address = genesis.getAddress()
-
-    const result = server.endure(genesis)
+    server.endure(genesis)
 
     const client = await PulseNet.createCI()
     await client.dialCI(server)
 
     const emitter = client.subscribePulse(address)
-    await delay(500)
+    const it = emitter[Symbol.asyncIterator]()
 
-    await server.endure(genesis)
+    debug('begin waiting for announcement')
+    const { value: p1 } = await it.next()
+    expect(p1).toBeInstanceOf(PulseLink)
+    debug('emit', p1)
+    expect(p1.equals(genesis.getPulseLink())).toBeTruthy()
+    Debug.enable('*tests* *PulseNet')
+    debug('getting pulse')
+    const pulse1 = await client.getPulse(p1)
+    debug('got pulse1')
+    expect(pulse1).toBeInstanceOf(Pulse)
+    expect(pulse1).toEqual(genesis)
 
-    // for await (const pulseLink of client.subscribePulse(address)) {
-    //   debug('asdf', pulseLink)
-    // }
+    await engine.pierce(Request.create('TEST'))
+    const next = engine.latest
+    debug('begin waiting for announcement')
+    server.endure(next)
+    const { value: p2 } = await it.next()
+    expect(p2).toBeInstanceOf(PulseLink)
+    debug('emit', p2)
+    expect(p2.equals(next.getPulseLink())).toBeTruthy()
+
+    const pulse2 = await client.getPulse(p2)
+    debug('got pulse2')
+    expect(pulse2).toBeInstanceOf(Pulse)
+    expect(pulse2).toEqual(next)
+
+    it.return()
   })
   test('server two clients', async () => {})
   test('two servers', async () => {})

@@ -2,11 +2,11 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "eslint": "^8.20.0",
-    "eslint-config-prettier": "^8.3.0",
+    "eslint": "^8.22.0",
+    "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.30.1",
-    "lerna": "^5.4.0",
+    "lerna": "^5.4.3",
     "prettier": "^2.7.1"
   },
   "workspaces": [
@@ -20,5 +20,8 @@
   },
   "scripts": {
     "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "patch-package": "^6.4.7"
   }
 }
