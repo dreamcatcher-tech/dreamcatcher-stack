@@ -29,7 +29,7 @@ const createNode = async () => {
 }
 
 describe('dht', () => {
-  test.only('basic', async () => {
+  test('basic', async () => {
     const [node1, node2, node3] = await Promise.all([
       createNode(),
       createNode(),

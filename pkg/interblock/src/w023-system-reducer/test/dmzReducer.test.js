@@ -24,7 +24,7 @@ describe('dmzReducer', () => {
       // 5 blocks 103ms, 3 blocks 79ms = 20ms / block
       const result = await engine.pierce(request)
       debug(`result`, result)
-      const state = engine.latest
+      const state = engine.selfLatest
       const channel = await state.getNetwork().getChild('child1')
       expect(channel).toMatchSnapshot()
     })

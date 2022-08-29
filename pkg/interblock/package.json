@@ -29,6 +29,7 @@
     "@libp2p/kad-dht": "^3.0.4",
     "@libp2p/mplex": "^5.0.0",
     "@libp2p/tcp": "^3.0.3",
+    "@libp2p/webrtc-star-signalling-server": "^2.0.2",
     "@noble/hashes": "^1.1.2",
     "ajv": "^8.11.0",
     "ajv-formats": "^2.1.1",

@@ -1,6 +1,10 @@
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Scale')
+
 export class Scale {
+  static create() {
+    return new Scale()
+  }
   // fires up more engine instances to form a distributed engine
   // in a trusted environment such as multicore cpu or aws lambda
   watchdog(lock) {

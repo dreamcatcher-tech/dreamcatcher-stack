@@ -7,14 +7,15 @@ const debug = Debug('interblock:tests:engine')
 describe('engine', () => {
   test('basic', async () => {
     const engine = await Engine.createCI()
-    debug(engine.address)
-    expect(engine.address.toString()).toMatchSnapshot()
+    Debug.enable('*tests*')
+    debug(engine.selfAddress)
+    expect(engine.selfAddress.toString()).toMatchSnapshot()
 
     const request = Request.create('PING')
     const response = await engine.pierce(request)
     assert.deepEqual(response, {})
 
-    const pulse = engine.latest
+    const pulse = engine.selfLatest
     assert.deepEqual(pulse.getNetwork().channels.txs, [])
     const io = await pulse.getNetwork().getIo()
     const [reply] = io.tx.reducer.replies

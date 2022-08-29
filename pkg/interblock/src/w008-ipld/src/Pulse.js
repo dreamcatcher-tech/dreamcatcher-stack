@@ -207,6 +207,13 @@ export class Pulse extends IpldStruct {
     const pulse = await Pulse.create(genesis)
     return pulse
   }
+  isNext(next) {
+    assert(next instanceof Pulse)
+    assert(this.getAddress().equals(next.getAddress()))
+    // TODO check lineage
+    assert(!this.getPulseLink().equals(next.getPulseLink()))
+    return true
+  }
 }
 const injectEntropy = (installer, entropy) => {
   let { config = {} } = installer

@@ -3,7 +3,7 @@ import { shell } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:openPaths')
 
-describe.concurrent('openPaths', () => {
+describe('openPaths', () => {
   test(`basic`, async () => {
     const engine = await Engine.createCI({ overloads: { root: shell } })
     await engine.pierce(shell.api.add('child1'))

@@ -1,5 +1,5 @@
 import { Pulse, PulseLink, Request } from '../../w008-ipld'
-import { PulseNet } from '..'
+import { PulseNet, createRamRepo } from '..'
 import Debug from 'debug'
 import { jest } from '@jest/globals'
 import { Engine } from '../../w210-engine'
@@ -7,10 +7,10 @@ const debug = Debug('interpulse:tests:full')
 
 describe('full', () => {
   jest.setTimeout(5000)
-  test.only('server with late client', async () => {
+  test('server with late client', async () => {
     const engine = await Engine.createCI()
     // one node set up
-    const server = await PulseNet.createCI()
+    const server = await PulseNet.create(createRamRepo('server'))
     debug(server)
     const genesis = engine.latest
     debug('address', genesis.getAddress())
@@ -18,7 +18,7 @@ describe('full', () => {
     const address = genesis.getAddress()
     server.endure(genesis)
 
-    const client = await PulseNet.createCI()
+    const client = await PulseNet.create(createRamRepo('client'))
     await client.dialCI(server)
 
     const emitter = client.subscribePulse(address)

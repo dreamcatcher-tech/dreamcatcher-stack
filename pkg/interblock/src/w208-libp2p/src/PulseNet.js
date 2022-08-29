@@ -1,3 +1,4 @@
+import { sigServer } from '@libp2p/webrtc-star-signalling-server'
 import { EventIterator } from 'event-iterator'
 import { createBitswap } from 'ipfs-bitswap'
 import { createRepo } from 'ipfs-repo'
@@ -17,51 +18,94 @@ import { GossipSub } from '@chainsafe/libp2p-gossipsub'
 import { decode } from '../../w008-ipld'
 import all from 'it-all'
 import delay from 'delay'
+import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
+
 import Debug from 'debug'
 const debug = Debug('interpulse:PulseNet')
 const MS_DELAY = 50
+
+const ciRepo = () => createRepo('ciRepo', loadCodec, createBackend())
 
 export class PulseNet {
   #net
   #repo
   #bitswap
-  static async createCI() {
+  #keypair
+  static async createCI(repo = ciRepo()) {
+    const CI = true
+    return this.create(repo, CI)
+  }
+  static async create(repo, CI) {
     const instance = new PulseNet()
-    await instance.#init()
+    await instance.#init(repo, CI)
     return instance
   }
-  constructor() {}
-  async #init() {
-    this.#net = await createLibp2p({
+  async #init(repoOrPath, CI = false) {
+    assert(repoOrPath, `must supply repo or path`)
+    let repo = repoOrPath
+    if (typeof repoOrPath === 'string') {
+      const options = { path: repoOrPath }
+      repo = createHardRepo(debug.extend('repo'), loadCodec, options)
+    }
+    assert.strictEqual(typeof repo.isInitialized, 'function')
+    // TODO store the config in the root chain
+    const options = {
       addresses: { listen: ['/ip4/0.0.0.0/tcp/0'] },
       transports: [new TCP()],
       streamMuxers: [new Mplex()],
       connectionEncryption: [new Noise()],
       dht: new KadDHT(),
       pubsub: new GossipSub(),
-    })
-    this.#net.pubsub.addEventListener('message', (e) => this.#pubsub(e))
-    await this.#net.start()
-
-    this.#repo = createRepo('rams', loadCodec, createBackend())
-    if (!(await this.#repo.isInitialized())) {
-      // workaround while waiting for
-      // https://github.com/ipfs/js-ipfs/pull/4172
-      let keypair
-      // if (CI) {
-      keypair = Keypair.createCI()
-      // } else {
-      // keypair = await Keypair.generate('ipex')
-      // }
-      // options.init.privateKey = await keypair.generatePeerId()
-      // const validators = Validators.create([keypair.publicKey])
-      // latest = await Pulse.createRoot({ CI, validators })
+      datastore: repo.datastore, // definitely correct as per ipfs
+    }
+    if (!(await repo.isInitialized())) {
+      debug('initializing repo', repo.path)
+      this.#keypair = CI
+        ? Keypair.createCI()
+        : await Keypair.generate(repo.path)
+      options.peerId = await this.#keypair.generatePeerId()
+      const identity = this.#keypair.export()
+      await repo.init({ identity })
+    } else {
+      const config = await repo.config.getAll()
+      this.#keypair = Keypair.import(config.identity)
+      options.peerId = await this.#keypair.generatePeerId()
+    }
+    if (repo.closed) {
+      await repo.open()
     }
 
+    this.#net = await createLibp2p(options)
+    this.#net.pubsub.addEventListener('message', (e) => this.#pubsub(e))
+
+    this.#net.handle('/pulse/0.0.1', () => {})
+    this.#net.addEventListener('peer:discovery', ({ detail: peer }) => {
+      // debug('peer:discovery', peer.id.toString())
+      // dial the pulse protocol to every peer, until we have enough ?
+      // try connect to all validators ?
+    })
+
+    await this.#net.start()
+    // TODO start a webrtc signalling server if we are on nodejs
+
+    this.#repo = repo
     this.#bitswap = createBitswap(this.#net, this.#repo.blocks)
     await this.#bitswap.start()
   }
-
+  async stop() {
+    await this.#bitswap.stop()
+    await this.#net.stop()
+    await this.#repo.close()
+  }
+  get repo() {
+    return this.#repo
+  }
+  get libp2p() {
+    return this.#net
+  }
+  get keypair() {
+    return this.#keypair
+  }
   endure(pulse) {
     // will read the approot and only announce if approot
     // if no approot, then treat like it is approot
@@ -73,6 +117,7 @@ export class PulseNet {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
 
+    // TODO throw if stopped
     const { provide, dht, pubsub } = this.#announce(pulse)
     const blocks = pulse.getDiffBlocks()
     const manyBlocks = [...blocks.entries()].map(([, block]) => {
@@ -233,13 +278,19 @@ export class PulseNet {
     assert(pulselink instanceof PulseLink)
     // call on bitswap to get the pulse
     // check the local repo first
-    const resolver = async (cid) => {
+    const resolver = this.getResolver(pulselink.cid)
+    const pulse = await Pulse.uncrush(pulselink.cid, resolver)
+    return pulse
+  }
+  getResolver(treetop) {
+    assert(treetop instanceof CID)
+    // TODO WARNING permissions must be honoured
+    // use treetop to only fetch things below this CID
+    return async (cid) => {
       const bytes = await this.#bitswap.get(cid)
       const block = await decode(bytes)
       return block
     }
-    const pulse = await Pulse.uncrush(pulselink.cid, resolver)
-    return pulse
   }
 }
 const isAppRoot = (pulse) => {

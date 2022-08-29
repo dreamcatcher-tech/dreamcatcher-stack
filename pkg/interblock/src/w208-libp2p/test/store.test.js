@@ -1,62 +1,54 @@
 import { deleteAsync } from 'del'
-import { createRepo } from 'ipfs-core-config/repo'
-import { Interpulse } from '../../w300-interpulse/src/Interpulse'
+import { createRepo } from 'ipfs-repo'
 import { createBackend } from '../src/createBackend'
 import { loadCodec } from '../src/loadCodec'
-import { fromString } from 'uint8arrays/from-string'
-import { toString } from 'uint8arrays/to-string'
-import { createLibp2p } from 'libp2p'
-import { TCP } from '@libp2p/tcp'
-import { Mplex } from '@libp2p/mplex'
-import { Noise } from '@chainsafe/libp2p-noise'
-import { CID } from 'multiformats/cid'
-import { KadDHT } from '@libp2p/kad-dht'
-import all from 'it-all'
-import delay from 'delay'
+import { Keypair } from '../../w008-ipld'
+import { PulseNet } from '..'
 import Debug from 'debug'
-import { Pulse } from '../../w008-ipld'
 const debug = Debug('interpulse:tests:ramrepo')
-Debug.enable('*tests*')
-describe('store', () => {
-  test('basic', async () => {
-    // get a basic repo going
-    // try store blocks and dht values in it
-    // ensure our dht storage takes precedence
 
-    const repo = createRepo('test', loadCodec, createBackend())
-    const options = {
-      addresses: { listen: ['/ip4/0.0.0.0/tcp/0'] },
-      transports: [new TCP()],
-      streamMuxers: [new Mplex()],
-      connectionEncryption: [new Noise()],
-      dht: new KadDHT(),
-      repo,
-    }
-    const node = await createLibp2p(options)
-    await node.loadKeychain()
-    debug(repo.keys)
-    await node.start()
-    debug(repo.keys)
+describe('store', () => {
+  test('ram', async () => {
+    const net = await PulseNet.createCI()
+    await expect(net.repo.isInitialized()).resolves.toBeTruthy()
+    const keypair = net.keypair
+    expect(keypair).toBeInstanceOf(Keypair)
+    expect(net.keypair).toEqual(Keypair.createCI())
+    await net.stop()
+  })
+  test('repo is closed after net.stop()', async () => {
+    const repo = createRepo('ciRepo', loadCodec, createBackend())
+    expect(repo.closed).toBeTruthy()
+    const net = await PulseNet.createCI(repo)
+    expect(repo.closed).toBeFalsy()
+    await net.stop()
+    expect(repo.closed).toBeTruthy()
+  })
+  test('ram reload', async () => {
+    const repo = createRepo('ciRepo', loadCodec, createBackend())
+    const net = await PulseNet.create(repo)
+    const { keypair } = net
+    await net.stop()
+
+    const reload = await PulseNet.create(repo)
+    expect(reload.keypair).toEqual(keypair)
+    expect(reload.keypair).not.toEqual(Keypair.createCI())
+    const netId = net.libp2p.peerId.toString()
+    const reloadId = reload.libp2p.peerId.toString()
+    expect(reloadId).toEqual(netId)
+    await reload.stop()
   })
   test('disk', async () => {
     const path = `tmp/repo-${Math.random()}`
+    let keypair
     try {
-      const repo = createRepo(debug, loadCodec, { path })
-      const options = {
-        addresses: { listen: ['/ip4/0.0.0.0/tcp/0'] },
-        transports: [new TCP()],
-        streamMuxers: [new Mplex()],
-        connectionEncryption: [new Noise()],
-        dht: new KadDHT(),
-        repo,
-      }
-      const node = await createLibp2p(options)
-      await node.loadKeychain()
-      debug(repo.keys)
-      await node.start()
-      debug(repo.keys)
-    } catch (e) {
-      debug(e)
+      const net = await PulseNet.create(path)
+      keypair = net.keypair
+      await net.stop()
+
+      const reload = await PulseNet.create(path)
+      expect(reload.keypair).toEqual(keypair)
+      await reload.stop()
     } finally {
       debug(`deleting ${path}`)
       await deleteAsync(path)

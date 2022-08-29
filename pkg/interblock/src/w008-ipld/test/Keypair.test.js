@@ -28,4 +28,20 @@ describe('keypair', () => {
     assert.notDeepEqual(v1pk, v2pk)
     assert.deepEqual(v1Rest, v2Rest)
   })
+  test('must supply name', async () => {
+    const msg = 'must supply a name for the key'
+    await expect(Keypair.generate('')).rejects.toThrow(msg)
+    await expect(Keypair.generate()).rejects.toThrow(msg)
+  })
+  test('generatePeerId', async () => {
+    const kp = await Keypair.generate('test')
+    const peerId = await kp.generatePeerId()
+    expect(peerId.type).toStrictEqual('secp256k1')
+  })
+  test('impex', async () => {
+    const kp = await Keypair.generate('ipex')
+    const ex = kp.export()
+    const imp = Keypair.import(ex)
+    expect(kp).toEqual(imp)
+  })
 })

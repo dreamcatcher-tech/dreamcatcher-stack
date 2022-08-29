@@ -24,7 +24,7 @@ const createNode = async () => {
   return node
 }
 describe('network', () => {
-  test.only('pubsub', async () => {
+  test('pubsub', async () => {
     Debug.enable(' *tests*')
     debug(`start`)
     const topic = 'fruit'

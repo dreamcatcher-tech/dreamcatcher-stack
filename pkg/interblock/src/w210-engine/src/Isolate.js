@@ -51,11 +51,54 @@ export class IsolateContainer {
 }
 export class Isolate {
   #overloads = {}
-  constructor() {}
+  #overloadPulses = new Map()
+  static create() {
+    return new Isolate()
+  }
   overload(overloads) {
     assert.strictEqual(typeof overloads, 'object')
     // the dev supplied covenants to override blockchained ones
     this.#overloads = overloads
+  }
+  isCovenant(path) {
+    return this.#isOverload(path) || this.#isSystem(path)
+  }
+  async getCovenantPulse(path) {
+    assert(this.isCovenant(path))
+    if (this.#isOverload(path)) {
+      return await this.#getOverloadPulse(path)
+    }
+    return await this.#getSystemPulse(path)
+  }
+  #isSystem(path) {
+    if (!path.startsWith('/system:/')) {
+      return false
+    }
+    const systemName = path.substring('/system:/'.length)
+    return !!system[systemName]
+  }
+  async #getSystemPulse(path) {
+    assert(this.#isSystem(path))
+    const systemName = path.substring('/system:/'.length)
+    assert(system[systemName], `unknown system covenant: ${systemName}`)
+    if (!this.#overloadPulses.has(path)) {
+      const covenant = system[systemName]
+      const pulse = await Pulse.createCovenantOverload(covenant)
+      this.#overloadPulses.set(path, pulse)
+    }
+    return this.#overloadPulses.get(path)
+  }
+  #isOverload(path) {
+    return !!this.#overloads[path]
+  }
+  async #getOverloadPulse(path) {
+    assert(this.#isOverload(path))
+    if (!this.#overloadPulses.has(path)) {
+      const covenant = this.#overloads[path]
+      const pulse = await Pulse.createCovenantOverload(covenant)
+      this.#overloadPulses.set(path, pulse)
+    }
+    return this.#overloadPulses.get(path)
   }
   async load(pulse, timeout) {
     debug('load')

@@ -4,10 +4,41 @@ import { Engine, schemaToFunctions } from '../../w210-engine'
 import assert from 'assert-fast'
 import Debug from 'debug'
 import posix from 'path-browserify'
-import { loadCodec } from '../../w210-engine/test/fixtures/loadCodec'
-import { createRepo } from 'ipfs-core-config/repo'
+import { PulseNet } from '../../w208-libp2p'
+import { Endurance } from '../../w210-engine/src/Endurance'
+import { Crypto } from '../../w210-engine/src/Crypto'
 
 const debug = Debug('interpulse')
+/**
+ * Hints handles receiving announce calls from the network,
+ * and investigates them until it is certain that the engine should be triggerd.
+ * The engine might still not execute if a duplicate is detected.
+ * Hints is entirely reactive to external events, many of which might be false
+ * or grossly delayed.
+ *
+ * Endurance holds the 'latest' functionality via subscribe() and simply
+ * ejects after the first result comes in.  Subscribe may optionally return
+ * a confidence rating, of the caller would like to wait around longer.
+ * DHT requests have an emitter on the result, pubsub also has an emitter.
+ * So rather than a callback, you need to consume the results, which also
+ * allows an unsubscribe function too.
+ *
+ * Endurance holds 'self' functionality too, where it knows what the address
+ * and latest of its own address is.
+ */
+class Hints {
+  static create(engine, net) {
+    assert(engine instanceof Engine)
+    assert(net instanceof PulseNet)
+    const instance = new Hints()
+    return instance
+  }
+  async stop() {
+    // TODO unsubscribe from pulsenet
+    // stop any sagas to resolve a hint
+  }
+}
+
 /**
  *
  * The top level ORM object.
@@ -22,22 +53,37 @@ const debug = Debug('interpulse')
 
 export class Interpulse {
   #engine
+  #endurance
+  #hints
+  #net
+  #crypto
   static async createCI(options = {}) {
     options = { ...options, CI: true }
     return this.create(options)
   }
-  static async create(options) {
-    const engineOptions = { ...options }
-    engineOptions.overloads = { ...engineOptions.overloads, root: shell }
-    if (engineOptions.repo && typeof engineOptions.repo === 'string') {
-      const path = engineOptions.repo
-      engineOptions.repo = createRepo(debug, loadCodec, { path })
+  static async create(options = {}) {
+    let overloads = options.overloads ? { ...options.overloads } : {}
+    overloads.root = shell
+    // build the endurance object
+    let net, crypto, endurance
+    const { repo, CI } = options
+    if (repo) {
+      // no repo, no net - storage and network are one 🙏
+      net = await PulseNet.create(repo, CI)
+      crypto = Crypto.create(net.keypair)
+      endurance = Endurance.create(net)
     }
-    const engine = await Engine.create(engineOptions)
-    if (typeof options.repo === 'string') {
-      await engine.ipfsStart()
-    }
+    const opts = { ...options, overloads, crypto, endurance }
+    const engine = await Engine.create(opts)
+
     const instance = new Interpulse(engine)
+    if (net) {
+      instance.#hints = Hints.create(engine, net)
+      instance.#net = net
+      instance.#endurance = endurance
+      instance.#crypto = crypto
+    }
+
     return instance
   }
   constructor(engine) {
@@ -61,7 +107,7 @@ export class Interpulse {
     return dispatches
   }
   async latest(path = '.') {
-    const { wd = '/' } = this.#engine.latest.getState().toJS()
+    const { wd = '/' } = this.#engine.selfLatest.getState().toJS()
     const absolutePath = posix.resolve(wd, path)
     return this.#engine.latestByPath(absolutePath)
   }
@@ -72,16 +118,14 @@ export class Interpulse {
     const { wd = '/' } = this.#engine.latest.getState().toJS()
     return wd
   }
-  async shutdown() {
-    await this.#engine.ipfsStop()
-  }
-  async ipfsStart() {
-    debug(`starting ipfs...`)
-    await this.#engine.ipfsStart()
-    debug(`ipfs started`)
-  }
-  get ipfs() {
-    return this.#engine.ipfs
+  async stop() {
+    await this.#engine.stop() // stop all interpulsing
+    if (this.#net) {
+      this.#crypto.stop()
+      await this.#hints.stop()
+      await this.#endurance.stop() // complete all disk writes
+      await this.#net.stop()
+    }
   }
 }
 const mapShell = (engine) => {

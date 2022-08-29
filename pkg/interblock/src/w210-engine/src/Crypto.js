@@ -30,8 +30,12 @@ export class CryptoLock {
   release() {
     debug(`release`)
     this.#resolve()
+    this.#keypair = undefined
   }
   isValid() {
+    if (!this.#keypair) {
+      return false
+    }
     return true // TODO expire based on timestamp
   }
   async sign(provenance) {
@@ -47,12 +51,18 @@ export class Crypto {
   #keypair
   #locks = new Map()
   #counter = 0
-  constructor(keypair = Keypair.createCI()) {
-    this.#keypair = keypair
+  static create(keypair = Keypair.createCI()) {
+    const instance = new Crypto()
+    instance.#keypair = keypair
+    return instance
+  }
+  get publicKey() {
+    return this.#keypair.publicKey
   }
   async lock(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
+    assert(this.#keypair)
     debug('lock', address)
     const chainId = address.getChainId()
     if (!this.#locks.has(chainId)) {
@@ -81,5 +91,9 @@ export class Crypto {
       }
     })
     return lock
+  }
+  stop() {
+    assert(!this.#locks.size, 'Open locks still')
+    this.#keypair = undefined
   }
 }

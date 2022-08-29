@@ -17,7 +17,6 @@ let CI_PRIVATE_KEY
 
 export class Keypair {
   static async generate(name) {
-    assert.strictEqual(typeof name, 'string')
     const privateKey = await keys.generateKeyPair('secp256k1')
     return this.create(name, privateKey)
   }
@@ -30,7 +29,9 @@ export class Keypair {
   }
   #privateKey
   static create(name, privateKey) {
-    assert.strictEqual(typeof name, 'string')
+    const msg = 'must supply a name for the key'
+    assert.strictEqual(typeof name, 'string', msg)
+    assert(name, msg)
     assert(privateKey instanceof Secp256k1PrivateKey)
     const keypair = new this()
     keypair.#privateKey = privateKey
@@ -38,6 +39,18 @@ export class Keypair {
     keypair.publicKey = PublicKey.create(name, privateKey.public)
     deepFreeze(keypair)
     return keypair
+  }
+  export() {
+    const name = this.name
+    const privateKey = to(this.#privateKey.marshal(), 'base58btc')
+    const publicKey = to(this.#privateKey.public.marshal(), 'base58btc')
+    return { name, privateKey, publicKey }
+  }
+  static import({ name, privateKey, publicKey }) {
+    const pri = from(privateKey, 'base58btc')
+    const pub = from(publicKey, 'base58btc')
+    const key = new Secp256k1PrivateKey(pri, pub)
+    return this.create(name, key)
   }
   async generatePeerId() {
     const pub = this.#privateKey.public.bytes

@@ -25,7 +25,7 @@ describe('hooker', () => {
     const ping = Request.create({ type: 'TEST' })
     const result = await engine.pierce(ping)
     assert.strictEqual(result.pong, true)
-    const pulse = engine.latest
+    const pulse = engine.selfLatest
     const loopback = await pulse.getNetwork().getLoopback()
     assert(loopback.rx.isEmpty())
     assert(loopback.tx.isEmpty())

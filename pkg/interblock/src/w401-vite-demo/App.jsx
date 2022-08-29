@@ -43,7 +43,7 @@ function App() {
       await engine.shutdown()
     }
     debug(`init`)
-    const newEngine = await Interpulse.createCI({ repo, preload: true })
+    const newEngine = await Interpulse.createCI({ repo })
     setEngine(newEngine)
     await newEngine.ipfsStart()
     debug(`Engine ready`)

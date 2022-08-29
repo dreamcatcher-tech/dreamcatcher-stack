@@ -5,7 +5,7 @@ import Debug from 'debug'
 import { Engine } from '../../w210-engine'
 const debug = Debug('interblock:tests:shell')
 
-describe.concurrent('shell', () => {
+describe('shell', () => {
   describe('execution', () => {
     test('parallel request is processed', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
@@ -24,7 +24,7 @@ describe.concurrent('shell', () => {
   test.todo('opens up a path')
   test.todo('coordinates with simultaneous path openings')
   test.todo('detects changes in filesystem')
-  describe.concurrent('cd', () => {
+  describe('cd', () => {
     test('cd to valid nested path', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       const addResult = await engine.pierce(shell.api.add('child1'))
@@ -35,7 +35,7 @@ describe.concurrent('shell', () => {
       assert.strictEqual(cdResult.absolutePath, '/child1')
       debug(`cdResult`, cdResult)
 
-      const { wd } = engine.latest.getState().toJS()
+      const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/child1')
       const addNestedResult = await engine.pierce(shell.api.add('nested1'))
       debug(`addNestedResult`, addNestedResult)
@@ -43,7 +43,7 @@ describe.concurrent('shell', () => {
 
       const nestedResult = await engine.pierce(cdNested)
       debug(`nestedResult`, nestedResult)
-      const { wd: wdNested } = engine.latest.getState().toJS()
+      const { wd: wdNested } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wdNested, '/child1/nested1')
       assert.strictEqual(engine.logger.pulseCount, 14)
     })
@@ -73,7 +73,7 @@ describe.concurrent('shell', () => {
       const result = await engine.pierce(cd)
       debug(`result`, result)
 
-      const { wd } = engine.latest.getState().toJS()
+      const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/')
     })
     test(`.. is valid`, async () => {
@@ -81,31 +81,31 @@ describe.concurrent('shell', () => {
       await engine.pierce(shell.api.add('child1'))
       const cdChild = shell.api.cd('child1')
       await engine.pierce(cdChild)
-      const { wd } = engine.latest.getState().toJS()
+      const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/child1')
 
       const cdParent = shell.api.cd('..')
       const parentResult = await engine.pierce(cdParent)
       debug(`parentResult`, parentResult)
-      const { wd: wdParent } = engine.latest.getState().toJS()
+      const { wd: wdParent } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wdParent, '/')
     })
     test(`cd .. at root stays at root`, async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       const cd = shell.api.cd('.')
       await engine.pierce(cd)
-      const { wd } = engine.latest.getState().toJS()
+      const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/')
       const cdUp = shell.api.cd('..')
       await engine.pierce(cdUp)
-      const { wd: wdCd } = engine.latest.getState().toJS()
+      const { wd: wdCd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wdCd, '/')
     })
     test.todo('cd rejects if non existent path')
     test.todo('absolute path')
     test.todo('parent path')
   })
-  describe.concurrent('ls', () => {
+  describe('ls', () => {
     test('list current directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       const ls = shell.api.ls()
@@ -170,7 +170,7 @@ describe.concurrent('shell', () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       await engine.pierce(shell.api.add('child1'))
       await engine.pierce(shell.api.cd('child1'))
-      const { wd } = engine.latest.getState().toJS()
+      const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/child1')
 
       const ls = shell.api.ls('/child1')

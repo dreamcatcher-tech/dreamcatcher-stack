@@ -1,43 +1,38 @@
-import { createRepo } from 'ipfs-repo'
-import { Interpulse } from '../../w300-interpulse/src/Interpulse'
-import { createBackend } from '../src/createBackend'
-import { loadCodec } from '../src/loadCodec'
 import { deleteAsync } from 'del'
+import { createRamRepo } from '../../w208-libp2p'
 import Debug from 'debug'
-const debug = Debug('interblock:tests:ipfs')
+import { Keypair, Pulse } from '../../w008-ipld'
+import { jest } from '@jest/globals'
+import { Interpulse } from '..'
 
-describe('ipfs', () => {
-  test('repo', async () => {
-    const repo = createRepo('test', loadCodec, createBackend())
-    await repo.init({})
-    await repo.open()
-    debug(await repo.stat())
-  })
-  test('reload', async () => {
-    const repo = createRepo('ram', loadCodec, createBackend())
+const debug = Debug('interpulse:tests:reload')
+
+Debug.enable('*tests*')
+
+describe('reload', () => {
+  jest.setTimeout(2000)
+  test.only('interpulse ram reload', async () => {
+    const repo = createRamRepo('ram')
     debug(`starting engine`)
     const engine = await Interpulse.createCI({ repo })
     debug(`engine started`)
 
     await engine.add('child1')
     await engine.cd('child1')
-    await engine.shutdown()
-    debug(await repo.stat())
+    await engine.stop()
+    debug('stat', await repo.stat())
     const reboot = await Interpulse.createCI({ repo })
     const latest = await reboot.latest('/')
     expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
+    await latest.stop()
   })
-  test('reload from disk', async () => {
+  test('interpulse disk reload', async () => {
     const repo = `tmp/reload-${Math.random()}`
     Debug.enable('*tests* ipfs*')
-    await import('trace-unhandled/register')
     try {
       const engine = await Interpulse.createCI({ repo })
-
       await new Promise((r) => setTimeout(r, 500))
       // await engine.shutdown()
-    } catch (e) {
-      debug(e)
     } finally {
       debug(`deleting ${repo}`)
       await deleteAsync(repo)
