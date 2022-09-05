@@ -11,7 +11,7 @@ Debug.enable('*tests*')
 
 describe('reload', () => {
   jest.setTimeout(2000)
-  test.only('interpulse ram reload', async () => {
+  test('interpulse ram reload', async () => {
     const repo = createRamRepo('ram')
     debug(`starting engine`)
     const engine = await Interpulse.createCI({ repo })

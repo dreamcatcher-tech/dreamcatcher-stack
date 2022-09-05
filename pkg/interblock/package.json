@@ -47,6 +47,7 @@
     "ipfs-repo": "^15.0.2",
     "ipld-hashmap": "^2.1.12",
     "ipld-schema": "^3.0.3",
+    "it-pushable": "^3.1.0",
     "libp2p": "0.38.0",
     "pad-left": "^2.1.0",
     "patch-package": "^6.4.7",

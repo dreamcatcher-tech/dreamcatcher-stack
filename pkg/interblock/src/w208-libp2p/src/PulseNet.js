@@ -129,27 +129,6 @@ export class PulseNet {
 
     return promise
   }
-  async awaitDhtPeers() {
-    // TODO hook into topology events, or some other way to know
-    // when new peers join dht, try insert into them, or read from them
-    // when new peers subscribe in pubsub, try publish to them
-    // TODO await pubsub peers, and race between them
-    const isDhtPeers = () =>
-      this.#net.dht.lan.routingTable.size > 0 ||
-      this.#net.dht.wan.routingTable.size > 0
-    return new Promise((resolve, reject) => {
-      const wait = async () => {
-        let waited = 0
-        while (!isDhtPeers() && this.#net.started) {
-          // TODO cancel this request if a superseding request is issued
-          await delay(MS_DELAY)
-          waited += MS_DELAY
-        }
-        resolve()
-      }
-      wait()
-    })
-  }
   #announce(pulse) {
     if (!isAppRoot(pulse)) {
       return

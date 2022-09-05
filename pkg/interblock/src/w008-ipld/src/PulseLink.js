@@ -61,8 +61,7 @@ export class PulseLink extends IpldInterface {
     return this
   }
   getDiffBlocks() {
-    const map = new Map()
-    return map
+    return new Map()
   }
   equals(other) {
     assert(other instanceof PulseLink)

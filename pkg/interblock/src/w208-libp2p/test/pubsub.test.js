@@ -5,8 +5,8 @@ import { Noise } from '@chainsafe/libp2p-noise'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import { GossipSub } from '@chainsafe/libp2p-gossipsub'
-import Debug from 'debug'
 import { assert } from 'chai'
+import Debug from 'debug'
 const debug = Debug('interpulse:tests:network')
 
 const createNode = async () => {

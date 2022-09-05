@@ -13,6 +13,8 @@ There are two other parts of the system that contracts are offered to. The first
 > The contract with remote validators are Interpulses pushed in order, but non consecutive <br/>
 > The contract with remote subscribers is Pulses in order, but non consecutive
 
+Note that the engine never has reason to ask for remote Pulses. This is because to ensure determinism, references to remote chains must be done using reference to an approot, which in turn must be supplied at pulse creation time.
+
 ## Principles
 
 1. Announcing an Interpulse is push, and is the responsibility of the transmitter, Pulse is pull, and is the responsibility of the consumer.
@@ -51,7 +53,7 @@ where path is provided when an interpulse is being sent, and tells the recipient
 
 ## Message Types
 
-### `SUBSCRIBE { forAddress, onlyLatest, proof }`
+### `SUBSCRIBE { forAddress, isSingle, proof }`
 
 ### `UNSUBSCRIBE { forAddress }`
 
