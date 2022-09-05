@@ -11,7 +11,7 @@ const createPulselink = () => {
   return PulseLink.createCrossover(address)
 }
 describe('Connection', () => {
-  test.only('basic', async () => {
+  test('basic', async () => {
     const eastStream = pushable({ objectMode: true })
     const westStream = pushable({ objectMode: true })
     const announce = pushable({ objectMode: true })

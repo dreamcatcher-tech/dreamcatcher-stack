@@ -22,7 +22,6 @@ export class Connection {
   #announce
   #txSubscriptions = new Set()
   #rxSubscriptions = new Map()
-  // TODO ensure no echoes on the line
   #latests = new Map() // chainId : {remote, local[]}
   static create(tx, rx, announce) {
     assert.strictEqual(typeof announce.push, 'function')
@@ -30,12 +29,13 @@ export class Connection {
     instance.#tx = tx
     instance.#rx = rx
     instance.#announce = announce
-    instance.#startListening()
+    instance.#listen()
     return instance
   }
-  async #startListening() {
-    for await (const { type, payload } of this.#rx) {
-      debug(`received`, type)
+  async #listen() {
+    for await (const received of this.#rx) {
+      debug(`received`, received)
+      const { type, payload } = received
       const { forAddress: chainId } = payload
       switch (type) {
         case 'ANNOUNCE': {
@@ -70,6 +70,7 @@ export class Connection {
   }
   updateRxAnnounce(forAddress, pulselink) {
     // called from parent when another peer updates latest first
+    // used to muffle echos from helpful remote peers
     assert(forAddress instanceof Address)
     assert(forAddress.isRemote())
     assert(pulselink instanceof PulseLink)
@@ -87,7 +88,6 @@ export class Connection {
   isEmpty() {
     return !this.#txSubscriptions.size && !this.#rxSubscriptions.size
   }
-  // stop repeats by updating all connections with latest
   txUnsubscribe(address) {
     assert(address instanceof Address)
     const chainId = address.getChainId()
@@ -95,13 +95,12 @@ export class Connection {
     this.#txSubscriptions.delete(chainId)
   }
   txSubscribe(forAddress, proof = []) {
-    assert(forAddress instanceof Address)
+    assert.strictEqual(typeof forAddress, 'string')
     assert(Array.isArray(proof))
     const isSingle = false
     const subscribe = Connection.SUBSCRIBE(forAddress, isSingle, proof)
-    const chainId = forAddress.getChainId()
-    assert(!this.#txSubscriptions.has(chainId))
-    this.#txSubscriptions.add(chainId)
+    assert(!this.#txSubscriptions.has(forAddress))
+    this.#txSubscriptions.add(forAddress)
     this.#tx.push(subscribe)
   }
   txAnnounce(forAddress, pulselink, path = '') {
@@ -109,7 +108,6 @@ export class Connection {
     assert(pulselink instanceof PulseLink)
     assert.strictEqual(typeof path, 'string')
     const chainId = forAddress.getChainId()
-    Connection.updateGlobalAnnounces(forAddress, pulselink)
     if (!this.#rxSubscriptions.has(chainId)) {
       return
     }
@@ -121,11 +119,11 @@ export class Connection {
     this.#tx.push(announce)
   }
   static SUBSCRIBE(forAddress, isSingle = false, proof = []) {
-    assert(forAddress instanceof Address)
+    assert.strictEqual(typeof forAddress, 'string')
     assert.strictEqual(typeof isSingle, 'boolean')
     assert(Array.isArray(proof))
     assert(proof.every((p) => p instanceof Address))
-    const payload = { forAddress: forAddress.getChainId(), isSingle, proof }
+    const payload = { forAddress, isSingle, proof }
     return { type: 'SUBSCRIBE', payload }
   }
   static ANNOUNCE(forAddress, pulselink, path) {
