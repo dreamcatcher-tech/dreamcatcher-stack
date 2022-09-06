@@ -151,6 +151,7 @@ export class Announcer {
     assert(forAddress instanceof Address)
     assert(latest instanceof PulseLink)
     assert.strictEqual(typeof path, 'string')
+    debug(`announce`, forAddress, latest, path)
 
     const chainId = forAddress.getChainId()
     if (this.#latests.has(chainId)) {
@@ -158,15 +159,15 @@ export class Announcer {
       assert(!latest.equals(previous))
     }
     this.#latests.set(chainId, latest)
+    for (const connection of this.#connections.values()) {
+      connection.txAnnounce(forAddress, latest)
+    }
     if (!this.#subscriptions.has(chainId)) {
       return
     }
     const subscribers = this.#subscriptions.get(chainId)
     for (const sink of subscribers) {
       sink(latest)
-    }
-    for (const connection of this.#connections) {
-      connection.txAnnounce(forAddress, latest)
     }
   }
   unsubscribe(forAddress) {

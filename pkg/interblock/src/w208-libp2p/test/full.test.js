@@ -3,10 +3,10 @@ import { PulseNet, createRamRepo } from '..'
 import Debug from 'debug'
 import { jest } from '@jest/globals'
 import { Engine } from '../../w210-engine'
-const debug = Debug('interpulse:tests:full')
+const debug = Debug('tests')
+Debug.enable('tests *Announcer *Connection')
 
 describe('full', () => {
-  jest.setTimeout(5000)
   test.only('server with late client', async () => {
     const engine = await Engine.createCI()
     const server = await PulseNet.create(createRamRepo('server'))
@@ -15,20 +15,19 @@ describe('full', () => {
     debug('address', genesis.getAddress())
     debug('pulselink', genesis.getPulseLink())
     const address = genesis.getAddress()
-    server.endure(genesis)
+    await server.endure(genesis)
 
     const client = await PulseNet.create(createRamRepo('client'))
     await client.dialCI(server)
-
+    const serverPeerId = await server.keypair.generatePeerId()
+    client.addAddressPeer(address, serverPeerId)
     const stream = client.subscribePulse(address)
-    const it = stream[Symbol.asyncIterator]()
 
     debug('begin waiting for announcement')
-    const { value: p1 } = await it.next()
+    const { value: p1 } = await stream.next()
     expect(p1).toBeInstanceOf(PulseLink)
     debug('emit', p1)
     expect(p1.equals(genesis.getPulseLink())).toBeTruthy()
-    Debug.enable('*tests* *PulseNet')
     debug('getting pulse')
     const pulse1 = await client.getPulse(p1)
     debug('got pulse1')
@@ -36,21 +35,24 @@ describe('full', () => {
     expect(pulse1).toEqual(genesis)
 
     await engine.pierce(Request.create('TEST'))
-    const next = engine.latest
+    const next = engine.selfLatest
+    debug('endure next')
+    await server.endure(next)
     debug('begin waiting for announcement')
-    server.endure(next)
-    const { value: p2 } = await it.next()
+    const { value: p2 } = await stream.next()
     expect(p2).toBeInstanceOf(PulseLink)
     debug('emit', p2)
     expect(p2.equals(next.getPulseLink())).toBeTruthy()
 
+    debug('get pulse2')
+    // Debug.enable('*bitswap*')
     const pulse2 = await client.getPulse(p2)
     debug('got pulse2')
     expect(pulse2).toBeInstanceOf(Pulse)
     expect(pulse2).toEqual(next)
-
-    it.return()
-  })
+    // await server.stop()
+    // await client.stop()
+  }, 4000)
   test('server two clients', async () => {})
   test('two servers', async () => {})
   test('server reload', async () => {

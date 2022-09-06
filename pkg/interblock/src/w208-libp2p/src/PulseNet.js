@@ -8,12 +8,14 @@ import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
 import { createLibp2p } from 'libp2p'
 import { TCP } from '@libp2p/tcp'
 import { Mplex } from '@libp2p/mplex'
+import { KadDHT } from '@libp2p/kad-dht'
 import { Noise } from '@chainsafe/libp2p-noise'
 import { CID } from 'multiformats/cid'
 import { decode } from '../../w008-ipld'
 import all from 'it-all'
 import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
 import Debug from 'debug'
+import { Announcer } from './Announcer'
 const debug = Debug('interpulse:PulseNet')
 
 const ciRepo = () => createRepo('ciRepo', loadCodec, createBackend())
@@ -23,6 +25,7 @@ export class PulseNet {
   #repo
   #bitswap
   #keypair
+  #announcer
   static async createCI(repo = ciRepo()) {
     const CI = true
     return this.create(repo, CI)
@@ -47,6 +50,7 @@ export class PulseNet {
       streamMuxers: [new Mplex()],
       connectionEncryption: [new Noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
+      dht: new KadDHT(),
     }
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)
@@ -66,6 +70,7 @@ export class PulseNet {
     }
 
     this.#net = await createLibp2p(options)
+    this.#announcer = Announcer.create(this.#net)
     await this.#net.start()
     // TODO start a webrtc signalling server if we are on nodejs
 
@@ -99,6 +104,9 @@ export class PulseNet {
     const bitswap = await all(this.#bitswap.putMany(manyBlocks))
     if (isAppRoot(pulse)) {
       debug('isApproot', pulse)
+      const address = pulse.getAddress()
+      const pulselink = pulse.getPulseLink()
+      await this.#announcer.announce(address, pulselink)
     }
     return bitswap
   }
@@ -110,18 +118,22 @@ export class PulseNet {
     await this.#net.peerStore.addressBook.set(peerId, addrs)
     await this.#net.dial(peerId)
   }
+  addAddressPeer(address, peerId) {
+    // TODO make different trust levels, as well as a default peer
+    this.#announcer.addAddressPeer(address, peerId)
+  }
   subscribePulse(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
     debug('subscribing to', address.toString())
 
+    const stream = this.#announcer.subscribe(address)
+    return stream
+
     // fetch out of bitswap
     // verify this is indeed the successor, or do some walking back
     // may layer this work into a Worker of some kind
     // return the stream to the caller
-
-    // do some checks against bitswap to verify what we received
-    // build this module as raw traffic, with a sanity reconciler coordinator
   }
   async getPulse(pulselink) {
     assert(pulselink instanceof PulseLink)
