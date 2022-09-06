@@ -32,7 +32,7 @@ describe('reload', () => {
     try {
       const engine = await Interpulse.createCI({ repo })
       await new Promise((r) => setTimeout(r, 500))
-      // await engine.shutdown()
+      await engine.stop()
     } finally {
       debug(`deleting ${repo}`)
       await deleteAsync(repo)

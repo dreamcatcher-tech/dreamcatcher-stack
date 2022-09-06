@@ -145,9 +145,14 @@ const to = (js) => {
 }
 const sinkJs = (pushable) => {
   return async function (source) {
-    for await (const arraylist of source) {
-      const object = from(arraylist)
-      pushable.push(object)
+    try {
+      for await (const arraylist of source) {
+        const object = from(arraylist)
+        pushable.push(object)
+      }
+    } catch (e) {
+      console.error(e)
+      // TODO tear down the connection
     }
   }
 }

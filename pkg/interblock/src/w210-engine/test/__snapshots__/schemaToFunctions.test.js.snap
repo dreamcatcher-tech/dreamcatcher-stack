@@ -1,15 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`schemaToFunctions > basic 1`] = `
+exports[`schemaToFunctions basic 1`] = `
 {
   "payload": {},
-  "type": "ADD",
-}
-`;
-
-exports[`schemaToFunctions basic 1`] = `
-Object {
-  "payload": Object {},
   "type": "ADD",
 }
 `;

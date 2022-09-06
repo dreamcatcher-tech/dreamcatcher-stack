@@ -1,13 +1,12 @@
 import { Pulse, PulseLink, Request } from '../../w008-ipld'
 import { PulseNet, createRamRepo } from '..'
 import Debug from 'debug'
-import { jest } from '@jest/globals'
 import { Engine } from '../../w210-engine'
 const debug = Debug('tests')
-Debug.enable('tests *Announcer *Connection')
+// Debug.enable('tests *Announcer *Connection')
 
 describe('full', () => {
-  test.only('server with late client', async () => {
+  test('server with late client', async () => {
     const engine = await Engine.createCI()
     const server = await PulseNet.create(createRamRepo('server'))
     debug(server)
@@ -45,32 +44,17 @@ describe('full', () => {
     expect(p2.equals(next.getPulseLink())).toBeTruthy()
 
     debug('get pulse2')
-    // Debug.enable('*bitswap*')
     const pulse2 = await client.getPulse(p2)
     debug('got pulse2')
     expect(pulse2).toBeInstanceOf(Pulse)
     expect(pulse2).toEqual(next)
-    // TODO shut down gracefully
-    // await server.stop()
-    // await client.stop()
+    await Promise.all([server.stop(), client.stop()])
   }, 4000)
   test('server two clients', async () => {})
-  test('two servers', async () => {})
   test('server reload', async () => {
     // server and client boot, exchange blocks two ways
     // both shut down to disk
     // boot server, make some new pulses
     // boot client, observe it catch up
-  })
-  test('interpulses', async () => {
-    // send a pulse to different clients, verify that interpulse announcements
-    // are not triggered unless the client is the target
-
-    for await (const interpulseHint of client.subscribeInterPulse()) {
-      // we get these hints coming in from remote validators
-      // each one we check, delve into on our side first, then on the remote side
-      // the hint is signed, so we can supply it when we ask for the pulse
-      // remotely, in case we were misled
-    }
   })
 })

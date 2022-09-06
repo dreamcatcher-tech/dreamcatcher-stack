@@ -2,12 +2,7 @@ import { createLibp2p } from 'libp2p'
 import { TCP } from '@libp2p/tcp'
 import { Mplex } from '@libp2p/mplex'
 import { Noise } from '@chainsafe/libp2p-noise'
-import { fromString } from 'uint8arrays/from-string'
-import { toString } from 'uint8arrays/to-string'
-import { pipe } from 'it-pipe'
-import { pushable } from 'it-pushable'
 import { Announcer } from '..'
-
 import Debug from 'debug'
 import { Address, PulseLink } from '../../w008-ipld'
 import assert from 'assert-fast'
@@ -32,7 +27,7 @@ describe('protocol', () => {
   const address = Address.createCI('test pulselink address')
   const pulselink = PulseLink.createCrossover(address)
 
-  test.only('direct', async () => {
+  test('direct', async () => {
     const [node1, node2] = await Promise.all([createNode(), createNode()])
     debug(`nodes created`)
     debug(`node1`, node1.peerId.toString())
@@ -57,16 +52,8 @@ describe('protocol', () => {
     debug(`nodes connected`)
     for await (const announcement of stream) {
       assert(pulselink.equals(announcement))
-      return
+      break
     }
-
-    // store the streams by nodeid so we can look them up for active announces
+    await Promise.all([node1.stop(), node2.stop()])
   }, 2000)
 })
-
-const to = (js) => {
-  return fromString(JSON.stringify(js), 'utf8')
-}
-const from = (arraylist) => {
-  return JSON.parse(toString(arraylist.subarray(), 'utf8'))
-}
