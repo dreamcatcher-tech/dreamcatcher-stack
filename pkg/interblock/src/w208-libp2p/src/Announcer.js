@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { peerIdFromString } from '@libp2p/peer-id'
 import { Address, PulseLink } from '../../w008-ipld'
 import { pushable } from 'it-pushable'
 import { Connection } from './Connection'
@@ -7,7 +8,7 @@ const debug = Debug('interpulse:libp2p:Announcer')
 
 export class Announcer {
   #libp2p
-  #subscriptions = new Map() // chainId : sinks[]
+  #subscriptions = new Map() // chainId : sink[]
   #latests = new Map() // chainId : pulselink
   #peerMap = new Map() // chainId : peerIdString[]
   #connections = new Map() // peerIdString : Connection
@@ -30,38 +31,49 @@ export class Announcer {
       }
       debug(`protocols`, protocols)
       const peerIdString = peerId.toString()
-
       if (this.#connections.has(peerIdString)) {
         return
       }
-
-      const wantedChainIds = new Set()
-      for (const chainId of this.#subscriptions.keys()) {
-        if (this.#peerMap.has(chainId)) {
-          const peers = this.#peerMap.get(chainId)
-          if (peers.has(peerIdString)) {
-            wantedChainIds.add(chainId)
-            continue
-          }
-        }
-      }
+      const wantedChainIds = this.#getWantlist(peerId)
       if (!wantedChainIds.size) {
         return
       }
-
-      const connection = this.#dial(peerId, wantedChainIds)
+      const connection = this.#dial(peerId)
       this.#connections.set(peerIdString, connection)
+      for (const chainId of wantedChainIds) {
+        connection.txSubscribe(chainId)
+      }
     }
+  }
+  // TODO ensure latests does not hold remote announcements ?
+  #getWantlist(peerId) {
+    const peerIdString = peerId.toString()
+    const wantedChainIds = new Set()
+    for (const chainId of this.#subscriptions.keys()) {
+      if (this.#peerMap.has(chainId)) {
+        const peers = this.#peerMap.get(chainId)
+        if (peers.has(peerIdString)) {
+          wantedChainIds.add(chainId)
+          continue
+        }
+      }
+    }
+    return wantedChainIds
   }
   #getHandler() {
     return ({ connection: cx, stream }) => {
-      const peerIdString = cx.remotePeer.toString()
+      const peerId = cx.remotePeer
+      const peerIdString = peerId.toString()
       debug('connection', peerIdString)
       // TODO figure out what we wanted from this peer, if anything
       assert(!this.#connections.has(peerIdString))
       const connection = Connection.create(this.#rxAnnounce, this.#latests)
       connection.connectStream(stream)
       this.#connections.set(peerIdString, connection)
+      const wantedChainIds = this.#getWantlist(peerId)
+      for (const chainId of wantedChainIds) {
+        connection.txSubscribe(chainId)
+      }
     }
   }
   addAddressPeer(forAddress, peerId) {
@@ -81,6 +93,7 @@ export class Announcer {
     if (!this.#subscriptions.has(chainId)) {
       return
     }
+
     let connection
     if (this.#connections.has(peerIdString)) {
       connection = this.#connections.get(peerIdString)
@@ -107,6 +120,7 @@ export class Announcer {
         subscribers.delete(sink)
         if (!subscribers.size) {
           this.#subscriptions.delete(chainId)
+          // TODO close down any idle connections
         }
       },
     })
@@ -114,9 +128,18 @@ export class Announcer {
     if (this.#latests.has(chainId)) {
       sink.push(this.#latests.get(chainId))
     }
-
-    // TODO dial all the peers we have
-
+    if (this.#peerMap.has(chainId)) {
+      const peers = this.#peerMap.get(chainId)
+      for (const peerIdString of peers) {
+        if (!this.#connections.has(chainId)) {
+          const peerId = peerIdFromString(peerIdString)
+          const connection = this.#dial(peerId)
+          this.#connections.set(peerIdString, connection)
+        }
+        const connection = this.#connections.get(peerIdString)
+        connection.txSubscribe(chainId)
+      }
+    }
     return sink
   }
   async latest(address) {
@@ -125,7 +148,7 @@ export class Announcer {
     let latest
     for await (const announcement of stream) {
       latest = announcement
-      break // TODO make break automatically unsubscribe
+      return
     }
   }
   async announce(forAddress, latest, path = '') {
@@ -172,14 +195,12 @@ export class Announcer {
       }
     }
   }
-  #dial(peerId, wantedChainIds = new Set()) {
+  #dial(peerId) {
     const cx = Connection.create(this.#rxAnnounce, this.#latests)
-    for (const chainId of wantedChainIds) {
-      cx.txSubscribe(chainId)
-    }
     this.#libp2p.dialProtocol(peerId, protocol).then((stream) => {
       cx.connectStream(stream)
     })
+    // TODO handle rejection and clean up the connection
     return cx
   }
 }

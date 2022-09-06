@@ -15,7 +15,7 @@ const createTestPulselink = () => {
 Debug.enable('*')
 
 describe('Connection', () => {
-  test.only('basic', async () => {
+  test('basic', async () => {
     const announce = pushable({ objectMode: true })
     const latests = new Map()
     const east = Connection.create(announce, latests)
