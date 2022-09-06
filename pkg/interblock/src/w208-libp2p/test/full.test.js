@@ -50,6 +50,7 @@ describe('full', () => {
     debug('got pulse2')
     expect(pulse2).toBeInstanceOf(Pulse)
     expect(pulse2).toEqual(next)
+    // TODO shut down gracefully
     // await server.stop()
     // await client.stop()
   }, 4000)

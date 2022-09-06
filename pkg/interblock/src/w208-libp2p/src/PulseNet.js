@@ -8,7 +8,6 @@ import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
 import { createLibp2p } from 'libp2p'
 import { TCP } from '@libp2p/tcp'
 import { Mplex } from '@libp2p/mplex'
-import { KadDHT } from '@libp2p/kad-dht'
 import { Noise } from '@chainsafe/libp2p-noise'
 import { CID } from 'multiformats/cid'
 import { decode } from '../../w008-ipld'
@@ -50,7 +49,6 @@ export class PulseNet {
       streamMuxers: [new Mplex()],
       connectionEncryption: [new Noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
-      dht: new KadDHT(),
     }
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)

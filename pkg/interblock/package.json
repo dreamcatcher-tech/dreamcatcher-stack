@@ -25,7 +25,6 @@
     "@chainsafe/libp2p-noise": "^8.0.1",
     "@ipld/dag-cbor": "^7.0.3",
     "@ipld/dag-pb": "^2.1.18",
-    "@libp2p/kad-dht": "^3.0.4",
     "@libp2p/mplex": "^5.1.1",
     "@libp2p/tcp": "^3.0.6",
     "@libp2p/webrtc-star-signalling-server": "^2.0.2",
