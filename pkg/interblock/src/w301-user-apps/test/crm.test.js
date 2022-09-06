@@ -2,7 +2,6 @@ import { assert } from 'chai/index.mjs'
 import { Interpulse } from '../../w300-interpulse'
 import { crm } from '..'
 import Debug from 'debug'
-import { expect } from 'chai'
 const debug = Debug('interblock:tests:crm')
 
 const serverFactory = async ({ customerCount = 10 } = {}) => {

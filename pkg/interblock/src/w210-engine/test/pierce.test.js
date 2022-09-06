@@ -8,8 +8,8 @@ describe('pierce', () => {
   test('do not txInterblocks to .@@io channel', async () => {
     const engine = await Engine.createCI()
     await engine.pierce(Request.createPing())
-    const { latest } = engine
-    const network = latest.getNetwork()
+    const { selfLatest } = engine
+    const network = selfLatest.getNetwork()
     assert.strictEqual(network.channels.txs.length, 0)
     const io = await network.getIo()
     assert.strictEqual(io.tx.system.replies.length, 1)

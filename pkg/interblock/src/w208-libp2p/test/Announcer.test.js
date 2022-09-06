@@ -62,46 +62,6 @@ describe('protocol', () => {
 
     // store the streams by nodeid so we can look them up for active announces
   }, 2000)
-  test('libp2p', async () => {
-    // start a libp2p node
-    // add the handler for the protocol
-    const [node1, node2] = await Promise.all([createNode(), createNode()])
-    debug(`nodes created`)
-    // node1 connect to node2
-    await node1.peerStore.addressBook.set(node2.peerId, node2.getMultiaddrs())
-    await node1.dial(node2.peerId)
-    debug(`nodes dialed`)
-
-    let resolve
-    const received = new Promise((_resolve) => {
-      resolve = _resolve
-    })
-    let hs
-    const n1 = await node1.handle('meow', async ({ connection, stream }) => {
-      // store the streams by nodeid so we can look them up for active announces
-      debug('connection', connection)
-      debug('handle', stream)
-      hs = stream
-      //   for await (const m of stream.source) {
-      //     debug('received:', m)
-      //   }
-      pipe(stream, async function (source) {
-        for await (const msg of source) {
-          debug(from(msg))
-          resolve()
-        }
-      })
-    })
-    const stream = await node2.dialProtocol(node1.peerId, ['meow'])
-    debug('stream', stream)
-
-    const source = pushable({ objectMode: false })
-    const request = { forAddress: 'meow' }
-    source.push(to(request))
-    pipe(source, stream)
-    // await delay(2000)
-    await received
-  }, 5000)
 })
 
 const to = (js) => {

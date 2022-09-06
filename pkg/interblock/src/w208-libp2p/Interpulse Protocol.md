@@ -26,7 +26,7 @@ Note that the engine never has reason to ask for remote Pulses. This is because 
 7. If a quorum of validators state the same view of latest, the recipient can trust this result
 8. This protocol is for announcing a new latest pulse and a new latest Interpulse. Fetching an arbitrary subsequence of pulses is done using the lineage tree, hence there is no query support
 9. No advertisement of available chain addresses is provided for privacy reasons
-10. Announcements for Pulses are only done for approot pulses
+10. Announcements for Pulses are only done for approot pulses, as this is all that is required to know if some child has changed
 11. The same subscription methods are used for pulses as well as for interpulses, with the only difference in the payload being the `path` key on an interpulse, so the recipient knows what path in the Pulse to request to avoid getting blacklisted for probing forbidden paths
 12. Programmatically subscriptions are managed using [async iterables](https://www.npmjs.com/package/streaming-iterables) because this is the default way libp2p handles protocol transmissions
 13. Protocol state is stored in ram because a reboot requires the connections to be re-established and re-authenticated. We may store peer:address mappings later, to help speed up rediscovery
@@ -96,3 +96,7 @@ Nodes helping other nodes finding each other, and relaying announcements on beha
 ### Multiple validators receiving Pool
 
 Pool is a Pulse that contains more information that its previous Pulse, but has not got all the signatures required to be a Pulse. Validators would use this protocol to announce to each other when they had a new Pool for consideration.
+
+### Tunneling thru socket chains
+
+Interpulses across validator sets should be limited by all being tunneled through a single chain. This reduces the amount of independent chatter on the protocol, and allows a single choke point to disconnection any foreign actor.

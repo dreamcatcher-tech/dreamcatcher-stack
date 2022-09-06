@@ -7,12 +7,11 @@ const debug = Debug('interpulse:tests:full')
 
 describe('full', () => {
   jest.setTimeout(5000)
-  test('server with late client', async () => {
+  test.only('server with late client', async () => {
     const engine = await Engine.createCI()
-    // one node set up
     const server = await PulseNet.create(createRamRepo('server'))
     debug(server)
-    const genesis = engine.latest
+    const genesis = engine.selfLatest
     debug('address', genesis.getAddress())
     debug('pulselink', genesis.getPulseLink())
     const address = genesis.getAddress()
@@ -21,8 +20,8 @@ describe('full', () => {
     const client = await PulseNet.create(createRamRepo('client'))
     await client.dialCI(server)
 
-    const emitter = client.subscribePulse(address)
-    const it = emitter[Symbol.asyncIterator]()
+    const stream = client.subscribePulse(address)
+    const it = stream[Symbol.asyncIterator]()
 
     debug('begin waiting for announcement')
     const { value: p1 } = await it.next()

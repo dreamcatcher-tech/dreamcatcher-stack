@@ -45,7 +45,6 @@ export class Announcer {
       }
     }
   }
-  // TODO ensure latests does not hold remote announcements ?
   #getWantlist(peerId) {
     const peerIdString = peerId.toString()
     const wantedChainIds = new Set()
@@ -65,7 +64,6 @@ export class Announcer {
       const peerId = cx.remotePeer
       const peerIdString = peerId.toString()
       debug('connection', peerIdString)
-      // TODO figure out what we wanted from this peer, if anything
       assert(!this.#connections.has(peerIdString))
       const connection = Connection.create(this.#rxAnnounce, this.#latests)
       connection.connectStream(stream)
@@ -142,13 +140,11 @@ export class Announcer {
     }
     return sink
   }
-  async latest(address) {
+  async latest(forAddress) {
     const onlyLatest = true
-    const stream = this.subscribe(address, onlyLatest)
-    let latest
+    const stream = this.subscribe(forAddress, onlyLatest)
     for await (const announcement of stream) {
-      latest = announcement
-      return
+      return announcement
     }
   }
   async announce(forAddress, latest, path = '') {

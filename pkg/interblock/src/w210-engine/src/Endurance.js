@@ -9,11 +9,11 @@ const debug = Debug('interblock:engine:Endurance')
 
 export class Endurance {
   static create(pulseNet) {
+    const instance = new Endurance()
     if (pulseNet) {
       assert(pulseNet instanceof PulseNet)
+      instance.#net = pulseNet
     }
-    const instance = new Endurance()
-    instance.#net = pulseNet
     return instance
   }
   #isStarted = true
@@ -54,7 +54,7 @@ export class Endurance {
     }
   }
   async start() {
-    // TODO when endurance loads, begin propogation of latest, in case anyone missed it
+    // TODO when endurance loads, begin propogation of latest, in case anyone missed it, and propogation of interpulses, as these might have not been received
     if (!this.#net) {
       return
     }
@@ -109,12 +109,10 @@ export class Endurance {
       this.#writeStart()
       const result = this.#net.endure(latest)
       debug(`start ipfs put`, latest.getPulseLink())
-      const { provide, dht, pubsub, bitswap } = result
-      bitswap.then(() => {
-        debug(`finish ipfs put`, latest.getPulseLink())
+      result.then(() => {
+        debug(`finish net endure`, latest.getPulseLink())
         this.#writeStop()
       })
-      return { provide, dht, pubsub, bitswap }
     }
     debug(`endure`, latest.getAddress(), latest.getPulseLink())
   }

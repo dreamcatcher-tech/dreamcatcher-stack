@@ -13,17 +13,19 @@ const debug = Debug('interpulse')
  * Hints handles receiving announce calls from the network,
  * and investigates them until it is certain that the engine should be triggerd.
  * The engine might still not execute if a duplicate is detected.
- * Hints is entirely reactive to external events, many of which might be false
- * or grossly delayed.
+ * Hints is entirely reactive to external events, many of which might be false,
+ * intermittent, or grossly delayed.
  *
  * Endurance holds the 'latest' functionality via subscribe() and simply
- * ejects after the first result comes in.  Subscribe may optionally return
+ * ejects after the first result comes in.
+ *
+ * In the future, Subscribe may optionally return
  * a confidence rating, of the caller would like to wait around longer.
- * DHT requests have an emitter on the result, pubsub also has an emitter.
+ * DHT requests may have an emitter on the result, pubsub also may have an emitter.
  * So rather than a callback, you need to consume the results, which also
  * allows an unsubscribe function too.
  *
- * Endurance holds 'self' functionality too, where it knows what the address
+ * Endurance holds 'self' functionality, where it knows what the address
  * and latest of its own address is.
  */
 class Hints {
@@ -64,11 +66,12 @@ export class Interpulse {
   static async create(options = {}) {
     let overloads = options.overloads ? { ...options.overloads } : {}
     overloads.root = shell
-    // build the endurance object
+    // if announcer is inside net, how to trigger on interpulse received ?
+    // could connect via Interpulse ?
     let net, crypto, endurance
     const { repo, CI } = options
     if (repo) {
-      // no repo, no net - storage and network are one 🙏
+      // no repo => no net - storage and network are one 🙏
       net = await PulseNet.create(repo, CI)
       crypto = Crypto.create(net.keypair)
       endurance = Endurance.create(net)

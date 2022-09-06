@@ -1,7 +1,8 @@
 {
   "recommendations": [
     "wallabyjs.wallaby-vscode",
-    "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "aaron-bond.better-comments",
+    "icrawl.discord-vscode"
   ]
 }

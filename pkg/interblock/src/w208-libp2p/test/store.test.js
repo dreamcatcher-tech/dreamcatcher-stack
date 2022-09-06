@@ -55,4 +55,5 @@ describe('store', () => {
       debug(`deleted ${path}`)
     }
   })
+  test.todo('latest is recovered from storage on reload')
 })
