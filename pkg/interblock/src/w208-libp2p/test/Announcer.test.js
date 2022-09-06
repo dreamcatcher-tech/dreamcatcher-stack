@@ -61,7 +61,7 @@ describe('protocol', () => {
     }
 
     // store the streams by nodeid so we can look them up for active announces
-  }, 1000)
+  }, 2000)
   test('libp2p', async () => {
     // start a libp2p node
     // add the handler for the protocol
