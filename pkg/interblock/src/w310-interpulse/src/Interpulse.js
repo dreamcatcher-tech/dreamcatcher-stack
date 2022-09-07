@@ -4,7 +4,7 @@ import { Engine, schemaToFunctions } from '../../w210-engine'
 import assert from 'assert-fast'
 import Debug from 'debug'
 import posix from 'path-browserify'
-import { PulseNet } from '../../w208-libp2p'
+import { PulseNet } from '../../w305-libp2p'
 import { Endurance } from '../../w210-engine/src/Endurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
 

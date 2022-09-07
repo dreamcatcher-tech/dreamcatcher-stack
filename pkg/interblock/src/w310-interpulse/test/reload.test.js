@@ -1,5 +1,5 @@
 import { deleteAsync } from 'del'
-import { createRamRepo } from '../../w208-libp2p'
+import { createRamRepo } from '../../w305-libp2p'
 import Debug from 'debug'
 import { Keypair, Pulse } from '../../w008-ipld'
 import { jest } from '@jest/globals'
@@ -23,8 +23,8 @@ describe('reload', () => {
     debug('stat', await repo.stat())
     const reboot = await Interpulse.createCI({ repo })
     const latest = await reboot.latest('/')
+    await reboot.stop()
     expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
-    await latest.stop()
   })
   test('interpulse disk reload', async () => {
     const repo = `tmp/reload-${Math.random()}`

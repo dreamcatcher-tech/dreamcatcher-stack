@@ -1,10 +1,9 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
-import { Address, decode, Pulse, PulseLink } from '../../w008-ipld'
+import { Address, Pulse, PulseLink } from '../../w008-ipld'
 import { Logger } from './Logger'
-import all from 'it-all'
 import Debug from 'debug'
-import { PulseNet } from '../../w208-libp2p'
+import { PulseNet } from '../../w305-libp2p'
 const debug = Debug('interblock:engine:Endurance')
 
 export class Endurance {
