@@ -110,7 +110,7 @@ export class Interpulse {
     return dispatches
   }
   async latest(path = '.') {
-    const { wd = '/' } = this.#engine.selfLatest.getState().toJS()
+    const { wd } = this
     const absolutePath = posix.resolve(wd, path)
     return this.#engine.latestByPath(absolutePath)
   }
@@ -118,7 +118,7 @@ export class Interpulse {
     return this.#engine.logger
   }
   get wd() {
-    const { wd = '/' } = this.#engine.latest.getState().toJS()
+    const { wd = '/' } = this.#engine.selfLatest.getState().toJS()
     return wd
   }
   async stop() {

@@ -5,13 +5,13 @@ import { Keypair, Pulse } from '../../w008-ipld'
 import { jest } from '@jest/globals'
 import { Interpulse } from '..'
 
-const debug = Debug('interpulse:tests:reload')
+const debug = Debug('tests')
 
-Debug.enable('*tests*')
+Debug.enable('tests')
 
 describe('reload', () => {
   jest.setTimeout(2000)
-  test('interpulse ram reload', async () => {
+  test.only('interpulse ram reload', async () => {
     const repo = createRamRepo('ram')
     debug(`starting engine`)
     const engine = await Interpulse.createCI({ repo })

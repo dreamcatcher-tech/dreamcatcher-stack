@@ -100,7 +100,9 @@
       "**/*.test.js"
     ],
     "src": [
-      "**/*.js"
+      "**/*.js",
+      "!**/*.test.js",
+      "!tmp/"
     ],
     "env": {
       "type": "node",
