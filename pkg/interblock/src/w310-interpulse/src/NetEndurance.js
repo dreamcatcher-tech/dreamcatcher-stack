@@ -45,12 +45,6 @@ export class NetEndurance extends Endurance {
       await super.endure(latest) // acts like the bootstrap pulse
     }
   }
-  async findLatest(address) {
-    // TODO subscribe to the address and get the first result
-    // provide varying degrees of confidence whenever an answer is emitted
-    // allow specification of absolute authority, or good enough will do
-    return super.findLatest(address)
-  }
   async endure(latest) {
     let isBootstrapPulse = !this.selfAddress
     await super.endure(latest)

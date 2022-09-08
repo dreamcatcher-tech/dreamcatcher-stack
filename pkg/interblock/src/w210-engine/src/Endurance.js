@@ -36,7 +36,6 @@ export class Endurance {
       const pulseLink = this.#latests.get(chainId)
       return await this.recover(pulseLink)
     }
-    throw new Error(`could not find latest for: ${chainId}`)
   }
   async endure(latest) {
     assert(latest instanceof Pulse)

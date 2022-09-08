@@ -140,6 +140,7 @@ export class PulseNet {
     // TODO WARNING permissions must be honoured
     // TODO use treetop to only fetch things below this CID
     return async (cid) => {
+      assert(cid instanceof CID, `not cid: ${cid}`)
       const bytes = await this.#bitswap.get(cid)
       const block = await decode(bytes)
       return block

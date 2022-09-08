@@ -7,9 +7,7 @@ export const cd = async ({ spinner, blockchain }, path = '.') => {
   debug(`cd: ${path}`)
   spinner.text = `Resolving: ${path}`
   await blockchain.cd(path)
-  const context = await blockchain.context()
-  debug(`context: %O`, context)
-  const { wd } = context
+  const { wd } = blockchain
   return { ctx: { wd } }
 }
 

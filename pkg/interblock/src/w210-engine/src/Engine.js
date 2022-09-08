@@ -8,6 +8,7 @@ import {
   Interpulse,
   Channel,
   Validators,
+  PulseLink,
 } from '../../w008-ipld'
 import { reducer } from './reducer'
 import { Isolate } from './Isolate'
@@ -187,7 +188,6 @@ export class Engine {
       return this.#isolate.getCovenantPulse(path)
     }
 
-    // get the root pulse
     let latest = await this.#endurance.findLatest(rootAddress)
     assert(latest instanceof Pulse)
     if (path === '/') {
@@ -208,8 +208,12 @@ export class Engine {
       if (!address.isRemote()) {
         throw new Error(`segment not resolved: ${segment} of: ${path}`)
       }
-      // TODO approot walk should use the precedent only
-      latest = await this.#endurance.findLatest(address)
+      const { tip } = channel.rx
+      if (!tip) {
+        throw Error(`No latest for ${address} relative to ${rootAddress}`)
+      }
+      assert(tip instanceof PulseLink)
+      latest = await this.#endurance.recover(tip)
     }
     return latest
   }

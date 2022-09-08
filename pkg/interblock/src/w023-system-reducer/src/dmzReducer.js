@@ -5,7 +5,7 @@ import { spawnReducer } from './spawn'
 import { installReducer } from './install'
 import { getChannelReducer } from './getChannel'
 import { genesisReducer } from './genesis'
-import { Address } from '../../w008-ipld'
+import { Address, Pulse } from '../../w008-ipld'
 import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
@@ -100,6 +100,7 @@ const pulseReducer = async (type, payload) => {
     case '@@USE_PULSE': {
       const { path } = payload
       const latestPulse = await latest(path)
+      assert(latestPulse instanceof Pulse)
       // TODO remove the network object, to provide a static pulse
       return latestPulse
     }
