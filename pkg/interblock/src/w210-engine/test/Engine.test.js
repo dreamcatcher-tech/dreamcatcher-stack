@@ -7,7 +7,6 @@ const debug = Debug('interblock:tests:engine')
 describe('engine', () => {
   test('basic', async () => {
     const engine = await Engine.createCI()
-    Debug.enable('*tests*')
     debug(engine.selfAddress)
     expect(engine.selfAddress.toString()).toMatchSnapshot()
 

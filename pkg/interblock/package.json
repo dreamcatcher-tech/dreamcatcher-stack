@@ -89,7 +89,7 @@
     "testEnvironment": "node",
     "transform": {},
     "maxWorkers": "95%",
-    "testTimeout": 300,
+    "testTimeout": 600,
     "setupFiles": [
       "trace-unhandled/register"
     ]
@@ -97,10 +97,10 @@
   "wallaby": {
     "autoDetect": true,
     "tests": [
-      "**/*.test.js"
+      "src/**/*.test.js"
     ],
-    "src": [
-      "**/*.js",
+    "files": [
+      "src/**/*.js",
       "!**/*.test.js",
       "!tmp/"
     ],

@@ -64,7 +64,7 @@ export class Engine {
     // TODO remake the engine with a control flow calling into functions
     // and a generic queue management module
     this.#isolate = isolate || Isolate.create()
-    this.#crypto = crypto || Crypto.create()
+    this.#crypto = crypto || Crypto.createCI()
     this.#endurance = endurance || Endurance.create()
     this.#scale = scale || Scale.create()
   }

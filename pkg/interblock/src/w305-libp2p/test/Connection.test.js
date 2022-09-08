@@ -12,8 +12,6 @@ const createTestPulselink = () => {
   return PulseLink.createCrossover(address)
 }
 
-Debug.enable('*')
-
 describe('Connection', () => {
   test('basic', async () => {
     const announce = pushable({ objectMode: true })

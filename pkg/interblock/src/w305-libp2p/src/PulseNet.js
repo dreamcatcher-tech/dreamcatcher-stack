@@ -127,11 +127,7 @@ export class PulseNet {
 
     const stream = this.#announcer.subscribe(address)
     return stream
-
-    // fetch out of bitswap
-    // verify this is indeed the successor, or do some walking back
-    // may layer this work into a Worker of some kind
-    // return the stream to the caller
+    // TODO use a worker to verify and catch up on announcements
   }
   async getPulse(pulselink) {
     assert(pulselink instanceof PulseLink)
@@ -142,7 +138,7 @@ export class PulseNet {
   getResolver(treetop) {
     assert(treetop instanceof CID)
     // TODO WARNING permissions must be honoured
-    // use treetop to only fetch things below this CID
+    // TODO use treetop to only fetch things below this CID
     return async (cid) => {
       const bytes = await this.#bitswap.get(cid)
       const block = await decode(bytes)
@@ -152,7 +148,9 @@ export class PulseNet {
 }
 const isAppRoot = (pulse) => {
   assert(pulse instanceof Pulse)
-  // TODO delve into config and read out the actual approot
-  // if no approot configured, then default to being self sovereign
-  return true
+  const { appRoot } = pulse.provenance.dmz
+  if (!appRoot) {
+    return true
+  }
+  return false
 }

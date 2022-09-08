@@ -5,58 +5,26 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 import posix from 'path-browserify'
 import { PulseNet } from '../../w305-libp2p'
-import { Endurance } from '../../w210-engine/src/Endurance'
+import { NetEndurance } from './NetEndurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
 
 const debug = Debug('interpulse')
-/**
- * Hints handles receiving announce calls from the network,
- * and investigates them until it is certain that the engine should be triggerd.
- * The engine might still not execute if a duplicate is detected.
- * Hints is entirely reactive to external events, many of which might be false,
- * intermittent, or grossly delayed.
- *
- * Endurance holds the 'latest' functionality via subscribe() and simply
- * ejects after the first result comes in.
- *
- * In the future, Subscribe may optionally return
- * a confidence rating, of the caller would like to wait around longer.
- * DHT requests may have an emitter on the result, pubsub also may have an emitter.
- * So rather than a callback, you need to consume the results, which also
- * allows an unsubscribe function too.
- *
- * Endurance holds 'self' functionality, where it knows what the address
- * and latest of its own address is.
- */
-class Hints {
-  static create(engine, net) {
-    assert(engine instanceof Engine)
-    assert(net instanceof PulseNet)
-    const instance = new Hints()
-    return instance
-  }
-  async stop() {
-    // TODO unsubscribe from pulsenet
-    // stop any sagas to resolve a hint
-  }
-}
 
 /**
  *
  * The top level ORM object.
  * Assembles an Engine with all the services it needs to operate.
- *    Where IPFS is started.
+ *    Where networking is started.
  *    Where multithreading is controlled.
  * Wraps engine with useful functions for devs.
  * Loads the shell to be loaded at the root block.
  * Works with paths, whereas engine works with addresses.
- * Manages subscriptions to chains for view purposes only.
+ * Manages subscriptions to remote chains.
  */
 
 export class Interpulse {
   #engine
   #endurance
-  #hints
   #net
   #crypto
   static async createCI(options = {}) {
@@ -74,14 +42,13 @@ export class Interpulse {
       // no repo => no net - storage and network are one 🙏
       net = await PulseNet.create(repo, CI)
       crypto = Crypto.create(net.keypair)
-      endurance = Endurance.create(net)
+      endurance = await NetEndurance.create(net)
     }
     const opts = { ...options, overloads, crypto, endurance }
     const engine = await Engine.create(opts)
 
     const instance = new Interpulse(engine)
     if (net) {
-      instance.#hints = Hints.create(engine, net)
       instance.#net = net
       instance.#endurance = endurance
       instance.#crypto = crypto
@@ -125,7 +92,6 @@ export class Interpulse {
     await this.#engine.stop() // stop all interpulsing
     if (this.#net) {
       this.#crypto.stop()
-      await this.#hints.stop()
       await this.#endurance.stop() // complete all disk writes
       await this.#net.stop()
     }

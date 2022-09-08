@@ -6,7 +6,7 @@ const debug = Debug('interblock:tests:Crypto')
 
 describe('Crypto', () => {
   test('locks', async () => {
-    const crypto = new Crypto()
+    const crypto = Crypto.createCI()
     const address = Address.createCI('locktest')
     const lock1 = await crypto.lock(address)
     assert(lock1 instanceof CryptoLock)
@@ -20,7 +20,7 @@ describe('Crypto', () => {
     assert(lock2 instanceof CryptoLock)
   })
   test('multiple locks', async () => {
-    const crypto = new Crypto()
+    const crypto = Crypto.createCI()
     const address = Address.createCI('locktest')
     const lock1 = await crypto.lock(address)
     const lock2Promise = crypto.lock(address)

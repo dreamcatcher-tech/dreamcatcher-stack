@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Interpulse } from '../../w300-interpulse'
+import { Interpulse } from '../..'
 import { crm } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:crm')
@@ -9,7 +9,6 @@ const serverFactory = async ({ customerCount = 10 } = {}) => {
   await server.add('crm', { covenant: '/crm' })
   const crmActions = await server.actions('/crm/customers')
   const awaits = []
-  Debug.enable('iplog')
   for (let i = 1; i <= customerCount; i++) {
     const addPromise = crmActions.add({
       formData: { custNo: i, name: 'test name ' + i },

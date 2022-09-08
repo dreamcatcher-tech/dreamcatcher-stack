@@ -45,7 +45,7 @@ export class Dmz extends IpldStruct {
     network: Network,
     state: State,
     pending: Pending,
-    approot: PulseLink,
+    appRoot: PulseLink,
     binary: Binary,
   }
   static create(params = {}, CI = false) {

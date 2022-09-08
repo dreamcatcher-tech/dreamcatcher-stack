@@ -51,7 +51,11 @@ export class Crypto {
   #keypair
   #locks = new Map()
   #counter = 0
-  static create(keypair = Keypair.createCI()) {
+  static createCI() {
+    return this.create(Keypair.createCI())
+  }
+  static create(keypair) {
+    assert(keypair instanceof Keypair)
     const instance = new Crypto()
     instance.#keypair = keypair
     return instance
@@ -93,7 +97,8 @@ export class Crypto {
     return lock
   }
   stop() {
-    assert(!this.#locks.size, 'Open locks still')
+    const openCount = this.#locks.size
+    assert(!openCount, `Open lock count: ${openCount}`)
     this.#keypair = undefined
   }
 }

@@ -8,8 +8,6 @@ import { Address, PulseLink } from '../../w008-ipld'
 import assert from 'assert-fast'
 const debug = Debug('test')
 
-Debug.enable('*test* *Announcer *Connection')
-
 const createNode = async () => {
   const node = await createLibp2p({
     addresses: {

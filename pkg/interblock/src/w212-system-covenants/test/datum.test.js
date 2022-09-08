@@ -1,7 +1,7 @@
 import { assert } from 'chai/index.mjs'
 import { convertToTemplate } from '../src/datum'
 import Debug from 'debug'
-import { Interpulse } from '../../w300-interpulse'
+import { Interpulse } from '../..'
 const debug = Debug('crm:tests:datum')
 
 const schema = {

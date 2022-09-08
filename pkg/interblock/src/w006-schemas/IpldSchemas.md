@@ -363,14 +363,6 @@ type Pending struct {
 
 Entropy is a seed used to provide pseudorandomness to the chain. Initially it is used to ensure the genesis blocks are strongly unique, but every time a function requests some random data, we increment the count, then run a twister function that many times to generate the randomness. The count is zeroed each Pulse by storing the current value of the twister. If the covenant is pending, this count is not increased, but rather the count in Pending slice is increased temporarily.
 
-### AppRoot requirements
-
-AppRoot is a system chain, and contains within it some required config items that can be deferred in child chains. It must also have some extra state.
-
-It holds the registry of what covenant names resolve to what pulselinks. To upgrade a package, this allows every chain in the complex to upgrade simultaneously.
-
-Individual chains may override `interpulse` and `covenant` but if they do not, the approot version is the required version.
-
 ```sh
 type SideEffectsConfig struct {
     networkAccess [String]
@@ -396,6 +388,14 @@ The Pulse structure is required to be both the snapshot of a stable state and a 
 
 An example of where such backtracking might occur if designed poorly is in the induction of Pierce actions. As these are put into a virtual channel, each time they are pooled, a new virtual Pulse needs to be created, to permit blocking to have already begun, then carry on immediately using the next pooled DAG.
 
+### AppRoot requirements
+
+AppRoot is a system chain, and contains within it some required config items that can be deferred in child chains. It must also have some extra state.
+
+It holds the registry of what covenant names resolve to what pulselinks. To upgrade a package, this allows every chain in the complex to upgrade simultaneously.
+
+Individual chains may override `interpulse` and `covenant` but if they do not, the approot version is the required version.
+
 ```sh
 type Dmz struct {
     config &Config
@@ -403,7 +403,7 @@ type Dmz struct {
     network Network                     # block implies network changed
     state &State
     pending optional &Pending
-    approot optional PulseLink          # The latest known approot
+    appRoot optional PulseLink          # The latest known approot
     binary optional Binary
     covenant Covenant
 }
