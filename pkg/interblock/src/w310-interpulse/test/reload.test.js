@@ -6,7 +6,7 @@ import { Interpulse } from '..'
 const debug = Debug('tests')
 
 describe('reload', () => {
-  test.only('interpulse ram reload', async () => {
+  test('interpulse ram reload', async () => {
     const repo = createRamRepo('ram')
     debug(`starting engine`)
     const engine = await Interpulse.createCI({ repo })
@@ -21,6 +21,7 @@ describe('reload', () => {
     const latest = await reboot.latest('/')
     Debug.enable('interblock:engine:reducer')
     await reboot.cd('/child1')
+
     await reboot.stop()
     expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
   })

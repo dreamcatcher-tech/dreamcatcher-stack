@@ -166,7 +166,6 @@ export class Engine {
     assert(provenance.cid.equals(pulse.provenance.cid))
 
     await this.#endurance.endure(pulse)
-    // TODO update all the subscriptions
     await lock.release()
     await this.#transmit(pulse)
   }
@@ -188,17 +187,17 @@ export class Engine {
       return this.#isolate.getCovenantPulse(path)
     }
 
-    let latest = await this.#endurance.findLatest(rootAddress)
-    assert(latest instanceof Pulse)
+    let pulse = await this.#endurance.findLatest(rootAddress)
+    assert(pulse instanceof Pulse)
     if (path === '/') {
-      return latest
+      return pulse
     }
     const [, ...segments] = path.split('/') // discard the root
     const depth = ['/']
     while (segments.length) {
       const segment = segments.shift()
       depth.push(segment)
-      const network = latest.getNetwork()
+      const network = pulse.getNetwork()
       if (!(await network.hasChannel(segment))) {
         const merged = depth.join('/').substring(1)
         throw new Error(`Segment not present: ${merged} of: ${path}`)
@@ -208,14 +207,15 @@ export class Engine {
       if (!address.isRemote()) {
         throw new Error(`segment not resolved: ${segment} of: ${path}`)
       }
-      const { tip } = channel.rx
-      if (!tip) {
+      const { latest } = channel.rx
+      if (!latest) {
         throw Error(`No latest for ${address} relative to ${rootAddress}`)
       }
-      assert(tip instanceof PulseLink)
-      latest = await this.#endurance.recover(tip)
+      assert(latest instanceof PulseLink)
+      // using tip assures the result is deterministic
+      pulse = await this.#endurance.recover(pulse)
     }
-    return latest
+    return pulse
   }
   async #transmit(pulse) {
     assert(pulse instanceof Pulse)
@@ -234,11 +234,20 @@ export class Engine {
         this.#endurance.announceInterpulse(target, source, pulse)
       }
     })
+    awaits.push(this.#updateParent(pulse))
     await Promise.all(awaits)
     if (pulse.getAddress().equals(this.selfAddress)) {
       const io = await network.getIo()
       await this.#checkPierceTracker(io, this.selfAddress)
     }
+  }
+  async #updateParent(pulse) {
+    assert(pulse instanceof Pulse)
+    const { address } = await pulse.getNetwork().getParent()
+    if (address.isRoot()) {
+      return
+    }
+    // do a special interpulse with no transactions
   }
   isLocal(address) {
     // find out if we are the validator or not

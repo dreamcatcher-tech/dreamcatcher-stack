@@ -21,6 +21,7 @@ export const reducer = async (pulse, isolate, latest) => {
   assert(pulse instanceof Pulse)
   assert(pulse.isModified())
   assert(isolate instanceof IsolateContainer)
+  assert.strictEqual(typeof latest, 'function')
   let network = pulse.getNetwork()
   let { pending } = pulse.provenance.dmz
   let counter = 0

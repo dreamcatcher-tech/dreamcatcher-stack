@@ -13,6 +13,7 @@ export const openPath = async ({ path }) => {
     // TODO resolve relative paths
     await interchain(Request.tryPath('/' + path))
   } catch (error) {
+    debug('path invalid', path)
     await invalidate(path)
     throw error
   }

@@ -1,5 +1,5 @@
 import { assert } from 'chai/index.mjs'
-import { Engine } from '../src/Engine'
+import { Engine } from '..'
 import Debug from 'debug'
 import { interchain } from '../../w002-api'
 import { Request } from '../../w008-ipld'

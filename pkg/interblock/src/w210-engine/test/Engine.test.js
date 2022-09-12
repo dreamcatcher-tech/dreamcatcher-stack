@@ -20,6 +20,7 @@ describe('engine', () => {
     const [reply] = io.tx.reducer.replies
     assert.strictEqual(reply.type, '@@RESOLVE')
   })
+
   test.todo('two engines have different addresses')
   describe('deleteChain', () => {
     test.todo('removes a chain')

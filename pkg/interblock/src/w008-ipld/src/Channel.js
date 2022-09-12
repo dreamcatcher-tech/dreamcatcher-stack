@@ -217,6 +217,10 @@ export class Channel extends IpldStruct {
 
     return this.setMap({ address, tx, rx })
   }
+  addLatest(pulse) {
+    const rx = this.rx.addLatest(pulse)
+    return this.setMap({ rx })
+  }
 }
 const reject = (rxQueue, txQueue, error) => {
   assert(rxQueue instanceof RxQueue)

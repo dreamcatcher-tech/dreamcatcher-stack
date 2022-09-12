@@ -11,14 +11,15 @@ type Rx struct {
 */
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
-import { RxQueue, PulseLink, Interpulse } from '.'
+import { Pulse, RxQueue, PulseLink, Interpulse } from '.'
 
 export class Rx extends IpldStruct {
-  static cidLinks = ['tip']
+  static cidLinks = ['tip', 'latest']
   static classMap = {
     tip: PulseLink, // TODO check pulselink is only used for tips
     system: RxQueue,
     reducer: RxQueue,
+    latest: PulseLink,
   }
   static create() {
     return super.clone({
@@ -43,15 +44,18 @@ export class Rx extends IpldStruct {
       if (!this.tip.cid.equals(tx.precedent.cid)) {
         throw new Error(`tip ${this.tip.cid} not precedent ${interpulse.cid}`)
       }
-      // TODO retrieve the current tip
-      // check that it comes next with the sequence numbers
-      // ? may supply the previous tip to the function call
     }
     const system = this.system.ingestTxQueue(tx.system)
     const reducer = this.reducer.ingestTxQueue(tx.reducer)
     const tip = interpulse.getPulseLink()
     next = next.setMap({ tip, system, reducer })
     return next
+  }
+  addLatest(pulse) {
+    // TODO check this is genuinely the successor
+    assert(pulse instanceof Pulse)
+    const latest = pulse.getPulseLink()
+    return this.setMap({ latest })
   }
   shiftSystemReply() {
     const system = this.system.shiftReplies()

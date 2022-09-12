@@ -468,7 +468,8 @@ The data structure of RxQueue and TxQueue is identical, but the functions presen
 ```sh
 type RxQueue = TxQueue
 type Rx struct {
-    tip optional PulseLink          # The last Pulse this chain received
+    tip optional PulseLink          # The lastest known InterPulse
+    latest optional PulseLink       # The latest known full Pulse
     system optional RxQueue
     reducer optional RxQueue
 }
@@ -601,15 +602,19 @@ WARNING state tree needs to use a HAMT for size
 ```sh
 type StateTreeNode struct {
     state &State
+    children HashMapRoot     # { String : &StateTreeNode }
+}
+type BinaryTreeNode struct {
     binary &Binary
-    children { String : &StateTreeNode }
+    children HashMapRoot     # { String : &BinaryTreeNode }
 }
 type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
 type Turnovers [PulseLink]   # TODO make into a tree
 type Provenance struct {
     dmz &Dmz
-    states &StateTreeNode
-    lineages &Lineage     # Must allow merging of N parents
+    stateTree &StateTreeNode
+    binaryTree &BinaryTreeNode
+    lineageTree &Lineage     # Must allow merging of N parents
 
     validators &Validators
     turnovers &Turnovers
