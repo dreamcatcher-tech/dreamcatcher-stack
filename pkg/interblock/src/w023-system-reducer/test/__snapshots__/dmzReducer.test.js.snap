@@ -8,6 +8,7 @@ Channel {
   ],
   "channelId": 3,
   "rx": Rx {
+    "latest": PulseLink {},
     "reducer": RxQueue {
       "promisedReplies": [],
       "promisedRequestIds": [],

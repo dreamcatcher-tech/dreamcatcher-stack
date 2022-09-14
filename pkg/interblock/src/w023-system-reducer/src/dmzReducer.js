@@ -162,7 +162,7 @@ const pulseReducer = async (type, payload) => {
       const { path } = payload
       assert.strictEqual(typeof path, 'string')
       assert(path)
-      debug(`isValid`, path)
+      debug(`@@TRY_PATH`, path)
       await latest(path)
       return
     }

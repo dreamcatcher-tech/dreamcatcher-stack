@@ -91,7 +91,6 @@ export class Pulse extends IpldStruct {
     const signatureCount = this.signatures.filter((s) => !!s).length
     return signatureCount >= this.provenance.validators.quorumThreshold
   }
-
   async generateSoftPulse(parent) {
     assert(!this.isModified())
     assert.strictEqual(this.currentCrush, this)

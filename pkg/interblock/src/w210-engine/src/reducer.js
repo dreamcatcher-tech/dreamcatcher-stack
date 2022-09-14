@@ -17,13 +17,14 @@ import { reducer as systemReducer } from '../../w023-system-reducer'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:reducer')
 
-export const reducer = async (pulse, isolate, latest) => {
-  assert(pulse instanceof Pulse)
-  assert(pulse.isModified())
+export const reducer = async (pool, isolate, latest) => {
+  assert(pool instanceof Pulse)
+  assert(pool.isModified())
+  assert(pool.getNetwork().channels.rxs.length)
   assert(isolate instanceof IsolateContainer)
   assert.strictEqual(typeof latest, 'function')
-  let network = pulse.getNetwork()
-  let { pending } = pulse.provenance.dmz
+  let network = pool.getNetwork()
+  let { pending } = pool.provenance.dmz
   let counter = 0
   const reduceReply = async (rxReply) => {
     assert(rxReply instanceof RxReply)
@@ -43,13 +44,13 @@ export const reducer = async (pulse, isolate, latest) => {
     await reduceFulfilledTrail(trail)
   }
   const reduceWithPulse = async (trail) => {
-    pulse = pulse.setNetwork(network).setPending(pending)
-    trail = trail.setMap({ pulse, latest })
+    pool = pool.setNetwork(network).setPending(pending)
+    trail = trail.setMap({ pulse: pool, latest })
     trail = await wrapReduce(trail, systemReducer)
-    pulse = trail.pulse
-    network = pulse.getNetwork()
+    pool = trail.pulse
+    network = pool.getNetwork()
     trail = trail.delete('pulse').delete('latest')
-    pending = pulse.getPending()
+    pending = pool.getPending()
     return trail
   }
 
@@ -139,8 +140,8 @@ export const reducer = async (pulse, isolate, latest) => {
       continue
     }
   }
-  pulse = pulse.setNetwork(network).setPending(pending)
-  return pulse
+  pool = pool.setNetwork(network).setPending(pending)
+  return pool
 }
 const transmitTrailTxs = async (trail, network, pending) => {
   assert(trail instanceof AsyncTrail)

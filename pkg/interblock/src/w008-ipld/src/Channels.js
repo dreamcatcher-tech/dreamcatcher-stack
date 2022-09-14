@@ -85,7 +85,7 @@ export class Channels extends IpldStruct {
       addresses = await this.addresses.set(address, channelId)
     }
     const next = this.setMap({ counter, list, addresses })
-    return next.updateActives(channelId, channel)
+    return next.#updateActives(channel)
   }
   async updateChannel(channel) {
     const { channelId } = channel
@@ -107,12 +107,14 @@ export class Channels extends IpldStruct {
       addresses = await addresses.set(address, channelId)
     }
     const next = this.setMap({ list, addresses })
-    return next.updateActives(channelId, channel)
+    return next.#updateActives(channel, previous)
   }
-  updateActives(channelId, channel) {
+  #updateActives(channel, previous) {
+    assert(channel instanceof Channel)
+    assert(!previous || previous instanceof Channel)
+    const { channelId } = channel
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)
-    assert(channel instanceof Channel)
     const { address } = channel
     let { rxs, txs } = this
     if (!channel.rxIsEmpty()) {
@@ -142,7 +144,21 @@ export class Channels extends IpldStruct {
         txs = txs.filter((id) => id !== channelId)
       }
     }
-    return this.setMap({ rxs, txs })
+
+    const next = this.setMap({ rxs, txs })
+    const { latest } = channel.rx
+    if (!latest) {
+      return next
+    }
+    if (previous && previous.rx.latest && latest.equals(previous.rx.latest)) {
+      return next
+    }
+    const { cxs = [] } = this
+    if (cxs.includes(channelId)) {
+      return next
+    }
+    cxs.push(channelId)
+    return next.setMap({ cxs })
   }
   async getTx(channelId) {
     assert(Number.isInteger(channelId))

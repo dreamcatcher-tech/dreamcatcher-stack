@@ -50,5 +50,5 @@ describe('reload', () => {
       await deleteAsync(repo)
       debug(`deleted ${repo}`)
     }
-  })
+  }, 2000)
 })

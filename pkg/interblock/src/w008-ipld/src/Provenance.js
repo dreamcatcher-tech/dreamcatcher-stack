@@ -105,7 +105,9 @@ export class Provenance extends IpldStruct {
       const { address, tx } = await channels.getChannel(channelId)
       transmissions = transmissions.addTx(address, tx)
     }
+
     next = next.setMap({ transmissions })
-    return await next.crush(resolver)
+    const crushed = await next.crush(resolver)
+    return crushed
   }
 }

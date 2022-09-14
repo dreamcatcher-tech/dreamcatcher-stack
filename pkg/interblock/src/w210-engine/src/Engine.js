@@ -15,6 +15,7 @@ import { Isolate } from './Isolate'
 import { Scale } from './Scale'
 import { Crypto, CryptoLock } from './Crypto'
 import { Endurance } from './Endurance'
+import { Deepening } from './Deepening'
 import Debug from 'debug'
 const debug = Debug('interblock:engine')
 
@@ -62,8 +63,6 @@ export class Engine {
     return instance
   }
   constructor({ isolate, crypto, endurance, scale } = {}) {
-    // TODO remake the engine with a control flow calling into functions
-    // and a generic queue management module
     this.#isolate = isolate || Isolate.create()
     this.#crypto = crypto || Crypto.createCI()
     this.#endurance = endurance || Endurance.create()
@@ -85,79 +84,124 @@ export class Engine {
     assert(this.selfAddress.equals(this.selfLatest.getAddress()))
     // TODO verify we have the crypto keys required to be this block
   }
-  #interpulseLocks = new Map()
-  async #interpulse(target, source, pulse) {
-    // gets hinted that a chain has updated, so begins seeking confirmation
-    // looks up what chains it is hosting, and gets what chains are subscribed ?
+  async #interpulse(target, pulse) {
     assert(target instanceof Address)
-    assert(target.isRemote())
-    assert(source instanceof Address)
-    assert(source.isRemote())
     assert(pulse instanceof Pulse)
-    debug(`interpulse hint received`, target, source)
+    debug(
+      `interpulse for %s from %s pulselink %s`,
+      target,
+      pulse.getAddress(),
+      pulse.getPulseLink()
+    )
 
-    const tracker = { source, pulse }
-    const promise = new Promise((resolve, reject) => {
-      Object.assign(tracker, { resolve, reject })
-    })
-    const chainId = target.getChainId()
-    if (this.#interpulseLocks.has(chainId)) {
-      const queue = this.#interpulseLocks.get(chainId)
-      queue.push(tracker)
-      debug(`interpulse buffered`, queue.length)
+    const deepening = Deepening.createInterpulse(target, pulse)
+    return await this.#pool(deepening)
+  }
+  #poolBuffers = new Map() // chainId: deepening[]
+  async #pool(deepening) {
+    assert(deepening instanceof Deepening)
+    if (this.#poolBuffers.has(deepening.chainId)) {
+      const { queue, promise } = this.#poolBuffers.get(deepening.chainId)
+      queue.push(deepening)
       return promise
     }
-    const queue = [tracker]
-    this.#interpulseLocks.set(chainId, queue)
-    const lock = await this.#crypto.lock(target)
-    const [pool, resolver] = await this.#interpulseQueue(lock, queue, target)
-    assert(!queue.length)
-    this.#interpulseLocks.delete(chainId)
-    const result = await this.#increase(pool, lock)
-    resolver(result)
-    return promise
+    return await this.#drainPoolBuffer(deepening)
   }
-  async #interpulseQueue(lock, interpulseQueue, target) {
-    assert(lock instanceof CryptoLock)
-    assert(lock.isValid())
-    assert(Array.isArray(interpulseQueue))
-    assert(target instanceof Address)
+  async #drainPoolBuffer(first) {
+    assert(first instanceof Deepening)
+    assert(!this.#poolBuffers.has(first.chainId))
+    const queue = [first]
+    const cycle = { queue }
+    cycle.promise = new Promise((resolve, reject) =>
+      Object.assign(cycle, { resolve, reject })
+    )
+    const { chainId } = first
+    this.#poolBuffers.set(chainId, cycle)
+    const lock = await this.#crypto.lock(first.address)
+    debug('got lock for', first.address)
+    const pool = await this.#deepenPool(queue)
+    assert(!queue.length)
+    this.#poolBuffers.delete(chainId)
 
-    let pool
-    const resolves = []
-    while (interpulseQueue.length) {
-      const { source, pulse, resolve, reject } = interpulseQueue.shift()
-      resolves.push(resolve)
-      const interpulse = Interpulse.extract(pulse, target)
-      // TODO check that the change we want to make is still valid
+    const result = await this.#increase(pool, lock)
+    assert(!lock.isValid(), 'increase did not release lock')
+    cycle.resolve(result)
+    return result
+  }
+  async #deepenPool(queue) {
+    assert(Array.isArray(queue))
+    assert(queue.length > 0)
+    const [first] = queue
+    assert(queue.every(({ chainId }) => first.chainId === chainId))
+    const { address } = first
+    let pool = await this.#generatePool(first)
+    while (queue.length) {
+      const { type, payload } = queue.shift()
+      debug('deepening %s for %s', type, address)
+      switch (type) {
+        case Deepening.INTERPULSE: {
+          const interpulse = Interpulse.extract(payload.pulse, address)
+          pool = await pool.ingestInterpulse(interpulse)
+          break
+        }
+        case Deepening.PIERCE: {
+          const { dmz } = pool.provenance
+          assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
+          const { piercer, request } = payload
+          const [network, requestId] = await pool.getNetwork().pierceIo(request)
+          pool = pool.setNetwork(network)
+          piercer.requestId = requestId
+          break
+        }
+        case Deepening.UPDATE: {
+          const { pulse } = payload
+          let network = pool.getNetwork()
+          let channel = await network.getByAddress(pulse.getAddress())
+          channel = channel.addLatest(pulse.getPulseLink())
+          network = await network.updateChannel(channel)
+          pool = pool.setNetwork(network)
+          break
+        }
+      }
+    }
+    debug('deepenPool complete', address)
+    return pool
+  }
+  async #generatePool(deepening) {
+    assert(deepening instanceof Deepening)
+    let parent
+    if (deepening.type === Deepening.INTERPULSE) {
+      const { pulse } = deepening.payload
+      const interpulse = Interpulse.extract(pulse, deepening.address)
       if (interpulse.tx.isGenesisRequest()) {
         const installer = interpulse.tx.getGenesisInstaller()
-        const genesis = await pulse.deriveChildGenesis(installer)
+        parent = pulse
+        const genesis = await parent.deriveChildGenesis(installer)
         await this.#endurance.endure(genesis)
         debug(`genesis endured`, genesis.getAddress())
-        // TODO ? make a unified way to fetch the latest pool item ?
-        // pools are always processed as soon as they are modified
-        assert(!pool)
       }
-      if (!pool) {
-        const latest = await this.#endurance.findLatest(target)
-        const parent = latest.isGenesis() ? pulse : undefined
-        pool = await latest.generateSoftPulse(parent)
-      }
-      pool = await pool.ingestInterpulse(interpulse)
-      debug(`interpulse ingested for: %s from: %s`, target, source)
     }
-    const resolver = (result) => resolves.forEach((resolve) => resolve(result))
-    return [pool, resolver]
+    const latest = await this.#endurance.findLatest(deepening.address)
+    if (parent) {
+      assert(latest.isGenesis())
+    }
+    assert(latest.isVerified())
+    return await latest.generateSoftPulse(parent)
   }
   async #increase(pool, lock) {
     assert(pool instanceof Pulse)
-    assert(pool.getNetwork().channels.rxs.length)
     assert(lock instanceof CryptoLock)
     assert(lock.isValid())
+    const { channels } = pool.getNetwork()
+    assert(channels.rxs.length || channels.cxs.length, 'nothing to increase')
     await this.#scale.watchdog(pool)
-
-    pool = await this.#reducer(pool)
+    if (channels.rxs.length) {
+      pool = await this.#reducer(pool)
+    }
+    if (channels.cxs) {
+      pool = await this.#updateTree(pool)
+      assert(!pool.getNetwork().channels.cxs)
+    }
     const resolver = this.#endurance.getResolver(pool.currentCrush.cid)
     const provenance = await pool.provenance.crushToCid(resolver)
     const signature = await lock.sign(provenance)
@@ -167,6 +211,7 @@ export class Engine {
 
     await this.#endurance.endure(pulse)
     await lock.release()
+    debug('lock released', pool.getAddress())
     await this.#transmit(pulse)
   }
   async #reducer(pool) {
@@ -177,8 +222,27 @@ export class Engine {
     const latest = (path) => this.latestByPath(path)
     return reducer(pool, isolate, latest)
   }
+  async #updateTree(pool) {
+    assert(pool instanceof Pulse)
+    assert(pool.isModified())
+    let network = pool.getNetwork()
+    const { cxs } = network.channels
+    assert(Array.isArray(cxs))
+    assert(cxs.length)
+    for (const channelId of cxs) {
+      const channel = await network.channels.getChannel(channelId)
+      assert(channel.rx.latest instanceof PulseLink)
+      const latest = await this.#endurance.recover(channel.rx.latest)
+      assert(latest instanceof Pulse)
+      // TODO update the trees
+    }
+    const channels = await network.channels.delete('cxs')
+    network = network.setMap({ channels })
+    pool = pool.setNetwork(network)
+    return pool
+  }
   async latestByPath(path, rootAddress = this.selfAddress) {
-    // TODO allow remote roots
+    // TODO allow remote rootAddresses
     assert.strictEqual(typeof path, 'string')
     assert(posix.isAbsolute(path), `path not absolute: ${path}`)
     assert(rootAddress instanceof Address, `no root for path: ${path}`)
@@ -192,7 +256,7 @@ export class Engine {
     if (path === '/') {
       return pulse
     }
-    const [, ...segments] = path.split('/') // discard the root
+    const [discardRoot, ...segments] = path.split('/')
     const depth = ['/']
     while (segments.length) {
       const segment = segments.shift()
@@ -207,13 +271,13 @@ export class Engine {
       if (!address.isRemote()) {
         throw new Error(`segment not resolved: ${segment} of: ${path}`)
       }
+
       const { latest } = channel.rx
       if (!latest) {
         throw Error(`No latest for ${address} relative to ${rootAddress}`)
       }
       assert(latest instanceof PulseLink)
-      // using tip assures the result is deterministic
-      pulse = await this.#endurance.recover(pulse)
+      pulse = await this.#endurance.recover(latest)
     }
     return pulse
   }
@@ -223,98 +287,55 @@ export class Engine {
     const network = pulse.getNetwork()
     const awaits = network.channels.txs.map(async (channelId) => {
       const channel = await network.channels.getChannel(channelId)
-      const { address } = channel
-      assert(address.isRemote())
-      const target = address
-      const source = pulse.getAddress()
-      if (this.isLocal(address)) {
+      const { address: target } = channel
+      assert(target.isRemote())
+      if (this.#isLocal(target)) {
         // remote validators will receive new block proposals as announcements
-        return await this.#interpulse(target, source, pulse)
+        return await this.#interpulse(target, pulse)
       } else {
-        this.#endurance.announceInterpulse(target, source, pulse)
+        this.#endurance.announceInterpulse(target, pulse)
       }
     })
-    awaits.push(this.#updateParent(pulse))
+    await this.#updateParent(pulse)
     await Promise.all(awaits)
     if (pulse.getAddress().equals(this.selfAddress)) {
       const io = await network.getIo()
       await this.#checkPierceTracker(io, this.selfAddress)
     }
+    debug('transmit complete', pulse.getAddress(), pulse.getPulseLink())
   }
   async #updateParent(pulse) {
     assert(pulse instanceof Pulse)
-    const { address } = await pulse.getNetwork().getParent()
-    if (address.isRoot()) {
+    if (await pulse.isRoot()) {
+      debug('no update parent for root')
       return
     }
-    // do a special interpulse with no transactions
+    const { address } = await pulse.getNetwork().getParent()
+    debug('updateParent', address)
+    const deepening = Deepening.createUpdate(address, pulse)
+    return await this.#pool(deepening)
   }
-  isLocal(address) {
+  #isLocal(address) {
     // find out if we are the validator or not
     return true // TODO fetch the pulse validators only, then check
     // validators check is acceptable for ours or remote
   }
-  subscribe(callback) {
-    assert.strictEqual(typeof callback, 'function')
-    // TODO gets called each time a new block is made
-  }
-  #pierceLocks = new Map()
   async pierce(request, address = this.selfAddress) {
-    // the origin of external stimulus across all engines
-    // return a promise that resolves when the promise returns AND
-    // the engine has settled
     assert(address instanceof Address)
     assert(address.isRemote())
     assert(request instanceof Request)
     debug(`pierce`, request.type, address)
-    const chainId = address.getChainId()
-    const tracker = { request, requestId: undefined }
+
+    const piercer = {}
     const promise = new Promise((resolve, reject) =>
-      Object.assign(tracker, { resolve, reject })
+      Object.assign(piercer, { resolve, reject })
     )
-    if (this.#pierceLocks.has(chainId)) {
-      const pierceQueue = this.#pierceLocks.get(chainId)
-      pierceQueue.push(tracker)
-      // TODO somehow unify with interpulse buffering by making
-      // pierce look like an interpulse hint
-      return promise
-    }
-    const pierceQueue = [tracker]
-    this.#pierceLocks.set(chainId, pierceQueue)
-
-    const lock = await this.#crypto.lock(address)
-    // could get the pool and pass it around with the lock ?
-    // the engines work is to make sure pool is increased into a pulse
-    // it cannot settle while there is unincreased pool around
-
-    const latest = await this.#endurance.findLatest(address)
-    assert(latest instanceof Pulse)
-    assert(latest.isVerified())
-    let pool = await latest.generateSoftPulse()
-    const { dmz } = pool.provenance
-    assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
-    while (pierceQueue.length) {
-      debug(`pierceQueue.length`, pierceQueue.length)
-      const tracker = pierceQueue.shift()
-      const { request } = tracker
-      const [network, requestId] = await pool.getNetwork().pierceIo(request)
-      pool = pool.setNetwork(network)
-      tracker.requestId = requestId
-      delete tracker.request
-      this.#piercePromises.add(tracker)
-    }
-    this.#pierceLocks.delete(chainId)
-    await this.#increase(pool, lock)
+    this.#piercers.add(piercer)
+    const deepening = Deepening.createPierce(address, request, piercer)
+    await this.#pool(deepening)
     return promise
   }
-  /**
-   * If endurance was the reference store of things like latest, and pool
-   * And if it was controlled by having a lock to access it
-   * endure(pulse, lock)
-   * pool(pool, lock)
-   * But it has to be able to have ipfs plugged in to it easily
-   */
-  #piercePromises = new Set()
+  #piercers = new Set()
   async #checkPierceTracker(io, address) {
     assert(io instanceof Channel)
     assert.strictEqual(io.channelId, Network.FIXED_IDS.IO)
@@ -323,9 +344,12 @@ export class Engine {
     assert(address.equals(this.selfAddress))
     const { tx } = io
     if (!tx.isEmpty()) {
-      for (const tracker of this.#piercePromises) {
-        const { stream, requestIndex } = tracker.requestId
-        debug(tracker)
+      for (const piercer of this.#piercers) {
+        if (!piercer.requestId) {
+          continue
+        }
+        const { stream, requestIndex } = piercer.requestId
+        debug(piercer)
         // see if the replies contain a settle
         if (tx[stream].hasReply(requestIndex)) {
           const reply = tx[stream].getReply(requestIndex)
@@ -333,12 +357,12 @@ export class Engine {
           if (reply.isPromise()) {
             continue
           }
-          this.#piercePromises.delete(tracker)
+          this.#piercers.delete(piercer)
           if (reply.isResolve()) {
-            tracker.resolve(reply.payload)
+            piercer.resolve(reply.payload)
           } else {
             assert(reply.isRejection())
-            tracker.reject(reply.getRejectionError())
+            piercer.reject(reply.getRejectionError())
           }
         }
       }
@@ -347,9 +371,11 @@ export class Engine {
   async multiThreadStart(threadCount) {}
   async multiThreadStop() {}
   async stop() {
-    // TODO wait on any outstanding pulses to be reduced down
-    // maybe make pool be a Set that always gets drained
-    // reject any new calls to interpulse in the meantime
-    // ? shut down endurance ?
+    // TODO reject calls to a stopped engine
+    while (this.#poolBuffers.size) {
+      for (const cycle of this.#poolBuffers.values) {
+        await cycle.promise
+      }
+    }
   }
 }

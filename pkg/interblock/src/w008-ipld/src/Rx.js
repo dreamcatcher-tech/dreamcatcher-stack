@@ -51,10 +51,9 @@ export class Rx extends IpldStruct {
     next = next.setMap({ tip, system, reducer })
     return next
   }
-  addLatest(pulse) {
+  addLatest(latest) {
     // TODO check this is genuinely the successor
-    assert(pulse instanceof Pulse)
-    const latest = pulse.getPulseLink()
+    assert(latest instanceof PulseLink)
     return this.setMap({ latest })
   }
   shiftSystemReply() {

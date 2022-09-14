@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import {
+  PulseLink,
   RxQueue,
   TxQueue,
   RequestId,
@@ -196,9 +197,9 @@ export class Channel extends IpldStruct {
     const requestIndex = this.tx[stream].requestsLength
     return RequestId.create(channelId, stream, requestIndex)
   }
-  invalidate(pathMsg) {
-    assert.strictEqual(typeof pathMsg, 'string')
-    assert(pathMsg)
+  invalidate(pathString) {
+    assert.strictEqual(typeof pathString, 'string')
+    assert(pathString)
     assert(!this.address.isResolved())
     assert(this.rx.isEmpty())
     assert(this.rx.system.isStart())
@@ -209,20 +210,21 @@ export class Channel extends IpldStruct {
     assert.strictEqual(this.tx.reducer.promisedReplies.length, 0)
     const address = Address.createInvalid()
     let { tx, rx } = this
-    const error = Reply.createError(new Error(`Invalid Path: ${pathMsg}`))
-    let system = reject(rx.system, tx.system, error)
-    let reducer = reject(rx.reducer, tx.reducer, error)
+    const error = Reply.createError(new Error(`Invalid Path: ${pathString}`))
+    let system = rejectAll(rx.system, tx.system, error)
+    let reducer = rejectAll(rx.reducer, tx.reducer, error)
     rx = rx.setMap({ system, reducer })
     tx = tx.setMap({ system: tx.system.blank(), reducer: tx.reducer.blank() })
 
     return this.setMap({ address, tx, rx })
   }
-  addLatest(pulse) {
-    const rx = this.rx.addLatest(pulse)
+  addLatest(latest) {
+    assert(latest instanceof PulseLink)
+    const rx = this.rx.addLatest(latest)
     return this.setMap({ rx })
   }
 }
-const reject = (rxQueue, txQueue, error) => {
+const rejectAll = (rxQueue, txQueue, error) => {
   assert(rxQueue instanceof RxQueue)
   assert(txQueue instanceof TxQueue)
   const replies = txQueue.requests.map((_) => error)

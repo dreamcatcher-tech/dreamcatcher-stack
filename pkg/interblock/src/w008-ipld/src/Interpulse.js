@@ -27,8 +27,11 @@ export class Interpulse {
   #pulse
   static extract(pulse, target) {
     assert(pulse instanceof Pulse)
-    assert(!pulse.isModified())
+    assert(pulse.isVerified())
+    assert(!pulse.isGenesis())
     assert(target instanceof Address)
+    assert(target.isRemote())
+    assert(!target.equals(pulse.getAddress()), 'interpulse is to self')
     let { provenance, signatures } = pulse
     const { validators, turnovers, address, transmissions } = provenance
     const chainId = target.getChainId()
