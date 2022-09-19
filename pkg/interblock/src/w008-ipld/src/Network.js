@@ -117,7 +117,6 @@ export class Network extends IpldStruct {
     }
     return Channel.createIo()
   }
-
   async updateIo(io) {
     assert(io instanceof Channel)
     assert.strictEqual(io.channelId, FIXED.IO)
@@ -135,7 +134,6 @@ export class Network extends IpldStruct {
     const channels = await next.channels.updateChannel(io)
     return next.setMap({ channels })
   }
-
   async pierceIo(request) {
     assert(request instanceof Request)
     let io = await this.getIo()
@@ -165,7 +163,6 @@ export class Network extends IpldStruct {
     // as making an outbound system request is nonsense.
     throw new Error('not implemented')
   }
-
   async addUplink(address) {
     assert(address instanceof Address)
     assert(address.isRemote())

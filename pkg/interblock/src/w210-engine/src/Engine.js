@@ -181,7 +181,19 @@ export class Engine {
         debug(`genesis endured`, genesis.getAddress())
       }
     }
-    const latest = await this.#endurance.findLatest(deepening.address)
+    const { address } = deepening
+    let latest
+    if (this.#endurance.hasLatest(address)) {
+      latest = await this.#endurance.findLatest(address)
+    } else {
+      const source = deepening.payload.pulse
+      assert(source instanceof Pulse)
+      const channel = await source.getNetwork().getByAddress(address)
+      // TODO make aliases discern between child and symlink aliases
+      const [alias] = channel.aliases
+      latest = await this.latestByPath('/' + alias, source)
+    }
+    assert(latest instanceof Pulse, `no latest found for ${address}`)
     if (parent) {
       assert(latest.isGenesis())
     }
@@ -241,17 +253,19 @@ export class Engine {
     pool = pool.setNetwork(network)
     return pool
   }
-  async latestByPath(path, rootAddress = this.selfAddress) {
+  async latestByPath(path, rootPulse) {
     // TODO allow remote rootAddresses
     assert.strictEqual(typeof path, 'string')
-    assert(posix.isAbsolute(path), `path not absolute: ${path}`)
-    assert(rootAddress instanceof Address, `no root for path: ${path}`)
+    if (!rootPulse) {
+      rootPulse = this.selfLatest
+    }
+    assert(rootPulse instanceof Pulse, `no root for path: ${path}`)
     debug('latestByPath', path)
     if (this.#isolate.isCovenant(path)) {
       return this.#isolate.getCovenantPulse(path)
     }
 
-    let pulse = await this.#endurance.findLatest(rootAddress)
+    let pulse = rootPulse
     assert(pulse instanceof Pulse)
     if (path === '/') {
       return pulse

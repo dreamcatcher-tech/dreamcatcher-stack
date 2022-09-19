@@ -19,21 +19,21 @@ export class Deepening {
     instance.payload = { pulse }
     return instance
   }
-  static createPierce(address, request, piercer) {
-    assert(address instanceof Address)
+  static createPierce(target, request, piercer) {
+    assert(target instanceof Address)
     assert(request instanceof Request)
     assert.strictEqual(typeof piercer, 'object')
     assert.strictEqual(typeof piercer.resolve, 'function')
     assert.strictEqual(typeof piercer.reject, 'function')
-    const instance = new Deepening(address)
+    const instance = new Deepening(target)
     instance.type = Deepening.PIERCE
     instance.payload = { request, piercer }
     return instance
   }
-  static createUpdate(address, pulse) {
-    assert(address instanceof Address)
+  static createUpdate(target, pulse) {
+    assert(target instanceof Address)
     assert(pulse instanceof Pulse)
-    const instance = new Deepening(address)
+    const instance = new Deepening(target)
     instance.type = Deepening.UPDATE
     instance.payload = { pulse }
     return instance

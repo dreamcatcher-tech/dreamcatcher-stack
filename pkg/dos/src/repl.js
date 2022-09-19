@@ -107,23 +107,6 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
   spinner.text = `benchmarking local system` // TODO move to dedicated command with params
   spinner.info(`local blockrate 23 blocks per second / 53 ms per block`)
 
-  // spinner.text = `Provisioning app store`
-  // spinner.start()
-  // const publishStart = Date.now()
-  // const { dpkgPath } = await blockchain.publish('crmApp', apps.crm.install)
-  // const installStart = Date.now()
-  // const publishMs = installStart - publishStart
-  // spinner.info(`app store set up at: /${dpkgPath} in ${publishMs}ms`)
-  // spinner.text = `installing crm app at /crm`
-  // spinner.start()
-  // await blockchain.install(dpkgPath, 'crm')
-  // const installMs = Date.now() - installStart
-  // const totalMs = Date.now() - publishStart
-  // spinner.info(`crm app installed at /crm in ${installMs}ms`)
-  // spinner.info(`total deployment time: ${totalMs}ms`)
-  // spinner.stop()
-  await awaitBlockchain(blockchain)
-
   const user = 'root'
   const machineId = 'local'
   spinner.stop()
@@ -132,13 +115,3 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
 }
 
 const noTiming = ['time', 'clear', 'help']
-
-const awaitBlockchain = async (blockchain) => {
-  const latest = await blockchain.latest()
-  const state = latest.getState()
-  if (!state.context) {
-    debug(`creating one block as workaround for no @@INIT action`)
-    await blockchain.ping()
-    debug(`done`)
-  }
-}

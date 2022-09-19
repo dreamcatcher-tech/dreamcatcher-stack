@@ -23,6 +23,7 @@ export default async function print(func, stdout, stderr) {
     }
   } catch (err) {
     debug(err)
-    stderr.write(`❌️ ${err}\r\n`)
+    stderr.write(`❌️ ${err.message}\r\n`)
+    stderr.write(`❌️ ${err.stack}\r\n`)
   }
 }
