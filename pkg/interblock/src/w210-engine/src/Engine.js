@@ -185,12 +185,18 @@ export class Engine {
     let latest
     if (this.#endurance.hasLatest(address)) {
       latest = await this.#endurance.findLatest(address)
+      debug('endurance had', address)
     } else {
+      debug('endurance no cache for', address)
       const source = deepening.payload.pulse
       assert(source instanceof Pulse)
       const channel = await source.getNetwork().getByAddress(address)
       // TODO make aliases discern between child and symlink aliases
       const [alias] = channel.aliases
+      assert.strictEqual(typeof alias, 'string')
+      assert(alias)
+
+      debug('latest by alias', alias)
       latest = await this.latestByPath('/' + alias, source)
     }
     assert(latest instanceof Pulse, `no latest found for ${address}`)
@@ -283,15 +289,17 @@ export class Engine {
       const channel = await network.getChannel(segment)
       const { address } = channel
       if (!address.isRemote()) {
-        throw new Error(`segment not resolved: ${segment} of: ${path}`)
+        throw new Error(`Segment not resolved: ${segment} of: ${path}`)
       }
 
       const { latest } = channel.rx
       if (!latest) {
+        const rootAddress = rootPulse.getAddress()
         throw Error(`No latest for ${address} relative to ${rootAddress}`)
       }
       assert(latest instanceof PulseLink)
       pulse = await this.#endurance.recover(latest)
+      this.#endurance.upsertLatest(address, latest)
     }
     return pulse
   }

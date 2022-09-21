@@ -36,7 +36,7 @@ export class Interpulse {
     overloads.root = shell
     // if announcer is inside net, how to trigger on interpulse received ?
     // could connect via Interpulse ?
-    let net, crypto, endurance
+    let { net, crypto, endurance } = options
     const { repo, CI } = options
     if (repo) {
       // no repo => no net - storage and network are one 🙏

@@ -19,7 +19,6 @@ describe('reload', () => {
     const reboot = await Interpulse.createCI({ repo })
 
     const latest = await reboot.latest('/')
-    Debug.enable('interblock:engine:reducer')
     await reboot.cd('/child1')
 
     await reboot.stop()

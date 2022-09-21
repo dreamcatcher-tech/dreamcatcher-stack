@@ -31,7 +31,6 @@ describe('engine', () => {
     }
     const endurance = Endurance.create()
     const engine = await Engine.createCI({ endurance, overloads })
-    Debug.enable('iplog')
     await engine.pierce(Request.createSpawn('child1'))
     endurance._flushLatests()
     await endurance.endure(endurance.selfLatest)

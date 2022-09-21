@@ -32,12 +32,27 @@ export class Endurance {
   }
   #latests = new Map()
   hasLatest(address) {
+    assert(address instanceof Address)
+    if (address.equals(this.selfAddress)) {
+      return true
+    }
     return this.#latests.has(address.getChainId())
+  }
+  upsertLatest(address, latestLink) {
+    assert(address instanceof Address)
+    assert(latestLink instanceof PulseLink)
+    const chainId = address.getChainId()
+    if (!this.#latests.has(chainId)) {
+      this.#latests.set(chainId, latestLink)
+    }
   }
   async findLatest(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
     this.assertStarted()
+    if (address.equals(this.selfAddress)) {
+      return this.selfLatest
+    }
     const chainId = address.getChainId()
     if (!this.#latests.has(chainId)) {
       throw new Error(`latest not found for ${chainId}`)
