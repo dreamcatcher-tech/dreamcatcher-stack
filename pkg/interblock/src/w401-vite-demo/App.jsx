@@ -14,7 +14,6 @@ function App() {
   const [pingRTT, setPingRTT] = useState([])
 
   const ping = async () => {
-    assert(engine.latest)
     const key = pingRTT.length
     const entry = { rtt: '(waiting...)', key }
     pingRTT.unshift(entry)
@@ -33,19 +32,17 @@ function App() {
     debug(`pulsecount: ${pulseCount}`)
     const latest = await engine.latest()
     debug(`pulse hash`, latest.cid.toString())
-    debug(`https://explore.ipld.io/#/explore/${latest.cid.toString()}`)
     debug(`stop`)
   }
   const oneShot = useRef(false)
   const init = async (engine) => {
     if (engine) {
       debug(`awaiting priors`)
-      await engine.shutdown()
+      await engine.stop()
     }
     debug(`init`)
     const newEngine = await Interpulse.createCI({ repo })
     setEngine(newEngine)
-    await newEngine.ipfsStart()
     debug(`Engine ready`)
   }
   useEffect(() => {
@@ -74,14 +71,22 @@ function App() {
   const reset = async () => {
     debug(`resetting db...`)
     setEngine()
-    await engine.shutdown()
+    await engine.stop()
     const dbs = await window.indexedDB.databases()
+    const awaits = []
     for (const db of dbs) {
       debug(`deleting`, db)
-      window.indexedDB.deleteDatabase(db)
-      debug(`deleted`, db)
+      const request = window.indexedDB.deleteDatabase(db.name)
+      awaits.push(
+        new Promise((resolve, reject) => {
+          request.onerror = reject
+          request.onsuccess = resolve
+        }).then(() => debug(`deleted`, db))
+      )
     }
+    await Promise.all(awaits)
     debug(`reset complete`)
+    setPingRTT([])
     init()
   }
   return (
@@ -115,29 +120,14 @@ function App() {
           <button
             type="button"
             onClick={async () => {
-              const latest = await engine.latest()
-              const cidString = latest.cid.toString()
-              const publicUrl = `https://explore.ipld.io/#/explore/${cidString}`
-              window.open(publicUrl)
+              const stats = await engine.stats()
+              debug('stats', stats)
+              debug('repo', stats.repo)
+              debug('bitswap', stats.bitswap)
+              debug('net', stats.net)
             }}
           >
-            Browse latest on IPFS
-          </button>
-        </p>
-        <p>
-          <button
-            type="button"
-            onClick={async () => {
-              const { ipfs } = engine
-              console.info(await ipfs.swarm.peers())
-              const addresses = await ipfs.swarm.addrs()
-              for (const info of addresses) {
-                console.info(info.id)
-                info.addrs.forEach((addr) => console.info(addr.toString()))
-              }
-            }}
-          >
-            IPFS Stats
+            Stats
           </button>
         </p>
         <p>

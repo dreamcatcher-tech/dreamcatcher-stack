@@ -1,4 +1,4 @@
-import { sigServer } from '@libp2p/webrtc-star-signalling-server'
+import { isNode } from 'wherearewe'
 import { createBitswap } from 'ipfs-bitswap'
 import { createRepo } from 'ipfs-repo'
 import { loadCodec } from '../src/loadCodec'
@@ -6,15 +6,15 @@ import { createBackend } from '../src/createBackend'
 import assert from 'assert-fast'
 import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
 import { createLibp2p } from 'libp2p'
-import { TCP } from '@libp2p/tcp'
 import { Mplex } from '@libp2p/mplex'
 import { Noise } from '@chainsafe/libp2p-noise'
 import { CID } from 'multiformats/cid'
 import { decode } from '../../w008-ipld'
 import all from 'it-all'
 import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
-import Debug from 'debug'
+import { libp2pConfig } from 'ipfs-core-config/libp2p'
 import { Announcer } from './Announcer'
+import Debug from 'debug'
 const debug = Debug('interpulse:PulseNet')
 
 const ciRepo = () => createRepo('ciRepo', loadCodec, createBackend())
@@ -43,13 +43,17 @@ export class PulseNet {
     }
     assert.strictEqual(typeof repo.isInitialized, 'function')
     // TODO store the config in the root chain
+    const baseOptions = libp2pConfig()
     const options = {
-      addresses: { listen: ['/ip4/0.0.0.0/tcp/0'] },
-      transports: [new TCP()],
+      ...baseOptions,
       streamMuxers: [new Mplex()],
       connectionEncryption: [new Noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
     }
+    if (isNode) {
+      options.addresses = { listen: ['/ip4/0.0.0.0/tcp/0'] }
+    }
+
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)
       this.#keypair = CI
@@ -59,6 +63,9 @@ export class PulseNet {
       const identity = this.#keypair.export()
       await repo.init({ identity })
     } else {
+      if (repo.closed) {
+        await repo.open()
+      }
       const config = await repo.config.getAll()
       this.#keypair = Keypair.import(config.identity)
       options.peerId = await this.#keypair.generatePeerId()
@@ -145,6 +152,12 @@ export class PulseNet {
       const block = await decode(bytes)
       return block
     }
+  }
+  async stats() {
+    const repo = await this.#repo.stat()
+    const bitswap = this.#bitswap.stat().snapshot
+    const net = this.#net.metrics.globalStats.getSnapshot()
+    return { repo, bitswap, net }
   }
 }
 const isAppRoot = (pulse) => {

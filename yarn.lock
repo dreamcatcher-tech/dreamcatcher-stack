@@ -2477,7 +2477,7 @@
     socket.io "^4.1.2"
     socket.io-client "^4.1.2"
 
-"@libp2p/webrtc-star@^3.0.0":
+"@libp2p/webrtc-star@^3.0.0", "@libp2p/webrtc-star@^3.0.1":
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/@libp2p/webrtc-star/-/webrtc-star-3.0.1.tgz#1b979e2619444cde818a2a0664dcb95d3c93eeae"
   integrity sha512-DCgOUgA6poNUUYH1UIzLg8zRNbEnqSORb0ioFOIA5ljFu3vtPb+4j1dWz72w0reM/wxLaSocXjo6xaX1lCy1qQ==
@@ -10806,7 +10806,7 @@ wcwidth@^1.0.0, wcwidth@^1.0.1:
   dependencies:
     defaults "^1.0.3"
 
-wherearewe@^2.0.0:
+wherearewe@^2.0.0, wherearewe@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/wherearewe/-/wherearewe-2.0.1.tgz#37c97a7bf112dca8db34bfefb2f6c997af312bb8"
   integrity sha512-XUguZbDxCA2wBn2LoFtcEhXL6AXo+hVjGonwhSTTTU9SzbWG8Xu3onNIpzf9j/mYUcJQ0f+m37SzG77G851uFw==

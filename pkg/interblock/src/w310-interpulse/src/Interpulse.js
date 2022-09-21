@@ -96,6 +96,12 @@ export class Interpulse {
       await this.#net.stop()
     }
   }
+  async stats() {
+    if (!this.#net) {
+      return {}
+    }
+    return await this.#net.stats()
+  }
 }
 const mapShell = (engine) => {
   const actions = {}
