@@ -104,6 +104,9 @@
       "!**/*.test.js",
       "!tmp/"
     ],
+    "workers": {
+      "regular": 6
+    },
     "env": {
       "type": "node",
       "runner": "node",
