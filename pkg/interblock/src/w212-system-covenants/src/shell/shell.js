@@ -4,6 +4,7 @@ import { interchain, usePulse, useState } from '../../../w002-api'
 import Debug from 'debug'
 import { Pulse, Request } from '../../../w008-ipld'
 import { listChildren } from '../../../w023-system-reducer'
+import { schemaToFunctions } from '../../../w210-engine'
 const debug = Debug('interblock:system:shell')
 
 const reducer = async (request) => {
@@ -14,9 +15,8 @@ const reducer = async (request) => {
   switch (type) {
     case 'PING': {
       debug(`ping: %O`, payload)
-      const { to = '.', ...rest } = payload
-      assert.strictEqual(type, 'PING')
-      const ping = Request.createPing(rest)
+      const { to = '.', message } = payload
+      const ping = Request.createPing(message)
       const result = await interchain(ping, to)
       debug(`ping result: %O`, result)
       return result
@@ -39,16 +39,16 @@ const reducer = async (request) => {
       return { loginResult }
     }
     case 'ADD': {
-      let { alias, installer } = payload
-      assert.strictEqual(typeof alias, 'string')
+      let { path, installer } = payload
+      assert.strictEqual(typeof path, 'string')
       assert.strictEqual(typeof installer, 'object')
       const [{ wd = '/' }] = await useState()
       debug('wd', wd)
-      const absolutePath = posix.resolve(wd, alias)
+      const absolutePath = posix.resolve(wd, path)
       const to = posix.dirname(absolutePath)
       let basename = posix.basename(absolutePath)
-      if (!basename && alias) {
-        basename = alias
+      if (!basename && path) {
+        basename = path
         debug(`resetting name to ${basename}`)
       }
       debug(`addActor: %O to: %O`, basename, to)
@@ -68,6 +68,9 @@ const reducer = async (request) => {
       const pulse = await usePulse(absPath)
       assert(pulse instanceof Pulse)
       const children = await listChildren(pulse)
+      const { covenant } = pulse.provenance.dmz
+      const covenantPulse = await usePulse(covenant)
+      assert(covenantPulse instanceof Pulse)
       // TODO implement useCovenant to return an inert json object for actions
       // const covenant = await useCovenant(block)
 
@@ -103,10 +106,10 @@ const reducer = async (request) => {
       return
     }
     case 'DISPATCH': {
-      const { action, to } = payload
+      const { action, path } = payload
       const { type, payload: innerPayload } = action
-      debug(`dispatch type: %o to: %o`, type, to)
-      const result = await interchain(type, innerPayload, to)
+      debug(`dispatch type: %o to: %o`, type, path)
+      const result = await interchain(type, innerPayload, path)
       return result
     }
     case 'MV': {
@@ -127,7 +130,9 @@ const reducer = async (request) => {
       path = posix.resolve(wd, path)
       debug(`publish: ${name} to: ${parentPath} as`, path)
       const installer = { covenant: 'covenant', state: covenant }
-      const result = await interchain(api.add(path, installer))
+      const { add } = api
+      const apiFn = schemaToFunctions({ add })
+      const result = await interchain(apiFn.add(path, installer))
       debug(result)
       return { path }
     }
@@ -150,6 +155,14 @@ const reducer = async (request) => {
       const covenantState = await interchain(request)
       // want to get the covenant path, then do useState on it
       return covenantState
+    }
+    case 'NET_CONNECT': {
+      // provide with a multiaddr then insert this into libp2p
+      return
+    }
+    case 'NET_MAP': {
+      // map a nodeId to an address
+      return
     }
     default: {
       throw new Error(`Unrecognized action: ${type}`)
@@ -194,80 +207,131 @@ const reducer = async (request) => {
  *
  * @param {*} config path to a file, object, or JSON describing the application
  */
-
 const api = {
-  ping: (to = '.', payload = {}) =>
-    Request.create({
-      type: 'PING',
-      payload: { ...payload, to },
-    }),
-  login: (terminalChainId, credentials) => ({
-    type: 'LOGIN',
-    payload: { terminalChainId, credentials },
-  }),
-  add: (alias, installer = {}) =>
-    Request.create({
-      // TODO interpret datums and ask for extra data
-      // TODO use path info
-      type: 'ADD',
-      payload: { alias, installer },
-    }),
-  ls: (path = '.') =>
-    Request.create({
-      type: 'LS',
-      payload: { path },
-    }),
-  rm: (path) => ({
-    type: 'RM',
-    payload: { path },
-  }),
-  cd: (path = '.') =>
-    Request.create({
-      type: 'CD',
-      payload: { path },
-    }),
-  up: (path = '.', remoteParent) => ({
-    type: 'UP',
-    payload: { path, remoteParent },
-  }),
-  dispatch: (action, to) => {
-    assert.strictEqual(typeof action, 'object')
-    assert.strictEqual(typeof to, 'string')
-    return Request.create({
-      type: 'DISPATCH',
-      payload: { action, to },
-    })
+  ping: {
+    type: 'object',
+    title: 'PING',
+    description: 'Ping a remote chain',
+    additionalProperties: true,
+    required: ['to'],
+    properties: {
+      to: { type: 'string', default: '.' },
+      message: { type: 'object' },
+    },
   },
-  /**
-   * Many more options are possible, this is just the bare minimum to get operational
-   * @param {string} name Hint for consumers
-   * @param {object} installer Any required children and their covenants are named here
-   * @param {*} path Path to the publication chain.  You must have permission to update this chain.  If the path does not exist but the parent does, a new child will be created
-   * @returns
-   */
-  publish: (name, covenant = {}, parentPath = '.') =>
-    Request.create({
-      type: 'PUBLISH',
-      payload: { name, covenant, parentPath },
-    }),
-  cat: (path = '.') =>
-    Request.create({
-      type: 'CAT',
-      payload: { path },
-    }),
-  covenant: (path = '.') =>
-    Request.create({ type: 'COVENANT', payload: { path } }),
+  login: {
+    type: 'object',
+    title: 'LOGIN',
+    description: 'Authenticate with a remote app complex',
+    additionalProperties: false,
+    required: ['chainId', 'credentials'],
+    properties: {
+      chainId: { type: 'string' }, // TODO regex
+      credentials: { type: 'object' },
+    },
+  },
+  add: {
+    type: 'object',
+    title: 'ADD',
+    description: `Add a new chain at the optional path, with optional given installer.  If no path is given, a reasonable default will be chosen`,
+    additionalProperties: false,
+    required: [],
+    properties: {
+      // TODO interpret datums and ask for extra data
+      path: { type: 'string' }, // TODO regex
+      installer: { type: 'object', default: {} }, // TODO use pulse to validate format
+    },
+  },
+  ls: {
+    type: 'object',
+    title: 'LS',
+    description: `List all children, and any actions available in the chain at the given path`,
+    additionalProperties: false,
+    required: ['path'],
+    properties: {
+      path: { type: 'string', default: '.' }, // TODO regex
+    },
+  },
+  rm: {
+    type: 'object',
+    title: 'RM',
+    description: `Attempt to remove the chain at the given path, and all its children`,
+    additionalProperties: false,
+    required: ['path'],
+    properties: {
+      path: { type: 'string', default: '.' }, // TODO regex
+    },
+  },
+  cd: {
+    type: 'object',
+    title: 'CD',
+    description: `Change directory to the given path`,
+    additionalProperties: false,
+    required: ['path'],
+    properties: {
+      path: { type: 'string', default: '.' }, // TODO regex
+    },
+  },
+  dispatch: {
+    type: 'object',
+    title: 'DISPATCH',
+    description: `Dispatch an action to a remote chain`,
+    additionalProperties: false,
+    required: ['action', 'path'],
+    properties: {
+      action: { type: 'object' },
+      path: { type: 'string', default: '.' }, // TODO regex
+    },
+  },
+  publish: {
+    type: 'object',
+    title: 'PUBLISH',
+    description: `Make a covenant ready for consumption`,
+    additionalProperties: false,
+    required: ['name', 'covenant', 'parentPath'],
+    properties: {
+      name: { type: 'string', description: `A friendly hint for consumers` }, // TODO regex to ensure no path
+      covenant: {
+        type: 'object',
+        description: `The state of the pulished covenant chain`,
+        // TODO use covenant state regex
+      },
+      parentPath: {
+        type: 'string',
+        default: '.',
+        description: `Path to the publication chain.  You must have permission to update this chain.  If the path does not exist but the parent does, a new default child will be created`,
+      }, // TODO regex
+    },
+  },
+  cat: {
+    type: 'object',
+    title: 'CAT',
+    description: `Return the state as an object at the given path`,
+    additionalProperties: false,
+    required: ['path'],
+    properties: {
+      path: { type: 'string', default: '.' }, // TODO regex
+    },
+  },
+  covenant: {
+    type: 'object',
+    title: 'COVENANT',
+    description: `Return the state of a published covenant`,
+    additionalProperties: false,
+    required: ['path'],
+    properties: {
+      path: { type: 'string', default: '.' }, // TODO regex
+    },
+  },
   //   MV: 'moveActor',
   //   LN: 'linkActor',
   //   LOGOUT: 'logout',
   //   EXEC: 'execute',
   //   BAL: 'balance',
-  //   INSTALL: 'install',
-  //   DISPATCH: 'dispatch'
   //   EDIT: 'edit' // interprets datum and asks for input data
   //   MERGE: 'merge' // combine one chain into the target chain
   //   CP: 'copy' // fork a chain and give it a new parent
 }
-// TODO move all api actions to jsonschema
-const state = { root: '/', wd: '/' }
-export { api, reducer, state }
+const installer = { state: { root: '/', wd: '/' } }
+const name = 'shell'
+export { name, api, reducer, installer }

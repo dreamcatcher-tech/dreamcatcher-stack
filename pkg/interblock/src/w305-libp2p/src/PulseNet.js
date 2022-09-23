@@ -51,6 +51,7 @@ export class PulseNet {
       datastore: repo.datastore, // definitely correct as per ipfs
     }
     if (isNode) {
+      // TODO start a webrtc signalling server if we are on nodejs
       options.addresses = { listen: ['/ip4/0.0.0.0/tcp/0'] }
     }
 
@@ -77,7 +78,6 @@ export class PulseNet {
     this.#net = await createLibp2p(options)
     this.#announcer = Announcer.create(this.#net)
     await this.#net.start()
-    // TODO start a webrtc signalling server if we are on nodejs
 
     this.#repo = repo
     this.#bitswap = createBitswap(this.#net, this.#repo.blocks)
@@ -108,7 +108,7 @@ export class PulseNet {
     })
     const bitswap = await all(this.#bitswap.putMany(manyBlocks))
     if (isAppRoot(pulse)) {
-      debug('isApproot', pulse)
+      debug('announcing appRoot')
       const address = pulse.getAddress()
       const pulselink = pulse.getPulseLink()
       await this.#announcer.announce(address, pulselink)

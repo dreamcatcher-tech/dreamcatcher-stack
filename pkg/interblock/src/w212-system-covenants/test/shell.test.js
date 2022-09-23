@@ -2,17 +2,20 @@ import chai, { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
 import { shell } from '..'
 import Debug from 'debug'
-import { Engine } from '../../w210-engine'
-const debug = Debug('interblock:tests:shell')
+import { Engine, schemaToFunctions } from '../../w210-engine'
+const debug = Debug('tests')
 
 describe('shell', () => {
+  const api = schemaToFunctions(shell.api)
   describe('execution', () => {
     test('parallel request is processed', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('child1'))
-      const cd = shell.api.cd('child1')
+      const add = api.add('child1')
+      debug(add)
+      await engine.pierce(add)
+      const cd = api.cd('child1')
       const cdPromise = engine.pierce(cd)
-      const ls = shell.api.ls('/')
+      const ls = api.ls('/')
       const lsPromise = engine.pierce(ls)
       const [cdResult, lsResult] = await Promise.all([cdPromise, lsPromise])
       assert.strictEqual(cdResult.absolutePath, '/child1')
@@ -27,19 +30,19 @@ describe('shell', () => {
   describe('cd', () => {
     test('cd to valid nested path', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const addResult = await engine.pierce(shell.api.add('child1'))
+      const addResult = await engine.pierce(api.add('child1'))
       debug('addResult', addResult)
 
-      const cdAction = shell.api.cd('child1')
+      const cdAction = api.cd('child1')
       const cdResult = await engine.pierce(cdAction)
       assert.strictEqual(cdResult.absolutePath, '/child1')
       debug(`cdResult`, cdResult)
 
       const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/child1')
-      const addNestedResult = await engine.pierce(shell.api.add('nested1'))
+      const addNestedResult = await engine.pierce(api.add('nested1'))
       debug(`addNestedResult`, addNestedResult)
-      const cdNested = shell.api.cd('nested1')
+      const cdNested = api.cd('nested1')
 
       const nestedResult = await engine.pierce(cdNested)
       debug(`nestedResult`, nestedResult)
@@ -49,27 +52,28 @@ describe('shell', () => {
     })
     test('cd errors on garbage path', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const cd = shell.api.cd('garbagePath')
+      const cd = api.cd('garbagePath')
       const msg = 'Segment not present: /garbagePath of: /garbagePath'
       await expect(engine.pierce(cd)).rejects.toThrow(msg)
     })
     test('cd errors on nested garbage path', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('child1'))
-      const cd = shell.api.cd('child1/garbagePath')
+      await engine.pierce(api.add('child1'))
+      const cd = api.cd('child1/garbagePath')
       const msg =
         'Segment not present: /child1/garbagePath of: /child1/garbagePath'
       await expect(engine.pierce(cd)).rejects.toThrow(msg)
-      const cdTrailing = shell.api.cd('child1/garbagePath/')
+      const cdTrailing = api.cd('child1/garbagePath/')
       await expect(engine.pierce(cdTrailing)).rejects.toThrow('Segment')
-      const cdLong = shell.api.cd('child1/garbagePath/asdf/asdf/')
+      const cdLong = api.cd('child1/garbagePath/asdf/asdf/')
       await expect(engine.pierce(cdLong)).rejects.toThrow('Segment')
-      const cdOk = shell.api.cd('child1')
+      const cdOk = api.cd('child1')
       await engine.pierce(cdOk)
     })
     test('. is resolved', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const cd = shell.api.cd()
+      const cd = api.cd()
+      debug(cd)
       const result = await engine.pierce(cd)
       debug(`result`, result)
 
@@ -78,13 +82,13 @@ describe('shell', () => {
     })
     test(`.. is valid`, async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('child1'))
-      const cdChild = shell.api.cd('child1')
+      await engine.pierce(api.add('child1'))
+      const cdChild = api.cd('child1')
       await engine.pierce(cdChild)
       const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/child1')
 
-      const cdParent = shell.api.cd('..')
+      const cdParent = api.cd('..')
       const parentResult = await engine.pierce(cdParent)
       debug(`parentResult`, parentResult)
       const { wd: wdParent } = engine.selfLatest.getState().toJS()
@@ -92,11 +96,11 @@ describe('shell', () => {
     })
     test(`cd .. at root stays at root`, async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const cd = shell.api.cd('.')
+      const cd = api.cd('.')
       await engine.pierce(cd)
       const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/')
-      const cdUp = shell.api.cd('..')
+      const cdUp = api.cd('..')
       await engine.pierce(cdUp)
       const { wd: wdCd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wdCd, '/')
@@ -108,7 +112,7 @@ describe('shell', () => {
   describe('ls', () => {
     test('list current directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const ls = shell.api.ls()
+      const ls = api.ls()
       const { children } = await engine.pierce(ls)
       debug(`ls: `, children)
       assert.deepEqual(Object.keys(children), ['..', '.', '.@@io'])
@@ -118,62 +122,62 @@ describe('shell', () => {
     })
     test('list remote directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('child1'))
-      const ls = shell.api.ls('child1')
+      await engine.pierce(api.add('child1'))
+      const ls = api.ls('child1')
       const { children } = await engine.pierce(ls)
       assert.deepEqual(Object.keys(children), ['..', '.'])
-      const lsAbsolute = shell.api.ls('/child1')
+      const lsAbsolute = api.ls('/child1')
       const { children: childrenAbsolute } = await engine.pierce(lsAbsolute)
       assert.deepEqual(Object.keys(childrenAbsolute), ['..', '.'])
     })
     test('throws on invalid directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const ls = shell.api.ls('nonExistentChild')
+      const ls = api.ls('nonExistentChild')
       const msg = 'Segment not present: /nonExistentChild of: /nonExistentChild'
       await expect(engine.pierce(ls)).rejects.toThrow(msg)
     })
     test('throws on invalid nested directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const ls = shell.api.ls('nonExistentChild/nested')
+      const ls = api.ls('nonExistentChild/nested')
       const msg =
         'Segment not present: /nonExistentChild of: /nonExistentChild/nested'
       await expect(engine.pierce(ls)).rejects.toThrow(msg)
     })
     test('throws on invalid double nested directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      const ls = shell.api.ls('nonExistentChild/nested1/nested2')
+      const ls = api.ls('nonExistentChild/nested1/nested2')
       const msg =
         'Segment not present: /nonExistentChild of: /nonExistentChild/nested1/nested2'
       await expect(engine.pierce(ls)).rejects.toThrow(msg)
     })
     test('throws on shallow invalid nested directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('validChild'))
-      const ls = shell.api.ls('validChild/nonExistentChild')
+      await engine.pierce(api.add('validChild'))
+      const ls = api.ls('validChild/nonExistentChild')
       const msg =
         'Segment not present: /validChild/nonExistentChild of: /validChild/nonExistentChild'
       await expect(engine.pierce(ls)).rejects.toThrow(msg)
     })
     test('throws on deep invalid nested directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('c1'))
-      await engine.pierce(shell.api.add('c1/nested1'))
+      await engine.pierce(api.add('c1'))
+      await engine.pierce(api.add('c1/nested1'))
 
-      let ls = shell.api.ls('c1/nested1/invalid')
+      let ls = api.ls('c1/nested1/invalid')
       await expect(engine.pierce(ls)).rejects.toThrow('Segment not present')
 
-      ls = shell.api.ls('c1/nested1/')
+      ls = api.ls('c1/nested1/')
       const result = await engine.pierce(ls)
       assert(result)
     })
     test('root path when cd is child', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('child1'))
-      await engine.pierce(shell.api.cd('child1'))
+      await engine.pierce(api.add('child1'))
+      await engine.pierce(api.cd('child1'))
       const { wd } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wd, '/child1')
 
-      const ls = shell.api.ls('/child1')
+      const ls = api.ls('/child1')
       const result = await engine.pierce(ls)
       assert(result)
     })
@@ -181,8 +185,8 @@ describe('shell', () => {
   describe('getState', () => {
     test('basic', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
-      await engine.pierce(shell.api.add('child1'))
-      const state = await engine.pierce(shell.api.cat('child1'))
+      await engine.pierce(api.add('child1'))
+      const state = await engine.pierce(api.cat('child1'))
       debug(state)
     })
   })
@@ -228,12 +232,13 @@ describe('shell', () => {
       }
       const engine = await Engine.createCI({ overloads })
       const { reducer, ...covenant } = dpkgTest
-      const publish = shell.api.publish('dpkgTest', covenant)
+      const publish = api.publish('dpkgTest', covenant)
+      debug(covenant)
       const { path } = await engine.pierce(publish)
       debug(`dpkgPath: `, path)
       assert.strictEqual(path, '/dpkgTest')
 
-      const add = shell.api.add('testInstall', { covenant: path })
+      const add = api.add('testInstall', { covenant: path })
       const installResult = await engine.pierce(add)
       debug(`installResult`, installResult)
       assert(isExecuted)

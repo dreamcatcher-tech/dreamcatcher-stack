@@ -11,18 +11,18 @@ describe('engine', () => {
     debug(`boot time: ${Date.now() - start} ms`)
     debug(`engine ready`)
     const pingStart = Date.now()
-    const payload = { test: 'ping' }
-    const reply = await engine.ping('.', payload)
+    const message = { test: 'ping' }
+    const reply = await engine.ping('.', message)
     debug(`reply: `, reply)
-    expect(reply).toEqual(payload)
+    expect(reply).toEqual(message)
     debug(`pong received`)
     debug(`ping RTT: ${Date.now() - pingStart} ms`)
     debug(`total test time: ${Date.now() - start} ms`)
     debug(`pulseCount: ${engine.logger.pulseCount}`)
 
     const secondStart = Date.now()
-    const secondReply = await engine.ping('.', payload)
-    expect(secondReply).toEqual(payload)
+    const secondReply = await engine.ping('.', message)
+    expect(secondReply).toEqual(message)
     debug(`second pong received`)
     debug(`second ping RTT: ${Date.now() - secondStart} ms`)
     debug(`second pulseCount: ${engine.logger.pulseCount}`)

@@ -345,6 +345,10 @@ export class Engine {
   async pierce(request, address = this.selfAddress) {
     assert(address instanceof Address)
     assert(address.isRemote())
+    if (!(request instanceof Request)) {
+      assert(request instanceof Object)
+      request = Request.create(request)
+    }
     assert(request instanceof Request)
     debug(`pierce`, request.type, address)
 

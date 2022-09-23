@@ -105,9 +105,10 @@ export class Interpulse {
 }
 const mapShell = (engine) => {
   const actions = {}
-  for (const key of Object.keys(shell.api)) {
+  const api = schemaToFunctions(shell.api)
+  for (const key of Object.keys(api)) {
     actions[key] = (...args) => {
-      const action = shell.api[key](...args)
+      const action = api[key](...args)
       return engine.pierce(action)
     }
   }

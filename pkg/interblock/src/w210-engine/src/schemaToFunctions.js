@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import Ajv from 'ajv'
-const ajv = new Ajv({ allErrors: true, verbose: true })
+const ajv = new Ajv({ allErrors: true, verbose: true, useDefaults: true })
 // first compile is about 12ms, so burn it off
 ajv.compile({ type: 'object' })
 
@@ -17,7 +17,20 @@ export const schemaToFunctions = (jsonSchema) => {
 }
 const createAction = (type, schema) => {
   const validate = ajv.compile(schema)
-  return (payload = {}) => {
+  return (payload, ...rest) => {
+    const isObject = typeof payload === 'object'
+    if (!isObject || rest.length) {
+      rest.unshift(payload)
+      payload = {}
+      const { properties = {} } = schema
+      for (const key of Object.keys(properties)) {
+        const value = rest.shift()
+        if (value === undefined) {
+          break
+        }
+        payload[key] = value
+      }
+    }
     if (!validate(payload)) {
       throw validate.errors
     }
