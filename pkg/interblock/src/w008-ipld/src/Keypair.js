@@ -28,6 +28,7 @@ export class Keypair {
     return this.create(name, CI_PRIVATE_KEY)
   }
   #privateKey
+  #peerId
   static create(name, privateKey) {
     const msg = 'must supply a name for the key'
     assert.strictEqual(typeof name, 'string', msg)
@@ -53,9 +54,12 @@ export class Keypair {
     return this.create(name, key)
   }
   async generatePeerId() {
-    const pub = this.#privateKey.public.bytes
-    const pri = this.#privateKey.bytes
-    return await peerIdFromKeys(pub, pri)
+    if (!this.#peerId) {
+      const pub = this.#privateKey.public.bytes
+      const pri = this.#privateKey.bytes
+      this.#peerId = await peerIdFromKeys(pub, pri)
+    }
+    return this.#peerId
   }
   async sign(provenance) {
     assert(provenance instanceof Provenance)

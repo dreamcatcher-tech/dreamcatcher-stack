@@ -107,7 +107,7 @@ export class PulseNet {
       return { key: block.cid, value: block.bytes }
     })
     const bitswap = await all(this.#bitswap.putMany(manyBlocks))
-    if (isAppRoot(pulse)) {
+    if (await isAppRoot(pulse)) {
       debug('announcing appRoot')
       const address = pulse.getAddress()
       const pulselink = pulse.getPulseLink()
@@ -159,12 +159,12 @@ export class PulseNet {
     const net = this.#net.metrics.globalStats.getSnapshot()
     return { repo, bitswap, net }
   }
-}
-const isAppRoot = (pulse) => {
-  assert(pulse instanceof Pulse)
-  const { appRoot } = pulse.provenance.dmz
-  if (!appRoot) {
-    return true
+  getMultiaddrs() {
+    const addrs = this.#net.getMultiaddrs()
+    return addrs.map((addr) => addr.toString())
   }
-  return false
+}
+const isAppRoot = async (pulse) => {
+  assert(pulse instanceof Pulse)
+  return await pulse.isRoot()
 }

@@ -170,43 +170,6 @@ const reducer = async (request) => {
   }
 }
 
-/**
- * Basic app structure is:
- * /root
- *      // internally has reference to the dpkg, which holds the covenants and install images
- *      .processes/
- *          // all FSMs and their running threads
- *          // processes change data
- *          // starts with the process of installing
- *          .network/
- *              // the externally presented FSM and types ?
- *      .devices/
- *          // all the devices connected to this application go here
- *          // includes the terminals from the clients
- *      .apps/
- *          // other applications that are part of this one
- *          // probably have to be symlinks ?
- *      // all the data of the application goes here
- *      ping/
- *      pong/
- *
- *
- * Config should not do permissioning of any kind.
- * Assure this is of standard form.
- * Include a manifest if this is an upgrade.
- *
- * Sequence for running a new app:
- * 1. resolve everything in the config locally, using code in action creator function.
- * 2. bundle up into an action for the shell
- * 2. dispatch action to the shell chain for installation
- * 5. create new root chain to represent the app, using the default name, with status INITIALIZING
- * 3. if waiting for binaries, begin the upload, status: 'UPLOADING'
- * 4. Once ready to install, begin install process for all covenants: INSTALLING
- * 6. After images are ready for execution, create all static chains from the config: DEPLOYING
- * 7. await for input from the users or services to begin normal operation: OPERATING
- *
- * @param {*} config path to a file, object, or JSON describing the application
- */
 const api = {
   ping: {
     type: 'object',

@@ -8,14 +8,22 @@ const debug = Debug('tests')
 Debug.enable('tests iplog *PulseNet')
 
 describe('mount', () => {
-  test('basic', async () => {
+  test.only('basic', async () => {
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
+    const result = await server.add('child1')
+    debug(result)
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })
-    debug('meow')
 
-    // set multiaddresses for peerId
+    const addrs = server.net.getMultiaddrs()
+    debug(addrs)
+    await client.net.dialCI(server.net)
+    const { peerId } = server.net.libp2p
+    const child1 = await server.latest('/child1')
+    const address = child1.getAddress()
+    debug('child1 address', address)
+    client.net.addAddressPeer(address, peerId)
     // map address to peerId
     // observe denied access
     // login to gain access
@@ -24,5 +32,5 @@ describe('mount', () => {
 
     await server.stop()
     await client.stop()
-  })
+  }, 2000)
 })

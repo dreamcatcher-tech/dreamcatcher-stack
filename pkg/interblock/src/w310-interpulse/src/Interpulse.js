@@ -25,7 +25,7 @@ const debug = Debug('interpulse')
 export class Interpulse {
   #engine
   #endurance
-  #net
+  net
   #crypto
   static async createCI(options = {}) {
     options = { ...options, CI: true }
@@ -49,7 +49,7 @@ export class Interpulse {
 
     const instance = new Interpulse(engine)
     if (net) {
-      instance.#net = net
+      instance.net = net
       instance.#endurance = endurance
       instance.#crypto = crypto
     }
@@ -90,17 +90,17 @@ export class Interpulse {
   }
   async stop() {
     await this.#engine.stop() // stop all interpulsing
-    if (this.#net) {
+    if (this.net) {
       this.#crypto.stop()
       await this.#endurance.stop() // complete all disk writes
-      await this.#net.stop()
+      await this.net.stop()
     }
   }
   async stats() {
-    if (!this.#net) {
+    if (!this.net) {
       return {}
     }
-    return await this.#net.stats()
+    return await this.net.stats()
   }
 }
 const mapShell = (engine) => {
