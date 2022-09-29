@@ -9,6 +9,7 @@ const debug = Debug('interpulse:libp2p:Announcer')
 export class Announcer {
   #libp2p
   #subscriptions = new Map() // chainId : sink[]
+  // TODO use endurances method for latest
   #latests = new Map() // chainId : pulselink
   #peerMap = new Map() // chainId : peerIdString[]
   #connections = new Map() // peerIdString : Connection

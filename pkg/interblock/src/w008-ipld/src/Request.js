@@ -56,6 +56,9 @@ export class Request extends IpldStruct {
     '@@RESOLVE_DOWNLINK',
     '@@INVALIDATE',
     '@@TRY_PATH',
+    '@@MOUNT',
+    '@@LN',
+    '@@HARDLINK',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
@@ -104,5 +107,29 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof path, 'string')
     assert(path)
     return this.create('@@TRY_PATH', { path })
+  }
+  static createMount(chainId, name) {
+    assert.strictEqual(typeof chainId, 'string')
+    const payload = { chainId }
+    if (name) {
+      assert.strictEqual(typeof name, 'string')
+      payload.name = name
+    }
+    return this.create('@@MOUNT', payload)
+  }
+  static createLn(target, linkName) {
+    assert.strictEqual(typeof target, 'string')
+    const payload = { target }
+    if (linkName) {
+      assert.strictEqual(typeof linkName, 'string')
+      payload.linkName = linkName
+    }
+    return this.create('@@LN', payload)
+  }
+  static createHardlink(name, chainId) {
+    assert.strictEqual(typeof name, 'string')
+    assert(name)
+    assert.strictEqual(typeof chainId, 'string')
+    return this.create('@@HARDLINK', { name, chainId })
   }
 }

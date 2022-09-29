@@ -6,7 +6,7 @@ Any changes to this file need to be followed by running `yarn schemas` to genera
 
 ## HAMT
 
-Schemas for the hash array mapped trie used to reduce Network slowness with speed.
+Schemas for the hash array mapped trie used to allow the Network to have an arbitrarily large number of channels and still remain performant.
 
 ```sh
 # Root node layout
@@ -531,17 +531,13 @@ type Loopback = Channel
 
 Every channel is given an index, which is monotonic since the start of the chain.
 This ID stays with the channel for its entire lifecycle.
-Internally, everything references channels by this id, with the advantage being communications are unaffected by renames or resolving the chainId, and when actions are dispatched, a unique identifier can be given to the action sender regardless of the current point in the lifecycle of the chain.
+Internally, everything references channels by this id, with the advantage being communications are unaffected by renames or resolving the chainId, and when actions are dispatched, a unique identifier can be given to the action sender regardless of the current point in the lifecycle of the channel.
 
 There may be many aliases mapped to the same channelId.
 
 A HAMT is used to track large amounts of data whilst storing only diffs.
 
 Channel is not stored as a link, but as a full object, since inside of the channel the Tx key will be stored as a link anyway, so no point double linking.
-
-Rxs may use a hamt.
-
-Txs are blanked each block, so no need to use a HAMT.
 
 Uplinks should never include any channels that are in the other hamts.
 

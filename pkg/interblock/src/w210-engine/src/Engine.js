@@ -286,6 +286,16 @@ export class Engine {
         const merged = depth.join('/').substring(1)
         throw new Error(`Segment not present: ${merged} of: ${path}`)
       }
+      const isSymlink = await network.isSymlink(segment)
+      if (isSymlink) {
+        const resolved = await network.resolveSymlink(segment)
+        console.log(resolved, path, segment)
+        assert(posix.isAbsolute(resolved), 'symlinks must be absolute for now')
+        const [, ...newSegments] = resolved.split('/')
+        segments.unshift(...newSegments)
+        console.log(newSegments)
+        continue
+      }
       const channel = await network.getChannel(segment)
       const { address } = channel
       if (!address.isRemote()) {
@@ -295,7 +305,9 @@ export class Engine {
       const { latest } = channel.rx
       if (!latest) {
         const rootAddress = rootPulse.getAddress()
-        throw Error(`No latest for ${address} relative to ${rootAddress}`)
+        throw Error(
+          `No latest for ${address} relative to ${rootAddress} in path: ${path} at segment: ${segment}`
+        )
       }
       assert(latest instanceof PulseLink)
       pulse = await this.#endurance.recover(latest)
@@ -307,6 +319,7 @@ export class Engine {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
     const network = pulse.getNetwork()
+    const updateParent = this.#updateParent(pulse)
     const awaits = network.channels.txs.map(async (channelId) => {
       const channel = await network.channels.getChannel(channelId)
       const { address: target } = channel
@@ -318,11 +331,11 @@ export class Engine {
         this.#endurance.announceInterpulse(target, pulse)
       }
     })
-    await this.#updateParent(pulse)
+    awaits.unshift(updateParent)
     await Promise.all(awaits)
     if (pulse.getAddress().equals(this.selfAddress)) {
       const io = await network.getIo()
-      await this.#checkPierceTracker(io, this.selfAddress)
+      this.#checkPierceTracker(io, this.selfAddress)
     }
     debug('transmit complete', pulse.getAddress(), pulse.getPulseLink())
   }
@@ -362,7 +375,7 @@ export class Engine {
     return promise
   }
   #piercers = new Set()
-  async #checkPierceTracker(io, address) {
+  #checkPierceTracker(io, address) {
     assert(io instanceof Channel)
     assert.strictEqual(io.channelId, Network.FIXED_IDS.IO)
     assert(address instanceof Address)

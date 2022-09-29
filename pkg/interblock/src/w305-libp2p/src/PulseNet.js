@@ -107,12 +107,9 @@ export class PulseNet {
       return { key: block.cid, value: block.bytes }
     })
     const bitswap = await all(this.#bitswap.putMany(manyBlocks))
-    if (await isAppRoot(pulse)) {
-      debug('announcing appRoot')
-      const address = pulse.getAddress()
-      const pulselink = pulse.getPulseLink()
-      await this.#announcer.announce(address, pulselink)
-    }
+    const address = pulse.getAddress()
+    const pulselink = pulse.getPulseLink()
+    await this.#announcer.announce(address, pulselink)
     return bitswap
   }
   async dialCI(other) {
@@ -163,8 +160,4 @@ export class PulseNet {
     const addrs = this.#net.getMultiaddrs()
     return addrs.map((addr) => addr.toString())
   }
-}
-const isAppRoot = async (pulse) => {
-  assert(pulse instanceof Pulse)
-  return await pulse.isRoot()
 }

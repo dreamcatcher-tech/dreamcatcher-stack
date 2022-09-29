@@ -10,6 +10,7 @@ import {
   Channels,
   ChildrenHamt,
   DownlinksHamt,
+  SymlinksHamt,
   UplinksHamt,
   Request,
   Reply,
@@ -49,7 +50,7 @@ export class Network extends IpldStruct {
     children: ChildrenHamt,
     uplinks: UplinksHamt,
     downlinks: DownlinksHamt,
-    symlinks: Hamt,
+    symlinks: SymlinksHamt,
     hardlinks: Hamt,
 
     piercings: Rx,
@@ -66,7 +67,7 @@ export class Network extends IpldStruct {
     const children = ChildrenHamt.create()
     const downlinks = DownlinksHamt.create()
     const uplinks = UplinksHamt.create()
-    const symlinks = Hamt.create() // TODO move to own class
+    const symlinks = SymlinksHamt.create()
     const hardlinks = Hamt.create() // TODO move to own class
     let instance = super.clone({
       channels,
@@ -340,6 +341,7 @@ export class Network extends IpldStruct {
 
   // OPERATIONS BY PATH FROM REDUCER
   async hasChannel(path) {
+    // TODO make a hamt to store all aliases, else may have race conditions between hamts
     assert.strictEqual(typeof path, 'string')
     assert(path)
     const fixeds = ['.', '..', '.@@io']
@@ -352,13 +354,13 @@ export class Network extends IpldStruct {
         return true
       }
     }
+    if (await this.symlinks.has(path)) {
+      return true
+    }
     if (await this.children.has(path)) {
       return true
     }
     if (await this.downlinks.has(path)) {
-      return true
-    }
-    if (await this.symlinks.has(path)) {
       return true
     }
     if (await this.hardlinks.has(path)) {
@@ -396,23 +398,19 @@ export class Network extends IpldStruct {
       }
     }
 
-    let hamt
+    let channelId
     if (await this.children.has(path)) {
-      hamt = this.children
+      channelId = await this.children.get(path)
     }
     if (await this.downlinks.has(path)) {
-      hamt = this.downlinks
-    }
-    if (await this.symlinks.has(path)) {
-      hamt = this.symlinks
+      channelId = await this.downlinks.get(path)
     }
     if (await this.hardlinks.has(path)) {
-      hamt = this.hardlinks
+      channelId = await this.hardlinks.get(path)
     }
-    if (!hamt) {
+    if (!channelId) {
       throw new Error(`non existent path: ${path}`)
     }
-    const channelId = await hamt.get(path)
     return await this.channels.getChannel(channelId)
   }
   async updateChannel(channel) {
@@ -442,6 +440,35 @@ export class Network extends IpldStruct {
     }
     const channels = await next.channels.blankTxs(precedent)
     return next.setMap({ channels })
+  }
+  async setSymlink(linkName, target) {
+    if (await this.hasChannel(linkName)) {
+      throw new Error(`name in use: ${linkName} for: ${target}`)
+    }
+    const symlinks = await this.symlinks.set(linkName, target)
+    return this.setMap({ symlinks })
+  }
+  async isSymlink(linkName) {
+    assert.strictEqual(typeof linkName, 'string')
+    assert(linkName)
+    return await this.symlinks.has(linkName)
+  }
+  async resolveSymlink(linkName) {
+    return await this.symlinks.get(linkName)
+  }
+  async setHardlink(name, address) {
+    assert.strictEqual(typeof name, 'string')
+    assert(name)
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    if (await this.hasChannel(name)) {
+      throw new Error(`name in use: ${name} for: ${address}`)
+    }
+    const channelId = this.channels.counter
+    const channel = Channel.create(channelId).addAlias(name)
+    const channels = await this.channels.addChannel(channel)
+    const hardlinks = await this.hardlinks.set(name, channelId)
+    return this.setMap({ channels, hardlinks })
   }
 }
 const crossover = (channel) => {

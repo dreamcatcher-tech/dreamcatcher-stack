@@ -3,6 +3,7 @@ import { openPath, deepestSegment, openChild } from './openPath'
 import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
 import { installReducer } from './install'
+import { mountReducer } from './mount'
 import { getChannelReducer } from './getChannel'
 import { genesisReducer } from './genesis'
 import { Address, Pulse } from '../../w008-ipld'
@@ -54,6 +55,9 @@ const reducer = (request) => {
     case '@@GET_CHAN':
       getChannelReducer(request)
       break
+    case '@@MOUNT': {
+      return mountReducer(payload)
+    }
     default:
       return pulseReducer(type, payload)
   }
@@ -164,6 +168,26 @@ const pulseReducer = async (type, payload) => {
       assert(path)
       debug(`@@TRY_PATH`, path)
       await latest(path)
+      return
+    }
+    case '@@LN': {
+      const { target, linkName } = payload
+      debug('@@LN', payload)
+      const network = await pulse.getNetwork().setSymlink(linkName, target)
+      pulse = pulse.setNetwork(network)
+      setPulse(pulse)
+      return
+    }
+    case '@@HARDLINK': {
+      const { name, chainId } = payload
+      let network = pulse.getNetwork()
+      if (await network.hasChannel(name)) {
+        throw new Error('remote name already used' + name)
+      }
+      const address = Address.fromChainId(chainId)
+      network = await network.setHardlink(name, address)
+      pulse = pulse.setNetwork(network)
+      setPulse(pulse)
       return
     }
     default:

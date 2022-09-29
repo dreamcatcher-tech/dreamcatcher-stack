@@ -52,6 +52,8 @@ export class Interpulse {
       instance.net = net
       instance.#endurance = endurance
       instance.#crypto = crypto
+
+      // start watching .mtab for remote information
     }
 
     return instance

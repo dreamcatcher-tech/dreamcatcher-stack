@@ -202,7 +202,8 @@ export class Pulse extends IpldStruct {
     const { network, ...rest } = installer
     const dmz = Dmz.create({ ...rest, timestamp })
     // TODO what if the validators change during this block creation ?
-    const genesis = Provenance.createGenesis(dmz, this.validators)
+    const { validators } = this.provenance
+    const genesis = Provenance.createGenesis(dmz, validators)
     const pulse = await Pulse.create(genesis)
     return pulse
   }

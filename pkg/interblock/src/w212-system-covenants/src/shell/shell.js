@@ -164,6 +164,19 @@ const reducer = async (request) => {
       // map a nodeId to an address
       return
     }
+    case 'MOUNT': {
+      const { chainId, name } = payload
+      debug('mount', name, chainId.substr(0, 14))
+      const mount = Request.createMount(chainId, name)
+      return await interchain(mount)
+    }
+    case 'LN': {
+      let { target, linkName = posix.basename(target) } = payload
+      debug('LN', target, linkName)
+      const ln = Request.createLn(target, linkName)
+      await interchain(ln)
+      return
+    }
     default: {
       throw new Error(`Unrecognized action: ${type}`)
     }
@@ -284,6 +297,31 @@ const api = {
     required: ['path'],
     properties: {
       path: { type: 'string', default: '.' }, // TODO regex
+    },
+  },
+  mount: {
+    type: 'object',
+    title: 'MOUNT',
+    description: `Attempt to mount the given chainId at the given mountPath.
+      This will make an entry in mtab if there is not one already.`,
+    additionalProperties: false,
+    required: ['chainId', 'name'],
+    properties: {
+      chainId: { type: 'string', pattern: 'Qm[1-9A-Za-z]{44}' },
+      name: { type: 'string' }, // TODO regex to have no path elements
+    },
+  },
+  ln: {
+    type: 'object',
+    title: 'LN',
+    description: `Link to target path`,
+    required: ['target'],
+    properties: {
+      target: { type: 'string' },
+      linkName: {
+        type: 'string',
+        description: `defaults to the target name.  Must not have any pathing`,
+      },
     },
   },
   //   MV: 'moveActor',
