@@ -1,6 +1,11 @@
 import posix from 'path-browserify'
 import assert from 'assert-fast'
-import { interchain, usePulse, useState } from '../../../w002-api'
+import {
+  interchain,
+  useCovenantState,
+  usePulse,
+  useState,
+} from '../../../w002-api'
 import Debug from 'debug'
 import { Pulse, Request } from '../../../w008-ipld'
 import { listChildren } from '../../../w023-system-reducer'
@@ -68,13 +73,9 @@ const reducer = async (request) => {
       const pulse = await usePulse(absPath)
       assert(pulse instanceof Pulse)
       const children = await listChildren(pulse)
-      const { covenant } = pulse.provenance.dmz
-      const covenantPulse = await usePulse(covenant)
-      assert(covenantPulse instanceof Pulse)
-      // TODO implement useCovenant to return an inert json object for actions
-      // const covenant = await useCovenant(block)
-
-      return { children }
+      const covenantState = await useCovenantState(absPath)
+      const { api = {} } = covenantState
+      return { children, api }
     }
     case 'CD': {
       // TODO ignore if same as working directory

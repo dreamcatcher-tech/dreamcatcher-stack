@@ -70,6 +70,7 @@ describe('crm', () => {
         formData: { custNo: 100, name: 'test name 1' },
       })
       debug(`newCustomer`, newCustomer)
+
       const { children } = await engine.ls('crm/customers')
       debug(`customers: `, children)
       const realCustomers = Object.keys(children).filter(

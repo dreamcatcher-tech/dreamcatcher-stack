@@ -3,15 +3,13 @@ import { createRamRepo } from '../../w305-libp2p'
 import Debug from 'debug'
 const debug = Debug('tests')
 
-Debug.enable('tests iplog *PulseNet interpulse')
-
 describe('mount', () => {
   afterEach(async () => {
     await Promise.all(engines.map((e) => e.stop()))
     engines.length = 0
   })
   const engines = []
-  test.only('basic', async () => {
+  test('basic', async () => {
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
     const addResult = await server.add('child1')
@@ -27,7 +25,7 @@ describe('mount', () => {
     debug('child1 address', address)
     client.net.addAddressPeer(address, peerId)
     const child1ChainId = address.getChainId()
-    Debug.enable('tests iplog *PulseNet *shell interpulse')
+
     await client.mount(child1ChainId, 'server')
     await client.ln('/.mtab/server', 'serverChild1')
     const remote = await client.latest('/serverChild1')

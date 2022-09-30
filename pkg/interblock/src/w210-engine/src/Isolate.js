@@ -89,10 +89,12 @@ export class Isolate {
     return this.#overloadPulses.get(path)
   }
   #isOverload(path) {
+    path = desystemize(path)
     return !!this.#overloads[path]
   }
   async #getOverloadPulse(path) {
     assert(this.#isOverload(path))
+    path = desystemize(path)
     if (!this.#overloadPulses.has(path)) {
       const covenant = this.#overloads[path]
       const pulse = await Pulse.createCovenantOverload(covenant)
@@ -105,4 +107,11 @@ export class Isolate {
     const overloads = this.#overloads
     return await IsolateContainer.create(pulse, overloads, timeout)
   }
+}
+
+const desystemize = (path) => {
+  if (path.startsWith('/system:/')) {
+    return path.substring('/system:/'.length)
+  }
+  return path
 }

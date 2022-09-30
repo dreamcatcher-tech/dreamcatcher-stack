@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { Request } from '../w008-ipld'
 
 export const interchain = (type, payload, to) => {
   const { interchain } = globalThis[Symbol.for('interblock:api:hook')]
@@ -15,4 +16,8 @@ export const usePulse = async (path = '.') => {
   assert(path)
   const reply = interchain('@@USE_PULSE', { path })
   return reply
+}
+export const useCovenantState = async (path = '.') => {
+  const request = Request.createGetCovenantState(path)
+  return await interchain(request)
 }
