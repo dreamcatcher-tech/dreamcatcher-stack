@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
+import { pushable } from 'it-pushable'
 import {
   Network,
   Address,
@@ -36,6 +37,8 @@ export class Engine {
   #crypto
   #endurance
   #scale
+
+  #subscribers = new Set()
 
   /** the address of the base chain of this engine */
   get selfAddress() {
@@ -154,6 +157,7 @@ export class Engine {
           break
         }
         case Deepening.UPDATE: {
+          // TODO verify update is actually what comes next
           const { pulse } = payload
           let network = pool.getNetwork()
           let channel = await network.getByAddress(pulse.getAddress())
@@ -228,6 +232,7 @@ export class Engine {
     assert(provenance.cid.equals(pulse.provenance.cid))
 
     await this.#endurance.endure(pulse)
+    this.#notifySubscribers(pulse) // TODO move pierce tracker to a subscriber
     await lock.release()
     debug('lock released', pool.getAddress())
     await this.#transmit(pulse)
@@ -259,8 +264,15 @@ export class Engine {
     pool = pool.setNetwork(network)
     return pool
   }
+  async updateLatest(target, latest) {
+    assert(target instanceof Address)
+    assert(target.isRemote())
+    assert(latest instanceof Pulse)
+    assert(latest.isVerified())
+    const deepening = Deepening.createUpdate(target, latest)
+    return await this.#pool(deepening)
+  }
   async latestByPath(path, rootPulse) {
-    // TODO allow remote rootAddresses
     assert.strictEqual(typeof path, 'string')
     if (!rootPulse) {
       rootPulse = this.selfLatest
@@ -270,13 +282,13 @@ export class Engine {
     if (this.#isolate.isCovenant(path)) {
       return this.#isolate.getCovenantPulse(path)
     }
-
     let pulse = rootPulse
     assert(pulse instanceof Pulse)
     if (path === '/') {
       return pulse
     }
-    const [discardRoot, ...segments] = path.split('/')
+    path = posix.normalize(path)
+    const segments = split(path)
     const depth = ['/']
     while (segments.length) {
       const segment = segments.shift()
@@ -289,12 +301,8 @@ export class Engine {
       const isSymlink = await network.isSymlink(segment)
       if (isSymlink) {
         const resolved = await network.resolveSymlink(segment)
-        console.log(resolved, path, segment)
         assert(posix.isAbsolute(resolved), 'symlinks must be absolute for now')
-        const [, ...newSegments] = resolved.split('/')
-        segments.unshift(...newSegments)
-        console.log(newSegments)
-        continue
+        return this.latestByPath(resolved + segments.join('/'))
       }
       const channel = await network.getChannel(segment)
       const { address } = channel
@@ -314,6 +322,26 @@ export class Engine {
       this.#endurance.upsertLatest(address, latest)
     }
     return pulse
+  }
+  subscribe() {
+    const sink = pushable({
+      objectMode: true,
+      onEnd: () => {
+        debug('unsubscribe')
+        this.#subscribers.delete(sink)
+      },
+    })
+    this.#subscribers.add(sink)
+    sink.push(this.selfLatest)
+    return sink
+  }
+  #notifySubscribers(pulse) {
+    assert(pulse instanceof Pulse)
+    if (pulse.getAddress().equals(this.selfAddress)) {
+      for (const sink of this.#subscribers) {
+        sink.push(pulse)
+      }
+    }
   }
   async #transmit(pulse) {
     assert(pulse instanceof Pulse)
@@ -411,10 +439,24 @@ export class Engine {
   async multiThreadStop() {}
   async stop() {
     // TODO reject calls to a stopped engine
+    for (const sink of this.#subscribers) {
+      sink.end()
+    }
     while (this.#poolBuffers.size) {
       for (const cycle of this.#poolBuffers.values) {
         await cycle.promise
       }
     }
   }
+}
+const split = (path) => {
+  assert.strictEqual(typeof path, 'string')
+  const result = path.split('/')
+  while (result[0] === '') {
+    result.shift()
+  }
+  while (result[result.length - 1] === '') {
+    result.pop()
+  }
+  return result
 }

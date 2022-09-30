@@ -464,8 +464,9 @@ export class Network extends IpldStruct {
     if (await this.hasChannel(name)) {
       throw new Error(`name in use: ${name} for: ${address}`)
     }
+    // TODO make channels create the channelId to avoid race conditions
     const channelId = this.channels.counter
-    const channel = Channel.create(channelId).addAlias(name)
+    const channel = Channel.create(channelId, address).addAlias(name)
     const channels = await this.channels.addChannel(channel)
     const hardlinks = await this.hardlinks.set(name, channelId)
     return this.setMap({ channels, hardlinks })

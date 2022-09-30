@@ -5,9 +5,9 @@ export const mountReducer = async (payload) => {
   const { chainId, name } = payload
   // TODO warning timing issues if multiple mtab requests made in same pulse
   try {
-    await usePulse('./.mtab')
+    await usePulse('/.mtab')
   } catch (error) {
-    if (error.message !== 'Segment not present: /.mtab of: ./.mtab') {
+    if (error.message !== 'Segment not present: /.mtab of: /.mtab') {
       throw error
     }
     await interchain(Request.createSpawn('.mtab'))
