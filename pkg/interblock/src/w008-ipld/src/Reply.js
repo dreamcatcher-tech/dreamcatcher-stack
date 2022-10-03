@@ -47,6 +47,8 @@ export class Reply extends Request {
         `Promises cannot have payloads`
       )
       assert(!this.binary, `Promises cannot have binary attachments`)
+    } else {
+      assert.strictEqual(typeof this.payload, 'object')
     }
   }
   isPromise() {

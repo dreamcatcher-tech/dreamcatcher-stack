@@ -132,4 +132,9 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof chainId, 'string')
     return this.create('@@HARDLINK', { name, chainId })
   }
+  static createUsePulse(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    return this.create('@@USE_PULSE', { path })
+  }
 }

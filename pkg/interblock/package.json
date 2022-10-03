@@ -92,7 +92,6 @@
     "testEnvironment": "node",
     "transform": {},
     "maxWorkers": "95%",
-    "testTimeout": 600,
     "setupFiles": [
       "trace-unhandled/register"
     ]

@@ -50,4 +50,18 @@ describe('reload', () => {
       debug(`deleted ${repo}`)
     }
   }, 2000)
+  test('open handles', async () => {
+    const repo = createRamRepo('ram')
+    debug(`starting engine`)
+    const engine = await Interpulse.createCI({ repo })
+    const stream = engine.subscribe()
+    const m = async () => {
+      for await (const p of stream) {
+        console.log('meow')
+      }
+    }
+    m()
+
+    await engine.stop()
+  })
 })

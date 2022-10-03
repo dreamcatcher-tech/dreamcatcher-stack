@@ -69,6 +69,7 @@ export class IpldStruct extends IpldInterface {
       const isChildCidLink = this.constructor.isCidLink(key)
       const slice = crushed[key]
       if (slice instanceof IpldInterface) {
+        // TODO make these all happen in parallel
         crushed[key] = await slice.crush(resolver, isChildCidLink)
         if (isChildCidLink) {
           dagTree[key] = crushed[key].cid

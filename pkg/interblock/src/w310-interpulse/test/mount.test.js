@@ -1,5 +1,6 @@
 import { Interpulse } from '..'
 import { createRamRepo } from '../../w305-libp2p'
+import delay from 'delay'
 import Debug from 'debug'
 const debug = Debug('tests')
 
@@ -32,10 +33,15 @@ describe('mount', () => {
     debug('remote', remote)
     expect(child1.cid.equals(remote.cid)).toBeTruthy()
 
+    Debug.enable('iplog')
     const nested1 = await server.add('child1/nested1')
     debug(nested1)
     const nestedRemote = await client.latest('/.mtab/server/nested1')
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
+    debug('nested1 pulseHash', nestedRemote.getPulseLink())
+    Debug.enable('*shell iplog *openPath *dmz')
+    await client.ping('/.mtab/server')
+    await client.ping('/.mtab/server/nested1')
 
     // things to store:
     //    peerId as a friendly name, like hosts file / dns
@@ -45,5 +51,5 @@ describe('mount', () => {
     // dispatch some commands into it
 
     // after restart of client, observe continued access to server/child1
-  }, 5000)
+  })
 })

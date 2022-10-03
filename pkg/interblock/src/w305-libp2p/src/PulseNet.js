@@ -80,7 +80,8 @@ export class PulseNet {
     await this.#net.start()
 
     this.#repo = repo
-    this.#bitswap = createBitswap(this.#net, this.#repo.blocks)
+    const bsOptions = { statsEnabled: true }
+    this.#bitswap = createBitswap(this.#net, this.#repo.blocks, bsOptions)
     await this.#bitswap.start()
   }
   async stop() {

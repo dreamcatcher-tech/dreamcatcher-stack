@@ -309,7 +309,6 @@ export class Engine {
       if (!address.isRemote()) {
         throw new Error(`Segment not resolved: ${segment} of: ${path}`)
       }
-
       const { latest } = channel.rx
       if (!latest) {
         const rootAddress = rootPulse.getAddress()
