@@ -65,11 +65,10 @@ export class IpldStruct extends IpldInterface {
     const crushed = new this.constructor()
     Object.assign(crushed, this)
     const dagTree = {}
-    for (const key in crushed) {
+    const awaits = Object.keys(crushed).map(async (key) => {
       const isChildCidLink = this.constructor.isCidLink(key)
       const slice = crushed[key]
       if (slice instanceof IpldInterface) {
-        // TODO make these all happen in parallel
         crushed[key] = await slice.crush(resolver, isChildCidLink)
         if (isChildCidLink) {
           dagTree[key] = crushed[key].cid
@@ -93,7 +92,8 @@ export class IpldStruct extends IpldInterface {
         assert(!isChildCidLink)
         dagTree[key] = crushed[key]
       }
-    }
+    })
+    await Promise.all(awaits)
     assert.strictEqual(Object.keys(dagTree).length, Object.keys(crushed).length)
     if (isCidLink) {
       crushed.#ipldBlock = await encode(dagTree)
