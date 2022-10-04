@@ -1,5 +1,5 @@
 import './Terminal.css'
-import { assert } from 'chai/index.mjs'
+import { assert } from 'assert-fast'
 import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'
 import { Terminal } from 'xterm'

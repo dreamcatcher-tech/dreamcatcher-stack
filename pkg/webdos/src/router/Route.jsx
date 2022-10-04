@@ -1,4 +1,4 @@
-import {assert} from 'chai/index.mjs'
+import { assert } from 'assert-fast'
 import posix from 'path-browserify'
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'

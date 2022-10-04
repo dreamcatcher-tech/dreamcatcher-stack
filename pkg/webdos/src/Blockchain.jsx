@@ -1,4 +1,4 @@
-import { assert } from 'chai/index.mjs'
+import { assert } from 'assert-fast'
 import React, { useState, useEffect } from 'react'
 import { effectorFactory } from '@dreamcatcher-tech/interblock'
 import equals from 'fast-deep-equal'

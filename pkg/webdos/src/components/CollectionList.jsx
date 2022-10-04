@@ -1,15 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react'
 import calculateSize from 'calculate-size'
 import { XGrid } from '@material-ui/x-grid'
-import {assert} from 'chai/index.mjs'
+import { assert } from 'assert-fast'
 import Debug from 'debug'
 import { useBlockchain, useBlockstream, useRouter } from '../hooks'
 import { Fab } from '@material-ui/core'
 import { Add } from '@material-ui/icons'
 import equal from 'fast-deep-equal'
 import process from 'process'
-
-
 
 const debug = Debug('terminal:widgets:CollectionList')
 const CollectionList = (props) => {

@@ -3,7 +3,7 @@
  * Updates later blocks in the array if an earlier block changes.
  * Throws if any part of the path is invalid.
  */
-import { assert } from 'chai/index.mjs'
+import { assert } from 'assert-fast'
 import { useState, useEffect } from 'react'
 import { default as useBlockchain } from './useBlockchain'
 import Debug from 'debug'
