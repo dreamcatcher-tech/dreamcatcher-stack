@@ -1,6 +1,6 @@
-import { assert } from 'assert-fast'
-import React, { useState, useEffect } from 'react'
-import { effectorFactory } from '@dreamcatcher-tech/interblock'
+import assert from 'assert-fast'
+import React, { useState, useEffect, useRef } from 'react'
+import { Interpulse } from '@dreamcatcher-tech/interblock'
 import equals from 'fast-deep-equal'
 import { Terminal } from '.'
 import process from 'process'
@@ -9,118 +9,41 @@ const debug = Debug('terminal:Blockchain')
 
 export const BlockchainContext = React.createContext()
 BlockchainContext.displayName = 'Blockchain'
-
-const Blockchain = ({ id = 'terminal', dev, children }) => {
+const Blockchain = ({ repo = 'interpulse', dev, children }) => {
   assert(typeof dev === 'object' || typeof dev === 'undefined')
   const [latest, setLatest] = useState()
-  const [context, setContext] = useState()
-  const [blockchain, setBlockchain] = useState()
+  const [state, setState] = useState()
+  const [engine, setEngine] = useState()
   const [isPending, setIsPending] = useState(false)
   const [isBooting, setIsBooting] = useState(true)
 
-  const initializeBlockchain = async () => {
-    let isActive = true
-    debug(`initializing blockchain: ${id}`)
-    const covenantOverloads = _extractCovenants(dev)
-    const blockchain = await effectorFactory(
-      id,
-      covenantOverloads,
-      'interblock'
-    )
-    if (!isActive) {
-      // TODO wrap stdin in package attached to blockchain so can be replaced
-      debug(`blockchain loaded but torn down`)
+  const oneShot = useRef(false)
+  const init = async (engine) => {
+    if (engine) {
+      debug(`awaiting priors`)
+      await engine.stop()
+    }
+    debug(`init`)
+    const newEngine = await Interpulse.createCI({ repo })
+    setEngine(newEngine)
+    setIsBooting(false)
+    console.log(await newEngine.latest())
+    debug(`Engine ready`)
+  }
+  useEffect(() => {
+    if (!oneShot.current) {
+      debug(`oneshot React18 workaround`)
+      oneShot.current = true
       return
     }
-    setBlockchain(blockchain)
-    if (dev) {
-      assert.strictEqual(typeof dev, 'object', `dev must be an object`)
-      debug(`installing dev mode app`)
-      const { installer, covenantId } = dev
-      const { name } = covenantId
-      const { dpkgPath } = await blockchain.publish(name, installer)
-      debug(`dpkgPath: `, dpkgPath)
-      const installResult = await blockchain.install(dpkgPath, 'app')
+    init(engine)
+  }, [])
 
-      debug(`app installed: `, installResult)
-      await blockchain.cd('/app')
-      if (!isActive) {
-        debug(`app installed, but blockchain torn down`)
-        return
-      }
-      const command = `ls\n`
-      for (const c of command) {
-        // TODO fix console not in sync with terminal automatically
-        // TODO make writeline command
-        process.stdin.send(c)
-      }
-    }
-    setTimeout(() => isActive && setIsBooting(false), 100)
-    return () => {
-      // TODO make the blockchain reject everything, as it is defunct
-      isActive = false
-      debug(`"${id}" has been shut down`)
-    }
-  }
-  const subscribeToLatestBlock = () => {
-    if (!blockchain) {
-      return
-    }
-    const unsubscribe = blockchain.subscribe((block) => {
-      debug(`setLatest to height: ${block.provenance.height}`)
-      setLatest(block)
-      setContext((current) => {
-        const { context } = block.getState()
-        if (!equals(context, current)) {
-          debug(`setting context %o`, context)
-          return context
-        }
-        return current
-      })
-    })
-    return () => {
-      unsubscribe()
-    }
-  }
-  const subscribePending = () => {
-    if (!blockchain) {
-      return
-    }
-    const unsubscribeIsPending = blockchain.subscribePending((isPending) => {
-      debug(`subscribePending`, isPending)
-      setIsPending(isPending)
-    })
-    return unsubscribeIsPending
-  }
-
-  useEffect(() => initializeBlockchain(), [id, dev])
-  useEffect(subscribeToLatestBlock, [blockchain])
-  useEffect(subscribePending, [blockchain])
-
-  const providerValue = { blockchain, latest, context, isPending }
-  // TODO block stdin during this boot time
+  const providerValue = { engine, latest, state, isPending }
   return (
     <BlockchainContext.Provider value={providerValue}>
-      {isBooting ? (
-        <Terminal id="boot" style={{ height: '100vh' }} />
-      ) : (
-        children
-      )}
+      {isBooting ? <div>booting...</div> : children}
     </BlockchainContext.Provider>
   )
-}
-const _extractCovenants = (dev) => {
-  if (!dev) {
-    return
-  }
-  if (!dev.installer) {
-    // TODO assert has covenant format
-    return { devApp: dev } // this matches the default installer name in shell
-  }
-  // TODO extract all covenants from the installer ?
-  // TODO assert dev meets covenant format
-  assert(dev.covenantId && dev.covenantId.name)
-  const name = dev.covenantId.name
-  return { [name]: dev }
 }
 export default Blockchain

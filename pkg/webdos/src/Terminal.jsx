@@ -1,5 +1,5 @@
 import './Terminal.css'
-import { assert } from 'assert-fast'
+import assert from 'assert-fast'
 import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'
 import { Terminal } from 'xterm'
@@ -62,7 +62,6 @@ const TerminalContainer = (props) => {
     const { blockchain: bc } = useBlockchain()
     blockchain = bc
   } catch (e) {
-    debugger
     const thing = useBlockchain()
   }
   const [streams, setStreams] = useState()

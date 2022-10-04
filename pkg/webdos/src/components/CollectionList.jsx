@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import calculateSize from 'calculate-size'
 import { XGrid } from '@material-ui/x-grid'
-import { assert } from 'assert-fast'
+import assert from 'assert-fast'
 import Debug from 'debug'
 import { useBlockchain, useBlockstream, useRouter } from '../hooks'
 import { Fab } from '@material-ui/core'

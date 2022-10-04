@@ -1,8 +1,7 @@
 import { version } from '../../package.json'
 import './demo.css'
-
 import React, { useEffect, Component } from 'react'
-import ReactDOM from 'react-dom'
+import ReactDOM from 'react-dom/client'
 import { Blockchain, Terminal, Router, Switch, Route } from '..'
 
 import {
@@ -25,7 +24,7 @@ import multi from './multi'
 import timesheets from './timesheets'
 import Debug from 'debug'
 const debug = Debug('client:tests:App')
-Debug.enable('*:widgets:* *Route* *Switch *met* ')
+Debug.enable('*:widgets:* *Route* *Switch iplog *Blockchain')
 
 const Map = () => {
   return (
@@ -78,8 +77,8 @@ export default class Demo extends Component {
       <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
         <h4>Demo version: {version}</h4>
         <Blockchain dev={multi}>
-          <Terminal style={{ height: '280px', background: 'black' }} />
-          <Router>
+          {/* <Terminal style={{ height: '100vh', background: 'black' }} /> */}
+          {/* <Router>
             <Switch>
               <Route covenant="app">
                 <AppContainer>
@@ -95,11 +94,15 @@ export default class Demo extends Component {
               </Route>
               <Route component={<Explorer />} />
             </Switch>
-          </Router>
+          </Router> */}
         </Blockchain>
       </div>
     )
   }
 }
 
-ReactDOM.render(<Demo />, document.querySelector('#root'))
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <Demo />
+  </React.StrictMode>
+)
