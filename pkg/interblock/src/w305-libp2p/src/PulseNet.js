@@ -78,6 +78,7 @@ export class PulseNet {
     this.#net = await createLibp2p(options)
     this.#announcer = Announcer.create(this.#net)
     await this.#net.start()
+    debug('listening on', this.#net.getMultiaddrs())
 
     this.#repo = repo
     const bsOptions = { statsEnabled: true }

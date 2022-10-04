@@ -1,11 +1,9 @@
 import { defineConfig } from 'vite'
-import reactRefresh from '@vitejs/plugin-react-refresh'
+import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
-const { dependencies } = require('./package.json')
-dependencies['chai/index.mjs'] = true
 
 /**
  * ora must be held at 3.0.0 as this is the last version not using nodejs globals
@@ -17,12 +15,21 @@ dependencies['chai/index.mjs'] = true
  * than tracing the root cause.  Suspect the root cause is ora.
  */
 
+const { dependencies } = require('./package.json')
+dependencies['chai/index.mjs'] = true
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [reactRefresh()],
+  plugins: [react()],
+  optimizeDeps: {
+    // target: es2020 added as workaround to make big ints work
+    // https://github.com/vitejs/vite/issues/9062#issuecomment-1182818044
+    esbuildOptions: {
+      target: 'es2020',
+    },
+  },
   build: {
     target: 'esnext',
-    minify: 'esbuild', // required to transform biginteger in noble-crypto
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],
       external: Object.keys(dependencies),
@@ -31,5 +38,8 @@ export default defineConfig({
       formats: ['es'],
       entry: path.resolve('./src/index.mjs'),
     },
+  },
+  define: {
+    'process.env.NODE_DEBUG': 'false',
   },
 })

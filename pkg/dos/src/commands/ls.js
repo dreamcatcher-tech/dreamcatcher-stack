@@ -1,4 +1,3 @@
-import posix from 'path-browserify'
 import cliuiModule from 'cliui'
 import chalk from 'ansi-colors-browserify'
 import Debug from 'debug'
@@ -9,20 +8,7 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
   spinner.text = `Resolving ${path}`
 
   debug(`ls`, path)
-  let { children } = await blockchain.ls(path)
-  children = { ...children }
-
-  // TODO implement this in shell, not externally
-  const { wd } = blockchain
-  const absPath = posix.resolve(wd, path)
-  // const actions = await blockchain.actions(absPath)
-  // debug(`actions`, actions)
-  // const actionNames = Object.keys(actions).map((name) => {
-  //   const localName = `./${name}()`
-  //   children[localName] = { systemRole: 'function' }
-  //   return localName
-  // })
-
+  let { children, api } = await blockchain.ls(path)
   const ui = cliui()
   const aliases = Object.keys(children)
     .sort((a, b) => {
@@ -57,35 +43,31 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
     })
     .filter((alias) => !alias.includes('/'))
 
-  // aliases.splice(0, 0, ...actionNames)
   debug(`aliases: `, aliases)
   aliases.forEach((alias) => {
     debug(`child: ${alias}`)
-    let { systemRole, chainId, hash = '', height = '' } = children[alias]
+    let { chainId, tip, precedent, hash = '' } = children[alias]
     let filename = alias
-
-    if (systemRole !== 'function') {
-      chainId = chainId.length === 64 ? chainId.substring(0, 8) : chainId
-      hash = hash.length === 64 ? hash.substring(0, 8) : hash
-      if (systemRole !== 'UP_LINK') {
-        filename = chalk.blueBright(alias)
-      } else {
-        filename = chalk.green(alias)
-      }
-    } else {
-      filename = chalk.red(alias)
-      height = ''
-      chainId = '(function)'
-    }
+    chainId = chainId.length >= 40 ? chainId.substring(0, 14) : chainId
+    hash = hash.length >= 50 ? hash.substring(0, 14) : hash
+    filename = chalk.green(alias)
 
     // TODO use the same tools as networkPrint
-    debug(filename, height, chainId, hash)
 
     ui.div(
       { text: filename, width: 35 },
-      { text: height + '', width: 10 },
-      { text: chainId, width: 13 },
+      { text: chainId, width: 17 },
       { text: hash, width: 55 }
+    )
+  })
+  Object.keys(api).forEach((functionName) => {
+    const filename = chalk.red(functionName + '()')
+    const chainId = '(function)'
+
+    ui.div(
+      { text: filename, width: 35 },
+      { text: chainId, width: 17 },
+      { text: '', width: 55 }
     )
   })
   return { out: ui.toString() }
