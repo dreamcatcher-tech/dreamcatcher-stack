@@ -151,7 +151,7 @@ const sinkJs = (pushable) => {
         pushable.push(object)
       }
     } catch (e) {
-      console.error(e)
+      // console.error(e)
       // TODO tear down the connection
     }
   }

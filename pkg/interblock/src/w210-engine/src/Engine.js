@@ -208,6 +208,7 @@ export class Engine {
       assert(latest.isGenesis())
     }
     assert(latest.isVerified())
+    assert(this.#crypto.isValidatable(latest), 'No public keys for Pulse')
     return await latest.generateSoftPulse(parent)
   }
   async #increase(pool, lock) {
@@ -351,7 +352,7 @@ export class Engine {
       const channel = await network.channels.getChannel(channelId)
       const { address: target } = channel
       assert(target.isRemote())
-      if (this.#isLocal(target)) {
+      if (await this.#isLocal(channel, pulse)) {
         // remote validators will receive new block proposals as announcements
         return await this.#interpulse(target, pulse)
       } else {
@@ -377,7 +378,27 @@ export class Engine {
     const deepening = Deepening.createUpdate(address, pulse)
     return await this.#pool(deepening)
   }
-  #isLocal(address) {
+  async whoami(pulse) {
+    assert(pulse instanceof Pulse)
+  }
+  async #isLocal(toChannel, fromPulse) {
+    assert(toChannel instanceof Channel)
+    assert(fromPulse instanceof Pulse)
+    // if its a hardlink, get the total path
+    // based on path alone, we can tell if this channel is remote ?
+
+    const fromPath = await this.whoami(fromPulse)
+
+    // get the path of the address
+    // use the path to determine local or remote
+
+    /**
+     * How would we know if this address is local or remote ?
+     * If we had the alias info, then we could figure this part out.
+     * But we would need to enforce pathing
+     * So uplinks cannot be pure addresses - need to be pathed
+     *
+     */
     // find out if we are the validator or not
     return true // TODO fetch the pulse validators only, then check
     // validators check is acceptable for ours or remote

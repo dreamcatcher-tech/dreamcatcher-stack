@@ -96,6 +96,13 @@ export class Crypto {
     })
     return lock
   }
+  isValidatable(pulse) {
+    assert(pulse instanceof Pulse)
+    assert(pulse.isVerified())
+    const thisKey = this.publicKey.key
+    const { publicKeys } = pulse.provenance.validators
+    return publicKeys.some(({ key }) => key === thisKey)
+  }
   stop() {
     const openCount = this.#locks.size
     assert(!openCount, `Open lock count: ${openCount}`)
