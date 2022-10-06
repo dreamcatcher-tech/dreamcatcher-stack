@@ -4,11 +4,21 @@ import Debug from 'debug'
 const debug = Debug('dos:commands:whoami')
 
 export const whoami = async ({ blockchain }) => {
-  const chainId = blockchain.getState().getChainId()
+  const latest = await blockchain.latest()
+  const chainId = latest.getAddress().getChainId()
+  const peerId = await blockchain.net.keypair.generatePeerId()
   const ui = cliui()
-  ui.div({ text: `User:`, width: 15 }, `root`)
-  ui.div({ text: `Machine:`, width: 15 }, chalk.green(chainId))
+  ui.div({ text: `Root:`, width: 15 }, chainId)
+  ui.div({ text: `Machine:`, width: 15 }, chalk.green(peerId))
   ui.div({ text: `Hypercomputer:`, width: 15 }, chalk.red(`NOT CONNECTED`))
+
+  const addrs = blockchain.net.getMultiaddrs()
+  if (!addrs.length) {
+    addrs.push(chalk.red(`NOT LISTENING`))
+  }
+  for (const addr of addrs) {
+    ui.div({ text: `Address:`, width: 15 }, addr)
+  }
 
   return { out: ui.toString() }
 }

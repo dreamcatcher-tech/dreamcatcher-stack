@@ -55,6 +55,7 @@ export default async function repl(opts = {}) {
       stderr
     )
   }
+  await exec('whoami')
   // await exec('cd /') // must make at least one block to have context
   // debug(`changing to home directory`)
   // await exec('cd /crm/customers')
@@ -94,7 +95,10 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
   if (!blockchain) {
     debug(`no blockchain provided`)
     spinner.text = `Initializing blockchain...`
-    blockchain = await Interpulse.createCI({ repo: 'tmp/test' })
+    const tcpHost = '0.0.0.0'
+    const tcpPort = '8789'
+    const repo = 'tmp/test'
+    blockchain = await Interpulse.create({ repo, tcpHost, tcpPort })
     debug('blockchain created')
   }
   const latest = await blockchain.latest()

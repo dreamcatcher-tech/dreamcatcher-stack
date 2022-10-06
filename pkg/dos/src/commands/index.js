@@ -28,7 +28,9 @@ export * from './blocks'
 export * from './scrub'
 export * from './namegen'
 export * from './validators'
-
+export * from './addPeer'
+export * from './addMultiAddress'
+export * from './mount'
 export * from './help' // TODO change how imports work, as help command gets overridden by other exports
 
 import Debug from 'debug'

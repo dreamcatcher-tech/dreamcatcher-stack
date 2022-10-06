@@ -19,6 +19,9 @@ export class Logger {
   isOn() {
     return this.#debugPulse.enabled
   }
+  get Debug() {
+    return Debug
+  }
   async pulse(pulse) {
     this.#pulseCount++
     if (!this.isOn()) {

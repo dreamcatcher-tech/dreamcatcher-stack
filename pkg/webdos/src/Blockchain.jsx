@@ -16,7 +16,6 @@ const Blockchain = ({ repo = 'interpulse', dev, children }) => {
   const [engine, setEngine] = useState()
   const [isPending, setIsPending] = useState(false)
   const [isBooting, setIsBooting] = useState(true)
-
   const oneShot = useRef(false)
   const init = async (engine) => {
     if (engine) {
@@ -27,8 +26,8 @@ const Blockchain = ({ repo = 'interpulse', dev, children }) => {
     const newEngine = await Interpulse.createCI({ repo })
     setEngine(newEngine)
     setIsBooting(false)
-    console.log(await newEngine.latest())
     debug(`Engine ready`)
+    return newEngine
   }
   useEffect(() => {
     if (!oneShot.current) {
@@ -36,7 +35,14 @@ const Blockchain = ({ repo = 'interpulse', dev, children }) => {
       oneShot.current = true
       return
     }
-    init(engine)
+    const newEnginePromise = init(engine)
+    // return async () => {
+    //   if (!engine) {
+    //     const newEngine = await newEnginePromise
+    //     assert(newEngine)
+    //     newEngine.stop()
+    //   }
+    // }
   }, [])
 
   const providerValue = { engine, latest, state, isPending }

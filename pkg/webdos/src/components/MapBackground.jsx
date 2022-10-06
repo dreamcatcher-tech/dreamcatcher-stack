@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Debug from 'debug'
+import './shim'
 import 'leaflet/dist/leaflet.css'
-import L from 'leaflet'
+import * as L from 'leaflet'
 
 import 'leaflet-draw/dist/leaflet.draw.css'
 import 'leaflet-draw/dist/leaflet.draw.js'

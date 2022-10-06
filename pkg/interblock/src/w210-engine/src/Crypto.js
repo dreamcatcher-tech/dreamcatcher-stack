@@ -66,7 +66,7 @@ export class Crypto {
   async lock(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
-    assert(this.#keypair)
+    assert(this.#keypair, 'No keypair')
     debug('lock', address)
     const chainId = address.getChainId()
     if (!this.#locks.has(chainId)) {

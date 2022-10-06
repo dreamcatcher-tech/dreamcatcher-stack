@@ -237,6 +237,11 @@ const api = {
     required: ['path'],
     properties: {
       path: { type: 'string', default: '.' }, // TODO regex
+      history: {
+        type: 'boolean',
+        default: false,
+        description: `Remove the history too`,
+      },
     },
   },
   cd: {
@@ -326,7 +331,6 @@ const api = {
     },
   },
   //   MV: 'moveActor',
-  //   LN: 'linkActor',
   //   LOGOUT: 'logout',
   //   EXEC: 'execute',
   //   BAL: 'balance',

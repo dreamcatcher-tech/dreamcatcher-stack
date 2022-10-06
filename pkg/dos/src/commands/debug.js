@@ -3,12 +3,12 @@ import Debug from 'debug'
 
 export const debug = async ({ blockchain }, ...args) => {
   const argsString = args.join(' ')
-  const interblockNamespaces = blockchain._debug.disable()
+  const interblockNamespaces = blockchain.logger.Debug.disable()
   const dosShellNamespaces = Debug.disable()
   let out = `current interblock flags: ` + interblockNamespaces
   out += `\ncurrent dos flags: ` + dosShellNamespaces
   out += `\nsetting flags to: ` + argsString
-  blockchain._debug.enable(argsString)
+  blockchain.logger.Debug.enable(argsString)
   Debug.enable(argsString)
   // if (localStorage) {
   //   localStorage.debug = argsString

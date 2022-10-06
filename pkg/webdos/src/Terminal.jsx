@@ -1,4 +1,3 @@
-import './Terminal.css'
 import assert from 'assert-fast'
 import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'
@@ -10,9 +9,8 @@ import '@fontsource/roboto-mono'
 import 'xterm/css/xterm.css'
 import { stdin as mockStdin } from 'mock-stdin-browserify'
 import { useBlockchain } from './hooks'
-import commandLineShell from '@dreamcatcher-tech/dos' // in build, gets aliased to @dreamcatcher-tech/dos
+import commandLineShell from '@dreamcatcher-tech/dos'
 import process from 'process'
-// import '../css/TorEmoji.woff2'
 
 const debug = debugFactory(`terminal:Terminal`)
 
@@ -57,12 +55,12 @@ const convertToStdOutStream = (terminal) => {
 const TerminalContainer = (props) => {
   let { id = '0' } = props
   id = `xterm-container-${id}`
-  let blockchain
+  let engine
   try {
-    const { blockchain: bc } = useBlockchain()
-    blockchain = bc
+    const { engine: bc } = useBlockchain()
+    engine = bc
   } catch (e) {
-    const thing = useBlockchain()
+    console.error(e)
   }
   const [streams, setStreams] = useState()
 
@@ -73,6 +71,9 @@ const TerminalContainer = (props) => {
       cursorStyle: 'block', // gets overridden by enquirer
       convertEol: true,
       rendererType: 'dom', // needed in tor browser
+      allowProposedApi: true,
+      macOptionIsMeta: true,
+      smoothScrollDuration: 100,
     })
 
     const fitAddon = new FitAddon()
@@ -162,7 +163,7 @@ const TerminalContainer = (props) => {
   }, [id])
 
   useEffect(() => {
-    if (blockchain && streams) {
+    if (engine && streams) {
       const { stdout, stdin, stderr } = streams
       Object.defineProperty(process, 'stdin', {
         value: stdin,
@@ -175,7 +176,7 @@ const TerminalContainer = (props) => {
 
       const emptyArgs = []
       const abortCmdPromise = commandLineShell(emptyArgs, {
-        blockchain,
+        blockchain: engine,
         ...streams,
       })
       return async () => {
@@ -183,7 +184,7 @@ const TerminalContainer = (props) => {
         abortCmd()
       }
     }
-  }, [blockchain, streams])
+  }, [engine, streams])
 
   return <div {...props} id={id}></div>
 }

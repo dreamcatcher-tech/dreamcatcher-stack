@@ -11,13 +11,15 @@
     "dos": "src/bin.js"
   },
   "scripts": {
-    "start": "DEBUG='*dos*' nodemon --experimental-specifier-resolution=node src/bin.js",
+    "start": "DEBUG='*dos*' node --experimental-specifier-resolution=node src/bin.js",
+    "dev": "DEBUG='*dos*' nodemon --experimental-specifier-resolution=node src/bin.js",
     "build": "vite build"
   },
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@dreamcatcher-tech/interblock": "^1.0.11",
+    "@multiformats/multiaddr": "^11.0.3",
     "@vitejs/plugin-react": "^2.1.0",
     "ansi-colors-browserify": "^4.1.2",
     "assert": "^2.0.0",
@@ -27,6 +29,7 @@
     "debug": "^4.3.4",
     "docker-names": "^1.2.1",
     "enquirer-browserify": "^2.3.15",
+    "inquirer": "^9.1.2",
     "is-in-browser": "^2.0.0",
     "ora": "3.0.0",
     "os-browserify": "^0.3.0",

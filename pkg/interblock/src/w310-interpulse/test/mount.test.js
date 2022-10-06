@@ -33,15 +33,15 @@ describe('mount', () => {
     debug('remote', remote)
     expect(child1.cid.equals(remote.cid)).toBeTruthy()
 
-    Debug.enable('iplog')
+    Debug.enable('iplog *bitswap:engine*')
     const nested1 = await server.add('child1/nested1')
     debug(nested1)
     const nestedRemote = await client.latest('/.mtab/server/nested1')
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
     Debug.enable('*shell iplog *openPath *dmz')
-    await client.ping('/.mtab/server')
-    await client.ping('/.mtab/server/nested1')
+    // await client.ping('/.mtab/server')
+    // await client.ping('/.mtab/server/nested1')
 
     // things to store:
     //    peerId as a friendly name, like hosts file / dns

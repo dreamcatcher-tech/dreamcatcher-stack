@@ -8,12 +8,14 @@ import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
 import { createLibp2p } from 'libp2p'
 import { Mplex } from '@libp2p/mplex'
 import { Noise } from '@chainsafe/libp2p-noise'
+import { isMultiaddr } from '@multiformats/multiaddr'
 import { CID } from 'multiformats/cid'
 import { decode } from '../../w008-ipld'
 import all from 'it-all'
 import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
 import { libp2pConfig } from 'ipfs-core-config/libp2p'
 import { Announcer } from './Announcer'
+import { peerIdFromString } from '@libp2p/peer-id'
 import Debug from 'debug'
 const debug = Debug('interpulse:PulseNet')
 
@@ -27,14 +29,18 @@ export class PulseNet {
   #announcer
   static async createCI(repo = ciRepo()) {
     const CI = true
-    return this.create(repo, CI)
+    let tcpHost
+    if (isNode) {
+      tcpHost = '0.0.0.0'
+    }
+    return this.create(repo, CI, tcpHost)
   }
-  static async create(repo, CI) {
+  static async create(repo, CI, tcpHost, tcpPort) {
     const instance = new PulseNet()
-    await instance.#init(repo, CI)
+    await instance.#init(repo, CI, tcpHost, tcpPort)
     return instance
   }
-  async #init(repoOrPath, CI = false) {
+  async #init(repoOrPath, CI = false, tcpHost = '0.0.0.0', tcpPort = 0) {
     assert(repoOrPath, `must supply repo or path`)
     let repo = repoOrPath
     if (typeof repoOrPath === 'string') {
@@ -52,7 +58,7 @@ export class PulseNet {
     }
     if (isNode) {
       // TODO start a webrtc signalling server if we are on nodejs
-      options.addresses = { listen: ['/ip4/0.0.0.0/tcp/0'] }
+      options.addresses = { listen: [`/ip4/${tcpHost}/tcp/${tcpPort}`] }
     }
 
     if (!(await repo.isInitialized())) {
@@ -125,6 +131,12 @@ export class PulseNet {
   addAddressPeer(address, peerId) {
     // TODO make different trust levels, as well as a default peer
     this.#announcer.addAddressPeer(address, peerId)
+  }
+  async addMultiAddress(multiaddr) {
+    assert(isMultiaddr(multiaddr))
+    assert(multiaddr.getPeerId())
+    const peerId = peerIdFromString(multiaddr.getPeerId())
+    await this.#net.peerStore.addressBook.set(peerId, [multiaddr])
   }
   subscribePulse(address) {
     assert(address instanceof Address)

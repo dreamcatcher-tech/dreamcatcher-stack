@@ -48,15 +48,13 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
     debug(`child: ${alias}`)
     let { chainId, tip, precedent, hash = '' } = children[alias]
     let filename = alias
-    chainId = chainId.length >= 40 ? chainId.substring(0, 14) : chainId
     hash = hash.length >= 50 ? hash.substring(0, 14) : hash
     filename = chalk.green(alias)
-
     // TODO use the same tools as networkPrint
 
     ui.div(
       { text: filename, width: 35 },
-      { text: chainId, width: 17 },
+      { text: chainId, width: 48 },
       { text: hash, width: 55 }
     )
   })
@@ -66,7 +64,7 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
 
     ui.div(
       { text: filename, width: 35 },
-      { text: chainId, width: 17 },
+      { text: chainId, width: 48 },
       { text: '', width: 55 }
     )
   })

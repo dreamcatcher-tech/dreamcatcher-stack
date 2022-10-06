@@ -73,7 +73,7 @@ const awaitActivity = async (result, id) => {
   } else {
     const racecarSymbol = Symbol()
     const ripcordSymbol = Symbol()
-    const timeout = 100
+    const timeout = 2000
     const racecar = new Promise((resolve) =>
       setTimeout(() => resolve(racecarSymbol), timeout)
     )

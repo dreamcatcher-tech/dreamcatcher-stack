@@ -24,7 +24,9 @@ import multi from './multi'
 import timesheets from './timesheets'
 import Debug from 'debug'
 const debug = Debug('client:tests:App')
-Debug.enable('*:widgets:* *Route* *Switch iplog *Blockchain')
+Debug.enable(
+  '*:widgets:* *Route* *Switch iplog *Blockchain *PulseNet *Connection *Announcer'
+)
 
 const Map = () => {
   return (
@@ -75,9 +77,8 @@ export default class Demo extends Component {
   render() {
     return (
       <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
-        <h4>Demo version: {version}</h4>
         <Blockchain dev={multi}>
-          {/* <Terminal style={{ height: '100vh', background: 'black' }} /> */}
+          <Terminal style={{ height: '100vh', background: 'black' }} />
           {/* <Router>
             <Switch>
               <Route covenant="app">

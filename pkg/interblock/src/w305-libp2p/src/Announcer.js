@@ -195,6 +195,7 @@ export class Announcer {
   }
   #dial(peerId) {
     const cx = Connection.create(this.#rxAnnounce, this.#latests)
+    // TODO check if we have any addresses first
     this.#libp2p.dialProtocol(peerId, protocol).then((stream) => {
       cx.connectStream(stream)
     })

@@ -45,7 +45,8 @@ export class Interpulse {
     const { repo, CI } = options
     if (repo) {
       // no repo => no net - storage and network are one 🙏
-      net = await PulseNet.create(repo, CI)
+      const { tcpHost, tcpPort } = options
+      net = await PulseNet.create(repo, CI, tcpHost, tcpPort)
       crypto = Crypto.create(net.keypair)
       endurance = await NetEndurance.create(net)
     }
@@ -59,7 +60,6 @@ export class Interpulse {
       instance.#crypto = crypto
       instance.#watchMtab()
     }
-
     return instance
   }
   constructor(engine) {
