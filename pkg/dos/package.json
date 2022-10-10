@@ -11,8 +11,8 @@
     "dos": "src/bin.js"
   },
   "scripts": {
-    "start": "DEBUG='*dos*' node --experimental-specifier-resolution=node src/bin.js",
-    "dev": "DEBUG='*dos*' nodemon -I -x yarn start",
+    "start": "node --experimental-specifier-resolution=node src/bin.js",
+    "dev": "nodemon -I -x yarn start",
     "build": "vite build"
   },
   "author": "Dreamcatcher Command",

@@ -5,7 +5,7 @@ const debug = Debug('dos:commands:help')
 
 const strip = (str) => str.replace(/\n|\r|\r\n/g, ' ').trim()
 
-export const help = (ctx) => {
+export const help = (ctx, command) => {
   const ui = cliui()
   debug(`help: `, Object.keys(commands))
   ui.div(`Use the following commands (use "tab" for autocomplete):\n`)

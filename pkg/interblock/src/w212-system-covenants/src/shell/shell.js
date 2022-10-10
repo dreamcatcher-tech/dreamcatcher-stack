@@ -22,9 +22,15 @@ const reducer = async (request) => {
   switch (type) {
     case 'PING': {
       debug(`ping: %O`, payload)
-      const { to = '.', message } = payload
+      let { to, message } = payload
+      const [{ wd = '/' }] = await useState()
+      if (!to) {
+        to = wd
+      }
+      const absolutePath = posix.resolve(wd, to)
+
       const ping = Request.createPing(message)
-      const result = await interchain(ping, to)
+      const result = await interchain(ping, absolutePath)
       debug(`ping result: %O`, result)
       return result
     }
@@ -212,9 +218,9 @@ const api = {
     title: 'PING',
     description: 'Ping a remote chain',
     additionalProperties: true,
-    required: ['to'],
+    required: [],
     properties: {
-      to: { type: 'string', default: '.' },
+      to: { type: 'string' },
       message: { type: 'object' },
     },
   },

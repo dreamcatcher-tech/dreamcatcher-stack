@@ -1,4 +1,3 @@
-import { deleteAsync } from 'del'
 import { pipe } from 'it-pipe'
 import { shell } from '../../w212-system-covenants'
 import * as apps from '../../w301-user-apps'
@@ -133,6 +132,7 @@ export class Interpulse {
       return await Promise.all(awaits)
     }
     if (isNode) {
+      const { deleteAsync } = await import('del')
       if (typeof this.#repo === 'string') {
         debug('deleting directory:', this.#repo)
         return await deleteAsync(this.#repo)
