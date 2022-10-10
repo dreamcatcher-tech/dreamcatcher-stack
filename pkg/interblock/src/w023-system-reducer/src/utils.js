@@ -55,4 +55,15 @@ const listChildren = async (pulse) => {
   }
   return children
 }
-export { autoAlias, getChannelParams, listChildren }
+const listHardlinks = async (pulse) => {
+  assert(pulse instanceof Pulse)
+  const hardlinks = {}
+  const hardlinksHamt = pulse.getNetwork().hardlinks
+  const entries = hardlinksHamt.entries()
+  for await (const [alias, channelId] of hardlinksHamt.entries()) {
+    const channel = await pulse.getNetwork().channels.getChannel(channelId)
+    hardlinks[alias] = getChannelParams(channel)
+  }
+  return hardlinks
+}
+export { autoAlias, getChannelParams, listChildren, listHardlinks }

@@ -8,6 +8,7 @@ import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
 import { createLibp2p } from 'libp2p'
 import { Mplex } from '@libp2p/mplex'
 import { Noise } from '@chainsafe/libp2p-noise'
+import { WebSockets } from '@libp2p/websockets'
 import { isMultiaddr } from '@multiformats/multiaddr'
 import { CID } from 'multiformats/cid'
 import { decode } from '../../w008-ipld'
@@ -58,8 +59,9 @@ export class PulseNet {
     }
     if (isNode) {
       // TODO start a webrtc signalling server if we are on nodejs
-      options.addresses = { listen: [`/ip4/${tcpHost}/tcp/${tcpPort}`] }
+      options.addresses = { listen: [`/ip4/${tcpHost}/tcp/${tcpPort}/ws`] }
     }
+    options.transports = [new WebSockets()]
 
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)

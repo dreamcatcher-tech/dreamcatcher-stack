@@ -8,7 +8,7 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
   spinner.text = `Resolving ${path}`
 
   debug(`ls`, path)
-  let { children, api } = await blockchain.ls(path)
+  let { children, hardlinks, api } = await blockchain.ls(path)
   const ui = cliui()
   const aliases = Object.keys(children)
     .sort((a, b) => {
@@ -51,6 +51,19 @@ export const ls = async ({ spinner, blockchain }, path = '.') => {
     hash = hash.length >= 50 ? hash.substring(0, 14) : hash
     filename = chalk.green(alias)
     // TODO use the same tools as networkPrint
+
+    ui.div(
+      { text: filename, width: 35 },
+      { text: chainId, width: 48 },
+      { text: hash, width: 55 }
+    )
+  })
+  Object.keys(hardlinks).forEach((name) => {
+    debug(`hardlink: ${name}`)
+    let { chainId, tip, precedent, latest, hash = '' } = hardlinks[name]
+    let filename = name
+    hash = hash.length >= 50 ? hash.substring(0, 14) : hash
+    filename = chalk.yellowBright(name)
 
     ui.div(
       { text: filename, width: 35 },

@@ -83,13 +83,38 @@ const TerminalContainer = (props) => {
     terminal.unicode.activeVersion = '11'
 
     terminal.open(document.getElementById(id))
-    // terminal.focus() // grabs focus in stackblitz
+    terminal.focus() // grabs focus in stackblitz
     convertToStdOutStream(terminal)
+    let isKey = false
     terminal.attachCustomKeyEventHandler((event) => {
-      const { key, type } = event
+      const { key, type, ctrlKey } = event
+      debug(event)
       if (ignoreKeys.includes(key)) {
-        debug(`ignoring: ${key} with type: ${type}`)
+        debug(`ignoring: ${key} with type: ${type} and ctrl: ${ctrlKey}`)
         return false
+      }
+      if (ctrlKey && key === 'v') {
+        debug('paste')
+        return false
+      }
+      if (ctrlKey && key === 'c') {
+        debug('copy')
+        return false
+      }
+      if (key.length === 1) {
+        debug('setting isKey')
+        isKey = true
+      }
+    })
+    terminal.onData((data) => {
+      if (isKey) {
+        isKey = false
+        debug('key detected')
+        return
+      }
+      debug('paste', data)
+      for (const c of data) {
+        stdin.send(c)
       }
     })
     // TODO skip stdin mocking and use direct objects somehow ?
@@ -103,7 +128,6 @@ const TerminalContainer = (props) => {
       const term = document.getElementById(id)
       if (term.getClientRects().length === 0) {
         debug(`avoided throw from fitAddon.fit() on hidden element`)
-        debugger
         return
       }
       fitAddon.fit()
@@ -112,45 +136,7 @@ const TerminalContainer = (props) => {
     resizeListener() // set initial sizing
     window.addEventListener('resize', resizeListener)
 
-    const isTor = checkIsLikelyTor()
-    debug(`isTor: ${isTor}`)
-    const fontLoadDelay = 5000000
-    const fonts = []
-    const awaits = []
-    const roboto = new FontFaceObserver('Roboto Mono')
-    // const awaitRobotoLoad = roboto
-    //   .load(null, fontLoadDelay)
-    //   .then(() => fonts.push('Roboto Mono'))
-    //   .catch((e) => debug(`roboto load error:`, e))
-    // awaits.push(awaitRobotoLoad)
-    if (isTor) {
-      // chrome displays emojis badly
-      // TODO get a webfont for emojis that displays correctly and is small
-      debug('loading emojis for tor browser')
-      // const tor = new FontFaceObserver('TorEmoji')
-      // const awaitTorLoad = tor
-      //   .load('🦄', fontLoadDelay)
-      //   .then(() => fonts.push('TorEmoji'))
-      //   .catch((e) => debug(`tor load error:`, e))
-      // awaits.push(awaitTorLoad)
-    }
     let isActive = true
-    Promise.all(awaits)
-      // setting without delay causes xterm layout bug
-      // xterm measures using a huge default if font is not available at render
-      .then(() => {
-        if (fonts.length && isActive) {
-          const fontsString = fonts.join(', ')
-          debug('fonts loaded: ', fontsString)
-          debug('fonts were: ', terminal.getOption('fontFamily'))
-          terminal.setOption('fontFamily', fontsString)
-          debug('fonts set: ', terminal.getOption('fontFamily'))
-          fitAddon.fit() // workaround for xterm blanking existing text on font change
-        }
-      })
-      .catch((e) => {
-        debug('error loading fonts: ', e)
-      })
     debug('terminal ready')
 
     return () => {
@@ -192,24 +178,3 @@ const TerminalContainer = (props) => {
 const ignoreKeys = 'F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12'.split(' ')
 
 export default TerminalContainer
-
-const checkIsLikelyTor = () => {
-  const { fonts } = document
-  const it = fonts.entries()
-  let done = false
-  while (!done) {
-    const font = it.next()
-    done = font.done
-    if (!done) {
-      debug(`font: %o`, font.value)
-    }
-    if (
-      font.value &&
-      font.value[0] &&
-      font.value[0].family === 'proxima-nova'
-    ) {
-      return false
-    }
-  }
-  return true
-}

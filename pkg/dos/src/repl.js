@@ -15,7 +15,7 @@ import json from '@dreamcatcher-tech/interblock/package.json' assert { type: 'js
 
 export default async function repl(opts = {}) {
   assert.strictEqual(typeof opts, 'object')
-  Debug.enable('*:repl *commands* *:eval *dag:import ipfs*')
+  Debug.enable('*:repl *commands* *:eval *dag:import ipfs* dos')
   debug(`repl`)
   opts.read = opts.read || withAutoComplete(read)
   opts.evaluate = opts.evaluate || withSpin(evaluate)
@@ -79,7 +79,7 @@ export default async function repl(opts = {}) {
   return stopLoop
 }
 
-async function getInitialCtx({ blockchain, stdout: stream }) {
+async function getInitialCtx({ blockchain, stdout: stream, repo, tcpPort }) {
   // TODO move this to the reboot command
   // TODO get environment printout
   const spinner = ora({ spinner: 'aesthetic', stream }).start()
@@ -96,8 +96,8 @@ async function getInitialCtx({ blockchain, stdout: stream }) {
     debug(`no blockchain provided`)
     spinner.text = `Initializing blockchain...`
     const tcpHost = '0.0.0.0'
-    const tcpPort = '8789'
-    const repo = 'tmp/test'
+    tcpPort = tcpPort || '8789'
+    repo = repo || 'tmp/test'
     blockchain = await Interpulse.create({ repo, tcpHost, tcpPort })
     debug('blockchain created')
   }

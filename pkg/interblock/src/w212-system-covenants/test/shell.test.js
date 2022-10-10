@@ -113,7 +113,8 @@ describe('shell', () => {
     test('list current directory', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       const ls = api.ls()
-      const { children } = await engine.pierce(ls)
+      const results = await engine.pierce(ls)
+      const { children } = results
       debug(`ls: `, children)
       assert.deepEqual(Object.keys(children), ['..', '.', '.@@io'])
       const { children: repeated } = await engine.pierce(ls)

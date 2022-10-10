@@ -10,6 +10,7 @@ export const whoami = async ({ blockchain }) => {
   const ui = cliui()
   ui.div({ text: `Root:`, width: 15 }, chainId)
   ui.div({ text: `Machine:`, width: 15 }, chalk.green(peerId))
+  ui.div({ text: `Repo path:`, width: 15 }, blockchain.net.repo.path)
   ui.div({ text: `Hypercomputer:`, width: 15 }, chalk.red(`NOT CONNECTED`))
 
   const addrs = blockchain.net.getMultiaddrs()

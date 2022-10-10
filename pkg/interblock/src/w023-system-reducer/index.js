@@ -1,3 +1,3 @@
 export * from './src/dmzReducer'
 // TODO export all from utils ?
-export { listChildren } from './src/utils'
+export { listChildren, listHardlinks } from './src/utils'

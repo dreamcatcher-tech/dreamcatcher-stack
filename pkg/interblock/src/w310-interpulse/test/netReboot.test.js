@@ -4,13 +4,13 @@ import delay from 'delay'
 import Debug from 'debug'
 const debug = Debug('tests')
 
-describe('mount', () => {
+describe('netReboot', () => {
   afterEach(async () => {
     await Promise.all(engines.map((e) => e.stop()))
     engines.length = 0
   })
   const engines = []
-  test('basic read-only mount', async () => {
+  test('restart connection', async () => {
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
     const addResult = await server.add('child1')
@@ -18,6 +18,14 @@ describe('mount', () => {
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })
     engines.push(client, server)
+
+    // add multiaddr
+    const multiaddr = server.
+    // add peer
+    // do mount
+
+    // reboot system
+
 
     await client.net.dialCI(server.net)
     const { peerId } = server.net.libp2p
@@ -41,16 +49,6 @@ describe('mount', () => {
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
     Debug.enable('*shell iplog *openPath *dmz')
 
-    // await client.ping('/.mtab/server')
-    // await client.ping('/.mtab/server/nested1')
-
-    // things to store:
-    //    peerId as a friendly name, like hosts file / dns
-    //    peerId multiaddrs, so we can connect to the peer
-    //    which peers are assosciated with which peerId
-
-    // dispatch some commands into it
-
-    // after restart of client, observe continued access to server/child1
+    console.log(client.net.repo)
   })
 })

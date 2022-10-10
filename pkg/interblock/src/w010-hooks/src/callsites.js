@@ -22,7 +22,7 @@ let activeInvocations = new Map()
  * @returns { reply, txs }
 
  */
-export const wrapReduce = async (trail, reducer) => {
+export const wrapReduce = async (trail, reducer, timeout = 2000) => {
   assert(trail instanceof AsyncTrail)
   assert(trail.isPending())
   assert(trail.isFulfilled())
@@ -42,13 +42,13 @@ export const wrapReduce = async (trail, reducer) => {
 
   try {
     const result = wrapper[id]()
-    return await awaitActivity(result, id)
+    return await awaitActivity(result, id, timeout)
   } catch (error) {
     const { txs } = activeInvocations.get(id)
     return trail.setError(txs, error)
   }
 }
-const awaitActivity = async (result, id) => {
+const awaitActivity = async (result, id, timeout) => {
   if (result !== undefined && typeof result !== 'object') {
     // TODO relax this contstraint
     throw new Error(`Must return either undefined, or an object`)
@@ -73,7 +73,6 @@ const awaitActivity = async (result, id) => {
   } else {
     const racecarSymbol = Symbol()
     const ripcordSymbol = Symbol()
-    const timeout = 2000
     const racecar = new Promise((resolve) =>
       setTimeout(() => resolve(racecarSymbol), timeout)
     )

@@ -7,8 +7,6 @@ import { Address } from '@dreamcatcher-tech/interblock/src/w008-ipld'
 const debug = Debug('dos:commands:adddPeer')
 
 export const mount = async ({ blockchain }, chainId, name) => {
-  chainId = window.prompt()
-  name = window.prompt()
   const result = await blockchain.mount(chainId, name)
   return { out: result }
 }

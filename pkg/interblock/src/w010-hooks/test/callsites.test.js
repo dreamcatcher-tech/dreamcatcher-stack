@@ -117,8 +117,9 @@ describe('callsites', () => {
       const slowest = () => {
         return new Promise(() => Infinity)
       }
-      const trail = await wrapReduce(init, slowest)
-      assert.strictEqual(trail.getError().message, 'timeout exceeded: 100 ms')
+      const timeout = 109
+      const trail = await wrapReduce(init, slowest, timeout)
+      assert.strictEqual(trail.getError().message, 'timeout exceeded: 109 ms')
     })
     test.todo('duplicate requests permitted in different calls')
   })

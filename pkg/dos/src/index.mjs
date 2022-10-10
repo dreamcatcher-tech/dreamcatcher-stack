@@ -19,6 +19,13 @@ export default async (argv, opts = {}) => {
   debug(`argv`, argv)
   argv = (argv || process.argv).slice(2)
   debug(`argv`, argv)
+  if (typeof argv[0] === 'string') {
+    opts.repo = argv[0]
+  }
+  if (typeof argv[1] === 'string') {
+    opts.tcpPort = argv[1]
+  }
+  debug(opts)
   // return argv.length ? evalPrint(ctx, argv[0], argv.slice(1), opts) : repl(opts)
   return repl(opts)
 }

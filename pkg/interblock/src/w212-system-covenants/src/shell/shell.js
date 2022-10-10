@@ -8,7 +8,7 @@ import {
 } from '../../../w002-api'
 import Debug from 'debug'
 import { Pulse, Request } from '../../../w008-ipld'
-import { listChildren } from '../../../w023-system-reducer'
+import { listChildren, listHardlinks } from '../../../w023-system-reducer'
 import { schemaToFunctions } from '../../../w210-engine'
 const debug = Debug('interblock:system:shell')
 
@@ -72,10 +72,12 @@ const reducer = async (request) => {
       debug(`listActors`, absPath)
       const pulse = await usePulse(absPath)
       assert(pulse instanceof Pulse)
-      const children = await listChildren(pulse)
-      const covenantState = await useCovenantState(absPath)
-      const { api = {} } = covenantState
-      return { children, api }
+      const aC = listChildren(pulse)
+      const aH = listHardlinks(pulse)
+      const aS = useCovenantState(absPath)
+      const [children, hardlinks, state] = await Promise.all([aC, aH, aS])
+      const { api = {} } = state
+      return { children, hardlinks, api }
     }
     case 'CD': {
       // TODO ignore if same as working directory

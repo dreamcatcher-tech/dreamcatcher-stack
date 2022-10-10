@@ -6,9 +6,7 @@ import Debug from 'debug'
 import { Address } from '@dreamcatcher-tech/interblock/src/w008-ipld'
 const debug = Debug('dos:commands:adddPeer')
 
-export const addPeer = async ({ blockchain }, addressString, peerIdString) => {
-  addressString = window.prompt()
-  peerIdString = window.prompt()
+export const peer = async ({ blockchain }, addressString, peerIdString) => {
   const address = Address.fromChainId(addressString)
   const peerId = peerIdFromString(peerIdString)
   blockchain.net.addAddressPeer(address, peerId)
