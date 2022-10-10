@@ -20,12 +20,11 @@ describe('netReboot', () => {
     engines.push(client, server)
 
     // add multiaddr
-    const multiaddr = server.
+    // const multiaddr = server.
     // add peer
     // do mount
 
     // reboot system
-
 
     await client.net.dialCI(server.net)
     const { peerId } = server.net.libp2p
@@ -48,7 +47,5 @@ describe('netReboot', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
     Debug.enable('*shell iplog *openPath *dmz')
-
-    console.log(client.net.repo)
   })
 })

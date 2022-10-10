@@ -159,4 +159,5 @@ const api = {
   },
 }
 const state = convertToTemplate({ type: 'COLLECTION', schema: {} })
-export { reducer, api, state }
+const name = 'collection'
+export { reducer, api, state, name }

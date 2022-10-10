@@ -49,7 +49,7 @@ describe('reload', () => {
       await deleteAsync(repo)
       debug(`deleted ${repo}`)
     }
-  }, 2000)
+  }, 4000)
   test('open handles', async () => {
     const repo = createRamRepo('ram')
     debug(`starting engine`)

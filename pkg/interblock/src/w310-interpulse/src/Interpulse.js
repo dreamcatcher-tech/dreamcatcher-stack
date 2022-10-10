@@ -1,5 +1,6 @@
 import { pipe } from 'it-pipe'
 import { shell } from '../../w212-system-covenants'
+import * as apps from '../../w301-user-apps'
 import { pushable } from 'it-pushable'
 import { getCovenantState } from '../../w023-system-reducer'
 import { Engine, schemaToFunctions } from '../../w210-engine'
@@ -39,6 +40,7 @@ export class Interpulse {
   static async create(options = {}) {
     let overloads = options.overloads ? { ...options.overloads } : {}
     overloads.root = shell
+    Object.assign(overloads, apps)
     // if announcer is inside net, how to trigger on interpulse received ?
     // could connect via Interpulse ?
     let { net, crypto, endurance } = options

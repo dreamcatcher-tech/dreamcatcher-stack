@@ -56,9 +56,13 @@ export default async function repl(opts = {}) {
     )
   }
   await exec('whoami')
-  // await exec('cd /') // must make at least one block to have context
-  // debug(`changing to home directory`)
-  // await exec('cd /crm/customers')
+  try {
+    await ctx.blockchain.cd('/app/customers')
+  } catch (error) {
+    await exec('add /app crm')
+  }
+
+  await exec('cd /app/customers')
   // await exec('./add --isTestData')
   // const children = ctx.blockchain.crm.customers.getChildren()
   // const child = Object.keys(children)[0]

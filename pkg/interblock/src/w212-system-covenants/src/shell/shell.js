@@ -44,8 +44,12 @@ const reducer = async (request) => {
       return { loginResult }
     }
     case 'ADD': {
-      let { path, installer } = payload
+      let { path, installer = {} } = payload
       assert.strictEqual(typeof path, 'string')
+      debug('installer', installer)
+      if (typeof installer === 'string') {
+        installer = { covenant: installer }
+      }
       assert.strictEqual(typeof installer, 'object')
       const [{ wd = '/' }] = await useState()
       debug('wd', wd)
@@ -218,7 +222,9 @@ const api = {
     properties: {
       // TODO interpret datums and ask for extra data
       path: { type: 'string' }, // TODO regex
-      installer: { type: 'object', default: {} }, // TODO use pulse to validate format
+      installer: {
+        oneOf: [{ type: 'string' }, { type: 'object', default: {} }],
+      }, // TODO use pulse to validate format
     },
   },
   ls: {

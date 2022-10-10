@@ -2,22 +2,15 @@ import chalk from 'ansi-colors-browserify'
 import Debug from 'debug'
 const debug = Debug('dos:commands:add')
 
-export const add = async ({ spinner, blockchain }, ...paths) => {
+export const add = async ({ spinner, blockchain }, path, installer) => {
   // TODO handle nested and remote paths
-  debug(`add: %O`, paths)
-  if (!paths.length) {
-    paths = [undefined]
-  }
+  debug(`add path: %s installer: %s`, path, installer)
   let out = ``
-  for (const path of paths) {
-    // TODO handle partial failure
-    // TODO allow submitting multiple requests simultaneously
-    spinner.text = `adding ${path}...`
-    const { alias, chainId } = await blockchain.add(path)
-    spinner.succeed(`added ${path}`).start()
-    out += `Added: ${chalk.red(alias)}
+  spinner.text = `adding ${path}...`
+  const { alias, chainId } = await blockchain.add(path, installer)
+  spinner.succeed(`added ${path}`).start()
+  out += `Added: ${chalk.red(alias)}
  - chainId: ${chalk.greenBright(chainId)}\n`
-  }
   return {
     out: out.trim(),
   }

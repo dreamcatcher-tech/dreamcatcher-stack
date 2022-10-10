@@ -202,6 +202,12 @@ describe('shell', () => {
     })
   })
   describe('add', () => {
+    test('add accepts string installer arg', async () => {
+      const engine = await Engine.createCI({ overloads: { root: shell } })
+      await engine.pierce(api.add('child1', 'collection'))
+      const covenant = await engine.pierce(api.covenant('child1'))
+      assert.strictEqual(covenant.name, 'collection')
+    })
     test.todo('invalid parent path rejects')
     test.todo('grandchild can spawn')
   })
