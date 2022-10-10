@@ -1,3 +1,4 @@
+import { deleteAsync } from 'del'
 import { pipe } from 'it-pipe'
 import { shell } from '../../w212-system-covenants'
 import * as apps from '../../w301-user-apps'
@@ -11,6 +12,7 @@ import { PulseNet } from '../../w305-libp2p'
 import { NetEndurance } from './NetEndurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
 import { PulseLink } from '../../w008-ipld'
+import { isBrowser, isNode } from 'wherearewe'
 
 const debug = Debug('interpulse')
 
@@ -28,6 +30,7 @@ const debug = Debug('interpulse')
 
 export class Interpulse {
   net
+  #repo
   #engine
   #endurance
   #crypto
@@ -58,6 +61,7 @@ export class Interpulse {
     const instance = new Interpulse(engine)
     if (repo) {
       instance.net = net
+      instance.#repo = repo
       instance.#endurance = endurance
       instance.#crypto = crypto
       instance.#watchMtab()
@@ -98,9 +102,11 @@ export class Interpulse {
       }
     }
   }
-  async isResolvablePath(path) {
-    // TODO test if this path may be resolved at some point
-    // basically walk until hit an unresolved address or non-existent channel
+  async current(path = '.') {
+    const { wd } = this
+    const absPath = posix.resolve(wd, path)
+    const latest = await this.#engine.latestByPath(absPath)
+    return latest
   }
   get logger() {
     return this.#engine.logger
@@ -108,6 +114,42 @@ export class Interpulse {
   get wd() {
     const { wd = '/' } = this.#engine.selfLatest.getState().toJS()
     return wd
+  }
+  async hardReset() {
+    await this.stop()
+    if (isBrowser) {
+      const dbs = await window.indexedDB.databases()
+      const awaits = []
+      for (const db of dbs) {
+        debug(`deleting`, db)
+        const request = window.indexedDB.deleteDatabase(db.name)
+        awaits.push(
+          new Promise((resolve, reject) => {
+            request.onerror = reject
+            request.onsuccess = resolve
+          }).then(() => debug(`deleted`, db))
+        )
+      }
+      return await Promise.all(awaits)
+    }
+    if (isNode) {
+      if (typeof this.#repo === 'string') {
+        debug('deleting directory:', this.#repo)
+        return await deleteAsync(this.#repo)
+      }
+      debug('repo was not a filesystem path - skipping deletion')
+    }
+  }
+  async scrub() {
+    /**
+    To ensure the integrity of the system, invoke scrub to
+    check the hashes of all objects at this location,
+    and to verify the availability of all objects.
+    Use the option --history to check all blocks in the past
+    as well as LATEST.  This will incur significant usage fees
+    and bandwidth.
+     */
+    throw new Error('not implemented')
   }
   async stop() {
     if (this.net) {

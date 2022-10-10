@@ -1,3 +1,4 @@
+import process from 'process'
 import Enquirer from 'enquirer-browserify'
 import Debug from 'debug'
 const debug = Debug('dos:commands:reset')
@@ -12,10 +13,13 @@ export const reset = async ({ spinner, blockchain }) => {
   })
   let msg
   if (reset) {
+    await blockchain.hardReset()
     msg = `All local blockchains deleted`
   } else {
     msg = `Cancelled reset`
   }
+  setTimeout(() => process.exit())
+
   return { out: msg }
 }
 

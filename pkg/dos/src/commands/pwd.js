@@ -1,3 +1,3 @@
-export const pwd = ({ wd }) => {
-  return { out: wd }
+export const pwd = ({ blockchain }) => {
+  return { out: blockchain.wd }
 }

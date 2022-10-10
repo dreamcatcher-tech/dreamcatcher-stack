@@ -16,7 +16,8 @@ export const time = async (ctx, ...args) => {
   const lastChainCount = blockchain.logger.chainCount
 
   const start = Date.now()
-  const res = (await evaluate(ctx, command, rest)) || {}
+  let res = (await evaluate(ctx, command, rest)) || {}
+  res = { ...res }
   res.out = res.out ? res.out + '\n' : ''
   const options = { compact: false, separateMilliseconds: true }
   res.out = res.out + `Time: ${pretty(Date.now() - start, options)}`

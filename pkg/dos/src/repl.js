@@ -57,8 +57,9 @@ export default async function repl(opts = {}) {
   }
   await exec('whoami')
   try {
-    await ctx.blockchain.cd('/app/customers')
+    await ctx.blockchain.current('/app/customers')
   } catch (error) {
+    debug('app not installed - installing...')
     await exec('add /app crm')
   }
 

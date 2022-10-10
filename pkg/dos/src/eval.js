@@ -11,11 +11,10 @@ export const evaluate = async (ctx, cmd, cmdArgs = []) => {
     return
   }
   if (!commands[cmd]) {
-    const isLocalCommand =
+    const { blockchain } = ctx
+    const isResolvable =
       cmd.startsWith('./') || cmd.startsWith('/' || cmd.startsWith('../'))
-    if (isLocalCommand) {
-      // TODO allow remote location at any path to be used as actions
-      const { blockchain } = ctx
+    if (isResolvable) {
       const { wd } = blockchain
       const absolutePath = posix.resolve(wd, cmd)
       const actionName = posix.basename(absolutePath)
@@ -29,6 +28,11 @@ export const evaluate = async (ctx, cmd, cmdArgs = []) => {
         return actionFn(...cmdArgs)
       }
     }
+    // TODO lookup path for multiple other covenants
+    if (blockchain[cmd]) {
+      return blockchain[cmd](...cmdArgs)
+    }
+
     throw new Error(`${cmd}: command not found`)
   }
 

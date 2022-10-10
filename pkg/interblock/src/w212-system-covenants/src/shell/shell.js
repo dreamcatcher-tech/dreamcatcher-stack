@@ -1,3 +1,5 @@
+import { multiaddr as fromString } from '@multiformats/multiaddr'
+import { peerIdFromString } from '@libp2p/peer-id'
 import posix from 'path-browserify'
 import assert from 'assert-fast'
 import {
@@ -7,7 +9,7 @@ import {
   useState,
 } from '../../../w002-api'
 import Debug from 'debug'
-import { Pulse, Request } from '../../../w008-ipld'
+import { Address, Pulse, Request } from '../../../w008-ipld'
 import { listChildren, listHardlinks } from '../../../w023-system-reducer'
 import { schemaToFunctions } from '../../../w210-engine'
 const debug = Debug('interblock:system:shell')
@@ -171,12 +173,6 @@ const reducer = async (request) => {
       // map a nodeId to an address
       return
     }
-    case 'MOUNT': {
-      const { chainId, name } = payload
-      debug('mount', name, chainId.substr(0, 14))
-      const mount = Request.createMount(chainId, name)
-      return await interchain(mount)
-    }
     case 'LN': {
       let { target, linkName = posix.basename(target) } = payload
       debug('LN', target, linkName)
@@ -184,6 +180,26 @@ const reducer = async (request) => {
       await interchain(ln)
       return
     }
+    case 'MOUNT': {
+      const { chainId, name } = payload
+      debug('mount', name, chainId.substr(0, 14))
+      const mount = Request.createMount(chainId, name)
+      return await interchain(mount)
+    }
+    case 'PEER': {
+      const { peerId: peerIdString, chainId } = payload
+      const peerId = peerIdFromString(peerIdString)
+      const address = Address.fromChainId(chainId)
+      return
+    }
+    case 'MULTIADDR': {
+      const { multiaddr } = payload
+      const addr = fromString(multiaddr)
+      // ensure mtab chain
+      return
+    }
+    // check if action is part of mtab api
+    // if so, ensure mtab then pass the action thru
     default: {
       throw new Error(`Unrecognized action: ${type}`)
     }
@@ -205,7 +221,12 @@ const api = {
   login: {
     type: 'object',
     title: 'LOGIN',
-    description: 'Authenticate with a remote app complex',
+    description: `Authenticate with a remote app complex
+Loop the user through a signon process that links
+The current machine pubkey to their interblock user chain.
+When this occurs, the guest chain will transition to the
+user chain, and the prompt will change from "guest" to "user"
+    `,
     additionalProperties: false,
     required: ['chainId', 'credentials'],
     properties: {
@@ -328,7 +349,12 @@ const api = {
   ln: {
     type: 'object',
     title: 'LN',
-    description: `Link to target path`,
+    description: `Link to target path.
+Linking is act of inserting one Object as the child of another
+which allows an Object to be the child of more than one parent.
+This operation is essential to application data structures
+as opposed to simple filesystem data structures, which are 
+usually a tree`,
     required: ['target'],
     properties: {
       target: { type: 'string' },
@@ -337,6 +363,38 @@ const api = {
         description: `defaults to the target name.  Must not have any pathing`,
       },
     },
+  },
+  multiaddr: {
+    type: 'object',
+    title: 'MULTIADDR',
+    description: `Add a new multiaddr to network memory`,
+    required: ['multiaddr'],
+    properties: {
+      // TODO regex that requires pubkey and valid multiaddr
+      multiaddr: { type: 'string' },
+    },
+  },
+  peer: {
+    type: 'object',
+    title: 'PEER',
+    description: `Add a new multiaddr to network memory`,
+    required: ['peerId', 'chainId'],
+    properties: {
+      // TODO regex
+      peerId: { type: 'string' },
+      chainId: { type: 'string' },
+    },
+  },
+  validators: {
+    type: 'object',
+    title: 'VALIDATORS',
+    description: `
+    View, change the validator set of a chain or group of chains.
+    Recursively change all validators of the chains children.
+    Validators must accept the role before the handover is complete.
+    Can be used to force a change if a chain has stalled.
+    `,
+    // TODO make this a subset of all ACL type of operations
   },
   //   MV: 'moveActor',
   //   LOGOUT: 'logout',
