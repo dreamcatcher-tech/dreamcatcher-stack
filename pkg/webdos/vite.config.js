@@ -52,13 +52,13 @@ const config = {
   },
   server: {},
 }
-dotenv.config()
+dotenv.config({ path: '../../.env' })
 const { env } = process
 if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
   console.log('serving SSL for hostname:', process.env.SSL_HOSTNAME)
   Object.assign(config.server, {
     https: {
-      hostname: env.SSL_HOSTNAME,
+      // hostname: env.SSL_HOSTNAME,
       key: env.SSL_PRIVATE_KEY,
       cert: env.SSL_CERT_CHAIN,
     },

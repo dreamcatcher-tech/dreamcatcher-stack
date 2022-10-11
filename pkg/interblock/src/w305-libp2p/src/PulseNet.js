@@ -1,4 +1,5 @@
 import { isNode } from 'wherearewe'
+import process from 'process'
 import { createBitswap } from 'ipfs-bitswap'
 import { createRepo } from 'ipfs-repo'
 import { loadCodec } from '../src/loadCodec'
@@ -30,11 +31,7 @@ export class PulseNet {
   #announcer
   static async createCI(repo = ciRepo()) {
     const CI = true
-    let tcpHost
-    if (isNode) {
-      tcpHost = '0.0.0.0'
-    }
-    return this.create(repo, CI, tcpHost)
+    return this.create(repo, CI)
   }
   static async create(repo, CI, tcpHost, tcpPort) {
     const instance = new PulseNet()
@@ -57,11 +54,22 @@ export class PulseNet {
       connectionEncryption: [new Noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
     }
+    const websocketsOptions = {}
     if (isNode) {
-      // TODO start a webrtc signalling server if we are on nodejs
-      options.addresses = { listen: [`/ip4/${tcpHost}/tcp/${tcpPort}/ws`] }
+      const listen = [`/ip4/${tcpHost}/tcp/${tcpPort}/ws`]
+      const { SSL_PRIVATE_KEY, SSL_CERT_CHAIN } = process.env
+      if (SSL_PRIVATE_KEY && SSL_CERT_CHAIN) {
+        debug('using SSL certificates')
+        const https = await import('https')
+        websocketsOptions.server = https.createServer({
+          cert: SSL_CERT_CHAIN,
+          key: SSL_PRIVATE_KEY,
+        })
+        listen.push(`/ip4/${tcpHost}/tcp/${tcpPort}/wss`)
+      }
+      options.addresses = { listen }
     }
-    options.transports = [new WebSockets()]
+    options.transports = [new WebSockets(websocketsOptions)]
 
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)
