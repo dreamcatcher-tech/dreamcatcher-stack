@@ -1,7 +1,8 @@
+import * as dotenv from 'dotenv'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
-import path from 'path'
+import process from 'process'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
@@ -33,8 +34,7 @@ deps['leaflet.markercluster/dist/MarkerCluster.Default.css'] = true
 deps['leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css'] = true
 deps['leaflet-extra-markers/dist/js/leaflet.extra-markers.min'] = true
 
-// https://vitejs.dev/config/
-export default defineConfig({
+const config = {
   plugins: [react()],
   optimizeDeps: {
     // target: es2020 added as workaround to make big ints work
@@ -50,7 +50,19 @@ export default defineConfig({
       external: Object.keys(deps),
     },
   },
-  define: {
-    // 'process.env.NODE_DEBUG': 'false',
-  },
-})
+  server: {},
+}
+dotenv.config()
+const { env } = process
+if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
+  console.log('serving SSL for hostname:', process.env.SSL_HOSTNAME)
+  Object.assign(config.server, {
+    https: {
+      hostname: env.SSL_HOSTNAME,
+      key: env.SSL_PRIVATE_KEY,
+      cert: env.SSL_CERT_CHAIN,
+    },
+  })
+}
+// https://vitejs.dev/config/
+export default defineConfig(config)
