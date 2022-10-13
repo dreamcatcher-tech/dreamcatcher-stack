@@ -16,7 +16,6 @@ export class Reply extends Request {
   }
   static createPulse(pulse) {
     assert(pulse instanceof Pulse)
-    assert(pulse.isVerified())
     const type = '@@RESOLVE'
     const payload = pulse
     return super.clone({ type, payload })

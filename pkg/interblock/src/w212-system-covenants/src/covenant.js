@@ -60,4 +60,5 @@ const covenantSchema = {
     },
   },
 }
-export { reducer }
+const name = 'covenant'
+export { name, reducer }

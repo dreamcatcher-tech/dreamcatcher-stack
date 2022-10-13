@@ -10,7 +10,7 @@ import { createLibp2p } from 'libp2p'
 import { Mplex } from '@libp2p/mplex'
 import { Noise } from '@chainsafe/libp2p-noise'
 import { WebSockets } from '@libp2p/websockets'
-import { isMultiaddr } from '@multiformats/multiaddr'
+import { isMultiaddr, multiaddr as fromString } from '@multiformats/multiaddr'
 import { CID } from 'multiformats/cid'
 import { decode } from '../../w008-ipld'
 import all from 'it-all'
@@ -93,13 +93,14 @@ export class PulseNet {
 
     this.#net = await createLibp2p(options)
     this.#announcer = Announcer.create(this.#net)
-    await this.#net.start()
-    debug('listening on', this.#net.getMultiaddrs())
 
     this.#repo = repo
     const bsOptions = { statsEnabled: true }
     this.#bitswap = createBitswap(this.#net, this.#repo.blocks, bsOptions)
-    await this.#bitswap.start()
+  }
+  async start() {
+    await Promise.all([this.#net.start(), this.#bitswap.start()])
+    debug('listening on', this.#net.getMultiaddrs())
   }
   async stop() {
     await this.#bitswap.stop()
@@ -140,9 +141,18 @@ export class PulseNet {
   }
   addAddressPeer(address, peerId) {
     // TODO make different trust levels, as well as a default peer
+    if (typeof address === 'string') {
+      address = Address.fromChainId(address)
+    }
+    if (typeof peerId === 'string') {
+      peerId = peerIdFromString(peerId)
+    }
     this.#announcer.addAddressPeer(address, peerId)
   }
   async addMultiAddress(multiaddr) {
+    if (typeof multiaddr === 'string') {
+      multiaddr = fromString(multiaddr)
+    }
     assert(isMultiaddr(multiaddr))
     assert(multiaddr.getPeerId())
     const peerId = peerIdFromString(multiaddr.getPeerId())

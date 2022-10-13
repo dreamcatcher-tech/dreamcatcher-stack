@@ -109,15 +109,22 @@ const getInvocation = () => {
   }
   return activeInvocations.get(invokeId)
 }
-const interchain = (type, payload, to = '.', binary) => {
+const interchain = (type, payload, to, binary) => {
   let request
   if (type instanceof Request) {
     request = type
     binary = to
-    to = payload || '.'
+    to = payload
   } else {
+    if (type.type && type.payload) {
+      binary = to
+      to = payload
+      payload = type.payload
+      type = type.type
+    }
     request = Request.create(type, payload, binary)
   }
+  to = to || '.'
   assert(to !== '.@@io')
   const { settles, txs, ripcord } = getInvocation()
   if (!settles.length) {

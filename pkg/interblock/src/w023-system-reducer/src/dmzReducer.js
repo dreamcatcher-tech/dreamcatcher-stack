@@ -3,8 +3,6 @@ import { openPath, deepestSegment, openChild } from './openPath'
 import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
 import { installReducer } from './install'
-import { mountReducer } from './mount'
-import { getChannelReducer } from './getChannel'
 import { genesisReducer } from './genesis'
 import { Address, Pulse } from '../../w008-ipld'
 import { usePulse } from '../../w010-hooks'
@@ -52,12 +50,6 @@ const reducer = (request) => {
       break
     case '@@INSTALL':
       return installReducer(payload)
-    case '@@GET_CHAN':
-      getChannelReducer(request)
-      break
-    case '@@MOUNT': {
-      return mountReducer(payload)
-    }
     default:
       return pulseReducer(type, payload)
   }
@@ -112,6 +104,7 @@ const pulseReducer = async (type, payload) => {
       const { path } = payload
       debug(`@@COVENANT`, path)
       const latestByPath = async (path) => {
+        debug('latestByPath', path)
         if (path !== '.') {
           // TODO apply this optimization at the engine level
           return await latest(path)

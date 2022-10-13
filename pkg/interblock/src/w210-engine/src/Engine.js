@@ -139,6 +139,7 @@ export class Engine {
     const { address } = first
     let pool = await this.#generatePool(first)
     while (queue.length) {
+      prioritizeUpdates(queue)
       const { type, payload } = queue.shift()
       debug('deepening %s for %s', type, address)
       switch (type) {
@@ -243,7 +244,14 @@ export class Engine {
     assert(pool.isModified())
     const timeout = 2000 // TODO move to config
     const isolate = await this.#isolate.load(pool, timeout)
-    const latest = (path) => this.latestByPath(path)
+    let rootPulse = this.selfLatest
+    if (await pool.isRoot()) {
+      rootPulse = pool
+    }
+    const latest = (path) => {
+      path = posix.normalize(path)
+      return this.latestByPath(path, rootPulse)
+    }
     return reducer(pool, isolate, latest)
   }
   async #updateTree(pool) {
@@ -303,7 +311,7 @@ export class Engine {
       if (isSymlink) {
         const resolved = await network.resolveSymlink(segment)
         assert(posix.isAbsolute(resolved), 'symlinks must be absolute for now')
-        return this.latestByPath(resolved + segments.join('/'))
+        return this.latestByPath(resolved + segments.join('/'), rootPulse)
       }
       const channel = await network.getChannel(segment)
       const { address } = channel
@@ -479,4 +487,11 @@ const split = (path) => {
     result.pop()
   }
   return result
+}
+const prioritizeUpdates = (queue) => {
+  queue.sort((a, b) => {
+    const aU = a.type === Deepening.UPDATE ? 1 : 0
+    const bU = b.type === Deepening.UPDATE ? 1 : 0
+    return aU - bU
+  })
 }

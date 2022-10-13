@@ -73,6 +73,9 @@ export class Interpulse {
     Object.assign(this, actions)
     this.#engine = engine
   }
+  async pierce(request) {
+    return await this.#engine.pierce(request)
+  }
   async actions(path = '.') {
     const latest = (path) => this.latest(path)
     const state = await getCovenantState(path, latest)
@@ -87,7 +90,6 @@ export class Interpulse {
     }
     return dispatches
   }
-
   async latest(path = '.') {
     const { wd } = this
     const absPath = posix.resolve(wd, path)
@@ -100,6 +102,7 @@ export class Interpulse {
         debug('error', error.message)
       }
     }
+    throw new Error(`Subscription ended to: ${absPath}`)
   }
   async current(path = '.') {
     const { wd } = this
@@ -151,6 +154,11 @@ export class Interpulse {
      */
     throw new Error('not implemented')
   }
+  async startNetwork() {
+    if (this.net) {
+      await this.net.start()
+    }
+  }
   async stop() {
     if (this.net) {
       this.#crypto.stop()
@@ -193,14 +201,36 @@ export class Interpulse {
     pipe(rootEmitter, checker)
     return sink
   }
+  /**
+   * get the latest mtab pulse, then:
+   *    get the new multi addresses
+   *    get the new address mappings
+   *    get the new hardlinks
+   */
   async #watchMtab() {
     assert(this.net)
     const subscribed = new Set()
+    const multiaddrsSet = new Set()
     let lastMtab
     for await (const mtab of this.subscribe('/.mtab')) {
       if (lastMtab) {
-        // TODO determine what to unmount
+        // TODO determine what to unsubscribe and unmap
       }
+      const state = mtab.getState().toJS()
+      const peerIds = Object.keys(state)
+      for (const peerId of peerIds) {
+        const { multiaddrs, chainIds } = state[peerId]
+        for (const multiaddr of multiaddrs) {
+          if (!multiaddrsSet.has(multiaddr)) {
+            multiaddrsSet.add(multiaddr)
+            await this.net.addMultiAddress(multiaddr)
+          }
+        }
+        for (const chainId of chainIds) {
+          this.net.addAddressPeer(chainId, peerId)
+        }
+      }
+
       lastMtab = mtab
       const network = mtab.getNetwork()
       for await (const [, channelId] of network.hardlinks.entries()) {
@@ -211,6 +241,7 @@ export class Interpulse {
         }
         subscribed.add(address.getChainId())
         debug('subscribing to', address)
+
         const stream = this.net.subscribePulse(address)
         const updater = async (source) => {
           for await (const pulselink of source) {

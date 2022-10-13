@@ -214,8 +214,9 @@ const api = {
   // unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
   // setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
 }
-
+const name = 'datum'
 export {
+  name,
   api,
   reducer,
   convertToTemplate,

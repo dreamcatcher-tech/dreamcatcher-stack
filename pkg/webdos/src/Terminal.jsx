@@ -1,3 +1,4 @@
+import './shim.js'
 import assert from 'assert-fast'
 import React, { useEffect, useState } from 'react'
 import debugFactory from 'debug'

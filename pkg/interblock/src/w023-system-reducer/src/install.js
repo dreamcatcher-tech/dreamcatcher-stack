@@ -4,10 +4,10 @@ import { useState, interchain } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:install')
 
-const installReducer = async (payload) => {
+export const installReducer = async (payload) => {
   assert.strictEqual(typeof payload, 'object')
   assert.strictEqual(Object.keys(payload).length, 1)
-  assert(payload.installer)
+  assert.strictEqual(typeof payload.installer, 'object')
   debug(`payload`, payload)
   const covenantState = await interchain(Request.createGetCovenantState())
   debug(`covenantState`, covenantState)
@@ -16,17 +16,15 @@ const installReducer = async (payload) => {
   const { network = {}, state = {} } = installer
   assert.strictEqual(typeof network, 'object')
   assert.strictEqual(typeof state, 'object')
-
-  // TODO clean up failed partial deployments ?
-  // TODO accomodate existing children already ? or throw ?
-  const isPayloadState = !!payload.installer.state
-  const isCovenantState = !!covenantState.installer.state
-  if (!isPayloadState && isCovenantState) {
+  if (!payload.installer.state && isState(covenantState)) {
     const [currentState, setState] = await useState()
-    console.dir(currentState, { depth: Infinity })
     assert.strictEqual(Object.keys(currentState).length, 0)
     await setState(state)
   }
+
+  // TODO clean up failed partial deployments ?
+  // TODO accomodate existing children already ? or throw ?
+
   const awaits = []
   for (const child in network) {
     debug('installing child: ', child)
@@ -37,4 +35,7 @@ const installReducer = async (payload) => {
   }
   const results = await Promise.all(awaits)
 }
-export { installReducer }
+const isState = (installer) => {
+  const { state = {} } = installer
+  return Object.keys(state).length !== 0
+}

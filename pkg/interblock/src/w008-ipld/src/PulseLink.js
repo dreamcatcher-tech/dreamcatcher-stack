@@ -29,9 +29,11 @@ export class PulseLink extends IpldInterface {
   }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
-    assert(!pulse.isModified(), `Pulse must be crushed already`)
+    if (pulse.isModified() && !pulse.currentCrush) {
+      throw new Error(`Pulse must be crushed already`)
+    }
     const instance = new this()
-    instance.#setCid(pulse.cid)
+    instance.#setCid(pulse.currentCrush.cid)
     return instance
   }
   #setCid(cid) {

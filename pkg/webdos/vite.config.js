@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv'
+import git from 'git-rev-sync'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -42,27 +43,34 @@ const config = {
     esbuildOptions: {
       target: 'es2020',
     },
+    exclude: ['del'],
   },
   build: {
-    target: 'esnext',
+    target: 'es2020',
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],
-      external: Object.keys(deps),
+      // external: Object.keys(deps),
+      external: ['del'],
     },
   },
   server: {},
+  clearScreen: false,
 }
 dotenv.config({ path: '../../.env' })
 const { env } = process
-if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
-  console.log('serving SSL for hostname:', process.env.SSL_HOSTNAME)
-  Object.assign(config.server, {
-    https: {
-      // hostname: env.SSL_HOSTNAME,
-      key: env.SSL_PRIVATE_KEY,
-      cert: env.SSL_CERT_CHAIN,
-    },
-  })
-}
+// if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
+//   console.log('serving SSL for hostname:', process.env.SSL_HOSTNAME)
+//   Object.assign(config.server, {
+//     https: {
+//       hostname: env.SSL_HOSTNAME,
+//       key: env.SSL_PRIVATE_KEY,
+//       cert: env.SSL_CERT_CHAIN,
+//     },
+//   })
+// }
+const gitPath = '../..'
+process.env.VITE_GIT_HASH = git.long(gitPath)
+process.env.VITE_GIT_DATE = git.date()
+
 // https://vitejs.dev/config/
 export default defineConfig(config)

@@ -18,6 +18,44 @@ export const usePulse = async (path = '.') => {
   return reply
 }
 export const useCovenantState = async (path = '.') => {
-  const request = Request.createGetCovenantState(path)
-  return await interchain(request)
+  return await interchain('@@COVENANT', { path })
+}
+
+export const isApiAction = (request, covenant) => {
+  assert.strictEqual(typeof request, 'object')
+  assert.strictEqual(typeof request.type, 'string')
+  assert(request.type)
+  assert.strictEqual(typeof covenant, 'object')
+  assert.strictEqual(typeof covenant.api, 'object')
+  const schemas = Object.values(covenant.api)
+  assert(schemas.length, 'No actions in schema')
+  assert(schemas.every((schema) => typeof schema.title === 'string'))
+  return schemas.some(({ title }) => request.type === title)
+}
+
+export const ensureChild = async (child, installer = 'unity') => {
+  assert.strictEqual(typeof child, 'string')
+  assert(child)
+  // TODO assert child points to a deeper path, not higher one
+  if (typeof installer === 'string') {
+    installer = { covenant: installer }
+  }
+  assert.strictEqual(typeof installer, 'object')
+  let covenant
+  try {
+    covenant = await useCovenantState('./' + child)
+  } catch (error) {
+    // TODO work with any child
+    const msg = `Segment not present: /.mtab of: .mtab`
+    if (error.message !== msg) {
+      throw error
+    }
+    const spawnAction = Request.createSpawn(child, installer)
+    await interchain(spawnAction)
+  }
+}
+
+export const isSystemAction = (request) => {
+  assert.strictEqual(typeof request.type, 'string')
+  return Request.SYSTEM_TYPES.includes(request.type)
 }

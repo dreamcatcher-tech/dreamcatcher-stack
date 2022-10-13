@@ -32,7 +32,15 @@ const createAction = (type, schema) => {
       }
     }
     if (!validate(payload)) {
-      throw validate.errors
+      const { errors = [] } = validate
+      let concat = ''
+      errors.forEach(({ message }) => {
+        if (concat) {
+          concat += ', '
+        }
+        concat += message
+      })
+      throw type + ': ' + concat
     }
     return { type, payload }
   }

@@ -2,7 +2,7 @@ import { assert } from 'chai/index.mjs'
 import { Interpulse } from '../..'
 import { crm } from '..'
 import Debug from 'debug'
-const debug = Debug('interblock:tests:crm')
+const debug = Debug('tests')
 
 const serverFactory = async ({ customerCount = 10 } = {}) => {
   const server = await Interpulse.createCI({ overloads: { '/crm': crm } })
@@ -22,12 +22,13 @@ const serverFactory = async ({ customerCount = 10 } = {}) => {
 describe('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
-      // Debug.enable('*tests*')
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
       const { path } = await engine.publish('dpkgCrm', crm)
       assert.strictEqual(path, '/dpkgCrm')
       const installStart = Date.now()
+      const latest = await engine.latest('/dpkgCrm')
+      expect(latest.provenance.dmz.covenant).toEqual('covenant')
       await engine.add('crm', { covenant: path })
 
       debug(`publish time: ${installStart - publishStart} ms`)

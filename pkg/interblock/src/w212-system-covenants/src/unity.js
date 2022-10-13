@@ -1,5 +1,3 @@
-const reducer = (state = {}) => {
-  return state
-}
-
-export { reducer }
+const reducer = () => {}
+const name = 'unity'
+export { name, reducer }

@@ -13,10 +13,12 @@ describe('netReboot', () => {
   test('restart connection', async () => {
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
+    await server.startNetwork()
     const addResult = await server.add('child1')
     debug(addResult)
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })
+    await client.startNetwork()
     engines.push(client, server)
 
     // add multiaddr
