@@ -50,17 +50,10 @@ describe('reload', () => {
       debug(`deleted ${repo}`)
     }
   }, 4000)
-  test('open handles', async () => {
-    const repo = createRamRepo('ram')
+  test.only('open handles', async () => {
     debug(`starting engine`)
-    const engine = await Interpulse.createCI({ repo })
-    const stream = engine.subscribe()
-    const m = async () => {
-      for await (const p of stream) {
-        console.log('meow')
-      }
-    }
-    m()
+    const engine = await Interpulse.createCI()
+    await engine.add('child1') // TODO if add a child, get an open handle
 
     await engine.stop()
   })

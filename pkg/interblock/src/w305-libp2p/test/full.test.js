@@ -3,7 +3,6 @@ import { PulseNet, createRamRepo } from '..'
 import Debug from 'debug'
 import { Engine } from '../../w210-engine'
 const debug = Debug('tests')
-// Debug.enable('tests *Announcer *Connection')
 
 describe('full', () => {
   test('server with late client', async () => {

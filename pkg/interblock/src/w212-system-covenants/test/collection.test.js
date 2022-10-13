@@ -27,7 +27,6 @@ describe.skip('collection', () => {
   }
 
   test('add with test data', async () => {
-    // Debug.enable('iplog *collection interpulse')
     const engine = await Interpulse.createCI()
     await engine.add('col1', { covenant: 'collection' })
     const actions = await engine.actions('col1')
