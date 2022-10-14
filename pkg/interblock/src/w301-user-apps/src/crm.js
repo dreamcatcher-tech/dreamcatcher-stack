@@ -189,5 +189,5 @@ const installer = {
     },
   },
 }
-
-export { installer }
+const name = 'crm'
+export { name, installer }

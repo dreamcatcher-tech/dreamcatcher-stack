@@ -39,13 +39,6 @@ describe('mount', () => {
     const nestedRemote = await client.latest('/.mtab/server/nested1')
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
-
-    // await client.ping('/.mtab/server')
-    // await client.ping('/.mtab/server/nested1')
-
-    // dispatch some commands into it
-
-    // after restart of client, observe continued access to server/child1
   })
   test('shell based read-only mount', async () => {
     const serverRepo = createRamRepo('server')

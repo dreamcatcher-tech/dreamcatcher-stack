@@ -81,9 +81,23 @@ const pulseReducer = async (type, payload) => {
       return { alias, chainId, entropy }
     }
     case '@@GET_STATE': {
-      const stateModel = pulse.getState()
+      const { path } = payload
+      let remotePulse = pulse
+      if (path !== '.') {
+        // TODO make latest handle relative paths
+        remotePulse = await latest(path)
+      }
+      const stateModel = remotePulse.getState()
       const state = stateModel.toJS()
       return { state }
+    }
+    case '@@COVENANT': {
+      // TODO remove when can query pulses from reducers
+      const path = pulse.getCovenantPath()
+      debug(`@@COVENANT`, path)
+      const covenant = await latest(path)
+      const state = covenant.getState().toJS()
+      return state
     }
     case '@@SET_STATE': {
       const { state } = payload
@@ -95,25 +109,14 @@ const pulseReducer = async (type, payload) => {
     }
     case '@@USE_PULSE': {
       const { path } = payload
-      const latestPulse = await latest(path)
-      assert(latestPulse instanceof Pulse)
-      // TODO remove the network object, to provide a static pulse
-      return latestPulse
-    }
-    case '@@COVENANT': {
-      const { path } = payload
-      debug(`@@COVENANT`, path)
-      const latestByPath = async (path) => {
-        debug('latestByPath', path)
-        if (path !== '.') {
-          // TODO apply this optimization at the engine level
-          return await latest(path)
-          // but need some way to walk blocks relatively ?
-        }
-        return pulse
+      let remotePulse = pulse
+      if (path !== '.') {
+        // TODO make latest handle relative paths
+        remotePulse = await latest(path)
       }
-      const state = await getCovenantState(path, latestByPath)
-      return state
+      assert(remotePulse instanceof Pulse)
+      // TODO remove the network object, to provide a static pulse
+      return remotePulse
     }
     case '@@DEEPEST_SEGMENT': {
       return deepestSegment(pulse, payload)
@@ -188,21 +191,4 @@ const pulseReducer = async (type, payload) => {
   }
 }
 
-const getCovenantState = async (path, latestByPath) => {
-  assert.strictEqual(typeof path, 'string')
-  assert.strictEqual(typeof latestByPath, 'function')
-  let latestPulse = await latestByPath(path)
-  const { covenant } = latestPulse.provenance.dmz
-  assert.strictEqual(typeof covenant, 'string')
-  // TODO define covenant resolution algorithm better
-  let covenantPath = covenant
-  if (!posix.isAbsolute(covenantPath)) {
-    // TODO be precise about assumption this is a system covenant
-    covenantPath = '/system:/' + covenantPath
-  }
-  debug('covenantPath', covenantPath)
-  const covenantPulse = await latestByPath(covenantPath)
-  return covenantPulse.getState().toJS()
-}
-
-export { reducer, getCovenantState }
+export { reducer }

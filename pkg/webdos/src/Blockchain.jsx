@@ -1,33 +1,43 @@
+import PropTypes from 'prop-types'
 import assert from 'assert-fast'
 import React, { useState, useEffect, useRef } from 'react'
 import { Interpulse } from '@dreamcatcher-tech/interblock'
-import equals from 'fast-deep-equal'
-import { Terminal } from '.'
-import process from 'process'
 import Debug from 'debug'
 const debug = Debug('terminal:Blockchain')
 
 export const BlockchainContext = React.createContext()
-BlockchainContext.displayName = 'Blockchain'
+BlockchainContext.displayName = 'Interpulse'
 const Blockchain = ({ repo = 'interpulse', dev, children }) => {
   assert(typeof dev === 'object' || typeof dev === 'undefined')
   const [latest, setLatest] = useState()
-  const [state, setState] = useState()
+  const [state, setState] = useState({})
+  const [wd, setWd] = useState('/')
   const [engine, setEngine] = useState()
   const [isPending, setIsPending] = useState(false)
   const [isBooting, setIsBooting] = useState(true)
   const oneShot = useRef(false)
-  const init = async (engine) => {
-    if (engine) {
+  const engineRef = useRef()
+  const init = async () => {
+    if (engineRef.current) {
       debug(`awaiting priors`)
-      await engine.stop()
+      const prior = await engineRef.current
+      await prior.stop()
     }
-    debug(`init`)
-    const newEngine = await Interpulse.createCI({ repo })
-    setEngine(newEngine)
+    debug(`init`, engineRef.current)
+    engineRef.current = Interpulse.createCI({ repo })
+    const engine = await engineRef.current
+    globalThis.interpulse = engine
+    setEngine(engine)
     setIsBooting(false)
     debug(`Engine ready`)
-    return newEngine
+    for await (const latest of engine.subscribe('/')) {
+      assert(latest)
+      setLatest(latest)
+      const state = latest.getState().toJS()
+      setState(state)
+      const { wd = '/' } = state
+      setWd(wd)
+    }
   }
   useEffect(() => {
     if (!oneShot.current) {
@@ -35,21 +45,27 @@ const Blockchain = ({ repo = 'interpulse', dev, children }) => {
       oneShot.current = true
       return
     }
-    const newEnginePromise = init(engine)
-    // return async () => {
-    //   if (!engine) {
-    //     const newEngine = await newEnginePromise
-    //     assert(newEngine)
-    //     newEngine.stop()
-    //   }
-    // }
+    init()
+    return async () => {
+      debug('effect cleanup triggered')
+      if (engineRef.current) {
+        const engine = await engineRef.current
+        await engine.stop()
+      }
+      debug('effect cleanup done')
+    }
   }, [])
 
-  const providerValue = { engine, latest, state, isPending }
+  const providerValue = { engine, latest, state, wd, isPending }
   return (
     <BlockchainContext.Provider value={providerValue}>
       {isBooting ? <div>booting...</div> : children}
     </BlockchainContext.Provider>
   )
+}
+Blockchain.propTypes = {
+  repo: PropTypes.string,
+  dev: PropTypes.object,
+  children: PropTypes.node,
 }
 export default Blockchain

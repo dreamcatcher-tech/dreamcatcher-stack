@@ -11,6 +11,7 @@ import {
   Network,
 } from '.'
 import assert from 'assert-fast'
+import posix from 'path-browserify'
 import { fromString as from } from 'uint8arrays/from-string'
 import { PulseLink } from './PulseLink'
 /**
@@ -171,6 +172,16 @@ export class Pulse extends IpldStruct {
   setState(state) {
     assert(state instanceof State)
     return this.setMap({ provenance: { dmz: { state } } })
+  }
+  getCovenantPath() {
+    const { covenant } = this.provenance.dmz
+    assert.strictEqual(typeof covenant, 'string')
+    let covenantPath = covenant
+    if (!posix.isAbsolute(covenantPath)) {
+      // TODO be precise about assumption this is a system covenant
+      covenantPath = '/system:/' + covenantPath
+    }
+    return covenantPath
   }
   async addChild(alias, installer) {
     // TODO insert repeatable randomness to child

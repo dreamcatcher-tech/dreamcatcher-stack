@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react'
 import { default as useBlockchain } from './useBlockchain'
 import debugFactory from 'debug'
-import process from 'process'
 const debug = debugFactory(`webdos:hooks:useNavigation`)
 
 export default () => {
-  // TODO make urls drive the blockchain, as well as blockchain drive urls
-  const { blockchain, context } = useBlockchain()
+  const { engine, wd } = useBlockchain()
+
   const [popstate, setPopstate] = useState()
   const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    if (!blockchain) {
+    if (!engine) {
       debug(`popstate not settable`)
       return
     }
@@ -19,28 +18,23 @@ export default () => {
     const onPopstate = ({ state }) => {
       const { wd } = state
       debug(`popstate wd: `, wd)
-      // TODO store the current terminal contents, delete back to the prompt
-      const command = `cd ${wd}\n`
-      for (const c of command) {
-        process.stdin.send(c)
-      }
-      // TODO restore the existing terminal text
+      engine.cd(wd)
       setPopstate(wd)
     }
     window.addEventListener('popstate', onPopstate)
     return () => {
       window.removeEventListener('popstate', onPopstate)
     }
-  }, [blockchain])
+  }, [engine])
 
-  if (!context) {
+  if (!wd) {
     return
   }
-  const { wd } = context
+  document.title = wd
   useEffect(() => {
     if (window.location.pathname !== wd) {
       debug(`oneShot window.location.pathname !== wd`)
-      blockchain.cd(window.location.pathname).catch((e) => {
+      engine.cd(window.location.pathname).catch((e) => {
         debug(`pathname mismatch ${wd} ${e.message}`)
       })
     }
@@ -50,7 +44,6 @@ export default () => {
   if (!isInitialized) {
     return
   }
-
   if (window.location.pathname !== wd) {
     debug(`window.history.pushState: `, wd)
     if (!popstate) {

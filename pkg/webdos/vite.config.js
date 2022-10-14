@@ -35,6 +35,10 @@ deps['leaflet.markercluster/dist/MarkerCluster.Default.css'] = true
 deps['leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css'] = true
 deps['leaflet-extra-markers/dist/js/leaflet.extra-markers.min'] = true
 
+const gitPath = '../..'
+const VITE_GIT_HASH = JSON.stringify(git.long(gitPath))
+const VITE_GIT_DATE = JSON.stringify(git.date())
+
 const config = {
   plugins: [react()],
   optimizeDeps: {
@@ -55,22 +59,18 @@ const config = {
   },
   server: {},
   clearScreen: false,
+  define: { VITE_GIT_HASH, VITE_GIT_DATE },
 }
 dotenv.config({ path: '../../.env' })
 const { env } = process
-// if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
-//   console.log('serving SSL for hostname:', process.env.SSL_HOSTNAME)
-//   Object.assign(config.server, {
-//     https: {
-//       hostname: env.SSL_HOSTNAME,
-//       key: env.SSL_PRIVATE_KEY,
-//       cert: env.SSL_CERT_CHAIN,
-//     },
-//   })
-// }
-const gitPath = '../..'
-process.env.VITE_GIT_HASH = git.long(gitPath)
-process.env.VITE_GIT_DATE = git.date()
-
+if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
+  Object.assign(config.server, {
+    https: {
+      hostname: env.SSL_HOSTNAME,
+      key: env.SSL_PRIVATE_KEY,
+      cert: env.SSL_CERT_CHAIN,
+    },
+  })
+}
 // https://vitejs.dev/config/
 export default defineConfig(config)

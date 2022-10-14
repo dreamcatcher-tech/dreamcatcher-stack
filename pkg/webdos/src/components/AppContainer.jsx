@@ -1,8 +1,9 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import { useRef } from 'react'
 
-export const AppContainerContext = React.createContext('appContainer')
-
+export const AppContainerContext = React.createContext()
+AppContainerContext.displayName = 'AppContainer'
 const AppContainer = ({ children }) => {
   const style = {
     display: 'flex',
@@ -25,5 +26,7 @@ const AppContainer = ({ children }) => {
     </AppContainerContext.Provider>
   )
 }
-
+AppContainer.propTypes = {
+  children: PropTypes.node,
+}
 export default AppContainer

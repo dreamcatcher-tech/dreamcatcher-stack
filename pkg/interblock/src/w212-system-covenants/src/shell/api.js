@@ -116,16 +116,6 @@ export const api = {
       path: { type: 'string', default: '.' }, // TODO regex
     },
   },
-  covenant: {
-    type: 'object',
-    title: 'COVENANT',
-    description: `Return the state of a published covenant`,
-    additionalProperties: false,
-    required: ['path'],
-    properties: {
-      path: { type: 'string', default: '.' }, // TODO regex
-    },
-  },
   ln: {
     type: 'object',
     title: 'LN',

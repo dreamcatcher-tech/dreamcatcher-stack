@@ -130,7 +130,6 @@ export class Endurance {
     }
   }
   stop() {
-    assert(this.#isStarted)
     this.#isStarted = false
   }
 }

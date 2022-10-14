@@ -17,9 +17,6 @@ export const usePulse = async (path = '.') => {
   const reply = interchain('@@USE_PULSE', { path })
   return reply
 }
-export const useCovenantState = async (path = '.') => {
-  return await interchain('@@COVENANT', { path })
-}
 
 export const isApiAction = (request, covenant) => {
   assert.strictEqual(typeof request, 'object')
@@ -33,24 +30,24 @@ export const isApiAction = (request, covenant) => {
   return schemas.some(({ title }) => request.type === title)
 }
 
-export const ensureChild = async (child, installer = 'unity') => {
-  assert.strictEqual(typeof child, 'string')
-  assert(child)
+export const ensureChild = async (path, installer = 'unity') => {
+  assert.strictEqual(typeof path, 'string')
+  assert(path)
   // TODO assert child points to a deeper path, not higher one
   if (typeof installer === 'string') {
     installer = { covenant: installer }
   }
   assert.strictEqual(typeof installer, 'object')
-  let covenant
   try {
-    covenant = await useCovenantState('./' + child)
+    await interchain(Request.tryPath(path))
+    // TODO assert covenant matches
   } catch (error) {
     // TODO work with any child
     const msg = `Segment not present: /.mtab of: .mtab`
     if (error.message !== msg) {
       throw error
     }
-    const spawnAction = Request.createSpawn(child, installer)
+    const spawnAction = Request.createSpawn(path, installer)
     await interchain(spawnAction)
   }
 }

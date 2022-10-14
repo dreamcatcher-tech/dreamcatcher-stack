@@ -51,7 +51,6 @@ export class Request extends IpldStruct {
     '@@GET_STATE',
     '@@SET_STATE',
     '@@USE_PULSE',
-    '@@COVENANT',
     '@@SELF_ID',
     '@@RESOLVE_DOWNLINK',
     '@@INVALIDATE',
@@ -59,6 +58,7 @@ export class Request extends IpldStruct {
     '@@MOUNT',
     '@@LN',
     '@@HARDLINK',
+    '@@COVENANT', // TODO remove this when can usePulse()
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
@@ -94,9 +94,6 @@ export class Request extends IpldStruct {
       payload = { string: payload }
     }
     return this.create('@@PING', payload)
-  }
-  static createGetCovenantState(path = '.') {
-    return this.create('@@COVENANT', { path })
   }
   static createOpenPath(path) {
     assert.strictEqual(typeof path, 'string')

@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
-import { Request, Pulse } from '../../w008-ipld'
-import { useState, interchain } from '../../w002-api'
+import { Request } from '../../w008-ipld'
+import { useState, interchain, usePulse } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:install')
 
@@ -9,14 +9,14 @@ export const installReducer = async (payload) => {
   assert.strictEqual(Object.keys(payload).length, 1)
   assert.strictEqual(typeof payload.installer, 'object')
   debug(`payload`, payload)
-  const covenantState = await interchain(Request.createGetCovenantState())
-  debug(`covenantState`, covenantState)
-  let { installer } = covenantState
+  const covenant = await interchain('@@COVENANT')
+  debug(`covenantState`, covenant)
+  let { installer } = covenant
   installer = { ...installer, ...payload.installer }
   const { network = {}, state = {} } = installer
   assert.strictEqual(typeof network, 'object')
   assert.strictEqual(typeof state, 'object')
-  if (!payload.installer.state && isState(covenantState)) {
+  if (!payload.installer.state && isState(covenant)) {
     const [currentState, setState] = await useState()
     assert.strictEqual(Object.keys(currentState).length, 0)
     await setState(state)

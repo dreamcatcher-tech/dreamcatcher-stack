@@ -7,33 +7,12 @@ import { useRouter } from '../hooks'
 import RouterContext from './RouterContext'
 
 const debug = Debug('webdos:router:Route')
-/**
- * ## Matching on covenant
- * Renders based on the earliest match
- *
- *
- * @param {*} param0
- * @returns
- */
-const Route = ({ path, covenant, component, children }) => {
-  debug(
-    `Route path: %s covenant: %s component: %s children: %s`,
-    path,
-    covenant,
-    !!component,
-    !!children
-  )
-  const context = useRouter()
-
-  // check if our path matches, and if we should render at all
-  const { blocks, match, cwd } = context
+const Route = ({ path, covenant, children }) => {
+  debug(`Route path: %s covenant: %s`, path, covenant)
   // path match is when some remains of (cwd - match) === path
-  // assert(posix.isAbsolute(match), `match not absolute: ${match} ${cwd}`)
-  assert(posix.isAbsolute(cwd), `cwd not absolute: ${match} ${cwd}`)
-  assert(Array.isArray(blocks))
+  const { matchedPath, pulse } = useRouter()
+  assert(posix.isAbsolute(matchedPath), `match not absolute: ${matchedPath}`)
 
-  let matchedCovenant = false,
-    matchedPath = false
   if (path) {
     let pathTest = path
     if (path.endsWith('*')) {
@@ -42,53 +21,18 @@ const Route = ({ path, covenant, component, children }) => {
     }
     matchedPath = cwd.includes(pathTest)
   }
-  debug(`matchedPath: %o matchedCovenant: %o`, matchedPath, matchedCovenant)
-  // TODO check if covenant is matched by using code from Switch
-  matchedCovenant = !!covenant
 
-  if (!matchedPath && !matchedCovenant) {
-    debug(`no match`, path)
-    return null
+  if (covenant) {
+    const { covenant: toMatch } = pulse.provenance.dmz
+    if (covenant === toMatch) {
+      return children
+    }
   }
-  debug(`match found`, path, covenant)
-
-  // TODO wrap in a routerProvider, rather than injecting props
-  const wrapRoute = (route, index) => {
-    const matchedBlocks = blocks.slice(index)
-    const match = segments
-      .slice(0, index + 1)
-      .join('/')
-      .substring(1)
-    debug(`matchedPath`, match)
-    return (
-      <RouterContext.Provider value={{ blocks: matchedBlocks, match, cwd }}>
-        {route}
-      </RouterContext.Provider>
-    )
-  }
-  let result
-
-  if (component) {
-    const nextChildren = [
-      ...React.Children.toArray(component.props.children),
-      ...React.Children.toArray(children),
-    ]
-    result = React.cloneElement(component, context, nextChildren)
-  } else {
-    result = (
-      <>
-        {React.Children.map(children, (child) => {
-          return React.cloneElement(child, context)
-        })}
-      </>
-    )
-  }
-  return result
 }
 Route.propTypes = {
   path: PropTypes.string,
   covenant: PropTypes.string,
-  component: PropTypes.element,
+  children: PropTypes.node,
 }
 
 export default Route

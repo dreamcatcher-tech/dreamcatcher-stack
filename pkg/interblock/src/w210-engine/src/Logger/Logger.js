@@ -2,6 +2,7 @@ import assert from 'assert-fast'
 import { pulsePrint } from './printer'
 import { Pulse } from '../../../w008-ipld'
 import Debug from 'debug'
+import { isBrowser } from 'wherearewe'
 
 export class Logger {
   #options = {}
@@ -37,15 +38,12 @@ export class Logger {
     }
     this.#insertPulse(pulse)
     const path = await this.#getPath(pulse)
-    const formatted = await pulsePrint(
-      pulse,
-      path,
-      isNew,
-      isDupe,
-      this.#options
-    )
+    let formatted = await pulsePrint(pulse, path, isNew, isDupe, this.#options)
     if (this.#options.path && path !== this.#options.path) {
       return
+    }
+    if (isBrowser) {
+      formatted = '\n' + formatted
     }
     this.#debugPulse(formatted)
   }

@@ -2,7 +2,6 @@ import posix from 'path-browserify'
 import assert from 'assert-fast'
 import {
   interchain,
-  useCovenantState,
   usePulse,
   useState,
   isApiAction,
@@ -88,8 +87,9 @@ const reducer = async (request) => {
       assert(pulse instanceof Pulse)
       const aC = listChildren(pulse)
       const aH = listHardlinks(pulse)
-      const aS = useCovenantState(absPath)
-      const [children, hardlinks, state] = await Promise.all([aC, aH, aS])
+      const aS = usePulse(pulse.getCovenantPath())
+      const [children, hardlinks, covenant] = await Promise.all([aC, aH, aS])
+      const state = covenant.getState().toJS()
       const { api = {} } = state
       return { children, hardlinks, api }
     }
@@ -162,15 +162,6 @@ const reducer = async (request) => {
       const state = pulse.getState().toJS()
       debug(`getState result: `, state)
       return state
-    }
-    case 'COVENANT': {
-      const { path } = payload
-      let [{ wd = '/' }] = await useState()
-      const absolutePath = posix.resolve(wd, path)
-      const request = Request.createGetCovenantState(absolutePath)
-      const covenantState = await interchain(request)
-      // want to get the covenant path, then do useState on it
-      return covenantState
     }
     case 'LN': {
       let { target, linkName = posix.basename(target) } = payload

@@ -2,7 +2,6 @@ import { pipe } from 'it-pipe'
 import { shell } from '../../w212-system-covenants'
 import * as apps from '../../w301-user-apps'
 import { pushable } from 'it-pushable'
-import { getCovenantState } from '../../w023-system-reducer'
 import { Engine, schemaToFunctions } from '../../w210-engine'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -77,8 +76,10 @@ export class Interpulse {
     return await this.#engine.pierce(request)
   }
   async actions(path = '.') {
-    const latest = (path) => this.latest(path)
-    const state = await getCovenantState(path, latest)
+    const pulse = await this.latest(path)
+    const covenantPath = pulse.getCovenantPath()
+    const covenantPulse = await this.latest(covenantPath)
+    const state = covenantPulse.getState().toJS()
     const { api = {} } = state
     const actions = schemaToFunctions(api)
     const dispatches = {}
@@ -102,12 +103,11 @@ export class Interpulse {
         debug('error', error.message)
       }
     }
-    throw new Error(`Subscription ended to: ${absPath}`)
   }
-  async current(path = '.') {
+  async current(path = '.', rootPulse) {
     const { wd } = this
     const absPath = posix.resolve(wd, path)
-    const latest = await this.#engine.latestByPath(absPath)
+    const latest = await this.#engine.latestByPath(absPath, rootPulse)
     return latest
   }
   get logger() {

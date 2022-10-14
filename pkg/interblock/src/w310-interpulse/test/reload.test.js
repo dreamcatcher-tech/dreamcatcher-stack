@@ -50,7 +50,7 @@ describe('reload', () => {
       debug(`deleted ${repo}`)
     }
   }, 4000)
-  test.only('open handles', async () => {
+  test('open handles', async () => {
     debug(`starting engine`)
     const engine = await Interpulse.createCI()
     await engine.add('child1') // TODO if add a child, get an open handle

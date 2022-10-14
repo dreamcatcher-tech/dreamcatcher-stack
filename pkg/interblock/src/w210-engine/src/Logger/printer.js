@@ -18,7 +18,7 @@ const interPrint = (interpulse, msg, path, bg, fg) => {
   const chainIdRaw = provenance.getAddress().getChainId()
   let chainId = shrink(chainIdRaw, bg)
   const hashRaw = interpulse.hashString()
-  let hash = chalk.dim(shrink(hashRaw, 'bgWhite', fg))
+  let hash = shrink(hashRaw, 'bgWhiteBright', fg)
   let size = getSize(interpulse)
 
   const messages = [{ msg, height, path, chainId, hash, size }]
@@ -80,11 +80,11 @@ const headerPrint = (pulse, path, isNewChain, isDuplicate, options) => {
   const chainId = shrink(pulse.getAddress().getChainId())
   const height = chalk.green(pulse.provenance.height)
   const rawHash = pulse.cid.toString().substring(6)
-  const hash = chalk.dim(shrink(rawHash, 'bgWhite', 'green'))
+  const hash = shrink(rawHash, 'bgWhiteBright', 'green')
   const msg = isDuplicate ? chalk.gray('NOCHANGE') : chalk.green('BLOCK')
   const pathMax = PRINT_OPTIONS.config.path.maxWidth
   path = path.length > pathMax ? path.substring(0, pathMax) : path
-  path = chalk.blue.bold.bgWhite(path)
+  path = chalk.blue.bold.bgWhiteBright(path)
   const header = { msg, height, path, chainId, hash }
   if (options.size) {
     header.size = getSize(pulse)
@@ -115,13 +115,13 @@ const networkPrint = async (pulse, options) => {
     let hash = grayUndefined
     if (channel.rx.tip) {
       const tip = channel.rx.tip.cid.toString().substring(6)
-      hash = chalk.dim(shrink(tip, 'bgWhite', 'green'))
+      hash = shrink(tip, 'bgWhiteBright', 'green')
     }
     if (address.isResolved()) {
-      chainId = shrink(address.getChainId(), 'bgMagenta', 'gray')
+      chainId = shrink(address.getChainId(), 'bgMagenta', 'whiteBright')
     }
     if (address.isRoot() || address.isLoopback()) {
-      chainId = shrink(address.getChainId(), 'bgBlack', 'gray')
+      chainId = shrink(address.getChainId(), 'bgBlack', 'whiteBright')
       hash = ''
     }
     const msg = chalk.magenta('└─channel')
@@ -211,7 +211,7 @@ const getSize = (model) => {
   const size = pad(prettyBytes(model.serialize().length * 2), 12)
   return size
 }
-const shrink = (string = '', bg = 'bgGreen', fg = 'white') => {
+const shrink = (string = '', bg = 'bgGreen', fg = 'whiteBright') => {
   const shrunk = ` ${pad(string, 9).substring(0, 9)} `
   return chalk[fg][bg].bold(shrunk)
 }

@@ -23,5 +23,6 @@ export default (cwd) => {
   assert(posix.isAbsolute(cwd), `path must be absolute: ${cwd}`)
   const blocks = usePathBlockstream(cwd)
   const segments = splitPathSegments(cwd)
-  return blocks[segments.length - 1]
+  const last = blocks.pop()
+  return latest
 }
