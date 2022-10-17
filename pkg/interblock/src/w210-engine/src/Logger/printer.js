@@ -4,7 +4,7 @@ import pad from 'pad-left'
 import prettyBytes from 'pretty-bytes'
 import columnify from 'columnify'
 import { Interpulse } from '../../../w008-ipld'
-const grayUndefined = chalk.gray('undefined')
+const grayUndefined = chalk.blackBright.bgWhiteBright('undefined')
 
 const interPrint = (interpulse, msg, path, bg, fg) => {
   assert(interpulse instanceof Interpulse)

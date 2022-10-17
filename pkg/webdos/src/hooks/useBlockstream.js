@@ -14,15 +14,12 @@
 import assert from 'assert-fast'
 import { default as usePathBlockstream } from './usePathBlockstream'
 import Debug from 'debug'
-import { splitPathSegments } from '../utils'
-import posix from 'path'
+import posix from 'path-browserify'
 
 const debug = Debug(`terminal:useBlockstream`)
 
-export default (cwd) => {
-  assert(posix.isAbsolute(cwd), `path must be absolute: ${cwd}`)
-  const blocks = usePathBlockstream(cwd)
-  const segments = splitPathSegments(cwd)
-  const last = blocks.pop()
-  return latest
+export default (path) => {
+  assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
+  const pulses = usePathBlockstream(path)
+  return pulses[path]
 }

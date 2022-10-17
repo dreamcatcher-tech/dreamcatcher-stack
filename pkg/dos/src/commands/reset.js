@@ -1,5 +1,6 @@
 import process from 'process'
 import Enquirer from 'enquirer-browserify'
+import { isNode } from 'wherearewe'
 import Debug from 'debug'
 const debug = Debug('dos:commands:reset')
 
@@ -18,7 +19,11 @@ export const reset = async ({ spinner, blockchain }) => {
   } else {
     msg = `Cancelled reset`
   }
-  setTimeout(() => process.exit())
+  if (isNode) {
+    setTimeout(() => process.exit())
+  } else {
+    window.location.reload()
+  }
 
   return { out: msg }
 }

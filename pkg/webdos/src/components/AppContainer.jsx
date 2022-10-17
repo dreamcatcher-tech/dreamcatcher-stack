@@ -20,7 +20,7 @@ const AppContainer = ({ children }) => {
 
   return (
     <AppContainerContext.Provider value={{ element: ref.current, isFocused }}>
-      <div ref={ref} style={style}>
+      <div id="AppContainer" ref={ref} style={style}>
         {children}
       </div>
     </AppContainerContext.Provider>

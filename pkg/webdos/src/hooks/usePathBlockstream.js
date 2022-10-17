@@ -1,4 +1,4 @@
-import assert from 'assert-fast'
+import equals from 'fast-deep-equal'
 import { useState, useEffect } from 'react'
 import { default as useBlockchain } from './useBlockchain'
 import Debug from 'debug'
@@ -23,10 +23,8 @@ export default (path) => {
   useEffect(() => {
     debug('walker loaded')
     let isActive = true
-    const pulses = {}
+    const nextPulses = {}
     const walker = async () => {
-      // taking the latest, walk until get an error
-      // once have errorred or completed, update the array of blocks we report
       const segments = splitPathSegments(path)
       debug('segments', segments)
       let partialPath = ''
@@ -34,7 +32,7 @@ export default (path) => {
         partialPath += segment
         try {
           const pulse = await engine.current(partialPath, latest)
-          pulses[partialPath] = pulse
+          nextPulses[partialPath] = pulse
         } catch (error) {
           console.log(error.message)
           break
@@ -44,8 +42,8 @@ export default (path) => {
         }
       }
 
-      if (isActive) {
-        setPulses(pulses)
+      if (isActive && !equals(pulses, nextPulses)) {
+        setPulses(nextPulses)
       }
     }
     walker()

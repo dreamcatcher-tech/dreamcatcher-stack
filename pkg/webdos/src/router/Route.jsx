@@ -1,10 +1,8 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
-import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import { useRouter } from '../hooks'
-import RouterContext from './RouterContext'
+import { useRouter, useBlockchain } from '../hooks'
 
 const debug = Debug('webdos:router:Route')
 const Route = ({ path, covenant, children }) => {
@@ -12,6 +10,7 @@ const Route = ({ path, covenant, children }) => {
   // path match is when some remains of (cwd - match) === path
   const { matchedPath, pulse } = useRouter()
   assert(posix.isAbsolute(matchedPath), `match not absolute: ${matchedPath}`)
+  const { wd } = useBlockchain()
 
   if (path) {
     let pathTest = path
@@ -19,7 +18,9 @@ const Route = ({ path, covenant, children }) => {
       // TODO parse globs correctly
       pathTest = path.substring(0, path.length - 1)
     }
-    matchedPath = cwd.includes(pathTest)
+    if (wd.includes(pathTest)) {
+      return children
+    }
   }
 
   if (covenant) {

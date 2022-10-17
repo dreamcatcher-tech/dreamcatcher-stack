@@ -1,33 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
+import PropTypes from 'prop-types'
+import L from './leaflet'
 import Debug from 'debug'
-import './shim'
-import 'leaflet/dist/leaflet.css'
-import * as L from 'leaflet'
-
-import 'leaflet-draw/dist/leaflet.draw.css'
-import 'leaflet-draw/dist/leaflet.draw.js'
-
-import 'leaflet-providers'
-
-import 'leaflet.markercluster/dist/MarkerCluster.css'
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
-import 'leaflet.markercluster'
-
-import 'leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css'
-import 'leaflet-extra-markers/dist/js/leaflet.extra-markers.min'
 
 const debug = Debug('terminal:widgets:Mapping')
-
 // TODO instantiate map using an html element, so no IDs are used
 const MAP_ID = 'mapId'
 const maxNativeZoom = 18
 const maxZoom = 22
-const isMapOn = true
 const MapBackground = ({ children }) => {
   useEffect(() => {
-    if (!isMapOn) {
-      return
-    }
     L.Browser.touch = false
     const mapOptions = {
       center: [-37.76976, 175.27605],
@@ -134,8 +116,8 @@ const MapBackground = ({ children }) => {
     zoomControl.addTo(map)
     drawControl.addTo(map)
     layerControl.addTo(map)
-
     return () => {
+      debug('removing map')
       map.remove()
     }
   }, [])
@@ -167,5 +149,5 @@ const MapBackground = ({ children }) => {
     </div>
   )
 }
-
+MapBackground.propTypes = { children: PropTypes.node }
 export default MapBackground
