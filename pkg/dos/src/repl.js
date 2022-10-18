@@ -1,6 +1,6 @@
 import process from 'process'
 import ora from 'ora'
-import { assert } from 'chai'
+import assert from 'assert-fast'
 import { Interpulse, apps } from '@dreamcatcher-tech/interblock'
 import { read } from './read'
 import { evaluate } from './eval'

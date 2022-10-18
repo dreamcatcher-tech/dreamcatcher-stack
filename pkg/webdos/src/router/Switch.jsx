@@ -4,7 +4,6 @@ import Debug from 'debug'
 import { Route, useBlockchain, usePathBlockstream } from '..'
 import assert from 'assert-fast'
 import RouterContext from './RouterContext'
-import { splitPathSegments } from '../utils'
 
 const debug = Debug('webdos:router:Switch')
 
@@ -15,7 +14,6 @@ const Switch = ({ children }) => {
   assert.strictEqual(children.length, routes.length)
   const { wd } = useBlockchain()
   debug(`wd`, wd)
-  const segments = splitPathSegments(wd)
 
   // TODO switch needs to be aware of when it is nested
 
@@ -40,10 +38,13 @@ const Switch = ({ children }) => {
     if (path) {
       debug(`route path: `, path)
       if (wd.includes(path)) {
-        const lastSegment = path.split('/').pop()
-        const index = segments.lastIndexOf(lastSegment)
-        assert(index >= 0, `Index not found: ${path}`)
-        return wrapRoute(route, index)
+        const paths = Object.keys(latests)
+        for (const segment of paths) {
+          if (segment.includes(path)) {
+            return wrapRoute(route, segment, latests[segment])
+          }
+        }
+        debug('match not found in segments: ' + path + ' in ' + wd, latests)
       }
     }
   }

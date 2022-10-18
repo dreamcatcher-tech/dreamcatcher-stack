@@ -10,7 +10,7 @@ const debug = Debug(`webdos:hooks:usePathBlockstream`)
  * Throws if any part of the path is invalid.
  */
 export default (path) => {
-  const { engine, latest } = useBlockchain()
+  const { engine } = useBlockchain()
   const [pulses, setPulses] = useState({})
 
   useEffect(() => {
@@ -22,6 +22,7 @@ export default (path) => {
 
   useEffect(() => {
     debug('walker loaded')
+    // TODO WARNING must use subscribe to start up to date
     let isActive = true
     const nextPulses = {}
     const walker = async () => {
@@ -31,7 +32,7 @@ export default (path) => {
       for (const segment of segments) {
         partialPath += segment
         try {
-          const pulse = await engine.current(partialPath, latest)
+          const pulse = await engine.current(partialPath)
           nextPulses[partialPath] = pulse
         } catch (error) {
           console.log(error.message)
@@ -51,6 +52,6 @@ export default (path) => {
       debug('walker unloaded')
       isActive = false
     }
-  }, [latest])
+  }, [path])
   return pulses
 }

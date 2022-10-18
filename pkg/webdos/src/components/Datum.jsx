@@ -1,20 +1,15 @@
 import React, { useState } from 'react'
-import { makeStyles } from '@material-ui/core/styles'
-import Form from '@rjsf/material-ui'
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  IconButton,
-  Grid,
-} from '@material-ui/core'
-import { Edit, Cancel, Save } from '@material-ui/icons'
+import { makeStyles } from '@mui/styles'
+import Form from '@rjsf/mui'
+import { Card, CardHeader, CardContent, IconButton, Grid } from '@mui/material'
+import { Edit, Cancel, Save } from '@mui/icons-material'
 import { useBlockchain } from '../hooks'
 import Debug from 'debug'
+import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Datum')
 
 const useStyles = makeStyles((theme) => ({
-  // TODO try remove makeStyles and use basic classes - adds much to stackblitz
+  // TODO try remove makeStyles and use basic classes
   root: {
     flexGrow: 1,
   },
@@ -28,12 +23,12 @@ const useStyles = makeStyles((theme) => ({
 
 // const DatumCard =
 
-const Datum = ({ block }) => {
-  const { state } = block
+const Datum = ({ pulse }) => {
+  assert.strictEqual(pulse.getCovenantPath(), '')
+  const state = pulse.getState().toJS()
   const { schema, formData: storedFormData, uiSchema } = state
   const { title, ...noTitleSchema } = schema
   const [liveFormData, setLiveFormData] = useState(storedFormData)
-  const { isPending } = useBlockchain()
   // TODO verify the covenant is a datum
   // TODO verify the chain children match the schema children
 

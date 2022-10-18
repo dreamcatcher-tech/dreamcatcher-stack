@@ -1,9 +1,9 @@
-import DialogTitle from '@material-ui/core/DialogTitle'
-import Dialog from '@material-ui/core/Dialog'
-import DialogContent from '@material-ui/core/DialogContent'
+import { DialogTitle } from '@mui/material'
+import { Dialog } from '@mui/material'
+import { DialogContent } from '@mui/material'
 import React from 'react'
 import Debug from 'debug'
-import { makeStyles } from '@material-ui/core'
+import { makeStyles } from '@mui/styles'
 import { useAppContainer } from '../hooks'
 import process from 'process'
 

@@ -8,6 +8,7 @@ const debug = Debug(`terminal:useBlockstream`)
 export default (path, masks = []) => {
   assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
   const pulse = useBlockstream(path)
+  // TODO use immutable for large child lists
   const [children, setChildrenRaw] = useState({})
   const setChildren = (buffer) => {
     const ordered = {}

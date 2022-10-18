@@ -1,11 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import { AppBar, Toolbar } from '@material-ui/core'
-import { List, ListItem, ListItemText } from '@material-ui/core'
-import { IconButton } from '@material-ui/core'
-import { Home, AccountCircle, Settings, Info } from '@material-ui/icons'
-import { makeStyles } from '@material-ui/core'
+import { AppBar, Toolbar } from '@mui/material'
+import { List, ListItem, ListItemText } from '@mui/material'
+import { IconButton } from '@mui/material'
+import { Home, AccountCircle, Settings, Info } from '@mui/icons-material'
+import { makeStyles } from '@mui/styles'
 import { useRouter, useChildren, useBlockchain } from '../hooks'
 const debug = Debug('terminal:widgets:Nav')
 

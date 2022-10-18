@@ -1,8 +1,8 @@
 import Debug from 'debug'
 import assert from 'assert-fast'
-import { LicenseInfo } from '@material-ui/x-grid'
+import { LicenseInfo } from '@mui/x-license-pro'
 LicenseInfo.setLicenseKey(
-  '0f94d8b65161817ca5d7f7af8ac2f042T1JERVI6TVVJLVN0b3J5Ym9vayxFWFBJUlk9MTY1NDg1ODc1MzU1MCxLRVlWRVJTSU9OPTE='
+  '61628ce74db2c1b62783a6d438593bc5Tz1NVUktRG9jLEU9MTY4MzQ0NzgyMTI4NCxTPXByZW1pdW0sTE09c3Vic2NyaXB0aW9uLEtWPTI='
 )
 const debug = Debug('web-components:utils')
 

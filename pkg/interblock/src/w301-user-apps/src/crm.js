@@ -39,17 +39,17 @@ const installer = {
         uiSchema: 'schedule',
       },
       network: {
-        exceptions: {
+        modifications: {
+          // any manual changes to the computed paths
+          // might include reconciled manifests too
           covenant: 'collection',
           state: {
-            datumTemplate: {
-              // stuff
-            },
+            datumTemplate: {},
           },
         },
       },
     },
-    services: { covenant: 'datum' },
+    // services: { covenant: 'datum' },
     customers: {
       covenant: 'collection',
       state: {
@@ -124,7 +124,7 @@ const installer = {
       },
     },
     routing: {},
-    banking: { covenant: 'datum' },
+    // banking: { covenant: 'datum' },
     settings: {
       covenant: 'datum',
       state: {
@@ -141,11 +141,6 @@ const installer = {
             },
             isGuiVisible: {
               title: 'Show GUI',
-              type: 'boolean',
-              default: true,
-            },
-            isFakeDataEnabled: {
-              title: 'Allow Fake Data',
               type: 'boolean',
               default: true,
             },

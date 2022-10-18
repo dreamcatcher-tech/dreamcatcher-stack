@@ -134,7 +134,7 @@ const separateFormData = (payload) => {
   return result
 }
 
-const validateFormData = (payload, template) => {
+export const validateFormData = (payload, template) => {
   const isValid = ajv.validate(template.schema, payload.formData)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
@@ -215,11 +215,4 @@ const api = {
   // setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?
 }
 const name = 'datum'
-export {
-  name,
-  api,
-  reducer,
-  convertToTemplate,
-  validateDatumTemplate,
-  validateFormData,
-}
+export { name, api, reducer, convertToTemplate, validateDatumTemplate }

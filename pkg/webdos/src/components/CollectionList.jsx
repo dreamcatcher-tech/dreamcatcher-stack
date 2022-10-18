@@ -1,51 +1,45 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState } from 'react'
+import PropTypes from 'prop-types'
 import calculateSize from 'calculate-size'
-import { XGrid } from '@material-ui/x-grid'
+import { DataGridPremium } from '@mui/x-data-grid-premium'
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { useBlockchain, useBlockstream, useRouter } from '../hooks'
-import { Fab } from '@material-ui/core'
-import { Add } from '@material-ui/icons'
+import { useBlockchain, useBlockstream, useChildren, useRouter } from '../hooks'
+import { Fab } from '@mui/material'
+import { Add } from '@mui/icons-material'
 import equal from 'fast-deep-equal'
 import process from 'process'
 
 const debug = Debug('terminal:widgets:CollectionList')
-const CollectionList = (props) => {
-  const { children } = props // TODO verify this is a Collection
-  const { blocks, match, cwd } = useRouter()
-
-  const { blockchain, isPending } = useBlockchain()
-  // TODO disable '+' button if we are not the cwd
-  const isCwd = true
-  const [block] = blocks
+const CollectionList = () => {
+  const { matchedPath, pulse } = useRouter()
+  assert(pulse, 'pulse not loaded')
+  assert.strictEqual(pulse.getCovenantPath(), '/system:/collection')
+  const { engine } = useBlockchain()
+  const [isAdding, setIsAdding] = useState(false)
 
   const onAddCustomer = async () => {
-    assert(!isPending, `Cannot add customers simultaneously`)
     debug(`addCustomer `)
-    // show an enquiring modal UI over the top to get the data we need
+    // TODO show an enquiring modal UI over the top to get the data we need
+    assert(!isAdding)
+    setIsAdding(true)
 
-    const command = `./add --isTestData\n`
-    for (const c of command) {
-      // process.stdin.send(c)
-    }
-    const { add } = await blockchain.actions(match)
-    const result = await add({ isTestData: true })
+    const { add } = await engine.actions(matchedPath)
+    // use the toSchema functions to interogate the thing
+    const result = await add({ formData: { custNo: 1234, name: 'bob' } })
     debug(`add result: `, result)
+    // TODO cd into the new customer immediately
     // const newCustomer = await isPending
-    // how to learn what customer just got added ?
     // const cd = `cd /crm/customers/bob`
+    setIsAdding(false)
   }
-  const addButtonStyle = {
-    margin: 0,
-    top: 'auto',
-    right: 20,
-    bottom: 20,
-    left: 'auto',
-    position: 'fixed',
-  }
-  const regenerateColumns = (datumTemplate) => {
-    debug(`generating new columns`)
+
+  const generateColumns = (datumTemplate) => {
+    debug(`generating columns`, datumTemplate)
     const columns = []
+    if (!datumTemplate.schema) {
+      return columns
+    }
     // TODO get nested children columns out, hiding all but top level
     const { properties } = datumTemplate.schema
     const { namePath } = datumTemplate
@@ -59,7 +53,7 @@ const CollectionList = (props) => {
         // need to cache all the blocks so fetching them is very cheap
         // fetch block relating to this child, to get out data
         // show loading screen in meantime
-        const childPath = match + '/' + child
+        const childPath = matchedPath + '/' + child
         return (
           <CellBlock
             path={childPath}
@@ -83,92 +77,92 @@ const CollectionList = (props) => {
     }
     return columns
   }
-  const ref = useRef({ columns: [], datumTemplate: {} })
-  if (block && block.state.datumTemplate) {
-    const { datumTemplate } = block.state
-    if (datumTemplate) {
-      if (!equal(ref.current.datumTemplate, datumTemplate)) {
-        debug(`updating datumTemplate`)
-        ref.current.datumTemplate = datumTemplate
-        ref.current.columns = regenerateColumns(datumTemplate)
-      }
-    }
+  const state = pulse.getState().toJS()
+  const [datumTemplate, setDatumTemplate] = useState({})
+  const [columns, setColumns] = useState([])
+
+  debug({ state, datumTemplate, columns })
+
+  if (!equal(datumTemplate, state.datumTemplate)) {
+    setDatumTemplate(state.datumTemplate)
+    setColumns(generateColumns(state.datumTemplate))
   }
 
-  const listItems = _getChildren(block)
+  const listItems = useChildren(matchedPath)
+  debug('children', listItems)
   const rows = []
-  for (const child of listItems) {
+  for (const child of Object.keys(listItems)) {
     rows.push({ id: rows.length, child })
   }
-  const onRowClick = ({ id }) => {
-    const child = listItems[id]
-    debug(`onclick`, child, match, cwd)
-    const nextPath = match + '/' + child
-    if (match === nextPath) {
-      debug(`no change to ${match}`)
-      return
-    }
-    const command = `cd ${nextPath}\n`
-    for (const c of command) {
-      // TODO replace with NavLink
-      process.stdin.send(c)
-    }
-  }
-  const hideMapBackgrond = {
-    position: 'absolute', // hits top of the map background container
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-    background: 'white',
+  const onRowClick = ({ row }) => {
+    const { child } = row
+    debug(`onclick`, child, matchedPath)
+    const nextPath = matchedPath + '/' + child
+    engine.cd(nextPath)
   }
 
   return (
     <div style={hideMapBackgrond}>
-      <XGrid
-        columns={ref.current.columns}
+      <DataGridPremium
+        columns={columns}
         rows={rows}
         // autoHeight
         disableMultipleSelection
         hideFooter
-        loading={!block}
         onRowClick={onRowClick}
+        loading={isAdding}
       />
       <Fab
         color="primary"
         style={addButtonStyle}
         onClick={onAddCustomer}
-        disabled={isPending || !isCwd}
+        disabled={!isAdding}
       >
         <Add />
       </Fab>
-      {children}
     </div>
   )
 }
-const _getChildren = (block) => {
-  const masked = ['..', '.', '.@@io']
-  if (!block) {
-    return []
-  }
-  return block.network
-    .getAliases()
-    .filter((alias) => !masked.includes(alias) && !alias.startsWith('.'))
-}
+// CollectionList.propTypes = { children: PropTypes.node }
 const CellBlock = ({ path, field, alias, namePath }) => {
-  const block = useBlockstream(path)
+  debug('CellBlock', { path, field, alias, namePath })
+  const pulse = useBlockstream(path)
   let text
   if (field === namePath) {
     text = alias
-  } else if (block && block.state.formData) {
+  } else if (pulse) {
+    const state = pulse.getState().toJS()
+    if (state.formData) {
+      text = state.formData[field]
+    }
     // TODO check if this is a datum
     // TODO draw the columns based on the schema, with local prefs stored for the user
     // TODO draw the different types of object, like checkboxes and others
-    const { state } = block
-    text = state.formData[field]
   }
   // TODO detect the default key, and display this if nothing else showing
   return <div>{text}</div>
+}
+CellBlock.propTypes = {
+  path: PropTypes.string,
+  field: PropTypes.string,
+  alias: PropTypes.string,
+  namePath: PropTypes.string,
+}
+const addButtonStyle = {
+  margin: 0,
+  top: 'auto',
+  right: 20,
+  bottom: 20,
+  left: 'auto',
+  position: 'fixed',
+}
+const hideMapBackgrond = {
+  position: 'absolute', // hits top of the map background container
+  top: 0,
+  left: 0,
+  bottom: 0,
+  right: 0,
+  background: 'white',
 }
 
 export default CollectionList

@@ -4,12 +4,14 @@ import { useRouter } from '../hooks'
 const debug = Debug('terminal:widgets:Services')
 
 /**
- * Overlays the map with tooling and inserts geometry layers.
- * Geo layers represent the children of the collection that this component faces
- *
+ * Uses the data in the customer collection to generate a list of affected customers given a date.
+ * Special in that it needs to generate the data it displays, rather than altering any state in chain land.  This data streams in as it is calculated, rather than waiting for the lengthy calculation to complete.
+ * Once a date has passed, a snapshot of this day is stored in the "services" chain.
+ * Shows a list of customers in order for a given date.
+ * A local cache may be store don the users chain
  */
 
-const Geometry = () => {
+const Schedule = () => {
   const { matchedPath, pulse } = useRouter()
   const title = 'Sites'
   const description = 'Geography of sites'
@@ -30,4 +32,4 @@ const Geometry = () => {
   )
 }
 
-export default Geometry
+export default Schedule

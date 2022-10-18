@@ -10,9 +10,10 @@ const { convertToTemplate, validateDatumTemplate, validateFormData } = datum
 const add = async (payload, datumTemplate) => {
   assertFormData(payload)
   validateDatumTemplate(datumTemplate)
-  validateFormData(payload, datumTemplate)
   const { formData } = payload
   const name = getChildName(datumTemplate, formData)
+
+  validateFormData(payload, datumTemplate)
   const state = { datumTemplate: '..' }
   const covenant = 'datum'
   const installer = { state, covenant }

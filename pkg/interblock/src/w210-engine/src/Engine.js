@@ -471,7 +471,7 @@ export class Engine {
       sink.end()
     }
     while (this.#poolBuffers.size) {
-      for (const cycle of this.#poolBuffers.values) {
+      for (const cycle of this.#poolBuffers.values()) {
         await cycle.promise
       }
     }

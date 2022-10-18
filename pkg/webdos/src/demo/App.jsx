@@ -18,27 +18,40 @@ import multi from './multi'
 import timesheets from './timesheets'
 import Debug from 'debug'
 const debug = Debug('client:tests:App')
-Debug.enable('webdos:hooks:usePath* iplog *Mapping ')
+Debug.enable(' iplog *Datum*  *CollectionList')
 
 export default class Demo extends Component {
   render() {
     return (
       <Blockchain dev={multi}>
-        <Terminal style={{ height: '30vh', background: 'black' }} />
+        <Terminal style={{ height: '280px', background: 'black' }} />
         <Router>
           <Switch>
             <Route covenant="crm">
               <AppContainer>
                 <Nav />
                 <MapBackground>
-                  {/* <Switch>
+                  <Switch>
                     <Route path="/customers">
                       <CollectionList />
                     </Route>
-                    <Route path="/services" component={<Geometry />} />
-                  </Switch> */}
+                    <Route path="/services">
+                      <Geometry />
+                    </Route>
+                    <Route path="/about">
+                      <About />
+                    </Route>
+                    <Route path="/settings">
+                      <Settings />
+                    </Route>
+                  </Switch>
+                  <Route path="/account">
+                    <Account />
+                  </Route>
                 </MapBackground>
-                <Route path="/custNo-*" component={<DialogDatum />} />
+                <Route path="/custNo-*">
+                  <DialogDatum />
+                </Route>
               </AppContainer>
             </Route>
             <Route component={<Explorer />} />

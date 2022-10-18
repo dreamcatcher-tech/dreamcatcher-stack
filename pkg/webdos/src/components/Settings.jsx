@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import OpenDialog from './OpenDialog'
-import Form from '@rjsf/material-ui'
+import Form from '@rjsf/mui'
 import { useRouter, useBlockchain } from '../hooks'
 import process from 'process'
 import Debug from 'debug'
 const debug = Debug('terminal:widgets:Settings')
-
 
 const Settings = () => {
   const { blocks, match, cwd } = useRouter()

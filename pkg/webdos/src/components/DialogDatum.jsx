@@ -5,32 +5,32 @@ import { getNextPath } from '../utils'
 import OpenDialog from './OpenDialog'
 import Datum from './Datum'
 import { useRouter } from '../hooks'
+import assert from 'assert-fast'
 
-const debug = Debug('terminal:widgets:Customer')
+const debug = Debug('webdos:widgets:DialogDatum')
 debug(`loaded`)
 const DialogDatum = () => {
-  const { blocks, match, cwd } = useRouter()
+  const { matchedPath, pulse } = useRouter()
+  debug('matchedPath', matchedPath)
   let title = ''
   let name = ''
   let custNo = ''
-  const [b1, b2, block] = blocks
-  // TODO I am so sorry that I did not do any route scoping
   // TODO make a datum container that can be placed anywhere
   // datums need to display children too, so making a container allows blocks to be passed down ?
   // or make the datums aware by passing down their alias, and they fetch the blocks themselves
+  // or use routes as children, so can use no special methods
+
   // TODO handle a collection being passed ?
-  if (!block || !block.state.schema || !block.state.formData) {
-    debug(`not enough info to render`)
-    return null
-  }
-  title = block.state.schema.title
-  name = block.state.formData.name || block.state.formData.to
-  // TODO get the identifier key out
+  assert(pulse)
+  const state = pulse.getState().toJS()
+  title = state.schema.title
+  name = state.formData.name
+  // TODO regen the identifier
 
   return (
     <>
       <OpenDialog title={`${title}: ${name}`}>
-        <Datum block={block} />
+        <Datum pulse={pulse} />
       </OpenDialog>
     </>
   )

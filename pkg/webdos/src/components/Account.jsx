@@ -6,19 +6,14 @@ import Datum from './Datum'
 const debug = Debug('terminal:widgets:Account')
 
 const Account = () => {
-  const { blocks, match, cwd } = useRouter()
-  const [block] = blocks
-  if (!block) {
-    debug(`not enough info to render`)
-    return null
-  }
-  const { state } = block
+  const { matchedPath, pulse } = useRouter()
+  const state = pulse.getState().toJS()
   // TODO assert that it is a Datum ?
   debug(`state`, state)
   const { title = '', description = '' } = state.schema || {}
   return (
     <OpenDialog title={title}>
-      <Datum block={block} />
+      <Datum block={pulse} />
     </OpenDialog>
   )
 }
