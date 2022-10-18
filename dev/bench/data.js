@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665966778656,
+  "lastUpdate": 1666121534441,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interpulse Benchmark": [
@@ -7095,6 +7095,86 @@ window.BENCHMARK_DATA = {
             "range": "±1.26%",
             "unit": "ops/sec",
             "extra": "84 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "106172d7d2e383e2b80c13eac9033f45b9298a32",
+          "message": "Upgrade material-ui to mui.\nCollectionList update dependencies.\nMap working as background.",
+          "timestamp": "2022-10-19T08:30:10+13:00",
+          "tree_id": "504d4a4f81cfb0d97189f1af03f1ebc9f0ebcdd3",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/106172d7d2e383e2b80c13eac9033f45b9298a32"
+        },
+        "date": 1666121533919,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 494,
+            "range": "±2.85%",
+            "unit": "ops/sec",
+            "extra": "80 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 164,
+            "range": "±2.26%",
+            "unit": "ops/sec",
+            "extra": "85 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 270,
+            "range": "±0.58%",
+            "unit": "ops/sec",
+            "extra": "85 samples"
+          },
+          {
+            "name": "publish",
+            "value": 39.57,
+            "range": "±7.84%",
+            "unit": "ops/sec",
+            "extra": "65 samples"
+          },
+          {
+            "name": "install",
+            "value": 7.73,
+            "range": "±0.70%",
+            "unit": "ops/sec",
+            "extra": "41 samples"
+          },
+          {
+            "name": "add customer",
+            "value": 12.35,
+            "range": "±1.88%",
+            "unit": "ops/sec",
+            "extra": "62 samples"
+          },
+          {
+            "name": "block making",
+            "value": 973,
+            "range": "±0.24%",
+            "unit": "ops/sec",
+            "extra": "89 samples"
+          },
+          {
+            "name": "unsigned block making",
+            "value": 6146,
+            "range": "±14.48%",
+            "unit": "ops/sec",
+            "extra": "75 samples"
           }
         ]
       }
