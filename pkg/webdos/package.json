@@ -10,7 +10,9 @@
   "scripts": {
     "dev": "vite --force --host 0.0.0.0",
     "build": "vite build",
-    "serve": "vite preview --host 0.0.0.0"
+    "serve": "vite preview --host 0.0.0.0",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@dreamcatcher-tech/dos": "^1.0.11",
@@ -55,12 +57,19 @@
     "react": "18.x"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^7.0.0-alpha.39",
+    "@storybook/addon-interactions": "^7.0.0-alpha.39",
+    "@storybook/addon-links": "^7.0.0-alpha.39",
+    "@storybook/react": "^7.0.0-alpha.39",
+    "@storybook/react-vite": "^7.0.0-alpha.39",
+    "@storybook/testing-library": "^0.0.13",
     "eslint": "^8.25.0",
     "eslint-plugin-react": "^7.31.10",
     "lerna": "^6.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.8.3",
+    "storybook": "^7.0.0-alpha.39",
     "vite": "3.1.8"
   },
   "repository": "git@github.com:dreamcatcher-tech/webdos.git",
