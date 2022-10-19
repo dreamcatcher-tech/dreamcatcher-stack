@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { useRouter } from '../hooks'
 const debug = Debug('terminal:widgets:Services')
@@ -11,10 +12,8 @@ const debug = Debug('terminal:widgets:Services')
  * A local cache may be store don the users chain
  */
 
-const Schedule = () => {
-  const { matchedPath, pulse } = useRouter()
-  const title = 'Sites'
-  const description = 'Geography of sites'
+const Schedule = ({ test }) => {
+  const title = 'Schedule' + test
   const aboveMapStyle = { position: 'relative', pointerEvents: 'none' }
   const hideMapBackgrond = {
     position: 'absolute', // hits top of the map background container
@@ -25,11 +24,15 @@ const Schedule = () => {
     background: 'white',
   }
   return (
-    <div style={hideMapBackgrond}>
+    <div style={aboveMapStyle}>
       <h2>{title}</h2>
-      <p>{description}</p>
     </div>
   )
 }
+Schedule.propTypes = {
+  // this is a test
+  test: PropTypes.string,
+}
+Schedule.defaultProps = { test: 'm' }
 
 export default Schedule

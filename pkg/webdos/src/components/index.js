@@ -10,6 +10,8 @@ import Settings from './Settings'
 import MapBackground from './MapBackground'
 import AppContainer from './AppContainer'
 import Geometry from './Geometry'
+import Schedule from './Schedule'
+import Sorter from './Sorter'
 
 export {
   About,
@@ -24,4 +26,6 @@ export {
   MapBackground,
   AppContainer,
   Geometry,
+  Schedule,
+  Sorter,
 }

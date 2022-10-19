@@ -1,5 +1,4 @@
-const path = require('path')
-module.exports = {
+export default {
   stories: ['../src/**/*.stories.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
   addons: [
     '@storybook/addon-links',
@@ -12,6 +11,7 @@ module.exports = {
   },
   features: {
     interactionsDebugger: true, // 👈 Enable playback controls
+    // storyStoreV7: true, // lazy load each story
   },
   async viteFinal(config) {
     const nextConfig = {
