@@ -6,6 +6,12 @@ import { Sorter } from '../components'
 export default {
   title: 'Sorter',
   component: Sorter,
+  parameters: { layout: 'centered' },
+  args: {
+    items: Array(20)
+      .fill()
+      .map((_, index) => ({ path: `custNo-${index + 1}` })),
+  },
 }
 
 const Template = (args) => <Sorter {...args} />

@@ -24,6 +24,7 @@ const useStyles = makeStyles((theme) => ({
 // const DatumCard =
 
 const Datum = ({ pulse }) => {
+  return <div>Datum</div>
   assert.strictEqual(pulse.getCovenantPath(), '')
   const state = pulse.getState().toJS()
   const { schema, formData: storedFormData, uiSchema } = state

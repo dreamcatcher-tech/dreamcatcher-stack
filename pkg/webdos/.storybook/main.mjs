@@ -22,6 +22,10 @@ export default {
           target: 'es2020',
         },
       },
+      build: {
+        ...config.build,
+        target: 'es2020',
+      },
     }
     return nextConfig
   },

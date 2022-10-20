@@ -65,7 +65,6 @@
     "@vitejs/plugin-react": "^2.1.0",
     "benchmark": "^2.1.4",
     "chai": "^4.3.6",
-    "del": "^7.0.0",
     "delay": "^5.0.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",

@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { AppBar, Toolbar } from '@mui/material'
-import { List, ListItem, ListItemText } from '@mui/material'
+import { List, ListItemButton, ListItemText } from '@mui/material'
 import { IconButton } from '@mui/material'
 import { Home, AccountCircle, Settings, Info } from '@mui/icons-material'
 import { makeStyles } from '@mui/styles'
@@ -25,36 +25,35 @@ const useStyles = makeStyles({
   },
 })
 
-const Nav = (props) => {
-  debug(`props: `, props)
+const Nav = ({ children, onCd, selected }) => {
+  debug(`children: `, children)
   const classes = useStyles()
-  const { matchedPath } = useRouter()
-  debug('matched path:', matchedPath)
-  const children = useChildren(matchedPath, masked)
-  debug(`aliases: `, children)
-  const { engine, wd } = useBlockchain()
+  const navLinks = children
+    .filter((path) => !masked.includes(path))
+    .map((path) => {
+      const title = path
+      return (
+        <div
+          key={title}
+          className={classes.linkText}
+          onClick={() => onCd(path)}
+        >
+          <ListItemButton selected={selected === path}>
+            <ListItemText primary={title} />
+          </ListItemButton>
+        </div>
+      )
+    })
+  // TODO dig into datums and get full title
 
-  const navLinks = Object.keys(children).map((child) => ({
-    title: child, // TODO get the blocks of the children, and get titles out of datums
-  }))
-  const onClick = (child) => () => {
-    // TODO replace with <NavLink> components that handle this automatically
-    debug(`onclick`, child)
-    const nextPath = matchedPath + '/' + child
-    if (wd.includes(nextPath)) {
-      debug(`no change to ${matchedPath}`)
-      return
-    }
-    engine.cd(nextPath)
-  }
-
-  const makeButtonIcon = (name, icon, description) => (
+  const makeButtonIcon = (path, icon, description) => (
     <IconButton
       edge="end"
       aria-label={description}
       aria-haspopup="true"
-      onClick={onClick(name)}
+      onClick={() => onCd(path)}
       color="inherit"
+      selected={selected === path}
     >
       {icon}
     </IconButton>
@@ -71,28 +70,33 @@ const Nav = (props) => {
             aria-labelledby="main navigation"
             className={classes.navDisplayFlex}
           >
-            {navLinks.map(({ title }) => (
-              <div
-                key={title}
-                className={classes.linkText}
-                onClick={onClick(title)}
-              >
-                <ListItem button>
-                  <ListItemText primary={title} />
-                </ListItem>
-              </div>
-            ))}
+            {navLinks}
           </List>
           <div className={classes.grow} />
-          {makeButtonIcon('about', <Info />, 'about')}
-          {makeButtonIcon('settings', <Settings />, 'application settings')}
-          {makeButtonIcon('account', <AccountCircle />, 'current user account')}
+          {children.includes('about') &&
+            makeButtonIcon('about', <Info />, 'about')}
+          {children.includes('settings') &&
+            makeButtonIcon('settings', <Settings />, 'application settings')}
+          {children.includes('account') &&
+            makeButtonIcon('account', <AccountCircle />, 'user account')}
         </Toolbar>
       </AppBar>
-      {props.children}
     </>
   )
 }
-Nav.propTypes = { children: PropTypes.node }
+Nav.propTypes = {
+  /**
+   * List of paths that the links point to
+   */
+  children: PropTypes.arrayOf(PropTypes.string).isRequired,
+  /**
+   * Handle clicking on a link
+   */
+  onCd: PropTypes.func.isRequired,
+  /**
+   * Which item in children is currently selected ?
+   */
+  selected: PropTypes.string,
+}
 
 export default Nav

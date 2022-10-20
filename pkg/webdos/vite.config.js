@@ -43,19 +43,22 @@ const config = {
     esbuildOptions: {
       target: 'es2020',
     },
-    exclude: ['del'],
   },
   build: {
     target: 'es2020',
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],
       // external: Object.keys(deps),
-      external: ['del'],
     },
   },
   server: {},
   clearScreen: false,
-  define: { VITE_GIT_HASH, VITE_GIT_DATE },
+  define: {
+    VITE_GIT_HASH,
+    VITE_GIT_DATE,
+    // used by the 'util' module
+    'process.env.NODE_DEBUG': 'false',
+  },
 }
 dotenv.config({ path: '../../.env' })
 const { env } = process

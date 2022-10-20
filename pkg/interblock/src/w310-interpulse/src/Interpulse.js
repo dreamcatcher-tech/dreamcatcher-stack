@@ -135,7 +135,6 @@ export class Interpulse {
       return await Promise.all(awaits)
     }
     if (isNode) {
-      const { deleteAsync } = await import('del')
       if (typeof this.#repo === 'string') {
         debug('deleting directory:', this.#repo)
         return await deleteAsync(this.#repo)

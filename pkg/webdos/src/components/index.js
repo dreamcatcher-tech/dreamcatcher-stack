@@ -7,7 +7,7 @@ import Explorer from './Explorer'
 import Nav from './Nav'
 import OpenDialog from './OpenDialog'
 import Settings from './Settings'
-import MapBackground from './MapBackground'
+import Map from './Map'
 import AppContainer from './AppContainer'
 import Geometry from './Geometry'
 import Schedule from './Schedule'
@@ -23,7 +23,7 @@ export {
   Nav,
   OpenDialog,
   Settings,
-  MapBackground,
+  Map,
   AppContainer,
   Geometry,
   Schedule,

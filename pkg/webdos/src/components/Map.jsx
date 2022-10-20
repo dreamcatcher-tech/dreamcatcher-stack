@@ -1,14 +1,14 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useId } from 'react'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'
 
-const debug = Debug('terminal:widgets:Mapping')
+const debug = Debug('webdos:components:Map')
 // TODO instantiate map using an html element, so no IDs are used
-const MAP_ID = 'mapId'
 const maxNativeZoom = 18
 const maxZoom = 22
-const MapBackground = ({ children }) => {
+const Map = () => {
+  const mapId = useId()
   useEffect(() => {
     L.Browser.touch = false
     const mapOptions = {
@@ -30,15 +30,8 @@ const MapBackground = ({ children }) => {
       wheelPxPerZoomLevel: 350,
     }
     debug('creating map')
-    const map = L.map(MAP_ID, mapOptions)
+    const map = L.map(mapId, mapOptions)
     const geometryLayer = L.featureGroup().addTo(map)
-
-    // TODO try operate without globals
-    if (!window.hamr) {
-      window.hamr = {}
-    }
-    window.hamr.map = map
-    window.hamr.geometryLayer = geometryLayer
 
     const zoomControl = L.control.zoom({ position: 'bottomright' })
 
@@ -106,7 +99,7 @@ const MapBackground = ({ children }) => {
       // geometryEdited(modifiedGeometry)
     })
 
-    map.on(L.Draw.Event.CREATED, (event) => {
+    map.on('draw:created', (event) => {
       debug('draw:created')
       const geoJson = event.layer.toGeoJSON()
       // geometryCreated(geoJson)
@@ -126,6 +119,8 @@ const MapBackground = ({ children }) => {
   const mapContainerStyle = {
     flex: 1,
     position: containerAsPositionedElement,
+    height: '100%',
+    background: 'green',
   }
 
   const mustHaveZIndex = 0
@@ -142,12 +137,7 @@ const MapBackground = ({ children }) => {
   }
 
   // TODO maybe clone all children and add zIndex to their styles
-  return (
-    <div id="mapContainer" style={mapContainerStyle}>
-      <div id={MAP_ID} style={mapBackgroundStyle}></div>
-      {children}
-    </div>
-  )
+  return <div id={mapId} style={mapBackgroundStyle}></div>
 }
-MapBackground.propTypes = { children: PropTypes.node }
-export default MapBackground
+Map.propTypes = {}
+export default Map
