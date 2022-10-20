@@ -24,5 +24,7 @@ jobs:
           # 👇 Chromatic projectToken, refer to the manage page to obtain it.
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: pkg/webdos
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
 
 
