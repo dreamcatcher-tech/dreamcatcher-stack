@@ -5,43 +5,25 @@ import { AppBar, Toolbar } from '@mui/material'
 import { List, ListItemButton, ListItemText } from '@mui/material'
 import { IconButton } from '@mui/material'
 import { Home, AccountCircle, Settings, Info } from '@mui/icons-material'
-import { makeStyles } from '@mui/styles'
-import { useRouter, useChildren, useBlockchain } from '../hooks'
 const debug = Debug('terminal:widgets:Nav')
 
 const masked = ['.@@io', 'about', 'settings', 'account']
-const useStyles = makeStyles({
-  grow: {
-    flexGrow: 1,
-  },
-  navDisplayFlex: {
-    display: `flex`,
-    justifyContent: `space-between`,
-  },
-  linkText: {
-    textDecoration: `none`,
-    textTransform: `uppercase`,
-    color: `white`,
-  },
-})
 
 const Nav = ({ children, onCd, selected }) => {
   debug(`children: `, children)
-  const classes = useStyles()
   const navLinks = children
     .filter((path) => !masked.includes(path))
     .map((path) => {
       const title = path
       return (
-        <div
+        <ListItemButton
           key={title}
-          className={classes.linkText}
+          sx={{ textTransform: 'uppercase', color: 'white' }}
           onClick={() => onCd(path)}
+          selected={selected === path}
         >
-          <ListItemButton selected={selected === path}>
-            <ListItemText primary={title} />
-          </ListItemButton>
-        </div>
+          <ListItemText primary={title} />
+        </ListItemButton>
       )
     })
   // TODO dig into datums and get full title
@@ -68,11 +50,11 @@ const Nav = ({ children, onCd, selected }) => {
           <List
             component="nav"
             aria-labelledby="main navigation"
-            className={classes.navDisplayFlex}
+            sx={{ display: `flex`, justifyContent: `space-between` }}
           >
             {navLinks}
           </List>
-          <div className={classes.grow} />
+          <div style={{ flexGrow: 1 }} />
           {children.includes('about') &&
             makeButtonIcon('about', <Info />, 'about')}
           {children.includes('settings') &&

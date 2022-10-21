@@ -22,7 +22,6 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.10",
-    "@mui/styles": "^5.10.10",
     "@mui/x-data-grid-premium": "^5.17.8",
     "@rjsf/core": "^5.0.0-beta.11",
     "@rjsf/material-ui": "^5.0.0-beta.11",

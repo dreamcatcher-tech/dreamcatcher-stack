@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { makeStyles } from '@mui/styles'
 import Form from '@rjsf/mui'
+import validator from '@rjsf/validator-ajv6'
 import { Card, CardHeader, CardContent, IconButton, Grid } from '@mui/material'
 import { Edit, Cancel, Save } from '@mui/icons-material'
 import { useBlockchain } from '../hooks'
@@ -8,60 +8,32 @@ import Debug from 'debug'
 import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Datum')
 
-const useStyles = makeStyles((theme) => ({
-  // TODO try remove makeStyles and use basic classes
-  root: {
-    flexGrow: 1,
-  },
-  card: { maxWidth: 345 },
-  paper: {
-    padding: theme.spacing(2),
-    // textAlign: 'center',
-    // color: theme.palette.text.secondary,
-  },
-}))
-
-// const DatumCard =
-
-const Datum = ({ pulse }) => {
-  return <div>Datum</div>
-  assert.strictEqual(pulse.getCovenantPath(), '')
-  const state = pulse.getState().toJS()
-  const { schema, formData: storedFormData, uiSchema } = state
+const Datum = ({ state, network, actions }) => {
+  const { schema, formData, uiSchema } = state
   const { title, ...noTitleSchema } = schema
-  const [liveFormData, setLiveFormData] = useState(storedFormData)
+  const [liveFormData, setLiveFormData] = useState(formData)
   // TODO verify the covenant is a datum
   // TODO verify the chain children match the schema children
-
-  // pull out the children from the block, so can draw these as visual children
-
+  const [isPending, setIsPending] = useState(false)
   const onBlur = (...args) => {
     debug(`onBlur: `, ...args)
   }
-  // const setDatum = (formData) => {
-  //   const string = JSON.stringify(formData)
-  //   debug(`setDatum`, string)
-  //   // show an enquiring modal UI over the top to get the data we need
-
-  //   const command = `./set --formData ${string}\n`
-  //   for (const c of command) {
-  //     process.stdin.send(c)
-  //   }
-  // }
+  const setDatum = (formData) => {
+    debug(`setDatum`, formData)
+    setIsPending(true)
+    actions.set(formData).then(() => setIsPending(false))
+  }
   const onChange = ({ formData }) => {
     debug(`onChange: `, formData)
     setLiveFormData(formData)
     // if any booleans changed, then apply the changes immediately
-
-    // ? what is the action to call on the blockchain ?
     // setDatum(formData)
   }
 
-  const classes = useStyles()
   return (
     <Grid container spacing={3}>
       <Grid item>
-        <Card className={classes.card}>
+        <Card sx={{ maxWidth: 345 }}>
           <CardHeader
             title={title}
             action={
@@ -80,11 +52,11 @@ const Datum = ({ pulse }) => {
           />
           <CardContent>
             <Form
+              validator={validator}
               disabled={isPending}
               schema={noTitleSchema}
               uiSchema={uiSchema}
               formData={liveFormData}
-              children
               onBlur={onBlur}
               onChange={onChange}
             />

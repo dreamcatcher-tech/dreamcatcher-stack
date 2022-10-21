@@ -1,11 +1,15 @@
 import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
-
+import { apps } from '@dreamcatcher-tech/interblock'
 import { Datum } from '../components'
+const { datumTemplate: template } = apps.crm.installer.network.customers.state
 
 export default {
   title: 'Datum',
   component: Datum,
+  args: {
+    state: template,
+  },
 }
 
 const Template = (args) => <Datum {...args} />

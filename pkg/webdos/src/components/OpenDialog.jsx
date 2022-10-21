@@ -3,23 +3,12 @@ import { Dialog } from '@mui/material'
 import { DialogContent } from '@mui/material'
 import React from 'react'
 import Debug from 'debug'
-import { makeStyles } from '@mui/styles'
 import { useAppContainer } from '../hooks'
 import process from 'process'
 
 const debug = Debug('terminal:widgets:OpenDialog')
 debug(`loaded`)
-
-const useStyles = makeStyles({
-  root: {
-    position: 'absolute',
-  },
-  backdrop: {
-    position: 'absolute',
-  },
-})
 const OpenDialog = ({ title, children }) => {
-  const classes = useStyles()
   const { element, isFocused } = useAppContainer()
   const onClose = () => {
     // TODO halt the user if blockchain is enquiring still
@@ -37,7 +26,7 @@ const OpenDialog = ({ title, children }) => {
       aria-labelledby="simple-dialog-title"
       open
       BackdropProps={{
-        classes: { root: classes.backdrop },
+        sx: { position: 'absolute' },
       }}
       style={{ position: 'absolute' }}
       // TODO if terminal is showing, do not grab focus

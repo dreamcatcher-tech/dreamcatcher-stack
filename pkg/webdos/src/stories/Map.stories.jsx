@@ -11,31 +11,36 @@ export default {
   parameters: { layout: 'fullscreen' },
   args: {},
 }
-
-const Template = (args) => {
-  const button = (
-    <Button sx={{ bgcolor: 'red', height: 30, m: 5 }}>TEST BUTTON</Button>
-  )
+const wrap = (children) => {
   return (
     <div
       style={{
-        minHeight: '200px',
+        minHeight: '320px',
         width: '100%',
         height: '100%',
         background: 'purple',
         display: 'flex',
       }}
     >
-      <Map {...args} />
-      {button}
-      {button}
+      {children}
     </div>
   )
 }
+const Template = (args) => wrap(<Map {...args} />)
 
-// More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 export const Basic = Template.bind({})
 
 export const Dragging = Template.bind({})
 
-export const OverDraw = Template.bind({})
+export const OverDraw = (args) => {
+  const button = (
+    <Button sx={{ bgcolor: 'red', height: 30, m: 5 }}>TEST BUTTON</Button>
+  )
+  return wrap(
+    <>
+      <Map {...args} />
+      {button}
+      {button}
+    </>
+  )
+}

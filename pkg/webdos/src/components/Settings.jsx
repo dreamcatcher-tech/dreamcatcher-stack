@@ -7,13 +7,6 @@ import Debug from 'debug'
 const debug = Debug('terminal:widgets:Settings')
 
 const Settings = () => {
-  const { blocks, match, cwd } = useRouter()
-  const [block] = blocks
-  if (!block) {
-    debug(`not enough info to render`)
-    return null
-  }
-  const { state } = block
   // TODO assert that this matches the settings schema
   const { schema, formData: storedFormData } = state
   const { title, ...noTitleSchema } = schema

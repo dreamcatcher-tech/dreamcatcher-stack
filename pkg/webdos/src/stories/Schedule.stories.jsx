@@ -4,7 +4,7 @@ import { within, userEvent } from '@storybook/testing-library'
 import { Schedule } from '../components'
 
 export default {
-  title: 'Pages/Schedule',
+  title: 'Schedule',
   component: Schedule,
 }
 
