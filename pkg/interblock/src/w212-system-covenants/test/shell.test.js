@@ -2,7 +2,8 @@ import chai, { assert } from 'chai/index.mjs'
 import posix from 'path-browserify'
 import { shell } from '..'
 import Debug from 'debug'
-import { Engine, schemaToFunctions } from '../../w210-engine'
+import { Engine } from '../../w210-engine'
+import { schemaToFunctions } from '../../w002-api'
 const debug = Debug('tests')
 
 describe('shell', () => {

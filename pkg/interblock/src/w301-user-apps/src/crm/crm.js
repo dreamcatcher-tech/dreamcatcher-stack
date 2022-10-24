@@ -28,7 +28,7 @@ const gps = {
     },
   },
 }
-const installer = {
+export const installer = {
   network: {
     schedule: {
       covenant: 'datum',
@@ -147,6 +147,11 @@ const installer = {
           },
         },
       },
+      network: {
+        sync: {
+          covenant: 'dbSyncer',
+        },
+      },
     },
     about: {
       covenant: 'datum',
@@ -184,5 +189,5 @@ const installer = {
     },
   },
 }
-const name = 'crm'
-export { name, installer }
+
+export const name = 'CRM'

@@ -8,10 +8,13 @@ import { Home, AccountCircle, Settings, Info } from '@mui/icons-material'
 const debug = Debug('terminal:widgets:Nav')
 
 const masked = ['.@@io', 'about', 'settings', 'account']
-
-const Nav = ({ children, onCd, selected }) => {
-  debug(`children: `, children)
-  const navLinks = children
+/**
+ * Navigation bar that renders links based on the children
+ * of the root of the app complex.
+ */
+const Nav = ({ state, network, actions, wd }) => {
+  debug(`network: `, network)
+  const navLinks = network
     .filter((path) => !masked.includes(path))
     .map((path) => {
       const title = path
@@ -19,8 +22,8 @@ const Nav = ({ children, onCd, selected }) => {
         <ListItemButton
           key={title}
           sx={{ textTransform: 'uppercase', color: 'white' }}
-          onClick={() => onCd(path)}
-          selected={selected === path}
+          onClick={() => actions.cd(path)}
+          selected={wd.startsWith('/' + path)}
         >
           <ListItemText primary={title} />
         </ListItemButton>
@@ -33,9 +36,9 @@ const Nav = ({ children, onCd, selected }) => {
       edge="end"
       aria-label={description}
       aria-haspopup="true"
-      onClick={() => onCd(path)}
+      onClick={() => actions.cd(path)}
       color="inherit"
-      selected={selected === path}
+      selected={wd.startsWith('/' + path)}
     >
       {icon}
     </IconButton>
@@ -55,11 +58,11 @@ const Nav = ({ children, onCd, selected }) => {
             {navLinks}
           </List>
           <div style={{ flexGrow: 1 }} />
-          {children.includes('about') &&
+          {network.includes('about') &&
             makeButtonIcon('about', <Info />, 'about')}
-          {children.includes('settings') &&
+          {network.includes('settings') &&
             makeButtonIcon('settings', <Settings />, 'application settings')}
-          {children.includes('account') &&
+          {network.includes('account') &&
             makeButtonIcon('account', <AccountCircle />, 'user account')}
         </Toolbar>
       </AppBar>
@@ -70,15 +73,16 @@ Nav.propTypes = {
   /**
    * List of paths that the links point to
    */
-  children: PropTypes.arrayOf(PropTypes.string).isRequired,
+  network: PropTypes.arrayOf(PropTypes.string).isRequired,
   /**
    * Handle clicking on a link
    */
-  onCd: PropTypes.func.isRequired,
+  actions: PropTypes.objectOf(PropTypes.func.isRequired),
   /**
-   * Which item in children is currently selected ?
+   * The current working directory, relative to the
+   * app root, not the engine root.
    */
-  selected: PropTypes.string,
+  wd: PropTypes.string,
 }
 
 export default Nav

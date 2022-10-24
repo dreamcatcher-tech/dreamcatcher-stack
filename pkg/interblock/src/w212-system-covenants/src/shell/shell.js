@@ -6,11 +6,11 @@ import {
   useState,
   isApiAction,
   ensureChild,
+  schemaToFunctions,
 } from '../../../w002-api'
 import Debug from 'debug'
 import { Pulse, Request } from '../../../w008-ipld'
 import { listChildren, listHardlinks } from '../../../w023-system-reducer'
-import { schemaToFunctions } from '../../../w210-engine'
 import { net } from '../..'
 import { api } from './api'
 const debug = Debug('interblock:system:shell')

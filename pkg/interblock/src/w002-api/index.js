@@ -56,3 +56,5 @@ export const isSystemAction = (request) => {
   assert.strictEqual(typeof request.type, 'string')
   return Request.SYSTEM_TYPES.includes(request.type)
 }
+
+export { schemaToFunctions } from './schemaToFunctions'

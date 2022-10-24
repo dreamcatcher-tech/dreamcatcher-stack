@@ -1,4 +1,5 @@
-import { Engine, schemaToFunctions } from '../../w210-engine'
+import { schemaToFunctions } from '../../w002-api'
+import { Engine } from '../../w210-engine'
 import { shell } from '..'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:openPaths')

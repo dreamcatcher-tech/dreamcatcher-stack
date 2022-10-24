@@ -10,21 +10,19 @@ import {
   Nav,
   OpenDialog,
   Settings,
-  MapBackground,
+  Map,
   AppContainer,
   Geometry,
 } from '..'
 import multi from './multi'
-import timesheets from './timesheets'
 import Debug from 'debug'
-const debug = Debug('client:tests:App')
-Debug.enable(' iplog *Datum*  *CollectionList')
+const debug = Debug('Crm')
 
 /**
  * This is an inbrowser blockchain with the crm loaded in it
  * for demonstration purposes
  */
-export default class Demo extends Component {
+export default class Crm extends Component {
   render() {
     return (
       <Blockchain dev={multi}>

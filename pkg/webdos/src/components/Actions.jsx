@@ -8,11 +8,9 @@ import Debug from 'debug'
 import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Datum')
 
-const Datum = ({ state, network, actions }) => {
-  // TODO verify the covenant is a datum
-  // TODO verify the chain children match the schema children
-  const { schema, formData, uiSchema } = state
-  const { title, ...noTitleSchema } = schema
+const Actions = ({ actions }) => {
+  // create a datum componentt from the action schemas
+
   const [liveFormData, setLiveFormData] = useState(formData)
   const [isPending, setIsPending] = useState(false)
   const onBlur = (...args) => {
@@ -67,4 +65,4 @@ const Datum = ({ state, network, actions }) => {
   )
 }
 
-export default Datum
+export default Actions

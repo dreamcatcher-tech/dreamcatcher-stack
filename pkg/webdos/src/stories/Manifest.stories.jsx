@@ -1,13 +1,13 @@
 import React from 'react'
-import { Nav } from '../components'
+import { Manifest } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('Nav')
 Debug.enable('*Nav')
 
 export default {
-  title: 'Nav',
-  component: Nav,
+  title: 'Manifest',
+  component: Manifest,
   parameters: {
     // More on Story layout: https://storybook.js.org/docs/react/configure/story-layout
     layout: 'fullscreen',
@@ -32,12 +32,7 @@ export default {
   },
 }
 
-const Logger = (props) => {
-  console.log(props)
-  return <div>mdow</div>
-}
-
-const Template = (args) => <Nav {...args} />
+const Template = (args) => <Manifest {...args} />
 
 export const Basic = Template.bind({})
 Basic.args = {}

@@ -1,4 +1,4 @@
-import { schemaToFunctions } from '..'
+import { schemaToFunctions } from '../w210-engine'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:schemaToFunctions')
 

@@ -38,6 +38,7 @@ import assert from 'assert-fast'
 import * as system from './w212-system-covenants'
 import * as apps from './w301-user-apps'
 import { Interpulse } from './w310-interpulse'
+import * as api from './w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock')
 
@@ -55,4 +56,4 @@ const checkModules = () => {
   }
 }
 checkModules()
-export { Interpulse, system, apps, Debug }
+export { Interpulse, system, apps, api, Debug }
