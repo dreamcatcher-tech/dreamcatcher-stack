@@ -138,7 +138,8 @@ export class Interpulse {
     if (isNode) {
       if (typeof this.#repo === 'string') {
         debug('deleting directory:', this.#repo)
-        return await deleteAsync(this.#repo)
+        const rimraf = await import('rimraf')
+        return rimraf.default.sync(this.#repo)
       }
       debug('repo was not a filesystem path - skipping deletion')
     }

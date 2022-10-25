@@ -103,6 +103,7 @@ async function getInitialCtx({ blockchain, stdout: stream, repo, tcpPort }) {
     tcpPort = tcpPort || '8789'
     repo = repo || 'tmp/test'
     blockchain = await Interpulse.create({ repo, tcpHost, tcpPort })
+    blockchain.startNetwork()
     debug('blockchain created')
   }
   const current = await blockchain.current('/')
