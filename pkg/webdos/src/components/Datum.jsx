@@ -3,7 +3,7 @@ import Form from '@rjsf/mui'
 import validator from '@rjsf/validator-ajv6'
 import { Card, CardHeader, CardContent, IconButton, Grid } from '@mui/material'
 import { Edit, Cancel, Save } from '@mui/icons-material'
-import { useBlockchain } from '../hooks'
+import { Actions } from '.'
 import Debug from 'debug'
 import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Datum')
@@ -30,6 +30,9 @@ const Datum = ({ state, network, actions }) => {
     // setDatum(formData)
   }
 
+  debug(actions)
+  // TODO strip out the datum standard actions
+
   return (
     <Grid container spacing={3}>
       <Grid item>
@@ -41,10 +44,10 @@ const Datum = ({ state, network, actions }) => {
                 <IconButton aria-label="edit">
                   <Edit color="primary" />
                 </IconButton>
-                <IconButton aria-label="edit">
+                <IconButton aria-label="save">
                   <Save color="primary" />
                 </IconButton>
-                <IconButton aria-label="edit">
+                <IconButton aria-label="cancel">
                   <Cancel color="secondary" />
                 </IconButton>
               </>
@@ -60,6 +63,7 @@ const Datum = ({ state, network, actions }) => {
               onBlur={onBlur}
               onChange={onChange}
             />
+            <Actions actions={actions}></Actions>
           </CardContent>
         </Card>
       </Grid>

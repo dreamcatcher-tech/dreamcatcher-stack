@@ -115,15 +115,7 @@ const Map = () => {
     }
   }, [])
 
-  const containerAsPositionedElement = 'relative'
-  const mapContainerStyle = {
-    flex: 1,
-    position: containerAsPositionedElement,
-    height: '100%',
-    background: 'green',
-  }
-
-  const mustHaveZIndex = 0
+  const paintBelowAllOthers = -1
   const ensureNotPartOfNormalLayout = 'absolute'
   const mapBackgroundStyle = {
     left: '0px',
@@ -133,7 +125,7 @@ const Map = () => {
     position: ensureNotPartOfNormalLayout,
     margin: 0,
     background: 'black',
-    zIndex: mustHaveZIndex,
+    zIndex: paintBelowAllOthers,
   }
 
   // TODO maybe clone all children and add zIndex to their styles

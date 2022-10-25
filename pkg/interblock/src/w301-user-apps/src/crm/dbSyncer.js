@@ -4,7 +4,23 @@ const debug = Debug('crm:dbSyncer')
  * Could make this stream in, so as soon as data is received, it updates
  */
 const api = {
-  sync: {},
+  start: {
+    type: 'object',
+    title: 'START',
+    description: `Start a synchronization with the database`,
+    properties: {
+      chunkSize: {
+        type: 'integer',
+        description: 'How many records to pull down at a time',
+        default: 10,
+      },
+    },
+  },
+  stop: {
+    type: 'object',
+    title: 'STOP',
+    description: `Stop a running synchronization`,
+  },
 }
 const state = {
   schema: {

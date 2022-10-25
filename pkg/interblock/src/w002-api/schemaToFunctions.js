@@ -11,6 +11,7 @@ export const schemaToFunctions = (jsonSchema) => {
     const schema = jsonSchema[key]
     const type = schema.title || key
     const action = createAction(type, schema)
+    action.schema = schema
     actions[key] = action
   }
   return actions
@@ -18,6 +19,7 @@ export const schemaToFunctions = (jsonSchema) => {
 const createAction = (type, schema) => {
   const validate = ajv.compile(schema)
   return (payload, ...rest) => {
+    // TODO set function parameter names
     const isObject = typeof payload === 'object'
     if (!isObject || rest.length) {
       rest.unshift(payload)

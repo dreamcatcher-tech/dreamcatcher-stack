@@ -2,7 +2,7 @@ import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
 import { Map } from '../components'
 import Debug from 'debug'
-import { Button } from '@mui/material'
+import { Card, CardContent, Grid, Button } from '@mui/material'
 const debug = Debug('*Map')
 
 export default {
@@ -42,5 +42,17 @@ export const OverDraw = (args) => {
       {button}
       {button}
     </>
+  )
+}
+export const CardOverDraw = (args) => {
+  return (
+    <Grid container>
+      <Grid padding={3} item>
+        <Card>
+          <CardContent>This content should appear over the Map</CardContent>
+        </Card>
+      </Grid>
+      <Map />
+    </Grid>
   )
 }

@@ -7,7 +7,7 @@ export const api = {
     required: [],
     properties: {
       to: { type: 'string' },
-      message: { type: 'object' },
+      message: { type: 'object', default: {} },
     },
   },
   login: {

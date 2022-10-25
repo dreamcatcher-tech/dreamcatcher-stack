@@ -1,7 +1,14 @@
 import React from 'react'
+import { useState } from 'react'
 import PropTypes from 'prop-types'
+import { Map } from '.'
+import { Grid, Card, CardContent } from '@mui/material'
+import dayjs from 'dayjs'
+import { TextField } from '@mui/material'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
 import Debug from 'debug'
-import { useRouter } from '../hooks'
 const debug = Debug('terminal:widgets:Services')
 
 /**
@@ -12,21 +19,21 @@ const debug = Debug('terminal:widgets:Services')
  * A local cache may be store don the users chain
  */
 
-const Schedule = ({ test }) => {
-  const title = 'Schedule' + test
-  const aboveMapStyle = { position: 'relative', pointerEvents: 'none' }
-  const hideMapBackgrond = {
-    position: 'absolute', // hits top of the map background container
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-    background: 'white',
-  }
+const Schedule = ({}) => {
   return (
-    <div style={aboveMapStyle}>
-      <h2>{title}</h2>
-    </div>
+    <>
+      <Map />
+      <Grid container>
+        <Grid item>
+          <Card sx={{ minWidth: 345, maxWidth: 345 }}>
+            <CardContent>
+              <div>meow</div>
+              {/* <Actions actions={actions}></Actions> */}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </>
   )
 }
 Schedule.propTypes = {

@@ -6,7 +6,6 @@ const debug = Debug('CollectionList')
 Debug.enable()
 
 const { datumTemplate: template } = apps.crm.installer.network.customers.state
-console.dir(template, { depth: Infinity })
 export default {
   title: 'CollectionList',
   component: CollectionList,
