@@ -10,7 +10,7 @@ import {
   Nav,
   OpenDialog,
   Settings,
-  MapBackground,
+  Map,
   AppContainer,
   Geometry,
 } from '..'
@@ -28,13 +28,13 @@ export default class Demo extends Component {
   render() {
     return (
       <Blockchain dev={multi}>
-        <Terminal style={{ height: '280px', background: 'black' }} />
-        <Router>
+        <Terminal style={{ height: '100vh', background: 'black' }} />
+        {/* <Router>
           <Switch>
             <Route covenant="crm">
               <AppContainer>
                 <Nav />
-                <MapBackground>
+                <Map>
                   <Switch>
                     <Route path="/customers">
                       <CollectionList />
@@ -52,7 +52,7 @@ export default class Demo extends Component {
                   <Route path="/account">
                     <Account />
                   </Route>
-                </MapBackground>
+                </Map>
                 <Route path="/custNo-*">
                   <DialogDatum />
                 </Route>
@@ -60,7 +60,7 @@ export default class Demo extends Component {
             </Route>
             <Route component={<Explorer />} />
           </Switch>
-        </Router>
+        </Router> */}
       </Blockchain>
     )
   }

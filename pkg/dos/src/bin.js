@@ -3,5 +3,6 @@
 import { config } from 'dotenv'
 import shell from '.'
 
-console.log(config({ path: '../../.env' }))
+const loaded = config({ path: '../../.env' })
+console.log('loaded .env:', Object.keys(loaded.parsed))
 shell()
