@@ -15,11 +15,11 @@ export default {
 }
 const Template = ({ initial }) => {
   Debug.enable('*Date')
-  const [value, setValue] = useState(initial)
-  const onChange = (date) => {
+  const [dateString, setValue] = useState(initial)
+  const onDateChange = (date) => {
     setValue(date)
   }
-  return <Date {...{ value, onChange }} />
+  return <Date {...{ dateString, onDateChange }} />
 }
 Template.propTypes = { initial: PropTypes.string }
 

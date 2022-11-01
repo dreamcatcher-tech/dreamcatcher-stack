@@ -43,7 +43,7 @@ export const Basic = Template.bind({})
 Basic.args = {}
 
 export const Selection = Template.bind({})
-Basic.args = { wd: '/customers' }
+Selection.args = { wd: '/customers' }
 
 export const NoSettings = Template.bind({})
 NoSettings.args = {

@@ -22,7 +22,7 @@ const Nav = ({ state, network, actions, wd }) => {
         <ListItemButton
           key={title}
           sx={{ textTransform: 'uppercase', color: 'white' }}
-          onClick={() => actions.cd(path)}
+          onClick={() => actions.cd('/' + path)}
           selected={wd.startsWith('/' + path)}
         >
           <ListItemText primary={title} />

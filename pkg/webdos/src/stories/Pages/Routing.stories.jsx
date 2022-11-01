@@ -4,7 +4,7 @@ import { within, userEvent } from '@storybook/testing-library'
 import { Routing } from '../../components'
 
 export default {
-  title: 'Pages/Routing',
+  title: 'Routing',
   component: Routing,
   args: {
     state: {},

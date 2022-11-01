@@ -1,14 +1,15 @@
-import React, { useEffect, useId } from 'react'
+import React, { useEffect, useId, useState } from 'react'
+import { Grid, Stack, Box } from '@mui/material'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'
 
 const debug = Debug('webdos:components:Map')
-// TODO instantiate map using an html element, so no IDs are used
 const maxNativeZoom = 18
 const maxZoom = 22
-const Map = () => {
+const Map = ({ children, onCreate, onEdit, geoJson }) => {
   const mapId = useId()
+  const [mapState, setMap] = useState()
   useEffect(() => {
     L.Browser.touch = false
     const mapOptions = {
@@ -28,46 +29,15 @@ const Map = () => {
       boxZoom: false,
       zoomDelta: 1,
       wheelPxPerZoomLevel: 350,
+      pmIgnore: false,
     }
     debug('creating map')
     const map = L.map(mapId, mapOptions)
-    const geometryLayer = L.featureGroup().addTo(map)
-
+    setMap(map)
     const zoomControl = L.control.zoom({ position: 'bottomright' })
 
-    const scaleOptions = {
-      position: 'bottomright',
-    }
+    const scaleOptions = { position: 'bottomright' }
     const scale = L.control.scale(scaleOptions)
-
-    const drawOptions = {
-      position: 'bottomright',
-      draw: {
-        polyline: false,
-        polygon: {
-          metric: true,
-          showArea: true,
-          allowIntersection: false,
-          drawError: {
-            color: '#b00b00',
-            message: 'impossible shape',
-            timeout: 1000,
-          },
-          shapeOptions: {
-            color: '#662d91',
-          },
-        },
-        circle: false,
-        marker: false,
-      },
-      edit: {
-        featureGroup: geometryLayer,
-        edit: {},
-        remove: false,
-      },
-    }
-    const drawControl = new L.Control.Draw(drawOptions)
-
     const baseLayers = {
       OpenStreetMap: L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -88,34 +58,84 @@ const Map = () => {
 
     const layerControl = L.control.layers(baseLayers, overlays, layerConfig)
 
-    map.on('draw:edited', (e) => {
+    map.on('pm:edit', (event) => {
       // all layers come back, but we can tag them
-      debug('draw:edited')
-      const layers = e.layers
+      debug('draw:edited', event)
+      const layers = event.layers
       let modifiedGeometry = {}
       layers.eachLayer(function (layer) {
         modifiedGeometry[layer.sectorId] = layer.toGeoJSON()
       })
-      // geometryEdited(modifiedGeometry)
+      onEdit(modifiedGeometry)
     })
 
-    map.on('draw:created', (event) => {
-      debug('draw:created')
+    map.on('pm:create', (event) => {
+      debug('draw:created', event)
       const geoJson = event.layer.toGeoJSON()
-      // geometryCreated(geoJson)
+      event.layer.remove()
+      console.log(event)
+      onCreate(geoJson)
     })
 
     scale.addTo(map)
     zoomControl.addTo(map)
-    drawControl.addTo(map)
+    if (onCreate) {
+      map.pm.addControls({
+        position: 'bottomright',
+        drawCircle: false,
+        drawMarker: false,
+        drawCircleMarker: false,
+        drawPolyline: false,
+        drawRectangle: false,
+        drawText: false,
+        dragMode: false,
+        cutPolygon: false,
+        removalMode: false,
+        rotateMode: false,
+        editControls: false,
+      })
+    }
     layerControl.addTo(map)
     return () => {
       debug('removing map')
       map.remove()
+      setMap(undefined)
     }
   }, [])
 
-  const paintBelowAllOthers = -1
+  useEffect(() => {
+    if (!mapState) {
+      return
+    }
+    debug('geoJson', geoJson)
+    const geometryLayer = L.featureGroup().addTo(mapState)
+
+    for (const geo of geoJson) {
+      const opacity = 0.65
+      const fillOpacity = 0.3
+      const layerStyle = {
+        color: 'red',
+        weight: 3,
+        opacity: opacity,
+        fillOpacity: fillOpacity,
+        clickable: true,
+      }
+      const layer = L.geoJson(geo, {
+        style: layerStyle,
+      })
+      geometryLayer.addLayer(layer)
+      layer.on('click', (e) => {
+        console.log('click', e)
+      })
+    }
+
+    return () => {
+      debug(`removing geometryLayer`)
+      geometryLayer.remove()
+    }
+  }, [mapState, geoJson])
+
+  const paintBelowAllOthers = 0
   const ensureNotPartOfNormalLayout = 'absolute'
   const mapBackgroundStyle = {
     left: '0px',
@@ -128,8 +148,25 @@ const Map = () => {
     zIndex: paintBelowAllOthers,
   }
 
-  // TODO maybe clone all children and add zIndex to their styles
-  return <div id={mapId} style={mapBackgroundStyle}></div>
+  return (
+    <>
+      <div id={mapId} style={mapBackgroundStyle}></div>
+      <Stack
+        spacing={2}
+        sx={{ p: 2, zIndex: 1000, position: 'relative', width: 'min-content' }}
+      >
+        {children}
+      </Stack>
+    </>
+  )
 }
-Map.propTypes = {}
+Map.propTypes = {
+  children: PropTypes.node,
+  onCreate: PropTypes.func,
+  onEdit: PropTypes.func,
+  geoJson: PropTypes.array,
+}
+Map.defaultProps = {
+  geoJson: [],
+}
 export default Map
