@@ -32,11 +32,6 @@ export default {
   },
 }
 
-const Logger = (props) => {
-  console.log(props)
-  return <div>mdow</div>
-}
-
 const Template = (args) => <Nav {...args} />
 
 export const Basic = Template.bind({})

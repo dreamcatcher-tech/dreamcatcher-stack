@@ -8,12 +8,9 @@ Debug.enable('*Nav')
 export default {
   title: 'Manifest',
   component: Manifest,
-  parameters: {
-    // More on Story layout: https://storybook.js.org/docs/react/configure/story-layout
-    layout: 'fullscreen',
-  },
 
   args: {
+    expanded: true,
     actions: {
       cd: (path) => {
         console.log('cd', path)
@@ -34,25 +31,14 @@ export default {
 
 const Template = (args) => <Manifest {...args} />
 
-export const Basic = Template.bind({})
-Basic.args = {}
-
-export const Selection = Template.bind({})
-Basic.args = { wd: '/customers' }
-
-export const NoSettings = Template.bind({})
-NoSettings.args = {
-  network: ['schedule', 'customers', 'routing', 'about', 'account'],
-}
-
-export const Relative = Template.bind({})
-Relative.args = {
-  network: [
-    '../schedule',
-    'customers',
-    'routing',
-    'settings',
-    'about',
-    'account',
-  ],
+export const Collapsed = Template.bind({})
+Collapsed.args = { expanded: false }
+export const Expanded = Template.bind({})
+Expanded.args = {}
+export const Published = Template.bind({})
+Published.args = {}
+export const Reconciled = Template.bind({})
+Reconciled.args = {
+  isPublished: true,
+  isReconciled: true,
 }

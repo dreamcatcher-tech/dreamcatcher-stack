@@ -72,9 +72,11 @@ const Action = ({ action, onAction }) => {
             >
               {title}
             </LoadingButton>
-            <IconButton aria-label="reset" onClick={reset}>
-              <Cancel color="secondary" />
-            </IconButton>
+            {isPending && (
+              <IconButton aria-label="reset" onClick={reset}>
+                <Cancel color="secondary" fontSize="small" />
+              </IconButton>
+            )}
           </Grid>
         </Form>
       </CardContent>

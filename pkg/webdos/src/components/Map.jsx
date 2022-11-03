@@ -21,7 +21,7 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
       controls: {
         layers: {
           visible: true,
-          position: 'bottomright',
+          position: 'topright',
           collapsed: true,
         },
       },
@@ -34,9 +34,9 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
     debug('creating map')
     const map = L.map(mapId, mapOptions)
     setMap(map)
-    const zoomControl = L.control.zoom({ position: 'bottomright' })
+    const zoomControl = L.control.zoom({ position: 'topright' })
 
-    const scaleOptions = { position: 'bottomright' }
+    const scaleOptions = { position: 'topright' }
     const scale = L.control.scale(scaleOptions)
     const baseLayers = {
       OpenStreetMap: L.tileLayer(
@@ -51,7 +51,7 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
 
     const overlays = {}
     const layerConfig = {
-      position: 'bottomright',
+      position: 'topright',
       collapsed: true,
       hideSingleBase: false,
     }
@@ -78,10 +78,12 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
     })
 
     scale.addTo(map)
+    layerControl.addTo(map)
     zoomControl.addTo(map)
+
     if (onCreate) {
       map.pm.addControls({
-        position: 'bottomright',
+        position: 'topright',
         drawCircle: false,
         drawMarker: false,
         drawCircleMarker: false,
@@ -95,7 +97,6 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
         editControls: false,
       })
     }
-    layerControl.addTo(map)
     return () => {
       debug('removing map')
       map.remove()
@@ -151,12 +152,17 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
   return (
     <>
       <div id={mapId} style={mapBackgroundStyle}></div>
-      <Stack
-        spacing={2}
-        sx={{ p: 2, zIndex: 1000, position: 'relative', width: 'min-content' }}
+      <Box
+        sx={{
+          zIndex: 1000,
+          position: 'relative',
+          // width: 'min-content',
+          // height: '100%',
+          // flex: 1,
+        }}
       >
         {children}
-      </Stack>
+      </Box>
     </>
   )
 }

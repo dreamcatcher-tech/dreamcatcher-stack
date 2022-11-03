@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { AppBar, Toolbar } from '@mui/material'
-import { List, ListItemButton, ListItemText } from '@mui/material'
+import { List, ListItemButton, ListItemText, Typography } from '@mui/material'
 import { IconButton } from '@mui/material'
 import { Home, AccountCircle, Settings, Info } from '@mui/icons-material'
 const debug = Debug('terminal:widgets:Nav')
@@ -18,14 +18,19 @@ const Nav = ({ state, network, actions, wd }) => {
     .filter((path) => !masked.includes(path))
     .map((path) => {
       const title = path
+      const selected = wd.startsWith('/' + path)
       return (
         <ListItemButton
           key={title}
           sx={{ textTransform: 'uppercase', color: 'white' }}
           onClick={() => actions.cd('/' + path)}
-          selected={wd.startsWith('/' + path)}
+          selected={selected}
         >
-          <ListItemText primary={title} />
+          <ListItemText
+            primary={
+              <Typography fontWeight={selected && 'bold'}>{title}</Typography>
+            }
+          />
         </ListItemButton>
       )
     })

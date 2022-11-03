@@ -9,44 +9,56 @@ import Accordion from '@mui/material/Accordion'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import Typography from '@mui/material/Typography'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
+import { useEffect } from 'react'
 const debug = Debug('webdos:Date')
 
-export default function Date({ dateString, onDateChange, children }) {
+export default function Date({ dateString, onDateChange, expanded }) {
   debug('value', dateString)
   const parse = (date) => {
     const string = date.format('YYYY-MM-DD')
     debug(string)
     onDateChange(string)
   }
+  const onChange = (event, expanded) => {
+    debug('onChange', expanded)
+  }
   return (
     <Card>
-      <CardContent>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <StaticDatePicker
-            value={dayjs(dateString)}
-            onChange={parse}
-            renderInput={(params) => {
-              debug('renderInput', params)
-              return <TextField {...params} />
-            }}
-            showDaysOutsideCurrentMonth
-            componentsProps={{
-              actionBar: {
-                actions: ['today', 'meow'],
-              },
-            }}
-          />
-        </LocalizationProvider>
-        {children}
-      </CardContent>
+      <Accordion defaultExpanded={expanded} onChange={onChange}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography>Date: {dateString}</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <CardContent>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <StaticDatePicker
+                value={dayjs(dateString)}
+                onChange={parse}
+                renderInput={(params) => {
+                  debug('renderInput', params)
+                  return <TextField {...params} />
+                }}
+                showDaysOutsideCurrentMonth
+                componentsProps={{
+                  actionBar: {
+                    actions: ['today'],
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </CardContent>
+        </AccordionDetails>
+      </Accordion>
     </Card>
   )
 }
 Date.propTypes = {
   dateString: PropTypes.string,
   onDateChange: PropTypes.func,
+  expanded: PropTypes.bool,
 }
 Date.today = () => {
   const now = dayjs()

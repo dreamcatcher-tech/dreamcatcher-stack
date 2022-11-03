@@ -1,6 +1,6 @@
 import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
-
+import { Box } from '@mui/material'
 import { Routing } from '../../components'
 
 export default {
@@ -20,7 +20,9 @@ export default {
   },
 }
 
-const Template = (args) => <Routing {...args} />
+const Template = (args) => {
+  return <Routing {...args} />
+}
 
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 export const Basic = Template.bind({})

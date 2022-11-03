@@ -11,7 +11,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*App *Nav')
+  Debug.enable('*App *Nav *Date')
   const [wd, setWd] = React.useState(args.wd)
   const cd = (path) => {
     debug('cd', path)

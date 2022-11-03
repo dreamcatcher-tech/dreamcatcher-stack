@@ -1,47 +1,50 @@
 import React from 'react'
 import { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Map } from '.'
+import { Map, ScheduleSpeedDial, Manifest, SectorSelector } from '.'
 import { Grid, Card, CardContent, Stack } from '@mui/material'
 import dayjs from 'dayjs'
 import { TextField } from '@mui/material'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
+import CancelIcon from '@mui/icons-material/Cancel'
+import DoneIcon from '@mui/icons-material/Done'
 import { Date } from '.'
 import Debug from 'debug'
 const debug = Debug('terminal:widgets:Services')
-
-/**
- * Uses the data in the customer collection to generate a list of affected customers given a date.
- * Special in that it needs to generate the data it displays, rather than altering any state in chain land.  This data streams in as it is calculated, rather than waiting for the lengthy calculation to complete.
- * Once a date has passed, a snapshot of this day is stored in the "services" chain.
- * Shows a list of customers in order for a given date.
- */
 
 const Schedule = ({}) => {
   const [dateString, setDate] = useState(Date.today())
   const onDateChange = (date) => {
     setDate(date)
+    // check if we have a minfest for the given date
+    // if so, cd into the directory
   }
   return (
     <>
       <Map>
-        <Date {...{ dateString, onDateChange }}></Date>
-        <Card sx={{ minWidth: 345 }}>
-          <CardContent>
-            <div>meow</div>
-            {/* <Actions actions={actions}></Actions> */}
-          </CardContent>
-        </Card>
+        <Grid container spacing={2}>
+          <Grid item xs={5}>
+            <Stack spacing={2}>
+              <Date {...{ dateString, onDateChange }}></Date>
+              <SectorSelector />
+              <Card sx={{ minWidth: 245 }}>
+                <CardContent>
+                  <div>Show Locations</div>
+                </CardContent>
+              </Card>
+            </Stack>
+          </Grid>
+          <Grid item xs={7}>
+            <Manifest />
+          </Grid>
+        </Grid>
       </Map>
+      <ScheduleSpeedDial />
     </>
   )
 }
-Schedule.propTypes = {
-  // this is a test
-  test: PropTypes.string,
-}
-Schedule.defaultProps = { test: 'm' }
+Schedule.propTypes = {}
 
 export default Schedule

@@ -11,15 +11,16 @@ export default {
   component: Date,
   args: {
     initial: Date.today(),
+    expanded: true,
   },
 }
-const Template = ({ initial }) => {
+const Template = ({ initial, ...rest }) => {
   Debug.enable('*Date')
   const [dateString, setValue] = useState(initial)
   const onDateChange = (date) => {
     setValue(date)
   }
-  return <Date {...{ dateString, onDateChange }} />
+  return <Date {...{ ...rest, dateString, onDateChange }} />
 }
 Template.propTypes = { initial: PropTypes.string }
 
@@ -28,3 +29,5 @@ export const Tomorrow = Template.bind({})
 Tomorrow.args = {
   initial: dayjs().add(1, 'day').format('YYYY-MM-DD'),
 }
+export const Collapsed = Template.bind({})
+Collapsed.args = { expanded: false }
