@@ -2,8 +2,10 @@ import React from 'react'
 import { Manifest } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
+import '../../../../data/test'
 const debug = Debug('Nav')
 Debug.enable('*Nav')
+const { manifest } = apps
 
 export default {
   title: 'Manifest',
@@ -11,34 +13,36 @@ export default {
 
   args: {
     expanded: true,
-    actions: {
-      cd: (path) => {
-        console.log('cd', path)
-        return new Promise((r) => setTimeout(r, 1000))
-      },
-    },
-    network: [
-      'schedule',
-      'customers',
-      'routing',
-      'settings',
-      'about',
-      'account',
-    ],
-    wd: '/schedule',
+    state: manifest.state,
   },
 }
 
-const Template = (args) => <Manifest {...args} />
+const Template = (args) => {
+  Debug.enable('*CollectionList *Manifest')
+  return <Manifest {...args} />
+}
 
 export const Collapsed = Template.bind({})
 Collapsed.args = { expanded: false }
 export const Expanded = Template.bind({})
-Expanded.args = {}
 export const Published = Template.bind({})
-Published.args = {}
+Published.args = {
+  state: { ...manifest.state, isPublished: true },
+}
 export const Reconciled = Template.bind({})
 Reconciled.args = {
-  isPublished: true,
-  isReconciled: true,
+  state: { ...manifest.state, isPublished: true, isReconciled: true },
+}
+export const WithRows = Template.bind({})
+WithRows.args = {
+  state: {
+    ...manifest.state,
+    isPublished: true,
+    isReconciled: true,
+    rows: [
+      {
+        id: '1234',
+      },
+    ],
+  },
 }
