@@ -9,6 +9,7 @@ import { Stack, Chip } from '@mui/material'
 import CancelIcon from '@mui/icons-material/Cancel'
 import DoneIcon from '@mui/icons-material/Done'
 
+import { CollectionList } from '.'
 const Status = ({ label, isPositive }) => {
   return (
     <Chip
@@ -22,9 +23,11 @@ const Status = ({ label, isPositive }) => {
 }
 Status.propTypes = {
   label: PropTypes.string.isRequired,
-  isPositive: PropTypes.bool.isRequired,
+  isPositive: PropTypes.bool,
 }
-export default function Manifest({ expanded, isPublished, isReconciled }) {
+export default function Manifest({ expanded, state }) {
+  // TODO assert the state is a small collection object
+  const { isPublished, isReconciled, template, rows } = state
   return (
     <Accordion defaultExpanded={expanded}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -34,12 +37,13 @@ export default function Manifest({ expanded, isPublished, isReconciled }) {
           <Status label={'reconciled'} isPositive={isReconciled} />
         </Stack>
       </AccordionSummary>
-      <AccordionDetails sx={{ height: '100%' }}>meow</AccordionDetails>
+      <AccordionDetails sx={{ height: '100%' }}>
+        <CollectionList {...{ template, rows }} />
+      </AccordionDetails>
     </Accordion>
   )
 }
 Manifest.propTypes = {
   expanded: PropTypes.bool,
-  isPublished: PropTypes.bool,
-  isReconciled: PropTypes.bool,
+  state: PropTypes.object,
 }

@@ -8,6 +8,7 @@ const debug = Debug('webdos:components:App')
 export default function App(props) {
   const { wd } = props
   debug('wd', wd)
+  debug('props', props)
   return (
     <Box
       sx={{

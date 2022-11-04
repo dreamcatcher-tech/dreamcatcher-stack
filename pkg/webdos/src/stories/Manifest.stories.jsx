@@ -2,7 +2,6 @@ import React from 'react'
 import { Manifest } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-import '../../../../data/test'
 const debug = Debug('Nav')
 Debug.enable('*Nav')
 const { manifest } = apps

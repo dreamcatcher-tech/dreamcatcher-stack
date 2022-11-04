@@ -12,9 +12,12 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import DoneIcon from '@mui/icons-material/Done'
 import { Date } from '.'
 import Debug from 'debug'
+
+import { apps } from '@dreamcatcher-tech/interblock'
+const { manifest } = apps
 const debug = Debug('terminal:widgets:Services')
 
-const Schedule = ({}) => {
+const Schedule = ({ manifestState = manifest.state }) => {
   const [dateString, setDate] = useState(Date.today())
   const onDateChange = (date) => {
     setDate(date)
@@ -37,7 +40,7 @@ const Schedule = ({}) => {
             </Stack>
           </Grid>
           <Grid item xs={7}>
-            <Manifest />
+            <Manifest state={manifestState} />
           </Grid>
         </Grid>
       </Map>

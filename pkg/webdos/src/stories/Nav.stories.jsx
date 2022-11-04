@@ -1,6 +1,6 @@
 import React from 'react'
 import { Nav } from '../components'
-import { apps } from '@dreamcatcher-tech/interblock'
+import topProps from './topProps'
 import Debug from 'debug'
 const debug = Debug('Nav')
 Debug.enable('*Nav')
@@ -13,26 +13,21 @@ export default {
     layout: 'fullscreen',
   },
 
-  args: {
-    actions: {
-      cd: (path) => {
-        console.log('cd', path)
-        return new Promise((r) => setTimeout(r, 1000))
-      },
-    },
-    network: [
-      'schedule',
-      'customers',
-      'routing',
-      'settings',
-      'about',
-      'account',
-    ],
-    wd: '/schedule',
-  },
+  args: topProps,
 }
 
-const Template = (args) => <Nav {...args} />
+const Template = (args) => {
+  const [wd, setWd] = React.useState(args.wd)
+  args.actions = {
+    ...args.actions,
+    cd: (path) => {
+      debug('cd', path)
+      setWd(path)
+    },
+  }
+  args.wd = wd
+  return <Nav {...args} />
+}
 
 export const Basic = Template.bind({})
 Basic.args = {}
@@ -42,17 +37,12 @@ Selection.args = { wd: '/customers' }
 
 export const NoSettings = Template.bind({})
 NoSettings.args = {
-  network: ['schedule', 'customers', 'routing', 'about', 'account'],
+  network: { ...topProps.network },
 }
+delete NoSettings.args.network.settings
 
 export const Relative = Template.bind({})
 Relative.args = {
-  network: [
-    '../schedule',
-    'customers',
-    'routing',
-    'settings',
-    'about',
-    'account',
-  ],
+  network: { ...topProps.network, '../schedule': {} },
+  wd: '/../schedule',
 }

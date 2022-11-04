@@ -1,5 +1,5 @@
 export const name = 'sector'
-export const COLORS = [
+const COLORS = [
   'red',
   'orange',
   'yellow',
@@ -15,7 +15,7 @@ const geometry = {
   required: ['type', 'properties', 'geometry'],
   properties: {
     type: { enum: ['Feature'] },
-    properties: { type: 'object' }, // TODO set zero keys
+    properties: { type: 'object', maxProperties: 0 },
     geometry: {
       title: 'GeoJSON Polygon',
       type: 'object',
@@ -50,9 +50,14 @@ export const state = {
     description: `A sector is a geographic area that is used to group customers 
         for scheduling purposes.`,
     type: 'object',
-    required: ['color', 'geometry'],
+    required: ['name', 'color', 'geometry'],
     allowAdditionalProperties: false,
     properties: {
+      name: {
+        type: 'string',
+        title: 'Name',
+        description: 'The name of the sector',
+      },
       color: {
         title: 'Color',
         description: 'The color of the sector',
@@ -60,8 +65,18 @@ export const state = {
       },
       frequencyInDays: { type: 'integer', title: 'Frequency in Days' },
       frequencyOffset: { type: 'integer', title: 'Frequency Offset' },
+      order: {
+        type: 'array',
+        title: 'Order',
+        uniqueItems: true,
+        items: { type: 'string' },
+      },
       geometry,
     },
   },
   formData: {},
+  uiSchema: {
+    geometry: { 'ui:widget': 'hidden' },
+    order: { 'ui:options': { addable: false, removable: false } },
+  },
 }

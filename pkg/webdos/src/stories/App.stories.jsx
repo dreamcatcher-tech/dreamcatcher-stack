@@ -4,6 +4,8 @@ import NavStory from './Nav.stories'
 import Debug from 'debug'
 const debug = Debug('App')
 
+import topProps from './topProps'
+
 export default {
   title: 'App',
   component: App,
@@ -18,7 +20,7 @@ const Template = (args) => {
     setWd(path)
   }
   debug('render')
-  args = { ...args, actions: { ...args.actions, cd }, wd }
+  args = { ...args, actions: { ...args.actions, cd }, wd, ...topProps }
   return <App {...args} />
 }
 

@@ -14,7 +14,7 @@ const masked = ['.@@io', 'about', 'settings', 'account']
  */
 const Nav = ({ state, network, actions, wd }) => {
   debug(`network: `, network)
-  const navLinks = network
+  const navLinks = Object.keys(network)
     .filter((path) => !masked.includes(path))
     .map((path) => {
       const title = path
@@ -63,22 +63,23 @@ const Nav = ({ state, network, actions, wd }) => {
             {navLinks}
           </List>
           <div style={{ flexGrow: 1 }} />
-          {network.includes('about') &&
-            makeButtonIcon('about', <Info />, 'about')}
-          {network.includes('settings') &&
-            makeButtonIcon('settings', <Settings />, 'application settings')}
-          {network.includes('account') &&
-            makeButtonIcon('account', <AccountCircle />, 'user account')}
+          {network['about'] &&
+            makeButtonIcon('about', <Info />, 'About the CRM')}
+          {network['settings'] &&
+            makeButtonIcon('settings', <Settings />, 'Application Settings')}
+          {network['account'] &&
+            makeButtonIcon('account', <AccountCircle />, 'User Account')}
         </Toolbar>
       </AppBar>
     </>
   )
 }
 Nav.propTypes = {
+  state: PropTypes.object,
   /**
    * List of paths that the links point to
    */
-  network: PropTypes.arrayOf(PropTypes.string).isRequired,
+  network: PropTypes.object.isRequired,
   /**
    * Handle clicking on a link
    */

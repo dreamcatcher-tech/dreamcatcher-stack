@@ -1,11 +1,14 @@
 import React from 'react'
-import { within, userEvent } from '@storybook/testing-library'
-
+import { apps } from '@dreamcatcher-tech/interblock'
 import { Schedule } from '../components'
+const { manifest } = apps
 
 export default {
   title: 'Schedule',
   component: Schedule,
+  args: {
+    manifestState: manifest.state,
+  },
 }
 
 const Template = (args) => <Schedule {...args} />

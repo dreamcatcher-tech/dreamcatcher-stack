@@ -12,32 +12,6 @@ import process from 'process'
 
 const debug = Debug('terminal:widgets:CollectionList')
 
-const Data = () => {
-  const { matchedPath, pulse } = useRouter()
-  assert(pulse, 'pulse not loaded')
-  assert.strictEqual(pulse.getCovenantPath(), '/system:/collection')
-  const { engine } = useBlockchain()
-  const onAdd = async (data) => {
-    const { add } = await engine.actions(matchedPath)
-    // use the toSchema functions to interogate the thing
-    const result = await add(data)
-    debug(`add result: `, result)
-    // TODO cd into the new customer immediately
-    // const newCustomer = await isPending
-    // const cd = `cd /crm/customers/bob`
-  }
-  const state = pulse.getState().toJS()
-  const onRow = ({ row }) => {
-    const { child } = row
-    debug(`onclick`, child, matchedPath)
-    const nextPath = matchedPath + '/' + child
-    engine.cd(nextPath)
-  }
-  return <CollectionList {...{ onAdd, onRow }} />
-}
-/**
- * CollectionList
- */
 const CollectionList = ({ onAdd, onRow, template, rows, loading }) => {
   const [isAdding, setIsAdding] = useState(false)
 
@@ -110,16 +84,6 @@ const addButtonStyle = {
   left: 'auto',
   position: 'fixed',
 }
-const hideMapBackgrond = {
-  // position: 'absolute', // hits top of the map background container
-  // top: 0,
-  // left: 0,
-  // bottom: 0,
-  // right: 0,
-  // background: 'white',
-  // height: '100%',
-  // flex: 1,
-}
 
 const generateColumns = (template) => {
   debug(`generating columns`, template)
@@ -130,7 +94,7 @@ const generateColumns = (template) => {
   // TODO get nested children columns out, hiding all but top level
   const { properties } = template.schema
   for (const key in properties) {
-    let { title = key, description = '' } = properties[key]
+    let { title = key, description = '', type } = properties[key]
     description = description || title
     const { width } = calculateSize(title, {
       font: 'Arial',
@@ -141,6 +105,8 @@ const generateColumns = (template) => {
       headerName: title,
       description,
       width: width + 82,
+      type,
+      isEditable: true,
     })
   }
   return columns

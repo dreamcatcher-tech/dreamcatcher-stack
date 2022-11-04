@@ -5159,30 +5159,30 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
-"@rjsf/core@^5.0.0-beta.11":
-  version "5.0.0-beta.11"
-  resolved "https://registry.yarnpkg.com/@rjsf/core/-/core-5.0.0-beta.11.tgz#cebdbb7bc22bdbf5029cee253b56cc8d6d21577c"
-  integrity sha512-PEXoojuXz0GvQnFPhZ9G/YmabzYQ6Ywtx/PChDsBQkk0kJKeP9OLpe0Nxmw8cnQQ6V3IfaOVdsPHCXQrKE/PMg==
+"@rjsf/core@^5.0.0-beta.12":
+  version "5.0.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@rjsf/core/-/core-5.0.0-beta.12.tgz#0a396dc7efb1d0562986ed02e1e54e5b00bc4f22"
+  integrity sha512-UPGlJNAq2ub1td8XN+0KJ1VtQIKHER4i8zCmVhAViGEH98hWmsks9iRt2PqLkwCBdprR/ZwR09R7OOdsWJz7EA==
   dependencies:
     lodash "^4.17.15"
     lodash-es "^4.17.15"
     nanoid "^3.3.4"
     prop-types "^15.7.2"
 
-"@rjsf/material-ui@^5.0.0-beta.11":
-  version "5.0.0-beta.11"
-  resolved "https://registry.yarnpkg.com/@rjsf/material-ui/-/material-ui-5.0.0-beta.11.tgz#0ddb1adbceaa33534ca9797b087399aa1532d102"
-  integrity sha512-hsq2pCSVHbWAfnbg1RHV9fN72Vubf47pQ5r10x3pIcfHCBNjga4HI+pYnfxC2sMVZi+igu8ZKlyhJ11vtKe6Hw==
+"@rjsf/material-ui@^5.0.0-beta.12":
+  version "5.0.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@rjsf/material-ui/-/material-ui-5.0.0-beta.12.tgz#940403df85ff7f47e96de75fed61ed53ca8e3fe5"
+  integrity sha512-gBV+NDMsordjoIcVQ6W/JrNUJBFaHTrWdcrGItyMynak9uvP7imhaid6J/vmJWlY6trwbr0DmQx55U06gIU4GA==
 
-"@rjsf/mui@^5.0.0-beta.11":
-  version "5.0.0-beta.11"
-  resolved "https://registry.yarnpkg.com/@rjsf/mui/-/mui-5.0.0-beta.11.tgz#d897e64fa8208dc5708fef5984e4f48d6b6cc0c1"
-  integrity sha512-wd07fNz6PKHJrZMsdehDTYUjXD6L/L5SKurx7yu55nqDTYe2HTPExwuWF75us1JZ+bIX6s2Twpk+FLecsPcRkA==
+"@rjsf/mui@^5.0.0-beta.12":
+  version "5.0.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@rjsf/mui/-/mui-5.0.0-beta.12.tgz#be5b5efed927d890f7b500dfa83f2ccec4c1d0ec"
+  integrity sha512-oTY+0xWekVwY4RTYKXZ+BOyel7bOAqM5CyjjgicEfCrR6Jjo/yclh6A7Fxkc5K6xYEM3nExQNrJEw1jDOxOojg==
 
-"@rjsf/utils@^5.0.0-beta.11":
-  version "5.0.0-beta.11"
-  resolved "https://registry.yarnpkg.com/@rjsf/utils/-/utils-5.0.0-beta.11.tgz#bb8cce23fb3085e1484c63bb2373a9be5cdc60cf"
-  integrity sha512-PTzh+cj2PzGdpZERd00zWlAaYqYi9dL8apoUKHcBBBBBGd6yEd417NXUh5DOSzC7zXaY1i22MTrOIogdqiYukg==
+"@rjsf/utils@^5.0.0-beta.12":
+  version "5.0.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@rjsf/utils/-/utils-5.0.0-beta.12.tgz#a03f9da784896744a1908e8fd4dec0a36e90704b"
+  integrity sha512-RH965WMGp3Z25iQ2PTn+BFkQusJuvG0e2fl8V+wx1N21EkrZnW2+twouWUmqNqHwke2Z0OOimF5picZVgobl7g==
   dependencies:
     json-schema-merge-allof "^0.8.1"
     jsonpointer "^5.0.1"
@@ -5190,10 +5190,10 @@
     lodash-es "^4.17.15"
     react-is "^18.2.0"
 
-"@rjsf/validator-ajv6@^5.0.0-beta.11":
-  version "5.0.0-beta.11"
-  resolved "https://registry.yarnpkg.com/@rjsf/validator-ajv6/-/validator-ajv6-5.0.0-beta.11.tgz#6ed02da1586dad9594434f131a7d84f4887428d3"
-  integrity sha512-LLKHGy5k8pwy7FnhmpbNJtnApyZe070sKpYqqm9o4fG8l9r8Me1AZ4yYXYeDEVOKDVrW9dnxAzYqc2J43Q5uog==
+"@rjsf/validator-ajv6@^5.0.0-beta.12":
+  version "5.0.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@rjsf/validator-ajv6/-/validator-ajv6-5.0.0-beta.12.tgz#38d64792af6d6978ee5aadcd3586ab48a9cfc057"
+  integrity sha512-dGMacqI/M/p9UdTa1EaIhxQjnGUEE8rbjO3qC/HFLbD8Qit2bjpWFFeC1vPt5aXdahSP7f27n9s1vZPv5IPNzA==
   dependencies:
     ajv "^6.7.0"
     lodash "^4.17.15"
