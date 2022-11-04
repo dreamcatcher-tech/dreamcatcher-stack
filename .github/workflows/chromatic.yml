@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
         with:
-          submodules: true
+          submodules: recursive
       - name: Install dependencies
         run: yarn
         # 👇 Adds Chromatic as a step in the workflow
