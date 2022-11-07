@@ -1,17 +1,19 @@
+import Complex from '../Complex'
 import React, { useState } from 'react'
 import Form from '@rjsf/mui'
 import validator from '@rjsf/validator-ajv6'
 import { Card, CardHeader, CardContent, IconButton, Grid } from '@mui/material'
 import { Edit, Cancel, Save } from '@mui/icons-material'
 import { Actions } from '.'
+import PropTypes from 'prop-types'
 import Debug from 'debug'
 import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Datum')
 
-const Datum = ({ state, network, actions }) => {
+const Datum = ({ complex }) => {
   // TODO verify the covenant is a datum
   // TODO verify the chain children match the schema children
-  const { schema, formData, uiSchema } = state
+  const { schema, formData, uiSchema } = complex.state
   const { title, ...noTitleSchema } = schema
   const [liveFormData, setLiveFormData] = useState(formData)
   const [isPending, setIsPending] = useState(false)
@@ -21,7 +23,7 @@ const Datum = ({ state, network, actions }) => {
   const setDatum = (formData) => {
     debug(`setDatum`, formData)
     setIsPending(true)
-    actions.set(formData).then(() => setIsPending(false))
+    complex.actions.set(formData).then(() => setIsPending(false))
   }
   const onChange = ({ formData }) => {
     debug(`onChange: `, formData)
@@ -30,7 +32,7 @@ const Datum = ({ state, network, actions }) => {
     // setDatum(formData)
   }
 
-  debug(actions)
+  debug(complex.actions)
   // TODO strip out the datum standard actions
 
   return (
@@ -63,12 +65,12 @@ const Datum = ({ state, network, actions }) => {
               onBlur={onBlur}
               onChange={onChange}
             />
-            <Actions actions={actions}></Actions>
+            <Actions actions={complex.actions}></Actions>
           </CardContent>
         </Card>
       </Grid>
     </Grid>
   )
 }
-
+Datum.propTypes = { complex: PropTypes.instanceOf(Complex).isRequired }
 export default Datum

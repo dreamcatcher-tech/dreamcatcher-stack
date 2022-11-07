@@ -15,8 +15,8 @@ import Debug from 'debug'
 import { useEffect } from 'react'
 const debug = Debug('webdos:Date')
 
-export default function Date({ dateString, onDateChange, expanded }) {
-  debug('value', dateString)
+export default function Date({ runDate, onDateChange, expanded }) {
+  debug('value', runDate)
   const parse = (date) => {
     const string = date.format('YYYY-MM-DD')
     debug(string)
@@ -29,13 +29,13 @@ export default function Date({ dateString, onDateChange, expanded }) {
     <Card>
       <Accordion defaultExpanded={expanded} onChange={onChange}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Date: {dateString}</Typography>
+          <Typography>Date: {runDate}</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <CardContent>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <StaticDatePicker
-                value={dayjs(dateString)}
+                value={dayjs(runDate)}
                 onChange={parse}
                 renderInput={(params) => {
                   debug('renderInput', params)
@@ -56,7 +56,7 @@ export default function Date({ dateString, onDateChange, expanded }) {
   )
 }
 Date.propTypes = {
-  dateString: PropTypes.string,
+  runDate: PropTypes.string,
   onDateChange: PropTypes.func,
   expanded: PropTypes.bool,
 }

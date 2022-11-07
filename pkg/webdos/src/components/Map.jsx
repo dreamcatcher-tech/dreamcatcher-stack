@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useState } from 'react'
+import Complex from '../Complex'
 import { Grid, Stack, Box } from '@mui/material'
 import PropTypes from 'prop-types'
 import L from './leaflet'
@@ -7,7 +8,7 @@ import Debug from 'debug'
 const debug = Debug('webdos:components:Map')
 const maxNativeZoom = 18
 const maxZoom = 22
-const Map = ({ children, onCreate, onEdit, geoJson }) => {
+const Map = ({ children, onCreate, onEdit, complex }) => {
   const mapId = useId()
   const [mapState, setMap] = useState()
   useEffect(() => {
@@ -105,28 +106,29 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
   }, [])
 
   useEffect(() => {
-    if (!mapState) {
-      return
+    if (!mapState || !complex) {
+      return // TODO detect deep equals of complex
     }
-    debug('geoJson', geoJson)
     const geometryLayer = L.featureGroup().addTo(mapState)
-
-    for (const geo of geoJson) {
+    debug('adding sectors', complex)
+    for (const { state } of complex.network) {
+      const { formData: sector } = state
       const opacity = 0.65
       const fillOpacity = 0.3
+      const { color, geometry } = sector
       const layerStyle = {
-        color: 'red',
+        color,
         weight: 3,
         opacity: opacity,
         fillOpacity: fillOpacity,
         clickable: true,
       }
-      const layer = L.geoJson(geo, {
+      const layer = L.geoJson(geometry, {
         style: layerStyle,
       })
       geometryLayer.addLayer(layer)
       layer.on('click', (e) => {
-        console.log('click', e)
+        console.log('click', e, sector)
       })
     }
 
@@ -134,7 +136,7 @@ const Map = ({ children, onCreate, onEdit, geoJson }) => {
       debug(`removing geometryLayer`)
       geometryLayer.remove()
     }
-  }, [mapState, geoJson])
+  }, [mapState, complex])
 
   const paintBelowAllOthers = 0
   const ensureNotPartOfNormalLayout = 'absolute'
@@ -170,9 +172,6 @@ Map.propTypes = {
   children: PropTypes.node,
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
-  geoJson: PropTypes.array,
-}
-Map.defaultProps = {
-  geoJson: [],
+  complex: PropTypes.instanceOf(Complex),
 }
 export default Map

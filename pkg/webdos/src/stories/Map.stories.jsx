@@ -1,8 +1,8 @@
 import React from 'react'
-import { within, userEvent } from '@storybook/testing-library'
 import { Map } from '../components'
 import Debug from 'debug'
 import { Card, CardContent, Grid, Button } from '@mui/material'
+import complex from './topProps'
 
 export default {
   title: 'Map',
@@ -87,21 +87,5 @@ NoPolygons.args = {
 export const Polygons = Template.bind({})
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 Polygons.args = {
-  geoJson: [
-    {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [175.238457, -37.723479],
-            [175.202751, -37.749001],
-            [175.252876, -37.746015],
-            [175.238457, -37.723479],
-          ],
-        ],
-      },
-    },
-  ],
+  complex: complex.child('routing'),
 }

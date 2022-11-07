@@ -1,26 +1,20 @@
 import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
 import { Box } from '@mui/material'
-import { Routing } from '../../components'
+import { Routing } from '../components'
+import complex from './topProps'
+import Debug from 'debug'
 
 export default {
   title: 'Routing',
   component: Routing,
   args: {
-    state: {},
-    network: [
-      {
-        path: 'Sector 1',
-        state: {
-          // geojson for sectors
-        },
-      },
-      { path: 'Sector 2' },
-    ],
+    complex: complex.child('routing'),
   },
 }
 
 const Template = (args) => {
+  Debug.enable('*Routing')
   return <Routing {...args} />
 }
 

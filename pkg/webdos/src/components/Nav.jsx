@@ -1,4 +1,5 @@
 import React from 'react'
+import Complex from '../Complex'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { AppBar, Toolbar } from '@mui/material'
@@ -12,11 +13,12 @@ const masked = ['.@@io', 'about', 'settings', 'account']
  * Navigation bar that renders links based on the children
  * of the root of the app complex.
  */
-const Nav = ({ state, network, actions, wd }) => {
+const Nav = ({ complex }) => {
+  const { network, wd, actions } = complex
   debug(`network: `, network)
-  const navLinks = Object.keys(network)
-    .filter((path) => !masked.includes(path))
-    .map((path) => {
+  const navLinks = network
+    .filter(({ path }) => !masked.includes(path))
+    .map(({ path }) => {
       const title = path
       const selected = wd.startsWith('/' + path)
       return (
@@ -63,11 +65,11 @@ const Nav = ({ state, network, actions, wd }) => {
             {navLinks}
           </List>
           <div style={{ flexGrow: 1 }} />
-          {network['about'] &&
+          {complex.hasChild('about') &&
             makeButtonIcon('about', <Info />, 'About the CRM')}
-          {network['settings'] &&
+          {complex.hasChild('settings') &&
             makeButtonIcon('settings', <Settings />, 'Application Settings')}
-          {network['account'] &&
+          {complex.hasChild('account') &&
             makeButtonIcon('account', <AccountCircle />, 'User Account')}
         </Toolbar>
       </AppBar>
@@ -75,20 +77,7 @@ const Nav = ({ state, network, actions, wd }) => {
   )
 }
 Nav.propTypes = {
-  state: PropTypes.object,
-  /**
-   * List of paths that the links point to
-   */
-  network: PropTypes.object.isRequired,
-  /**
-   * Handle clicking on a link
-   */
-  actions: PropTypes.objectOf(PropTypes.func.isRequired),
-  /**
-   * The current working directory, relative to the
-   * app root, not the engine root.
-   */
-  wd: PropTypes.string,
+  complex: PropTypes.instanceOf(Complex).isRequired,
 }
 
 export default Nav

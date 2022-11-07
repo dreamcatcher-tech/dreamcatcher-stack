@@ -1,6 +1,6 @@
 import React from 'react'
 import { Nav } from '../components'
-import topProps from './topProps'
+import complex from './topProps'
 import Debug from 'debug'
 const debug = Debug('Nav')
 Debug.enable('*Nav')
@@ -10,39 +10,29 @@ export default {
   component: Nav,
   parameters: {
     // More on Story layout: https://storybook.js.org/docs/react/configure/story-layout
-    layout: 'fullscreen',
+    // layout: 'fullscreen',
   },
 
-  args: topProps,
+  args: { complex },
 }
 
 const Template = (args) => {
-  const [wd, setWd] = React.useState(args.wd)
-  args.actions = {
-    ...args.actions,
+  const [wd, setWd] = React.useState(args.complex.wd)
+  args.complex = args.complex.setWd(wd).addAction({
     cd: (path) => {
       debug('cd', path)
       setWd(path)
     },
-  }
-  args.wd = wd
+  })
   return <Nav {...args} />
 }
 
 export const Basic = Template.bind({})
-Basic.args = {}
 
 export const Selection = Template.bind({})
-Selection.args = { wd: '/customers' }
+Selection.args = { complex: complex.setWd('/customers') }
 
 export const NoSettings = Template.bind({})
 NoSettings.args = {
-  network: { ...topProps.network },
-}
-delete NoSettings.args.network.settings
-
-export const Relative = Template.bind({})
-Relative.args = {
-  network: { ...topProps.network, '../schedule': {} },
-  wd: '/../schedule',
+  complex: complex.rm('settings'),
 }

@@ -1,3 +1,4 @@
+import Complex from '../Complex'
 import Debug from 'debug'
 import React from 'react'
 import PropTypes from 'prop-types'
@@ -6,14 +7,14 @@ import { Card, CardContent, Stack } from '@mui/material'
 
 const debug = Debug('terminal:widgets:Routing')
 
-const Routing = ({}) => {
+const Routing = ({ complex }) => {
   const onCreate = () => {}
   const onEdit = () => {}
 
   return (
     <>
       <Map {...{ onCreate, onEdit }}>
-        <SectorSelector selected="meow" />
+        <SectorSelector complex={complex} />
         <Card sx={{ minWidth: 245 }}>
           <CardContent>
             <div>Sector Datum</div>
@@ -30,7 +31,6 @@ const Routing = ({}) => {
     </>
   )
 }
-Routing.propTypes = {}
-Routing.defaultProps = {}
+Routing.propTypes = { complex: PropTypes.instanceOf(Complex).isRequired }
 
 export default Routing

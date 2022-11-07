@@ -1,14 +1,14 @@
 import { Box } from '@mui/system'
+import Complex from '../Complex'
 import React from 'react'
 import { Nav, Schedule, CollectionList, Routing } from '.'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 const debug = Debug('webdos:components:App')
 
-export default function App(props) {
-  const { wd } = props
+export default function App({ complex }) {
+  const { wd } = complex
   debug('wd', wd)
-  debug('props', props)
   return (
     <Box
       sx={{
@@ -19,7 +19,7 @@ export default function App(props) {
         overflow: 'hidden',
       }}
     >
-      <Nav {...props} />
+      <Nav complex={complex} />
       <Box
         sx={{
           display: 'flex',
@@ -31,13 +31,19 @@ export default function App(props) {
           position: 'relative',
         }}
       >
-        {wd.startsWith('/schedule') && <Schedule {...props} />}
-        {wd.startsWith('/customers') && <CollectionList {...props} />}
-        {wd.startsWith('/routing') && <Routing {...props} />}
+        {wd.startsWith('/schedule') && (
+          <Schedule complex={complex.child('schedule')} />
+        )}
+        {wd.startsWith('/customers') && (
+          <CollectionList complex={complex.child('customers')} />
+        )}
+        {wd.startsWith('/routing') && (
+          <Routing complex={complex.child('routing')} />
+        )}
       </Box>
     </Box>
   )
 }
 App.propTypes = {
-  wd: PropTypes.string,
+  complex: PropTypes.instanceOf(Complex),
 }

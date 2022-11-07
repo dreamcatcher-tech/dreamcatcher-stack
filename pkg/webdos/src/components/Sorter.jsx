@@ -17,12 +17,12 @@ function renderRow(props) {
   return (
     <ListItem style={style} key={row.path} component="div" disablePadding>
       <ListItemButton>
-        <ListItemText primary={`Item ${path}`} />
+        <ListItemText primary={path} />
       </ListItemButton>
     </ListItem>
   )
 }
-export default function Sorter({ items }) {
+export default function Sorter({ items, onSort, readonly }) {
   return (
     <Box
       sx={{
@@ -67,6 +67,7 @@ Sorter.propTypes = {
    * which can be used to present a static view.
    */
   onSort: PropTypes.func,
+  readonly: PropTypes.bool,
 }
 
 // import { SortableContainer, SortableElement } from 'react-sortable-hoc'
