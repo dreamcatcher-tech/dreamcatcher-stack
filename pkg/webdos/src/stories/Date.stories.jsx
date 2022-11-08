@@ -10,24 +10,24 @@ export default {
   title: 'Date',
   component: Date,
   args: {
-    initial: Date.today(),
+    runDate: Date.today(),
     expanded: true,
   },
 }
-const Template = ({ initial, ...rest }) => {
+const Template = ({ runDate, ...rest }) => {
   Debug.enable('*Date')
-  const [dateString, setValue] = useState(initial)
+  const [dateString, setValue] = useState(runDate)
   const onDateChange = (date) => {
     setValue(date)
   }
-  return <Date {...{ ...rest, dateString, onDateChange }} />
+  return <Date {...{ ...rest, onDateChange }} runDate={dateString} />
 }
-Template.propTypes = { initial: PropTypes.string }
+Template.propTypes = { runDate: PropTypes.string }
 
 export const Basic = Template.bind({})
 export const Tomorrow = Template.bind({})
 Tomorrow.args = {
-  initial: dayjs().add(1, 'day').format('YYYY-MM-DD'),
+  runDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
 }
 export const Collapsed = Template.bind({})
 Collapsed.args = { expanded: false }

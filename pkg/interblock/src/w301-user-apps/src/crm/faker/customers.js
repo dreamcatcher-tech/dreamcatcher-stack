@@ -4,14 +4,6 @@ import Debug from 'debug'
 const debug = Debug('faker:customers')
 JSONSchemaFaker.extend('faker', () => faker)
 
-const address = (title) => ({
-  title,
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    address: { type: 'string', faker: 'address.streetAddress' },
-  },
-})
 const gps = {
   title: 'Service GPS',
   type: 'object',
@@ -60,14 +52,23 @@ export const customers = {
             minimum: 1,
             maximum: 200000,
           },
-          serviceAddress: address('Service Address'),
+          serviceAddress: {
+            title: 'Service Address',
+            type: 'string',
+            faker: 'address.streetAddress',
+          },
           serviceGps: gps,
-          billingAddress: address('Billing Address'),
+          billingAddress: {
+            title: 'Billing Address',
+            type: 'string',
+            faker: 'address.streetAddress',
+          },
           importedHash: { type: 'string', faker: 'git.commitSha' },
         },
       },
       uiSchema: {
         importedHash: { 'ui:widget': 'hidden' },
+        serviceGps: { 'ui:widget': 'hidden' },
         isEmailVerified: { 'ui:readonly': true },
         custNo: { 'ui:readonly': true },
       },
@@ -87,12 +88,12 @@ const generate = () => {
     customer = JSONSchemaFaker.generate(customers.state.template.schema)
   } while (custNos.has(customer.custNo))
   custNos.add(customer.custNo)
-  customer.serviceGps.longitude = faker.datatype.number({
+  customer.serviceGps.latitude = faker.datatype.number({
     min: bottom,
     max: top,
     precision: 0.000001,
   })
-  customer.serviceGps.latitude = faker.datatype.number({
+  customer.serviceGps.longitude = faker.datatype.number({
     min: left,
     max: right,
     precision: 0.000001,

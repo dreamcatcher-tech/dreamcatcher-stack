@@ -75,6 +75,12 @@ export default class Complex {
     next.state = state
     return next
   }
+  setIsLoading(isLoading) {
+    assert.strictEqual(typeof isLoading, 'boolean')
+    const next = this.clone()
+    next.isLoading = isLoading
+    return next
+  }
   parent() {
     return this.#parent
   }

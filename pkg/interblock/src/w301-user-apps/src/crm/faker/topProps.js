@@ -11,7 +11,7 @@ const pip = (geometry, gps) => {
   const lookup = new PolygonLookup(geometry)
   const order = []
   for (const { latitude, longitude, path } of gps) {
-    const result = lookup.search(latitude, longitude)
+    const result = lookup.search(longitude, latitude)
     if (result) {
       order.push(path)
     }

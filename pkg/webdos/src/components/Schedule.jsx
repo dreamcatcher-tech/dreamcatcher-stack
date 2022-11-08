@@ -38,7 +38,7 @@ const Schedule = ({ complex }) => {
   }
   return (
     <>
-      <Map {...{ complex }}>
+      <Map {...{ complex }} showCustomers>
         <Grid container spacing={2}>
           <Grid item xs={5}>
             <Stack spacing={2}>

@@ -23,9 +23,12 @@ export default function SectorSelector(props) {
     selected = complex.network[0].path
   }
   let selectedName = '(No sectors present)'
+  let selectedCount = ''
   if (selected) {
     assert(complex.hasChild(selected), `selected must exist: ${selected}`)
-    selectedName = complex.child(selected).state.formData.name
+    const child = complex.child(selected)
+    selectedName = child.state.formData.name
+    selectedCount = child.state.formData.order.length
   }
   const onClick = (path) => {
     onSelected(path)
@@ -37,7 +40,8 @@ export default function SectorSelector(props) {
     <Card>
       <Accordion expanded={expanded} onChange={(_, exp) => setExpanded(exp)}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Sector: {selectedName}</Typography>
+          <Typography>Sector: {selectedName} </Typography>
+          <Typography fontStyle="italic">&nbsp;({selectedCount})</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <List sx={{ width: '100%' }} dense>
@@ -63,7 +67,15 @@ SectorSelector.defaultProps = { expanded: false }
 
 const Sector = ({ selected, onClick, path, sector }) => {
   const { state } = sector
-  const { name, next, color } = state.formData
+  const { name, next, color, order } = state.formData
+  const primary = (
+    <>
+      <Typography component="span">{name}</Typography>
+      <Typography component="span" fontStyle="italic">
+        &nbsp;({order.length})
+      </Typography>
+    </>
+  )
   return (
     <ListItemButton selected={selected === name} onClick={() => onClick(path)}>
       <ListItemAvatar>
@@ -71,7 +83,7 @@ const Sector = ({ selected, onClick, path, sector }) => {
           <MapIcon />
         </Avatar>
       </ListItemAvatar>
-      <ListItemText primary={name} secondary={next} />
+      <ListItemText primary={primary} />
     </ListItemButton>
   )
 }

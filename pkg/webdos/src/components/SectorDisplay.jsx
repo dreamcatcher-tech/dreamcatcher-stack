@@ -24,7 +24,7 @@ export default function SectorDisplay({ complex }) {
         <Typography>Frequency in Days: {frequencyInDays}</Typography>
         <Typography>Frequency Offset: {frequencyOffset}</Typography>
         <Typography variant="h6">Customers:</Typography>
-        <Sorter items={items} readonly />
+        <Sorter complex={complex} readonly />
       </CardContent>
     </Card>
   )

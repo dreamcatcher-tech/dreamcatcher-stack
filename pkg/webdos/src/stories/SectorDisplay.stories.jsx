@@ -4,7 +4,6 @@ import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { faker } = apps
 const debug = Debug('SectorDisplay')
-Debug.enable('*SectorDisplay')
 
 export default {
   title: 'SectorDisplay',
@@ -15,7 +14,11 @@ export default {
   },
 }
 
-const Template = (args) => <SectorDisplay {...args} />
+const Template = (args) => {
+  Debug.enable('*SectorDisplay *Sorter')
+
+  return <SectorDisplay {...args} />
+}
 
 export const Basic = Template.bind({})
 export const Blank = Template.bind({})

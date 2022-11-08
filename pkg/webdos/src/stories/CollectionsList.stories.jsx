@@ -4,9 +4,8 @@ import { apps } from '@dreamcatcher-tech/interblock'
 const { faker } = apps
 import Debug from 'debug'
 const debug = Debug('CollectionList')
-Debug.enable()
 
-const { datumTemplate: template } = apps.crm.installer.network.customers.state
+const complex = faker.child('customers')
 export default {
   title: 'CollectionList',
   component: CollectionList,
@@ -20,33 +19,26 @@ export default {
       return new Promise((r) => setTimeout(r, 1000))
     },
     onRow: () => {},
-    template,
-    rows: [],
+    complex,
   },
 }
 
-const Template = (args) => <CollectionList {...args} />
+const Template = (args) => {
+  Debug.enable('*CollectionList')
+  return <CollectionList {...args} />
+}
 
 export const Loading = Template.bind({})
 Loading.args = {
-  loading: true,
+  complex: complex.setNetwork([]).setIsLoading(true),
 }
 export const LoadingChildren = Template.bind({})
 LoadingChildren.args = {
-  rows: [
-    { id: 0, custNo: 'custNo-0', name: 'test1' },
-    { id: 1, custNo: 'custNo-1' },
-  ],
-  loading: true,
+  complex: complex.setIsLoading(true),
 }
 
 export const Empty = Template.bind({})
-Empty.args = {}
+Empty.args = { complex: complex.setNetwork([]) }
+export const SmallData = Template.bind({})
+SmallData.args = { complex: complex.setNetwork(complex.network.slice(0, 5)) }
 export const LargeData = Template.bind({})
-LargeData.args = {
-  rows: Array(50)
-    .fill(0)
-    .map((v, id) => ({ id, custNo: `custNo-${id}`, name: `name-${id}` })),
-}
-export const Sorting = Template.bind({})
-Sorting.args = { ...LargeData.args }

@@ -152,10 +152,14 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
       const { order = [] } = sector
       debug('order', order)
       for (const custNo of order) {
-        debug('adding customer')
         assert(customers.hasChild(custNo), `customer ${custNo} not found`)
         const customer = customers.child(custNo)
-        // const
+        const { serviceGps } = customer.state.formData
+        const { latitude, longitude } = serviceGps
+        const options = { riseOnHover: true }
+        const marker = L.marker([latitude, longitude], options)
+        marker.addTo(customersLayer)
+        debug('adding customer')
       }
     }
     return () => {

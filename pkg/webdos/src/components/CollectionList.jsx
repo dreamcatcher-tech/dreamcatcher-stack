@@ -1,18 +1,16 @@
 import React, { useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
 import calculateSize from 'calculate-size'
+import { api } from '@dreamcatcher-tech/interblock'
 import { DataGridPremium } from '@mui/x-data-grid-premium'
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { useBlockchain, useBlockstream, useChildren, useRouter } from '../hooks'
 import { Fab } from '@mui/material'
 import { Add } from '@mui/icons-material'
-import equal from 'fast-deep-equal'
-import process from 'process'
 
 const debug = Debug('terminal:widgets:CollectionList')
 
-const CollectionList = ({ onAdd, onRow, template, rows, loading }) => {
+const CollectionList = ({ onAdd, onRow, complex }) => {
   const [isAdding, setIsAdding] = useState(false)
 
   const onAddCustomer = () => {
@@ -24,10 +22,16 @@ const CollectionList = ({ onAdd, onRow, template, rows, loading }) => {
       setIsAdding(false)
     })
   }
-
+  const { template } = complex.state
+  const { isLoading } = complex
   const columns = useMemo(() => generateColumns(template), [template])
-
-  const isLoading = isAdding || loading
+  const rows = useMemo(() => {
+    debug('generating rows')
+    return complex.network.map((child) => ({
+      ...child.state.formData,
+      id: child.path,
+    }))
+  }, [complex.network])
   return (
     <>
       <DataGridPremium
@@ -37,7 +41,7 @@ const CollectionList = ({ onAdd, onRow, template, rows, loading }) => {
         disableMultipleSelection
         hideFooter
         onRowClick={onRow}
-        loading={isLoading}
+        loading={isAdding || isLoading}
       />
       <Fab
         color="primary"
@@ -51,29 +55,9 @@ const CollectionList = ({ onAdd, onRow, template, rows, loading }) => {
   )
 }
 CollectionList.propTypes = {
-  // { onAdd, onRow, template, rows, fetch, loading }
-
-  /**
-   * Add an item using the blockchain engine
-   */
   onAdd: PropTypes.func,
-  /**
-   * Handler for row clicks
-   */
   onRow: PropTypes.func,
-  /**
-   * Datum template
-   */
-  template: PropTypes.object,
-  /**
-   * list of row data that is streamed in as the engine
-   * fetches it from disk and network and changes.
-   */
-  rows: PropTypes.arrayOf(PropTypes.object),
-  /**
-   * Is the engine aware of more data yet to be loaded ?
-   */
-  loading: PropTypes.bool,
+  complex: PropTypes.instanceOf(api.Complex).isRequired,
 }
 
 const addButtonStyle = {
@@ -93,7 +77,17 @@ const generateColumns = (template) => {
   }
   // TODO get nested children columns out, hiding all but top level
   const { properties } = template.schema
+  const { uiSchema = {} } = template
   for (const key in properties) {
+    let isEditable = true
+    if (uiSchema[key]) {
+      if (uiSchema[key]['ui:widget'] === 'hidden') {
+        continue
+      }
+      if (uiSchema[key]['ui:readonly']) {
+        isEditable = false
+      }
+    }
     let { title = key, description = '', type } = properties[key]
     description = description || title
     const { width } = calculateSize(title, {
@@ -106,7 +100,7 @@ const generateColumns = (template) => {
       description,
       width: width + 82,
       type,
-      isEditable: true,
+      isEditable,
     })
   }
   return columns
