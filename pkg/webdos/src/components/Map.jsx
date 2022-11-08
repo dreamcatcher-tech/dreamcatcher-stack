@@ -1,14 +1,15 @@
 import React, { useEffect, useId, useState } from 'react'
-import Complex from '../Complex'
+import { api } from '@dreamcatcher-tech/interblock'
 import { Grid, Stack, Box } from '@mui/material'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'
+import assert from 'assert-fast'
 
 const debug = Debug('webdos:components:Map')
 const maxNativeZoom = 18
 const maxZoom = 22
-const Map = ({ children, onCreate, onEdit, complex }) => {
+const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
   const mapId = useId()
   const [mapState, setMap] = useState()
   useEffect(() => {
@@ -126,7 +127,9 @@ const Map = ({ children, onCreate, onEdit, complex }) => {
       const layer = L.geoJson(geometry, {
         style: layerStyle,
       })
+      debug('adding layer')
       geometryLayer.addLayer(layer)
+      debug('layer added')
       layer.on('click', (e) => {
         console.log('click', e, sector)
       })
@@ -137,6 +140,29 @@ const Map = ({ children, onCreate, onEdit, complex }) => {
       geometryLayer.remove()
     }
   }, [mapState, complex])
+
+  useEffect(() => {
+    if (!mapState || !complex || !showCustomers) {
+      return // TODO detect deep equals of complex
+    }
+    const customersLayer = L.featureGroup().addTo(mapState)
+    const customers = complex.tree.child('customers')
+    for (const { state } of complex.network) {
+      const { formData: sector } = state
+      const { order = [] } = sector
+      debug('order', order)
+      for (const custNo of order) {
+        debug('adding customer')
+        assert(customers.hasChild(custNo), `customer ${custNo} not found`)
+        const customer = customers.child(custNo)
+        // const
+      }
+    }
+    return () => {
+      debug(`removing customers`)
+      customersLayer.remove()
+    }
+  }, [mapState, complex, showCustomers])
 
   const paintBelowAllOthers = 0
   const ensureNotPartOfNormalLayout = 'absolute'
@@ -172,6 +198,7 @@ Map.propTypes = {
   children: PropTypes.node,
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
-  complex: PropTypes.instanceOf(Complex),
+  showCustomers: PropTypes.bool,
+  complex: PropTypes.instanceOf(api.Complex),
 }
 export default Map

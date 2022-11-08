@@ -1,5 +1,5 @@
 import { Box } from '@mui/system'
-import Complex from '../Complex'
+import { api } from '@dreamcatcher-tech/interblock'
 import React from 'react'
 import { Nav, Schedule, CollectionList, Routing } from '.'
 import PropTypes from 'prop-types'
@@ -45,5 +45,5 @@ export default function App({ complex }) {
   )
 }
 App.propTypes = {
-  complex: PropTypes.instanceOf(Complex),
+  complex: PropTypes.instanceOf(api.Complex),
 }

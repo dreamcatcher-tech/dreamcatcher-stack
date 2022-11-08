@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 export default class Complex {
+  #parent
   static create({ state, binary, network, actions, isLoading, wd, tree }) {
     return new Complex({ state, binary, network, actions, isLoading, wd, tree })
   }
@@ -16,7 +17,9 @@ export default class Complex {
     }
   }
   clone() {
-    return new Complex(this)
+    const next = new Complex(this)
+    next.#parent = this.#parent
+    return next
   }
   addAction(actions) {
     const next = this.clone()
@@ -40,9 +43,14 @@ export default class Complex {
       throw new Error(`child not found: ${path}`)
     }
     const { tree } = this
-    return Complex.create({ ...child, tree })
+    const next = Complex.create({ ...child, tree })
+    next.#parent = this
+    return next
   }
   hasChild(path) {
+    if (!path) {
+      return false
+    }
     assert.strictEqual(typeof path, 'string')
     assert(!path.startsWith('/'))
     assert(!path.startsWith('./'))
@@ -60,5 +68,14 @@ export default class Complex {
     const next = this.clone()
     next.network = network
     return next
+  }
+  setState(state) {
+    assert.strictEqual(typeof state, 'object')
+    const next = this.clone()
+    next.state = state
+    return next
+  }
+  parent() {
+    return this.#parent
   }
 }

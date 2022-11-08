@@ -1,5 +1,5 @@
 import React from 'react'
-import Complex from '../Complex'
+import { api } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { AppBar, Toolbar } from '@mui/material'
@@ -43,7 +43,7 @@ const Nav = ({ complex }) => {
       edge="end"
       aria-label={description}
       aria-haspopup="true"
-      onClick={() => actions.cd(path)}
+      onClick={() => actions.cd('/' + path)}
       color="inherit"
       selected={wd.startsWith('/' + path)}
     >
@@ -77,7 +77,7 @@ const Nav = ({ complex }) => {
   )
 }
 Nav.propTypes = {
-  complex: PropTypes.instanceOf(Complex).isRequired,
+  complex: PropTypes.instanceOf(api.Complex).isRequired,
 }
 
 export default Nav

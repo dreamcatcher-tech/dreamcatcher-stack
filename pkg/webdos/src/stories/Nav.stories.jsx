@@ -1,9 +1,9 @@
 import React from 'react'
 import { Nav } from '../components'
-import complex from './topProps'
+import { apps } from '@dreamcatcher-tech/interblock'
+const { faker } = apps
 import Debug from 'debug'
 const debug = Debug('Nav')
-Debug.enable('*Nav')
 
 export default {
   title: 'Nav',
@@ -13,10 +13,11 @@ export default {
     // layout: 'fullscreen',
   },
 
-  args: { complex },
+  args: { complex: faker },
 }
 
 const Template = (args) => {
+  Debug.enable('*Nav')
   const [wd, setWd] = React.useState(args.complex.wd)
   args.complex = args.complex.setWd(wd).addAction({
     cd: (path) => {
@@ -30,9 +31,9 @@ const Template = (args) => {
 export const Basic = Template.bind({})
 
 export const Selection = Template.bind({})
-Selection.args = { complex: complex.setWd('/customers') }
+Selection.args = { complex: faker.setWd('/customers') }
 
 export const NoSettings = Template.bind({})
 NoSettings.args = {
-  complex: complex.rm('settings'),
+  complex: faker.rm('settings'),
 }

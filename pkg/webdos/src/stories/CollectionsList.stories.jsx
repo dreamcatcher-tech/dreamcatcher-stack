@@ -1,6 +1,7 @@
 import React from 'react'
 import { CollectionList } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
+const { faker } = apps
 import Debug from 'debug'
 const debug = Debug('CollectionList')
 Debug.enable()

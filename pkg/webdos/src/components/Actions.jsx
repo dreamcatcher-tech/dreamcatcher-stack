@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Form from '@rjsf/mui'
-import validator from '@rjsf/validator-ajv6'
+import validator from '@rjsf/validator-ajv8'
 import { Card, CardContent, IconButton, Grid, Stack } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { Cancel, Send } from '@mui/icons-material'

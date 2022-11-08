@@ -2,14 +2,14 @@ import React from 'react'
 import { apps } from '@dreamcatcher-tech/interblock'
 import { Schedule } from '../components'
 import Debug from 'debug'
-import complex from './topProps'
+const { faker } = apps
 const { manifest } = apps
 
 export default {
   title: 'Schedule',
   component: Schedule,
   args: {
-    complex: complex.child('schedule'),
+    complex: faker.child('schedule'),
   },
 }
 

@@ -2,7 +2,7 @@ import React from 'react'
 import { Datum } from '../components'
 import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-import complex from './topProps'
+const { faker } = apps
 const debug = Debug('SectorDatum')
 
 export default {
@@ -10,11 +10,10 @@ export default {
   component: Datum,
 
   args: {
-    complex: complex.child('routing').child('0'),
+    complex: faker.child('routing').child('0'),
   },
 }
 
-console.log('complex', complex)
 const Template = (args) => {
   Debug.enable('*SectorDatum')
   return <Datum {...args} />

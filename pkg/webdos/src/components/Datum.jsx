@@ -1,7 +1,7 @@
-import Complex from '../Complex'
+import { api } from '@dreamcatcher-tech/interblock'
 import React, { useState } from 'react'
 import Form from '@rjsf/mui'
-import validator from '@rjsf/validator-ajv6'
+import validator from '@rjsf/validator-ajv8'
 import { Card, CardHeader, CardContent, IconButton, Grid } from '@mui/material'
 import { Edit, Cancel, Save } from '@mui/icons-material'
 import { Actions } from '.'
@@ -13,10 +13,21 @@ const debug = Debug('terminal:widgets:Datum')
 const Datum = ({ complex }) => {
   // TODO verify the covenant is a datum
   // TODO verify the chain children match the schema children
-  const { schema, formData, uiSchema } = complex.state
+  let { schema, formData, uiSchema } = complex.state
+  if (schema === '..') {
+    schema = complex.parent().state.template.schema
+    uiSchema = complex.parent().state.template.uiSchema
+  }
   const { title, ...noTitleSchema } = schema
   const [liveFormData, setLiveFormData] = useState(formData)
   const [isPending, setIsPending] = useState(false)
+  const [state, setState] = useState(complex.state)
+  if (state !== complex.state) {
+    debug('state changed', state, complex.state)
+    setState(complex.state)
+    setLiveFormData(formData)
+    // TODO alert if changes not saved
+  }
   const onBlur = (...args) => {
     debug(`onBlur: `, ...args)
   }
@@ -32,7 +43,6 @@ const Datum = ({ complex }) => {
     // setDatum(formData)
   }
 
-  debug(complex.actions)
   // TODO strip out the datum standard actions
 
   return (
@@ -72,5 +82,5 @@ const Datum = ({ complex }) => {
     </Grid>
   )
 }
-Datum.propTypes = { complex: PropTypes.instanceOf(Complex).isRequired }
+Datum.propTypes = { complex: PropTypes.instanceOf(api.Complex).isRequired }
 export default Datum

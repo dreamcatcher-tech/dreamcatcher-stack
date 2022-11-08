@@ -1,4 +1,4 @@
-import Complex from '../Complex'
+import { api } from '@dreamcatcher-tech/interblock'
 import React from 'react'
 import { useState } from 'react'
 import PropTypes from 'prop-types'
@@ -19,9 +19,9 @@ const Schedule = ({ complex }) => {
   const [runDate, setRunDate] = useState(Date.today())
   const onDateChange = (date) => {
     setRunDate(date)
+    onSelected()
     // check if we have a minfest for the given date
     // if so, cd into the directory
-    onSelected('')
   }
   const routing = complex.tree.child('routing')
   debug('routing', routing)
@@ -31,7 +31,7 @@ const Schedule = ({ complex }) => {
     isSectorOnDate(sector, commonDate, runDate)
   )
   complex = complex.setNetwork(network)
-  const [selected, onSelected] = React.useState('')
+  const [selected, onSelected] = React.useState()
   const sector = complex.hasChild(selected) ? complex.child(selected) : null
   if (!sector && complex.network.length) {
     onSelected(complex.network[0].path)
@@ -56,7 +56,7 @@ const Schedule = ({ complex }) => {
     </>
   )
 }
-Schedule.propTypes = { complex: PropTypes.instanceOf(Complex).isRequired }
+Schedule.propTypes = { complex: PropTypes.instanceOf(api.Complex).isRequired }
 
 export default Schedule
 

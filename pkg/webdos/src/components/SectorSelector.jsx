@@ -13,12 +13,12 @@ import PropTypes from 'prop-types'
 import { Card, CardContent, ListItemButton, Stack } from '@mui/material'
 import Debug from 'debug'
 import assert from 'assert-fast'
-import Complex from '../Complex'
+import { api } from '@dreamcatcher-tech/interblock'
 const debug = Debug('webdos:SectorSelector')
 
 export default function SectorSelector(props) {
-  const { onSelected, expanded, complex } = props
-  let { selected = '' } = props
+  const { onSelected, complex } = props
+  let { selected } = props
   if (complex.network.length && !selected) {
     selected = complex.network[0].path
   }
@@ -27,9 +27,15 @@ export default function SectorSelector(props) {
     assert(complex.hasChild(selected), `selected must exist: ${selected}`)
     selectedName = complex.child(selected).state.formData.name
   }
+  const onClick = (path) => {
+    onSelected(path)
+    setExpanded(false)
+  }
+  const [expanded, setExpanded] = React.useState(props.expanded)
+
   return (
     <Card>
-      <Accordion defaultExpanded={expanded}>
+      <Accordion expanded={expanded} onChange={(_, exp) => setExpanded(exp)}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography>Sector: {selectedName}</Typography>
         </AccordionSummary>
@@ -38,7 +44,7 @@ export default function SectorSelector(props) {
             {complex.network.map(({ path }, key) => {
               const sector = complex.child(path)
               return (
-                <Sector {...{ selected, onSelected, path, sector }} key={key} />
+                <Sector {...{ selected, onClick, path, sector }} key={key} />
               )
             })}
           </List>
@@ -51,15 +57,15 @@ SectorSelector.propTypes = {
   selected: PropTypes.string,
   onSelected: PropTypes.func,
   expanded: PropTypes.bool,
-  complex: PropTypes.instanceOf(Complex).isRequired,
+  complex: PropTypes.instanceOf(api.Complex).isRequired,
 }
+SectorSelector.defaultProps = { expanded: false }
 
-const Sector = ({ selected, onSelected, path, sector }) => {
+const Sector = ({ selected, onClick, path, sector }) => {
   const { state } = sector
   const { name, next, color } = state.formData
-  const onClick = () => onSelected(path)
   return (
-    <ListItemButton selected={selected === name} onClick={onClick}>
+    <ListItemButton selected={selected === name} onClick={() => onClick(path)}>
       <ListItemAvatar>
         <Avatar sx={{ bgcolor: color }}>
           <MapIcon />
@@ -71,7 +77,7 @@ const Sector = ({ selected, onSelected, path, sector }) => {
 }
 Sector.propTypes = {
   selected: PropTypes.string,
-  onSelected: PropTypes.func,
+  onClick: PropTypes.func,
   path: PropTypes.string,
-  sector: PropTypes.instanceOf(Complex).isRequired,
+  sector: PropTypes.instanceOf(api.Complex).isRequired,
 }

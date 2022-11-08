@@ -1,20 +1,21 @@
 import React from 'react'
 import { SectorSelector } from '../components'
-import complex from './topProps'
+import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('SectorSelector')
-Debug.enable('*SectorSelector')
+const { faker } = apps
 export default {
   title: 'SectorSelector',
   component: SectorSelector,
 
   args: {
     expanded: true,
-    complex: complex.child('routing'),
+    complex: faker.child('routing'),
   },
 }
 
 const Template = (args) => {
+  Debug.enable('*SectorSelector')
   const [selected, onSelected] = React.useState()
   return <SectorSelector {...{ ...args, selected, onSelected }} />
 }

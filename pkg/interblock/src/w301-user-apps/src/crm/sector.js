@@ -70,6 +70,7 @@ export const state = {
         title: 'Order',
         uniqueItems: true,
         items: { type: 'string' },
+        default: [],
       },
       geometry,
     },

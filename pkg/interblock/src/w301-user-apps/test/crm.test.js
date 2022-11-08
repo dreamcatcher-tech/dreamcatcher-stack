@@ -59,7 +59,7 @@ describe('crm', () => {
       const lastPulseCount = engine.logger.pulseCount
       debug(`add 2 pulse count: ${lastPulseCount - add2PulseCount}`)
     })
-    test.only('can only add customer if provide valid data', async () => {
+    test('can only add customer if provide valid data', async () => {
       const engine = await Interpulse.createCI()
       await engine.add('app', 'crm')
       const actions = await engine.actions('/app/customers')

@@ -57,6 +57,7 @@ const template = {
 }
 
 export const state = {
+  type: 'INNER_COLLECTION',
   schema: {
     title: 'Manifest',
     description: `A manifest is a list of customers that are to be serviced on a given day`,

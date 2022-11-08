@@ -1,4 +1,4 @@
-import Complex from '../Complex'
+import { api } from '@dreamcatcher-tech/interblock'
 import * as React from 'react'
 import PropTypes from 'prop-types'
 import Card from '@mui/material/Card'
@@ -19,7 +19,7 @@ export default function SectorDisplay({ complex }) {
   })
   return (
     <Card sx={{ minWidth: 275 }}>
-      <CardHeader title={name} />
+      <CardHeader title={'Sector: ' + name} />
       <CardContent>
         <Typography>Frequency in Days: {frequencyInDays}</Typography>
         <Typography>Frequency Offset: {frequencyOffset}</Typography>
@@ -30,11 +30,11 @@ export default function SectorDisplay({ complex }) {
   )
 }
 SectorDisplay.propTypes = {
-  complex: PropTypes.instanceOf(Complex),
+  complex: PropTypes.instanceOf(api.Complex),
 }
 const NotSelected = () => {
   return (
-    <Card sx={{ minWidth: 275 }}>
+    <Card>
       <CardHeader title="No sector selected" />
       <CardContent>
         <Typography>Select a sector to see details.</Typography>

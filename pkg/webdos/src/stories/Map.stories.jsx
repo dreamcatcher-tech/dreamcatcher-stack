@@ -2,7 +2,8 @@ import React from 'react'
 import { Map } from '../components'
 import Debug from 'debug'
 import { Card, CardContent, Grid, Button } from '@mui/material'
-import complex from './topProps'
+import { apps } from '@dreamcatcher-tech/interblock'
+const { faker } = apps
 
 export default {
   title: 'Map',
@@ -87,5 +88,12 @@ NoPolygons.args = {
 export const Polygons = Template.bind({})
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 Polygons.args = {
-  complex: complex.child('routing'),
+  complex: faker.child('routing'),
+  customers: false,
+}
+
+export const Customers = Template.bind({})
+Customers.args = {
+  complex: faker.child('routing'),
+  showCustomers: true,
 }
