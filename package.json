@@ -2,11 +2,11 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "eslint": "^8.23.0",
+    "eslint": "^8.27.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-react": "^7.31.7",
-    "lerna": "^5.5.0",
+    "eslint-plugin-react": "^7.31.10",
+    "lerna": "^6.0.3",
     "prettier": "^2.7.1"
   },
   "workspaces": [

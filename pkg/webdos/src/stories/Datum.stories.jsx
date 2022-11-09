@@ -2,9 +2,10 @@ import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
 import { apps } from '@dreamcatcher-tech/interblock'
 import { Datum } from '../components'
+import assert from 'assert-fast'
 const { crm } = apps
-
 const customers = crm.faker.child('customers')
+assert(customers.child(customers.network[0].path))
 export default {
   title: 'Datum',
   component: Datum,
