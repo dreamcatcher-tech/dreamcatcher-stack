@@ -12,11 +12,7 @@ export default function SectorDisplay({ complex }) {
     return <NotSelected />
   }
   const { formData } = complex.state
-  const { name, frequencyInDays, frequencyOffset, order } = formData
-  // TODO resolve order to full customer names
-  const items = order.map((custNo) => {
-    return { path: custNo }
-  })
+  const { name, frequencyInDays, frequencyOffset } = formData
   return (
     <Card sx={{ minWidth: 275 }}>
       <CardHeader title={'Sector: ' + name} />
@@ -24,7 +20,7 @@ export default function SectorDisplay({ complex }) {
         <Typography>Frequency in Days: {frequencyInDays}</Typography>
         <Typography>Frequency Offset: {frequencyOffset}</Typography>
         <Typography variant="h6">Customers:</Typography>
-        <Sorter complex={complex} readonly />
+        <Sorter complex={complex} />
       </CardContent>
     </Card>
   )

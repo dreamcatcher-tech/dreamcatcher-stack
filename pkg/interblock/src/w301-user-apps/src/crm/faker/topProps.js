@@ -34,7 +34,7 @@ debug('start pip')
 const network = list.map((sector, index) => {
   const order = pipMap(sector, customers.network)
   const state = {
-    ...apps.sector.state,
+    ...apps.crm.sector.state,
     formData: { ...sector, order },
   }
   return { path: index.toString(), state }
@@ -44,7 +44,7 @@ debug('pip complete')
 const complex = Complex.create({
   state: {},
   network: [
-    { path: 'schedule', state: {} },
+    { path: 'schedule', state: apps.crm.schedule.installer.state },
     { path: 'customers', ...customers },
     { path: 'routing', state: { formData }, network },
     { path: 'settings', state: {} },

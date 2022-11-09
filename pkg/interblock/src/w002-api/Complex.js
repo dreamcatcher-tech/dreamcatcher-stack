@@ -44,6 +44,9 @@ export default class Complex {
     }
     const { tree } = this
     const next = Complex.create({ ...child, tree })
+    if (!tree) {
+      next.tree = this
+    }
     next.#parent = this
     return next
   }

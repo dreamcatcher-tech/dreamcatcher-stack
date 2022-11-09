@@ -41,6 +41,7 @@ const reducer = async (request) => {
       return
     }
     case 'ADD': {
+      // TODO cause the child to fetch the template when it is spawned
       return await add(payload, datumTemplate)
     }
     case 'BATCH': {

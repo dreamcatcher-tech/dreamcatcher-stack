@@ -2,9 +2,9 @@ import React from 'react'
 import { Manifest } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-const debug = Debug('Nav')
-Debug.enable('*Nav')
-const { manifest } = apps
+const { crm } = apps
+const runDate = '2022-11-09'
+const complex = crm.utils.generateManifest(crm.faker, runDate)
 
 export default {
   title: 'Manifest',
@@ -12,36 +12,54 @@ export default {
 
   args: {
     expanded: true,
-    state: manifest.state,
+    complex,
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*CollectionList *Manifest')
+  Debug.enable('*CollectionList *Manifest crm:utils *InnerCollection')
   return <Manifest {...args} />
 }
+
+/**
+ * How would Sechdule generate a virtual manifest ?
+ *    Filter the sectors to date, then filter the customers to date
+ *    Manifest then smooshes all the sectors together to form rows
+ *
+ * How would a new manifest be generated and saved ?
+ *    When schedule covenant is told to add( runDate ) it creates a
+ *    manifest child, which uses the same code used to generate the
+ *    virtual manifest, saves the results inside itself, and creates a
+ *    non-updating hardlink to the approot to lock the manifest in place.
+ *
+ *    Then when user or sector is viewed from the manifest point of view,
+ *    it shows the current version if no different, or the locked version
+ *    with a graphical indication of the differences.
+ *
+ * The manifest display would always receive a complex.  The UI display is
+ * ignorant of whether it is virtual or real.
+ */
 
 export const Collapsed = Template.bind({})
 Collapsed.args = { expanded: false }
 export const Expanded = Template.bind({})
+export const Empty = Template.bind({})
+Empty.args = { complex: complex.setNetwork([]) }
 export const Published = Template.bind({})
 Published.args = {
-  state: { ...manifest.state, isPublished: true },
+  complex: complex.setState({
+    ...complex.state,
+    formData: { ...complex.state.formData, isPublished: true },
+  }),
 }
 export const Reconciled = Template.bind({})
 Reconciled.args = {
-  state: { ...manifest.state, isPublished: true, isReconciled: true },
-}
-export const WithRows = Template.bind({})
-WithRows.args = {
-  state: {
-    ...manifest.state,
-    isPublished: true,
-    isReconciled: true,
-    rows: [
-      {
-        id: '1234',
-      },
-    ],
-  },
+  complex: complex.setState({
+    ...complex.state,
+    formData: {
+      ...complex.state.formData,
+      isPublished: true,
+      isReconciled: true,
+    },
+  }),
 }

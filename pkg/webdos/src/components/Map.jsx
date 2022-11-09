@@ -180,7 +180,7 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
     background: 'black',
     zIndex: paintBelowAllOthers,
   }
-
+  // TODO make a div that comes after map that resets the positioning and stacking contexts
   return (
     <>
       <div id={mapId} style={mapBackgroundStyle}></div>

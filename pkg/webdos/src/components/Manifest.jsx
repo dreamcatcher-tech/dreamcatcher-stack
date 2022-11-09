@@ -8,8 +8,10 @@ import PropTypes from 'prop-types'
 import { Stack, Chip } from '@mui/material'
 import CancelIcon from '@mui/icons-material/Cancel'
 import DoneIcon from '@mui/icons-material/Done'
-
-import { CollectionList } from '.'
+import { api } from '@dreamcatcher-tech/interblock'
+import { InnerCollection } from '.'
+import Debug from 'debug'
+const debug = Debug('webdos:widgets:Manifest')
 const Status = ({ label, isPositive }) => {
   return (
     <Chip
@@ -25,25 +27,26 @@ Status.propTypes = {
   label: PropTypes.string.isRequired,
   isPositive: PropTypes.bool,
 }
-export default function Manifest({ expanded, state }) {
+export default function Manifest({ expanded, complex }) {
   // TODO assert the state is a small collection object
-  const { isPublished, isReconciled, template, rows } = state
+  const { isPublished, isReconciled, runDate } = complex.state.formData
+  debug(complex)
   return (
     <Accordion defaultExpanded={expanded}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction={'row'} spacing={1}>
-          <Typography>Manifest:</Typography>
+          <Typography>Manifest for {runDate}:</Typography>
           <Status label={'published'} isPositive={isPublished} />
           <Status label={'reconciled'} isPositive={isReconciled} />
         </Stack>
       </AccordionSummary>
       <AccordionDetails sx={{ height: '100%' }}>
-        <CollectionList {...{ template, rows }} />
+        <InnerCollection {...{ complex }} />
       </AccordionDetails>
     </Accordion>
   )
 }
 Manifest.propTypes = {
   expanded: PropTypes.bool,
-  state: PropTypes.object,
+  complex: PropTypes.instanceOf(api.Complex),
 }

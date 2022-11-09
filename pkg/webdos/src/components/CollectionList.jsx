@@ -32,6 +32,16 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
       id: child.path,
     }))
   }, [complex.network])
+  const fab = (
+    <Fab
+      color="primary"
+      style={addButtonStyle}
+      onClick={onAddCustomer}
+      disabled={isAdding}
+    >
+      <Add />
+    </Fab>
+  )
   return (
     <>
       <DataGridPremium
@@ -43,14 +53,7 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
         onRowClick={onRow}
         loading={isAdding || isLoading}
       />
-      <Fab
-        color="primary"
-        style={addButtonStyle}
-        onClick={onAddCustomer}
-        disabled={isAdding}
-      >
-        <Add />
-      </Fab>
+      {onAdd ? fab : null}
     </>
   )
 }

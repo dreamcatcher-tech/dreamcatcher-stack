@@ -1,5 +1,6 @@
 export * as crm from './crm'
 export * as dbSyncer from './dbSyncer'
 export * as sector from './sector'
-export * as manifest from './manifest'
+export * as schedule from './schedule'
 export { default as faker } from './faker'
+export * as utils from './utils'
