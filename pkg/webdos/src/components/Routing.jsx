@@ -25,7 +25,7 @@ const Routing = ({ complex }) => {
   const datum = sector ? <Datum complex={sector} /> : <NotSelected />
   return (
     <>
-      <Map {...{ onCreate, onEdit }}>
+      <Map {...{ onCreate, onEdit, complex }} showCustomers>
         <SectorSelector {...{ complex, selected, onSelected }} />
         {datum}
       </Map>

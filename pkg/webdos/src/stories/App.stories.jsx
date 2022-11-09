@@ -3,7 +3,7 @@ import { App } from '../components'
 import Debug from 'debug'
 const debug = Debug('App')
 import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps
+const { crm } = apps
 
 export default {
   title: 'App',
@@ -12,12 +12,12 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*App *Nav *Date')
-  debug('complex', faker)
+  debug('complex', crm.faker)
   const cd = (path) => {
     debug('cd', path)
     setComplex(complex.setWd(path))
   }
-  const [complex, setComplex] = React.useState(faker.addAction({ cd }))
+  const [complex, setComplex] = React.useState(crm.faker.addAction({ cd }))
   debug('render')
   return <App complex={complex} />
 }

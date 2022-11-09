@@ -2,7 +2,7 @@ import React from 'react'
 import { SectorDisplay } from '../components'
 import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-const { faker } = apps
+const { faker } = apps.crm
 const debug = Debug('SectorDisplay')
 
 export default {

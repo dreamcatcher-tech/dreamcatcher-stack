@@ -1,7 +1,13 @@
 import * as React from 'react'
 import { api } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
-import { Box, ListItemText, ListItem, ListItemButton } from '@mui/material'
+import {
+  Box,
+  ListItemText,
+  ListItem,
+  ListItemButton,
+  Typography,
+} from '@mui/material'
 import { FixedSizeList } from 'react-window'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import Debug from 'debug'
@@ -35,6 +41,12 @@ export default function Sorter({ complex, onSort }) {
       return { path: custNo, address }
     })
   }, [order, customers])
+  if (!items.length) {
+    items.push({
+      path: 0,
+      address: <Typography fontStyle={'italic'}>(No customers)</Typography>,
+    })
+  }
   return (
     <Box
       sx={{

@@ -3,7 +3,7 @@ import { SectorSelector } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('SectorSelector')
-const { faker } = apps
+const { faker } = apps.crm
 export default {
   title: 'SectorSelector',
   component: SectorSelector,

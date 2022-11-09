@@ -1,17 +1,13 @@
 import React from 'react'
 import { Nav } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps
+const { faker } = apps.crm
 import Debug from 'debug'
 const debug = Debug('Nav')
 
 export default {
   title: 'Nav',
   component: Nav,
-  parameters: {
-    // More on Story layout: https://storybook.js.org/docs/react/configure/story-layout
-    // layout: 'fullscreen',
-  },
 
   args: { complex: faker },
 }

@@ -3,14 +3,14 @@ import { within, userEvent } from '@storybook/testing-library'
 import { Box } from '@mui/material'
 import { Routing } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps
+const { crm } = apps
 import Debug from 'debug'
 
 export default {
   title: 'Routing',
   component: Routing,
   args: {
-    complex: faker.child('routing'),
+    complex: crm.faker.child('routing'),
   },
 }
 
@@ -23,5 +23,5 @@ const Template = (args) => {
 export const Basic = Template.bind({})
 export const Blank = Template.bind({})
 Blank.args = {
-  complex: faker.child('routing').setNetwork([]),
+  complex: crm.faker.child('routing').setNetwork([]),
 }

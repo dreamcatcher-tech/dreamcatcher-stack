@@ -41,13 +41,15 @@ const network = list.map((sector, index) => {
 })
 debug('pip complete')
 
+const actions = api.schemaToFunctions(apps.crm.dbSyncer.api)
+
 const complex = Complex.create({
   state: {},
   network: [
     { path: 'schedule', state: apps.crm.schedule.installer.state },
     { path: 'customers', ...customers },
     { path: 'routing', state: { formData }, network },
-    { path: 'settings', state: {} },
+    { path: 'settings', state: apps.crm.dbSyncer.state, actions },
     { path: 'about', state: {} },
     { path: 'account', state: {} },
   ],

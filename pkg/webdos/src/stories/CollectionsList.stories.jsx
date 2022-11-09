@@ -1,11 +1,11 @@
 import React from 'react'
 import { CollectionList } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps
+const { crm } = apps
 import Debug from 'debug'
 const debug = Debug('CollectionList')
 
-const complex = faker.child('customers')
+const complex = crm.faker.child('customers')
 export default {
   title: 'CollectionList',
   component: CollectionList,

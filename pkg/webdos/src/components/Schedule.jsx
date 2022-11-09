@@ -25,21 +25,20 @@ const Schedule = ({ complex, expandManifest }) => {
     // if so, cd into the directory
   }
   const manifest = utils.generateManifest(complex.tree, runDate)
+  const sectors = utils.sectorsOnDay(complex.tree, runDate)
   const [selected, onSelected] = React.useState()
-  const sector = manifest.hasChild(selected) ? manifest.child(selected) : null
-  if (!sector && manifest.network.length) {
-    onSelected(manifest.network[0].path)
+  const sector = sectors.hasChild(selected) ? sectors.child(selected) : null
+  if (!sector && sectors.network.length) {
+    onSelected(sectors.network[0].path)
   }
   return (
     <>
-      <Map complex={manifest} showCustomers>
+      <Map complex={sectors} showCustomers>
         <Grid container spacing={2}>
           <Grid item xs={5}>
             <Stack spacing={2}>
               <Date {...{ runDate, onDateChange }}></Date>
-              <SectorSelector
-                {...{ complex: manifest, selected, onSelected }}
-              />
+              <SectorSelector {...{ complex: sectors, selected, onSelected }} />
               <SectorDisplay complex={sector} />
             </Stack>
           </Grid>

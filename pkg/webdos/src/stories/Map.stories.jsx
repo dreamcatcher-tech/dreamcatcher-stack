@@ -3,7 +3,7 @@ import { Map } from '../components'
 import Debug from 'debug'
 import { Card, CardContent, Grid, Button } from '@mui/material'
 import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps
+const { faker } = apps.crm
 
 export default {
   title: 'Map',

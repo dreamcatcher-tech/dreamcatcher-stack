@@ -2,7 +2,7 @@ import React from 'react'
 import { Datum } from '../components'
 import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-const { faker } = apps
+const { faker } = apps.crm
 const debug = Debug('SectorDatum')
 
 export default {

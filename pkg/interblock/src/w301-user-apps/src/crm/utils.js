@@ -4,7 +4,7 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 const debug = Debug('crm:utils')
 
-export function isSectorOnDate(sector, commonDate, runDate) {
+function isSectorOnDate(sector, commonDate, runDate) {
   if (!commonDate) {
     return false
   }
@@ -18,8 +18,7 @@ function calcDiffInDays(startDate, endDate) {
   const diff = endMoment.diff(startMoment, 'days')
   return diff
 }
-
-export const generateManifest = (rootComplex, runDate) => {
+export const sectorsOnDay = (rootComplex, runDate) => {
   assert(rootComplex instanceof Complex, 'rootComplex must be a Complex')
   assert.strictEqual(typeof runDate, 'string', 'runDate must be a string')
   const routing = rootComplex.child('routing')
@@ -27,10 +26,18 @@ export const generateManifest = (rootComplex, runDate) => {
   const network = routing.network.filter(({ state: { formData: sector } }) =>
     isSectorOnDate(sector, commonDate, runDate)
   )
+  // TODO modify the order to have only customers for this day
+  return routing.setNetwork(network)
+}
+
+export const generateManifest = (rootComplex, runDate) => {
+  assert(rootComplex instanceof Complex, 'rootComplex must be a Complex')
+  assert.strictEqual(typeof runDate, 'string', 'runDate must be a string')
+  const routing = rootComplex.child('routing')
+  const onDay = sectorsOnDay(rootComplex, runDate)
   const schedule = rootComplex.child('schedule')
   const { state } = schedule
-  const { template } = state
-  const rows = network.map(({ state: { formData: sector } }) => {
+  const rows = onDay.network.map(({ state: { formData: sector } }) => {
     const { order } = sector
     const row = order.map((path) => {
       const { state } = rootComplex.child('customers').child(path)
