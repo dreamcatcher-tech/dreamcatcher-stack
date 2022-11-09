@@ -79,7 +79,7 @@
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.8.3",
     "storybook": "^7.0.0-alpha.48",
-    "vite": "3.2.3"
+    "vite": "^3.2.3"
   },
   "repository": {
     "type": "git",

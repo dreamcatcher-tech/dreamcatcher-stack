@@ -181,22 +181,7 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
     zIndex: paintBelowAllOthers,
   }
   // TODO make a div that comes after map that resets the positioning and stacking contexts
-  return (
-    <>
-      <div id={mapId} style={mapBackgroundStyle}></div>
-      <Box
-        sx={{
-          zIndex: 1000,
-          position: 'relative',
-          // width: 'min-content',
-          // height: '100%',
-          // flex: 1,
-        }}
-      >
-        {children}
-      </Box>
-    </>
-  )
+  return <div id={mapId} style={mapBackgroundStyle}></div>
 }
 Map.propTypes = {
   children: PropTypes.node,

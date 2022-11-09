@@ -51,33 +51,47 @@ export const OverDraw = (args) => {
     </>
   )
 }
+
+const GlassContainer = ({ children }) => (
+  <Grid
+    container
+    sx={{ zIndex: 1, position: 'relative', pointerEvents: 'none' }}
+  >
+    {children}
+  </Grid>
+)
+
+const GlassLeft = ({ children }) => (
+  <Grid padding={3} item sx={{ pointerEvents: 'auto' }}>
+    {children}
+  </Grid>
+)
+
 export const CardOverDraw = (args) => {
   return (
     <>
-      <Map>
-        <Grid container>
-          <Grid padding={3} item>
-            <Card>
-              <CardContent>This content should appear over the Map</CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Map>
+      <GlassContainer>
+        <GlassLeft>
+          <Card>
+            <CardContent>This content should appear over the Map</CardContent>
+          </Card>
+        </GlassLeft>
+      </GlassContainer>
+      <Map />
     </>
   )
 }
 export const CardColumn = (args) => {
   return (
     <>
-      <Map>
-        <Grid container>
-          <Grid padding={3} item>
-            <Card style={{ minHeight: '200px' }}>
-              <CardContent>Right hand side is draggable</CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Map>
+      <Map />
+      <GlassContainer>
+        <GlassLeft>
+          <Card style={{ minHeight: '200px' }}>
+            <CardContent>Right hand side is draggable</CardContent>
+          </Card>
+        </GlassLeft>
+      </GlassContainer>
     </>
   )
 }
