@@ -12,7 +12,7 @@
     "build": "vite build",
     "serve": "vite preview --host 0.0.0.0",
     "storybook": "storybook dev -p 6008",
-    "build-storybook": "storybook build",
+    "build-storybook": "NODE_OPTIONS='--max-old-space-size=8192' storybook build",
     "chromatic": "chromatic --exit-zero-on-changes"
   },
   "dependencies": {
