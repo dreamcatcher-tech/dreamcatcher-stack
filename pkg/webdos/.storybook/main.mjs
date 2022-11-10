@@ -25,6 +25,8 @@ export default {
       build: {
         ...config.build,
         target: 'es2020',
+        minify: false,
+        sourcemap: false,
       },
     }
     return nextConfig

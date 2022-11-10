@@ -50,6 +50,8 @@ const config = {
       plugins: [visualizer({ filename: './dist/vis.html' })],
       // external: Object.keys(deps),
     },
+    minify: false,
+    sourcemap: false,
   },
   server: {},
   clearScreen: false,

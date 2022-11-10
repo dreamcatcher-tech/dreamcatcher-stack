@@ -10,6 +10,7 @@ export default {
   component: App,
 }
 
+const base = crm.faker(200)
 const Template = (args) => {
   Debug.enable('*App *Nav *Date')
   debug('complex', crm.faker)
@@ -17,7 +18,7 @@ const Template = (args) => {
     debug('cd', path)
     setComplex(complex.setWd(path))
   }
-  const [complex, setComplex] = React.useState(crm.faker.addAction({ cd }))
+  const [complex, setComplex] = React.useState(base.addAction({ cd }))
   debug('render')
   return <App complex={complex} />
 }
