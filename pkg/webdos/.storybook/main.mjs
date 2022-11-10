@@ -11,7 +11,7 @@ export default {
   },
   features: {
     interactionsDebugger: true, // 👈 Enable playback controls
-    // storyStoreV7: true, // lazy load each story
+    storyStoreV7: true, // lazy load each story
   },
   async viteFinal(config) {
     const nextConfig = {
@@ -25,6 +25,8 @@ export default {
       build: {
         ...config.build,
         target: 'es2020',
+        sourcemap: false,
+        minify: false,
       },
     }
     return nextConfig
