@@ -3441,7 +3441,7 @@
     prop-types "^15.8.1"
     react-is "^18.2.0"
 
-"@mui/x-data-grid-premium@^5.17.10":
+"@mui/x-data-grid-premium@^5.17.11":
   version "5.17.11"
   resolved "https://registry.yarnpkg.com/@mui/x-data-grid-premium/-/x-data-grid-premium-5.17.11.tgz#27bd98b814c3c646b658b11498e2952dc183779b"
   integrity sha512-FLCNijY5f75XcWdGL6ZhMC8SOvV0fDjpvy2UVljBiThk31dyeVye44Qk2/4nEEXMV1gmb9OR5nGqdj7DYoM8xQ==
@@ -3482,7 +3482,7 @@
     prop-types "^15.8.1"
     reselect "^4.1.6"
 
-"@mui/x-date-pickers@^5.0.7":
+"@mui/x-date-pickers@^5.0.8":
   version "5.0.8"
   resolved "https://registry.yarnpkg.com/@mui/x-date-pickers/-/x-date-pickers-5.0.8.tgz#984018a28bf1d51bc2116e2f664cdd4b21f0f550"
   integrity sha512-L+9WOyoxIPxj86dk4G/zyVsiakQjBX0MJTIPMNSRitxFi4I6T8KlasdpGUHfnni/EAjqR36w0d/BDwCjc/7gPQ==
