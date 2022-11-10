@@ -3,7 +3,7 @@ import { apps } from '@dreamcatcher-tech/interblock'
 import { Datum } from '..'
 import Debug from 'debug'
 Debug.enable('*Datum')
-const complex = apps.crm.faker.child('settings')
+const complex = apps.crm.faker().child('settings')
 export default {
   title: 'DbSync',
   component: Datum,

@@ -10,7 +10,7 @@ export default {
 
   args: {
     expanded: true,
-    complex: faker.child('routing'),
+    complex: faker().child('routing'),
   },
 }
 

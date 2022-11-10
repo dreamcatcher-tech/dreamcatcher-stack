@@ -10,7 +10,7 @@ export default {
   component: Datum,
 
   args: {
-    complex: faker.child('routing').child('0'),
+    complex: faker().child('routing').child('0'),
   },
 }
 

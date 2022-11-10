@@ -4,8 +4,7 @@ import { apps } from '@dreamcatcher-tech/interblock'
 import { Datum } from '..'
 import assert from 'assert-fast'
 const { crm } = apps
-const customers = crm.faker.child('customers')
-assert(customers.child(customers.network[0].path))
+const customers = crm.faker().child('customers')
 export default {
   title: 'Datum',
   component: Datum,

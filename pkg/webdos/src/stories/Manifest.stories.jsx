@@ -4,7 +4,7 @@ import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { crm } = apps
 const runDate = '2022-11-09'
-const complex = crm.utils.generateManifest(crm.faker, runDate)
+const complex = crm.utils.generateManifest(crm.faker(), runDate)
 
 export default {
   title: 'Manifest',

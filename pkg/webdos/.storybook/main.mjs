@@ -11,7 +11,7 @@ export default {
   },
   features: {
     interactionsDebugger: true, // 👈 Enable playback controls
-    storyStoreV7: true, // lazy load each story
+    // storyStoreV7: true, // lazy load each story
   },
   async viteFinal(config) {
     const nextConfig = {
@@ -31,19 +31,19 @@ export default {
           output: {
             manualChunks: (id) => {
               // makes build-storybook work again
-              if (id.includes('pkg/webdos/src/')) {
-                return 'webdos'
-              }
-              if (id.includes('pkg/interblock/src/')) {
-                return 'interblock'
-              }
-              if (id.includes('@mui')) {
-                console.log(id)
-                return 'mui'
-              }
-              if (id.includes('faker')) {
-                return 'faker'
-              }
+              // if (id.includes('pkg/webdos/src/')) {
+              //   return 'webdos'
+              // }
+              // if (id.includes('pkg/interblock/src/')) {
+              //   return 'interblock'
+              // }
+              // if (id.includes('@mui')) {
+              //   console.log(id)
+              //   return 'mui'
+              // }
+              // if (id.includes('faker')) {
+              //   return 'faker'
+              // }
               return 'vendor'
             },
           },

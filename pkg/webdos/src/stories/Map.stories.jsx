@@ -105,12 +105,12 @@ NoPolygons.args = {
 export const Polygons = Template.bind({})
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 Polygons.args = {
-  complex: faker.child('routing'),
+  complex: faker().child('routing'),
   customers: false,
 }
 
 export const Customers = Template.bind({})
 Customers.args = {
-  complex: faker.child('routing'),
+  complex: faker().child('routing'),
   showCustomers: true,
 }

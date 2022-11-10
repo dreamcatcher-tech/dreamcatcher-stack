@@ -9,7 +9,7 @@ export default {
   title: 'Nav',
   component: Nav,
 
-  args: { complex: faker },
+  args: { complex: faker() },
 }
 
 const Template = (args) => {
@@ -27,9 +27,9 @@ const Template = (args) => {
 export const Basic = Template.bind({})
 
 export const Selection = Template.bind({})
-Selection.args = { complex: faker.setWd('/customers') }
+Selection.args = { complex: faker().setWd('/customers') }
 
 export const NoSettings = Template.bind({})
 NoSettings.args = {
-  complex: faker.rm('settings'),
+  complex: faker().rm('settings'),
 }

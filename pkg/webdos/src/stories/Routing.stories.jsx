@@ -9,7 +9,7 @@ export default {
   title: 'Routing',
   component: Routing,
   args: {
-    complex: crm.faker.child('routing'),
+    complex: crm.faker().child('routing'),
   },
 }
 
@@ -22,5 +22,5 @@ const Template = (args) => {
 export const Basic = Template.bind({})
 export const Blank = Template.bind({})
 Blank.args = {
-  complex: crm.faker.child('routing').setNetwork([]),
+  complex: crm.faker().child('routing').setNetwork([]),
 }

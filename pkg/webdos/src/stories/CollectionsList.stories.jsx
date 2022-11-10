@@ -5,7 +5,7 @@ const { crm } = apps
 import Debug from 'debug'
 const debug = Debug('CollectionList')
 
-const complex = crm.faker.child('customers')
+const complex = crm.faker().child('customers')
 export default {
   title: 'CollectionList',
   component: CollectionList,

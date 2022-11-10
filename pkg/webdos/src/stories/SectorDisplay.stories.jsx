@@ -10,7 +10,7 @@ export default {
   component: SectorDisplay,
 
   args: {
-    complex: faker.child('routing').child('0'),
+    complex: faker().child('routing').child('0'),
   },
 }
 
