@@ -1,6 +1,6 @@
-import { DialogTitle } from '@mui/material'
-import { Dialog } from '@mui/material'
-import { DialogContent } from '@mui/material'
+import DialogTitle from '@mui/material/DialogTitle'
+import Dialog from '@mui/material/Dialog'
+import DialogContent from '@mui/material/DialogContent'
 import React from 'react'
 import Debug from 'debug'
 

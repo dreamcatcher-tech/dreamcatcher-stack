@@ -1,4 +1,4 @@
-import { Box } from '@mui/system'
+import Box from '@mui/system/Box'
 import { api } from '@dreamcatcher-tech/interblock'
 import React from 'react'
 import { Nav, Schedule, CollectionList, Routing } from '.'

@@ -2,11 +2,11 @@ import React, { useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
 import calculateSize from 'calculate-size'
 import { api } from '@dreamcatcher-tech/interblock'
-import { DataGridPremium } from '@mui/x-data-grid-premium'
+import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium'
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { Fab } from '@mui/material'
-import { Add } from '@mui/icons-material'
+import Fab from '@mui/material/Fab'
+import Add from '@mui/icons-material/Add'
 
 const debug = Debug('terminal:widgets:CollectionList')
 

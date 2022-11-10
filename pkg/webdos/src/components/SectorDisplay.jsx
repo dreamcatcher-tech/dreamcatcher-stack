@@ -5,7 +5,7 @@ import Card from '@mui/material/Card'
 import CardActions from '@mui/material/CardActions'
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
-import { Typography } from '@mui/material'
+import Typography from '@mui/material/Typography'
 import { Sorter } from '.'
 export default function SectorDisplay({ complex }) {
   if (!complex) {

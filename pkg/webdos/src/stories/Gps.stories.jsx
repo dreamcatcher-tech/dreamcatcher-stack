@@ -2,7 +2,6 @@ import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
 import { Gps } from '..'
 import Debug from 'debug'
-import { Button } from '@mui/material'
 Debug.enable('*Map')
 
 export default {

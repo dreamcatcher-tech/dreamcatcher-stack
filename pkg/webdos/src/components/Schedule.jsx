@@ -9,7 +9,8 @@ import {
   SectorSelector,
   SectorDisplay,
 } from '.'
-import { Grid, Card, CardContent, Stack } from '@mui/material'
+import Grid from '@mui/material/Grid'
+import Stack from '@mui/material/Stack'
 import { Date } from '.'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'

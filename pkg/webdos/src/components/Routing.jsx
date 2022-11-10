@@ -3,7 +3,10 @@ import Debug from 'debug'
 import * as React from 'react'
 import PropTypes from 'prop-types'
 import { Map, RoutingSpeedDial, SectorSelector, Datum } from '.'
-import { Card, CardHeader, CardContent, Typography } from '@mui/material'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
 
 const debug = Debug('terminal:widgets:Routing')
 

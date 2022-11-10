@@ -1,7 +1,10 @@
 import React from 'react'
 import { Map } from '..'
 import Debug from 'debug'
-import { Card, CardContent, Grid, Button } from '@mui/material'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Grid from '@mui/material/Grid'
+import Button from '@mui/material/Button'
 import { apps } from '@dreamcatcher-tech/interblock'
 const { faker } = apps.crm
 

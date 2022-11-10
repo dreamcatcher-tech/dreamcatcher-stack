@@ -1,13 +1,12 @@
 import * as React from 'react'
 import { api } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
-import {
-  Box,
-  ListItemText,
-  ListItem,
-  ListItemButton,
-  Typography,
-} from '@mui/material'
+import Box from '@mui/material/Box'
+import ListItemText from '@mui/material/ListItemText'
+import ListItem from '@mui/material/ListItem'
+import ListItemButton from '@mui/material/ListItemButton'
+import Typography from '@mui/material/Typography'
+
 import { FixedSizeList } from 'react-window'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import Debug from 'debug'

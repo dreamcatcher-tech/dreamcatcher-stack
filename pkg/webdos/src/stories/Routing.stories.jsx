@@ -1,6 +1,5 @@
 import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
-import { Box } from '@mui/material'
 import { Routing } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 const { crm } = apps

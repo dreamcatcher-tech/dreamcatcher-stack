@@ -28,10 +28,24 @@ export default {
         sourcemap: false,
         minify: false,
         rollupOptions: {
-          manualChunks: (id) => {
-            // makes build-storybook work again
-            console.log('id', id)
-            return 'nope'
+          output: {
+            manualChunks: (id) => {
+              // makes build-storybook work again
+              if (id.includes('pkg/webdos/src/')) {
+                return 'webdos'
+              }
+              if (id.includes('pkg/interblock/src/')) {
+                return 'interblock'
+              }
+              if (id.includes('@mui')) {
+                console.log(id)
+                return 'mui'
+              }
+              if (id.includes('faker')) {
+                return 'faker'
+              }
+              return 'vendor'
+            },
           },
         },
       },
