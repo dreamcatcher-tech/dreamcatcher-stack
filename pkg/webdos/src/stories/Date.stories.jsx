@@ -3,7 +3,7 @@ import React from 'react'
 import { useState } from 'react'
 import { within, userEvent } from '@storybook/testing-library'
 import Debug from 'debug'
-import { Date } from '../components'
+import { Date } from '..'
 import PropTypes from 'prop-types'
 
 export default {

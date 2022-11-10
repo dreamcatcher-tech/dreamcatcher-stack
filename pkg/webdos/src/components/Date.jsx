@@ -12,7 +12,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Typography from '@mui/material/Typography'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import { useEffect } from 'react'
 const debug = Debug('webdos:Date')
 
 export default function Date({ runDate, onDateChange, expanded }) {

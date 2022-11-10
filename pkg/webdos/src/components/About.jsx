@@ -1,7 +1,6 @@
 import React from 'react'
 import Debug from 'debug'
-import OpenDialog from './OpenDialog'
-import { useRouter } from '../hooks'
+import { OpenDialog } from '.'
 
 const debug = Debug('terminal:widgets:About')
 debug(`loaded`)

@@ -1,6 +1,6 @@
 import React from 'react'
 import { system, api } from '@dreamcatcher-tech/interblock'
-import { Actions } from '../components'
+import { Actions } from '..'
 import Debug from 'debug'
 Debug.enable('*Actions')
 const { shell } = system

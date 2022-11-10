@@ -1,5 +1,5 @@
 import React from 'react'
-import { App } from '../components'
+import { App } from '..'
 import Debug from 'debug'
 const debug = Debug('App')
 import { apps } from '@dreamcatcher-tech/interblock'

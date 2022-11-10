@@ -1,5 +1,5 @@
 import React from 'react'
-import { Map } from '../components'
+import { Map } from '..'
 import Debug from 'debug'
 import { Card, CardContent, Grid, Button } from '@mui/material'
 import { apps } from '@dreamcatcher-tech/interblock'

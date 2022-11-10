@@ -1,5 +1,5 @@
 import React from 'react'
-import { Nav } from '../components'
+import { Nav } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 const { faker } = apps.crm
 import Debug from 'debug'

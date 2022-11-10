@@ -1,6 +1,5 @@
 import React, { useEffect, useId, useState } from 'react'
 import { api } from '@dreamcatcher-tech/interblock'
-import { Grid, Stack, Box } from '@mui/material'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'

@@ -3,8 +3,6 @@ import { Dialog } from '@mui/material'
 import { DialogContent } from '@mui/material'
 import React from 'react'
 import Debug from 'debug'
-import { useAppContainer } from '../hooks'
-import process from 'process'
 
 const debug = Debug('terminal:widgets:OpenDialog')
 debug(`loaded`)
