@@ -1,5 +1,5 @@
 import React from 'react'
-import { ScheduleSpeedDial } from '../components'
+import { ScheduleSpeedDial } from '..'
 import Debug from 'debug'
 const debug = Debug('ScheduleSpeedDial')
 

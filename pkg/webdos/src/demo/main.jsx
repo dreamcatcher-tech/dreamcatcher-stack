@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom/client'
 import Debug from 'debug'
 const debug = Debug('client:tests:App')
 
-import Demo from './App'
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Demo />

@@ -1,5 +1,5 @@
 import React from 'react'
-import { RoutingSpeedDial } from '../components'
+import { RoutingSpeedDial } from '..'
 import Debug from 'debug'
 const debug = Debug('RoutingSpeedDial')
 

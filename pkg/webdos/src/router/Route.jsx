@@ -2,7 +2,6 @@ import assert from 'assert-fast'
 import posix from 'path-browserify'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import { useRouter, useBlockchain, usePathBlockstream } from '../hooks'
 import RouterContext from './RouterContext'
 import React from 'react'
 

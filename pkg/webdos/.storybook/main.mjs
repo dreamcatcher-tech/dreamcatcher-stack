@@ -27,6 +27,13 @@ export default {
         target: 'es2020',
         sourcemap: false,
         minify: false,
+        rollupOptions: {
+          manualChunks: (id) => {
+            // makes build-storybook work again
+            console.log('id', id)
+            return 'nope'
+          },
+        },
       },
     }
     return nextConfig

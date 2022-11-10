@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import { Route, useBlockchain, usePathBlockstream } from '..'
 import assert from 'assert-fast'
 import RouterContext from './RouterContext'
 

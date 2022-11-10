@@ -1,6 +1,6 @@
 import React from 'react'
 import { apps } from '@dreamcatcher-tech/interblock'
-import { Schedule } from '../components'
+import { Schedule } from '..'
 import Debug from 'debug'
 const { crm } = apps
 

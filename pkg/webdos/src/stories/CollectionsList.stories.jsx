@@ -1,5 +1,5 @@
 import React from 'react'
-import { CollectionList } from '../components'
+import { CollectionList } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 const { crm } = apps
 import Debug from 'debug'

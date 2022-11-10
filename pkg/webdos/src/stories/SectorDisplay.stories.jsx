@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectorDisplay } from '../components'
+import { SectorDisplay } from '..'
 import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { faker } = apps.crm

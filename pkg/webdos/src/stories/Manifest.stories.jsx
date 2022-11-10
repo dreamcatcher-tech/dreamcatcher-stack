@@ -1,5 +1,5 @@
 import React from 'react'
-import { Manifest } from '../components'
+import { Manifest } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { crm } = apps

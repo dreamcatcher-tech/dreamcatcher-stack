@@ -1,7 +1,7 @@
 import React from 'react'
 import { apps } from '@dreamcatcher-tech/interblock'
 const { faker } = apps.crm
-import { Sorter } from '../components'
+import { Sorter } from '..'
 const complex = faker.child('routing').child('13')
 console.log(complex)
 export default {

@@ -1,10 +1,6 @@
 import React from 'react'
 import Debug from 'debug'
-import Explorer from './Explorer'
-import { getNextPath } from '../utils'
-import OpenDialog from './OpenDialog'
-import Datum from './Datum'
-import { useRouter } from '../hooks'
+import { OpenDialog, Datum } from '.'
 import assert from 'assert-fast'
 
 const debug = Debug('webdos:widgets:DialogDatum')

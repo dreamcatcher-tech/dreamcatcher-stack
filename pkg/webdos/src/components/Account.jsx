@@ -1,8 +1,6 @@
 import React from 'react'
 import Debug from 'debug'
-import { useRouter } from '../hooks'
-import OpenDialog from './OpenDialog'
-import Datum from './Datum'
+import { OpenDialog, Datum } from '.'
 const debug = Debug('terminal:widgets:Account')
 
 const Account = () => {

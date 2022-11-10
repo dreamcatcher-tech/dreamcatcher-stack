@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectorSelector } from '../components'
+import { SectorSelector } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('SectorSelector')

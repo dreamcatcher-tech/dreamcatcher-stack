@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { default as useBlockchain } from './useBlockchain'
 import debugFactory from 'debug'
 const debug = debugFactory(`webdos:hooks:useNavigation`)
 

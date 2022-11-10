@@ -1,5 +1,5 @@
 import React from 'react'
-import { Datum } from '../components'
+import { Datum } from '..'
 import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { faker } = apps.crm

@@ -1,6 +1,6 @@
 import React from 'react'
 import { apps } from '@dreamcatcher-tech/interblock'
-import { Datum } from '../components'
+import { Datum } from '..'
 import Debug from 'debug'
 Debug.enable('*Datum')
 const complex = apps.crm.faker.child('settings')

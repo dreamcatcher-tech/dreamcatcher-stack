@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
-import OpenDialog from './OpenDialog'
+import { OpenDialog } from '.'
 import Form from '@rjsf/mui'
-import { useRouter, useBlockchain } from '../hooks'
 import process from 'process'
 import Debug from 'debug'
 const debug = Debug('terminal:widgets:Settings')

@@ -1,7 +1,7 @@
 import React from 'react'
 import { within, userEvent } from '@storybook/testing-library'
 import { apps } from '@dreamcatcher-tech/interblock'
-import { Datum } from '../components'
+import { Datum } from '..'
 import assert from 'assert-fast'
 const { crm } = apps
 const customers = crm.faker.child('customers')
