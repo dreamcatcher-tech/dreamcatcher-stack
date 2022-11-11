@@ -1,4 +1,4 @@
-import { deleteAsync } from 'del'
+import rimraf from 'rimraf'
 import { createRamRepo } from '../../w305-libp2p'
 import Debug from 'debug'
 import { Interpulse } from '..'
@@ -46,7 +46,7 @@ describe('reload', () => {
       expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
     } finally {
       debug(`deleting ${repo}`)
-      await deleteAsync(repo)
+      rimraf.sync(repo)
       debug(`deleted ${repo}`)
     }
   }, 4000)

@@ -130,11 +130,6 @@ export const installer = {
           },
         },
       },
-      network: {
-        sync: {
-          covenant: 'dbSyncer',
-        },
-      },
     },
     about: {
       covenant: 'datum',

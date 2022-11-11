@@ -33,7 +33,7 @@ const hotPing = async () => {
 const publish = async () => {
   const engine = await Interpulse.createCI()
   const { crm } = apps
-  const { path } = await engine.publish('dpkgCrm', crm)
+  const { path } = await engine.publish('dpkgCrm', crm.covenant)
   assert.strictEqual(path, '/dpkgCrm')
   return engine
 }

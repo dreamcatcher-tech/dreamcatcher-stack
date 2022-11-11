@@ -1,15 +1,16 @@
 import Debug from 'debug'
 const debug = Debug('test')
-Debug.enable('test faker*')
 describe('complex', () => {
   it('generates customer data', async () => {
-    const { customers } = await import('./faker/customers')
+    const { generateCustomers } = await import('./faker/customers')
+    const customers = generateCustomers(29)
+    expect(customers.network.length).toEqual(29)
   })
-  it.only('calculates sector memberships', async () => {
+  it('calculates sector memberships', async () => {
     debug('start')
     const { default: faker } = await import('./faker')
     debug('loaded faker')
-    const routing = faker.child('routing')
+    const routing = faker(100).child('routing')
     debug('created routing child')
     let orderCount = 0
     for (const sector of routing.network) {

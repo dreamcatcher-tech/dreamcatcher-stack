@@ -1,7 +1,7 @@
 import { createLibp2p } from 'libp2p'
-import { TCP } from '@libp2p/tcp'
-import { Mplex } from '@libp2p/mplex'
-import { Noise } from '@chainsafe/libp2p-noise'
+import { tcp } from '@libp2p/tcp'
+import { mplex } from '@libp2p/mplex'
+import { noise } from '@chainsafe/libp2p-noise'
 import { Announcer } from '..'
 import Debug from 'debug'
 import { Address, PulseLink } from '../../w008-ipld'
@@ -13,9 +13,9 @@ const createNode = async () => {
     addresses: {
       listen: ['/ip4/127.0.0.1/tcp/0'],
     },
-    transports: [new TCP()],
-    streamMuxers: [new Mplex()],
-    connectionEncryption: [new Noise()],
+    transports: [new tcp()],
+    streamMuxers: [new mplex()],
+    connectionEncryption: [new noise()],
   })
   await node.start()
   return node

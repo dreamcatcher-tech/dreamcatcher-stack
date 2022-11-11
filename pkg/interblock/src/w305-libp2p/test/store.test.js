@@ -1,4 +1,4 @@
-import { deleteAsync } from 'del'
+import rimraf from 'rimraf'
 import { createRepo } from 'ipfs-repo'
 import { createBackend } from '../src/createBackend'
 import { loadCodec } from '../src/loadCodec'
@@ -51,7 +51,7 @@ describe('store', () => {
       await reload.stop()
     } finally {
       debug(`deleting ${path}`)
-      await deleteAsync(path)
+      rimraf.sync(path)
       debug(`deleted ${path}`)
     }
   })

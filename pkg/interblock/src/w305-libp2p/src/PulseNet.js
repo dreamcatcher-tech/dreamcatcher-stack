@@ -7,9 +7,9 @@ import { createBackend } from '../src/createBackend'
 import assert from 'assert-fast'
 import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
 import { createLibp2p } from 'libp2p'
-import { Mplex } from '@libp2p/mplex'
-import { Noise } from '@chainsafe/libp2p-noise'
-import { WebSockets } from '@libp2p/websockets'
+import { mplex } from '@libp2p/mplex'
+import { noise } from '@chainsafe/libp2p-noise'
+import { webSockets } from '@libp2p/websockets'
 import { isMultiaddr, multiaddr as fromString } from '@multiformats/multiaddr'
 import { CID } from 'multiformats/cid'
 import { decode } from '../../w008-ipld'
@@ -50,8 +50,8 @@ export class PulseNet {
     const baseOptions = libp2pConfig()
     const options = {
       ...baseOptions,
-      streamMuxers: [new Mplex()],
-      connectionEncryption: [new Noise()],
+      streamMuxers: [new mplex()],
+      connectionEncryption: [new noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
     }
     const websocketsOptions = {}
@@ -69,7 +69,7 @@ export class PulseNet {
       }
       options.addresses = { listen }
     }
-    options.transports = [new WebSockets(websocketsOptions)]
+    options.transports = [new webSockets(websocketsOptions)]
 
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)

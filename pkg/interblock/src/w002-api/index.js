@@ -57,6 +57,6 @@ export const isSystemAction = (request) => {
   return Request.SYSTEM_TYPES.includes(request.type)
 }
 
-export { schemaToFunctions } from './schemaToFunctions'
+export { schemaToFunctions } from './src/schemaToFunctions'
 
-export { default as Complex } from './Complex'
+export { default as Complex } from './src/Complex'

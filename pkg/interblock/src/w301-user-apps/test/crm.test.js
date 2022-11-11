@@ -5,7 +5,9 @@ import Debug from 'debug'
 const debug = Debug('tests')
 
 const serverFactory = async ({ customerCount = 10 } = {}) => {
-  const server = await Interpulse.createCI({ overloads: { '/crm': crm } })
+  const server = await Interpulse.createCI({
+    overloads: { '/crm': crm.covenant },
+  })
   await server.add('crm', { covenant: '/crm' })
   const crmActions = await server.actions('/crm/customers')
   const awaits = []
@@ -24,7 +26,7 @@ describe('crm', () => {
     test('deploys app', async () => {
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
-      const { path } = await engine.publish('dpkgCrm', crm)
+      const { path } = await engine.publish('dpkgCrm', crm.covenant)
       assert.strictEqual(path, '/dpkgCrm')
       const installStart = Date.now()
       const latest = await engine.latest('/dpkgCrm')
@@ -39,11 +41,11 @@ describe('crm', () => {
       const pulseRate = Math.floor(testTime / engine.logger.pulseCount)
       debug(`pulserate: ${pulseRate}ms per block`)
 
-      const exceptions = await engine.latest('/crm/schedule/exceptions')
+      const exceptions = await engine.current('/crm/schedule/modifications')
       assert(exceptions.getState().toJS().datumTemplate)
       const about = await engine.latest('/crm/about')
       const aboutState = about.getState().toJS()
-      expect(aboutState).toEqual(crm.installer.network.about.state)
+      expect(aboutState).toEqual(crm.covenant.installer.network.about.state)
 
       const crmActions = await engine.actions('/crm/customers')
       const add1Start = Date.now()
@@ -60,11 +62,12 @@ describe('crm', () => {
       debug(`add 2 pulse count: ${lastPulseCount - add2PulseCount}`)
     })
     test('can only add customer if provide valid data', async () => {
-      const engine = await Interpulse.createCI()
-      await engine.add('app', 'crm')
+      const engine = await Interpulse.createCI({
+        overloads: { '/crm': crm.covenant },
+      })
+      await engine.add('app', '/crm')
       const actions = await engine.actions('/app/customers')
       await engine.ping('/app/customers')
-      Debug.enable('iplog tests')
       const result = await actions.add({
         formData: { custNo: 1234, name: 'test1' },
       })
@@ -73,7 +76,9 @@ describe('crm', () => {
   })
   describe('list customers', () => {
     test('list customers basic', async () => {
-      const engine = await Interpulse.createCI({ overloads: { '/crm': crm } })
+      const engine = await Interpulse.createCI({
+        overloads: { '/crm': crm.covenant },
+      })
       await engine.add('crm', { covenant: '/crm' })
       const crmActions = await engine.actions('/crm/customers')
       const newCustomer = await crmActions.add({
