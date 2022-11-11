@@ -2,7 +2,6 @@ import { api } from '@dreamcatcher-tech/interblock'
 import * as React from 'react'
 import PropTypes from 'prop-types'
 import Card from '@mui/material/Card'
-import CardActions from '@mui/material/CardActions'
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
 import Typography from '@mui/material/Typography'
@@ -14,7 +13,7 @@ export default function SectorDisplay({ complex }) {
   const { formData } = complex.state
   const { name, frequencyInDays, frequencyOffset } = formData
   return (
-    <Card sx={{ minWidth: 275 }}>
+    <Card>
       <CardHeader title={'Sector: ' + name} />
       <CardContent>
         <Typography>Frequency in Days: {frequencyInDays}</Typography>

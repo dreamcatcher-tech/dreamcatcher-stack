@@ -52,40 +52,36 @@ const Datum = ({ complex }) => {
   // TODO strip out the datum standard actions
 
   return (
-    <Grid container spacing={3}>
-      <Grid item>
-        <Card sx={{ maxWidth: 345 }}>
-          <CardHeader
-            title={title}
-            action={
-              <>
-                <IconButton aria-label="edit">
-                  <Edit color="primary" />
-                </IconButton>
-                <IconButton aria-label="save">
-                  <Save color="primary" />
-                </IconButton>
-                <IconButton aria-label="cancel">
-                  <Cancel color="secondary" />
-                </IconButton>
-              </>
-            }
-          />
-          <CardContent>
-            <Form
-              validator={validator}
-              disabled={isPending}
-              schema={noTitleSchema}
-              uiSchema={uiSchema}
-              formData={liveFormData}
-              onBlur={onBlur}
-              onChange={onChange}
-            />
-            <Actions actions={complex.actions}></Actions>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
+    <Card>
+      <CardHeader
+        title={title}
+        action={
+          <>
+            <IconButton aria-label="edit">
+              <Edit color="primary" />
+            </IconButton>
+            <IconButton aria-label="save">
+              <Save color="primary" />
+            </IconButton>
+            <IconButton aria-label="cancel">
+              <Cancel color="secondary" />
+            </IconButton>
+          </>
+        }
+      />
+      <CardContent>
+        <Form
+          validator={validator}
+          disabled={isPending}
+          schema={noTitleSchema}
+          uiSchema={uiSchema}
+          formData={liveFormData}
+          onBlur={onBlur}
+          onChange={onChange}
+        />
+        <Actions actions={complex.actions}></Actions>
+      </CardContent>
+    </Card>
   )
 }
 Datum.propTypes = { complex: PropTypes.instanceOf(api.Complex).isRequired }

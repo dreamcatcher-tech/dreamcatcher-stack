@@ -8,9 +8,8 @@ import {
   Manifest,
   SectorSelector,
   SectorDisplay,
+  Glass,
 } from '.'
-import Grid from '@mui/material/Grid'
-import Stack from '@mui/material/Stack'
 import { Date } from '.'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
@@ -34,20 +33,17 @@ const Schedule = ({ complex, expandManifest }) => {
   }
   return (
     <>
-      <Map complex={sectors} showCustomers>
-        <Grid container spacing={2}>
-          <Grid item xs={5}>
-            <Stack spacing={2}>
-              <Date {...{ runDate, onDateChange }}></Date>
-              <SectorSelector {...{ complex: sectors, selected, onSelected }} />
-              <SectorDisplay complex={sector} />
-            </Stack>
-          </Grid>
-          <Grid item xs={7}>
-            <Manifest complex={manifest} expanded={expandManifest} />
-          </Grid>
-        </Grid>
-      </Map>
+      <Map complex={sectors} showCustomers />
+      <Glass.Container>
+        <Glass.Left>
+          <Date {...{ runDate, onDateChange }}></Date>
+          <SectorSelector {...{ complex: sectors, selected, onSelected }} />
+          <SectorDisplay complex={sector} />
+        </Glass.Left>
+        <Glass.Rest>
+          <Manifest complex={manifest} expanded={expandManifest} />
+        </Glass.Rest>
+      </Glass.Container>
       <ScheduleSpeedDial />
     </>
   )

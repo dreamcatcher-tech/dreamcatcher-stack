@@ -11,6 +11,7 @@ export { default as Actions } from './Actions'
 export { default as OpenDialog } from './OpenDialog'
 export { default as Map } from './Map'
 export { default as Date } from './Date'
+export { default as Glass } from './Glass'
 
 // compounds of atoms
 export { default as Datum } from './Datum'

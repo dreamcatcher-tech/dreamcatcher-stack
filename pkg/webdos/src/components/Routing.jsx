@@ -2,7 +2,7 @@ import { api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 import * as React from 'react'
 import PropTypes from 'prop-types'
-import { Map, RoutingSpeedDial, SectorSelector, Datum } from '.'
+import { Map, RoutingSpeedDial, SectorSelector, Datum, Glass } from '.'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
@@ -28,11 +28,14 @@ const Routing = ({ complex }) => {
   const datum = sector ? <Datum complex={sector} /> : <NotSelected />
   return (
     <>
-      <Map {...{ onCreate, onEdit, complex }} showCustomers>
-        <SectorSelector {...{ complex, selected, onSelected }} />
-        {datum}
-      </Map>
+      <Glass.Container>
+        <Glass.Left>
+          <SectorSelector {...{ complex, selected, onSelected }} />
+          {datum}
+        </Glass.Left>
+      </Glass.Container>
       <RoutingSpeedDial></RoutingSpeedDial>
+      <Map {...{ onCreate, onEdit, complex }} showCustomers />
     </>
   )
 }

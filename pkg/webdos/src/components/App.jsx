@@ -16,7 +16,6 @@ export default function App({ complex }) {
         flexDirection: 'column',
         height: '100%',
         width: '100%',
-        overflow: 'hidden',
       }}
     >
       <Nav complex={complex} />
@@ -26,7 +25,6 @@ export default function App({ complex }) {
           flexDirection: 'column',
           height: '100%',
           width: '100%',
-          overflow: 'hidden',
           position: 'relative',
         }}
       >

@@ -46,7 +46,7 @@ export default function SectorSelector(props) {
           <Typography fontStyle="italic">&nbsp;({selectedCount})</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <List sx={{ width: '100%' }} dense>
+          <List dense>
             {complex.network.map(({ path }, key) => {
               const sector = complex.child(path)
               return (

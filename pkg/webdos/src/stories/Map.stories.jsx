@@ -1,9 +1,8 @@
 import React from 'react'
-import { Map } from '..'
+import { Map, Glass } from '..'
 import Debug from 'debug'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import { apps } from '@dreamcatcher-tech/interblock'
 const { faker } = apps.crm
@@ -18,6 +17,12 @@ export default {
     },
     onEdit: (geoJson) => {
       console.log('edit', geoJson)
+    },
+    onSector: (sector) => {
+      console.log('sector', sector)
+    },
+    onMarker: (marker) => {
+      console.log('marker', marker)
     },
   },
 }
@@ -55,31 +60,16 @@ export const OverDraw = (args) => {
   )
 }
 
-const GlassContainer = ({ children }) => (
-  <Grid
-    container
-    sx={{ zIndex: 1, position: 'relative', pointerEvents: 'none' }}
-  >
-    {children}
-  </Grid>
-)
-
-const GlassLeft = ({ children }) => (
-  <Grid padding={3} item sx={{ pointerEvents: 'auto' }}>
-    {children}
-  </Grid>
-)
-
 export const CardOverDraw = (args) => {
   return (
     <>
-      <GlassContainer>
-        <GlassLeft>
+      <Glass.Container>
+        <Glass.Left>
           <Card>
             <CardContent>This content should appear over the Map</CardContent>
           </Card>
-        </GlassLeft>
-      </GlassContainer>
+        </Glass.Left>
+      </Glass.Container>
       <Map />
     </>
   )
@@ -88,13 +78,13 @@ export const CardColumn = (args) => {
   return (
     <>
       <Map />
-      <GlassContainer>
-        <GlassLeft>
+      <Glass.Container>
+        <Glass.Left>
           <Card style={{ minHeight: '200px' }}>
             <CardContent>Right hand side is draggable</CardContent>
           </Card>
-        </GlassLeft>
-      </GlassContainer>
+        </Glass.Left>
+      </Glass.Container>
     </>
   )
 }
@@ -106,7 +96,6 @@ export const Polygons = Template.bind({})
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 Polygons.args = {
   complex: faker().child('routing'),
-  customers: false,
 }
 
 export const Customers = Template.bind({})
