@@ -150,13 +150,14 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
       const { formData: sector } = state
       const { order = [] } = sector
       debug('order', order)
-      for (const custNo of order) {
+      for (const [index, custNo] of order.entries()) {
         assert(customers.hasChild(custNo), `customer ${custNo} not found`)
         const customer = customers.child(custNo)
         const { serviceGps } = customer.state.formData
         const { latitude, longitude } = serviceGps
         const options = { riseOnHover: true }
         const marker = L.marker([latitude, longitude], options)
+        marker.setIcon(createIcon(sector.color, index + 1))
         marker.addTo(customersLayer)
         debug('adding customer')
       }
@@ -181,6 +182,15 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
   }
   // TODO make a div that comes after map that resets the positioning and stacking contexts
   return <div id={mapId} style={mapBackgroundStyle}></div>
+}
+const createIcon = (color, number) => {
+  return L.ExtraMarkers.icon({
+    icon: 'fa-number',
+    prefix: 'fa',
+    shape: 'circle',
+    markerColor: color,
+    number: number,
+  })
 }
 Map.propTypes = {
   children: PropTypes.node,
