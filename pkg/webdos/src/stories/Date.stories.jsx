@@ -3,7 +3,7 @@ import React from 'react'
 import { useState } from 'react'
 import { within, userEvent } from '@storybook/testing-library'
 import Debug from 'debug'
-import { Date } from '..'
+import { Date, Glass } from '..'
 import PropTypes from 'prop-types'
 
 export default {
@@ -20,7 +20,13 @@ const Template = ({ runDate, ...rest }) => {
   const onDateChange = (date) => {
     setValue(date)
   }
-  return <Date {...{ ...rest, onDateChange }} runDate={dateString} />
+  return (
+    <Glass.Container>
+      <Glass.Left>
+        <Date {...{ ...rest, onDateChange }} runDate={dateString} />
+      </Glass.Left>
+    </Glass.Container>
+  )
 }
 Template.propTypes = { runDate: PropTypes.string }
 

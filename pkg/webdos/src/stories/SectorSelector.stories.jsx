@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectorSelector } from '..'
+import { SectorSelector, Glass } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('SectorSelector')
@@ -17,7 +17,13 @@ export default {
 const Template = (args) => {
   Debug.enable('*SectorSelector')
   const [selected, onSelected] = React.useState()
-  return <SectorSelector {...{ ...args, selected, onSelected }} />
+  return (
+    <Glass.Container>
+      <Glass.Left>
+        <SectorSelector {...{ ...args, selected, onSelected }} />
+      </Glass.Left>
+    </Glass.Container>
+  )
 }
 
 export const Collapsed = Template.bind({})

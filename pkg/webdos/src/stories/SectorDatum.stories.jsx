@@ -1,5 +1,5 @@
 import React from 'react'
-import { Datum } from '..'
+import { Datum, Glass } from '..'
 import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { faker } = apps.crm
@@ -16,7 +16,13 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*SectorDatum')
-  return <Datum {...args} />
+  return (
+    <Glass.Container>
+      <Glass.Left>
+        <Datum {...args} />
+      </Glass.Left>
+    </Glass.Container>
+  )
 }
 
 export const Default = Template.bind({})

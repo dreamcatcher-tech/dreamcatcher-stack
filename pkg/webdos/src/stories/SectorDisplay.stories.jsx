@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectorDisplay } from '..'
+import { SectorDisplay, Glass } from '..'
 import { apps, api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { faker } = apps.crm
@@ -16,8 +16,13 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*SectorDisplay *Sorter')
-
-  return <SectorDisplay {...args} />
+  return (
+    <Glass.Container>
+      <Glass.Left>
+        <SectorDisplay {...args} />
+      </Glass.Left>
+    </Glass.Container>
+  )
 }
 
 export const Basic = Template.bind({})

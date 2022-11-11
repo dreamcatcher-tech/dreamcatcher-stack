@@ -16,7 +16,7 @@ const Container = ({ children }) => (
 Container.propTypes = { children: PropTypes.node }
 
 const Left = ({ children }) => (
-  <Grid item sx={{ minWidth: 345, maxWidth: 345 }}>
+  <Grid item sx={{ minWidth: 375, maxWidth: 375 }}>
     <Stack spacing={2} sx={{ pointerEvents: 'auto' }}>
       {children}
     </Stack>
