@@ -17,4 +17,5 @@ L.PM.setOptIn(true)
 
 import 'beautifymarker/leaflet-beautify-marker-icon.css'
 import 'beautifymarker'
+console.log('L', L)
 export default L

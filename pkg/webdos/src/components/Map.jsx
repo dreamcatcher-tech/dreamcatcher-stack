@@ -194,6 +194,7 @@ const createIcon = (color, number) => {
   }
   return L.BeautifyIcon.icon(options)
 }
+console.log('leaflet.BeautifyIcon', L)
 Map.propTypes = {
   children: PropTypes.node,
   onCreate: PropTypes.func,
