@@ -11,9 +11,6 @@ const OpenDialog = ({ title, children }) => {
   const onClose = () => {
     // TODO halt the user if blockchain is enquiring still
     const command = `cd ..\n`
-    for (const c of command) {
-      process.stdin.send(c)
-    }
   }
   return (
     <Dialog

@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { OpenDialog } from '.'
 import Form from '@rjsf/mui'
-import process from 'process'
 import Debug from 'debug'
 const debug = Debug('terminal:widgets:Settings')
 
@@ -20,9 +19,6 @@ const Settings = () => {
     // show an enquiring modal UI over the top to get the data we need
 
     const command = `./set --formData ${string}\n`
-    for (const c of command) {
-      process.stdin.send(c)
-    }
   }
   const onChange = ({ formData }) => {
     debug(`onChange: `, formData)
