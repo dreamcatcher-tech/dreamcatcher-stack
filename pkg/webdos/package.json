@@ -13,7 +13,8 @@
     "serve": "vite preview --host 0.0.0.0",
     "storybook": "storybook dev -p 6008",
     "build-storybook": "NODE_OPTIONS='--max-old-space-size=8192' storybook  build",
-    "chromatic": "chromatic --exit-zero-on-changes"
+    "chromatic": "chromatic --exit-zero-on-changes",
+    "serve-storybook": "serve storybook-static"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.0.5",
@@ -78,6 +79,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.8.3",
+    "serve": "^14.1.1",
     "storybook": "^7.0.0-alpha.48",
     "vite": "^3.2.3"
   },
