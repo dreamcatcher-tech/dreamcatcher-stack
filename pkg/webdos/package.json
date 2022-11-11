@@ -37,6 +37,7 @@
     "@rjsf/validator-ajv8": "^5.0.0-beta.12",
     "ansi-colors-browserify": "^4.1.2",
     "assert-fast": "^1.0.3",
+    "beautifymarker": "^1.0.9",
     "buffer": "^6.0.3",
     "calculate-size": "^1.1.1",
     "dayjs": "^1.11.6",

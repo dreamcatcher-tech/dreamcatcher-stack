@@ -184,13 +184,15 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
   return <div id={mapId} style={mapBackgroundStyle}></div>
 }
 const createIcon = (color, number) => {
-  return L.ExtraMarkers.icon({
-    icon: 'fa-number',
-    prefix: 'fa',
-    shape: 'circle',
-    markerColor: color,
-    number: number,
-  })
+  const options = {
+    isAlphaNumericIcon: true,
+    text: number,
+    iconShape: 'marker',
+    borderColor: color,
+    color,
+    textColor: '#00ABDC',
+  }
+  return L.BeautifyIcon.icon(options)
 }
 Map.propTypes = {
   children: PropTypes.node,

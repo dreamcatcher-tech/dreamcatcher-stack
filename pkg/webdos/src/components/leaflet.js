@@ -15,7 +15,6 @@ L.PM.setOptIn(true)
 // import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 // import 'leaflet.markercluster'
 
-import 'leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css'
-import 'leaflet-extra-markers/dist/js/leaflet.extra-markers.min'
-
+import 'beautifymarker/leaflet-beautify-marker-icon.css'
+import 'beautifymarker'
 export default L
