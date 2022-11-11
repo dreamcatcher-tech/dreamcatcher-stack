@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css'
-import * as L from 'leaflet'
-
+import * as Leaflet from 'leaflet'
+const L = { ...Leaflet }
 import '@geoman-io/leaflet-geoman-free'
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
 
