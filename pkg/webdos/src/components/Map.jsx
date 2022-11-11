@@ -192,6 +192,7 @@ const createIcon = (color, number) => {
     color,
     textColor: '#00ABDC',
   }
+  console.log('leaflet.BeautifyIcon', L)
   return L.BeautifyIcon.icon(options)
 }
 console.log('leaflet.BeautifyIcon', L)
