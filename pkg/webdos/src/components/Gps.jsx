@@ -6,10 +6,6 @@ Debug.enable('*Gps')
 const debug = Debug('webdos:components:Gps')
 const maxNativeZoom = 18
 const maxZoom = 22
-/**
- * Allows placement of a GPS location given a starting location.
- * Defaults to the application default zoom level.
- */
 const Gps = ({ center, zoom = 12 }) => {
   const mapId = useId()
   useEffect(() => {
@@ -23,7 +19,7 @@ const Gps = ({ center, zoom = 12 }) => {
       controls: {
         layers: {
           visible: true,
-          position: 'bottomright',
+          position: 'topright',
           collapsed: true,
         },
       },
@@ -36,10 +32,10 @@ const Gps = ({ center, zoom = 12 }) => {
     debug('creating map')
     const map = L.map(mapId, mapOptions)
 
-    const zoomControl = L.control.zoom({ position: 'bottomright' })
+    const zoomControl = L.control.zoom({ position: 'topright' })
 
     const scaleOptions = {
-      position: 'bottomright',
+      position: 'topright',
     }
     const scale = L.control.scale(scaleOptions)
 
@@ -56,7 +52,7 @@ const Gps = ({ center, zoom = 12 }) => {
 
     const overlays = {}
     const layerConfig = {
-      position: 'bottomright',
+      position: 'topright',
       collapsed: true,
       hideSingleBase: false,
     }
@@ -67,8 +63,14 @@ const Gps = ({ center, zoom = 12 }) => {
     zoomControl.addTo(map)
     layerControl.addTo(map)
 
-    // make a marker stay at the centre
-    const stickyCenterMarker = L.marker(center).addTo(map)
+    const options = {
+      iconShape: 'marker',
+      borderColor: 'blue',
+      color: 'blue',
+      textColor: '#00ABDC',
+    }
+    const icon = L.BeautifyIcon.icon(options)
+    const stickyCenterMarker = L.marker(center, { icon }).addTo(map)
     map.on('move', ({ target }) => {
       const center = target.getCenter()
       stickyCenterMarker.setLatLng(center)
@@ -89,7 +91,6 @@ const Gps = ({ center, zoom = 12 }) => {
     background: 'black',
   }
 
-  // TODO maybe clone all children and add zIndex to their styles
   return <div id={mapId} style={mapStyle}></div>
 }
 Gps.propTypes = {
