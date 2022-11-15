@@ -1,16 +1,17 @@
-import React, { useEffect, useId, useState } from 'react'
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { api } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'
 import assert from 'assert-fast'
+import { useResizeDetector } from 'react-resize-detector'
 
 const debug = Debug('webdos:components:Map')
 const maxNativeZoom = 18
 const maxZoom = 22
-const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
+const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
   const mapId = useId()
-  const [mapState, setMap] = useState()
+  const mapRef = useRef()
   useEffect(() => {
     L.Browser.touch = false
     const mapOptions = {
@@ -31,10 +32,11 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
       zoomDelta: 1,
       wheelPxPerZoomLevel: 350,
       pmIgnore: false,
+      preferCanvas: true,
     }
     debug('creating map')
     const map = L.map(mapId, mapOptions)
-    setMap(map)
+
     const zoomControl = L.control.zoom({ position: 'topright' })
 
     const scaleOptions = { position: 'topright' }
@@ -98,19 +100,22 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
         editControls: false,
       })
     }
+    debug('map created')
+    mapRef.current = map
     return () => {
       debug('removing map')
       map.remove()
-      setMap(undefined)
+      mapRef.current = undefined
     }
   }, [])
 
   useEffect(() => {
-    if (!mapState || !complex) {
-      return // TODO detect deep equals of complex
+    const map = mapRef.current
+    if (!map || !complex) {
+      return
     }
-    const geometryLayer = L.featureGroup().addTo(mapState)
     debug('adding sectors', complex)
+    const geometryLayer = L.featureGroup().addTo(map)
     for (const { state } of complex.network) {
       const { formData: sector } = state
       const opacity = 0.65
@@ -126,30 +131,29 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
       const layer = L.geoJson(geometry, {
         style: layerStyle,
       })
-      debug('adding layer')
       geometryLayer.addLayer(layer)
-      debug('layer added')
       layer.on('click', (e) => {
-        console.log('click', e, sector)
+        console.log('click ', e, sector)
       })
     }
-
+    debug('sectors added')
     return () => {
-      debug(`removing geometryLayer`)
+      debug(`removing sectors`)
       geometryLayer.remove()
     }
-  }, [mapState, complex])
+  }, [mapRef.current, complex])
 
   useEffect(() => {
-    if (!mapState || !complex || !showCustomers) {
+    const map = mapRef.current
+    if (!map || !complex || !showCustomers) {
       return // TODO detect deep equals of complex
     }
-    const customersLayer = L.featureGroup().addTo(mapState)
+    debug('adding customers')
+    const customersLayer = L.featureGroup().addTo(map)
     const customers = complex.tree.child('customers')
     for (const { state } of complex.network) {
       const { formData: sector } = state
       const { order = [] } = sector
-      debug('order', order)
       for (const [index, custNo] of order.entries()) {
         assert(customers.hasChild(custNo), `customer ${custNo} not found`)
         const customer = customers.child(custNo)
@@ -159,14 +163,14 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
         const marker = L.marker([latitude, longitude], options)
         marker.setIcon(createIcon(sector.color, index + 1))
         marker.addTo(customersLayer)
-        debug('adding customer')
       }
     }
+    debug('customers added')
     return () => {
       debug(`removing customers`)
       customersLayer.remove()
     }
-  }, [mapState, complex, showCustomers])
+  }, [mapRef.current, complex, showCustomers])
 
   const paintBelowAllOthers = 0
   const ensureNotPartOfNormalLayout = 'absolute'
@@ -180,8 +184,17 @@ const Map = ({ children, onCreate, onEdit, showCustomers, complex }) => {
     background: 'black',
     zIndex: paintBelowAllOthers,
   }
-  // TODO make a div that comes after map that resets the positioning and stacking contexts
-  return <div id={mapId} style={mapBackgroundStyle}></div>
+  const onResize = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.invalidateSize()
+    }
+  }, [mapRef.current])
+
+  const { ref } = useResizeDetector({
+    onResize,
+  })
+
+  return <div ref={ref} id={mapId} style={mapBackgroundStyle}></div>
 }
 const createIcon = (color, number) => {
   const options = {
@@ -192,15 +205,13 @@ const createIcon = (color, number) => {
     color,
     textColor: '#00ABDC',
   }
-  console.log('leaflet.BeautifyIcon', L)
   return L.BeautifyIcon.icon(options)
 }
-console.log('leaflet.BeautifyIcon', L)
 Map.propTypes = {
-  children: PropTypes.node,
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
   showCustomers: PropTypes.bool,
   complex: PropTypes.instanceOf(api.Complex),
+  hidden: PropTypes.bool,
 }
 export default Map
