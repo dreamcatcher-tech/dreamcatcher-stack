@@ -92,14 +92,48 @@ export const NoPolygons = Template.bind({})
 NoPolygons.args = {
   onCreate: undefined,
 }
+
+const complex = faker().child('routing')
 export const Polygons = Template.bind({})
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 Polygons.args = {
-  complex: faker().child('routing'),
+  complex,
 }
 
 export const Customers = Template.bind({})
 Customers.args = {
-  complex: faker().child('routing'),
-  showCustomers: true,
+  complex,
+  markers: true,
+}
+export const ClickSectors = (args) => {
+  const [selected, setSelected] = React.useState()
+  return (
+    <div>
+      <Glass.Container>
+        <Glass.Left>
+          <Card>
+            <CardContent>Selected:{selected}</CardContent>
+          </Card>
+        </Glass.Left>
+      </Glass.Container>
+      <Map onSector={setSelected} complex={complex} />
+    </div>
+  )
+  // TODO script some actual clicking
+}
+export const ClickCustomers = (args) => {
+  const [selected, setSelected] = React.useState()
+  return (
+    <div>
+      <Glass.Container>
+        <Glass.Left>
+          <Card>
+            <CardContent>Selected:{selected}</CardContent>
+          </Card>
+        </Glass.Left>
+      </Glass.Container>
+      <Map onMarker={setSelected} complex={complex} markers />
+    </div>
+  )
+  // TODO script some actual clicking
 }

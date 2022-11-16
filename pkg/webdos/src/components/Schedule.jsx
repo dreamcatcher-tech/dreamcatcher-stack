@@ -33,7 +33,7 @@ const Schedule = ({ complex, expandManifest }) => {
   }
   return (
     <>
-      <Map complex={sectors} showCustomers />
+      <Map complex={sectors} onSector={onSelected} markers />
       <Glass.Container>
         <Glass.Left>
           <Date {...{ runDate, onDateChange }}></Date>

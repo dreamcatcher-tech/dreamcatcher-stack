@@ -26,6 +26,7 @@ const Routing = ({ complex }) => {
     sector = sector.setState({ ...state, formData })
   }
   const datum = sector ? <Datum complex={sector} /> : <NotSelected />
+  const onSector = onSelected
   return (
     <>
       <Glass.Container>
@@ -35,7 +36,7 @@ const Routing = ({ complex }) => {
         </Glass.Left>
       </Glass.Container>
       <RoutingSpeedDial></RoutingSpeedDial>
-      <Map {...{ onCreate, onEdit, complex }} showCustomers />
+      <Map {...{ onCreate, onEdit, complex, onSector }} markers />
     </>
   )
 }

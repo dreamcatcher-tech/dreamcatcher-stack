@@ -9,7 +9,7 @@ import { useResizeDetector } from 'react-resize-detector'
 const debug = Debug('webdos:components:Map')
 const maxNativeZoom = 18
 const maxZoom = 22
-const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
+const Map = ({ onCreate, onEdit, markers, onSector, onMarker, complex }) => {
   const mapId = useId()
   const mapRef = useRef()
   useEffect(() => {
@@ -32,7 +32,7 @@ const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
       zoomDelta: 1,
       wheelPxPerZoomLevel: 350,
       pmIgnore: false,
-      preferCanvas: true,
+      // preferCanvas: true,
     }
     debug('creating map')
     const map = L.map(mapId, mapOptions)
@@ -116,7 +116,7 @@ const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
     }
     debug('adding sectors', complex)
     const geometryLayer = L.featureGroup().addTo(map)
-    for (const { state } of complex.network) {
+    for (const { state, path } of complex.network) {
       const { formData: sector } = state
       const opacity = 0.65
       const fillOpacity = 0.3
@@ -131,10 +131,13 @@ const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
       const layer = L.geoJson(geometry, {
         style: layerStyle,
       })
-      geometryLayer.addLayer(layer)
-      layer.on('click', (e) => {
-        console.log('click ', e, sector)
+      layer.on('click', () => {
+        if (onSector) {
+          onSector(path)
+        }
       })
+      layer.bindTooltip(sector.name, { sticky: true })
+      geometryLayer.addLayer(layer)
     }
     debug('sectors added')
     return () => {
@@ -145,7 +148,7 @@ const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !complex || !showCustomers) {
+    if (!map || !complex || !markers) {
       return // TODO detect deep equals of complex
     }
     debug('adding customers')
@@ -162,6 +165,9 @@ const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
         const options = { riseOnHover: true }
         const marker = L.marker([latitude, longitude], options)
         marker.setIcon(createIcon(sector.color, index + 1))
+        if (onMarker) {
+          marker.on('click', () => onMarker(custNo))
+        }
         marker.addTo(customersLayer)
       }
     }
@@ -170,7 +176,7 @@ const Map = ({ onCreate, onEdit, showCustomers, complex }) => {
       debug(`removing customers`)
       customersLayer.remove()
     }
-  }, [mapRef.current, complex, showCustomers])
+  }, [mapRef.current, complex, markers])
 
   const paintBelowAllOthers = 0
   const ensureNotPartOfNormalLayout = 'absolute'
@@ -210,7 +216,9 @@ const createIcon = (color, number) => {
 Map.propTypes = {
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
-  showCustomers: PropTypes.bool,
+  onSector: PropTypes.func,
+  onCustomer: PropTypes.func,
+  markers: PropTypes.bool,
   complex: PropTypes.instanceOf(api.Complex),
   hidden: PropTypes.bool,
 }
