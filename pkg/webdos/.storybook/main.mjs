@@ -25,8 +25,8 @@ export default {
       build: {
         ...config.build,
         target: 'es2020',
-        sourcemap: true,
-        minify: true,
+        sourcemap: false,
+        minify: false,
         rollupOptions: {
           output: {
             manualChunks: (id) => {

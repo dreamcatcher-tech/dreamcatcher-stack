@@ -14,7 +14,6 @@ export default function SectorDisplay({ complex }) {
   const { name, frequencyInDays, frequencyOffset } = formData
   return (
     <Card>
-      <CardHeader title={'Sector: ' + name} />
       <CardContent>
         <Typography>Frequency in Days: {frequencyInDays}</Typography>
         <Typography>Frequency Offset: {frequencyOffset}</Typography>

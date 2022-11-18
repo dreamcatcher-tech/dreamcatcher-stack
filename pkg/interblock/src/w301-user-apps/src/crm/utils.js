@@ -33,29 +33,32 @@ export const sectorsOnDay = (rootComplex, runDate) => {
 export const generateManifest = (rootComplex, runDate) => {
   assert(rootComplex instanceof Complex, 'rootComplex must be a Complex')
   assert.strictEqual(typeof runDate, 'string', 'runDate must be a string')
-  const routing = rootComplex.child('routing')
   const onDay = sectorsOnDay(rootComplex, runDate)
   const schedule = rootComplex.child('schedule')
-  const { state } = schedule
-  const rows = onDay.network.map(({ state: { formData: sector } }) => {
-    const { order } = sector
-    const row = order.map((path) => {
-      const { state } = rootComplex.child('customers').child(path)
-      const { formData } = state
-      return { ...formData, id: path }
+  const defaultRow = {
+    isDone: false,
+    ebc: false,
+    nabc: false,
+    isGateLocked: false,
+    isFenced: false,
+    isDog: false,
+    isVehicleBlocking: false,
+  }
+  const network = onDay.network.map(({ path, state: { formData } }) => {
+    const { order } = formData
+    const rows = order.map((path) => {
+      return { ...defaultRow, id: path }
     })
-    return row
+    return { path, state: { formData: { rows } } }
   })
   const formData = {
     runDate,
     isPublished: false,
     isReconciled: false,
-    rows: rows.flat(),
   }
 
   debug('formData', formData)
-  const child = { path: runDate, state: { formData, template: '..' } }
-
+  const child = { path: runDate, state: { formData, template: '..' }, network }
   const manifest = schedule
     .setNetwork([...schedule.network, child])
     .child(runDate)

@@ -20,4 +20,4 @@ const Template = (args) => {
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 export const Basic = Template.bind({})
 export const Manifest = Template.bind({})
-Manifest.args = { expandManifest: true }
+Manifest.args = { expanded: true }

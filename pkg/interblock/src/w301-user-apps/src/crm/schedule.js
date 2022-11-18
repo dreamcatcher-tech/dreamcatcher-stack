@@ -60,18 +60,35 @@ const manifestRowTemplate = {
 }
 
 const template = {
-  type: 'INNER_COLLECTION',
+  type: 'COLLECTION',
   schema: {
     title: 'Manifest',
     description: `A manifest is a list of customers that are to be serviced on a given day`,
     type: 'object',
-    required: ['date'],
+    required: ['runDate'],
     allowAdditionalProperties: false,
     properties: {
       runDate: { type: 'string', format: 'date' },
       isPublished: { type: 'boolean' },
       isReconciled: { type: 'boolean' },
-      rows: { type: 'array', items: manifestRowTemplate },
+    },
+  },
+  template: {
+    schema: {
+      title: 'Sector Manifest',
+      type: 'object',
+      description: `Scheduled collections, in order, for a given sector`,
+      additionalProperties: false,
+      properties: {
+        rows: {
+          type: 'array',
+          definition: `Scheduled collections, in order`,
+          items: manifestRowTemplate,
+        },
+      },
+    },
+    uiSchema: {
+      id: { 'ui:widget': 'hidden' },
     },
   },
 }

@@ -8,22 +8,21 @@ import Debug from 'debug'
 
 const debug = Debug('terminal:widgets:InnerCollection')
 
-const InnerCollection = ({ onAdd, onRow, complex }) => {
-  const { formData } = complex.state
-  let { template } = complex.state
-  if (template === '..') {
-    template = complex.parent().state.template
-  }
+const InnerCollection = ({ onAdd, onRow, complex = {}, template }) => {
   assert(template, `template is required`)
-  const { type, uiSchema } = template
-  assert.strictEqual(type, 'INNER_COLLECTION', `template.type: ${type}`)
-  const { isLoading } = complex
+  debug('complex', complex)
+  debug('template', template)
+
+  const { state = {} } = complex
+  const { formData = {} } = state
+  const { rows = [] } = formData
+  const { uiSchema } = template
+  const { isLoading = false } = complex
   const rowSchema = template.schema.properties.rows.items
   const columns = useMemo(
     () => generateColumns(rowSchema, uiSchema),
     [template]
   )
-  const { rows } = formData
   return (
     <>
       <DataGridPremium
@@ -41,7 +40,8 @@ const InnerCollection = ({ onAdd, onRow, complex }) => {
 InnerCollection.propTypes = {
   onAdd: PropTypes.func,
   onRow: PropTypes.func,
-  complex: PropTypes.instanceOf(api.Complex).isRequired,
+  complex: PropTypes.instanceOf(api.Complex),
+  template: PropTypes.object.isRequired,
 }
 
 const generateColumns = (schema, uiSchema = {}) => {

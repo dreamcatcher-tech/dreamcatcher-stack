@@ -16,7 +16,7 @@ import { apps } from '@dreamcatcher-tech/interblock'
 const { utils } = apps.crm
 const debug = Debug('terminal:widgets:Schedule')
 
-const Schedule = ({ complex, expandManifest }) => {
+const Schedule = ({ complex, expanded }) => {
   const [runDate, setRunDate] = useState(Date.today())
   const onDateChange = (date) => {
     setRunDate(date)
@@ -41,7 +41,7 @@ const Schedule = ({ complex, expandManifest }) => {
           <SectorDisplay complex={sector} />
         </Glass.Left>
         <Glass.Rest>
-          <Manifest complex={manifest} expanded={expandManifest} />
+          <Manifest complex={manifest} {...{ expanded, selected }} />
         </Glass.Rest>
       </Glass.Container>
       <ScheduleSpeedDial />
@@ -50,7 +50,7 @@ const Schedule = ({ complex, expandManifest }) => {
 }
 Schedule.propTypes = {
   complex: PropTypes.instanceOf(api.Complex).isRequired,
-  expandManifest: PropTypes.bool,
+  expanded: PropTypes.bool,
 }
 
 export default Schedule

@@ -44,11 +44,7 @@ export const Collapsed = Template.bind({})
 Collapsed.args = { expanded: false }
 export const Expanded = Template.bind({})
 export const Empty = Template.bind({})
-const empty = {
-  ...complex.state,
-  formData: { ...complex.state.formData, rows: [] },
-}
-Empty.args = { complex: complex.setState(empty) }
+Empty.args = { complex: complex.setNetwork([]) }
 export const Published = Template.bind({})
 Published.args = {
   complex: complex.setState({

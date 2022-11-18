@@ -79,7 +79,7 @@ const Sector = ({ selected, onClick, path, sector }) => {
     </>
   )
   return (
-    <ListItemButton selected={selected === name} onClick={() => onClick(path)}>
+    <ListItemButton selected={selected === path} onClick={() => onClick(path)}>
       <ListItemAvatar>
         <Avatar sx={{ bgcolor: color }}>
           <MapIcon />

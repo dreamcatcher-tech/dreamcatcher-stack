@@ -27,10 +27,12 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
   const columns = useMemo(() => generateColumns(template), [template])
   const rows = useMemo(() => {
     debug('generating rows')
-    return complex.network.map((child) => ({
+    const rows = complex.network.map((child) => ({
       ...child.state.formData,
       id: child.path,
     }))
+    debug('rows generated')
+    return rows
   }, [complex.network])
   const fab = (
     <Fab

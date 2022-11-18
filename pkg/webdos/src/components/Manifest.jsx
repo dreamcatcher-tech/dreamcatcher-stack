@@ -28,21 +28,33 @@ Status.propTypes = {
   label: PropTypes.string.isRequired,
   isPositive: PropTypes.bool,
 }
-export default function Manifest({ expanded, complex }) {
+export default function Manifest({ expanded, complex, selected }) {
   // TODO assert the state is a small collection object
-  const { isPublished, isReconciled, runDate } = complex.state.formData
-  debug(complex)
+  const { isPublished, isReconciled } = complex.state.formData
+  debug('Manifest', { complex, selected })
+  if (!selected && complex.network.length) {
+    selected = complex.network[0].path
+  }
+  const sector = complex.hasChild(selected)
+    ? complex.child(selected)
+    : undefined
+
+  const manifestTemplate = complex.parent().state.template
+  // due to this being a nested collection
+  const sectorTemplate = manifestTemplate.template
+  debug('template', sectorTemplate)
+
   return (
     <Accordion defaultExpanded={expanded}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction={'row'} spacing={1}>
-          <Typography>Manifest for {runDate}:</Typography>
+          <Typography>Manifest status:</Typography>
           <Status label={'published'} isPositive={isPublished} />
           <Status label={'reconciled'} isPositive={isReconciled} />
         </Stack>
       </AccordionSummary>
       <AccordionDetails sx={{ height: '100%' }}>
-        <InnerCollection {...{ complex }} />
+        <InnerCollection complex={sector} template={sectorTemplate} />
       </AccordionDetails>
     </Accordion>
   )
@@ -50,4 +62,8 @@ export default function Manifest({ expanded, complex }) {
 Manifest.propTypes = {
   expanded: PropTypes.bool,
   complex: PropTypes.instanceOf(api.Complex),
+  /**
+   * The selected sector
+   */
+  selected: PropTypes.string,
 }
