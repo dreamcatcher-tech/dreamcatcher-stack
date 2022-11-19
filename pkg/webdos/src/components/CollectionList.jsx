@@ -47,6 +47,7 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
   return (
     <>
       <DataGridPremium
+        backgroundColor="paper"
         columns={columns}
         rows={rows}
         autoHeight
