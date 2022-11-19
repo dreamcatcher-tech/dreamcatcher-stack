@@ -17,7 +17,7 @@ const { utils } = apps.crm
 const debug = Debug('terminal:widgets:Schedule')
 
 const Schedule = ({ complex, expanded }) => {
-  const [runDate, setRunDate] = useState(Date.today())
+  const [runDate, setRunDate] = useState(Date.weekday())
   const onDateChange = (date) => {
     setRunDate(date)
     onSelected()

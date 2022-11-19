@@ -60,7 +60,10 @@ Date.propTypes = {
   onDateChange: PropTypes.func,
   expanded: PropTypes.bool,
 }
-Date.today = () => {
-  const now = dayjs()
+Date.weekday = () => {
+  let now = dayjs()
+  while (now.day() === 0 || now.day() === 6) {
+    now = now.add(1, 'day')
+  }
   return now.format('YYYY-MM-DD')
 }
