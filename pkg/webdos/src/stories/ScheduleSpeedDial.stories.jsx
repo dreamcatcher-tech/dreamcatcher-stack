@@ -11,7 +11,7 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*ScheduleSpeedDial')
-  const events = { onPrint: () => debug('print') }
+  const events = { onPrint: (printAll = false) => debug('print', printAll) }
   const [isPublished, setIsPublished] = React.useState(args.isPublished)
   const [isReconciled, setIsReconciled] = React.useState(args.isReconciled)
   const onPublish = () => {

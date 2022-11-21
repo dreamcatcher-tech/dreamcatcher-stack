@@ -20,6 +20,7 @@ const manifestRowTemplate = {
   type: 'object',
   required: [
     'id',
+    'address',
     'isDone',
     'ebc',
     'nabc',
@@ -30,7 +31,9 @@ const manifestRowTemplate = {
   ],
   allowAdditionalProperties: false,
   properties: {
-    id: { type: 'string' },
+    id: { type: 'string', title: 'Customer #' },
+    address: { type: 'string', title: 'Address' },
+    isInvoice: { type: 'boolean', title: 'Invoice' },
     isDone: { type: 'boolean', title: 'Done', default: false },
     ebc: { type: 'boolean', title: 'EBC' },
     nabc: { type: 'boolean', title: 'NABC' },
@@ -87,9 +90,7 @@ const template = {
         },
       },
     },
-    uiSchema: {
-      id: { 'ui:widget': 'hidden' },
-    },
+    uiSchema: {},
   },
 }
 
