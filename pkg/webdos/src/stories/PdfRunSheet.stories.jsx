@@ -1,8 +1,6 @@
 import React from 'react'
-import { PdfRunSheet } from '..'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
-import { Document, PDFViewer, usePDF } from '@react-pdf/renderer'
 const { crm } = apps
 const runDate = '2022-11-09'
 const manifest = crm.utils.generateManifest(crm.faker(100), runDate)
@@ -11,7 +9,7 @@ const complex = manifest.child(manifest.network.slice(-1).pop().path)
 
 export default {
   title: 'PDF Run Sheet',
-  component: PdfRunSheet,
+  // component: PdfRunSheet,
   args: {
     complex,
   },
@@ -19,13 +17,7 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*PdfRunSheet')
-  return (
-    <PDFViewer width={'100%'} height={'100%'}>
-      <Document>
-        <PdfRunSheet {...args} />
-      </Document>
-    </PDFViewer>
-  )
+  return <div {...args} />
 }
 
 export const Basic = Template.bind({})

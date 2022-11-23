@@ -1,6 +1,6 @@
 import { api } from '@dreamcatcher-tech/interblock'
 import React from 'react'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import {
   Map,
@@ -31,6 +31,15 @@ const Schedule = ({ complex, expanded }) => {
   if (!sector && sectors.network.length) {
     onSelected(sectors.network[0].path)
   }
+
+  // Modal component takes in manifest and shows progress then opens the pdf
+  // it should be cancellable
+  // insert invoices into the finished pdf on the fly
+  // saving should be indeterminate, but provide a size update
+  // circular indeterminate for unknown items
+
+  const [isReady, onPrint] = usePrintPdf(manifest, selected)
+  const events = { onPrint: isReady ? onPrint : null }
   return (
     <>
       <Map complex={sectors} onSector={onSelected} markers />
@@ -44,7 +53,7 @@ const Schedule = ({ complex, expanded }) => {
           <Manifest complex={manifest} {...{ expanded, selected }} />
         </Glass.Rest>
       </Glass.Container>
-      <ScheduleSpeedDial />
+      <ScheduleSpeedDial events={events} />
     </>
   )
 }

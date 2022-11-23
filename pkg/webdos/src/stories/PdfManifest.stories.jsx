@@ -1,11 +1,8 @@
 import Button from '@mui/material/Button'
 import Stack from '@mui/system/Stack'
 import React from 'react'
-import { PdfManifest } from '..'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
-import img from './Invoice.jpg'
-import { PDFViewer, usePDF } from '@react-pdf/renderer'
 const { crm } = apps
 const runDate = '2022-11-09'
 const complex = crm.utils.generateManifest(crm.faker(), runDate)
@@ -18,20 +15,15 @@ const complex = crm.utils.generateManifest(crm.faker(), runDate)
 
 export default {
   title: 'PDF Manifest',
-  component: PdfManifest,
+  // component: PdfManifest,
   args: {
     complex,
-    img,
   },
 }
 
 const Template = (args) => {
   Debug.enable('*PdfManifest')
-  return (
-    <PDFViewer width={'100%'} height={'100%'}>
-      <PdfManifest {...args} />
-    </PDFViewer>
-  )
+  return <div />
 }
 
 export const Basic = Template.bind({})

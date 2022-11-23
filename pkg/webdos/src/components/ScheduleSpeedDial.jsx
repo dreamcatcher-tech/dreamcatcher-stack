@@ -47,12 +47,6 @@ const createActions = (events) => {
     name: 'Print',
     onClick: onPrint,
   })
-  const printAll = true
-  actions.push({
-    icon: <PrintIcon />,
-    name: 'PrintAll',
-    onClick: () => onPrint(printAll),
-  })
   return actions
 }
 
