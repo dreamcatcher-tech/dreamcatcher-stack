@@ -50,7 +50,7 @@ const createActions = (events) => {
   return actions
 }
 
-export default function SpeedDialFab(props) {
+export default function ScheduleSpeedDial(props) {
   const { initialOpen = false, events = {} } = props
   const [open, setOpen] = React.useState(initialOpen)
   const handleOpen = () => setOpen(true)
@@ -81,7 +81,7 @@ export default function SpeedDialFab(props) {
     </SpeedDial>
   )
 }
-SpeedDialFab.propTypes = {
+ScheduleSpeedDial.propTypes = {
   initialOpen: PropTypes.bool,
   events: PropTypes.objectOf(PropTypes.func),
 }

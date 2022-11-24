@@ -12,6 +12,7 @@ export { default as OpenDialog } from './OpenDialog'
 export { default as Map } from './Map'
 export { default as Date } from './Date'
 export { default as Glass } from './Glass'
+export { default as PdfModal } from './PdfModal'
 
 // compounds of atoms
 export { default as Datum } from './Datum'

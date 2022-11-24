@@ -3,6 +3,7 @@ import React from 'react'
 import { useState, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import {
+  PdfModal,
   Map,
   ScheduleSpeedDial,
   Manifest,
@@ -38,8 +39,9 @@ const Schedule = ({ complex, expanded }) => {
   // saving should be indeterminate, but provide a size update
   // circular indeterminate for unknown items
 
-  const [isReady, onPrint] = usePrintPdf(manifest, selected)
-  const events = { onPrint: isReady ? onPrint : null }
+  const [open, setOpen] = useState(false)
+  const onClose = () => setOpen(false)
+  const events = { onPrint: () => setOpen(true) }
   return (
     <>
       <Map complex={sectors} onSector={onSelected} markers />
@@ -54,6 +56,7 @@ const Schedule = ({ complex, expanded }) => {
         </Glass.Rest>
       </Glass.Container>
       <ScheduleSpeedDial events={events} />
+      <PdfModal {...{ open, complex: manifest, selected, onClose }} />
     </>
   )
 }

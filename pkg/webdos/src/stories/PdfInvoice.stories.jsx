@@ -4,7 +4,7 @@ import { apps } from '@dreamcatcher-tech/interblock'
 import { useInvoices, useMerge } from '../hooks'
 
 // make a proper test invoice without any data attached to it, so can commit it
-import pdf from '../../../../../../private/InvoiceTemplate.pdf'
+import pdf from './template.pdf'
 
 const { crm } = apps
 let complex = crm.faker().child('customers')
