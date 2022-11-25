@@ -26,10 +26,6 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
     onClose()
   }
   const title = `PDF Manifest for ${runDate}`
-  const onOpen = () => {
-    debug('onOpen', url)
-    window.open(url, 'PDFManifestViewer')
-  }
   const [status, setStatus] = React.useState()
   const [pagesDone, setPagesDone] = React.useState(0)
   const [totalPages, setTotalPages] = React.useState(0)
@@ -67,7 +63,7 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
     return () => {
       debug('unmount')
       isActive = false
-      setStatus('preparing')
+      setStatus()
       setPagesDone(0)
       setTotalPages(0)
       setSize(0)
@@ -96,14 +92,19 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
   }
   const filename = generator.title + '.pdf'
   return (
-    <Dialog onClose={onClose} open={open} fullWidth>
+    <Dialog onClose={close} open={open} fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>
         <Progress />
       </DialogContent>
       <DialogActions disableSpacing>
         <Stack direction="row" spacing={2}>
-          <Button disabled={!url} variant="contained" onClick={onOpen}>
+          <Button
+            disabled={!url}
+            variant="contained"
+            href={url}
+            target="PDFManifestViewer"
+          >
             Open&nbsp; <OpenInNew />
           </Button>
           <Button
@@ -175,6 +176,3 @@ LinearProgressWithLabel.propTypes = {
   unknown: PropTypes.bool,
   status: PropTypes.string,
 }
-
-// keep mounted
-// make open be a link so can middle click it

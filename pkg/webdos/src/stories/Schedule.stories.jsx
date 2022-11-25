@@ -13,7 +13,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*Schedule')
+  Debug.enable('*Schedule *PdfModal *pdfs')
   return <Schedule {...args} />
 }
 
