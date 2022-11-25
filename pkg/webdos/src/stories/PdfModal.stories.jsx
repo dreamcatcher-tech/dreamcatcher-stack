@@ -8,7 +8,7 @@ import { PdfModal } from '..'
 const debug = Debug('webdos:stories:PdfModal')
 const { crm } = apps
 const runDate = '2022-11-09'
-const complex = crm.utils.generateManifest(crm.faker(100), runDate)
+const complex = crm.utils.generateManifest(crm.faker(500), runDate)
 
 export default {
   title: 'PDF Modal',

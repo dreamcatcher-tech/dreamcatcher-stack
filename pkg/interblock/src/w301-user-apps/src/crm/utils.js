@@ -44,12 +44,18 @@ export const generateManifest = (rootComplex, runDate) => {
     isDog: false,
     isVehicleBlocking: false,
   }
+  const customers = rootComplex.child('customers')
   const network = onDay.network.map(({ path, state: { formData } }) => {
-    const { order } = formData
+    const { order, ...rest } = formData
     const rows = order.map((path) => {
-      return { ...defaultRow, id: path }
+      const customer = customers.child(path)
+      return {
+        ...defaultRow,
+        id: path,
+        address: customer.state.formData.serviceAddress,
+      }
     })
-    return { path, state: { formData: { rows } } }
+    return { path, state: { formData: { ...rest, rows } } }
   })
   const formData = {
     runDate,

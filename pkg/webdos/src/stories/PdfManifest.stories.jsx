@@ -8,11 +8,11 @@ const debug = Debug('PdfRunSheet')
 const { crm } = apps
 const runDate = '2022-11-01'
 // TODO get consistent data
-const complex = crm.utils.generateManifest(crm.faker(100), runDate)
+const complex = crm.utils.generateManifest(crm.faker(200), runDate)
 const sector = complex.child(complex.network[0].path)
 
 export default {
-  title: 'PDF Run Sheet',
+  title: 'PDF Manifest',
   args: {
     sector,
   },
@@ -20,9 +20,10 @@ export default {
 
 const Template = ({ sector }) => {
   Debug.enable('*PdfRunSheet ')
+  debug('sector', complex)
   const [url, setUrl] = React.useState()
   useAsync(async () => {
-    const pdf = await runSheetPdf(sector)
+    const pdf = await runSheetPdf(sector, runDate)
     const { url, size } = await saveToUrl(pdf)
     debug('size', size)
     setUrl(url)
@@ -37,7 +38,22 @@ Template.propTypes = { sector: PropTypes.object }
 export const Basic = Template.bind({})
 
 export const MultiPage = Template.bind({})
-const rows = complex.tree.child('customers').network.map(({ path }) => path)
+const defaultRow = {
+  isDone: false,
+  ebc: false,
+  nabc: false,
+  isGateLocked: false,
+  isFenced: false,
+  isDog: false,
+  isVehicleBlocking: false,
+}
+const rows = complex.tree
+  .child('customers')
+  .network.map(({ path, state: { formData } }) => ({
+    ...defaultRow,
+    id: path,
+    address: formData.serviceAddress,
+  }))
 MultiPage.args = {
   sector: sector.setState({
     ...sector.state,

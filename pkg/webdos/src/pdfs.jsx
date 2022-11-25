@@ -8,7 +8,8 @@ const debug = Debug('webdos:pdfs')
 export default function (manifests, templateUrl) {
   assert(manifests instanceof api.Complex)
   let pdf, templateArray
-  const title = 'Manifest for ' + manifests.state.formData.runDate
+  const { runDate } = manifests.state.formData
+  const title = 'Manifest for ' + runDate
   return {
     title,
     prepare: async () => {
@@ -20,7 +21,7 @@ export default function (manifests, templateUrl) {
       let totalPages = estimateTotalPages(manifests)
       for (const { path } of manifests.network) {
         const sector = manifests.child(path)
-        const runSheet = await runSheetPdf(sector)
+        const runSheet = await runSheetPdf(sector, runDate)
         const indices = runSheet.getPageIndices()
         totalPages += indices.length - 1
         const pages = await pdf.copyPages(runSheet, indices)
@@ -106,33 +107,55 @@ export async function invoice(customerData, templateArray) {
   return invoice
 }
 
-export async function runSheetPdf(sector) {
-  const { rows } = sector.state.formData
+export async function runSheetPdf(sector, runDate) {
+  const { rows, name } = sector.state.formData
   assert(Array.isArray(rows), 'rows must be an array')
-  const text = columnify(rows.map(charmapRows), {})
+  const text = columnify(rows.map(charmapRows), {
+    columns: [
+      'index',
+      'id',
+      'address',
+      // 'isInvoice',
+      // 'isDone',
+      // 'ebc',
+      // 'nabc',
+      // 'isGateLocked',
+      // 'isFenced',
+      // 'isDog',
+      // 'isVehicleBlocking',
+      'notes',
+    ],
+    config: {
+      index: { headingTransform: () => '#' },
+      id: { headingTransform: () => 'CustNo', align: 'right' },
+      address: {
+        minWidth: 30,
+        maxWidth: 30,
+        headingTransform: () => 'Address',
+      },
+      isInvoice: { headingTransform: () => 'I' },
+      isDone: { headingTransform: () => 'Done', align: 'center' },
+      isGateLocked: { headingTransform: () => 'Gate', align: 'center' },
+      isFenced: { headingTransform: () => 'Fence', align: 'center' },
+      isDog: { headingTransform: () => 'Dog' },
+      isVehicleBlocking: { headingTransform: () => 'Vehicle', align: 'center' },
+    },
+  })
+  const heading = text.split('\n')[0]
+  const body = text.substring(heading.length + 1)
   const doc = (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.section}>
-          <Text>
-            Peramble \nCustomers: 10312 Valid emails: 9584 Possibly Not
-            Hamilton: 2212
-          </Text>
-          <Text>
-            # | Customer | Address | Invoice | Done | EBC | NABC | Gate | Fence
-            | Dog | Vehicle | Delivered Bin | Cancelled Bin
-          </Text>
-          {rows.map((row, i) => {
-            const map = charmapRows(row)
-            return (
-              <Text key={i}>
-                {i} | {map.id} | {map.address} | {map.invoice} | {map.isDone} |
-                {map.ebc} | {map.nabc} | {map.isGateLocked} |{map.isFenced} |{' '}
-                {map.isDog} | {map.isVehicleBlocking}
-                {map.deliveredBin} | {map.cancelledBin}
-              </Text>
-            )
-          })}
+          <Text>Manifest Date: {runDate}</Text>
+          <Text>Sector: {name}</Text>
+          <Text>Customers: {rows.length}</Text>
+          <Text> </Text>
+          <View fixed>
+            <Text>{heading}</Text>
+            <Text> </Text>
+          </View>
+          <Text>{body}</Text>
         </View>
       </Page>
     </Document>
@@ -145,15 +168,16 @@ export async function runSheetPdf(sector) {
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Courier',
-    fontSize: 14,
+    fontSize: 11,
+    padding: 25,
   },
   section: {},
 })
-const charmapRows = (row) => {
-  const map = {}
+const charmapRows = (row, index) => {
+  const map = { index: index + 1, isInvoice: '×' }
   for (const key in row) {
     if (typeof row[key] === 'boolean') {
-      map[key] = row[key] ? 'Y' : 'N'
+      map[key] = row[key] ? '[X]' : '[ ]'
     } else {
       map[key] = row[key]
     }

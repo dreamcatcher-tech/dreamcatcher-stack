@@ -9,7 +9,6 @@ export default {
   component: Datum,
   args: { complex },
 }
-console.log(complex)
 
 const Template = (args) => (
   <Glass.Container>

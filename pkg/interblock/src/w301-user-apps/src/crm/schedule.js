@@ -34,6 +34,7 @@ const manifestRowTemplate = {
     id: { type: 'string', title: 'Customer #' },
     address: { type: 'string', title: 'Address' },
     isInvoice: { type: 'boolean', title: 'Invoice' },
+    type: { type: 'string', title: 'Type', enum: ['Bin', 'Bag'] },
     isDone: { type: 'boolean', title: 'Done', default: false },
     ebc: { type: 'boolean', title: 'EBC' },
     nabc: { type: 'boolean', title: 'NABC' },
@@ -58,6 +59,11 @@ const manifestRowTemplate = {
       type: 'string',
       title: 'Cancelled Bin',
       description: 'The ID of the bin that was returned',
+    },
+    notes: {
+      type: 'string',
+      title: 'Notes',
+      description: 'Any notes about the customer',
     },
   },
 }

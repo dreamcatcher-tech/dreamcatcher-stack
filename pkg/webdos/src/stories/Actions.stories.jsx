@@ -7,7 +7,6 @@ const { shell } = system
 const { schemaToFunctions } = api
 
 const onAction = async (action) => {
-  console.log('action received:', action)
   await new Promise((r) => setTimeout(r, 800))
 }
 const actions = schemaToFunctions(shell.api, onAction)

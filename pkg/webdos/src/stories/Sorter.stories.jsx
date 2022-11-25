@@ -3,7 +3,6 @@ import { apps } from '@dreamcatcher-tech/interblock'
 const { faker } = apps.crm
 import { Sorter } from '..'
 const complex = faker().child('routing').child('13')
-console.log(complex)
 export default {
   title: 'Sorter',
   component: Sorter,
