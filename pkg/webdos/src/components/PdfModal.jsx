@@ -26,24 +26,23 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
     onClose()
   }
   const title = `PDF Manifest for ${runDate}`
-  const onDownload = () => {
-    debug('download', url)
-  }
   const onOpen = () => {
     debug('onOpen', url)
-    window.open(url)
+    window.open(url, 'PDFManifestViewer')
   }
   const [status, setStatus] = React.useState()
   const [pagesDone, setPagesDone] = React.useState(0)
   const [totalPages, setTotalPages] = React.useState(0)
   const [size, setSize] = React.useState(0)
   useEffect(() => {
+    if (!open) {
+      return
+    }
     let isActive = true
     const generate = async () => {
       debug('generate')
       setStatus('preparing')
-      let totalPages = await generator.prepare()
-      debug('totalPages', totalPages)
+      await generator.prepare()
       setStatus('generating')
       for await (const total of generator) {
         if (!isActive) {
@@ -56,6 +55,10 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
       debug('saving')
       setStatus('saving')
       const { url, size } = await generator.save()
+      if (!isActive) {
+        debug('cancelled')
+        return
+      }
       setUrl(url)
       setSize(size)
       setStatus('done')
@@ -69,14 +72,15 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
       setTotalPages(0)
       setSize(0)
     }
-  }, [generator])
+  }, [generator, open])
   const Progress = () => {
     if (status === 'preparing') {
       const message = 'Preparing...'
       return <LinearProgressWithLabel unknown message={message} />
     }
     if (status === 'generating') {
-      const value = (pagesDone / totalPages) * 100
+      const total = totalPages || 1
+      const value = (pagesDone / total) * 100
       const message = `Generating... ${pagesDone} of ${totalPages} pages`
       return <LinearProgressWithLabel {...{ value, message }} />
     }
@@ -90,20 +94,28 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
     }
     return null
   }
+  const filename = generator.title + '.pdf'
   return (
     <Dialog onClose={onClose} open={open} fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>
         <Progress />
       </DialogContent>
-      <DialogActions>
-        <Button disabled={!url} variant="contained" onClick={onOpen}>
-          Open&nbsp; <OpenInNew />
-        </Button>
-        <Button disabled={!url} variant="contained" onClick={onDownload}>
-          Download&nbsp; <Download />
-        </Button>
-        <Button onClick={close}>Cancel</Button>
+      <DialogActions disableSpacing>
+        <Stack direction="row" spacing={2}>
+          <Button disabled={!url} variant="contained" onClick={onOpen}>
+            Open&nbsp; <OpenInNew />
+          </Button>
+          <Button
+            disabled={!url}
+            variant="contained"
+            href={url}
+            download={filename}
+          >
+            Download&nbsp; <Download />
+          </Button>
+          <Button onClick={close}>Cancel</Button>
+        </Stack>
       </DialogActions>
     </Dialog>
   )
@@ -158,8 +170,11 @@ LinearProgressWithLabel.propTypes = {
    * The value of the progress indicator for the determinate and buffer variants.
    * Value between 0 and 100.
    */
-  value: PropTypes.number.isRequired,
+  value: PropTypes.number,
   message: PropTypes.string.isRequired,
   unknown: PropTypes.bool,
   status: PropTypes.string,
 }
+
+// keep mounted
+// make open be a link so can middle click it

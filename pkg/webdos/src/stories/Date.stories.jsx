@@ -10,7 +10,7 @@ export default {
   title: 'Date',
   component: Date,
   args: {
-    runDate: Date.today(),
+    runDate: Date.weekday(),
     expanded: true,
   },
 }

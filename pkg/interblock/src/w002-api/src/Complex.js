@@ -34,7 +34,7 @@ export default class Complex {
     return next
   }
   child(path) {
-    assert.strictEqual(typeof path, 'string')
+    assert.strictEqual(typeof path, 'string', 'path must be a string')
     assert(!path.startsWith('/'))
     assert(!path.startsWith('./'))
     assert(!path.startsWith('..'))

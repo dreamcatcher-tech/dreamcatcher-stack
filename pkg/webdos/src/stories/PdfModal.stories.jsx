@@ -2,33 +2,35 @@ import React from 'react'
 import delay from 'delay'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
+import generator from '../pdfs'
+import templateUrl from './template.pdf'
 import { PdfModal } from '..'
 const debug = Debug('webdos:stories:PdfModal')
 const { crm } = apps
 const runDate = '2022-11-09'
-const complex = crm.utils.generateManifest(crm.faker(), runDate)
+const complex = crm.utils.generateManifest(crm.faker(100), runDate)
 
 export default {
   title: 'PDF Modal',
   args: {
     runDate,
-    open: true,
     onPdf: (url) => {
       debug('onPdf', url)
     },
     onClose: () => {
       debug('onClose')
     },
+    open: true,
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*PdfModal')
+  Debug.enable('*PdfModal *pdfs')
   return <PdfModal {...args} />
 }
-export const Basic = Template.bind({})
+export const Mocked = Template.bind({})
 const fakePageCount = 1001
-Basic.args = {
+Mocked.args = {
   generator: {
     prepare: async () => {
       await delay(800)
@@ -51,6 +53,7 @@ Basic.args = {
     },
   },
 }
-export const Single = Template.bind({})
-
-export const Multiple = Template.bind({})
+export const Real = Template.bind({})
+Real.args = {
+  generator: generator(complex, templateUrl),
+}

@@ -5,13 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Jest Tests",
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
+            "runtimeArgs": [
+              "--experimental-vm-modules",
+              "--preserve-symlinks",
+              "--inspect=9229",
+              "${workspaceRoot}/node_modules/.bin/jest",
+              "--runInBand",
+              "--testTimeout=9999999",
+              "${relativeFile}"
             ],
-            "program": "${file}"
-        }
+            "showAsyncStacks": true,
+            "skipFiles": ["<node_internals>/**"],
+            "smartStep": true,
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+          },
     ]
 }

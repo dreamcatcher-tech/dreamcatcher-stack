@@ -8,7 +8,7 @@ export default {
   title: 'Schedule',
   component: Schedule,
   args: {
-    complex: crm.faker().child('schedule'),
+    complex: crm.faker(1000).child('schedule'),
   },
 }
 

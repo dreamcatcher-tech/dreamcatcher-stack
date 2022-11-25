@@ -43,7 +43,9 @@ export default function SectorSelector(props) {
       <Accordion expanded={expanded} onChange={(_, exp) => setExpanded(exp)}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography>Sector: {selectedName} </Typography>
-          <Typography fontStyle="italic">&nbsp;({selectedCount})</Typography>
+          {Number.isInteger(selectedCount) ? (
+            <Typography fontStyle="italic">&nbsp;({selectedCount})</Typography>
+          ) : null}
         </AccordionSummary>
         <AccordionDetails>
           <List dense>
