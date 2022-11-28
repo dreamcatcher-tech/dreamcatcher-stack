@@ -159,15 +159,14 @@ const Map = ({
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !complex || !markers) {
+    if (!map || !complex || !markers || !selected) {
       debug('no map or complex or markers')
       return // TODO detect deep equals of complex
     }
-    const selectedSector = selected || complex.network[0].path
-    debug('adding customers to sector', selectedSector)
+    debug('adding customers to sector', selected)
 
     const customers = complex.tree.child('customers')
-    const { state } = complex.child(selectedSector)
+    const { state } = complex.child(selected)
 
     const { formData: sector } = state
     const { order = [] } = sector

@@ -1,15 +1,13 @@
 import React from 'react'
-import { within, userEvent } from '@storybook/testing-library'
 import { Routing } from '..'
-import { apps } from '@dreamcatcher-tech/interblock'
-const { crm } = apps
+import data from './data'
 import Debug from 'debug'
 
 export default {
   title: 'Routing',
   component: Routing,
   args: {
-    complex: crm.faker().child('routing'),
+    complex: data.small.child('routing'),
   },
 }
 
@@ -18,9 +16,16 @@ const Template = (args) => {
   return <Routing {...args} />
 }
 
-// More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
-export const Basic = Template.bind({})
 export const Blank = Template.bind({})
 Blank.args = {
-  complex: crm.faker().child('routing').setNetwork([]),
+  complex: data.small.child('routing').setNetwork([]),
+}
+export const Small = Template.bind({})
+export const Medium = Template.bind({})
+Medium.args = {
+  complex: data.medium.child('routing'),
+}
+export const Large = Template.bind({})
+Large.args = {
+  complex: data.large.child('routing'),
 }

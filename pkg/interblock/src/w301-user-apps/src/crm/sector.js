@@ -78,6 +78,7 @@ export const state = {
   formData: {},
   uiSchema: {
     geometry: { 'ui:widget': 'hidden' },
-    order: { 'ui:options': { addable: false, removable: false } },
+    order: { 'ui:widget': 'hidden' },
+    // order: { 'ui:options': { addable: false, removable: false } },
   },
 }

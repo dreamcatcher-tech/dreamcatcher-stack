@@ -45,7 +45,12 @@ const Schedule = ({ complex, expanded }) => {
   const events = { onPrint: () => setOpen(true) }
   return (
     <>
-      <Map complex={sectors} onSector={onSelected} markers />
+      <Map
+        complex={sectors}
+        onSector={onSelected}
+        selected={selected}
+        markers
+      />
       <Glass.Container>
         <Glass.Left>
           <Date {...{ runDate, onDateChange }}></Date>

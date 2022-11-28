@@ -26,12 +26,13 @@ describe('complex', () => {
   })
 })
 describe.only('generators', () => {
+  // TODO generate using the installer, then add new customers
+  // using a harness
+
   const write = (complex, filename) => {
     delete complex.tree
-    fs.writeFileSync(
-      `${__dirname}/${filename}.json`,
-      JSON.stringify(complex, null, 2)
-    )
+    const path = `${__dirname}/${filename}.js`
+    fs.writeFileSync(path, 'export default ' + JSON.stringify(complex, null, 2))
   }
   const __dirname = dirname(fileURLToPath(import.meta.url))
   test('small', async () => {

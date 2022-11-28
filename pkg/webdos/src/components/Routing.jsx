@@ -14,18 +14,21 @@ const Routing = ({ complex }) => {
   const onCreate = () => {}
   const onEdit = () => {}
   const [selected, onSelected] = React.useState()
-  let sector = complex.hasChild(selected) ? complex.child(selected) : null
+  const sector = complex.hasChild(selected) ? complex.child(selected) : null
   if (!sector && complex.network.length) {
     onSelected(complex.network[0].path)
   }
-  if (sector) {
-    const { state } = sector
-    const { formData: withGeometry } = state
-    const formData = { ...withGeometry }
-    delete formData.geometry
-    sector = sector.setState({ ...state, formData })
-  }
-  const datum = sector ? <Datum complex={sector} /> : <NotSelected />
+  const bareSector = React.useMemo(() => {
+    if (sector) {
+      // else rjsf will be slow to render
+      const { state } = sector
+      const { formData: withGeometry } = state
+      const formData = { ...withGeometry }
+      delete formData.geometry
+      return sector.setState({ ...state, formData })
+    }
+  }, [sector])
+  const datum = bareSector ? <Datum complex={bareSector} /> : <NotSelected />
   const onSector = onSelected
   return (
     <>
@@ -36,7 +39,7 @@ const Routing = ({ complex }) => {
         </Glass.Left>
       </Glass.Container>
       <RoutingSpeedDial></RoutingSpeedDial>
-      <Map {...{ onCreate, onEdit, complex, onSector }} markers />
+      <Map {...{ onCreate, onEdit, complex, onSector, selected }} markers />
     </>
   )
 }

@@ -1,2 +1,2 @@
-import faker from './topProps'
+import faker from './generateComplex'
 export default faker

@@ -51,6 +51,10 @@ const Datum = ({ complex }) => {
 
   // TODO strip out the datum standard actions
 
+  debug('schema', noTitleSchema)
+  debug('uiSchema', uiSchema)
+  debug('formData', liveFormData)
+
   return (
     <Card>
       <CardHeader

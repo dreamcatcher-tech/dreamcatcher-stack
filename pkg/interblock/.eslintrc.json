@@ -12,5 +12,10 @@
   "rules": {
     "no-unused-vars": "off"
   },
-  "globals": { "Machine": "readonly" }
+  "globals": { "Machine": "readonly" },
+  "ignorePatterns": [
+    "src/w301-user-apps/src/crm/faker/large.js",
+    "src/w301-user-apps/src/crm/faker/medium.js",
+    "src/w301-user-apps/src/crm/faker/small.js"
+  ]
 }
