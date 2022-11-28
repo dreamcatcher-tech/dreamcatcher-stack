@@ -9,7 +9,15 @@ import { useResizeDetector } from 'react-resize-detector'
 const debug = Debug('webdos:components:Map')
 const maxNativeZoom = 18
 const maxZoom = 22
-const Map = ({ onCreate, onEdit, markers, onSector, onMarker, complex }) => {
+const Map = ({
+  onCreate,
+  onEdit,
+  markers,
+  onSector,
+  onMarker,
+  selected,
+  complex,
+}) => {
   const mapId = useId()
   const mapRef = useRef()
   useEffect(() => {
@@ -78,6 +86,9 @@ const Map = ({ onCreate, onEdit, markers, onSector, onMarker, complex }) => {
       event.layer.remove()
       console.log(event)
       onCreate(geoJson)
+    })
+    map.on('zoomend', (event) => {
+      debug('zoomend', map.getZoom())
     })
 
     scale.addTo(map)
@@ -149,34 +160,50 @@ const Map = ({ onCreate, onEdit, markers, onSector, onMarker, complex }) => {
   useEffect(() => {
     const map = mapRef.current
     if (!map || !complex || !markers) {
+      debug('no map or complex or markers')
       return // TODO detect deep equals of complex
     }
-    debug('adding customers')
-    const customersLayer = L.featureGroup().addTo(map)
+    const selectedSector = selected || complex.network[0].path
+    debug('adding customers to sector', selectedSector)
+
     const customers = complex.tree.child('customers')
-    for (const { state } of complex.network) {
-      const { formData: sector } = state
-      const { order = [] } = sector
-      for (const [index, custNo] of order.entries()) {
-        assert(customers.hasChild(custNo), `customer ${custNo} not found`)
-        const customer = customers.child(custNo)
-        const { serviceGps } = customer.state.formData
-        const { latitude, longitude } = serviceGps
-        const options = { riseOnHover: true }
-        const marker = L.marker([latitude, longitude], options)
-        marker.setIcon(createIcon(sector.color, index + 1))
-        if (onMarker) {
-          marker.on('click', () => onMarker(custNo))
-        }
-        marker.addTo(customersLayer)
+    const { state } = complex.child(selectedSector)
+
+    const { formData: sector } = state
+    const { order = [] } = sector
+
+    const markersArray = []
+    for (const [index, custNo] of order.entries()) {
+      assert(customers.hasChild(custNo), `customer ${custNo} not found`)
+      const customer = customers.child(custNo)
+      const { serviceGps } = customer.state.formData
+      const { latitude, longitude } = serviceGps
+      const options = { riseOnHover: true }
+      const marker = L.marker([latitude, longitude], options)
+      marker.setIcon(createIcon(sector.color, index + 1))
+      if (onMarker) {
+        marker.on('click', () => onMarker(custNo))
       }
+      markersArray.push(marker)
     }
     debug('customers added')
+    let layer
+    const tooManyMarkers = 300
+    if (order.length < tooManyMarkers) {
+      layer = L.featureGroup().addTo(map)
+      markersArray.forEach((marker) => layer.addLayer(marker))
+    } else {
+      layer = L.markerClusterGroup({
+        zoomToBoundsOnClick: false,
+        disableClusteringAtZoom: 16,
+      }).addTo(map)
+      layer.addLayers(markersArray, { chunkedLoading: true })
+    }
     return () => {
       debug(`removing customers`)
-      customersLayer.remove()
+      layer.remove()
     }
-  }, [mapRef.current, complex, markers])
+  }, [mapRef.current, complex, markers, selected])
 
   const paintBelowAllOthers = 0
   const ensureNotPartOfNormalLayout = 'absolute'
@@ -219,7 +246,7 @@ Map.propTypes = {
   onSector: PropTypes.func,
   onCustomer: PropTypes.func,
   markers: PropTypes.bool,
+  selected: PropTypes.string,
   complex: PropTypes.instanceOf(api.Complex),
-  hidden: PropTypes.bool,
 }
 export default Map

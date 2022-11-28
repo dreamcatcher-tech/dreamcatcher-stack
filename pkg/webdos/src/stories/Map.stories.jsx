@@ -6,6 +6,8 @@ import CardContent from '@mui/material/CardContent'
 import Button from '@mui/material/Button'
 import { apps } from '@dreamcatcher-tech/interblock'
 const { faker } = apps.crm
+import data from './data'
+const debug = Debug('Map')
 
 export default {
   title: 'Map',
@@ -100,8 +102,8 @@ Polygons.args = {
   complex,
 }
 
-export const Customers = Template.bind({})
-Customers.args = {
+export const WithCustomers = Template.bind({})
+WithCustomers.args = {
   complex,
   markers: true,
 }
@@ -136,4 +138,29 @@ export const ClickCustomers = (args) => {
     </div>
   )
   // TODO script some actual clicking
+}
+
+const Customers = (args) => {
+  const [selected, setSelected] = React.useState()
+  const onSector = (sector) => {
+    debug('sector', sector)
+    setSelected(sector)
+  }
+  args = { ...args, onSector, selected }
+  return wrap(<Map {...args} />)
+}
+export const SmallCustomers = Customers.bind({})
+SmallCustomers.args = {
+  complex: data.small.child('routing'),
+  markers: true,
+}
+export const MediumCustomers = Customers.bind({})
+MediumCustomers.args = {
+  complex: data.medium.child('routing'),
+  markers: true,
+}
+export const LargeCustomers = Customers.bind({})
+LargeCustomers.args = {
+  complex: data.large.child('routing'),
+  markers: true,
 }

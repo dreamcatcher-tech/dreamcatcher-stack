@@ -47,6 +47,7 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
   return (
     <>
       <DataGridPremium
+        sx={{ height: '100%', width: '100%' }}
         backgroundColor="paper"
         columns={columns}
         rows={rows}

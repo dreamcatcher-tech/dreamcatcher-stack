@@ -51,7 +51,11 @@ const Lazy = ({ show, children }) => {
     setMounted(true)
   }
   if (mounted) {
-    return <div style={{ display: show ? null : 'none' }}>{children}</div>
+    return (
+      <div style={{ flexGrow: 1, display: show ? null : 'none' }}>
+        {children}
+      </div>
+    )
   }
 }
 Lazy.propTypes = {
