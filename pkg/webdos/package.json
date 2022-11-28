@@ -69,11 +69,11 @@
     "react": "18.x"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^7.0.0-alpha.53",
-    "@storybook/addon-interactions": "^7.0.0-alpha.53",
-    "@storybook/addon-links": "^7.0.0-alpha.53",
-    "@storybook/react": "^7.0.0-alpha.53",
-    "@storybook/react-vite": "^7.0.0-alpha.53",
+    "@storybook/addon-essentials": "^7.0.0-alpha.54",
+    "@storybook/addon-interactions": "^7.0.0-alpha.54",
+    "@storybook/addon-links": "^7.0.0-alpha.54",
+    "@storybook/react": "^7.0.0-alpha.54",
+    "@storybook/react-vite": "^7.0.0-alpha.54",
     "@storybook/testing-library": "^0.0.13",
     "chromatic": "^6.11.4",
     "dotenv": "^16.0.3",
@@ -85,7 +85,7 @@
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.8.3",
     "serve": "^14.1.2",
-    "storybook": "^7.0.0-alpha.53",
+    "storybook": "^7.0.0-alpha.54",
     "vite": "^3.2.4"
   },
   "repository": {

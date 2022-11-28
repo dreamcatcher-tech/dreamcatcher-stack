@@ -50,7 +50,6 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
         backgroundColor="paper"
         columns={columns}
         rows={rows}
-        autoHeight
         disableMultipleSelection
         hideFooter
         onRowClick={onRow}
@@ -100,6 +99,7 @@ const generateColumns = (template) => {
       font: 'Arial',
       fontSize: '14px',
     })
+    type = type === 'integer' ? 'number' : type
     columns.push({
       field: key,
       headerName: title,

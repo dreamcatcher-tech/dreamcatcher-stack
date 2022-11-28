@@ -1,18 +1,15 @@
 import React from 'react'
 import { CollectionList } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
+import data from './data'
 const { crm } = apps
 import Debug from 'debug'
 const debug = Debug('CollectionList')
 
-const complex = crm.faker().child('customers')
+const complex = data.small.child('customers')
 export default {
   title: 'CollectionList',
   component: CollectionList,
-  parameters: {
-    // More on Story layout: https://storybook.js.org/docs/react/configure/story-layout
-    layout: 'fullscreen',
-  },
 
   args: {
     onAdd: () => {
@@ -40,5 +37,7 @@ LoadingChildren.args = {
 export const Empty = Template.bind({})
 Empty.args = { complex: complex.setNetwork([]) }
 export const SmallData = Template.bind({})
-SmallData.args = { complex: complex.setNetwork(complex.network.slice(0, 5)) }
+export const MediumData = Template.bind({})
+MediumData.args = { complex: data.medium.child('customers') }
 export const LargeData = Template.bind({})
+LargeData.args = { complex: data.large.child('customers') }

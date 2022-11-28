@@ -103,7 +103,8 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
             disabled={!url}
             variant="contained"
             href={url}
-            target="PDFManifestViewer"
+            target="_blank"
+            type="application/pdf"
           >
             Open&nbsp; <OpenInNew />
           </Button>

@@ -15,7 +15,8 @@ import generatorFactory from '../pdfs'
 import { Date } from '.'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
-import templateUrl from '../stories/template.pdf'
+// TODO use binary in Complex
+import { templateUrl } from '../stories/data'
 const { utils } = apps.crm
 const debug = Debug('terminal:widgets:Schedule')
 

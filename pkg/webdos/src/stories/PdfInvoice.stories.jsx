@@ -3,7 +3,7 @@ import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
 import { saveToUrl, loadUrl, invoice } from '../pdfs'
 import { useAsync } from 'react-async-hook'
-import templateUrl from './template.pdf'
+import { templateUrl } from './data'
 const debug = Debug('PdfInvoice')
 const { crm } = apps
 let complex = crm.faker().child('customers')

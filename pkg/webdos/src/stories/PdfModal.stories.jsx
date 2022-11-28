@@ -3,7 +3,7 @@ import delay from 'delay'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
 import generator from '../pdfs'
-import templateUrl from './template.pdf'
+import { templateUrl } from './data'
 import { PdfModal } from '..'
 const debug = Debug('webdos:stories:PdfModal')
 const { crm } = apps
