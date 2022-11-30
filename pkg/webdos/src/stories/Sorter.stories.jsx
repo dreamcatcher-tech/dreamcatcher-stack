@@ -32,12 +32,13 @@ const Template = (args) => {
   Debug.enable('*Datum *Sorter')
   const mapping = mapCustomers(args.complex)
   const { order } = args.complex.state.formData
-  const [items, onSort] = React.useState(order)
+  const [items, setItems] = React.useState(order)
   const [selected, setSelected] = React.useState(args.selected)
   const onSelect = (id) => {
     debug('onSelect', id)
     setSelected(id)
   }
+  const onSort = args.onSort === false ? undefined : setItems
   debug('selected', selected)
   args = { ...args, items, mapping, onSort, onSelect, selected }
   return (
@@ -85,6 +86,6 @@ Selected.args = {
 }
 export const ReadOnly = Template.bind({})
 ReadOnly.args = {
-  onSort: undefined,
+  onSort: false,
   complex: medium,
 }

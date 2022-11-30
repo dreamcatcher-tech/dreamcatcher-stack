@@ -51,15 +51,15 @@ function renderRow(props) {
   }
   const isSelected = selected === id
   const onClick = () => {
-    const toggle = isSelected ? undefined : id
-    onSelect(toggle)
+    const toggleSelect = isSelected ? undefined : id
+    onSelect(toggleSelect)
   }
   return (
     <div ref={setNodeRef} {...attributes} {...listeners} style={sortableStyle}>
       <Item
         id={id}
         value={value}
-        index={index + 1}
+        label={index + 1}
         isDragging={!readOnly && isDragging}
         isSelected={isSelected}
         onClick={onClick}
@@ -67,14 +67,14 @@ function renderRow(props) {
     </div>
   )
 }
-const Item = ({ id, value, index, isDragging, isSelected, onClick }) => {
+const Item = ({ id, value, label, isDragging, isSelected, onClick }) => {
   value = isDragging ? ' ' : value
-  index = isDragging ? ' ' : index
+  label = isDragging ? ' ' : label
   return (
     <ListItem key={id}>
       <ListItemButton selected={isSelected} onClick={onClick}>
         <ListItemIcon>
-          <Chip label={index} />
+          <Chip label={label} />
         </ListItemIcon>
         <ListItemText primary={value} />
       </ListItemButton>
@@ -84,7 +84,7 @@ const Item = ({ id, value, index, isDragging, isSelected, onClick }) => {
 Item.propTypes = {
   id: PropTypes.string,
   value: PropTypes.node,
-  index: PropTypes.number,
+  label: PropTypes.node,
   isDragging: PropTypes.bool,
   isSelected: PropTypes.bool,
   onClick: PropTypes.func,
@@ -105,6 +105,9 @@ export default function Sorter({ items, mapping, onSort, onSelect, selected }) {
     return () => setLastSelected(selected)
   }, [selected])
   useEffect(() => {
+    if (!onSort) {
+      return
+    }
     if (lastSelected && selected && lastSelected !== selected) {
       debug('lastSelected', lastSelected, 'selected', selected)
       debug(mapping.get(lastSelected), mapping.get(selected))
@@ -136,8 +139,8 @@ export default function Sorter({ items, mapping, onSort, onSelect, selected }) {
       onSort(nextItems)
     }
   }
-
-  const data = { items, mapping, selected, readOnly: !onSort, onSelect }
+  const readOnly = !onSort
+  const data = { items, mapping, selected, readOnly, onSelect }
   return (
     <AutoSizer>
       {({ height, width }) => {
@@ -178,6 +181,7 @@ Sorter.propTypes = {
   onSelect: PropTypes.func,
   selected: PropTypes.string,
 }
+
 const Overlay = ({ activeId, data }) => {
   const { items, mapping, readOnly } = data
   if (readOnly) {
@@ -187,7 +191,7 @@ const Overlay = ({ activeId, data }) => {
   const index = items.indexOf(activeId) + 1
   const value = mapping.get(activeId, activeId)
   if (activeId) {
-    child = <Item id={activeId} value={value} index={index} />
+    child = <Item id={activeId} value={value} label={index} />
   }
   return (
     <DragOverlay modifiers={[restrictToParentElement]}>{child}</DragOverlay>
