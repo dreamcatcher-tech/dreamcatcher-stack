@@ -54,7 +54,22 @@ const Datum = ({ complex }) => {
   debug('schema', noTitleSchema)
   debug('uiSchema', uiSchema)
   debug('formData', liveFormData)
-  const widgets = {}
+  const widgets = {
+    sorter: (props) => {
+      return <div>meow</div>
+    },
+  }
+  const noHidden = {
+    ...noTitleSchema,
+    properties: { ...noTitleSchema.properties },
+  }
+  Object.keys(noHidden.properties).forEach((key) => {
+    if (uiSchema[key] && uiSchema[key]['ui:widget'] === 'hidden') {
+      debug('removing hidden', key)
+      // else rjsf loads slowly
+      delete noHidden.properties[key]
+    }
+  })
   return (
     <Card>
       <CardHeader
@@ -77,7 +92,7 @@ const Datum = ({ complex }) => {
         <Form
           validator={validator}
           disabled={isPending}
-          schema={noTitleSchema}
+          schema={noHidden}
           uiSchema={uiSchema}
           formData={liveFormData}
           onBlur={onBlur}
