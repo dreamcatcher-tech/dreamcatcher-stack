@@ -1,23 +1,77 @@
 import React from 'react'
-import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps.crm
-import { Sorter } from '..'
-const complex = faker().child('routing').child('13')
+import { Glass, Datum, Sorter } from '..'
+import Debug from 'debug'
+import data from './data'
+import assert from 'assert-fast'
+import { api } from '@dreamcatcher-tech/interblock'
+const complex = data.small.child('routing').child('13')
 export default {
   title: 'Sorter',
   component: Sorter,
-  parameters: { layout: 'centered' },
   args: {
     complex,
   },
 }
 
-const Template = (args) => <Sorter {...args} />
+const mapCustomers = (sector) => {
+  assert(sector instanceof api.Complex)
+  const { state } = sector
+  const { order } = state.formData
+  const mapping = new Map()
+  const customers = sector.tree.child('customers')
+  order.forEach((id) => {
+    const customer = customers.child(id)
+    const value = customer.state.formData.serviceAddress
+    mapping.set(id, value)
+  })
+  return mapping
+}
 
-// More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
-export const Basic = Template.bind({})
+const Template = (args) => {
+  Debug.enable('*Datum *Sorter')
+  const mapping = mapCustomers(args.complex)
+  const { order: items } = args.complex.state.formData
+  args = { ...args, items, mapping }
+  return (
+    <Glass.Container>
+      <Glass.Left>
+        <div
+          style={{
+            minHeight: 800,
+            minWidth: 350,
+            padding: '10px',
+            border: 'solid',
+            backgroundColor: 'blue',
+          }}
+        >
+          <div style={{ backgroundColor: 'white', height: '100%' }}>
+            <Sorter {...args} />
+          </div>
+        </div>
+      </Glass.Left>
+    </Glass.Container>
+  )
+}
+
+export const Small = Template.bind({})
 export const Blank = Template.bind({})
-const blank = { ...complex.state, formData: { ...complex.formData, order: [] } }
+const blank = {
+  ...complex.state,
+  formData: { ...complex.state.formData, order: [] },
+}
 Blank.args = { complex: complex.setState(blank) }
 
-export const Dragging = Template.bind({})
+export const Medium = Template.bind({})
+const medium = data.medium.child('routing').child('13')
+Medium.args = {
+  complex: medium,
+}
+export const Large = Template.bind({})
+Large.args = {
+  complex: data.large.child('routing').child('13'),
+}
+export const Selected = Template.bind({})
+Selected.args = {
+  complex: medium,
+  selected: medium.state.formData.order[0],
+}

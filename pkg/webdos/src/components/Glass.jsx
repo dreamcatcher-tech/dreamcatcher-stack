@@ -8,7 +8,12 @@ const Container = ({ children }) => (
     container
     padding={2}
     spacing={2}
-    sx={{ zIndex: 1, position: 'relative', pointerEvents: 'none' }}
+    sx={{
+      zIndex: 1,
+      position: 'relative',
+      pointerEvents: 'none',
+      display: 'flex',
+    }}
   >
     {children}
   </Grid>
@@ -16,8 +21,8 @@ const Container = ({ children }) => (
 Container.propTypes = { children: PropTypes.node }
 
 const Left = ({ children }) => (
-  <Grid item sx={{ minWidth: 375, maxWidth: 375 }}>
-    <Stack spacing={2} sx={{ pointerEvents: 'auto' }}>
+  <Grid item sx={{ minWidth: 375, maxWidth: 375, display: 'flex' }}>
+    <Stack spacing={2} sx={{ pointerEvents: 'auto', display: 'flex' }}>
       {children}
     </Stack>
   </Grid>
@@ -25,8 +30,8 @@ const Left = ({ children }) => (
 Left.propTypes = { children: PropTypes.node }
 
 const Rest = ({ children }) => (
-  <Grid item sx={{ flexGrow: 1 }}>
-    <Stack spacing={2} sx={{ pointerEvents: 'auto' }}>
+  <Grid item sx={{ flexGrow: 1, display: 'flex' }}>
+    <Stack spacing={2} sx={{ pointerEvents: 'auto', display: 'flex' }}>
       {children}
     </Stack>
   </Grid>

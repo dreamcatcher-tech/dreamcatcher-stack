@@ -12,7 +12,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*Routing')
+  Debug.enable('*Routing *Map')
   return <Routing {...args} />
 }
 

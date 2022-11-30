@@ -5,6 +5,7 @@ import L from './leaflet'
 import Debug from 'debug'
 import assert from 'assert-fast'
 import { useResizeDetector } from 'react-resize-detector'
+import delay from 'delay'
 
 const debug = Debug('webdos:components:Map')
 const maxNativeZoom = 18
@@ -158,49 +159,69 @@ const Map = ({
   }, [mapRef.current, complex])
 
   useEffect(() => {
+    let isActive = true
     const map = mapRef.current
     if (!map || !complex || !markers || !selected) {
       debug('no map or complex or markers')
       return // TODO detect deep equals of complex
     }
-    debug('adding customers to sector', selected)
-
-    const customers = complex.tree.child('customers')
-    const { state } = complex.child(selected)
-
-    const { formData: sector } = state
-    const { order = [] } = sector
-
-    const markersArray = []
-    for (const [index, custNo] of order.entries()) {
-      assert(customers.hasChild(custNo), `customer ${custNo} not found`)
-      const customer = customers.child(custNo)
-      const { serviceGps } = customer.state.formData
-      const { latitude, longitude } = serviceGps
-      const options = { riseOnHover: true }
-      const marker = L.marker([latitude, longitude], options)
-      marker.setIcon(createIcon(sector.color, index + 1))
-      if (onMarker) {
-        marker.on('click', () => onMarker(custNo))
-      }
-      markersArray.push(marker)
-    }
-    debug('customers added')
     let layer
-    const tooManyMarkers = 300
-    if (order.length < tooManyMarkers) {
-      layer = L.featureGroup().addTo(map)
-      markersArray.forEach((marker) => layer.addLayer(marker))
-    } else {
-      layer = L.markerClusterGroup({
-        zoomToBoundsOnClick: false,
-        disableClusteringAtZoom: 16,
-      }).addTo(map)
-      layer.addLayers(markersArray, { chunkedLoading: true })
+    const chunkLoad = async () => {
+      debug('adding customers to sector', selected)
+
+      const customers = complex.tree.child('customers')
+      const { state } = complex.child(selected)
+
+      const { formData: sector } = state
+      const { order = [] } = sector
+
+      const markersArray = []
+      debug('adding markers', order.length)
+      let count = 0
+      for (const [index, custNo] of order.entries()) {
+        assert(customers.hasChild(custNo), `customer ${custNo} not found`)
+        const customer = customers.child(custNo)
+        const { serviceGps } = customer.state.formData
+        const { latitude, longitude } = serviceGps
+        const options = { riseOnHover: true }
+        const marker = L.marker([latitude, longitude], options)
+        marker.setIcon(createIcon(sector.color, index + 1))
+        if (onMarker) {
+          marker.on('click', () => onMarker(custNo))
+        }
+        markersArray.push(marker)
+        count++
+        if (count % 100 === 0) {
+          await delay()
+          if (!isActive) {
+            return
+          }
+        }
+      }
+      debug('markers generated')
+      const tooManyMarkers = 300
+      if (order.length < tooManyMarkers) {
+        layer = L.featureGroup().addTo(map)
+        markersArray.forEach((marker) => layer.addLayer(marker))
+      } else {
+        layer = L.markerClusterGroup({
+          zoomToBoundsOnClick: false,
+          disableClusteringAtZoom: 16,
+        }).addTo(map)
+        layer.addLayers(markersArray, {
+          chunkedLoading: true,
+          chunkInterval: 50,
+        })
+      }
+      debug('markers added')
     }
+    chunkLoad()
     return () => {
+      isActive = false
       debug(`removing customers`)
-      layer.remove()
+      if (layer) {
+        layer.remove()
+      }
     }
   }, [mapRef.current, complex, markers, selected])
 

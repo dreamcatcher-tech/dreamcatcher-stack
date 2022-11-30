@@ -54,7 +54,7 @@ const Datum = ({ complex }) => {
   debug('schema', noTitleSchema)
   debug('uiSchema', uiSchema)
   debug('formData', liveFormData)
-
+  const widgets = {}
   return (
     <Card>
       <CardHeader
@@ -82,6 +82,7 @@ const Datum = ({ complex }) => {
           formData={liveFormData}
           onBlur={onBlur}
           onChange={onChange}
+          widgets={widgets}
         />
         <Actions actions={complex.actions}></Actions>
       </CardContent>

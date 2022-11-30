@@ -14,7 +14,7 @@ const geometry = {
   type: 'object',
   required: ['type', 'properties', 'geometry'],
   properties: {
-    type: { enum: ['Feature'] },
+    type: { const: 'Feature' },
     properties: { type: 'object', maxProperties: 0 },
     geometry: {
       title: 'GeoJSON Polygon',
@@ -24,7 +24,7 @@ const geometry = {
       properties: {
         type: {
           type: 'string',
-          enum: ['Polygon'],
+          const: 'Polygon',
         },
         coordinates: {
           type: 'array',
@@ -78,7 +78,6 @@ export const state = {
   formData: {},
   uiSchema: {
     geometry: { 'ui:widget': 'hidden' },
-    order: { 'ui:widget': 'hidden' },
-    // order: { 'ui:options': { addable: false, removable: false } },
+    order: { 'ui:widget': 'sorter' },
   },
 }

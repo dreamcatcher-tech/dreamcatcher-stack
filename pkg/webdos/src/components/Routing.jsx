@@ -18,17 +18,7 @@ const Routing = ({ complex }) => {
   if (!sector && complex.network.length) {
     onSelected(complex.network[0].path)
   }
-  const bareSector = React.useMemo(() => {
-    if (sector) {
-      // else rjsf will be slow to render
-      const { state } = sector
-      const { formData: withGeometry } = state
-      const formData = { ...withGeometry }
-      delete formData.geometry
-      return sector.setState({ ...state, formData })
-    }
-  }, [sector])
-  const datum = bareSector ? <Datum complex={bareSector} /> : <NotSelected />
+  const datum = sector ? <Datum complex={sector} /> : <NotSelected />
   const onSector = onSelected
   return (
     <>
