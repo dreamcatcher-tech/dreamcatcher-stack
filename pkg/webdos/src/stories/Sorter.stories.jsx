@@ -4,6 +4,7 @@ import Debug from 'debug'
 import data from './data'
 import assert from 'assert-fast'
 import { api } from '@dreamcatcher-tech/interblock'
+const debug = Debug('Sorter')
 const complex = data.small.child('routing').child('13')
 export default {
   title: 'Sorter',
@@ -30,8 +31,15 @@ const mapCustomers = (sector) => {
 const Template = (args) => {
   Debug.enable('*Datum *Sorter')
   const mapping = mapCustomers(args.complex)
-  const { order: items } = args.complex.state.formData
-  args = { ...args, items, mapping }
+  const { order } = args.complex.state.formData
+  const [items, onSort] = React.useState(order)
+  const [selected, setSelected] = React.useState(args.selected)
+  const onSelect = (id) => {
+    debug('onSelect', id)
+    setSelected(id)
+  }
+  debug('selected', selected)
+  args = { ...args, items, mapping, onSort, onSelect, selected }
   return (
     <Glass.Container>
       <Glass.Left>
@@ -74,4 +82,9 @@ export const Selected = Template.bind({})
 Selected.args = {
   complex: medium,
   selected: medium.state.formData.order[0],
+}
+export const ReadOnly = Template.bind({})
+ReadOnly.args = {
+  onSort: undefined,
+  complex: medium,
 }
