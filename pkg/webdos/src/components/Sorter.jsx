@@ -32,7 +32,7 @@ const debug = Debug('webdos:components:Sorter')
 
 function renderRow(props) {
   let { index, style, data, isScrolling } = props
-  const { items, mapping, selected, readOnly, onSelect } = data
+  const { items, mapping, selected, readOnly, onSelected } = data
   const id = items[index]
   const value = mapping.get(id, id)
 
@@ -52,7 +52,7 @@ function renderRow(props) {
   const isSelected = selected === id
   const onClick = () => {
     const toggleSelect = isSelected ? undefined : id
-    onSelect(toggleSelect)
+    onSelected(toggleSelect)
   }
   return (
     <div ref={setNodeRef} {...attributes} {...listeners} style={sortableStyle}>
@@ -71,7 +71,7 @@ const Item = ({ id, value, label, isDragging, isSelected, onClick }) => {
   value = isDragging ? ' ' : value
   label = isDragging ? ' ' : label
   return (
-    <ListItem key={id}>
+    <ListItem key={id} disablePadding>
       <ListItemButton selected={isSelected} onClick={onClick}>
         <ListItemIcon>
           <Chip label={label} />
@@ -89,7 +89,14 @@ Item.propTypes = {
   isSelected: PropTypes.bool,
   onClick: PropTypes.func,
 }
-export default function Sorter({ items, mapping, onSort, onSelect, selected }) {
+export default function Sorter({
+  items,
+  mapping,
+  onSort,
+  onSelected,
+  selected,
+}) {
+  debug('props', { items, mapping, onSort, onSelected, selected })
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 1 } }),
     useSensor(KeyboardSensor, {
@@ -140,10 +147,11 @@ export default function Sorter({ items, mapping, onSort, onSelect, selected }) {
     }
   }
   const readOnly = !onSort
-  const data = { items, mapping, selected, readOnly, onSelect }
+  const data = { items, mapping, selected, readOnly, onSelected }
   return (
     <AutoSizer>
       {({ height, width }) => {
+        debug('height', height, 'width', width)
         return (
           <DndContext
             sensors={sensors}
@@ -178,7 +186,7 @@ Sorter.propTypes = {
   items: PropTypes.arrayOf(PropTypes.string).isRequired,
   mapping: PropTypes.object,
   onSort: PropTypes.func,
-  onSelect: PropTypes.func,
+  onSelected: PropTypes.func,
   selected: PropTypes.string,
 }
 
@@ -206,9 +214,7 @@ const NoCustomers = () => {
   return (
     <ListItem>
       <ListItemButton>
-        <ListItemIcon>
-          <Chip />
-        </ListItemIcon>
+        <ListItemIcon />
         <ListItemText primary={value} />
       </ListItemButton>
     </ListItem>

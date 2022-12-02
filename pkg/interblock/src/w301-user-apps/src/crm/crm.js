@@ -53,10 +53,10 @@ export const installer = {
     customers: {
       covenant: 'collection',
       state: {
-        datumTemplate: {
+        template: {
           type: 'DATUM',
           schema: {
-            title: 'Details',
+            title: 'Customer',
             type: 'object',
             required: ['custNo', 'name'],
             properties: {
@@ -86,8 +86,7 @@ export const installer = {
                 title: 'Customer Number',
                 type: 'integer',
                 minimum: 1,
-                maximum: 15000,
-                default: 555,
+                maximum: 100000,
               },
               importedHash: { type: 'string', faker: 'git.commitSha' },
             },

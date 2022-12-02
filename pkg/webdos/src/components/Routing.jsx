@@ -2,7 +2,14 @@ import { api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 import * as React from 'react'
 import PropTypes from 'prop-types'
-import { Map, RoutingSpeedDial, SectorSelector, Datum, Glass } from '.'
+import {
+  SorterDatum,
+  Map,
+  RoutingSpeedDial,
+  SectorSelector,
+  Datum,
+  Glass,
+} from '.'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
@@ -10,10 +17,10 @@ import Typography from '@mui/material/Typography'
 
 const debug = Debug('terminal:widgets:Routing')
 
-const Routing = ({ complex }) => {
+const Routing = ({ complex, selected: initialSelected }) => {
   const onCreate = () => {}
   const onEdit = () => {}
-  const [selected, onSelected] = React.useState()
+  const [selected, onSelected] = React.useState(initialSelected)
   const sector = complex.hasChild(selected) ? complex.child(selected) : null
   if (!sector && complex.network.length) {
     onSelected(complex.network[0].path)
@@ -26,6 +33,7 @@ const Routing = ({ complex }) => {
         <Glass.Left>
           <SectorSelector {...{ complex, selected, onSelected }} />
           {datum}
+          <SorterDatum {...{ complex: sector, selected, onSelected }} />
         </Glass.Left>
       </Glass.Container>
       <RoutingSpeedDial></RoutingSpeedDial>
@@ -33,7 +41,10 @@ const Routing = ({ complex }) => {
     </>
   )
 }
-Routing.propTypes = { complex: PropTypes.instanceOf(api.Complex).isRequired }
+Routing.propTypes = {
+  complex: PropTypes.instanceOf(api.Complex).isRequired,
+  selected: PropTypes.string,
+}
 
 const NotSelected = () => {
   return (

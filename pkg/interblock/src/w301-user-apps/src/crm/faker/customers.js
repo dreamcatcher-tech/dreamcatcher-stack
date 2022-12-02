@@ -15,6 +15,7 @@ const gps = {
     longitude: { type: 'number', faker: 'address.longitude' },
   },
 }
+// TODO reconcile this with the actual covenant that will be deployed
 const state = {
   type: 'COLLECTION',
   template: {

@@ -1,9 +1,7 @@
 import React from 'react'
 import { Datum, Glass } from '..'
-import { apps, api } from '@dreamcatcher-tech/interblock'
 import data from './data'
 import Debug from 'debug'
-const { faker } = apps.crm
 const debug = Debug('SectorDatum')
 
 export default {
@@ -15,8 +13,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*SectorDatum *Datum')
-  debug('order length:', args.complex.state.formData.order.length)
+  Debug.enable('*Datum')
   return (
     <Glass.Container>
       <Glass.Left>
@@ -27,10 +24,9 @@ const Template = (args) => {
 }
 
 export const ReadOnly = Template.bind({})
-ReadOnly.args = {}
-export const Small = Template.bind({})
-Small.args = {}
-export const Medium = Template.bind({})
-Medium.args = { complex: data.medium.child('routing').child('13') }
-export const Large = Template.bind({})
-Large.args = { complex: data.large.child('routing').child('13') }
+ReadOnly.args = { readonly: true }
+export const Collapsed = Template.bind({})
+Collapsed.args = { collapsed: true }
+export const Viewing = Template.bind({})
+export const Editing = Template.bind({})
+Editing.args = { editing: true }

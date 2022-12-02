@@ -14,11 +14,20 @@ const [large, medium, small] = [largeJson, mediumJson, smallJson].map((obj) => {
   // maybe data should be moved to a separate repo
   obj.network = obj.network.map((child) => {
     switch (child.path) {
-      case 'customers':
-        return child
+      case 'customers': {
+        const { schema, uiSchema } =
+          crm.covenant.installer.network.customers.state.template
+        return {
+          ...child,
+          state: {
+            ...child.state,
+            template: { schema, uiSchema },
+          },
+        }
+      }
       case 'schedule':
         return child
-      case 'routing':
+      case 'routing': {
         const { schema, uiSchema } = crm.sector.state
         const network = child.network.map((sector) => {
           sector = { ...sector }
@@ -34,6 +43,7 @@ const [large, medium, small] = [largeJson, mediumJson, smallJson].map((obj) => {
             template: { schema, uiSchema },
           },
         }
+      }
       default:
         return child
     }

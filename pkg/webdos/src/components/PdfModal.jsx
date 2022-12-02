@@ -94,7 +94,7 @@ const PdfModal = ({ runDate, open = false, onPdf, onClose, generator }) => {
   return (
     <Dialog onClose={close} open={open} fullWidth>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
+      <DialogContent>
         <Progress />
       </DialogContent>
       <DialogActions disableSpacing>

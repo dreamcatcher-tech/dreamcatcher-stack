@@ -70,3 +70,17 @@ export const generateManifest = (rootComplex, runDate) => {
     .child(runDate)
   return manifest
 }
+
+export const mapCustomers = (sector) => {
+  assert(sector instanceof Complex)
+  const { state } = sector
+  const { order } = state.formData
+  const mapping = new Map()
+  const customers = sector.tree.child('customers')
+  order.forEach((id) => {
+    const customer = customers.child(id)
+    const value = customer.state.formData.serviceAddress
+    mapping.set(id, value)
+  })
+  return mapping
+}

@@ -8,11 +8,12 @@ export default {
   component: Routing,
   args: {
     complex: data.small.child('routing'),
+    selected: '13',
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*Routing *Map')
+  Debug.enable('*Routing  *Sorter*')
   return <Routing {...args} />
 }
 

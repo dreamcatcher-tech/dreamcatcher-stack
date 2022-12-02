@@ -20,6 +20,7 @@ export { default as Settings } from './Settings'
 export { default as SectorDisplay } from './SectorDisplay'
 export { default as About } from './About'
 export { default as Manifest } from './Manifest'
+export { default as SorterDatum } from './SorterDatum'
 
 // compounds of compounds
 export { default as DialogDatum } from './DialogDatum'

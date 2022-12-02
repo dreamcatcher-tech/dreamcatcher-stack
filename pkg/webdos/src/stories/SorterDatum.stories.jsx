@@ -1,31 +1,24 @@
 import React from 'react'
-import { Glass, Sorter } from '..'
+import { Glass, Datum, SorterDatum } from '..'
 import Debug from 'debug'
 import data from './data'
-import { apps } from '@dreamcatcher-tech/interblock'
+import assert from 'assert-fast'
+import { api, apps } from '@dreamcatcher-tech/interblock'
 const debug = Debug('Sorter')
 const complex = data.small.child('routing').child('13')
 export default {
-  title: 'Sorter',
-  component: Sorter,
+  title: 'SorterDatum',
+  component: SorterDatum,
   args: {
     complex,
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*Datum *Sorter')
-  const mapping = apps.crm.utils.mapCustomers(args.complex)
-  const { order } = args.complex.state.formData
-  const [items, setItems] = React.useState(order)
-  const [selected, setSelected] = React.useState(args.selected)
-  const onSelected = (id) => {
-    debug('onSelected', id)
-    setSelected(id)
-  }
-  const onSort = args.onSort === false ? undefined : setItems
-  debug('selected', selected)
-  args = { ...args, items, mapping, onSort, onSelected, selected }
+  Debug.enable('*Datum *Sorter *SorterDatum')
+
+  const [selected, onSelect] = React.useState(args.selected)
+  const [sector, onChange] = React.useState(args.sector)
   return (
     <Glass.Container>
       <Glass.Left>
@@ -36,11 +29,10 @@ const Template = (args) => {
             padding: '10px',
             border: 'solid',
             backgroundColor: 'blue',
+            display: 'flex',
           }}
         >
-          <div style={{ backgroundColor: 'white', height: '100%' }}>
-            <Sorter {...args} />
-          </div>
+          <SorterDatum {...args} />
         </div>
       </Glass.Left>
     </Glass.Container>
