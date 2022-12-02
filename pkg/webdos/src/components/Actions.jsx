@@ -16,6 +16,7 @@ const debug = Debug('terminal:widgets:Actions')
 const Actions = ({ actions, onAction }) => {
   const cards = []
   for (const key in actions) {
+    // TODO strip out the datum standard actions
     const action = actions[key]
     debug(action)
     cards.push(
