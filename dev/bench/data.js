@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669953184331,
+  "lastUpdate": 1670183200976,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interpulse Benchmark": [
@@ -11613,6 +11613,65 @@ window.BENCHMARK_DATA = {
             "range": "±9.92%",
             "unit": "ops/sec",
             "extra": "35 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "8ee2e3fd57eb9428207c4a021d6a9518c1908742",
+          "message": "upgrade",
+          "timestamp": "2022-12-05T08:44:53+13:00",
+          "tree_id": "a721cedc908f9150395714665ce58d82f36910de",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/8ee2e3fd57eb9428207c4a021d6a9518c1908742"
+        },
+        "date": 1670183200342,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 535,
+            "range": "±3.75%",
+            "unit": "ops/sec",
+            "extra": "81 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 175,
+            "range": "±1.05%",
+            "unit": "ops/sec",
+            "extra": "85 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 273,
+            "range": "±5.58%",
+            "unit": "ops/sec",
+            "extra": "84 samples"
+          },
+          {
+            "name": "publish",
+            "value": 43,
+            "range": "±0.81%",
+            "unit": "ops/sec",
+            "extra": "70 samples"
+          },
+          {
+            "name": "install",
+            "value": 7.98,
+            "range": "±1.20%",
+            "unit": "ops/sec",
+            "extra": "42 samples"
           }
         ]
       }
