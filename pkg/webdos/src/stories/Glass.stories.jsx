@@ -97,7 +97,6 @@ export const WithAccordions = (args) => {
     <Glass.Container debug>
       <Glass.Left debug>
         <FlexAccordion />
-
         <LargeAccordion />
       </Glass.Left>
       <Glass.Center debug>

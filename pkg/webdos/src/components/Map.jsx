@@ -162,7 +162,7 @@ const Map = ({
     let isActive = true
     const map = mapRef.current
     if (!map || !complex || !markers || !selected) {
-      debug('no map or complex or markers')
+      debug('no map or complex or markers', { map, complex, markers, selected })
       return // TODO detect deep equals of complex
     }
     let layer

@@ -4,8 +4,6 @@ import Debug from 'debug'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Button from '@mui/material/Button'
-import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps.crm
 import data from './data'
 const debug = Debug('Map')
 
@@ -28,58 +26,18 @@ export default {
     },
   },
 }
-const wrap = (children) => {
-  Debug.enable('*Map')
-
-  return (
-    <div
-      style={{
-        minHeight: '320px',
-        width: '100%',
-        height: '100%',
-        background: 'purple',
-        display: 'flex',
-      }}
-    >
-      {children}
-    </div>
-  )
+const enable = () => Debug.enable('*Map')
+const Template = (args) => {
+  enable()
+  return <Map {...args} />
 }
-const Template = (args) => wrap(<Map {...args} />)
 
 export const Basic = Template.bind({})
 
-export const OverDraw = (args) => {
-  const button = (
-    <Button sx={{ bgcolor: 'red', height: 30, m: 5 }}>TEST BUTTON</Button>
-  )
-  return wrap(
-    <>
-      <Map {...args} />
-      {button}
-      {button}
-    </>
-  )
-}
-
-export const CardOverDraw = (args) => {
-  return (
-    <>
-      <Glass.Container>
-        <Glass.Left>
-          <Card>
-            <CardContent>This content should appear over the Map</CardContent>
-          </Card>
-        </Glass.Left>
-      </Glass.Container>
-      <Map />
-    </>
-  )
-}
 export const CardColumn = (args) => {
+  enable()
   return (
     <>
-      <Map />
       <Glass.Container>
         <Glass.Left>
           <Card style={{ minHeight: '200px' }}>
@@ -87,6 +45,7 @@ export const CardColumn = (args) => {
           </Card>
         </Glass.Left>
       </Glass.Container>
+      <Map />
     </>
   )
 }
@@ -95,7 +54,7 @@ NoPolygons.args = {
   onCreate: undefined,
 }
 
-const complex = faker().child('routing')
+const complex = data.medium.child('routing')
 export const Polygons = Template.bind({})
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 Polygons.args = {
@@ -106,8 +65,10 @@ export const WithCustomers = Template.bind({})
 WithCustomers.args = {
   complex,
   markers: true,
+  selected: '26',
 }
 export const ClickSectors = (args) => {
+  enable()
   const [selected, setSelected] = React.useState()
   return (
     <div>
@@ -118,36 +79,47 @@ export const ClickSectors = (args) => {
           </Card>
         </Glass.Left>
       </Glass.Container>
-      <Map onSector={setSelected} complex={complex} />
+      <Map onSector={setSelected} complex={complex} selected={selected} />
     </div>
   )
   // TODO script some actual clicking
 }
 export const ClickCustomers = (args) => {
-  const [selected, setSelected] = React.useState()
+  enable()
+  const initialSector = '34'
+  const [marker, setMarker] = React.useState()
+  const [selected, setSelected] = React.useState(initialSector)
+
   return (
     <div>
       <Glass.Container>
         <Glass.Left>
           <Card>
-            <CardContent>Selected:{selected}</CardContent>
+            <CardContent>Selected Marker:{marker}</CardContent>
           </Card>
         </Glass.Left>
       </Glass.Container>
-      <Map onMarker={setSelected} complex={complex} markers />
+      <Map
+        onMarker={setMarker}
+        complex={complex}
+        markers
+        onSector={setSelected}
+        selected={selected}
+      />
     </div>
   )
   // TODO script some actual clicking
 }
 
 const Customers = (args) => {
-  const [selected, setSelected] = React.useState()
+  enable()
+  const [selected, setSelected] = React.useState('26')
   const onSector = (sector) => {
     debug('sector', sector)
     setSelected(sector)
   }
   args = { ...args, onSector, selected }
-  return wrap(<Map {...args} />)
+  return <Map {...args} />
 }
 export const SmallCustomers = Customers.bind({})
 SmallCustomers.args = {

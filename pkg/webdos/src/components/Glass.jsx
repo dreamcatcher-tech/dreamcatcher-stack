@@ -11,7 +11,7 @@ const Container = ({ children, debug }) => {
       container
       sx={{
         zIndex: 1,
-        // position: 'relative',
+        position: 'relative',
         pointerEvents: 'none',
         height: '100%',
         background,
