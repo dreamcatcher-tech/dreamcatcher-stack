@@ -15,7 +15,7 @@ export default {
   component: Glass,
 }
 
-export const Container = () => <Glass.Container debug />
+export const Blank = () => <Glass.Container debug />
 export const Empty = (args) => (
   <Glass.Container debug>
     <Glass.Left debug />
@@ -36,25 +36,19 @@ const FlexAccordion = () => {
   const onExpand = (e, expanded) => {
     setExpanded(expanded)
   }
-  const height = expanded ? '100%' : 'auto'
   return (
-    <Accordion
-      expanded={expanded}
-      onChange={onExpand}
-      sx={{ height }}
-      disableGutters
-    >
+    <Accordion expanded={expanded} onChange={onExpand} disableGutters>
       <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="large" />}>
         <CardHeader title="FlexAccordion" />
       </AccordionSummary>
       <AccordionDetails sx={{ display: 'flex' }}>
-        <div style={{ height: '100%', flexGrow: 1 }}>meow</div>
+        <div>Single Item</div>
       </AccordionDetails>
     </Accordion>
   )
 }
 
-const big = Array(100)
+const items = Array(100)
   .fill(0)
   .map((_, i) => i)
 const LargeAccordion = () => {
@@ -74,7 +68,7 @@ const LargeAccordion = () => {
       </AccordionSummary>
       <AccordionDetails>
         <List dense disablePadding>
-          {big.map((i) => {
+          {items.map((i) => {
             return (
               <ListItem key={i}>
                 <ListItemText primary={`list item ${i}`} />
@@ -105,10 +99,6 @@ export const WithAccordions = (args) => {
         <FlexAccordion />
 
         <LargeAccordion />
-        <Glass.Rest debug></Glass.Rest>
-        <Glass.Rest debug>
-          <div style={{ background: 'yellow' }}></div>
-        </Glass.Rest>
       </Glass.Left>
       <Glass.Center debug>
         <FlexAccordion />

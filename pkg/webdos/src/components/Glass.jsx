@@ -9,17 +9,14 @@ const Container = ({ children, debug }) => {
   return (
     <Grid
       container
-      padding={2}
-      spacing={2}
       sx={{
         zIndex: 1,
-        position: 'relative',
+        // position: 'relative',
         pointerEvents: 'none',
         height: '100%',
-        maxHeight: '100%',
-        overflow: 'hidden',
         background,
       }}
+      spacing={2}
     >
       {children}
     </Grid>
@@ -28,7 +25,7 @@ const Container = ({ children, debug }) => {
 Container.propTypes = { children: PropTypes.node, debug: PropTypes.bool }
 
 const Left = ({ children, debug }) => {
-  const grid = debug ? 'red' : undefined
+  const grid = debug ? 'orange' : undefined
   const stack = debug ? 'blue' : undefined
   return (
     <Grid item sx={{ background: grid, maxHeight: '100%' }}>
@@ -51,8 +48,8 @@ const Left = ({ children, debug }) => {
 Left.propTypes = { children: PropTypes.node, debug: PropTypes.bool }
 
 const Center = ({ children, debug }) => {
-  const grid = debug ? 'orange' : undefined
-  const stack = debug ? 'green' : undefined
+  const grid = debug ? 'yellow' : undefined
+  const stack = debug ? 'blue' : undefined
   return (
     <Grid item sx={{ flexGrow: 1, background: grid }}>
       <Stack
@@ -70,12 +67,4 @@ const Center = ({ children, debug }) => {
 }
 Center.propTypes = { children: PropTypes.node, debug: PropTypes.bool }
 
-const Rest = ({ children }) => (
-  <Box
-    sx={{ flexGrow: 1, flexShrink: 0, display: 'flex', background: 'green' }}
-  >
-    {children}
-  </Box>
-)
-Rest.propTypes = { children: PropTypes.node }
-export default { Container, Left, Center, Rest }
+export default { Container, Left, Center }
