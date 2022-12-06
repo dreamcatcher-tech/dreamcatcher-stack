@@ -57,9 +57,9 @@ const Schedule = ({ complex, expanded }) => {
           <SectorSelector {...{ complex: sectors, selected, onSelected }} />
           <SectorDisplay complex={sector} />
         </Glass.Left>
-        <Glass.Rest>
+        <Glass.Center>
           <Manifest complex={manifest} {...{ expanded, selected }} />
-        </Glass.Rest>
+        </Glass.Center>
       </Glass.Container>
       <ScheduleSpeedDial events={events} />
       <PdfModal {...{ runDate, open, onClose, generator }} />

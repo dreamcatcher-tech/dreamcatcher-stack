@@ -166,7 +166,7 @@ export default function Sorter({
               <FixedSizeList
                 height={height}
                 width={width}
-                itemSize={46}
+                itemSize={Sorter.ITEM_SIZE}
                 itemCount={items.length}
                 overscanCount={5}
                 itemKey={(index, data) => data.items[index]}
@@ -189,6 +189,7 @@ Sorter.propTypes = {
   onSelected: PropTypes.func,
   selected: PropTypes.string,
 }
+Sorter.ITEM_SIZE = 46
 
 const Overlay = ({ activeId, data }) => {
   const { items, mapping, readOnly } = data

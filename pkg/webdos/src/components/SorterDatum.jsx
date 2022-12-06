@@ -1,12 +1,9 @@
 import { api } from '@dreamcatcher-tech/interblock'
 import React, { useState } from 'react'
-import Form from '@rjsf/mui'
-import validator from '@rjsf/validator-ajv8'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
-import Grid from '@mui/material/Grid'
 import Edit from '@mui/icons-material/Edit'
 import Cancel from '@mui/icons-material/Cancel'
 import Save from '@mui/icons-material/Save'
@@ -15,58 +12,102 @@ import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
 import assert from 'assert-fast'
+
 const debug = Debug('terminal:widgets:SorterDatum')
 
-const SorterDatum = ({ complex, selected, onSelected }) => {
-  let { schema, formData, uiSchema } = complex.state
-  const [state, setState] = useState(complex.state)
-  if (state !== complex.state) {
-    debug('state changed', state, complex.state)
-    setState(complex.state)
-    setLiveFormData(formData)
-    // TODO alert if changes not saved
-  }
-  const onChange = ({ formData }) => {
-    debug(`onChange: `, formData)
-    setLiveFormData(formData)
-    // if any booleans changed, then apply the changes immediately
-    // setDatum(formData)
-  }
-  const { order: items } = formData
+export default function SorterDatum({ complex, viewonly, editing }) {
+  assert(!viewonly || !editing, 'viewonly and editing are mutually exclusive')
+  debug('props', { complex, viewonly, editing })
+  const { order: items } = complex.state.formData
   const mapping = apps.crm.utils.mapCustomers(complex)
   const onSort = (items) => {
     debug(`onSort: `, items)
   }
+  const [formData, setFormData] = useState(items)
+  const [isPending, setIsPending] = useState(false)
+  const [isEditing, setIsEditing] = useState(editing)
+  const [startingState, setStartingState] = useState(complex.state)
+  if (startingState !== complex.state) {
+    debug('state changed', startingState, complex.state)
+    setStartingState(complex.state)
+    // setFormData(complex.state.formData)
+    // TODO alert if changes not saved
+  }
+  const isDirty = formData !== items
+  debug('isDirty', isDirty)
+  const onChange = ({ formData }) => {
+    debug(`onChange: `, formData)
+    setFormData(formData)
+  }
 
-  // { items, mapping, onSort, onSelect, selected }
-  const args = { items, mapping, onSort, onSelected, selected }
+  const onSubmit = () => {
+    debug('onSubmit', formData)
+    setIsEditing(false)
+    // setIsPending(true)
+    // complex.actions.set(formData).then(() => setIsPending(false))
+  }
+  const onSave = (e) => {
+    debug('onSave', e)
+  }
+  const onCancel = (e) => {
+    debug('onCancel', e)
+    setIsEditing(false)
+    if (isDirty) {
+      setFormData(items)
+    }
+  }
+  const Editing = (
+    <>
+      <IconButton aria-label="save" onClick={onSave}>
+        <Save color="primary" />
+      </IconButton>
+      <IconButton aria-label="cancel" onClick={onCancel}>
+        <Cancel color="secondary" />
+      </IconButton>
+    </>
+  )
+  const onEdit = (e) => {
+    debug('onEdit', e)
+    setIsEditing(true)
+  }
+  const Viewing = (
+    <IconButton aria-label="edit" onClick={onEdit}>
+      <Edit color="primary" />
+    </IconButton>
+  )
+  let { schema } = complex.state
+  if (schema === '..') {
+    schema = complex.parent().state.template.schema
+  }
+  const orderSchema = schema.properties.order
+  const { title } = orderSchema
+  const displayableItems = items.length > 4 ? 4 : items.length
+  const totalItemHeight = displayableItems * Sorter.ITEM_SIZE
+  const cardHeaderHeight = 64.02
+  const cardBottomPadding = 24
+  const minHeight = cardHeaderHeight + totalItemHeight + cardBottomPadding
   return (
-    <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card
+      sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight }}
+    >
       <CardHeader
-        title="Order"
-        action={
-          <>
-            <IconButton aria-label="edit">
-              <Edit color="primary" />
-            </IconButton>
-            <IconButton aria-label="save">
-              <Save color="primary" />
-            </IconButton>
-            <IconButton aria-label="cancel">
-              <Cancel color="secondary" />
-            </IconButton>
-          </>
-        }
+        title={title}
+        action={isEditing ? Editing : viewonly ? null : Viewing}
       />
-      <CardContent sx={{ display: 'flex', flex: 1, minHeight: 300 }}>
-        <Sorter {...args} />
+      <CardContent sx={{ flexGrow: 1, p: 0 }}>
+        <Sorter {...{ items, mapping, onSort, onChange, formData }} />
       </CardContent>
     </Card>
   )
 }
 SorterDatum.propTypes = {
   complex: PropTypes.instanceOf(api.Complex).isRequired,
-  selected: PropTypes.string,
-  onSelected: PropTypes.func,
+  /**
+   * Show no edit button - all fields are readonly
+   */
+  viewonly: PropTypes.bool,
+  /**
+   * Used in testing to start the component in editing mode
+   */
+  editing: PropTypes.bool,
 }
-export default SorterDatum

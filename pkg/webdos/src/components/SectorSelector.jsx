@@ -2,6 +2,7 @@ import * as React from 'react'
 import Accordion from '@mui/material/Accordion'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
+import Box from '@mui/material/Box'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Typography from '@mui/material/Typography'
 import List from '@mui/material/List'
@@ -10,7 +11,6 @@ import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Avatar from '@mui/material/Avatar'
 import MapIcon from '@mui/icons-material/Map'
 import PropTypes from 'prop-types'
-import Card from '@mui/material/Card'
 import ListItemButton from '@mui/material/ListItemButton'
 
 import Debug from 'debug'
@@ -39,26 +39,27 @@ export default function SectorSelector(props) {
   const [expanded, setExpanded] = React.useState(props.expanded)
 
   return (
-    <Card>
-      <Accordion expanded={expanded} onChange={(_, exp) => setExpanded(exp)}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Sector: {selectedName} </Typography>
-          {Number.isInteger(selectedCount) ? (
-            <Typography fontStyle="italic">&nbsp;({selectedCount})</Typography>
-          ) : null}
-        </AccordionSummary>
-        <AccordionDetails>
-          <List dense>
-            {complex.network.map(({ path }, key) => {
-              const sector = complex.child(path)
-              return (
-                <Sector {...{ selected, onClick, path, sector }} key={key} />
-              )
-            })}
-          </List>
-        </AccordionDetails>
-      </Accordion>
-    </Card>
+    <Accordion
+      expanded={expanded}
+      onChange={(_, exp) => setExpanded(exp)}
+      disableGutters
+      sx={{ overflow: 'auto' }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography>Sector: {selectedName} </Typography>
+        {Number.isInteger(selectedCount) ? (
+          <Typography fontStyle="italic">&nbsp;({selectedCount})</Typography>
+        ) : null}
+      </AccordionSummary>
+      <AccordionDetails>
+        <List dense disablePadding>
+          {complex.network.map(({ path }, key) => {
+            const sector = complex.child(path)
+            return <Sector {...{ selected, onClick, path, sector }} key={key} />
+          })}
+        </List>
+      </AccordionDetails>
+    </Accordion>
   )
 }
 SectorSelector.propTypes = {

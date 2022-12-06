@@ -27,20 +27,16 @@ const Template = (args) => {
   debug('selected', selected)
   args = { ...args, items, mapping, onSort, onSelected, selected }
   return (
-    <Glass.Container>
-      <Glass.Left>
+    <Glass.Container debug>
+      <Glass.Left debug>
         <div
           style={{
-            minHeight: 800,
-            minWidth: 350,
-            padding: '10px',
-            border: 'solid',
-            backgroundColor: 'blue',
+            backgroundColor: 'lightgray',
+            display: 'flex',
+            height: '100vh',
           }}
         >
-          <div style={{ backgroundColor: 'white', height: '100%' }}>
-            <Sorter {...args} />
-          </div>
+          <Sorter {...args} />
         </div>
       </Glass.Left>
     </Glass.Container>

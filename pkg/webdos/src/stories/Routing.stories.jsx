@@ -20,6 +20,7 @@ const Template = (args) => {
 export const Blank = Template.bind({})
 Blank.args = {
   complex: data.small.child('routing').setNetwork([]),
+  selected: undefined,
 }
 export const Small = Template.bind({})
 export const Medium = Template.bind({})

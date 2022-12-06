@@ -21,19 +21,24 @@ const Routing = ({ complex, selected: initialSelected }) => {
   const onCreate = () => {}
   const onEdit = () => {}
   const [selected, onSelected] = React.useState(initialSelected)
-  const sector = complex.hasChild(selected) ? complex.child(selected) : null
+  const sector = complex.hasChild(selected)
+    ? complex.child(selected)
+    : undefined
   if (!sector && complex.network.length) {
     onSelected(complex.network[0].path)
   }
-  const datum = sector ? <Datum complex={sector} /> : <NotSelected />
   const onSector = onSelected
   return (
     <>
       <Glass.Container>
-        <Glass.Left>
+        <Glass.Left max>
           <SectorSelector {...{ complex, selected, onSelected }} />
-          {datum}
-          <SorterDatum {...{ complex: sector, selected, onSelected }} />
+          {sector && (
+            <>
+              <Datum complex={sector} />
+              <SorterDatum {...{ complex: sector, selected, onSelected }} />
+            </>
+          )}
         </Glass.Left>
       </Glass.Container>
       <RoutingSpeedDial></RoutingSpeedDial>

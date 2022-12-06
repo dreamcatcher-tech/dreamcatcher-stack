@@ -21,19 +21,8 @@ const Template = (args) => {
   const [sector, onChange] = React.useState(args.sector)
   return (
     <Glass.Container>
-      <Glass.Left>
-        <div
-          style={{
-            minHeight: 800,
-            minWidth: 350,
-            padding: '10px',
-            border: 'solid',
-            backgroundColor: 'blue',
-            display: 'flex',
-          }}
-        >
-          <SorterDatum {...args} />
-        </div>
+      <Glass.Left max>
+        <SorterDatum {...args} />
       </Glass.Left>
     </Glass.Container>
   )
