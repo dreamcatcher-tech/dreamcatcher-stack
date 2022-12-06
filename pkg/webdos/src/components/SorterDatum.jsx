@@ -20,6 +20,7 @@ export default function SorterDatum({ complex, viewonly, editing }) {
   debug('props', { complex, viewonly, editing })
   const { order: items } = complex.state.formData
   const mapping = apps.crm.utils.mapCustomers(complex)
+  debug('mapping complete')
   const onSort = (items) => {
     debug(`onSort: `, items)
   }
@@ -91,7 +92,7 @@ export default function SorterDatum({ complex, viewonly, editing }) {
       sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight }}
     >
       <CardHeader
-        title={title}
+        title={title + ` (${items.length})`}
         action={isEditing ? Editing : viewonly ? null : Viewing}
       />
       <CardContent sx={{ flexGrow: 1, p: 0 }}>

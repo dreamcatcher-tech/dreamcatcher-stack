@@ -18,26 +18,18 @@ export default function App({ complex }) {
         width: '100%',
       }}
     >
-      <Nav complex={complex} />
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        <Lazy show={wd.startsWith('/schedule')}>
-          <Schedule complex={complex.child('schedule')} />
-        </Lazy>
-        <Lazy show={wd.startsWith('/customers')}>
-          <CollectionList complex={complex.child('customers')} />
-        </Lazy>
-        <Lazy show={wd.startsWith('/routing')}>
-          <Routing complex={complex.child('routing')} />
-        </Lazy>
+      <Box sx={{ zIndex: 1 }}>
+        <Nav complex={complex} />
       </Box>
+      <Lazy show={wd.startsWith('/schedule')}>
+        <Schedule complex={complex.child('schedule')} />
+      </Lazy>
+      <Lazy show={wd.startsWith('/customers')}>
+        <CollectionList complex={complex.child('customers')} />
+      </Lazy>
+      <Lazy show={wd.startsWith('/routing')}>
+        <Routing complex={complex.child('routing')} />
+      </Lazy>
     </Box>
   )
 }
@@ -52,9 +44,9 @@ const Lazy = ({ show, children }) => {
   }
   if (mounted) {
     return (
-      <div style={{ flexGrow: 1, display: show ? null : 'none' }}>
+      <Box sx={{ spacing: 1, flexGrow: 1, display: show ? null : 'none' }}>
         {children}
-      </div>
+      </Box>
     )
   }
 }

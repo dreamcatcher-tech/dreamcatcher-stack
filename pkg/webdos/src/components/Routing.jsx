@@ -31,11 +31,11 @@ const Routing = ({ complex, selected: initialSelected }) => {
   return (
     <>
       <Glass.Container>
-        <Glass.Left max>
+        <Glass.Left>
           <SectorSelector {...{ complex, selected, onSelected }} />
           {sector && (
             <>
-              <Datum complex={sector} />
+              <Datum complex={sector} collapsed />
               <SorterDatum {...{ complex: sector, selected, onSelected }} />
             </>
           )}

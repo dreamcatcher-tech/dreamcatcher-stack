@@ -96,7 +96,7 @@ export const GreedyFiller = () => {
   return (
     <>
       <Glass.Container debug>
-        <Glass.Left debug max>
+        <Glass.Left debug>
           <OversizeAccordion />
           <PlainAccordion />
           <OversizeAccordion />
@@ -124,7 +124,7 @@ export const Routing = () => {
   return (
     <>
       <Glass.Container debug>
-        <Glass.Left debug max>
+        <Glass.Left debug>
           <OversizeAccordion collapsed title="SectorSelector" />
           <PlainAccordion collapsed title="SectorDatum" />
           <Filler />
@@ -138,7 +138,7 @@ export const Routing = () => {
 export const Scheduling = () => {
   return (
     <Glass.Container debug>
-      <Glass.Left debug max>
+      <Glass.Left debug>
         <PlainAccordion title="Date" />
         <OversizeAccordion title="SectorSelector" />
         <Filler />

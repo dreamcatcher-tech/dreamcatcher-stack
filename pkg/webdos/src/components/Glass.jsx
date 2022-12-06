@@ -13,9 +13,12 @@ const Container = ({ children, debug }) => {
         position: 'relative',
         pointerEvents: 'none',
         height: '100%',
+        maxWidth: '100%',
         background,
+        p: 1,
       }}
       spacing={1}
+      wrap="nowrap"
     >
       {children}
     </Grid>
@@ -23,7 +26,7 @@ const Container = ({ children, debug }) => {
 }
 Container.propTypes = { children: PropTypes.node, debug: PropTypes.bool }
 
-const Left = ({ children, debug, max }) => {
+const Left = ({ children, debug }) => {
   const grid = debug ? 'orange' : undefined
   const stack = debug ? 'blue' : undefined
   return (
@@ -43,7 +46,7 @@ const Left = ({ children, debug, max }) => {
           display: 'flex',
           background: stack,
           maxHeight: '100%',
-          height: max ? '100%' : undefined,
+          height: '100%',
         }}
       >
         {children}
@@ -54,11 +57,6 @@ const Left = ({ children, debug, max }) => {
 Left.propTypes = {
   children: PropTypes.node,
   debug: PropTypes.bool,
-  /**
-   * Set the stack to grow to full heigth.
-   * Used to create a component that can grab the remaining space.
-   */
-  max: PropTypes.bool,
 }
 
 const Center = ({ children, debug }) => {

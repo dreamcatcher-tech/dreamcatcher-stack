@@ -1,5 +1,6 @@
 import * as React from 'react'
 import Typography from '@mui/material/Typography'
+import Paper from '@mui/material/Paper'
 import ListItemText from '@mui/material/ListItemText'
 import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Avatar from '@mui/material/Avatar'
@@ -40,36 +41,38 @@ export default function SectorSelector({
   })
   const value = options.find(({ path }) => path === selected)
   return (
-    <Autocomplete
-      options={options}
-      getOptionLabel={({ sector }) => sector.state.formData.name}
-      disableClearable
-      fullWidth
-      noOptionsText="No sectors present"
-      selectOnFocus={false}
-      openOnFocus
-      onChange={onChange}
-      value={value}
-      blurOnSelect
-      {...openProps}
-      renderOption={(props, { path, sector }) => (
-        <Sector {...{ selected, path, sector, ...props }} />
-      )}
-      renderInput={(params) => {
-        return (
-          <TextField
-            {...params}
-            label="Selected Sector"
-            inputProps={{
-              ...params.inputProps,
-              readOnly: true,
-              autoComplete: 'new-password', // disable autocomplete and autofill
-              placeholder: 'No sectors present',
-            }}
-          />
-        )
-      }}
-    />
+    <Paper>
+      <Autocomplete
+        options={options}
+        getOptionLabel={({ sector }) => sector.state.formData.name}
+        disableClearable
+        fullWidth
+        noOptionsText="No sectors present"
+        selectOnFocus={false}
+        openOnFocus
+        onChange={onChange}
+        value={value}
+        blurOnSelect
+        {...openProps}
+        renderOption={(props, { path, sector }) => (
+          <Sector {...{ selected, path, sector, ...props }} />
+        )}
+        renderInput={(params) => {
+          return (
+            <TextField
+              {...params}
+              label="Selected Sector"
+              inputProps={{
+                ...params.inputProps,
+                readOnly: true,
+                autoComplete: 'new-password', // disable autocomplete and autofill
+                placeholder: 'No sectors present',
+              }}
+            />
+          )
+        }}
+      />
+    </Paper>
   )
 }
 SectorSelector.propTypes = {

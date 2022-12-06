@@ -13,7 +13,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*Routing  *Sorter*')
+  Debug.enable('*Routing  *Sorter* *SorterDatum')
   return <Routing {...args} />
 }
 

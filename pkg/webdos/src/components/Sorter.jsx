@@ -151,7 +151,6 @@ export default function Sorter({
   return (
     <AutoSizer>
       {({ height, width }) => {
-        debug('height', height, 'width', width)
         return (
           <DndContext
             sensors={sensors}

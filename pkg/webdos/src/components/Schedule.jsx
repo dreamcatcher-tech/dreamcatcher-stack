@@ -8,8 +8,8 @@ import {
   ScheduleSpeedDial,
   Manifest,
   SectorSelector,
-  SectorDisplay,
   Glass,
+  SorterDatum,
 } from '.'
 import generatorFactory from '../pdfs'
 import { Date } from '.'
@@ -45,22 +45,26 @@ const Schedule = ({ complex, expanded }) => {
   const events = { onPrint: () => setOpen(true) }
   return (
     <>
+      <Glass.Container>
+        <Glass.Left>
+          <Date {...{ runDate, onDateChange }}></Date>
+          <SectorSelector {...{ complex: sectors, selected, onSelected }} />
+          {sector && (
+            <>
+              <SorterDatum {...{ complex: sector, selected, onSelected }} />
+            </>
+          )}
+        </Glass.Left>
+        <Glass.Center>
+          <Manifest complex={manifest} {...{ expanded, selected }} />
+        </Glass.Center>
+      </Glass.Container>
       <Map
         complex={sectors}
         onSector={onSelected}
         selected={selected}
         markers
       />
-      <Glass.Container>
-        <Glass.Left>
-          <Date {...{ runDate, onDateChange }}></Date>
-          <SectorSelector {...{ complex: sectors, selected, onSelected }} />
-          <SectorDisplay complex={sector} />
-        </Glass.Left>
-        <Glass.Center>
-          <Manifest complex={manifest} {...{ expanded, selected }} />
-        </Glass.Center>
-      </Glass.Container>
       <ScheduleSpeedDial events={events} />
       <PdfModal {...{ runDate, open, onClose, generator }} />
     </>
