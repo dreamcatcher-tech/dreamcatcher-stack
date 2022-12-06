@@ -17,11 +17,11 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 const debug = Debug('terminal:widgets:DatumHOC')
 
-const theme = createTheme()
-const noDisabled = createTheme({
-  palette: { text: { disabled: '0 0 0' } },
-})
 export default function DatumHOC(Child) {
+  const theme = createTheme()
+  const noDisabled = createTheme({
+    palette: { text: { disabled: '0 0 0' } },
+  })
   const Datum = ({ complex, collapsed, viewonly, editing, ...props }) => {
     // TODO verify the covenant is a datum
     // TODO verify the chain children match the schema children

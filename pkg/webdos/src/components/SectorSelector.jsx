@@ -1,76 +1,89 @@
 import * as React from 'react'
-import Accordion from '@mui/material/Accordion'
-import AccordionSummary from '@mui/material/AccordionSummary'
-import AccordionDetails from '@mui/material/AccordionDetails'
-import Box from '@mui/material/Box'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Typography from '@mui/material/Typography'
-import List from '@mui/material/List'
 import ListItemText from '@mui/material/ListItemText'
 import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Avatar from '@mui/material/Avatar'
 import MapIcon from '@mui/icons-material/Map'
 import PropTypes from 'prop-types'
 import ListItemButton from '@mui/material/ListItemButton'
-
+import TextField from '@mui/material/TextField'
+import Autocomplete from '@mui/material/Autocomplete'
 import Debug from 'debug'
 import assert from 'assert-fast'
 import { api } from '@dreamcatcher-tech/interblock'
 const debug = Debug('webdos:SectorSelector')
 
-export default function SectorSelector(props) {
-  const { onSelected, complex } = props
-  let { selected } = props
+export default function SectorSelector({
+  onSelected,
+  complex,
+  selected,
+  expanded,
+}) {
   if (complex.network.length && !selected) {
     selected = complex.network[0].path
   }
-  let selectedName = '(No sectors present)'
-  let selectedCount = ''
-  if (selected) {
+  if (complex.network.length) {
     assert(complex.hasChild(selected), `selected must exist: ${selected}`)
-    const child = complex.child(selected)
-    selectedName = child.state.formData.name
-    selectedCount = child.state.formData.order.length
   }
-  const onClick = (path) => {
-    onSelected(path)
-    setExpanded(false)
+  const onChange = (event, value) => {
+    debug('onChange', value)
+    onSelected(value.path)
+    setOpen(false)
   }
-  const [expanded, setExpanded] = React.useState(props.expanded)
-
+  const [open, setOpen] = React.useState(expanded)
+  let openProps = expanded
+    ? { open, onOpen: () => setOpen(true), onClose: () => setOpen(false) }
+    : {}
+  const options = complex.network.map(({ path }) => {
+    const sector = complex.child(path)
+    return { path, sector }
+  })
+  const value = options.find(({ path }) => path === selected)
   return (
-    <Accordion
-      expanded={expanded}
-      onChange={(_, exp) => setExpanded(exp)}
-      disableGutters
-      sx={{ overflow: 'auto' }}
-    >
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography>Sector: {selectedName} </Typography>
-        {Number.isInteger(selectedCount) ? (
-          <Typography fontStyle="italic">&nbsp;({selectedCount})</Typography>
-        ) : null}
-      </AccordionSummary>
-      <AccordionDetails>
-        <List dense disablePadding>
-          {complex.network.map(({ path }, key) => {
-            const sector = complex.child(path)
-            return <Sector {...{ selected, onClick, path, sector }} key={key} />
-          })}
-        </List>
-      </AccordionDetails>
-    </Accordion>
+    <Autocomplete
+      options={options}
+      getOptionLabel={({ sector }) => sector.state.formData.name}
+      disableClearable
+      fullWidth
+      noOptionsText="No sectors present"
+      selectOnFocus={false}
+      openOnFocus
+      onChange={onChange}
+      value={value}
+      blurOnSelect
+      {...openProps}
+      renderOption={(props, { path, sector }) => (
+        <Sector {...{ selected, path, sector, ...props }} />
+      )}
+      renderInput={(params) => {
+        return (
+          <TextField
+            {...params}
+            label="Selected Sector"
+            inputProps={{
+              ...params.inputProps,
+              readOnly: true,
+              autoComplete: 'new-password', // disable autocomplete and autofill
+              placeholder: 'No sectors present',
+            }}
+          />
+        )
+      }}
+    />
   )
 }
 SectorSelector.propTypes = {
   selected: PropTypes.string,
   onSelected: PropTypes.func,
-  expanded: PropTypes.bool,
   complex: PropTypes.instanceOf(api.Complex).isRequired,
+  /**
+   * Used for testing only
+   */
+  expanded: PropTypes.bool,
 }
 SectorSelector.defaultProps = { expanded: false }
 
-const Sector = ({ selected, onClick, path, sector }) => {
+const Sector = ({ selected, path, sector, ...props }) => {
   const { state } = sector
   const { name, next, color, order } = state.formData
   const primary = (
@@ -82,7 +95,7 @@ const Sector = ({ selected, onClick, path, sector }) => {
     </>
   )
   return (
-    <ListItemButton selected={selected === path} onClick={() => onClick(path)}>
+    <ListItemButton selected={selected === path} {...props}>
       <ListItemAvatar>
         <Avatar sx={{ bgcolor: color }}>
           <MapIcon />

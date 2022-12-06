@@ -1,7 +1,6 @@
 import React from 'react'
 import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
-import Box from '@mui/material/Box'
 import PropTypes from 'prop-types'
 
 const Container = ({ children, debug }) => {
@@ -81,19 +80,4 @@ const Center = ({ children, debug }) => {
   )
 }
 Center.propTypes = { children: PropTypes.node, debug: PropTypes.bool }
-
-const Rest = ({ children }) => (
-  <Box
-    sx={{
-      flexGrow: 1,
-      display: 'flex',
-      background: 'green',
-      flexDirection: 'column',
-      overflow: 'hidden',
-    }}
-  >
-    {children}
-  </Box>
-)
-Rest.propTypes = { children: PropTypes.node }
-export default { Container, Left, Center, Rest }
+export default { Container, Left, Center }

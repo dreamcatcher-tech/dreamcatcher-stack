@@ -1,17 +1,15 @@
 import React from 'react'
-import Box from '@mui/material/Box'
 import { SectorSelector, Glass } from '..'
 import Debug from 'debug'
 const debug = Debug('SectorSelector')
 import data from './data'
+const complex = data.small.child('routing')
 
 export default {
   title: 'SectorSelector',
   component: SectorSelector,
-
   args: {
-    expanded: true,
-    complex: data.small.child('routing'),
+    complex,
   },
 }
 
@@ -19,19 +17,20 @@ const Template = (args) => {
   Debug.enable('*SectorSelector')
   const [selected, onSelected] = React.useState()
   return (
-    <Glass.Container debug>
-      <Glass.Left debug>
+    <Glass.Container>
+      <Glass.Left>
         <SectorSelector {...{ ...args, selected, onSelected }} />
-        <Box
-          sx={{
+        <div
+          style={{
             flexGrow: 1,
             background: 'red',
             minHeight: '200px',
           }}
         >
           Filler
-        </Box>
+        </div>
       </Glass.Left>
+      <Glass.Center debug />
     </Glass.Container>
   )
 }
@@ -39,3 +38,6 @@ const Template = (args) => {
 export const Collapsed = Template.bind({})
 Collapsed.args = { expanded: false }
 export const Expanded = Template.bind({})
+Expanded.args = { expanded: true }
+export const Blank = Template.bind({})
+Blank.args = { complex: complex.setNetwork([]) }
