@@ -116,7 +116,7 @@ export default function DatumHOC(Child) {
             <CardHeader title={title} sx={{ p: 0, flexGrow: 1 }} />
             {isEditing ? Editing : viewonly ? null : Viewing}
           </AccordionSummary>
-          <AccordionDetails sx={{ display: 'flex' }}>
+          <AccordionDetails sx={{ display: 'flex', flexDirection: 'column' }}>
             <ThemeProvider theme={isEditing ? theme : noDisabled}>
               <Child
                 {...{

@@ -39,7 +39,7 @@ export const CardColumn = (args) => {
   return (
     <>
       <Glass.Container>
-        <Glass.Left>
+        <Glass.Left min>
           <Card style={{ minHeight: '200px' }}>
             <CardContent>Right hand side is draggable</CardContent>
           </Card>
@@ -87,7 +87,7 @@ export const ClickSectors = (args) => {
 export const ClickCustomers = (args) => {
   enable()
   const initialSector = '34'
-  const [marker, setMarker] = React.useState()
+  const [marker, onMarker] = React.useState()
   const [selected, setSelected] = React.useState(initialSector)
 
   return (
@@ -100,10 +100,11 @@ export const ClickCustomers = (args) => {
         </Glass.Left>
       </Glass.Container>
       <Map
-        onMarker={setMarker}
+        onMarker={onMarker}
         complex={complex}
         markers
         onSector={setSelected}
+        marker={marker}
         selected={selected}
       />
     </div>
@@ -114,11 +115,12 @@ export const ClickCustomers = (args) => {
 const Customers = (args) => {
   enable()
   const [selected, setSelected] = React.useState('26')
+  const [marker, onMarker] = React.useState()
   const onSector = (sector) => {
     debug('sector', sector)
     setSelected(sector)
   }
-  args = { ...args, onSector, selected }
+  args = { ...args, onSector, selected, onMarker, marker }
   return <Map {...args} />
 }
 export const SmallCustomers = Customers.bind({})

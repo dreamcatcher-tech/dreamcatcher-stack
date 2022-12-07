@@ -1,6 +1,6 @@
 import { api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-import * as React from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import {
   SorterDatum,
@@ -10,21 +10,18 @@ import {
   Datum,
   Glass,
 } from '.'
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
 
 const debug = Debug('terminal:widgets:Routing')
 
 const Routing = ({ complex, selected: initialSelected }) => {
   const onCreate = () => {}
   const onEdit = () => {}
-  const [selected, onSelected] = React.useState(initialSelected)
-  const sector = complex.hasChild(selected)
-    ? complex.child(selected)
+  const [sector, onSelected] = useState(initialSelected)
+  const [marker, onMarker] = useState()
+  const sectorComplex = complex.hasChild(sector)
+    ? complex.child(sector)
     : undefined
-  if (!sector && complex.network.length) {
+  if (!sectorComplex && complex.network.length) {
     onSelected(complex.network[0].path)
   }
   const onSector = onSelected
@@ -32,34 +29,40 @@ const Routing = ({ complex, selected: initialSelected }) => {
     <>
       <Glass.Container>
         <Glass.Left>
-          <SectorSelector {...{ complex, selected, onSelected }} />
-          {sector && (
+          <SectorSelector {...{ complex, selected: sector, onSelected }} />
+          {sectorComplex && (
             <>
-              <Datum complex={sector} collapsed />
-              <SorterDatum {...{ complex: sector, selected, onSelected }} />
+              <Datum complex={sectorComplex} collapsed />
+              <SorterDatum
+                {...{
+                  complex: sectorComplex,
+                  selected: marker,
+                  onSelected: onMarker,
+                }}
+              />
             </>
           )}
         </Glass.Left>
       </Glass.Container>
       <RoutingSpeedDial></RoutingSpeedDial>
-      <Map {...{ onCreate, onEdit, complex, onSector, selected }} markers />
+      <Map
+        {...{
+          onCreate,
+          onEdit,
+          complex,
+          onSector,
+          selected: sector,
+          onMarker,
+          marker,
+        }}
+        markers
+      />
     </>
   )
 }
 Routing.propTypes = {
   complex: PropTypes.instanceOf(api.Complex).isRequired,
   selected: PropTypes.string,
-}
-
-const NotSelected = () => {
-  return (
-    <Card>
-      <CardHeader title="No sector selected" />
-      <CardContent>
-        <Typography>Select a sector to see details.</Typography>
-      </CardContent>
-    </Card>
-  )
 }
 
 export default Routing

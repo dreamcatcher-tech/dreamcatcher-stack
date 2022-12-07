@@ -20,7 +20,7 @@ const Template = (args) => {
   const [complex, setComplex] = React.useState(args.complex)
   const set = async (formData) => {
     debug('set', formData)
-    await delay(800)
+    await delay(1200)
     const next = complex.setState({ ...complex.state, formData })
     setComplex(next)
   }

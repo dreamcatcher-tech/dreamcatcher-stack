@@ -26,7 +26,7 @@ const Container = ({ children, debug }) => {
 }
 Container.propTypes = { children: PropTypes.node, debug: PropTypes.bool }
 
-const Left = ({ children, debug }) => {
+const Left = ({ children, debug, min }) => {
   const grid = debug ? 'orange' : undefined
   const stack = debug ? 'blue' : undefined
   return (
@@ -46,7 +46,7 @@ const Left = ({ children, debug }) => {
           display: 'flex',
           background: stack,
           maxHeight: '100%',
-          height: '100%',
+          height: min ? undefined : '100%',
         }}
       >
         {children}
@@ -57,6 +57,10 @@ const Left = ({ children, debug }) => {
 Left.propTypes = {
   children: PropTypes.node,
   debug: PropTypes.bool,
+  /**
+   * If true, the left panel will be as small as possible.
+   */
+  min: PropTypes.bool,
 }
 
 const Center = ({ children, debug }) => {

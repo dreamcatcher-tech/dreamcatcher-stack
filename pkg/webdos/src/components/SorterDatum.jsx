@@ -42,13 +42,15 @@ export default function SorterDatum({
     debug(`onChange: `, items)
     setItems(items)
   }
-  const onSort = viewOnly || !isEditing ? undefined : onChange
+  const onSort = viewOnly || !isEditing || isPending ? undefined : onChange
   const onSubmit = () => {
     debug('onSubmit', items)
-    setIsEditing(false)
     setIsPending(true)
     const formData = { ...complex.state.formData, order: items }
-    complex.actions.set(formData).then(() => setIsPending(false))
+    complex.actions.set(formData).then(() => {
+      setIsPending(false)
+      setIsEditing(false)
+    })
   }
   const onCancel = () => {
     debug('onCancel')
@@ -59,11 +61,11 @@ export default function SorterDatum({
   }
   const Editing = (
     <>
-      <IconButton aria-label="save" onClick={onSubmit}>
-        <Save color="primary" />
+      <IconButton aria-label="save" onClick={onSubmit} disabled={isPending}>
+        <Save color={isPending ? 'disabled' : 'primary'} />
       </IconButton>
-      <IconButton aria-label="cancel" onClick={onCancel}>
-        <Cancel color="secondary" />
+      <IconButton aria-label="cancel" onClick={onCancel} disabled={isPending}>
+        <Cancel color={isPending ? 'disabled' : 'secondary'} />
       </IconButton>
     </>
   )

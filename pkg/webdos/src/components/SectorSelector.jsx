@@ -20,10 +20,7 @@ export default function SectorSelector({
   selected,
   expanded,
 }) {
-  if (complex.network.length && !selected) {
-    selected = complex.network[0].path
-  }
-  if (complex.network.length) {
+  if (selected) {
     assert(complex.hasChild(selected), `selected must exist: ${selected}`)
   }
   const onChange = (event, value) => {

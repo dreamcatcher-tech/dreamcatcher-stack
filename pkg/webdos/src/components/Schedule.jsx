@@ -24,7 +24,7 @@ const Schedule = ({ complex, expanded }) => {
   const [runDate, setRunDate] = useState(Date.weekday())
   const onDateChange = (date) => {
     setRunDate(date)
-    onSelected()
+    onSelectedSector()
     // check if we have a minfest for the given date
     // if so, cd into the directory
   }
@@ -34,10 +34,13 @@ const Schedule = ({ complex, expanded }) => {
     const generator = generatorFactory(manifest, templateUrl)
     return { manifest, sectors, generator }
   }, [complex.tree, runDate, templateUrl])
-  const [selected, onSelected] = React.useState()
-  const sector = sectors.hasChild(selected) ? sectors.child(selected) : null
+  const [selectedSector, onSelectedSector] = React.useState()
+  const [marker, onMarker] = React.useState()
+  const sector = sectors.hasChild(selectedSector)
+    ? sectors.child(selectedSector)
+    : null
   if (!sector && sectors.network.length) {
-    onSelected(sectors.network[0].path)
+    onSelectedSector(sectors.network[0].path)
   }
 
   const [open, setOpen] = useState(false)
@@ -48,23 +51,38 @@ const Schedule = ({ complex, expanded }) => {
       <Glass.Container>
         <Glass.Left>
           <Date {...{ runDate, onDateChange }}></Date>
-          <SectorSelector {...{ complex: sectors, selected, onSelected }} />
+          <SectorSelector
+            {...{
+              complex: sectors,
+              selected: selectedSector,
+              onSelected: onSelectedSector,
+            }}
+          />
           {sector && (
             <>
               <SorterDatum
-                {...{ complex: sector, selected, onSelected, viewonly }}
+                viewOnly
+                {...{
+                  complex: sector,
+                  selected: marker,
+                  onSelected: onMarker,
+                }}
               />
             </>
           )}
         </Glass.Left>
         <Glass.Center>
-          <Manifest complex={manifest} {...{ expanded, selected }} />
+          <Manifest
+            complex={manifest}
+            {...{ expanded, selected: selectedSector }}
+          />
         </Glass.Center>
       </Glass.Container>
       <Map
         complex={sectors}
-        onSector={onSelected}
-        selected={selected}
+        onSector={onSelectedSector}
+        selected={selectedSector}
+        onMarker={onMarker}
         markers
       />
       <ScheduleSpeedDial events={events} />

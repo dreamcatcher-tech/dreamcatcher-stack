@@ -16,7 +16,8 @@ const Map = ({
   markers,
   onSector,
   onMarker,
-  selected,
+  selected, // TODO rename as sector
+  marker,
   complex,
 }) => {
   const mapId = useId()
@@ -185,7 +186,13 @@ const Map = ({
         const { latitude, longitude } = serviceGps
         const options = { riseOnHover: true }
         const marker = L.marker([latitude, longitude], options)
-        marker.setIcon(createIcon(sector.color, index + 1))
+        marker.data = {
+          color: sector.color,
+          number: index + 1,
+          id: custNo,
+          index,
+        }
+        setIcon(marker)
         if (onMarker) {
           marker.on('click', () => onMarker(custNo))
         }
@@ -214,6 +221,7 @@ const Map = ({
         })
       }
       debug('markers added')
+      setMarkersArray(markersArray)
     }
     chunkLoad()
     return () => {
@@ -222,8 +230,23 @@ const Map = ({
       if (layer) {
         layer.remove()
       }
+      setMarkersArray([])
     }
   }, [mapRef.current, complex, markers, selected])
+  const [markersArray, setMarkersArray] = useState([])
+  useEffect(() => {
+    const selectedMarker = markersArray.find(({ data }) => data.id === marker)
+    debug('selected marker', selectedMarker)
+    for (const [index, marker] of markersArray.entries()) {
+      assert(index === marker.data.index, `marker index mismatch`)
+    }
+    if (!selectedMarker) {
+      return
+    }
+    const selected = true
+    setIcon(selectedMarker, selected)
+    return () => setIcon(selectedMarker)
+  }, [markersArray, marker])
 
   const paintBelowAllOthers = 0
   const ensureNotPartOfNormalLayout = 'absolute'
@@ -249,7 +272,8 @@ const Map = ({
 
   return <div ref={ref} id={mapId} style={mapBackgroundStyle}></div>
 }
-const createIcon = (color, number) => {
+const setIcon = (marker, isSelected) => {
+  const { color, number } = marker.data
   const options = {
     isAlphaNumericIcon: true,
     text: number,
@@ -258,15 +282,25 @@ const createIcon = (color, number) => {
     color,
     textColor: '#00ABDC',
   }
-  return L.BeautifyIcon.icon(options)
+  marker.setZIndexOffset(0)
+  if (isSelected) {
+    options.backgroundColor = 'lightgreen'
+    marker.setZIndexOffset(1000)
+  }
+  const icon = L.BeautifyIcon.icon(options)
+  marker.setIcon(icon)
 }
 Map.propTypes = {
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
   onSector: PropTypes.func,
-  onCustomer: PropTypes.func,
+  onMarker: PropTypes.func,
   markers: PropTypes.bool,
   selected: PropTypes.string,
+  /**
+   * The id of the selected marker
+   */
+  marker: PropTypes.string,
   complex: PropTypes.instanceOf(api.Complex),
 }
 export default Map
