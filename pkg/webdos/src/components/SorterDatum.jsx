@@ -11,55 +11,55 @@ import { Sorter } from '.'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
+import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 
 const debug = Debug('terminal:widgets:SorterDatum')
 
-export default function SorterDatum({ complex, viewonly, editing }) {
-  assert(!viewonly || !editing, 'viewonly and editing are mutually exclusive')
-  debug('props', { complex, viewonly, editing })
-  const { order: items } = complex.state.formData
-  const mapping = apps.crm.utils.mapCustomers(complex)
-  debug('mapping complete')
-  const onSort = (items) => {
-    debug(`onSort: `, items)
-  }
-  const [formData, setFormData] = useState(items)
+export default function SorterDatum({
+  complex,
+  selected,
+  onSelected,
+  viewOnly,
+  editing,
+}) {
+  assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
+  const { order } = complex.state.formData
+  const enrich = apps.crm.utils.enrichCustomers(complex)
+  const [items, setItems] = useState(order)
   const [isPending, setIsPending] = useState(false)
   const [isEditing, setIsEditing] = useState(editing)
-  const [startingState, setStartingState] = useState(complex.state)
-  if (startingState !== complex.state) {
-    debug('state changed', startingState, complex.state)
-    setStartingState(complex.state)
-    // setFormData(complex.state.formData)
+  const [initialOrder, setInitialOrder] = useState(order)
+  if (!equals(initialOrder, order)) {
+    debug('state changed', initialOrder, order)
+    setInitialOrder(order)
+    setItems(order)
     // TODO alert if changes not saved
   }
-  const isDirty = formData !== items
+  const isDirty = !equals(items, order)
   debug('isDirty', isDirty)
-  const onChange = ({ formData }) => {
-    debug(`onChange: `, formData)
-    setFormData(formData)
+  const onChange = (items) => {
+    debug(`onChange: `, items)
+    setItems(items)
   }
-
+  const onSort = viewOnly || !isEditing ? undefined : onChange
   const onSubmit = () => {
-    debug('onSubmit', formData)
+    debug('onSubmit', items)
     setIsEditing(false)
-    // setIsPending(true)
-    // complex.actions.set(formData).then(() => setIsPending(false))
+    setIsPending(true)
+    const formData = { ...complex.state.formData, order: items }
+    complex.actions.set(formData).then(() => setIsPending(false))
   }
-  const onSave = (e) => {
-    debug('onSave', e)
-  }
-  const onCancel = (e) => {
-    debug('onCancel', e)
+  const onCancel = () => {
+    debug('onCancel')
     setIsEditing(false)
     if (isDirty) {
-      setFormData(items)
+      setItems(order)
     }
   }
   const Editing = (
     <>
-      <IconButton aria-label="save" onClick={onSave}>
+      <IconButton aria-label="save" onClick={onSubmit}>
         <Save color="primary" />
       </IconButton>
       <IconButton aria-label="cancel" onClick={onCancel}>
@@ -69,6 +69,7 @@ export default function SorterDatum({ complex, viewonly, editing }) {
   )
   const onEdit = (e) => {
     debug('onEdit', e)
+    assert(!viewOnly, 'viewOnly is true')
     setIsEditing(true)
   }
   const Viewing = (
@@ -76,27 +77,30 @@ export default function SorterDatum({ complex, viewonly, editing }) {
       <Edit color="primary" />
     </IconButton>
   )
+  const actions = isEditing
+    ? Editing
+    : viewOnly || !items.length
+    ? null
+    : Viewing
+
   let { schema } = complex.state
   if (schema === '..') {
     schema = complex.parent().state.template.schema
   }
   const orderSchema = schema.properties.order
   const { title } = orderSchema
-  const displayableItems = items.length > 4 ? 4 : items.length
-  const totalItemHeight = displayableItems * Sorter.ITEM_SIZE
-  const cardHeaderHeight = 64.02
-  const cardBottomPadding = 24
-  const minHeight = cardHeaderHeight + totalItemHeight + cardBottomPadding
+  const minHeight = calcMinHeight(items)
+  const sx = {
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight,
+  }
   return (
-    <Card
-      sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight }}
-    >
-      <CardHeader
-        title={title + ` (${items.length})`}
-        action={isEditing ? Editing : viewonly ? null : Viewing}
-      />
+    <Card sx={sx}>
+      <CardHeader title={`${title} (${items.length})`} action={actions} />
       <CardContent sx={{ flexGrow: 1, p: 0 }}>
-        <Sorter {...{ items, mapping, onSort, onChange, formData }} />
+        <Sorter {...{ items, enrich, selected, onSort, onSelected }} />
       </CardContent>
     </Card>
   )
@@ -106,9 +110,18 @@ SorterDatum.propTypes = {
   /**
    * Show no edit button - all fields are readonly
    */
-  viewonly: PropTypes.bool,
+  viewOnly: PropTypes.bool,
   /**
    * Used in testing to start the component in editing mode
    */
   editing: PropTypes.bool,
+  selected: PropTypes.string,
+  onSelected: PropTypes.func,
+}
+const calcMinHeight = (items) => {
+  const displayableItems = items.length > 4 ? 4 : items.length
+  const totalItemHeight = displayableItems * Sorter.ITEM_SIZE
+  const cardHeaderHeight = 64.02
+  const cardBottomPadding = 24
+  return cardHeaderHeight + totalItemHeight + cardBottomPadding
 }

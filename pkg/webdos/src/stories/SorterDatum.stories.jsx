@@ -1,9 +1,8 @@
 import React from 'react'
-import { Glass, Datum, SorterDatum } from '..'
+import { Glass, SorterDatum } from '..'
 import Debug from 'debug'
 import data from './data'
-import assert from 'assert-fast'
-import { api, apps } from '@dreamcatcher-tech/interblock'
+import delay from 'delay'
 const debug = Debug('Sorter')
 const complex = data.small.child('routing').child('13')
 export default {
@@ -17,8 +16,19 @@ export default {
 const Template = (args) => {
   Debug.enable('*Datum *Sorter *SorterDatum')
 
-  const [selected, onSelect] = React.useState(args.selected)
-  const [sector, onChange] = React.useState(args.sector)
+  const [selected, onSelected] = React.useState(args.selected)
+  const [complex, setComplex] = React.useState(args.complex)
+  const set = async (formData) => {
+    debug('set', formData)
+    await delay(800)
+    const next = complex.setState({ ...complex.state, formData })
+    setComplex(next)
+  }
+  if (!complex.actions.set) {
+    setComplex(complex.addAction({ set }))
+  }
+  args = { ...args, selected, onSelected, complex }
+
   return (
     <Glass.Container>
       <Glass.Left max>
@@ -48,10 +58,15 @@ Large.args = {
 export const Selected = Template.bind({})
 Selected.args = {
   complex: medium,
-  selected: medium.state.formData.order[0],
+  selected: medium.state.formData.order[3],
 }
 export const ReadOnly = Template.bind({})
 ReadOnly.args = {
-  onSort: false,
   complex: medium,
+  viewOnly: true,
+}
+export const Editing = Template.bind({})
+Editing.args = {
+  complex: medium,
+  editing: true,
 }

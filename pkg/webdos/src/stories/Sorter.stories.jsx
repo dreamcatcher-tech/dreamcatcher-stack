@@ -15,7 +15,7 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*Datum *Sorter')
-  const mapping = apps.crm.utils.mapCustomers(args.complex)
+  const enrich = apps.crm.utils.enrichCustomers(args.complex)
   const { order } = args.complex.state.formData
   const [items, setItems] = React.useState(order)
   const [selected, setSelected] = React.useState(args.selected)
@@ -25,7 +25,7 @@ const Template = (args) => {
   }
   const onSort = args.onSort === false ? undefined : setItems
   debug('selected', selected)
-  args = { ...args, items, mapping, onSort, onSelected, selected }
+  args = { ...args, items, enrich, onSort, onSelected, selected }
   return (
     <Glass.Container debug>
       <Glass.Left debug>
@@ -63,7 +63,7 @@ Large.args = {
 export const Selected = Template.bind({})
 Selected.args = {
   complex: medium,
-  selected: medium.state.formData.order[0],
+  selected: medium.state.formData.order[3],
 }
 export const ReadOnly = Template.bind({})
 ReadOnly.args = {

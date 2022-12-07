@@ -51,7 +51,9 @@ const Schedule = ({ complex, expanded }) => {
           <SectorSelector {...{ complex: sectors, selected, onSelected }} />
           {sector && (
             <>
-              <SorterDatum {...{ complex: sector, selected, onSelected }} />
+              <SorterDatum
+                {...{ complex: sector, selected, onSelected, viewonly }}
+              />
             </>
           )}
         </Glass.Left>

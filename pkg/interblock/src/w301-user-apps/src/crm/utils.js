@@ -71,16 +71,16 @@ export const generateManifest = (rootComplex, runDate) => {
   return manifest
 }
 
-export const mapCustomers = (sector) => {
+export const enrichCustomers = (sector) => {
   assert(sector instanceof Complex)
-  const { state } = sector
-  const { order } = state.formData
-  const mapping = new Map()
   const customers = sector.tree.child('customers')
-  order.forEach((id) => {
+  return (id = '') => {
+    assert.strictEqual(typeof id, 'string', `id must be a string, got ${id}`)
+    if (!customers.hasChild(id)) {
+      return id
+    }
     const customer = customers.child(id)
     const value = customer.state.formData.serviceAddress
-    mapping.set(id, value)
-  })
-  return mapping
+    return value || id
+  }
 }

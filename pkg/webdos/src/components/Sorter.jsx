@@ -32,9 +32,9 @@ const debug = Debug('webdos:components:Sorter')
 
 function renderRow(props) {
   let { index, style, data, isScrolling } = props
-  const { items, mapping, selected, readOnly, onSelected } = data
+  const { items, enrich, selected, readOnly, onSelected } = data
   const id = items[index]
-  const value = mapping.get(id, id)
+  const value = enrich(id)
 
   const {
     attributes,
@@ -91,12 +91,11 @@ Item.propTypes = {
 }
 export default function Sorter({
   items,
-  mapping,
+  enrich,
+  selected,
   onSort,
   onSelected,
-  selected,
 }) {
-  debug('props', { items, mapping, onSort, onSelected, selected })
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 1 } }),
     useSensor(KeyboardSensor, {
@@ -117,7 +116,7 @@ export default function Sorter({
     }
     if (lastSelected && selected && lastSelected !== selected) {
       debug('lastSelected', lastSelected, 'selected', selected)
-      debug(mapping.get(lastSelected), mapping.get(selected))
+      debug(enrich(lastSelected), enrich(selected))
       const lastSelectedIndex = items.indexOf(lastSelected)
       const selectedIndex = items.indexOf(selected)
       debug(lastSelectedIndex, selectedIndex)
@@ -147,7 +146,7 @@ export default function Sorter({
     }
   }
   const readOnly = !onSort
-  const data = { items, mapping, selected, readOnly, onSelected }
+  const data = { items, enrich, selected, readOnly, onSelected }
   return (
     <AutoSizer>
       {({ height, width }) => {
@@ -183,21 +182,34 @@ export default function Sorter({
 }
 Sorter.propTypes = {
   items: PropTypes.arrayOf(PropTypes.string).isRequired,
-  mapping: PropTypes.object,
-  onSort: PropTypes.func,
-  onSelected: PropTypes.func,
+  /**
+   * Function to get enriched data based on an id.
+   * Eg: turning the id into a service address.
+   */
+  enrich: PropTypes.object,
+  /**
+   * Id of the selected item.
+   */
   selected: PropTypes.string,
+  /**
+   * Callback invoked when the list is sorted.
+   */
+  onSort: PropTypes.func,
+  /**
+   * Callback invoked when an item is selected.
+   */
+  onSelected: PropTypes.func,
 }
 Sorter.ITEM_SIZE = 46
 
 const Overlay = ({ activeId, data }) => {
-  const { items, mapping, readOnly } = data
+  const { items, enrich, readOnly } = data
   if (readOnly) {
     return null
   }
   let child = null
   const index = items.indexOf(activeId) + 1
-  const value = mapping.get(activeId, activeId)
+  const value = enrich(activeId)
   if (activeId) {
     child = <Item id={activeId} value={value} label={index} />
   }
