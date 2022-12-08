@@ -22,7 +22,14 @@ export default function DatumHOC(Child) {
   const noDisabled = createTheme({
     palette: { text: { disabled: '0 0 0' } },
   })
-  const Datum = ({ complex, collapsed, viewOnly, editing, ...props }) => {
+  const Datum = ({
+    complex,
+    collapsed,
+    viewOnly,
+    onEdit,
+    editing,
+    ...props
+  }) => {
     // TODO verify the covenant is a datum
     // TODO verify the chain children match the schema children
     assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
@@ -44,10 +51,14 @@ export default function DatumHOC(Child) {
       debug(`onChange: `, formData)
       setFormData(formData)
     }
+    const onIsEditing = (isEditing) => {
+      setIsEditing(isEditing)
+      onEdit && onEdit(isEditing)
+    }
 
     const onSubmit = () => {
       debug('onSubmit', formData)
-      setIsEditing(false)
+      onIsEditing(false)
       // setIsPending(true)
       // complex.actions.set(formData).then(() => setIsPending(false))
     }
@@ -66,30 +77,35 @@ export default function DatumHOC(Child) {
     const onCancel = (e) => {
       debug('onCancel', e)
       e.stopPropagation()
-      setIsEditing(false)
+      onIsEditing(false)
       if (isDirty) {
         setFormData(complex.state.formData)
       }
     }
     const Editing = (
       <>
-        <IconButton aria-label="save" onClick={onSave}>
+        <IconButton onClick={onSave}>
           <Save color="primary" />
         </IconButton>
-        <IconButton aria-label="cancel" onClick={onCancel}>
+        <IconButton onClick={onCancel}>
           <Cancel color="secondary" />
         </IconButton>
       </>
     )
-    const onEdit = (e) => {
+    const onStartEdit = (e) => {
       debug('onEdit', e)
       setExpanded(true)
       e.stopPropagation()
-      setIsEditing(true)
+      onIsEditing(true)
     }
     const Viewing = (
-      <IconButton aria-label="edit" onClick={onEdit}>
+      <IconButton onClick={onStartEdit}>
         <Edit color="primary" />
+      </IconButton>
+    )
+    const Blank = (
+      <IconButton>
+        <Edit color="disabled" />
       </IconButton>
     )
     const onExpand = (e, isExpanded) => {
@@ -114,7 +130,7 @@ export default function DatumHOC(Child) {
             sx={{ display: 'flex' }}
           >
             <CardHeader title={title} sx={{ p: 0, flexGrow: 1 }} />
-            {isEditing ? Editing : viewOnly ? null : Viewing}
+            {isEditing ? Editing : viewOnly ? Blank : Viewing}
           </AccordionSummary>
           <AccordionDetails sx={{ display: 'flex', flexDirection: 'column' }}>
             <ThemeProvider theme={isEditing ? theme : noDisabled}>
@@ -147,6 +163,10 @@ export default function DatumHOC(Child) {
      * Show no edit button - all fields are readonly
      */
     viewOnly: PropTypes.bool,
+    /**
+     * Notify when the component starts and stops editing
+     */
+    onEdit: PropTypes.func,
     /**
      * Used in testing to start the component in editing mode
      */

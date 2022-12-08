@@ -41,3 +41,5 @@ export const Expanded = Template.bind({})
 Expanded.args = { expanded: true }
 export const Blank = Template.bind({})
 Blank.args = { complex: complex.setNetwork([]) }
+export const Disabled = Template.bind({})
+Disabled.args = { disabled: true }

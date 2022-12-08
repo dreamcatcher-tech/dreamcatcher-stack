@@ -21,6 +21,7 @@ export default function SorterDatum({
   viewOnly,
   onMarker,
   onOrder,
+  onEdit,
   editing,
 }) {
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
@@ -40,6 +41,11 @@ export default function SorterDatum({
   }
   const isDirty = items !== order
   debug('isDirty', isDirty)
+  const onIsEditing = (isEditing) => {
+    debug('onIsEditing', isEditing)
+    setIsEditing(isEditing)
+    onEdit && onEdit(isEditing)
+  }
   const onSort = (items) => {
     debug(`onSort`)
     assert(items !== order, 'items are equal to order')
@@ -52,13 +58,13 @@ export default function SorterDatum({
     const formData = { ...complex.state.formData, order: items }
     complex.actions.set(formData).then(() => {
       setIsPending(false)
-      setIsEditing(false)
+      onIsEditing(false)
       onOrder()
     })
   }
   const onCancel = () => {
     debug('onCancel')
-    setIsEditing(false)
+    onIsEditing(false)
     if (isDirty) {
       setItems(order)
       onOrder()
@@ -74,13 +80,13 @@ export default function SorterDatum({
       </IconButton>
     </>
   )
-  const onEdit = (e) => {
+  const onStartEdit = (e) => {
     debug('onEdit', e)
     assert(!viewOnly, 'viewOnly is true')
-    setIsEditing(true)
+    onIsEditing(true)
   }
   const Viewing = (
-    <IconButton aria-label="edit" onClick={onEdit}>
+    <IconButton aria-label="edit" onClick={onStartEdit}>
       <Edit color="primary" />
     </IconButton>
   )
@@ -135,7 +141,11 @@ SorterDatum.propTypes = {
   /**
    * Notify when the order changes so the map can update
    */
-  onOrder: PropTypes.func.isRequired,
+  onOrder: PropTypes.func,
+  /**
+   * Notify when the component starts and stops editing
+   */
+  onEdit: PropTypes.func,
   /**
    * Used in testing to start the component in editing mode
    */

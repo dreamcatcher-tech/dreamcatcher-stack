@@ -69,8 +69,10 @@ const Center = ({ children, debug }) => {
   const grid = debug ? 'yellow' : undefined
   const stack = debug ? 'blue' : undefined
   const { ref, width = 1, height = 1 } = useResizeObserver()
-  React.Children.only(children)
-  children = React.cloneElement(children, { width, height })
+  if (children) {
+    React.Children.only(children)
+    children = React.cloneElement(children, { width, height })
+  }
   return (
     <Grid item sx={{ flexGrow: 1, background: grid }} ref={ref}>
       <Stack

@@ -1,6 +1,6 @@
 import { api } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import {
   SorterDatum,
@@ -14,11 +14,12 @@ import {
 const debug = Debug('terminal:widgets:Routing')
 
 const Routing = ({ complex, sector: initialSector }) => {
-  const onCreate = () => {}
-  const onEdit = () => {}
-  const [sector, onSector] = useState(initialSector)
+  const [sector, setSector] = useState(initialSector)
   const [marker, setMarker] = useState()
   const [order, onOrder] = useState() // the dynamic changing data
+  const [isEditingSector, setIsEditingSector] = useState(false)
+  const [isEditingOrder, setIsEditingOrder] = useState(false)
+  const disabled = isEditingSector || isEditingOrder
   const onMarker = (marker) =>
     setMarker((current) => {
       debug('onMarker', current, marker)
@@ -27,6 +28,13 @@ const Routing = ({ complex, sector: initialSector }) => {
       }
       return marker
     })
+  const disabledRef = useRef()
+  disabledRef.current = disabled
+  const onSector = (sector) => {
+    if (!disabledRef.current) {
+      setSector(sector)
+    }
+  }
   const sectorComplex = complex.hasChild(sector)
     ? complex.child(sector)
     : undefined
@@ -37,15 +45,22 @@ const Routing = ({ complex, sector: initialSector }) => {
     <>
       <Glass.Container>
         <Glass.Left>
-          <SectorSelector {...{ complex, sector, onSector }} />
+          <SectorSelector {...{ complex, sector, onSector, disabled }} />
           {sectorComplex && (
             <>
-              <Datum complex={sectorComplex} collapsed />
+              <Datum
+                complex={sectorComplex}
+                collapsed
+                onEdit={setIsEditingSector}
+                viewOnly={isEditingOrder}
+              />
               <SorterDatum
                 complex={sectorComplex}
                 marker={marker}
                 onMarker={onMarker}
                 onOrder={onOrder}
+                onEdit={setIsEditingOrder}
+                viewOnly={isEditingSector}
               />
             </>
           )}
@@ -54,8 +69,6 @@ const Routing = ({ complex, sector: initialSector }) => {
       <RoutingSpeedDial></RoutingSpeedDial>
       <Map
         {...{
-          onCreate,
-          onEdit,
           complex,
           onSector,
           sector,

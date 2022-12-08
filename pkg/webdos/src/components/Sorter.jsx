@@ -117,22 +117,25 @@ export default function Sorter({
     if (lastSelected && selected && lastSelected !== selected) {
       debug('lastSelected', lastSelected, 'selected', selected)
       debug(enrich(lastSelected), enrich(selected))
-      const lastSelectedIndex = items.indexOf(lastSelected)
+      const lastIndex = items.indexOf(lastSelected)
       const selectedIndex = items.indexOf(selected)
-      debug(lastSelectedIndex, selectedIndex)
-      const adj = lastSelectedIndex < selectedIndex ? 1 : 0
-      const nextItems = arrayMove(items, selectedIndex, lastSelectedIndex + adj)
+      debug(lastIndex, selectedIndex)
+      const offset = lastIndex < selectedIndex ? 1 : 0
+      const nextItems = arrayMove(items, selectedIndex, lastIndex + offset)
       setLastSelected(selected)
       onSort(nextItems)
     }
   }, [lastSelected, selected, items])
   const api = useRef()
-  const isStableSelection =
-    !lastSelected || lastSelected === selected || !onSort
-  if (selected && isStableSelection && api.current) {
-    const index = items.indexOf(selected)
-    api.current.scrollToItem(index, 'smart')
-  }
+  useEffect(() => {
+    const isStableSelection =
+      !lastSelected || lastSelected === selected || !onSort
+    if (selected && isStableSelection && api.current) {
+      const index = items.indexOf(selected)
+      api.current.scrollToItem(index, 'smart')
+    }
+  }, [selected, lastSelected, onSort, api.current])
+
   if (!items.length) {
     return <NoCustomers />
   }

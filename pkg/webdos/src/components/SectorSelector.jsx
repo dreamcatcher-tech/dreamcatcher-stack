@@ -19,6 +19,7 @@ export default function SectorSelector({
   sector,
   onSector,
   expanded,
+  disabled,
 }) {
   if (complex.network.length && !sector) {
     sector = complex.network[0].path
@@ -43,6 +44,7 @@ export default function SectorSelector({
   return (
     <Paper>
       <Autocomplete
+        disabled={disabled}
         options={options}
         getOptionLabel={({ sector }) => sector.state.formData.name}
         disableClearable
@@ -88,6 +90,10 @@ SectorSelector.propTypes = {
    * Callback when a sector is selected
    */
   onSector: PropTypes.func,
+  /**
+   * Disable the selector during editing
+   */
+  disabled: PropTypes.bool,
   /**
    * Used for testing only
    */
