@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670469806433,
+  "lastUpdate": 1670477576566,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interpulse Benchmark": [
@@ -12026,6 +12026,65 @@ window.BENCHMARK_DATA = {
             "range": "±1.23%",
             "unit": "ops/sec",
             "extra": "43 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "ef1380cc1eae6f7d51fed549d0ee9263ba47bbe3",
+          "message": "Routing sorter works.",
+          "timestamp": "2022-12-08T18:31:21+13:00",
+          "tree_id": "4599d81be39ae84b2b161b57e3ba0faa8c3ef68f",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/ef1380cc1eae6f7d51fed549d0ee9263ba47bbe3"
+        },
+        "date": 1670477575960,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 524,
+            "range": "±3.41%",
+            "unit": "ops/sec",
+            "extra": "81 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 168,
+            "range": "±3.04%",
+            "unit": "ops/sec",
+            "extra": "83 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 274,
+            "range": "±0.96%",
+            "unit": "ops/sec",
+            "extra": "85 samples"
+          },
+          {
+            "name": "publish",
+            "value": 39.3,
+            "range": "±9.07%",
+            "unit": "ops/sec",
+            "extra": "64 samples"
+          },
+          {
+            "name": "install",
+            "value": 7.93,
+            "range": "±1.48%",
+            "unit": "ops/sec",
+            "extra": "42 samples"
           }
         ]
       }
