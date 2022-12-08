@@ -18,9 +18,10 @@ const Routing = ({ complex, sector: initialSector }) => {
   const onEdit = () => {}
   const [sector, onSector] = useState(initialSector)
   const [marker, setMarker] = useState()
-  const [formData, onChange] = useState() // the dynamic changing data
+  const [order, onOrder] = useState() // the dynamic changing data
   const onMarker = (marker) =>
     setMarker((current) => {
+      debug('onMarker', current, marker)
       if (current === marker) {
         return undefined
       }
@@ -36,17 +37,15 @@ const Routing = ({ complex, sector: initialSector }) => {
     <>
       <Glass.Container>
         <Glass.Left>
-          <SectorSelector
-            {...{ complex, selected: sector, onSelected: onSector }}
-          />
+          <SectorSelector {...{ complex, sector, onSector }} />
           {sectorComplex && (
             <>
               <Datum complex={sectorComplex} collapsed />
               <SorterDatum
                 complex={sectorComplex}
-                selected={marker}
-                onSelected={onMarker}
-                onChange={onChange}
+                marker={marker}
+                onMarker={onMarker}
+                onOrder={onOrder}
               />
             </>
           )}
@@ -59,10 +58,10 @@ const Routing = ({ complex, sector: initialSector }) => {
           onEdit,
           complex,
           onSector,
-          selected: sector,
+          sector,
           onMarker,
           marker,
-          sorted: formData,
+          order,
         }}
         markers
       />
@@ -70,8 +69,15 @@ const Routing = ({ complex, sector: initialSector }) => {
   )
 }
 Routing.propTypes = {
+  /**
+   * The Routing complex
+   */
   complex: PropTypes.instanceOf(api.Complex).isRequired,
-  selected: PropTypes.string,
+  /**
+   * Used only in testing
+   * The selected sector path
+   */
+  sector: PropTypes.string,
 }
 
 export default Routing

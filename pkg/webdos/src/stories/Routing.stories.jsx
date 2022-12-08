@@ -8,7 +8,7 @@ export default {
   component: Routing,
   args: {
     complex: data.small.child('routing'),
-    selected: '13',
+    sector: '13',
   },
 }
 
@@ -20,7 +20,7 @@ const Template = (args) => {
 export const Blank = Template.bind({})
 Blank.args = {
   complex: data.small.child('routing').setNetwork([]),
-  selected: undefined,
+  sector: undefined,
 }
 export const Small = Template.bind({})
 export const Medium = Template.bind({})

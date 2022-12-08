@@ -10,7 +10,7 @@ const debug = Debug('terminal:widgets:Datum')
 const SchemaForm = ({
   complex,
   pending,
-  viewonly,
+  viewOnly,
   formData,
   trySubmit,
   onChange,
@@ -44,7 +44,7 @@ const SchemaForm = ({
     <Form
       validator={validator}
       disabled={pending}
-      readonly={viewonly}
+      readonly={viewOnly}
       schema={noHidden}
       uiSchema={uiSchema}
       formData={formData}
@@ -57,7 +57,7 @@ const SchemaForm = ({
 SchemaForm.propTypes = {
   complex: PropTypes.instanceOf(api.Complex).isRequired,
   pending: PropTypes.bool,
-  viewonly: PropTypes.bool,
+  viewOnly: PropTypes.bool,
   formData: PropTypes.object,
   trySubmit: PropTypes.bool,
   onChange: PropTypes.func,

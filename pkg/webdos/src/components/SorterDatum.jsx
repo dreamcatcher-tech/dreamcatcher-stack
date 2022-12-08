@@ -11,7 +11,6 @@ import { Sorter } from '.'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
-import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 
 const debug = Debug('terminal:widgets:SorterDatum')
@@ -31,17 +30,19 @@ export default function SorterDatum({
   const [isPending, setIsPending] = useState(false)
   const [isEditing, setIsEditing] = useState(editing)
   const [initialOrder, setInitialOrder] = useState(order)
-  if (!equals(initialOrder, order)) {
-    debug('state changed', initialOrder, order)
+  if (initialOrder !== order) {
+    if (isEditing) {
+      debug('state changed', initialOrder, order)
+    }
     setInitialOrder(order)
     setItems(order)
     // TODO alert if changes not saved
   }
-  const isDirty = !equals(items, order)
+  const isDirty = items !== order
   debug('isDirty', isDirty)
   const onSort = (items) => {
-    debug(`onSort: `, items)
-    assert(!equals(items, order), 'items are equal to order')
+    debug(`onSort`)
+    assert(items !== order, 'items are equal to order')
     setItems(items)
     onOrder(items)
   }
@@ -52,6 +53,7 @@ export default function SorterDatum({
     complex.actions.set(formData).then(() => {
       setIsPending(false)
       setIsEditing(false)
+      onOrder()
     })
   }
   const onCancel = () => {
@@ -59,6 +61,7 @@ export default function SorterDatum({
     setIsEditing(false)
     if (isDirty) {
       setItems(order)
+      onOrder()
     }
   }
   const Editing = (
@@ -128,11 +131,11 @@ SorterDatum.propTypes = {
   /**
    * Callback when the selected marker changes
    */
-  onMarker: PropTypes.func,
+  onMarker: PropTypes.func.isRequired,
   /**
    * Notify when the order changes so the map can update
    */
-  onOrder: PropTypes.func,
+  onOrder: PropTypes.func.isRequired,
   /**
    * Used in testing to start the component in editing mode
    */

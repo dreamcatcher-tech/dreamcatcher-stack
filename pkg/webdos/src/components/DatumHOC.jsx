@@ -22,10 +22,10 @@ export default function DatumHOC(Child) {
   const noDisabled = createTheme({
     palette: { text: { disabled: '0 0 0' } },
   })
-  const Datum = ({ complex, collapsed, viewonly, editing, ...props }) => {
+  const Datum = ({ complex, collapsed, viewOnly, editing, ...props }) => {
     // TODO verify the covenant is a datum
     // TODO verify the chain children match the schema children
-    assert(!viewonly || !editing, 'viewonly and editing are mutually exclusive')
+    assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
 
     const [formData, setFormData] = useState(complex.state.formData)
     const [isPending, setIsPending] = useState(false)
@@ -114,7 +114,7 @@ export default function DatumHOC(Child) {
             sx={{ display: 'flex' }}
           >
             <CardHeader title={title} sx={{ p: 0, flexGrow: 1 }} />
-            {isEditing ? Editing : viewonly ? null : Viewing}
+            {isEditing ? Editing : viewOnly ? null : Viewing}
           </AccordionSummary>
           <AccordionDetails sx={{ display: 'flex', flexDirection: 'column' }}>
             <ThemeProvider theme={isEditing ? theme : noDisabled}>
@@ -122,7 +122,7 @@ export default function DatumHOC(Child) {
                 {...{
                   complex,
                   pending: isPending,
-                  viewonly: !isEditing,
+                  viewOnly: !isEditing,
                   onChange,
                   formData,
                   trySubmit,
@@ -146,7 +146,7 @@ export default function DatumHOC(Child) {
     /**
      * Show no edit button - all fields are readonly
      */
-    viewonly: PropTypes.bool,
+    viewOnly: PropTypes.bool,
     /**
      * Used in testing to start the component in editing mode
      */

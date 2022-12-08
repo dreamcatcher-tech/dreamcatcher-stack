@@ -10,16 +10,17 @@ import delay from 'delay'
 const debug = Debug('webdos:components:Map')
 const maxNativeZoom = 18
 const maxZoom = 22
-const Map = ({
+export default function MapComponent({
   onCreate,
   onEdit,
-  markers,
-  onSector,
-  onMarker,
-  selected, // TODO rename as sector
-  marker,
   complex,
-}) => {
+  onSector,
+  sector,
+  onMarker,
+  marker,
+  markers,
+  order,
+}) {
   const mapId = useId()
   const mapRef = useRef()
   useEffect(() => {
@@ -162,19 +163,19 @@ const Map = ({
   useEffect(() => {
     let isActive = true
     const map = mapRef.current
-    if (!map || !complex || !markers || !selected) {
-      debug('no map or complex or markers', { map, complex, markers, selected })
-      return // TODO detect deep equals of complex
+    if (!map || !complex || !markers || !sector) {
+      debug('no map or complex or markers')
+      return
     }
     let layer
     const chunkLoad = async () => {
-      debug('adding customers to sector', selected)
+      debug('adding customers to sector', sector)
 
       const customers = complex.tree.child('customers')
-      const { state } = complex.child(selected)
+      const { state } = complex.child(sector)
 
-      const { formData: sector } = state
-      const { order = [] } = sector
+      const { formData } = state
+      const { order = [] } = formData
 
       const markersArray = []
       debug('adding markers', order.length)
@@ -187,8 +188,7 @@ const Map = ({
         const options = { riseOnHover: true }
         const marker = L.marker([latitude, longitude], options)
         marker.data = {
-          color: sector.color,
-          number: index + 1,
+          color: formData.color,
           id: custNo,
           index,
         }
@@ -232,20 +232,35 @@ const Map = ({
       }
       setMarkersArray([])
     }
-  }, [mapRef.current, complex, markers, selected])
+  }, [mapRef.current, complex, markers, sector])
   const [markersArray, setMarkersArray] = useState([])
   useEffect(() => {
-    const selectedMarker = markersArray.find(({ data }) => data.id === marker)
-    debug('selected marker', selectedMarker)
-    for (const [index, marker] of markersArray.entries()) {
-      assert(index === marker.data.index, `marker index mismatch`)
+    // sweep thru markers and update the data icon
+    const map = new Map()
+    if (order && order.length === markersArray.length) {
+      order.forEach((id, index) => map.set(id, index))
     }
+    for (const [index, marker] of markersArray.entries()) {
+      let orderIndex = map.get(marker.data.id)
+      orderIndex = orderIndex === undefined ? index : orderIndex
+      if (marker.data.index !== orderIndex) {
+        marker.data.index = orderIndex
+        setIcon(marker)
+      }
+    }
+  }, [markersArray, order])
+  useEffect(() => {
+    debug('selected marker', marker)
+    const selectedMarker = markersArray.find(({ data }) => data.id === marker)
     if (!selectedMarker) {
       return
     }
-    const selected = true
-    setIcon(selectedMarker, selected)
-    return () => setIcon(selectedMarker)
+    selectedMarker.data.isSelected = true
+    setIcon(selectedMarker)
+    return () => {
+      selectedMarker.data.isSelected = false
+      setIcon(selectedMarker)
+    }
   }, [markersArray, marker])
 
   const paintBelowAllOthers = 0
@@ -272,8 +287,9 @@ const Map = ({
 
   return <div ref={ref} id={mapId} style={mapBackgroundStyle}></div>
 }
-const setIcon = (marker, isSelected) => {
-  const { color, number } = marker.data
+const setIcon = (marker) => {
+  const { color, index, isSelected } = marker.data
+  const number = index + 1
   const options = {
     isAlphaNumericIcon: true,
     text: number,
@@ -290,20 +306,24 @@ const setIcon = (marker, isSelected) => {
   const icon = L.BeautifyIcon.icon(options)
   marker.setIcon(icon)
 }
-Map.propTypes = {
+MapComponent.propTypes = {
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
+  complex: PropTypes.instanceOf(api.Complex),
   onSector: PropTypes.func,
+  sector: PropTypes.string,
   onMarker: PropTypes.func,
-  /**
-   * Should markers be displayed on the map?
-   */
-  markers: PropTypes.bool, // TODO replace with implicit signal
-  selected: PropTypes.string,
   /**
    * The id of the selected marker
    */
   marker: PropTypes.string,
-  complex: PropTypes.instanceOf(api.Complex),
+  /**
+   * Should markers be displayed on the map?
+   */
+  markers: PropTypes.bool, // TODO replace with implicit signal
+  /**
+   * The order of the markers.
+   * Used to show live updates during sorting.
+   */
+  order: PropTypes.arrayOf(PropTypes.string),
 }
-export default Map

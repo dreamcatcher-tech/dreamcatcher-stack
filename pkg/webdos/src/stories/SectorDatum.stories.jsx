@@ -24,7 +24,7 @@ const Template = (args) => {
 }
 
 export const ReadOnly = Template.bind({})
-ReadOnly.args = { viewonly: true }
+ReadOnly.args = { viewOnly: true }
 export const Collapsed = Template.bind({})
 Collapsed.args = { collapsed: true }
 export const Viewing = Template.bind({})

@@ -15,7 +15,6 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*Datum *Sorter *SorterDatum')
-  debug('args', args)
   const [marker, onMarker] = React.useState(args.marker)
   const [complex, setComplex] = React.useState(args.complex)
   const set = async (formData) => {

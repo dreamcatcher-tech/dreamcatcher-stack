@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
 import ListItemText from '@mui/material/ListItemText'
 import ListItem from '@mui/material/ListItem'
@@ -147,6 +147,13 @@ export default function Sorter({
   }
   const readOnly = !onSort
   const data = { items, enrich, selected, readOnly, onSelected }
+  const api = useRef()
+  const isNewSelection =
+    selected && (!lastSelected || lastSelected === selected || !onSort)
+  if (isNewSelection && api.current) {
+    const index = items.indexOf(selected)
+    api.current.scrollToItem(index, 'smart')
+  }
   return (
     <AutoSizer>
       {({ height, width }) => {
@@ -169,6 +176,7 @@ export default function Sorter({
                 overscanCount={5}
                 itemKey={(index, data) => data.items[index]}
                 itemData={data}
+                ref={api}
               >
                 {renderRow}
               </FixedSizeList>
