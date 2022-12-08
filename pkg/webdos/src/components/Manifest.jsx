@@ -75,7 +75,7 @@ Manifest.propTypes = {
   /**
    * The selected sector
    */
-  sector: PropTypes.string.isRequired,
+  sector: PropTypes.string,
   /**
    * Passed down from Glass.Center
    */

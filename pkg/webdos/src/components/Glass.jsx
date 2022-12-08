@@ -16,6 +16,8 @@ const Container = ({ children, debug }) => {
         maxWidth: '100%',
         background,
         p: 1,
+        overflow: 'hidden',
+        maxHeight: '100%',
       }}
       spacing={1}
       wrap="nowrap"

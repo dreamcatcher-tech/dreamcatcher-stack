@@ -16,6 +16,7 @@ export default function App({ complex }) {
         flexDirection: 'column',
         height: '100%',
         width: '100%',
+        overflow: 'hidden',
       }}
     >
       <Box sx={{ zIndex: 1 }}>

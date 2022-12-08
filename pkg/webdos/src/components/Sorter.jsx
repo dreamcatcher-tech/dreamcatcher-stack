@@ -198,7 +198,7 @@ Sorter.propTypes = {
    * Function to get enriched data based on an id.
    * Eg: turning the id into a service address.
    */
-  enrich: PropTypes.object,
+  enrich: PropTypes.func,
   /**
    * Id of the selected item.
    */
