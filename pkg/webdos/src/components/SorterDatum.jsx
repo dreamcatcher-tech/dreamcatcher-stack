@@ -18,11 +18,11 @@ const debug = Debug('terminal:widgets:SorterDatum')
 
 export default function SorterDatum({
   complex,
-  selected,
-  onSelected,
+  marker,
   viewOnly,
+  onMarker,
+  onOrder,
   editing,
-  onChange,
 }) {
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
   const { order } = complex.state.formData
@@ -33,8 +33,8 @@ export default function SorterDatum({
   const [initialOrder, setInitialOrder] = useState(order)
   if (!equals(initialOrder, order)) {
     debug('state changed', initialOrder, order)
-    // setInitialOrder(order)
-    // setItems(order)
+    setInitialOrder(order)
+    setItems(order)
     // TODO alert if changes not saved
   }
   const isDirty = !equals(items, order)
@@ -43,8 +43,7 @@ export default function SorterDatum({
     debug(`onSort: `, items)
     assert(!equals(items, order), 'items are equal to order')
     setItems(items)
-    const formData = { ...complex.state.formData, order: items }
-    onChange(formData)
+    onOrder(items)
   }
   const onSubmit = () => {
     debug('onSubmit', items)
@@ -108,9 +107,9 @@ export default function SorterDatum({
         <Sorter
           items={items}
           enrich={enrich}
-          selected={selected}
+          selected={marker}
           onSort={viewOnly || !isEditing || isPending ? undefined : onSort}
-          onSelected={onSelected}
+          onSelected={onMarker}
         />
       </CardContent>
     </Card>
@@ -119,15 +118,25 @@ export default function SorterDatum({
 SorterDatum.propTypes = {
   complex: PropTypes.instanceOf(api.Complex).isRequired,
   /**
+   * The selected marker id
+   */
+  marker: PropTypes.string,
+  /**
    * Show no edit button - all fields are readonly
    */
   viewOnly: PropTypes.bool,
   /**
+   * Callback when the selected marker changes
+   */
+  onMarker: PropTypes.func,
+  /**
+   * Notify when the order changes so the map can update
+   */
+  onOrder: PropTypes.func,
+  /**
    * Used in testing to start the component in editing mode
    */
   editing: PropTypes.bool,
-  selected: PropTypes.string,
-  onSelected: PropTypes.func,
 }
 const calcMinHeight = (items) => {
   const displayableItems = items.length > 4 ? 4 : items.length

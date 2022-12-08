@@ -17,7 +17,6 @@ export { default as PdfModal } from './PdfModal'
 // compounds of atoms
 export { default as Datum } from './Datum'
 export { default as Settings } from './Settings'
-export { default as SectorDisplay } from './SectorDisplay'
 export { default as About } from './About'
 export { default as Manifest } from './Manifest'
 export { default as SorterDatum } from './SorterDatum'

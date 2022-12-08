@@ -7,7 +7,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.31.10",
     "lerna": "^6.1.0",
-    "prettier": "^2.8.0"
+    "prettier": "^2.8.1"
   },
   "workspaces": [
     "pkg/*"

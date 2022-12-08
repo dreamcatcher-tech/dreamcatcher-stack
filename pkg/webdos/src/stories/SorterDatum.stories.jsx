@@ -3,7 +3,7 @@ import { Glass, SorterDatum } from '..'
 import Debug from 'debug'
 import data from './data'
 import delay from 'delay'
-const debug = Debug('Sorter')
+const debug = Debug('SorterDatum')
 const complex = data.small.child('routing').child('13')
 export default {
   title: 'SorterDatum',
@@ -15,8 +15,8 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*Datum *Sorter *SorterDatum')
-
-  const [selected, onSelected] = React.useState(args.selected)
+  debug('args', args)
+  const [marker, onMarker] = React.useState(args.marker)
   const [complex, setComplex] = React.useState(args.complex)
   const set = async (formData) => {
     debug('set', formData)
@@ -27,7 +27,10 @@ const Template = (args) => {
   if (!complex.actions.set) {
     setComplex(complex.addAction({ set }))
   }
-  args = { ...args, selected, onSelected, complex }
+  const onOrder = (order) => {
+    debug('onOrder', order)
+  }
+  args = { ...args, marker, onMarker, complex, onOrder }
 
   return (
     <Glass.Container>
@@ -58,7 +61,7 @@ Large.args = {
 export const Selected = Template.bind({})
 Selected.args = {
   complex: medium,
-  selected: medium.state.formData.order[3],
+  marker: medium.state.formData.order[3],
 }
 export const ReadOnly = Template.bind({})
 ReadOnly.args = {
