@@ -13,32 +13,40 @@ import {
 
 const debug = Debug('terminal:widgets:Routing')
 
-const Routing = ({ complex, selected: initialSelected }) => {
+const Routing = ({ complex, sector: initialSector }) => {
   const onCreate = () => {}
   const onEdit = () => {}
-  const [sector, onSelected] = useState(initialSelected)
-  const [marker, onMarker] = useState()
+  const [sector, onSector] = useState(initialSector)
+  const [marker, setMarker] = useState()
+  const [formData, onChange] = useState() // the dynamic changing data
+  const onMarker = (marker) =>
+    setMarker((current) => {
+      if (current === marker) {
+        return undefined
+      }
+      return marker
+    })
   const sectorComplex = complex.hasChild(sector)
     ? complex.child(sector)
     : undefined
   if (!sectorComplex && complex.network.length) {
-    onSelected(complex.network[0].path)
+    onSector(complex.network[0].path)
   }
-  const onSector = onSelected
   return (
     <>
       <Glass.Container>
         <Glass.Left>
-          <SectorSelector {...{ complex, selected: sector, onSelected }} />
+          <SectorSelector
+            {...{ complex, selected: sector, onSelected: onSector }}
+          />
           {sectorComplex && (
             <>
               <Datum complex={sectorComplex} collapsed />
               <SorterDatum
-                {...{
-                  complex: sectorComplex,
-                  selected: marker,
-                  onSelected: onMarker,
-                }}
+                complex={sectorComplex}
+                selected={marker}
+                onSelected={onMarker}
+                onChange={onChange}
               />
             </>
           )}
@@ -54,6 +62,7 @@ const Routing = ({ complex, selected: initialSelected }) => {
           selected: sector,
           onMarker,
           marker,
+          sorted: formData,
         }}
         markers
       />

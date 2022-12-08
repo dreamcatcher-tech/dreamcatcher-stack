@@ -33,12 +33,31 @@ export default class Complex {
     next.wd = wd
     return next
   }
+
+  #pathCache = new Map()
+  #pathCacheUpTo = 0
+  #findChild(path) {
+    if (this.#pathCache.has(path)) {
+      return this.#pathCache.get(path)
+    }
+    while (this.#pathCacheUpTo < this.network.length) {
+      const child = this.network[this.#pathCacheUpTo++]
+      this.#pathCache.set(child.path, child)
+      if (child.path === path) {
+        return child
+      }
+    }
+  }
+  #childCache = new Map()
   child(path) {
     assert.strictEqual(typeof path, 'string', 'path must be a string')
     assert(!path.startsWith('/'))
     assert(!path.startsWith('./'))
     assert(!path.startsWith('..'))
-    const child = this.network.find(({ path: p }) => p === path)
+    if (this.#childCache.has(path)) {
+      return this.#childCache.get(path)
+    }
+    const child = this.#findChild(path)
     if (!child) {
       throw new Error(`child not found: ${path}`)
     }
@@ -48,6 +67,7 @@ export default class Complex {
       next.tree = this
     }
     next.#parent = this
+    this.#childCache.set(path, next)
     return next
   }
   hasChild(path) {
@@ -58,7 +78,7 @@ export default class Complex {
     assert(!path.startsWith('/'))
     assert(!path.startsWith('./'))
     assert(!path.startsWith('..'))
-    return this.network.some(({ path: p }) => p === path)
+    return !!this.#findChild(path)
   }
   rm(path) {
     assert(this.hasChild(path))

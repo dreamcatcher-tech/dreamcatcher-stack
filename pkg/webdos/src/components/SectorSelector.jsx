@@ -15,28 +15,31 @@ import { api } from '@dreamcatcher-tech/interblock'
 const debug = Debug('webdos:SectorSelector')
 
 export default function SectorSelector({
-  onSelected,
   complex,
-  selected,
+  sector,
+  onSector,
   expanded,
 }) {
-  if (selected) {
-    assert(complex.hasChild(selected), `selected must exist: ${selected}`)
+  if (complex.network.length && !sector) {
+    sector = complex.network[0].path
+  }
+  if (complex.network.length) {
+    assert(complex.hasChild(sector), `selected must exist: ${sector}`)
   }
   const onChange = (event, value) => {
     debug('onChange', value)
-    onSelected(value.path)
+    onSector(value.path)
     setOpen(false)
   }
   const [open, setOpen] = React.useState(expanded)
-  let openProps = expanded
+  const openProps = expanded
     ? { open, onOpen: () => setOpen(true), onClose: () => setOpen(false) }
     : {}
   const options = complex.network.map(({ path }) => {
     const sector = complex.child(path)
     return { path, sector }
   })
-  const value = options.find(({ path }) => path === selected)
+  const value = options.find(({ path }) => path === sector)
   return (
     <Paper>
       <Autocomplete
@@ -51,8 +54,8 @@ export default function SectorSelector({
         value={value}
         blurOnSelect
         {...openProps}
-        renderOption={(props, { path, sector }) => (
-          <Sector {...{ selected, path, sector, ...props }} />
+        renderOption={(props, value) => (
+          <Sector {...{ selected: sector, ...value, ...props }} />
         )}
         renderInput={(params) => {
           return (
@@ -73,19 +76,27 @@ export default function SectorSelector({
   )
 }
 SectorSelector.propTypes = {
-  selected: PropTypes.string,
-  onSelected: PropTypes.func,
+  /**
+   * The Routing complex to select a sector from
+   */
   complex: PropTypes.instanceOf(api.Complex).isRequired,
+  /**
+   * The selected sector
+   */
+  sector: PropTypes.string,
+  /**
+   * Callback when a sector is selected
+   */
+  onSector: PropTypes.func,
   /**
    * Used for testing only
    */
   expanded: PropTypes.bool,
 }
-SectorSelector.defaultProps = { expanded: false }
 
 const Sector = ({ selected, path, sector, ...props }) => {
   const { state } = sector
-  const { name, next, color, order } = state.formData
+  const { name, color, order } = state.formData
   const primary = (
     <>
       <Typography component="span">{name}</Typography>

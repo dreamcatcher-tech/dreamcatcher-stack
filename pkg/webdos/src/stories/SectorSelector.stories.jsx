@@ -15,11 +15,11 @@ export default {
 
 const Template = (args) => {
   Debug.enable('*SectorSelector')
-  const [selected, onSelected] = React.useState()
+  const [sector, onSector] = React.useState()
   return (
     <Glass.Container>
       <Glass.Left>
-        <SectorSelector {...{ ...args, selected, onSelected }} />
+        <SectorSelector {...{ ...args, sector, onSector }} />
         <div
           style={{
             flexGrow: 1,

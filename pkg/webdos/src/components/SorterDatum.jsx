@@ -22,6 +22,7 @@ export default function SorterDatum({
   onSelected,
   viewOnly,
   editing,
+  onChange,
 }) {
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
   const { order } = complex.state.formData
@@ -32,17 +33,19 @@ export default function SorterDatum({
   const [initialOrder, setInitialOrder] = useState(order)
   if (!equals(initialOrder, order)) {
     debug('state changed', initialOrder, order)
-    setInitialOrder(order)
-    setItems(order)
+    // setInitialOrder(order)
+    // setItems(order)
     // TODO alert if changes not saved
   }
   const isDirty = !equals(items, order)
   debug('isDirty', isDirty)
-  const onChange = (items) => {
-    debug(`onChange: `, items)
+  const onSort = (items) => {
+    debug(`onSort: `, items)
+    assert(!equals(items, order), 'items are equal to order')
     setItems(items)
+    const formData = { ...complex.state.formData, order: items }
+    onChange(formData)
   }
-  const onSort = viewOnly || !isEditing || isPending ? undefined : onChange
   const onSubmit = () => {
     debug('onSubmit', items)
     setIsPending(true)
@@ -102,7 +105,13 @@ export default function SorterDatum({
     <Card sx={sx}>
       <CardHeader title={`${title} (${items.length})`} action={actions} />
       <CardContent sx={{ flexGrow: 1, p: 0 }}>
-        <Sorter {...{ items, enrich, selected, onSort, onSelected }} />
+        <Sorter
+          items={items}
+          enrich={enrich}
+          selected={selected}
+          onSort={viewOnly || !isEditing || isPending ? undefined : onSort}
+          onSelected={onSelected}
+        />
       </CardContent>
     </Card>
   )

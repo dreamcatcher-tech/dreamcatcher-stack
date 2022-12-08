@@ -295,7 +295,10 @@ Map.propTypes = {
   onEdit: PropTypes.func,
   onSector: PropTypes.func,
   onMarker: PropTypes.func,
-  markers: PropTypes.bool,
+  /**
+   * Should markers be displayed on the map?
+   */
+  markers: PropTypes.bool, // TODO replace with implicit signal
   selected: PropTypes.string,
   /**
    * The id of the selected marker
