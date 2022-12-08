@@ -63,17 +63,23 @@ Left.propTypes = {
   min: PropTypes.bool,
 }
 
+import useResizeObserver from 'use-resize-observer'
+
 const Center = ({ children, debug }) => {
   const grid = debug ? 'yellow' : undefined
   const stack = debug ? 'blue' : undefined
+  const { ref, width = 1, height = 1 } = useResizeObserver()
+  React.Children.only(children)
+  children = React.cloneElement(children, { width, height })
   return (
-    <Grid item sx={{ flexGrow: 1, background: grid }}>
+    <Grid item sx={{ flexGrow: 1, background: grid }} ref={ref}>
       <Stack
         spacing={1}
         sx={{
           pointerEvents: 'auto',
           display: 'flex',
           background: stack,
+          maxHeight: '100%',
         }}
       >
         {children}
@@ -81,5 +87,8 @@ const Center = ({ children, debug }) => {
     </Grid>
   )
 }
-Center.propTypes = { children: PropTypes.node, debug: PropTypes.bool }
+Center.propTypes = {
+  children: PropTypes.node,
+  debug: PropTypes.bool,
+}
 export default { Container, Left, Center }

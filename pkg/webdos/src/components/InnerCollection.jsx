@@ -10,8 +10,6 @@ const debug = Debug('terminal:widgets:InnerCollection')
 
 const InnerCollection = ({ onAdd, onRow, complex = {}, template }) => {
   assert(template, `template is required`)
-  debug('complex', complex)
-  debug('template', template)
 
   const { state = {} } = complex
   const { formData = {} } = state
@@ -28,7 +26,6 @@ const InnerCollection = ({ onAdd, onRow, complex = {}, template }) => {
       <DataGridPremium
         columns={columns}
         rows={rows}
-        autoHeight
         disableMultipleSelection
         hideFooter
         onRowClick={onRow}
@@ -45,7 +42,7 @@ InnerCollection.propTypes = {
 }
 
 const generateColumns = (schema, uiSchema = {}) => {
-  debug(`generating columns`, schema, uiSchema)
+  debug(`generating columns`)
   const columns = []
   if (!schema) {
     return columns

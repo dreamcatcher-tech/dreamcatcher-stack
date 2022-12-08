@@ -30,7 +30,7 @@ Actions.propTypes = {
   onAction: PropTypes.func,
 }
 const Action = ({ action, onAction }) => {
-  const { schema } = action
+  const { schema = {} } = action
   const { title, ...noTitleSchema } = schema
 
   const [liveFormData, setLiveFormData] = useState({})

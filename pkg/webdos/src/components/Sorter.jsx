@@ -126,6 +126,13 @@ export default function Sorter({
       onSort(nextItems)
     }
   }, [lastSelected, selected, items])
+  const api = useRef()
+  const isStableSelection =
+    !lastSelected || lastSelected === selected || !onSort
+  if (selected && isStableSelection && api.current) {
+    const index = items.indexOf(selected)
+    api.current.scrollToItem(index, 'smart')
+  }
   if (!items.length) {
     return <NoCustomers />
   }
@@ -147,13 +154,7 @@ export default function Sorter({
   }
   const readOnly = !onSort
   const data = { items, enrich, selected, readOnly, onSelected }
-  const api = useRef()
-  const isNewSelection =
-    selected && (!lastSelected || lastSelected === selected || !onSort)
-  if (isNewSelection && api.current) {
-    const index = items.indexOf(selected)
-    api.current.scrollToItem(index, 'smart')
-  }
+
   return (
     <AutoSizer>
       {({ height, width }) => {

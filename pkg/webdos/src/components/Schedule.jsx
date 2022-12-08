@@ -1,6 +1,5 @@
 import { api } from '@dreamcatcher-tech/interblock'
-import React from 'react'
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import {
   PdfModal,
@@ -24,8 +23,8 @@ const Schedule = ({ complex, expanded }) => {
   const [runDate, setRunDate] = useState(Date.weekday())
   const onDateChange = (date) => {
     setRunDate(date)
-    onSelectedSector()
-    // check if we have a minfest for the given date
+    onSector()
+    // check if we have a manifest for the given date
     // if so, cd into the directory
   }
   const { manifest, sectors, generator } = useMemo(() => {
@@ -34,13 +33,11 @@ const Schedule = ({ complex, expanded }) => {
     const generator = generatorFactory(manifest, templateUrl)
     return { manifest, sectors, generator }
   }, [complex.tree, runDate, templateUrl])
-  const [selectedSector, onSelectedSector] = React.useState()
-  const [marker, onMarker] = React.useState()
-  const sector = sectors.hasChild(selectedSector)
-    ? sectors.child(selectedSector)
-    : null
-  if (!sector && sectors.network.length) {
-    onSelectedSector(sectors.network[0].path)
+  const [sector, onSector] = useState()
+  const [marker, onMarker] = useState()
+  const sectorComplex = sectors.hasChild(sector) ? sectors.child(sector) : null
+  if (!sectorComplex && sectors.network.length) {
+    onSector(sectors.network[0].path)
   }
 
   const [open, setOpen] = useState(false)
@@ -51,38 +48,26 @@ const Schedule = ({ complex, expanded }) => {
       <Glass.Container>
         <Glass.Left>
           <Date {...{ runDate, onDateChange }}></Date>
-          <SectorSelector
-            {...{
-              complex: sectors,
-              selected: selectedSector,
-              onSelected: onSelectedSector,
-            }}
-          />
-          {sector && (
-            <>
-              <SorterDatum
-                viewOnly
-                {...{
-                  complex: sector,
-                  selected: marker,
-                  onSelected: onMarker,
-                }}
-              />
-            </>
+          <SectorSelector {...{ complex: sectors, sector, onSector }} />
+          {sectorComplex && (
+            <SorterDatum
+              viewOnly
+              complex={sectorComplex}
+              marker={marker}
+              onMarker={onMarker}
+            />
           )}
         </Glass.Left>
         <Glass.Center>
-          <Manifest
-            complex={manifest}
-            {...{ expanded, selected: selectedSector }}
-          />
+          <Manifest complex={manifest} {...{ expanded, sector }} />
         </Glass.Center>
       </Glass.Container>
       <Map
         complex={sectors}
-        onSector={onSelectedSector}
-        selected={selectedSector}
+        onSector={onSector}
+        sector={sector}
         onMarker={onMarker}
+        marker={marker}
         markers
       />
       <ScheduleSpeedDial events={events} />

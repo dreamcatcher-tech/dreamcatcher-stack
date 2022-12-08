@@ -1,10 +1,11 @@
 import React from 'react'
-import { Manifest } from '..'
+import { Manifest, Glass } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
+import data from './data'
 import Debug from 'debug'
 const { crm } = apps
 const runDate = '2022-11-09'
-const complex = crm.utils.generateManifest(crm.faker(), runDate)
+const complex = crm.utils.generateManifest(data.medium, runDate)
 
 export default {
   title: 'Manifest',
@@ -13,12 +14,19 @@ export default {
   args: {
     expanded: true,
     complex,
+    sector: complex.network[4].path,
   },
 }
 
 const Template = (args) => {
   Debug.enable('*CollectionList *Manifest crm:utils *InnerCollection')
-  return <Manifest {...args} />
+  return (
+    <Glass.Container>
+      <Glass.Center debug>
+        <Manifest {...args} />
+      </Glass.Center>
+    </Glass.Container>
+  )
 }
 
 /**
@@ -63,3 +71,9 @@ Reconciled.args = {
     },
   }),
 }
+export const Small = Template.bind({})
+Small.args = { complex: crm.utils.generateManifest(data.small, runDate) }
+export const Medium = Template.bind({})
+Medium.args = { complex: crm.utils.generateManifest(data.medium, runDate) }
+export const Large = Template.bind({})
+Large.args = { complex: crm.utils.generateManifest(data.large, runDate) }
