@@ -15,7 +15,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*Routing  *Sorter* *SorterDatum *Map')
+  Debug.enable('*Routing  *Sorter* *SorterDatum *DatumHOC *Datum')
   const [complex, setComplex] = React.useState(args.complex)
   if (complex === args.complex) {
     const network = args.complex.network.map((child) => {

@@ -23,6 +23,7 @@ export default function SectorSelector({
 }) {
   if (complex.network.length && !sector) {
     sector = complex.network[0].path
+    debug('sector default:', sector)
   }
   if (complex.network.length) {
     assert(complex.hasChild(sector), `selected must exist: ${sector}`)
@@ -46,7 +47,7 @@ export default function SectorSelector({
       <Autocomplete
         disabled={disabled}
         options={options}
-        getOptionLabel={({ sector }) => sector.state.formData.name}
+        getOptionLabel={({ path }) => path}
         disableClearable
         fullWidth
         noOptionsText="No sectors present"
@@ -69,6 +70,7 @@ export default function SectorSelector({
                 readOnly: true,
                 autoComplete: 'new-password', // disable autocomplete and autofill
                 placeholder: 'No sectors present',
+                value: value && value.sector.state.formData.name,
               }}
             />
           )
@@ -112,7 +114,7 @@ const Sector = ({ selected, path, sector, ...props }) => {
     </>
   )
   return (
-    <ListItemButton selected={selected === path} {...props}>
+    <ListItemButton selected={selected === path} {...props} key={path}>
       <ListItemAvatar>
         <Avatar sx={{ bgcolor: color }}>
           <MapIcon />

@@ -19,7 +19,23 @@ export default class Complex {
   clone() {
     const next = new Complex(this)
     next.#parent = this.#parent
+
     return next
+  }
+  setChild(path, child) {
+    assert.strictEqual(typeof path, 'string')
+    assert(!path.startsWith('/'))
+    assert(!path.startsWith('./'))
+    assert(!path.startsWith('..'))
+    assert(child instanceof Complex)
+    const { tree, ...rest } = child
+    console.log('rest', rest)
+    const network = [...this.network]
+    const index = network.findIndex(({ path: p }) => p === path)
+    assert(index !== -1)
+    network[index] = { path, ...rest }
+    // TODO update the current tree
+    return this.setNetwork(network)
   }
   addAction(actions) {
     const next = this.clone()
@@ -71,7 +87,7 @@ export default class Complex {
     return next
   }
   hasChild(path) {
-    if (!path) {
+    if (path === undefined) {
       return false
     }
     assert.strictEqual(typeof path, 'string')

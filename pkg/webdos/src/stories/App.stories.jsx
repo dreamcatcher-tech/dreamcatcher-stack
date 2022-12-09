@@ -1,9 +1,10 @@
 import React from 'react'
 import { App } from '..'
-import Debug from 'debug'
-const debug = Debug('App')
 import * as data from './data'
 import PropTypes from 'prop-types'
+import delay from 'delay'
+import Debug from 'debug'
+const debug = Debug('App')
 
 export default {
   title: 'App',
@@ -13,13 +14,42 @@ export default {
 
 const Template = ({ base }) => {
   Debug.enable('*App *Nav *Date')
-  debug('complex', base)
   const cd = (path) => {
     debug('cd', path)
-    setComplex(complex.setWd(path))
+    setComplex((current) => current.setWd(path))
   }
-  const [complex, setComplex] = React.useState(base.addAction({ cd }))
-  debug('render')
+  const [complex, setComplex] = React.useState(base)
+  if (complex === base) {
+    let next = base.addAction({ cd })
+    const routing = next.child('routing')
+    const network = routing.network.map((child) => {
+      const { path } = child
+      const set = async (formData) => {
+        debug('set', path, formData)
+        await delay(1200)
+        debug('setting done', path)
+        setComplex((current) => {
+          const routing = current.child('routing')
+          const network = routing.network.map((child) => {
+            if (child.path === path) {
+              return { ...child, state: { ...child.state, formData } }
+            }
+            return child
+          })
+          const next = current.setChild('routing', routing.setNetwork(network))
+          next.tree = next
+          return next
+        })
+      }
+      return { ...child, actions: { set } }
+    })
+    debug('setNet', routing.setNetwork(network))
+    next = next.setChild('routing', routing.setNetwork(network))
+    next.tree = next
+    debug('next', next)
+    setComplex(next)
+  }
+  debug('complex', complex)
   return <App complex={complex} />
 }
 Template.propTypes = { base: PropTypes.object }

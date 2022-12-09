@@ -3,14 +3,12 @@ import { Map, Glass } from '..'
 import Debug from 'debug'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Button from '@mui/material/Button'
 import data from './data'
 const debug = Debug('Map')
 
 export default {
   title: 'Map',
   component: Map,
-  parameters: { layout: 'fullscreen' },
   args: {
     onCreate: (geoJson) => {
       console.log('create', geoJson)
@@ -69,17 +67,17 @@ WithCustomers.args = {
 }
 export const ClickSectors = (args) => {
   enable()
-  const [selected, setSelected] = React.useState()
+  const [sector, onSector] = React.useState()
   return (
     <div>
       <Glass.Container>
         <Glass.Left>
           <Card>
-            <CardContent>Selected:{selected}</CardContent>
+            <CardContent>Selected:{sector}</CardContent>
           </Card>
         </Glass.Left>
       </Glass.Container>
-      <Map onSector={setSelected} complex={complex} selected={selected} />
+      <Map onSector={onSector} complex={complex} sector={sector} />
     </div>
   )
   // TODO script some actual clicking
@@ -88,7 +86,7 @@ export const ClickCustomers = (args) => {
   enable()
   const initialSector = '34'
   const [marker, onMarker] = React.useState()
-  const [selected, setSelected] = React.useState(initialSector)
+  const [sector, onSector] = React.useState(initialSector)
 
   return (
     <div>
@@ -103,9 +101,9 @@ export const ClickCustomers = (args) => {
         onMarker={onMarker}
         complex={complex}
         markers
-        onSector={setSelected}
+        onSector={onSector}
         marker={marker}
-        selected={selected}
+        sector={sector}
       />
     </div>
   )
@@ -114,13 +112,9 @@ export const ClickCustomers = (args) => {
 
 const Customers = (args) => {
   enable()
-  const [selected, setSelected] = React.useState('26')
+  const [sector, onSector] = React.useState('26')
   const [marker, onMarker] = React.useState()
-  const onSector = (sector) => {
-    debug('sector', sector)
-    setSelected(sector)
-  }
-  args = { ...args, onSector, selected, onMarker, marker }
+  args = { ...args, onSector, sector, onMarker, marker }
   return <Map {...args} />
 }
 export const SmallCustomers = Customers.bind({})

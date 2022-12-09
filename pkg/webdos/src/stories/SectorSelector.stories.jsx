@@ -43,3 +43,10 @@ export const Blank = Template.bind({})
 Blank.args = { complex: complex.setNetwork([]) }
 export const Disabled = Template.bind({})
 Disabled.args = { disabled: true }
+export const Duplicates = Template.bind({})
+const item = complex.network[0]
+const network = [item, item, item].map((item, path) => ({
+  ...item,
+  path: `${path}`,
+}))
+Duplicates.args = { complex: complex.setNetwork(network), expanded: true }

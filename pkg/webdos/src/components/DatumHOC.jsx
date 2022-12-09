@@ -58,9 +58,11 @@ export default function DatumHOC(Child) {
 
     const onSubmit = () => {
       debug('onSubmit', formData)
-      onIsEditing(false)
-      // setIsPending(true)
-      // complex.actions.set(formData).then(() => setIsPending(false))
+      setIsPending(true)
+      complex.actions.set(formData).then(() => {
+        setIsPending(false)
+        onIsEditing(false)
+      })
     }
     const [trySubmit, setTrySubmit] = useState(false)
     useEffect(() => {
@@ -85,10 +87,10 @@ export default function DatumHOC(Child) {
     const Editing = (
       <>
         <IconButton onClick={onSave}>
-          <Save color="primary" />
+          <Save color={isPending ? 'disabled' : 'primary'} />
         </IconButton>
         <IconButton onClick={onCancel}>
-          <Cancel color="secondary" />
+          <Cancel color={isPending ? 'disabled' : 'secondary'} />
         </IconButton>
       </>
     )
@@ -122,6 +124,8 @@ export default function DatumHOC(Child) {
       schema = complex.parent().state.template.schema
     }
     const { title } = schema
+    const { set, ...extraActions } = complex.actions
+    debug('actions', complex.actions)
     return (
       <Card>
         <Accordion expanded={expanded} onChange={onExpand}>
@@ -146,7 +150,7 @@ export default function DatumHOC(Child) {
                   ...props,
                 }}
               />
-              <Actions actions={complex.actions}></Actions>
+              <Actions actions={extraActions}></Actions>
             </ThemeProvider>
           </AccordionDetails>
         </Accordion>
