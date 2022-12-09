@@ -63,7 +63,7 @@ export const WithCustomers = Template.bind({})
 WithCustomers.args = {
   complex,
   markers: true,
-  selected: '26',
+  sector: '26',
 }
 export const ClickSectors = (args) => {
   enable()
