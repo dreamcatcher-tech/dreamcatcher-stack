@@ -25,16 +25,6 @@ export default {
       build: {
         ...config.build,
         target: 'es2020',
-        sourcemap: false,
-        minify: false,
-        rollupOptions: {
-          output: {
-            manualChunks: (id) => {
-              // makes build-storybook work again
-              return 'vendor'
-            },
-          },
-        },
       },
     }
     return nextConfig
