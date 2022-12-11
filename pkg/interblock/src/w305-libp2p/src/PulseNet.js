@@ -8,6 +8,7 @@ import assert from 'assert-fast'
 import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
 import { createLibp2p } from 'libp2p'
 import { mplex } from '@libp2p/mplex'
+import { prometheusMetrics } from '@libp2p/prometheus-metrics'
 import { noise } from '@chainsafe/libp2p-noise'
 import { webSockets } from '@libp2p/websockets'
 import { isMultiaddr, multiaddr as fromString } from '@multiformats/multiaddr'
@@ -50,6 +51,7 @@ export class PulseNet {
     const baseOptions = libp2pConfig()
     const options = {
       ...baseOptions,
+      metrics: prometheusMetrics(),
       streamMuxers: [new mplex()],
       connectionEncryption: [new noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
@@ -90,7 +92,6 @@ export class PulseNet {
     if (repo.closed) {
       await repo.open()
     }
-
     this.#net = await createLibp2p(options)
     this.#announcer = Announcer.create(this.#net)
 

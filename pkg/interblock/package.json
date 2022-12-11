@@ -26,6 +26,7 @@
     "@ipld/dag-cbor": "^8.0.0",
     "@ipld/dag-pb": "^3.0.1",
     "@libp2p/mplex": "^7.1.0",
+    "@libp2p/prometheus-metrics": "^1.1.2",
     "@libp2p/tcp": "^6.0.5",
     "@libp2p/webrtc-star": "^5.0.3",
     "@libp2p/webrtc-star-signalling-server": "^2.0.5",

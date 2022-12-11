@@ -3166,6 +3166,17 @@
     uint8arraylist "^2.1.1"
     uint8arrays "^4.0.2"
 
+"@libp2p/prometheus-metrics@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@libp2p/prometheus-metrics/-/prometheus-metrics-1.1.2.tgz#69c5d4e9e1ac6668b6c1768057aec734b9b3f1d4"
+  integrity sha512-oil4MLwzQwV0rcwCh5uN5Cv6gUJs32kZH+xm7Y1a2b0OGm1XyD3dXeDv3o7cvrQQdozjoNBdKmESUmL830WAfg==
+  dependencies:
+    "@libp2p/interface-connection" "^3.0.2"
+    "@libp2p/interface-metrics" "^4.0.2"
+    "@libp2p/logger" "^2.0.2"
+    it-foreach "^1.0.0"
+    it-stream-types "^1.0.4"
+
 "@libp2p/pubsub@^3.1.2":
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/@libp2p/pubsub/-/pubsub-3.1.3.tgz#bd4e363cddc88a11ab24665aadb8933d13896e5b"
