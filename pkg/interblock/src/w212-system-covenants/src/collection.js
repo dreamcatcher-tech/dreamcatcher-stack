@@ -34,7 +34,7 @@ const reducer = async (request) => {
   assert.strictEqual(typeof payload, 'object')
 
   const [state, setState] = await useState()
-  const { datumTemplate } = state
+  const { template } = state
 
   switch (type) {
     case '@@INIT': {
@@ -42,7 +42,7 @@ const reducer = async (request) => {
     }
     case 'ADD': {
       // TODO cause the child to fetch the template when it is spawned
-      return await add(payload, datumTemplate)
+      return await add(payload, template)
     }
     case 'BATCH': {
       const { batch } = payload
@@ -50,7 +50,7 @@ const reducer = async (request) => {
 
       const awaits = []
       for (const payload of batch) {
-        const promise = add(payload, datumTemplate)
+        const promise = add(payload, template)
         awaits.push(promise)
       }
       for (const promise of awaits) {

@@ -25,7 +25,7 @@ describe('complex', () => {
     debug('orderCount', orderCount)
   })
 })
-describe.only('generators', () => {
+describe.skip('generators', () => {
   // TODO generate using the installer, then add new customers
   // using a harness
 

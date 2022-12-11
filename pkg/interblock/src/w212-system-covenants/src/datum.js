@@ -10,18 +10,6 @@ const ajv = new Ajv({ allErrors: true, verbose: true })
 AjvFormats(ajv)
 ajv.addKeyword('faker')
 
-// const jsf from 'json-schema-faker')
-// const isBrowserBundle = !jsf.extend
-// if (isBrowserBundle) {
-//   Object.assign(jsf, {
-//     extend: () => true,
-//     option: () => true,
-//     generate: () => ({}),
-//   })
-// }
-// jsf.extend('faker', () => faker)
-// jsf.option({ random: seedrandom(seed), alwaysFakeOptionals: true })
-// faker.seed(seed)
 /**
  * Requirements:
  *  1.  boot with state already set, and this gets checked for validity immediately
