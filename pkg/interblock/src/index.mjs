@@ -35,10 +35,10 @@
 
     */
 import assert from 'assert-fast'
-import * as system from './w212-system-covenants'
-import * as apps from './w301-user-apps'
-import { Interpulse } from './w310-interpulse'
-import * as api from './w002-api'
+import * as system from './w212-system-covenants/index.js'
+import * as apps from './w301-user-apps/index.js'
+import { Interpulse } from './w310-interpulse/index.js'
+import * as api from './w002-api/index.js'
 import Debug from 'debug'
 const debug = Debug('interblock')
 
