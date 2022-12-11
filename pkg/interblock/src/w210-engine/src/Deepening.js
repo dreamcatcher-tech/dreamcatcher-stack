@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Pulse, Request } from '../../w008-ipld'
+import { Address, Pulse, Request } from '../../w008-ipld/index.mjs'
 /**
  * Deepens the pool by one of three actions:
  * 1. Interpulse from a remote chain

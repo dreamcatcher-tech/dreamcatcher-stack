@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
 import { interchain } from '../../w002-api'
-import { Request } from '../../w008-ipld'
+import { Request } from '../../w008-ipld/index.mjs'
 const debug = Debug('interblock:dmz:spawn')
 
 const spawnReducer = async (payload) => {

@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Pulse, AsyncTrail } from '../../w008-ipld'
+import { Pulse, AsyncTrail } from '../../w008-ipld/index.mjs'
 import * as system from '../../w212-system-covenants'
 import { wrapReduce } from '../../w010-hooks'
 import Debug from 'debug'

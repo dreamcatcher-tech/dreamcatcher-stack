@@ -1,5 +1,4 @@
 import assert from 'assert-fast'
-import { Request } from '../../w008-ipld'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:ping')
 

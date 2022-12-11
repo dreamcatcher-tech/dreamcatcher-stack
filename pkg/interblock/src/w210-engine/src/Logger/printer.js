@@ -3,7 +3,7 @@ import chalk from 'ansi-colors-browserify'
 import pad from 'pad-left'
 import prettyBytes from 'pretty-bytes'
 import columnify from 'columnify'
-import { Interpulse } from '../../../w008-ipld'
+import { Interpulse } from '../../../w008-ipld/index.mjs'
 const grayUndefined = chalk.blackBright.bgWhiteBright('undefined')
 
 const interPrint = (interpulse, msg, path, bg, fg) => {

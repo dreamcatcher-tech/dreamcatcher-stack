@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { peerIdFromString } from '@libp2p/peer-id'
-import { Address, PulseLink } from '../../w008-ipld'
+import { Address, PulseLink } from '../../w008-ipld/index.mjs'
 import { pushable } from 'it-pushable'
 import { Connection } from './Connection'
 import Debug from 'debug'

@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { pulsePrint } from './printer'
-import { Pulse } from '../../../w008-ipld'
+import { Pulse } from '../../../w008-ipld/index.mjs'
 import Debug from 'debug'
 import { isBrowser } from 'wherearewe'
 

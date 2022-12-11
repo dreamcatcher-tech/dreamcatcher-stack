@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Request } from '../../w008-ipld'
+import { Request } from '../../w008-ipld/index.mjs'
 import { useState, interchain, usePulse } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:install')

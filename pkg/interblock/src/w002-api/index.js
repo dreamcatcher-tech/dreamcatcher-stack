@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Request } from '../w008-ipld'
+import { Request } from '../w008-ipld/index.mjs'
 
 export const interchain = (type, payload, to) => {
   const { interchain } = globalThis[Symbol.for('interblock:api:hook')]

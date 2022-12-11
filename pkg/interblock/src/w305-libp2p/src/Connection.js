@@ -3,7 +3,7 @@ import { fromString } from 'uint8arrays/from-string'
 import { toString } from 'uint8arrays/to-string'
 import { pipe } from 'it-pipe'
 import assert from 'assert-fast'
-import { Address, PulseLink } from '../../w008-ipld'
+import { Address, PulseLink } from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interpulse:libp2p:Connection')
 

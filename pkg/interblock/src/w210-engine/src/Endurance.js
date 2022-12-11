@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
-import { Address, Pulse, PulseLink } from '../../w008-ipld'
+import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { Logger } from './Logger'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Endurance')

@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import * as datum from './datum'
 import { interchain, useState } from '../../w002-api'
-import { Request } from '../../w008-ipld'
+import { Request } from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
 

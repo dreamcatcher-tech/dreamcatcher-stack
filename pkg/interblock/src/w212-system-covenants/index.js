@@ -8,7 +8,7 @@ import * as unity from './src/unity'
 import * as root from './src/unity'
 import * as covenant from './src/covenant'
 
-import { Address, PulseLink } from '../w008-ipld'
+import { Address } from '../w008-ipld/index.mjs'
 
 export { collection, datum, hyper, probe, shell, unity, root, covenant, net }
 

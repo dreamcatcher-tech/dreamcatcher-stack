@@ -5,7 +5,13 @@ import { createRepo } from 'ipfs-repo'
 import { loadCodec } from '../src/loadCodec'
 import { createBackend } from '../src/createBackend'
 import assert from 'assert-fast'
-import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld'
+import {
+  Address,
+  Keypair,
+  Pulse,
+  PulseLink,
+  decode,
+} from '../../w008-ipld/index.mjs'
 import { createLibp2p } from 'libp2p'
 import { mplex } from '@libp2p/mplex'
 import { prometheusMetrics } from '@libp2p/prometheus-metrics'
@@ -13,7 +19,6 @@ import { noise } from '@chainsafe/libp2p-noise'
 import { webSockets } from '@libp2p/websockets'
 import { isMultiaddr, multiaddr as fromString } from '@multiformats/multiaddr'
 import { CID } from 'multiformats/cid'
-import { decode } from '../../w008-ipld'
 import all from 'it-all'
 import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
 import { libp2pConfig } from 'ipfs-core-config/libp2p'

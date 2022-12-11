@@ -9,7 +9,7 @@ import {
   schemaToFunctions,
 } from '../../../w002-api'
 import Debug from 'debug'
-import { Pulse, Request } from '../../../w008-ipld'
+import { Pulse, Request } from '../../../w008-ipld/index.mjs'
 import { listChildren, listHardlinks } from '../../../w023-system-reducer'
 import { net } from '../..'
 import { api } from './api'

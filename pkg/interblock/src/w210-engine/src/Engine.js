@@ -10,7 +10,7 @@ import {
   Channel,
   Validators,
   PulseLink,
-} from '../../w008-ipld'
+} from '../../w008-ipld/index.mjs'
 import { reducer } from './reducer'
 import { Isolate } from './Isolate'
 import { Scale } from './Scale'

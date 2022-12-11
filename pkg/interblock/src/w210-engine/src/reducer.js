@@ -9,7 +9,7 @@ import {
   Pulse,
   Request,
   RxReply,
-} from '../../w008-ipld'
+} from '../../w008-ipld/index.mjs'
 import { IsolateContainer } from './Isolate'
 import { wrapReduce } from '../../w010-hooks'
 import { reducer as systemReducer } from '../../w023-system-reducer'

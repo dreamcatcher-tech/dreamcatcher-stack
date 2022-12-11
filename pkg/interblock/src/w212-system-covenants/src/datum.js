@@ -4,7 +4,7 @@ import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
 import { interchain, useState } from '../../w002-api'
 import Debug from 'debug'
-import { Request } from '../../w008-ipld'
+import { Request } from '../../w008-ipld/index.mjs'
 const debug = Debug('interblock:apps:datum')
 const ajv = new Ajv({ allErrors: true, verbose: true })
 AjvFormats(ajv)

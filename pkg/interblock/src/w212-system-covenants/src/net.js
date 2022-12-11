@@ -2,7 +2,7 @@ import { multiaddr as fromString } from '@multiformats/multiaddr'
 import assert from 'assert-fast'
 import { peerIdFromString } from '@libp2p/peer-id'
 import { interchain, useState, isSystemAction } from '../../w002-api'
-import { Address, Request } from '../../w008-ipld'
+import { Address, Request } from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interblock:system:net')
 

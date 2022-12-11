@@ -9,7 +9,7 @@ import {
   Pulse,
   Dmz,
   Keypair,
-} from '../w008-ipld'
+} from '../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interblock:benchmarks')
 const suite = new Benchmark.Suite()

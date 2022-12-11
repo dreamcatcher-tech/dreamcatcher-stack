@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import pad from 'pad-left'
-import { Channel, Network, Pulse } from '../../w008-ipld'
+import { Channel, Network, Pulse } from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:utils')
 

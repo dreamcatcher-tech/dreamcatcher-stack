@@ -4,7 +4,7 @@ import {
   Reply,
   AsyncTrail,
   Pulse,
-} from '../../w008-ipld'
+} from '../../w008-ipld/index.mjs'
 import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 import callsites from 'callsites'

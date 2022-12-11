@@ -10,7 +10,7 @@ import posix from 'path-browserify'
 import { PulseNet } from '../../w305-libp2p'
 import { NetEndurance } from './NetEndurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
-import { PulseLink } from '../../w008-ipld'
+import { PulseLink } from '../../w008-ipld/index.mjs'
 import { isBrowser, isNode } from 'wherearewe'
 
 const debug = Debug('interpulse')

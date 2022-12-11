@@ -1,5 +1,11 @@
 import assert from 'assert-fast'
-import { Timestamp, Keypair, Provenance, Pulse, Address } from '../../w008-ipld'
+import {
+  Timestamp,
+  Keypair,
+  Provenance,
+  Pulse,
+  Address,
+} from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Crypto')
 

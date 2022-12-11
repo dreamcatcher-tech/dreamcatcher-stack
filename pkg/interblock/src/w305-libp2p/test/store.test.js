@@ -2,7 +2,7 @@ import rimraf from 'rimraf'
 import { createRepo } from 'ipfs-repo'
 import { createBackend } from '../src/createBackend'
 import { loadCodec } from '../src/loadCodec'
-import { Keypair } from '../../w008-ipld'
+import { Keypair } from '../../w008-ipld/index.mjs'
 import { PulseNet } from '..'
 import Debug from 'debug'
 const debug = Debug('interpulse:tests:ramrepo')

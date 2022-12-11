@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
 import { interchain } from '../../w002-api'
-import { Address, Pulse, Request } from '../../w008-ipld'
+import { Address, Pulse, Request } from '../../w008-ipld/index.mjs'
 const debug = Debug('interblock:dmz:openPath')
 
 export const openPath = async ({ path }) => {

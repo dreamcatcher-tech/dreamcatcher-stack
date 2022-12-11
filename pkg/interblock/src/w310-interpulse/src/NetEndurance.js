@@ -1,5 +1,5 @@
 import { CID } from 'multiformats/cid'
-import { PulseLink } from '../../w008-ipld'
+import { PulseLink } from '../../w008-ipld/index.mjs'
 import assert from 'assert-fast'
 import { Endurance } from '../../w210-engine'
 import { PulseNet } from '../../w305-libp2p'
