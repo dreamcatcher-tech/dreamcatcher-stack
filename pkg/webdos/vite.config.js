@@ -45,6 +45,7 @@ const config = {
     },
   },
   build: {
+    // done only so the size of the bundle can be inspected
     target: 'es2020',
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],

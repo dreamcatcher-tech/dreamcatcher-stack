@@ -71,13 +71,13 @@
     "react": "18.x"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^7.0.0-beta.1",
-    "@storybook/addon-interactions": "^7.0.0-beta.1",
-    "@storybook/addon-links": "^7.0.0-beta.1",
-    "@storybook/react": "^7.0.0-beta.1",
-    "@storybook/react-vite": "^7.0.0-beta.1",
+    "@storybook/addon-essentials": "^7.0.0-beta.3",
+    "@storybook/addon-interactions": "^7.0.0-beta.3",
+    "@storybook/addon-links": "^7.0.0-beta.3",
+    "@storybook/react": "^7.0.0-beta.3",
+    "@storybook/react-vite": "^7.0.0-beta.3",
     "@storybook/testing-library": "^0.0.13",
-    "chromatic": "^6.11.4",
+    "chromatic": "^6.12.0",
     "dotenv": "^16.0.3",
     "eslint": "^8.29.0",
     "eslint-plugin-react": "^7.31.11",
@@ -87,8 +87,8 @@
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.8.3",
     "serve": "^14.1.2",
-    "storybook": "^7.0.0-beta.1",
-    "vite": "^3.2.5"
+    "storybook": "^7.0.0-beta.3",
+    "vite": "^4.0.0"
   },
   "repository": {
     "type": "git",
