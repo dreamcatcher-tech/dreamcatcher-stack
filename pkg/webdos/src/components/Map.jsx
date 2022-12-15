@@ -53,15 +53,18 @@ export default function MapComponent({
     const scaleOptions = { position: 'topright' }
     const scale = L.control.scale(scaleOptions)
     const baseLayers = {
+      HEREMaps: L.tileLayer.provider('HEREv3.hybridDay', {
+        apiKey: 'BEHrpff8e5pVCFRntmhH4yk8XBSnijsOOSy1Hsi0BnY',
+      }),
       OpenStreetMap: L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         {
           maxNativeZoom: maxNativeZoom,
-          maxZoom: maxZoom,
+          maxZoom,
         }
       ),
     }
-    baseLayers['OpenStreetMap'].addTo(map)
+    baseLayers.HEREMaps.addTo(map)
 
     const overlays = {}
     const layerConfig = {

@@ -1,7 +1,7 @@
 import Box from '@mui/system/Box'
 import { api } from '@dreamcatcher-tech/interblock'
 import React from 'react'
-import { Nav, Schedule, CollectionList, Routing } from '.'
+import { Glass, Nav, Schedule, CollectionList, Routing } from '.'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 const debug = Debug('webdos:components:App')
@@ -22,36 +22,18 @@ export default function App({ complex }) {
       <Box sx={{ zIndex: 1 }}>
         <Nav complex={complex} />
       </Box>
-      <Lazy show={wd.startsWith('/schedule')}>
+      <Glass.Lazy show={wd.startsWith('/schedule')}>
         <Schedule complex={complex.child('schedule')} />
-      </Lazy>
-      <Lazy show={wd.startsWith('/customers')}>
+      </Glass.Lazy>
+      <Glass.Lazy show={wd.startsWith('/customers')}>
         <CollectionList complex={complex.child('customers')} />
-      </Lazy>
-      <Lazy show={wd.startsWith('/routing')}>
+      </Glass.Lazy>
+      <Glass.Lazy show={wd.startsWith('/routing')}>
         <Routing complex={complex.child('routing')} />
-      </Lazy>
+      </Glass.Lazy>
     </Box>
   )
 }
 App.propTypes = {
   complex: PropTypes.instanceOf(api.Complex),
-}
-
-const Lazy = ({ show, children }) => {
-  const [mounted, setMounted] = React.useState(show)
-  if (show && !mounted) {
-    setMounted(true)
-  }
-  if (mounted) {
-    return (
-      <Box sx={{ spacing: 1, flexGrow: 1, display: show ? null : 'none' }}>
-        {children}
-      </Box>
-    )
-  }
-}
-Lazy.propTypes = {
-  show: PropTypes.bool,
-  children: PropTypes.node,
 }

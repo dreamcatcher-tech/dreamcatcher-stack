@@ -14,7 +14,6 @@ import {
 } from '../../w008-ipld/index.mjs'
 import { createLibp2p } from 'libp2p'
 import { mplex } from '@libp2p/mplex'
-import { prometheusMetrics } from '@libp2p/prometheus-metrics'
 import { noise } from '@chainsafe/libp2p-noise'
 import { webSockets } from '@libp2p/websockets'
 import { isMultiaddr, multiaddr as fromString } from '@multiformats/multiaddr'
@@ -25,6 +24,7 @@ import { libp2pConfig } from 'ipfs-core-config/libp2p'
 import { Announcer } from './Announcer'
 import { peerIdFromString } from '@libp2p/peer-id'
 import Debug from 'debug'
+
 const debug = Debug('interpulse:PulseNet')
 
 const ciRepo = () => createRepo('ciRepo', loadCodec, createBackend())
@@ -56,11 +56,11 @@ export class PulseNet {
     const baseOptions = libp2pConfig()
     const options = {
       ...baseOptions,
-      metrics: prometheusMetrics(),
       streamMuxers: [new mplex()],
       connectionEncryption: [new noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
     }
+    delete options.metrics // TODO remove once libp2p is fixed
     const websocketsOptions = {}
     if (isNode) {
       const listen = [`/ip4/${tcpHost}/tcp/${tcpPort}/ws`]
@@ -193,8 +193,7 @@ export class PulseNet {
   async stats() {
     const repo = await this.#repo.stat()
     const bitswap = this.#bitswap.stat().snapshot
-    const net = this.#net.metrics.globalStats.getSnapshot()
-    return { repo, bitswap, net }
+    return { repo, bitswap }
   }
   getMultiaddrs() {
     const addrs = this.#net.getMultiaddrs()

@@ -1,4 +1,5 @@
 import React from 'react'
+import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import PropTypes from 'prop-types'
@@ -95,4 +96,21 @@ Center.propTypes = {
   children: PropTypes.node,
   debug: PropTypes.bool,
 }
-export default { Container, Left, Center }
+const Lazy = ({ show, children }) => {
+  const [mounted, setMounted] = React.useState(show)
+  if (show && !mounted) {
+    setMounted(true)
+  }
+  if (mounted) {
+    return (
+      <Box sx={{ spacing: 1, flexGrow: 1, display: show ? null : 'none' }}>
+        {children}
+      </Box>
+    )
+  }
+}
+Lazy.propTypes = {
+  show: PropTypes.bool,
+  children: PropTypes.node,
+}
+export default { Container, Left, Center, Lazy }

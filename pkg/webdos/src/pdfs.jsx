@@ -5,11 +5,18 @@ import assert from 'assert-fast'
 import { PDFDocument } from 'pdf-lib'
 import Debug from 'debug'
 const debug = Debug('webdos:pdfs')
-export default function (manifests, templateUrl) {
+export default function (manifests, templateUrl, sector) {
   assert(manifests instanceof api.Complex)
+  assert(!sector || manifests.hasChild(sector), `sector ${sector} not found`)
   let pdf, templateArray
   const { runDate } = manifests.state.formData
-  const title = 'Manifest for ' + runDate
+  let sectorTitle = ''
+  if (sector) {
+    const child = manifests.child(sector)
+    const { name } = child.state.formData
+    sectorTitle = ` in sector ${name}`
+  }
+  const title = 'Manifest for ' + runDate + sectorTitle
   return {
     title,
     prepare: async () => {
@@ -18,10 +25,13 @@ export default function (manifests, templateUrl) {
       pdf.setTitle(title)
     },
     async *[Symbol.asyncIterator]() {
-      let totalPages = estimateTotalPages(manifests)
+      let totalPages = estimateTotalPages(manifests, sector)
       for (const { path } of manifests.network) {
-        const sector = manifests.child(path)
-        const runSheet = await runSheetPdf(sector, runDate)
+        if (sector && path !== sector) {
+          continue
+        }
+        const sectorComplex = manifests.child(path)
+        const runSheet = await runSheetPdf(sectorComplex, runDate)
         const indices = runSheet.getPageIndices()
         totalPages += indices.length - 1
         const pages = await pdf.copyPages(runSheet, indices)
@@ -29,7 +39,7 @@ export default function (manifests, templateUrl) {
         await delay() // else will hog the loop
         yield totalPages
 
-        for await (const invoice of invoicePdfs(sector, templateArray)) {
+        for await (const invoice of invoicePdfs(sectorComplex, templateArray)) {
           const indices = invoice.getPageIndices()
           const pages = await pdf.copyPages(invoice, indices)
           pages.forEach((page) => pdf.addPage(page))
@@ -59,12 +69,15 @@ export async function saveToUrl(pdf) {
   return { url, size: array.byteLength }
 }
 
-function estimateTotalPages(manifests) {
+function estimateTotalPages(manifests, sector) {
   let totalPages = 0
   for (const { path } of manifests.network) {
+    if (sector && path !== sector) {
+      continue
+    }
     totalPages += 1 // run sheet is at least one page
-    const sector = manifests.child(path)
-    const { rows } = sector.state.formData
+    const sectorComplex = manifests.child(path)
+    const { rows } = sectorComplex.state.formData
     totalPages += rows.length
   }
   return totalPages
@@ -111,20 +124,7 @@ export async function runSheetPdf(sector, runDate) {
   const { rows, name } = sector.state.formData
   assert(Array.isArray(rows), 'rows must be an array')
   const text = columnify(rows.map(charmapRows), {
-    columns: [
-      'index',
-      'id',
-      'address',
-      // 'isInvoice',
-      // 'isDone',
-      // 'ebc',
-      // 'nabc',
-      // 'isGateLocked',
-      // 'isFenced',
-      // 'isDog',
-      // 'isVehicleBlocking',
-      'notes',
-    ],
+    columns: ['index', 'id', 'address', 'notes'],
     config: {
       index: { headingTransform: () => '#' },
       id: { headingTransform: () => 'CustNo', align: 'right' },

@@ -13,7 +13,7 @@
     "schemas": "node --experimental-specifier-resolution=node src/w006-schemas/bin.js && prettier -w src/w006-schemas/ipldSchemas.js",
     "dev": "vite --host 0.0.0.0 --open",
     "build": "vite build",
-    "serve": "vite preview",
+    "serve": "vite preview --host 0.0.0.0 --open",
     "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --bail",
     "watch": "DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --watch",
     "bench": "node --experimental-specifier-resolution=node src/w402-benchmarks/bench"

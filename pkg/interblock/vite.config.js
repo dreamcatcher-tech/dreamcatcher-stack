@@ -19,15 +19,7 @@ dependencies['uint8arrays/from-string'] = true
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    // target: es2020 added as workaround to make big ints work
-    // https://github.com/vitejs/vite/issues/9062#issuecomment-1182818044
-    esbuildOptions: {
-      target: 'es2020',
-    },
-  },
   build: {
-    target: 'esnext',
     rollupOptions: {
       plugins: [visualizer({ filename: './dist/vis.html' })],
       external: Object.keys(dependencies),

@@ -7,6 +7,7 @@ import 'beautifymarker'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster/dist/leaflet.markercluster-src'
+import 'leaflet-providers'
 
 Leaflet.PM.setOptIn(true)
 

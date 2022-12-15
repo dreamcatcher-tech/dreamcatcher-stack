@@ -21588,7 +21588,7 @@ export default {
               },
               name: 'Tuesday D RUN',
               frequencyInDays: 7,
-              frequencyOffset: 0,
+              frequencyOffset: 1,
               order: [
                 '146164',
                 '26312',

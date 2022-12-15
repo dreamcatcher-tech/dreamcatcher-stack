@@ -21,6 +21,8 @@ const debug = Debug('terminal:widgets:Schedule')
 
 const Schedule = ({ complex, expanded }) => {
   const [runDate, setRunDate] = useState(Date.weekday())
+  const [sector, onSector] = useState()
+  const [marker, onMarker] = useState()
   const onDateChange = (date) => {
     setRunDate(date)
     onSector()
@@ -30,11 +32,9 @@ const Schedule = ({ complex, expanded }) => {
   const { manifest, sectors, generator } = useMemo(() => {
     const manifest = utils.generateManifest(complex.tree, runDate)
     const sectors = utils.sectorsOnDay(complex.tree, runDate)
-    const generator = generatorFactory(manifest, templateUrl)
+    const generator = generatorFactory(manifest, templateUrl, sector)
     return { manifest, sectors, generator }
-  }, [complex.tree, runDate, templateUrl])
-  const [sector, onSector] = useState()
-  const [marker, onMarker] = useState()
+  }, [complex.tree, runDate, templateUrl, sector])
   const sectorComplex = sectors.hasChild(sector) ? sectors.child(sector) : null
   if (!sectorComplex && sectors.network.length) {
     onSector(sectors.network[0].path)

@@ -17,7 +17,6 @@ const createNode = async () => {
     streamMuxers: [new mplex()],
     connectionEncryption: [new noise()],
   })
-  await node.start()
   return node
 }
 

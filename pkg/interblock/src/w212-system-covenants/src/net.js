@@ -31,8 +31,8 @@ const reducer = async (request) => {
       return await setState(state)
     }
     case 'MULTIADDR': {
-      let [state, setState] = await useState()
       const { multiaddr } = payload
+      let [state, setState] = await useState()
       const addr = fromString(multiaddr)
       const peerId = addr.getPeerId()
       assert(peerIdFromString(peerId))

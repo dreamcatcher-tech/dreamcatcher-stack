@@ -57,3 +57,7 @@ export const Real = Template.bind({})
 Real.args = {
   generator: generator(complex, templateUrl),
 }
+export const SingleSector = Template.bind({})
+SingleSector.args = {
+  generator: generator(complex, templateUrl, '26'),
+}

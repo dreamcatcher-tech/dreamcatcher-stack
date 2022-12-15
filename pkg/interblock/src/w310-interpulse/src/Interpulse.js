@@ -272,6 +272,7 @@ const mapShell = (engine) => {
   assert(publish)
   actions.publish = (name, covenant = {}, parentPath = '.') => {
     // TODO use the covenant schema to pluck out what is valid
+    // or by default strip out any functions
     const { reducer, ...rest } = covenant
     return publish(name, rest, parentPath)
   }
