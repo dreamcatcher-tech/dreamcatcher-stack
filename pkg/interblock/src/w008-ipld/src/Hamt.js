@@ -206,15 +206,9 @@ export class Hamt extends IpldInterface {
     const mergedDiff = {}
     while (links.length > 0 && limit--) {
       const { cid, otherCid } = links.shift()
-      const block = await this.#putStore.getBlock(cid)
-      const otherBlock = await other.#putStore.getBlock(otherCid)
-      assert(block)
-      assert(otherBlock)
+      const value = await safelyGetBlock(this.#putStore, cid)
+      const otherValue = await safelyGetBlock(other.#putStore, otherCid)
 
-      let { value } = block
-      let { value: otherValue } = otherBlock
-      value = value.hamt ? value.hamt : value
-      otherValue = otherValue.hamt ? otherValue.hamt : otherValue
       const [, data] = value
       const [, otherData] = otherValue
       const max = Math.max(data.length, otherData.length)
@@ -230,19 +224,15 @@ export class Hamt extends IpldInterface {
             }
           } else {
             debug('one link is not a CID', element, otherElement)
-            links.push({ cid: element, otherCid: otherElement })
+            links.push({
+              cid: CID.asCID(element),
+              otherCid: CID.asCID(otherElement),
+            })
+            patchBuckets(element, otherElement, mergedDiff)
           }
+          // if cid vs bucket, compare bucket against blank, then cid against blank
         } else {
-          const bucket = element
-          const otherBucket = otherElement
-          assert(!bucket || Array.isArray(bucket))
-          assert(!otherBucket || Array.isArray(otherBucket))
-
-          const patch = compareBuckets(bucket, otherBucket)
-          if (patch) {
-            debug('node was modified', patch)
-            merge(mergedDiff, patch)
-          }
+          patchBuckets(element, otherElement, mergedDiff)
         }
       }
     }
@@ -250,11 +240,30 @@ export class Hamt extends IpldInterface {
     return mergedDiff
   }
 }
-
+const safelyGetBlock = async (putStore, cid) => {
+  if (!cid) {
+    return [undefined, []]
+  }
+  const block = await putStore.getBlock(cid)
+  assert(block)
+  let { value } = block
+  value = value.hamt ? value.hamt : value
+  return value
+}
 const assertKey = (key) => {
   assert(key !== undefined)
   assert(key !== '')
   assert(typeof key === 'string' || Number.isInteger(key))
+}
+const patchBuckets = (bucket, otherBucket, mergedDiff) => {
+  bucket = Array.isArray(bucket) ? bucket : []
+  otherBucket = Array.isArray(otherBucket) ? otherBucket : []
+
+  const patch = compareBuckets(bucket, otherBucket)
+  if (patch) {
+    debug('node was modified', patch)
+    merge(mergedDiff, patch)
+  }
 }
 const compareBuckets = (bucket, otherBucket) => {
   const diff = { added: [], deleted: [], modified: [] }
@@ -295,22 +304,21 @@ const merge = (diff, patch) => {
   diff.deleted = diff.deleted || new Set()
   diff.modified = diff.modified || new Set()
 
-  const added = patch.added.filter((key) => {
+  patch.added.forEach((key) => {
     if (diff.deleted.has(key)) {
       diff.deleted.delete(key)
-      return false
+      return
     }
-    return true
+    diff.added.add(key)
   })
-  const deleted = patch.deleted.filter((key) => {
+  patch.deleted.forEach((key) => {
     if (diff.added.has(key)) {
       diff.added.delete(key)
-      return false
+      return
     }
-    return true
+    diff.deleted.add(key)
   })
-
-  added.length && diff.added.add(...added)
-  deleted.length && diff.deleted.add(...deleted)
-  patch.modified.length && diff.modified.add(...patch.modified)
+  patch.modified.forEach((key) => {
+    diff.modified.add(key)
+  })
 }

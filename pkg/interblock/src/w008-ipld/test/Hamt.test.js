@@ -79,28 +79,20 @@ describe('Hamt', () => {
     )
   })
   test.only('diffing', async () => {
-    const valueClass = undefined
-    const isMutable = true
-    let base = Hamt.create(valueClass, isMutable)
-    for (let i = 0; i < 10000; i++) {
-      base = await base.set('test-' + i, { test: 'test-' + i })
-    }
-    base = await base.crush()
-    Debug.enable('tests *hamt *putstore')
+    const base = await hamtFactory()
     debug('start')
 
     let added = await base.set('addedKey', { test: 'added' })
     added = await added.crush()
     const addDiff = await added.compare(base)
     debug(addDiff)
-    const lost = await added.get('test-371')
-    expect(lost).toEqual({ test: 'test-371' })
     expect([...addDiff.added]).toEqual(['addedKey'])
     expect(addDiff.modified.size).toEqual(0)
     expect(addDiff.deleted.size).toEqual(0)
 
     let deleted = await base.delete('test-0')
     deleted = await deleted.crush()
+    Debug.enable('tests *hamt *putstore')
     const delDiff = await deleted.compare(base)
     debug(delDiff)
     expect([...delDiff.deleted]).toEqual(['test-0'])
@@ -115,5 +107,25 @@ describe('Hamt', () => {
     expect(modDiff.deleted.size).toEqual(0)
     expect(modDiff.added.size).toEqual(0)
   })
+  test('diff stress test', async () => {
+    // make a big hamt
+    // loop over multiple iterations of this test
+    // randomly choose whether to do adds, mods, dels, or any combination
+    // for each operation, select a random number of operations to do
+    // perform all operations on the hamt, logging each one into a diff tracker
+    // use the hamt diff
+    // assert that the diff tracker and the hamt diff are the same
+  })
   test.todo('recursive crush')
 })
+
+const hamtFactory = async (count = 100) => {
+  const valueClass = undefined
+  const isMutable = true
+  let hamt = Hamt.create(valueClass, isMutable)
+  for (let i = 0; i < count; i++) {
+    hamt = await hamt.set('test-' + i, { test: 'test-' + i })
+  }
+  hamt = await hamt.crush()
+  return hamt
+}
