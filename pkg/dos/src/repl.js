@@ -109,12 +109,7 @@ async function getInitialCtx({ blockchain, stdout: stream, repo, tcpPort }) {
   const current = await blockchain.current('/')
   const chainId = current.getAddress().getChainId()
   spinner.info(`Blockchain initialized with chainId: ${chainId}`).start()
-  spinner.text = `connecting to mainnet...`
-  spinner.info(`connection to mainnet established`).start()
-  spinner.info(`mainnet latency: 543 ms`)
-  spinner.info(`peer connection count: 1`).start()
-  spinner.text = `benchmarking local system` // TODO move to dedicated command with params
-  spinner.info(`local blockrate 23 blocks per second / 53 ms per block`)
+  // TODO make benchmarking command, including latency to mainnet
 
   const user = 'root'
   const machineId = 'local'

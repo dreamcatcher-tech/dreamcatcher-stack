@@ -46,6 +46,7 @@ export class PutStore {
   }
   async getBlock(cid) {
     assert(cid instanceof CID)
+    debug('getBlock:', cid.toString().substring(0, 9))
     if (this.#putsMap.has(cid.toString())) {
       return this.#putsMap.get(cid.toString())
     }

@@ -3,7 +3,7 @@ import { assert } from 'chai/index.mjs'
 import { Hamt } from '../src/Hamt'
 import Debug from 'debug'
 
-const debug = Debug('interblock:tests:ipld:hamt')
+const debug = Debug('tests')
 
 describe('Hamt', () => {
   test('basic', async () => {
@@ -77,6 +77,43 @@ describe('Hamt', () => {
     await expect(hamt.set('some key', 'over')).rejects.toThrow(
       'Cannot overwrite'
     )
+  })
+  test.only('diffing', async () => {
+    const valueClass = undefined
+    const isMutable = true
+    let base = Hamt.create(valueClass, isMutable)
+    for (let i = 0; i < 10000; i++) {
+      base = await base.set('test-' + i, { test: 'test-' + i })
+    }
+    base = await base.crush()
+    Debug.enable('tests *hamt *putstore')
+    debug('start')
+
+    let added = await base.set('addedKey', { test: 'added' })
+    added = await added.crush()
+    const addDiff = await added.compare(base)
+    debug(addDiff)
+    const lost = await added.get('test-371')
+    expect(lost).toEqual({ test: 'test-371' })
+    expect([...addDiff.added]).toEqual(['addedKey'])
+    expect(addDiff.modified.size).toEqual(0)
+    expect(addDiff.deleted.size).toEqual(0)
+
+    let deleted = await base.delete('test-0')
+    deleted = await deleted.crush()
+    const delDiff = await deleted.compare(base)
+    debug(delDiff)
+    expect([...delDiff.deleted]).toEqual(['test-0'])
+    expect(delDiff.modified.size).toEqual(0)
+    expect(delDiff.added.size).toEqual(0)
+
+    let modified = await base.set('test-1', { test: 'modified' })
+    modified = await modified.crush()
+    const modDiff = await modified.compare(base)
+    debug(modDiff)
+    expect([...modDiff.modified]).toEqual(['test-1'])
+    expect(modDiff.deleted.size).toEqual(0)
+    expect(modDiff.added.size).toEqual(0)
   })
   test.todo('recursive crush')
 })

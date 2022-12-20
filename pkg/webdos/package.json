@@ -64,7 +64,7 @@
     "stream-browserify": "^3.0.0",
     "use-resize-observer": "^9.1.0",
     "util": "^0.12.5",
-    "xterm": "^5.0.0",
+    "xterm": "^5.1.0",
     "xterm-addon-fit": "^0.6.0",
     "xterm-addon-unicode11": "^0.4.0"
   },
@@ -78,7 +78,7 @@
     "@storybook/react": "^7.0.0-beta.12",
     "@storybook/react-vite": "^7.0.0-beta.12",
     "@storybook/testing-library": "^0.0.13",
-    "chromatic": "^6.13.1",
+    "chromatic": "^6.14.0",
     "dotenv": "^16.0.3",
     "eslint": "^8.30.0",
     "eslint-plugin-react": "^7.31.11",

@@ -1,3 +1,4 @@
+import delay from 'delay'
 import PropTypes from 'prop-types'
 import assert from 'assert-fast'
 import React, { useState, useEffect, useRef } from 'react'
@@ -6,7 +7,10 @@ import Debug from 'debug'
 const debug = Debug('webdos:Engine')
 
 const shutdownMap = new Map()
-export default function Engine({ repo, dev, children }) {
+export default function Engine({ repo, ram, init, dev, children }) {
+  if (ram) {
+    repo = undefined
+  }
   const [latest, setLatest] = useState()
   const [state, setState] = useState({})
   const [wd, setWd] = useState('/')
@@ -24,10 +28,21 @@ export default function Engine({ repo, dev, children }) {
           await engineStop
           debug('previous engine has stopped')
         }
-        engine = await Interpulse.createCI({ repo })
+        const overloads = dev
+        engine = await Interpulse.createCI({ repo, overloads })
         globalThis.interpulse = engine
         setEngine(engine)
         debug(`Engine ready`)
+        if (init && engine.isCreated) {
+          debug('init', init)
+          for (const action of init) {
+            assert.strictEqual(Object.keys(action).length, 1)
+            const command = Object.keys(action).pop()
+            const args = Object.values(action).pop()
+            await engine[command](args)
+          }
+          debug('init complete')
+        }
       }
       const stop = async () => {
         debug('stopping', repo)
@@ -77,17 +92,17 @@ export default function Engine({ repo, dev, children }) {
 
 Engine.propTypes = {
   /**
-   * Name of the repo to use, which will be used to name the localDb instance.
-   * Mutually exclusive with `ram`.
+   * Name of the repo to use, which will be used to name the indexDb instance.
+   * If `ram` is true, this prop is ignored.
    */
   repo: PropTypes.string,
   /**
    * Should the engine be run in RAM only?
-   * Mutually exclusive with `repo`.
    */
   ram: PropTypes.bool,
   /**
-   * Map of chainIds to arrays of peerIds
+   * Map of chainIds to arrays of peerIds.
+   *
    */
   peers: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)),
   /**

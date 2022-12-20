@@ -258,6 +258,9 @@ export class Interpulse {
       }
     }
   }
+  get isCreated() {
+    return !this.net || this.net.isCreated
+  }
 }
 const mapShell = (engine) => {
   const actions = {}

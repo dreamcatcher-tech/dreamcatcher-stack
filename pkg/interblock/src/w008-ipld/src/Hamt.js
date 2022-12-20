@@ -1,3 +1,5 @@
+import equals from 'fast-deep-equal'
+import { toString } from 'uint8arrays/to-string'
 import Immutable from 'immutable'
 import { IpldInterface } from './IpldInterface'
 import { IpldStruct } from './IpldStruct'
@@ -191,10 +193,124 @@ export class Hamt extends IpldInterface {
     assert(!this.isModified())
     return this.#hashmap.entries()
   }
+  async compare(other) {
+    if (!other) {
+      other = this.constructor.create(this.#valueClass, this.#isMutable)
+    }
+    assert(other instanceof this.constructor)
+    assert(!this.isModified())
+    assert(!other.isModified())
+
+    const links = [{ cid: this.#hashmap.cid, otherCid: other.#hashmap.cid }]
+    let limit = 10000
+    const mergedDiff = {}
+    while (links.length > 0 && limit--) {
+      const { cid, otherCid } = links.shift()
+      const block = await this.#putStore.getBlock(cid)
+      const otherBlock = await other.#putStore.getBlock(otherCid)
+      assert(block)
+      assert(otherBlock)
+
+      let { value } = block
+      let { value: otherValue } = otherBlock
+      value = value.hamt ? value.hamt : value
+      otherValue = otherValue.hamt ? otherValue.hamt : otherValue
+      const [, data] = value
+      const [, otherData] = otherValue
+      const max = Math.max(data.length, otherData.length)
+      for (let i = 0; i < max; i++) {
+        const element = data[i]
+        const otherElement = otherData[i]
+        if (CID.asCID(element) || CID.asCID(otherElement)) {
+          const isBothCid = CID.asCID(element) && CID.asCID(otherElement)
+          if (isBothCid) {
+            if (!CID.asCID(element).equals(otherElement)) {
+              debug('different links found')
+              links.push({ cid: element, otherCid: otherElement })
+            }
+          } else {
+            debug('one link is not a CID', element, otherElement)
+            links.push({ cid: element, otherCid: otherElement })
+          }
+        } else {
+          const bucket = element
+          const otherBucket = otherElement
+          assert(!bucket || Array.isArray(bucket))
+          assert(!otherBucket || Array.isArray(otherBucket))
+
+          const patch = compareBuckets(bucket, otherBucket)
+          if (patch) {
+            debug('node was modified', patch)
+            merge(mergedDiff, patch)
+          }
+        }
+      }
+    }
+
+    return mergedDiff
+  }
 }
 
 const assertKey = (key) => {
   assert(key !== undefined)
   assert(key !== '')
   assert(typeof key === 'string' || Number.isInteger(key))
+}
+const compareBuckets = (bucket, otherBucket) => {
+  const diff = { added: [], deleted: [], modified: [] }
+  const map = bucketToMap(bucket)
+  const otherMap = bucketToMap(otherBucket)
+
+  otherMap.forEach((value, key) => {
+    if (!map.has(key)) {
+      diff.deleted.push(key)
+    }
+  })
+  map.forEach((value, key) => {
+    if (!otherMap.has(key)) {
+      diff.added.push(key)
+    } else {
+      const otherValue = otherMap.get(key)
+      if (!equals(value, otherValue)) {
+        diff.modified.push(key)
+      }
+    }
+  })
+  if (diff.added.length || diff.deleted.length || diff.modified.length) {
+    return diff
+  }
+}
+const bucketToMap = (bucket) => {
+  const map = new Map()
+  if (!bucket) {
+    return map
+  }
+  for (const [key, value] of bucket) {
+    map.set(toString(key), value)
+  }
+  return map
+}
+const merge = (diff, patch) => {
+  diff.added = diff.added || new Set()
+  diff.deleted = diff.deleted || new Set()
+  diff.modified = diff.modified || new Set()
+
+  const added = patch.added.filter((key) => {
+    if (diff.deleted.has(key)) {
+      diff.deleted.delete(key)
+      return false
+    }
+    return true
+  })
+  const deleted = patch.deleted.filter((key) => {
+    if (diff.added.has(key)) {
+      diff.added.delete(key)
+      return false
+    }
+    return true
+  })
+
+  added.length && diff.added.add(...added)
+  deleted.length && diff.deleted.add(...deleted)
+  patch.modified.length && diff.modified.add(...patch.modified)
 }

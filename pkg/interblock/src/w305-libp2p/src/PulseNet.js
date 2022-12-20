@@ -35,6 +35,7 @@ export class PulseNet {
   #bitswap
   #keypair
   #announcer
+  #isCreated = false
   static async createCI(repo = ciRepo()) {
     const CI = true
     return this.create(repo, CI)
@@ -80,6 +81,7 @@ export class PulseNet {
 
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)
+      this.#isCreated = true
       this.#keypair = CI
         ? Keypair.createCI()
         : await Keypair.generate(repo.path)
@@ -105,7 +107,7 @@ export class PulseNet {
     this.#bitswap = createBitswap(this.#net, this.#repo.blocks, bsOptions)
   }
   async start() {
-    await Promise.all([this.#net.start(), this.#bitswap.start()])
+    await this.#bitswap.start()
     debug('listening on', this.#net.getMultiaddrs())
   }
   async stop() {
@@ -121,6 +123,9 @@ export class PulseNet {
   }
   get keypair() {
     return this.#keypair
+  }
+  get isCreated() {
+    return this.#isCreated
   }
   async endure(pulse) {
     assert(pulse instanceof Pulse)

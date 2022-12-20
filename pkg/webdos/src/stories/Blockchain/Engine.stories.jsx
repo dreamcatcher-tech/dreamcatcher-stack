@@ -1,5 +1,5 @@
 import React from 'react'
-import { system, api } from '@dreamcatcher-tech/interblock'
+import { system, api, apps } from '@dreamcatcher-tech/interblock'
 import { Engine, Complex } from '../..'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
@@ -10,7 +10,10 @@ const { schemaToFunctions } = api
 export default {
   title: 'Blockchain/Complex',
   // component: Actions,
-  args: {},
+  args: {
+    repo: 'interpulse-1',
+    dev: { '/dpkg/crm': apps.crm.covenant },
+  },
 }
 
 const Test = ({ complex }) => {
@@ -21,10 +24,10 @@ Test.propTypes = {
 }
 
 const Template = (args) => {
-  Debug.enable('*Engine *Complex')
+  Debug.enable('*Engine *Complex iplog*')
   return (
-    <Engine repo="interpulse-1">
-      <Complex path="/">
+    <Engine {...args}>
+      <Complex path="/crm">
         <Test />
       </Complex>
     </Engine>
@@ -33,3 +36,10 @@ const Template = (args) => {
 
 // More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 export const Basic = Template.bind({})
+
+export const CRM = Template.bind({})
+CRM.args = {
+  ram: true,
+  // TODO make init be a function that does anything at all ?
+  init: [{ add: { path: 'crm', installer: '/dpkg/crm' } }],
+}
