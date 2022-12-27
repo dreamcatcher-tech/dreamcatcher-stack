@@ -77,6 +77,7 @@
     "jest": "^29.3.1",
     "json-schema-faker": "^0.5.0-rcv.46",
     "prettier": "^2.8.1",
+    "random": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.8.3",

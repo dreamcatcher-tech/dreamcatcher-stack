@@ -189,6 +189,9 @@ export class Hamt extends IpldInterface {
     debug(`get diff for CID`, cid)
     return this.#putStore.getDiffBlocks(cid)
   }
+  /**
+   * @returns {AsyncGenerator<[string, any]>}
+   */
   entries() {
     assert(!this.isModified())
     return this.#hashmap.entries()

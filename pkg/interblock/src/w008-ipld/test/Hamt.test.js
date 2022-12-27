@@ -2,6 +2,7 @@ import { IpldStruct } from '../src/IpldStruct'
 import { assert } from 'chai/index.mjs'
 import { Hamt } from '../src/Hamt'
 import Debug from 'debug'
+import random from 'random'
 
 const debug = Debug('tests')
 
@@ -78,7 +79,7 @@ describe('Hamt', () => {
       'Cannot overwrite'
     )
   })
-  test.only('diffing', async () => {
+  test('diffing', async () => {
     const base = await hamtFactory()
     debug('start')
 
@@ -107,18 +108,110 @@ describe('Hamt', () => {
     expect(modDiff.deleted.size).toEqual(0)
     expect(modDiff.added.size).toEqual(0)
   })
-  test('diff stress test', async () => {
-    // make a big hamt
-    // loop over multiple iterations of this test
-    // randomly choose whether to do adds, mods, dels, or any combination
-    // for each operation, select a random number of operations to do
-    // perform all operations on the hamt, logging each one into a diff tracker
-    // use the hamt diff
-    // assert that the diff tracker and the hamt diff are the same
+  test.only('diff stress test', async () => {
+    Debug.enable('tests ')
+    for (let i = 0; i < 10; i++) {
+      const ipfsPersistence = new Map()
+      const size = random.int(10, 100)
+      debug(`iteration %i with size %i`, i, size)
+      const diff = { added: new Set(), modified: new Set(), deleted: new Set() }
+
+      let base = await hamtFactory(size)
+      base = await crush(base, ipfsPersistence)
+      let next = base
+      // if (true) {
+      //   const addCount = random.int(1, 50)
+      //   next = await add(next, diff, addCount)
+      //   next = await crush(next, ipfsPersistence)
+      // }
+      // if (true) {
+      //   const delCount = random.int(1, 50)
+      //   next = await del(next, diff, delCount)
+      //   next = await crush(next, ipfsPersistence)
+      // }
+      if (true) {
+        const modCount = random.int(10, 50)
+        next = await mod(next, diff, modCount)
+        next = await crush(next, ipfsPersistence)
+      }
+
+      debug('crushing')
+      next = await next.crush()
+      debug('comparing')
+      const nextDiff = await next.compare(base)
+      debug('comparing done')
+      const addDiff = symmetricDifference(diff.added, nextDiff.added)
+      expect(addDiff.size).toEqual(0)
+      const delDiff = symmetricDifference(diff.deleted, nextDiff.deleted)
+      expect(delDiff.size).toEqual(0)
+      const modDiff = symmetricDifference(diff.modified, nextDiff.modified)
+      debug('expected', diff.modified)
+      debug('actual', nextDiff.modified)
+      expect(modDiff.size).toEqual(0)
+    }
   })
   test.todo('recursive crush')
 })
-
+const crush = async (hamt, ipfsMap) => {
+  debug('crushing')
+  const resolver = (cid) => ipfsMap.get(cid.toString())
+  hamt = await hamt.crush(resolver)
+  const diffBlocks = hamt.getDiffBlocks()
+  diffBlocks.forEach((v, k) => ipfsMap.set(k, v))
+  return hamt
+}
+const mod = async (hamt, diff, modCount) => {
+  debug(`modifying %i`, modCount)
+  const keys = []
+  for await (const [key] of hamt.entries()) {
+    keys.push(key)
+  }
+  const shuffled = keys
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value)
+  debug('mod shuffled keys', shuffled)
+  for (let i = 0; i < modCount; i++) {
+    if (!shuffled.length) {
+      break
+    }
+    const key = shuffled.pop()
+    const value = await hamt.get(key)
+    hamt = await hamt.set(key, { ...value, modified: i })
+    diff.modified.add(key)
+  }
+  return hamt
+}
+const del = async (hamt, diff, delCount) => {
+  debug(`deleting %i`, delCount)
+  const keys = []
+  for await (const [key] of hamt.entries()) {
+    keys.push(key)
+  }
+  const shuffled = keys
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value)
+  debug('keys listed')
+  for (let i = 0; i < delCount; i++) {
+    if (!shuffled.length) {
+      break
+    }
+    const key = shuffled.pop()
+    hamt = await hamt.delete(key)
+    diff.deleted.add(key)
+  }
+  return hamt
+}
+const add = async (hamt, diff, addCount) => {
+  debug(`adding %i`, addCount)
+  for (let i = 0; i < addCount; i++) {
+    const key = 'added-' + i
+    hamt = await hamt.set(key, { test: key })
+    diff.added.add(key)
+  }
+  return hamt
+}
 const hamtFactory = async (count = 100) => {
   const valueClass = undefined
   const isMutable = true
@@ -126,6 +219,16 @@ const hamtFactory = async (count = 100) => {
   for (let i = 0; i < count; i++) {
     hamt = await hamt.set('test-' + i, { test: 'test-' + i })
   }
-  hamt = await hamt.crush()
   return hamt
+}
+const symmetricDifference = (setA, setB) => {
+  const _difference = new Set(setA)
+  for (const elem of setB) {
+    if (_difference.has(elem)) {
+      _difference.delete(elem)
+    } else {
+      _difference.add(elem)
+    }
+  }
+  return _difference
 }
