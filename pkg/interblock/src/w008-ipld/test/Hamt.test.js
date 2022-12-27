@@ -80,7 +80,8 @@ describe('Hamt', () => {
     )
   })
   test('diffing', async () => {
-    const base = await hamtFactory()
+    const raw = await hamtFactory()
+    const base = await raw.crush()
     debug('start')
 
     let added = await base.set('addedKey', { test: 'added' })
@@ -93,7 +94,6 @@ describe('Hamt', () => {
 
     let deleted = await base.delete('test-0')
     deleted = await deleted.crush()
-    Debug.enable('tests *hamt *putstore')
     const delDiff = await deleted.compare(base)
     debug(delDiff)
     expect([...delDiff.deleted]).toEqual(['test-0'])
@@ -108,8 +108,7 @@ describe('Hamt', () => {
     expect(modDiff.deleted.size).toEqual(0)
     expect(modDiff.added.size).toEqual(0)
   })
-  test.only('diff stress test', async () => {
-    Debug.enable('tests ')
+  test('diff stress test', async () => {
     for (let i = 0; i < 50; i++) {
       const ipfsPersistence = new Map()
       const size = random.int(10, 100)
