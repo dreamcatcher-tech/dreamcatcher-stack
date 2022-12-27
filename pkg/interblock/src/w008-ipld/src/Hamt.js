@@ -211,6 +211,13 @@ export class Hamt extends IpldInterface {
       deleted: new Set(),
       modified: new Set(),
     }
+    const updateModified = async (key) => {
+      const value = await this.get(key)
+      const otherValue = await other.get(key)
+      if (!equals(value, otherValue)) {
+        mergedDiff.modified.add(key)
+      }
+    }
     while (links.length > 0 && limit--) {
       const { cid, otherCid } = links.shift()
       const value = await safelyGetBlock(this.#putStore, cid)
@@ -246,11 +253,7 @@ export class Hamt extends IpldInterface {
           for (const key of patch.added) {
             if (mergedDiff.deleted.has(key)) {
               mergedDiff.deleted.delete(key)
-              const value = await this.get(key)
-              const otherValue = await other.get(key)
-              if (!equals(value, otherValue)) {
-                mergedDiff.modified.add(key)
-              }
+              await updateModified(key)
             } else {
               mergedDiff.added.add(key)
             }
@@ -258,11 +261,7 @@ export class Hamt extends IpldInterface {
           for (const key of patch.deleted) {
             if (mergedDiff.added.has(key)) {
               mergedDiff.added.delete(key)
-              const value = await this.get(key)
-              const otherValue = await other.get(key)
-              if (!equals(value, otherValue)) {
-                mergedDiff.modified.add(key)
-              }
+              await updateModified(key)
             } else {
               mergedDiff.deleted.add(key)
             }

@@ -110,7 +110,7 @@ describe('Hamt', () => {
   })
   test.only('diff stress test', async () => {
     Debug.enable('tests ')
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 50; i++) {
       const ipfsPersistence = new Map()
       const size = random.int(10, 100)
       debug(`iteration %i with size %i`, i, size)
@@ -120,33 +120,21 @@ describe('Hamt', () => {
       base = await crush(base, ipfsPersistence)
       let next = base
       // choose an operation at random
-      if (true) {
+      if (random.boolean()) {
         const addCount = random.int(1, 50)
         next = await add(next, diff, addCount)
         next = await crush(next, ipfsPersistence)
       }
-      if (true) {
+      if (random.boolean()) {
         const modCount = random.int(10, 50)
         next = await mod(next, diff, modCount)
         next = await crush(next, ipfsPersistence)
       }
-      if (true) {
+      if (random.boolean()) {
         const delCount = random.int(1, 50)
         next = await del(next, diff, delCount)
         next = await crush(next, ipfsPersistence)
       }
-      /**
-       * Passing back the values from the diff may be more useful than the keys
-       * Also allows easier modification detection.
-       * Plus we have the values in ram at the time, so why not ?
-       * Will have to fetch and add to the complex anyway ?
-       *
-       * Or, comparing buckets might be wrong - should compare keys directly ?
-       * So use a has() and get() to know if deletion or modification.
-       * Sniff for signs of change using link walking, then comfirm using has/get
-       * Smaller ram usage
-       * Allows the complex to choose what to inflat or not
-       */
 
       debug('crushing')
       next = await next.crush()
