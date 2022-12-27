@@ -119,21 +119,34 @@ describe('Hamt', () => {
       let base = await hamtFactory(size)
       base = await crush(base, ipfsPersistence)
       let next = base
-      // if (true) {
-      //   const addCount = random.int(1, 50)
-      //   next = await add(next, diff, addCount)
-      //   next = await crush(next, ipfsPersistence)
-      // }
-      // if (true) {
-      //   const delCount = random.int(1, 50)
-      //   next = await del(next, diff, delCount)
-      //   next = await crush(next, ipfsPersistence)
-      // }
+      // choose an operation at random
+      if (true) {
+        const addCount = random.int(1, 50)
+        next = await add(next, diff, addCount)
+        next = await crush(next, ipfsPersistence)
+      }
       if (true) {
         const modCount = random.int(10, 50)
         next = await mod(next, diff, modCount)
         next = await crush(next, ipfsPersistence)
       }
+      if (true) {
+        const delCount = random.int(1, 50)
+        next = await del(next, diff, delCount)
+        next = await crush(next, ipfsPersistence)
+      }
+      /**
+       * Passing back the values from the diff may be more useful than the keys
+       * Also allows easier modification detection.
+       * Plus we have the values in ram at the time, so why not ?
+       * Will have to fetch and add to the complex anyway ?
+       *
+       * Or, comparing buckets might be wrong - should compare keys directly ?
+       * So use a has() and get() to know if deletion or modification.
+       * Sniff for signs of change using link walking, then comfirm using has/get
+       * Smaller ram usage
+       * Allows the complex to choose what to inflat or not
+       */
 
       debug('crushing')
       next = await next.crush()
@@ -143,10 +156,9 @@ describe('Hamt', () => {
       const addDiff = symmetricDifference(diff.added, nextDiff.added)
       expect(addDiff.size).toEqual(0)
       const delDiff = symmetricDifference(diff.deleted, nextDiff.deleted)
+      expect(nextDiff.deleted).toEqual(diff.deleted)
       expect(delDiff.size).toEqual(0)
       const modDiff = symmetricDifference(diff.modified, nextDiff.modified)
-      debug('expected', diff.modified)
-      debug('actual', nextDiff.modified)
       expect(modDiff.size).toEqual(0)
     }
   })
@@ -170,7 +182,6 @@ const mod = async (hamt, diff, modCount) => {
     .map((value) => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ value }) => value)
-  debug('mod shuffled keys', shuffled)
   for (let i = 0; i < modCount; i++) {
     if (!shuffled.length) {
       break
@@ -178,7 +189,9 @@ const mod = async (hamt, diff, modCount) => {
     const key = shuffled.pop()
     const value = await hamt.get(key)
     hamt = await hamt.set(key, { ...value, modified: i })
-    diff.modified.add(key)
+    if (!diff.added.has(key)) {
+      diff.modified.add(key)
+    }
   }
   return hamt
 }
@@ -199,7 +212,14 @@ const del = async (hamt, diff, delCount) => {
     }
     const key = shuffled.pop()
     hamt = await hamt.delete(key)
-    diff.deleted.add(key)
+    if (diff.added.has(key)) {
+      diff.added.delete(key)
+    } else {
+      if (diff.modified.has(key)) {
+        diff.modified.delete(key)
+      }
+      diff.deleted.add(key)
+    }
   }
   return hamt
 }
@@ -207,8 +227,11 @@ const add = async (hamt, diff, addCount) => {
   debug(`adding %i`, addCount)
   for (let i = 0; i < addCount; i++) {
     const key = 'added-' + i
+    assert(!(await hamt.has(key)), 'key already exists')
     hamt = await hamt.set(key, { test: key })
     diff.added.add(key)
+    assert(!diff.deleted.has(key))
+    assert(!diff.modified.has(key))
   }
   return hamt
 }

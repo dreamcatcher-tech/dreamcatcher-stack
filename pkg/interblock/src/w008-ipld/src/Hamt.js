@@ -205,8 +205,12 @@ export class Hamt extends IpldInterface {
     assert(!other.isModified())
 
     const links = [{ cid: this.#hashmap.cid, otherCid: other.#hashmap.cid }]
-    let limit = 10000
-    const mergedDiff = {}
+    let limit = 100000
+    const mergedDiff = {
+      added: new Set(),
+      deleted: new Set(),
+      modified: new Set(),
+    }
     while (links.length > 0 && limit--) {
       const { cid, otherCid } = links.shift()
       const value = await safelyGetBlock(this.#putStore, cid)
@@ -216,6 +220,7 @@ export class Hamt extends IpldInterface {
       const [, otherData] = otherValue
       const max = Math.max(data.length, otherData.length)
       for (let i = 0; i < max; i++) {
+        let patch
         const element = data[i]
         const otherElement = otherData[i]
         if (CID.asCID(element) || CID.asCID(otherElement)) {
@@ -227,15 +232,44 @@ export class Hamt extends IpldInterface {
             }
           } else {
             debug('one link is not a CID', element, otherElement)
+            // compare bucket against blank, then cid against blank
             links.push({
               cid: CID.asCID(element),
               otherCid: CID.asCID(otherElement),
             })
-            patchBuckets(element, otherElement, mergedDiff)
+            patch = patchBuckets(element, otherElement)
           }
-          // if cid vs bucket, compare bucket against blank, then cid against blank
         } else {
-          patchBuckets(element, otherElement, mergedDiff)
+          patch = patchBuckets(element, otherElement)
+        }
+        if (patch) {
+          for (const key of patch.added) {
+            if (mergedDiff.deleted.has(key)) {
+              mergedDiff.deleted.delete(key)
+              const value = await this.get(key)
+              const otherValue = await other.get(key)
+              if (!equals(value, otherValue)) {
+                mergedDiff.modified.add(key)
+              }
+            } else {
+              mergedDiff.added.add(key)
+            }
+          }
+          for (const key of patch.deleted) {
+            if (mergedDiff.added.has(key)) {
+              mergedDiff.added.delete(key)
+              const value = await this.get(key)
+              const otherValue = await other.get(key)
+              if (!equals(value, otherValue)) {
+                mergedDiff.modified.add(key)
+              }
+            } else {
+              mergedDiff.deleted.add(key)
+            }
+          }
+          for (const key of patch.modified) {
+            mergedDiff.modified.add(key)
+          }
         }
       }
     }
@@ -258,15 +292,12 @@ const assertKey = (key) => {
   assert(key !== '')
   assert(typeof key === 'string' || Number.isInteger(key))
 }
-const patchBuckets = (bucket, otherBucket, mergedDiff) => {
+const patchBuckets = (bucket, otherBucket) => {
   bucket = Array.isArray(bucket) ? bucket : []
   otherBucket = Array.isArray(otherBucket) ? otherBucket : []
 
   const patch = compareBuckets(bucket, otherBucket)
-  if (patch) {
-    debug('node was modified', patch)
-    merge(mergedDiff, patch)
-  }
+  return patch
 }
 const compareBuckets = (bucket, otherBucket) => {
   const diff = { added: [], deleted: [], modified: [] }
@@ -289,6 +320,7 @@ const compareBuckets = (bucket, otherBucket) => {
     }
   })
   if (diff.added.length || diff.deleted.length || diff.modified.length) {
+    debug('node was modified', diff)
     return diff
   }
 }
@@ -301,27 +333,4 @@ const bucketToMap = (bucket) => {
     map.set(toString(key), value)
   }
   return map
-}
-const merge = (diff, patch) => {
-  diff.added = diff.added || new Set()
-  diff.deleted = diff.deleted || new Set()
-  diff.modified = diff.modified || new Set()
-
-  patch.added.forEach((key) => {
-    if (diff.deleted.has(key)) {
-      diff.deleted.delete(key)
-      return
-    }
-    diff.added.add(key)
-  })
-  patch.deleted.forEach((key) => {
-    if (diff.added.has(key)) {
-      diff.added.delete(key)
-      return
-    }
-    diff.deleted.add(key)
-  })
-  patch.modified.forEach((key) => {
-    diff.modified.add(key)
-  })
 }
