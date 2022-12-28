@@ -1,8 +1,49 @@
 import assert from 'assert-fast'
+import Debug from 'debug'
+import equals from 'fast-deep-equal'
+import { Pulse } from '../../w008-ipld'
+// import { Interpulse } from '../../w310-interpulse'
+const debug = Debug('interblock:api:Complex')
 export default class Complex {
   #parent
+  #pulse
   static create({ state, binary, network, actions, isLoading, wd, tree }) {
     return new Complex({ state, binary, network, actions, isLoading, wd, tree })
+  }
+  static createLoading() {
+    return this.create({ isLoading: true })
+  }
+  async update(pulse, engine) {
+    assert(pulse instanceof Pulse)
+    // assert(engine instanceof Interpulse)
+
+    // TODO verify this pulse is actually after the current one
+    // by default this update is full
+    if (this.#pulse && this.#pulse.cid.equals(pulse.cid)) {
+      return this
+    }
+    let prev = this.#pulse
+    let next = this.clone()
+    next.#pulse = pulse
+    if (!prev || !prev.getState().cid.equals(pulse.getState().cid)) {
+      debug('state changed')
+      const state = pulse.getState().toJS()
+      if (!equals(next.state, state)) {
+        next = next.setState(state)
+      }
+    }
+    // TODO binary
+    if (!prev || !prev.getNetwork().cid.equals(pulse.getNetwork().cid)) {
+      debug('network changed')
+      const { children } = pulse.getNetwork()
+      const { children: previousChildren } = prev ? prev.getNetwork() : {}
+      const diff = await children.compare(previousChildren)
+      debug(diff)
+      // find what channels have changed
+      // use sparse array to keep track of channels by id
+    }
+
+    return next
   }
   constructor({ state, binary, network, actions, isLoading, wd, tree }) {
     this.state = state || {}
@@ -19,7 +60,7 @@ export default class Complex {
   clone() {
     const next = new Complex(this)
     next.#parent = this.#parent
-
+    next.#pulse = this.#pulse
     return next
   }
   setChild(path, child) {

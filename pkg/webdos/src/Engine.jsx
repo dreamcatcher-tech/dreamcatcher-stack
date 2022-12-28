@@ -59,7 +59,6 @@ export default function Engine({ repo, ram, init, dev, children }) {
         await awaitStart
         for await (const latest of engine.subscribe('/')) {
           debug('subscription update')
-          assert(!params.isStopped, 'awaitStop already set')
           if (params.isStopped) {
             return
           }

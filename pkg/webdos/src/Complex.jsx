@@ -6,43 +6,33 @@ import Debug from 'debug'
 const debug = Debug('webdos:Complex')
 const { Complex } = api
 export default function ReactComplex({ engine, path, sync, wd, children }) {
-  const [complex, setComplex] = useState(Complex.create({ isLoading: true }))
+  const [complex, setComplex] = useState(Complex.createLoading())
   useEffect(() => {
     if (!engine) {
       return
     }
     const iterator = engine.subscribe(path)
     debug('iterator', iterator)
-    let previous
     const subscribe = async () => {
+      let previous = complex
       for await (const latest of iterator) {
         debug('subscription update', latest)
-        if (previous) {
-          const previousState = previous.getState()
-          const latestState = latest.getState()
-          if (previousState.cid.equals(latestState.cid)) {
-            debug('no state change')
-            continue
-          }
+        // TODO allow skips if update takes longer than subscription interval
+        const next = await previous.update(latest, engine)
+        // TODO update complex as soon as each new info is updated
+
+        if (next !== previous) {
+          debug('complex updated', next)
+          setComplex((current) => next.setWd(current.wd))
+          previous = next
         }
-        // make the process of syncing diffs be the same as syncing all
-
-        // load the actions for this pulse
-
-        if (sync) {
-          // check which children are different
-          // what was added
-          // what was removed
-          // only permit one sync to be in progress at any time
-        }
-
-        previous = latest
-        setComplex((current) => current.setState(latest.getState().toJS()))
       }
     }
     subscribe()
     return () => {
+      debug('teardown')
       iterator.return()
+      setComplex(Complex.createLoading())
     }
   }, [path, engine])
   if (wd !== complex.wd) {

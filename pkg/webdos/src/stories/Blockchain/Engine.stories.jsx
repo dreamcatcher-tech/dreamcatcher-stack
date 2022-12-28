@@ -11,7 +11,7 @@ export default {
   title: 'Blockchain/Complex',
   // component: Actions,
   args: {
-    repo: 'interpulse-1',
+    repo: 'interpulse-storybook',
     dev: { '/dpkg/crm': apps.crm.covenant },
   },
 }

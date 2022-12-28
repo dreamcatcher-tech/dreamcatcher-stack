@@ -105,6 +105,13 @@ export class Interpulse {
       }
     }
   }
+  /**
+   * Get whatever pulse is available in local storage for the given path.
+   * Will error if no pulse is available.
+   * @param {string} path Path to requested pulse relative to rootPulse
+   * @param {Pulse} rootPulse Pulse to be treated as root for the path
+   * @returns Pulse
+   */
   async current(path = '.', rootPulse) {
     const { wd } = this
     const absPath = posix.resolve(wd, path)

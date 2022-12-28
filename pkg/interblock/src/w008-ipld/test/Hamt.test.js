@@ -79,6 +79,15 @@ describe('Hamt', () => {
       'Cannot overwrite'
     )
   })
+  test.only('compare blank', async () => {
+    const size = 53
+    const raw = await hamtFactory(size)
+    const base = await raw.crush()
+    const diff = await base.compare()
+    expect(diff.added.size).toEqual(53)
+    expect(diff.deleted.size).toEqual(0)
+    expect(diff.modified.size).toEqual(0)
+  })
   test('diffing', async () => {
     const raw = await hamtFactory()
     const base = await raw.crush()

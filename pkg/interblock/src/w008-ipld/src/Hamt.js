@@ -199,6 +199,7 @@ export class Hamt extends IpldInterface {
   async compare(other) {
     if (!other) {
       other = this.constructor.create(this.#valueClass, this.#isMutable)
+      other = await other.crush()
     }
     assert(other instanceof this.constructor)
     assert(!this.isModified())
