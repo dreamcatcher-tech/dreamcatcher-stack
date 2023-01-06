@@ -70,6 +70,7 @@ export class Crisp {
   *[Symbol.iterator]() {
     for (const [, value] of this.#map.entries()) {
       const { aliases } = value
+      // TODO shortcut until aliases are remodeled
       yield aliases[0]
     }
   }

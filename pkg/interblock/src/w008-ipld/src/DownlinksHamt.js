@@ -12,6 +12,9 @@ export class DownlinksHamt extends Hamt {
   static create() {
     return super.create()
   }
+  get isBakeSkippable() {
+    return true
+  }
   set() {
     throw new Error('not implemented')
   }

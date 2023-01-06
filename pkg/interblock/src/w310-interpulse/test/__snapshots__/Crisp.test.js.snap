@@ -2,13 +2,13 @@
 
 exports[`Crisp reconciles diffs 1`] = `
 [
-  "account",
-  "schedule",
-  "customers",
   ".",
   "..",
   "about",
-  "settings",
+  "account",
+  "customers",
   "routing",
+  "schedule",
+  "settings",
 ]
 `;

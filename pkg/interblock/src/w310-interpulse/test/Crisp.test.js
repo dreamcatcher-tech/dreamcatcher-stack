@@ -2,7 +2,6 @@ import { createRamRepo } from '../../w305-libp2p'
 import { Interpulse, Crisp, Syncer } from '..'
 import { crm } from '../../w301-user-apps'
 import { Pulse } from '../../w008-ipld/src'
-import last from 'it-last'
 import Debug from 'debug'
 const debug = Debug('tests')
 
@@ -16,15 +15,6 @@ describe('Crisp', function () {
 
     // add a child to the pulse
     // dump the engine cache
-  })
-  it('inflates', async () => {
-    // start up the engine
-    // make some children
-    // dump the engine cache
-    // uncrush the pulse
-    // test the crisp is missing pieces
-    // start the reconciler
-    // test the crisp is fully loaded
   })
   it.only('reconciles diffs', async () => {
     const repo = createRamRepo('ram')
@@ -40,18 +30,22 @@ describe('Crisp', function () {
     })
     const approot = await engine.current('app')
     Debug.enable('iplog *Crisp *Syncer tests')
-    const syncer = Syncer.create(engine.pulseResolver)
+    let count = 0
+    const resolver = (pl) => ++count && engine.pulseResolver(pl)
+    const syncer = Syncer.create(resolver)
     // restart the engine so can do timing
     debug('starting syncer')
     await syncer.update(approot)
-    debug('syncer complete')
+    debug('syncer complete', count)
+
     for await (const crisp of syncer) {
       debug('crisp', crisp)
       const children = [...crisp]
+      children.sort((a, b) => a.localeCompare(b))
       debug(children)
       expect(children).toMatchSnapshot()
       break
     }
     await engine.stop()
-  }, 1500)
+  })
 })

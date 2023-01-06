@@ -121,6 +121,9 @@ export class Hamt extends IpldInterface {
   get crushedSize() {
     throw new Error('Not Implemented')
   }
+  get isBakeSkippable() {
+    return false
+  }
   async crush(resolver = () => {}) {
     assert.strictEqual(typeof resolver, 'function')
     const next = this.#clone()

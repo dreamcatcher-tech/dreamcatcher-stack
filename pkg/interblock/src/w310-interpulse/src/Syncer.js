@@ -90,6 +90,7 @@ export class Syncer {
     }
 
     const { classMap = {}, defaultClass } = instance.constructor
+    assert(!(Object.keys(classMap).length && defaultClass))
     await Promise.all(
       Object.keys(classMap).map(async (key) => {
         const value = instance[key]
@@ -110,7 +111,7 @@ export class Syncer {
   async #updateHamt(hamt, prior) {
     assert(hamt instanceof Hamt)
     assert(!prior || prior instanceof Hamt)
-    if (hamt.bakedMap) {
+    if (hamt.bakedMap || hamt.isBakeSkippable) {
       return
     }
     const diff = await hamt.compare(prior)
@@ -120,7 +121,7 @@ export class Syncer {
     for (const key of deleted) {
       map = map.delete(key)
     }
-    for (const key of modified) {
+    const mods = [...modified].map(async (key) => {
       const value = await hamt.get(key)
       map = map.set(key, value)
       let priorValue
@@ -132,12 +133,13 @@ export class Syncer {
         }
       }
       await this.#update(value, priorValue)
-    }
-    for (const key of added) {
+    })
+    const adds = [...added].map(async (key) => {
       const value = await hamt.get(key)
       map = map.set(key, value)
       await this.#update(value)
-    }
+    })
+    await Promise.all([...mods, ...adds])
     hamt.bake(map)
   }
 

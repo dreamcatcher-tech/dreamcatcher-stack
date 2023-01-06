@@ -2,6 +2,9 @@ import { Hamt } from './Hamt'
 import { Address } from '.'
 import assert from 'assert-fast'
 export class AddressesHamt extends Hamt {
+  get isBakeSkippable() {
+    return true
+  }
   async set(address, channelId) {
     assert(address instanceof Address)
     assert(Number.isInteger(channelId))

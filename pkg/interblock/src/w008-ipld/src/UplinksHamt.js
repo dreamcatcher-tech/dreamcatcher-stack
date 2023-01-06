@@ -6,6 +6,9 @@ export class UplinksHamt extends Hamt {
   static create() {
     return super.create()
   }
+  get isBakeSkippable() {
+    return true
+  }
   async set(address, channelId) {
     assert(address instanceof Address)
     assert(address.isRemote())
