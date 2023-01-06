@@ -21,6 +21,7 @@ export class Hamt extends IpldInterface {
   #gets = Immutable.Map()
   #sets = Immutable.Map()
   #deletes = Immutable.Set()
+  #bakedMap
   static create(valueClass, isMutable = false) {
     if (valueClass) {
       assert(valueClass.prototype instanceof IpldStruct, 'Not IpldStruct type')
@@ -195,6 +196,15 @@ export class Hamt extends IpldInterface {
   entries() {
     assert(!this.isModified())
     return this.#hashmap.entries()
+  }
+  bake(map) {
+    assert(Immutable.Map.isMap(map))
+    assert(!this.isModified())
+    this.#bakedMap = map
+  }
+  get bakedMap() {
+    assert(!this.isModified())
+    return this.#bakedMap
   }
   async compare(other) {
     if (!other) {

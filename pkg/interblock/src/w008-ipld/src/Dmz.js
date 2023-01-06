@@ -1,8 +1,6 @@
 import assert from 'assert-fast'
 import {
-  Provenance,
-  Pulse,
-  PulseLink,
+  HistoricalPulseLink,
   Config,
   Binary,
   Timestamp,
@@ -45,7 +43,7 @@ export class Dmz extends IpldStruct {
     network: Network,
     state: State,
     pending: Pending,
-    appRoot: PulseLink,
+    appRoot: HistoricalPulseLink,
     binary: Binary,
   }
   static create(params = {}, CI = false) {

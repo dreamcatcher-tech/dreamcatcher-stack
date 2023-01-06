@@ -8,6 +8,7 @@ type PulseLink link
 
 export class PulseLink extends IpldInterface {
   #cid
+  #bakedPulse
   static createCrossover(address) {
     assert(address instanceof Address)
     assert(address.isResolved())
@@ -19,6 +20,8 @@ export class PulseLink extends IpldInterface {
     let cid
     if (ArrayBuffer.isView(data)) {
       cid = CID.decode(data)
+    } else if (CID.asCID(data)) {
+      cid = CID.asCID(data)
     } else {
       assert.strictEqual(typeof data, 'string')
       assert(data)
@@ -37,6 +40,7 @@ export class PulseLink extends IpldInterface {
     return instance
   }
   #setCid(cid) {
+    assert(!this.#cid)
     assert(cid instanceof CID, `cid must be a CID, got ${cid}`)
     assert(cid.version === 1)
     this.#cid = cid
@@ -68,5 +72,28 @@ export class PulseLink extends IpldInterface {
   equals(other) {
     assert(other instanceof PulseLink)
     return this.#cid.equals(other.#cid)
+  }
+  bake(pulse) {
+    assert(pulse instanceof Pulse)
+    assert(!this.#bakedPulse)
+    assert(!pulse.isModified())
+    assert(this.cid.equals(pulse.cid))
+    this.#bakedPulse = pulse
+  }
+  get bakedPulse() {
+    return this.#bakedPulse
+  }
+}
+
+export class HistoricalPulseLink extends PulseLink {
+  static fromPulseLink(pulseLink) {
+    assert(pulseLink instanceof PulseLink)
+    return this.parse(pulseLink.cid)
+  }
+  [Symbol.for('nodejs.util.inspect.custom')]() {
+    return this.toString()
+  }
+  toString() {
+    return `HistoricalPulseLink(${this.cid.toString().substring(4, 14)})`
   }
 }

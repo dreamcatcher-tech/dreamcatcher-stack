@@ -308,7 +308,6 @@ type ACL struct {
 
 ## State
 
-CID links inside the State will allow the author to break down their state any way they please. This will not be supported initially, as the State should be kept small enough to be managed as a single object.
 
 The result of running a covenant is stored here, and must be serializable.
 
@@ -318,17 +317,16 @@ State is special in that it wraps an object directly, with no predefined keys.
 type State { String : Any }
 ```
 
+CID links inside the State are not allowed - the correct way for apps to break down large state is to make a child chain.  This allows for state of unlimited size, so long as break points are well thought out.  In the browser, this state management allows for background managed memory eviction too, so as not to overwhelm restricted devices.
+
 ## Pending
 
-Tracks what was the covenant action that caused the chain to go into pending mode, stored by channelId and requestId. It then keeps track of all requests made while the chain is in pending mode whenever the covenant is run. The chain is only rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.
+Tracks each of the covenant Requests that caused the reducer to return a promise in an AsyncTrail, which holds the channelId and requestId of the origin Request it is tracking.  The reducer is then rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.  
 
-Each rerun must produce the exact same requests and replies each time, in the exact same order.
+Each new set of Requests from each rerun are also tracked.  Each rerun must produce the exact same requests and replies each time, in the exact same order.
 
-This structure consists of two arrays - one of all the outbound requests the covenant made, and another of all the so far received replies. The reducer should not be invoked until all the empty slots in the `replies` array have been filled.
+The AsyncTrail consists of two arrays - one of all the outbound requests the covenant made: `txs`, and another of all the so far received replies: `settles`. The reducer is not re-invoked until all the empty slots in the `settles` array have been filled.
 
-Replies must be tracked too, else we may retransmit them
-
-Replies that are received are stored in the `settled` key in the AsyncRequest object.
 
 ```sh
 type RequestId struct {
@@ -395,6 +393,8 @@ AppRoot is a system chain, and contains within it some required config items tha
 It holds the registry of what covenant names resolve to what pulselinks. To upgrade a package, this allows every chain in the complex to upgrade simultaneously.
 
 Individual chains may override `interpulse` and `covenant` but if they do not, the approot version is the required version.
+
+AppRoot cannot be inferred, since its state would be indeterminate depending on what the Validator was perceiving.  Order of operations for a given perception is deterministic, but perceptions may be different but non conflicting.
 
 ```sh
 type Dmz struct {
@@ -559,6 +559,11 @@ This does introduce non-determinism, as the timing of when something occurred ca
 
 Network handles turning strings into channelIds
 
+In essence, the Network is 3 maps:
+1. Path strings to channelId integers (for devs)
+1. Address strings to channelId integers (for interpulse crypto)
+1. ChannelId integers to channel objects (for interpulse comms)
+
 ```sh
 type Channels struct {
     counter Int
@@ -605,7 +610,7 @@ type BinaryTreeNode struct {
     children HashMapRoot     # { String : &BinaryTreeNode }
 }
 type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
-type Turnovers [PulseLink]   # TODO make into a tree
+type Turnovers [HistoricalPulseLink]   # TODO make into a tree
 type Provenance struct {
     dmz &Dmz
     stateTree &StateTreeNode
@@ -638,10 +643,24 @@ In some places, we want to avoid dereferencing CIDs during the uncrush process.
 These places are always Pulses, and so the PulseLink class signals to the
 uncrush process not to look any further.
 
-If the program needs to dereference the actual Pulse, then it needs to do so explicitly, and should also free up the object when finished, to avoid holding any entire blockchain in ram.
+If the program needs to dereference the actual Pulse, then it needs to do so explicitly, and should also free up the object when finished, to avoid holding any entire blockchains history in ram.
+
+Generically, there are three types of hashlinked data in any CAS system:
+1. Internal to the object
+2. External to the object
+3. Historical to the object (could be internal or external)
 
 ```sh
 type PulseLink link
+```
+
+## HistoricalPulseLink
+All Content Addressed systems have a notion of current and history, since they are all implicitly CoW.  Having content that points to other content addresses is common.  When the content is mutated, the new content should reference the old, for audit reasons.  When asking to view the content in full, with all links resolved, we often do not want the historical view unless we specifically ask for it.
+
+In order to automatically inflate the notion of 'current' without inflating all of the linked history, a distinction is provided for developers to indicate history.
+
+```sh
+type HistoricalPulseLink = PulseLink
 ```
 
 ## InterPulse

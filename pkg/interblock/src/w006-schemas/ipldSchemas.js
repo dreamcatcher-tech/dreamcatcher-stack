@@ -1,799 +1,907 @@
 export default {
   types: {
     HashMapRoot: {
-      kind: 'struct',
-      fields: {
-        hashAlg: {
-          type: 'Int',
+      struct: {
+        fields: {
+          hashAlg: {
+            type: 'Int',
+          },
+          bucketSize: {
+            type: 'Int',
+          },
+          hamt: {
+            type: 'HashMapNode',
+          },
         },
-        bucketSize: {
-          type: 'Int',
+        representation: {
+          map: {},
         },
-        hamt: {
-          type: 'HashMapNode',
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     HashMapNode: {
-      kind: 'struct',
-      fields: {
-        map: {
-          type: 'Bytes',
-        },
-        data: {
-          type: {
-            kind: 'list',
-            valueType: 'Element',
+      struct: {
+        fields: {
+          map: {
+            type: 'Bytes',
+          },
+          data: {
+            type: {
+              list: {
+                valueType: 'Element',
+              },
+            },
           },
         },
-      },
-      representation: {
-        tuple: {},
+        representation: {
+          tuple: {},
+        },
       },
     },
     Element: {
-      kind: 'union',
-      representation: {
-        kinded: {
-          link: {
-            kind: 'link',
-            expectedType: 'HashMapNode',
+      union: {
+        members: [
+          {
+            link: {
+              expectedType: 'HashMapNode',
+            },
           },
-          list: 'Bucket',
+          'Bucket',
+        ],
+        representation: {
+          kinded: {
+            link: {
+              link: {
+                expectedType: 'HashMapNode',
+              },
+            },
+            list: 'Bucket',
+          },
         },
       },
     },
     Bucket: {
-      kind: 'list',
-      valueType: 'BucketEntry',
+      list: {
+        valueType: 'BucketEntry',
+      },
     },
     BucketEntry: {
-      kind: 'struct',
-      fields: {
-        key: {
-          type: 'Bytes',
+      struct: {
+        fields: {
+          key: {
+            type: 'Bytes',
+          },
+          value: {
+            type: 'Any',
+          },
         },
-        value: {
-          type: 'Any',
+        representation: {
+          tuple: {},
         },
-      },
-      representation: {
-        tuple: {},
       },
     },
     Binary: {
-      kind: 'link',
+      link: {},
     },
     Address: {
-      kind: 'link',
+      link: {},
     },
     Request: {
-      kind: 'struct',
-      fields: {
-        type: {
-          type: 'String',
-        },
-        payload: {
+      struct: {
+        fields: {
           type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Any',
+            type: 'String',
+          },
+          payload: {
+            type: {
+              map: {
+                keyType: 'String',
+                valueType: 'Any',
+              },
+            },
+          },
+          binary: {
+            type: 'Binary',
+            optional: true,
           },
         },
-        binary: {
-          type: 'Binary',
-          optional: true,
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     ReplyTypes: {
-      kind: 'enum',
-      members: {
-        REJECT: null,
-        PROMISE: null,
-        RESOLVE: null,
-      },
-      representation: {
-        string: {
-          REJECT: '@@REJECT',
-          PROMISE: '@@PROMISE',
-          RESOLVE: '@@RESOLVE',
+      enum: {
+        members: ['REJECT', 'PROMISE', 'RESOLVE'],
+        representation: {
+          string: {
+            REJECT: '@@REJECT',
+            PROMISE: '@@PROMISE',
+            RESOLVE: '@@RESOLVE',
+          },
         },
       },
     },
     Reply: {
-      kind: 'struct',
-      fields: {
-        type: {
-          type: 'ReplyTypes',
-        },
-        payload: {
+      struct: {
+        fields: {
           type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Any',
+            type: 'ReplyTypes',
+          },
+          payload: {
+            type: {
+              map: {
+                keyType: 'String',
+                valueType: 'Any',
+              },
+            },
+          },
+          binary: {
+            type: 'Binary',
+            optional: true,
           },
         },
-        binary: {
-          type: 'Binary',
-          optional: true,
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     PublicKeyTypes: {
-      kind: 'enum',
-      members: {
-        Ed25519: null,
-        Secp256k1: null,
-        RSA: null,
-      },
-      representation: {
-        string: {},
+      enum: {
+        members: ['Ed25519', 'Secp256k1', 'RSA'],
+        representation: {
+          string: {},
+        },
       },
     },
     PublicKey: {
-      kind: 'struct',
-      fields: {
-        name: {
-          type: 'String',
+      struct: {
+        fields: {
+          name: {
+            type: 'String',
+          },
+          key: {
+            type: 'String',
+          },
+          algorithm: {
+            type: 'PublicKeyTypes',
+          },
         },
-        key: {
-          type: 'String',
+        representation: {
+          map: {},
         },
-        algorithm: {
-          type: 'PublicKeyTypes',
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     Validators: {
-      kind: 'struct',
-      fields: {
-        quorumThreshold: {
-          type: 'Int',
-        },
-        publicKeys: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'PublicKey',
+      struct: {
+        fields: {
+          quorumThreshold: {
+            type: 'Int',
+          },
+          publicKeys: {
+            type: {
+              list: {
+                valueType: {
+                  link: {
+                    expectedType: 'PublicKey',
+                  },
+                },
+              },
             },
           },
         },
-      },
-      representation: {
-        map: {},
+        representation: {
+          map: {},
+        },
       },
     },
     Signatures: {
-      kind: 'list',
-      valueType: 'String',
+      list: {
+        valueType: 'String',
+      },
     },
     Covenant: {
-      kind: 'string',
+      string: {},
     },
     Timestamp: {
-      kind: 'struct',
-      fields: {
-        isoDate: {
-          type: 'String',
+      struct: {
+        fields: {
+          isoDate: {
+            type: 'String',
+          },
         },
-      },
-      representation: {
-        map: {},
+        representation: {
+          map: {},
+        },
       },
     },
     ACL: {
-      kind: 'struct',
-      fields: {},
-      representation: {
-        map: {},
+      struct: {
+        fields: {},
+        representation: {
+          map: {},
+        },
       },
     },
     State: {
-      kind: 'map',
-      keyType: 'String',
-      valueType: 'Any',
+      map: {
+        keyType: 'String',
+        valueType: 'Any',
+      },
     },
     RequestId: {
-      kind: 'struct',
-      fields: {
-        channelId: {
-          type: 'Int',
+      struct: {
+        fields: {
+          channelId: {
+            type: 'Int',
+          },
+          stream: {
+            type: 'String',
+          },
+          requestIndex: {
+            type: 'Int',
+          },
         },
-        stream: {
-          type: 'String',
+        representation: {
+          map: {},
         },
-        requestIndex: {
-          type: 'Int',
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     AsyncRequest: {
-      kind: 'struct',
-      fields: {
-        request: {
-          type: {
-            kind: 'link',
-            expectedType: 'Request',
+      struct: {
+        fields: {
+          request: {
+            type: {
+              link: {
+                expectedType: 'Request',
+              },
+            },
+          },
+          to: {
+            type: 'String',
+          },
+          requestId: {
+            type: 'RequestId',
+            optional: true,
+          },
+          settled: {
+            type: {
+              link: {
+                expectedType: 'Reply',
+              },
+            },
+            optional: true,
           },
         },
-        to: {
-          type: 'String',
+        representation: {
+          map: {},
         },
-        requestId: {
-          type: 'RequestId',
-          optional: true,
-        },
-        settled: {
-          type: {
-            kind: 'link',
-            expectedType: 'Reply',
-          },
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     RxRequest: {
-      kind: 'struct',
-      fields: {
-        request: {
-          type: {
-            kind: 'link',
-            expectedType: 'Request',
+      struct: {
+        fields: {
+          request: {
+            type: {
+              link: {
+                expectedType: 'Request',
+              },
+            },
+          },
+          requestId: {
+            type: 'RequestId',
           },
         },
-        requestId: {
-          type: 'RequestId',
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     AsyncTrail: {
-      kind: 'struct',
-      fields: {
-        origin: {
-          type: 'RxRequest',
-        },
-        settles: {
-          type: {
-            kind: 'list',
-            valueType: 'AsyncRequest',
+      struct: {
+        fields: {
+          origin: {
+            type: 'RxRequest',
+          },
+          settles: {
+            type: {
+              list: {
+                valueType: 'AsyncRequest',
+              },
+            },
+          },
+          txs: {
+            type: {
+              list: {
+                valueType: 'AsyncRequest',
+              },
+            },
+          },
+          reply: {
+            type: {
+              link: {
+                expectedType: 'reply',
+              },
+            },
+            optional: true,
+          },
+          openPaths: {
+            type: {
+              list: {
+                valueType: 'RequestId',
+              },
+            },
+            optional: true,
           },
         },
-        txs: {
-          type: {
-            kind: 'list',
-            valueType: 'AsyncRequest',
-          },
+        representation: {
+          map: {},
         },
-        reply: {
-          type: {
-            kind: 'link',
-            expectedType: 'reply',
-          },
-          optional: true,
-        },
-        openPaths: {
-          type: {
-            kind: 'list',
-            valueType: 'RequestId',
-          },
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     Pending: {
-      kind: 'struct',
-      fields: {
-        system: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'AsyncTrail',
+      struct: {
+        fields: {
+          system: {
+            type: {
+              list: {
+                valueType: {
+                  link: {
+                    expectedType: 'AsyncTrail',
+                  },
+                },
+              },
+            },
+          },
+          reducer: {
+            type: {
+              list: {
+                valueType: {
+                  link: {
+                    expectedType: 'AsyncTrail',
+                  },
+                },
+              },
             },
           },
         },
-        reducer: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'AsyncTrail',
-            },
-          },
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     SideEffectsConfig: {
-      kind: 'struct',
-      fields: {
-        networkAccess: {
-          type: {
-            kind: 'list',
-            valueType: 'String',
+      struct: {
+        fields: {
+          networkAccess: {
+            type: {
+              list: {
+                valueType: 'String',
+              },
+            },
+          },
+          asyncTimeoutMs: {
+            type: 'Int',
           },
         },
-        asyncTimeoutMs: {
-          type: 'Int',
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     Entropy: {
-      kind: 'struct',
-      fields: {
-        seed: {
-          type: 'String',
+      struct: {
+        fields: {
+          seed: {
+            type: 'String',
+          },
+          count: {
+            type: 'Int',
+          },
         },
-        count: {
-          type: 'Int',
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     Config: {
-      kind: 'struct',
-      fields: {
-        isPierced: {
-          type: 'Bool',
-        },
-        sideEffects: {
-          type: 'SideEffectsConfig',
-        },
-        isPublicChannelOpen: {
-          type: 'Bool',
-        },
-        acl: {
-          type: {
-            kind: 'link',
-            expectedType: 'ACL',
+      struct: {
+        fields: {
+          isPierced: {
+            type: 'Bool',
+          },
+          sideEffects: {
+            type: 'SideEffectsConfig',
+          },
+          isPublicChannelOpen: {
+            type: 'Bool',
+          },
+          acl: {
+            type: {
+              link: {
+                expectedType: 'ACL',
+              },
+            },
+          },
+          interpulse: {
+            type: {
+              link: {
+                expectedType: 'Covenant',
+              },
+            },
+          },
+          entropy: {
+            type: 'Entropy',
           },
         },
-        interpulse: {
-          type: {
-            kind: 'link',
-            expectedType: 'Covenant',
-          },
+        representation: {
+          map: {},
         },
-        entropy: {
-          type: 'Entropy',
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     Dmz: {
-      kind: 'struct',
-      fields: {
-        config: {
-          type: {
-            kind: 'link',
-            expectedType: 'Config',
+      struct: {
+        fields: {
+          config: {
+            type: {
+              link: {
+                expectedType: 'Config',
+              },
+            },
+          },
+          timestamp: {
+            type: 'Timestamp',
+          },
+          network: {
+            type: 'Network',
+          },
+          state: {
+            type: {
+              link: {
+                expectedType: 'State',
+              },
+            },
+          },
+          pending: {
+            type: {
+              link: {
+                expectedType: 'Pending',
+              },
+            },
+            optional: true,
+          },
+          appRoot: {
+            type: 'HistoricalPulseLink',
+            optional: true,
+          },
+          binary: {
+            type: 'Binary',
+            optional: true,
+          },
+          covenant: {
+            type: 'Covenant',
           },
         },
-        timestamp: {
-          type: 'Timestamp',
+        representation: {
+          map: {},
         },
-        network: {
-          type: 'Network',
-        },
-        state: {
-          type: {
-            kind: 'link',
-            expectedType: 'State',
-          },
-        },
-        pending: {
-          type: {
-            kind: 'link',
-            expectedType: 'Pending',
-          },
-          optional: true,
-        },
-        approot: {
-          type: 'PulseLink',
-          optional: true,
-        },
-        binary: {
-          type: 'Binary',
-          optional: true,
-        },
-        covenant: {
-          type: 'Covenant',
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     PromisedReply: {
-      kind: 'struct',
-      fields: {
-        requestIndex: {
-          type: 'Int',
-        },
-        reply: {
-          type: {
-            kind: 'link',
-            expectedType: 'Reply',
+      struct: {
+        fields: {
+          requestIndex: {
+            type: 'Int',
+          },
+          reply: {
+            type: {
+              link: {
+                expectedType: 'Reply',
+              },
+            },
           },
         },
-      },
-      representation: {
-        map: {},
+        representation: {
+          map: {},
+        },
       },
     },
     TxQueue: {
-      kind: 'struct',
-      fields: {
-        requestsLength: {
-          type: 'Int',
-        },
-        requests: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'Request',
+      struct: {
+        fields: {
+          requestsLength: {
+            type: 'Int',
+          },
+          requests: {
+            type: {
+              list: {
+                valueType: {
+                  link: {
+                    expectedType: 'Request',
+                  },
+                },
+              },
+            },
+            optional: true,
+          },
+          repliesLength: {
+            type: 'Int',
+          },
+          replies: {
+            type: {
+              list: {
+                valueType: {
+                  link: {
+                    expectedType: 'Reply',
+                  },
+                },
+              },
+            },
+            optional: true,
+          },
+          promisedRequestIds: {
+            type: {
+              list: {
+                valueType: 'Int',
+              },
             },
           },
-          optional: true,
-        },
-        repliesLength: {
-          type: 'Int',
-        },
-        replies: {
-          type: {
-            kind: 'list',
-            valueType: {
-              kind: 'link',
-              expectedType: 'Reply',
+          promisedReplies: {
+            type: {
+              list: {
+                valueType: 'PromisedReply',
+              },
             },
-          },
-          optional: true,
-        },
-        promisedRequestIds: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
+            optional: true,
           },
         },
-        promisedReplies: {
-          type: {
-            kind: 'list',
-            valueType: 'PromisedReply',
-          },
-          optional: true,
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     Tx: {
-      kind: 'struct',
-      fields: {
-        precedent: {
-          type: 'PulseLink',
-          optional: true,
+      struct: {
+        fields: {
+          precedent: {
+            type: 'PulseLink',
+            optional: true,
+          },
+          system: {
+            type: 'TxQueue',
+          },
+          reducer: {
+            type: 'TxQueue',
+          },
         },
-        system: {
-          type: 'TxQueue',
+        representation: {
+          map: {},
         },
-        reducer: {
-          type: 'TxQueue',
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     RxQueue: {
-      kind: 'copy',
-      fromType: 'TxQueue',
+      copy: {
+        fromType: 'TxQueue',
+      },
     },
     Rx: {
-      kind: 'struct',
-      fields: {
-        tip: {
-          type: 'PulseLink',
-          optional: true,
+      struct: {
+        fields: {
+          tip: {
+            type: 'PulseLink',
+            optional: true,
+          },
+          latest: {
+            type: 'PulseLink',
+            optional: true,
+          },
+          system: {
+            type: 'RxQueue',
+            optional: true,
+          },
+          reducer: {
+            type: 'RxQueue',
+            optional: true,
+          },
         },
-        system: {
-          type: 'RxQueue',
-          optional: true,
+        representation: {
+          map: {},
         },
-        reducer: {
-          type: 'RxQueue',
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     Channel: {
-      kind: 'struct',
-      fields: {
-        channelId: {
-          type: 'Int',
-        },
-        address: {
-          type: 'Address',
-        },
-        tx: {
-          type: {
-            kind: 'link',
-            expectedType: 'Tx',
+      struct: {
+        fields: {
+          channelId: {
+            type: 'Int',
           },
-        },
-        rx: {
-          type: 'Rx',
-        },
-        aliases: {
-          type: {
-            kind: 'list',
-            valueType: 'String',
+          address: {
+            type: 'Address',
           },
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    Loopback: {
-      kind: 'copy',
-      fromType: 'Channel',
-    },
-    Channels: {
-      kind: 'struct',
-      fields: {
-        counter: {
-          type: 'Int',
-        },
-        list: {
-          type: 'HashMapRoot',
-        },
-        addresses: {
-          type: 'HashMapRoot',
-        },
-        rxs: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
+          tx: {
+            type: {
+              link: {
+                expectedType: 'Tx',
+              },
+            },
           },
-        },
-        txs: {
-          type: {
-            kind: 'list',
-            valueType: 'Int',
+          rx: {
+            type: 'Rx',
           },
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    Network: {
-      kind: 'struct',
-      fields: {
-        channels: {
-          type: 'Channels',
-        },
-        children: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        downlinks: {
-          type: 'HashMapRoot',
-        },
-        uplinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        symlinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        hardlinks: {
-          type: 'HashMapRoot',
-          optional: true,
-        },
-        piercings: {
-          type: 'Tx',
-          optional: true,
-        },
-      },
-      representation: {
-        map: {},
-      },
-    },
-    StateTreeNode: {
-      kind: 'struct',
-      fields: {
-        state: {
-          type: {
-            kind: 'link',
-            expectedType: 'State',
-          },
-        },
-        binary: {
-          type: {
-            kind: 'link',
-            expectedType: 'Binary',
-          },
-        },
-        children: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: {
-              kind: 'link',
-              expectedType: 'StateTreeNode',
+          aliases: {
+            type: {
+              list: {
+                valueType: 'String',
+              },
             },
           },
         },
+        representation: {
+          map: {},
+        },
       },
-      representation: {
-        map: {},
+    },
+    Loopback: {
+      copy: {
+        fromType: 'Channel',
+      },
+    },
+    Channels: {
+      struct: {
+        fields: {
+          counter: {
+            type: 'Int',
+          },
+          list: {
+            type: 'HashMapRoot',
+          },
+          addresses: {
+            type: 'HashMapRoot',
+          },
+          rxs: {
+            type: {
+              list: {
+                valueType: 'Int',
+              },
+            },
+          },
+          txs: {
+            type: {
+              list: {
+                valueType: 'Int',
+              },
+            },
+          },
+        },
+        representation: {
+          map: {},
+        },
+      },
+    },
+    Network: {
+      struct: {
+        fields: {
+          channels: {
+            type: 'Channels',
+          },
+          children: {
+            type: 'HashMapRoot',
+            optional: true,
+          },
+          downlinks: {
+            type: 'HashMapRoot',
+          },
+          uplinks: {
+            type: 'HashMapRoot',
+            optional: true,
+          },
+          symlinks: {
+            type: 'HashMapRoot',
+            optional: true,
+          },
+          hardlinks: {
+            type: 'HashMapRoot',
+            optional: true,
+          },
+          piercings: {
+            type: 'Tx',
+            optional: true,
+          },
+        },
+        representation: {
+          map: {},
+        },
+      },
+    },
+    StateTreeNode: {
+      struct: {
+        fields: {
+          state: {
+            type: {
+              link: {
+                expectedType: 'State',
+              },
+            },
+          },
+          children: {
+            type: 'HashMapRoot',
+          },
+        },
+        representation: {
+          map: {},
+        },
+      },
+    },
+    BinaryTreeNode: {
+      struct: {
+        fields: {
+          binary: {
+            type: {
+              link: {
+                expectedType: 'Binary',
+              },
+            },
+          },
+          children: {
+            type: 'HashMapRoot',
+          },
+        },
+        representation: {
+          map: {},
+        },
       },
     },
     Lineage: {
-      kind: 'list',
-      valueType: 'Link',
+      list: {
+        valueType: 'Link',
+      },
     },
     Turnovers: {
-      kind: 'list',
-      valueType: 'PulseLink',
+      list: {
+        valueType: 'PulseLink',
+      },
     },
     Provenance: {
-      kind: 'struct',
-      fields: {
-        dmz: {
-          type: {
-            kind: 'link',
-            expectedType: 'Dmz',
+      struct: {
+        fields: {
+          dmz: {
+            type: {
+              link: {
+                expectedType: 'Dmz',
+              },
+            },
+          },
+          stateTree: {
+            type: {
+              link: {
+                expectedType: 'StateTreeNode',
+              },
+            },
+          },
+          binaryTree: {
+            type: {
+              link: {
+                expectedType: 'BinaryTreeNode',
+              },
+            },
+          },
+          lineageTree: {
+            type: {
+              link: {
+                expectedType: 'Lineage',
+              },
+            },
+          },
+          validators: {
+            type: {
+              link: {
+                expectedType: 'Validators',
+              },
+            },
+          },
+          turnovers: {
+            type: {
+              link: {
+                expectedType: 'Turnovers',
+              },
+            },
+          },
+          address: {
+            type: 'Address',
+          },
+          transmissions: {
+            type: {
+              map: {
+                keyType: 'String',
+                valueType: 'Tx',
+              },
+            },
           },
         },
-        states: {
-          type: {
-            kind: 'link',
-            expectedType: 'StateTreeNode',
-          },
+        representation: {
+          map: {},
         },
-        lineages: {
-          type: {
-            kind: 'link',
-            expectedType: 'Lineage',
-          },
-        },
-        validators: {
-          type: {
-            kind: 'link',
-            expectedType: 'Validators',
-          },
-        },
-        turnovers: {
-          type: {
-            kind: 'link',
-            expectedType: 'Turnovers',
-          },
-        },
-        address: {
-          type: 'Address',
-        },
-        transmissions: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Tx',
-          },
-        },
-      },
-      representation: {
-        map: {},
       },
     },
     Pulse: {
-      kind: 'struct',
-      fields: {
-        provenance: {
-          type: {
-            kind: 'link',
-            expectedType: 'Provenance',
+      struct: {
+        fields: {
+          provenance: {
+            type: {
+              link: {
+                expectedType: 'Provenance',
+              },
+            },
+          },
+          signatures: {
+            type: 'Signatures',
           },
         },
-        signatures: {
-          type: 'Signatures',
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
     PulseLink: {
-      kind: 'link',
+      link: {},
+    },
+    HistoricalPulseLink: {
+      copy: {
+        fromType: 'PulseLink',
+      },
     },
     InterProvenance: {
-      kind: 'struct',
-      fields: {
-        validators: {
-          type: {
-            kind: 'link',
-            expectedType: 'Validators',
+      struct: {
+        fields: {
+          validators: {
+            type: {
+              link: {
+                expectedType: 'Validators',
+              },
+            },
+            optional: true,
           },
-          optional: true,
-        },
-        turnovers: {
-          type: {
-            kind: 'link',
-            expectedType: 'Turnovers',
+          turnovers: {
+            type: {
+              link: {
+                expectedType: 'Turnovers',
+              },
+            },
+            optional: true,
           },
-          optional: true,
-        },
-        address: {
-          type: 'Address',
-        },
-        transmissions: {
-          type: {
-            kind: 'map',
-            keyType: 'String',
-            valueType: 'Tx',
+          address: {
+            type: 'Address',
+          },
+          transmissions: {
+            type: {
+              map: {
+                keyType: 'String',
+                valueType: 'Tx',
+              },
+            },
           },
         },
-      },
-      representation: {
-        map: {},
+        representation: {
+          map: {},
+        },
       },
     },
     InterPulse: {
-      kind: 'struct',
-      fields: {
-        provenance: {
-          type: {
-            kind: 'link',
-            expectedType: 'InterProvenance',
+      struct: {
+        fields: {
+          provenance: {
+            type: {
+              link: {
+                expectedType: 'InterProvenance',
+              },
+            },
+          },
+          signatures: {
+            type: 'Signatures',
           },
         },
-        signatures: {
-          type: 'Signatures',
+        representation: {
+          map: {},
         },
-      },
-      representation: {
-        map: {},
       },
     },
   },

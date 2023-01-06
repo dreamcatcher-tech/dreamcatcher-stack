@@ -25,10 +25,10 @@ Channel {
       "requests": [],
       "requestsLength": 0,
     },
-    "tip": PulseLink {},
+    "tip": HistoricalPulseLink {},
   },
   "tx": Tx {
-    "precedent": PulseLink {},
+    "precedent": HistoricalPulseLink {},
     "reducer": TxQueue {
       "promisedReplies": [],
       "promisedRequestIds": [],

@@ -2,7 +2,7 @@ import { pipe } from 'it-pipe'
 import { shell } from '../../w212-system-covenants'
 import * as apps from '../../w301-user-apps'
 import { pushable } from 'it-pushable'
-import { Engine } from '../../w210-engine'
+import { Engine, Endurance } from '../../w210-engine'
 import { schemaToFunctions } from '../../w002-api'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -45,7 +45,7 @@ export class Interpulse {
     Object.assign(overloads, apps)
     // if announcer is inside net, how to trigger on interpulse received ?
     // could connect via Interpulse ?
-    let { net, crypto, endurance } = options
+    let { net, crypto, endurance = Endurance.create() } = options
     const { repo, CI } = options
     if (repo) {
       // no repo => no net - storage and network are one 🙏
@@ -58,10 +58,10 @@ export class Interpulse {
     const engine = await Engine.create(opts)
 
     const instance = new Interpulse(engine)
+    instance.#endurance = endurance
     if (repo) {
       instance.net = net
       instance.#repo = repo
-      instance.#endurance = endurance
       instance.#crypto = crypto
       instance.#watchMtab()
     }
@@ -117,6 +117,9 @@ export class Interpulse {
     const absPath = posix.resolve(wd, path)
     const latest = await this.#engine.latestByPath(absPath, rootPulse)
     return latest
+  }
+  get pulseResolver() {
+    return (pulseLink) => this.#endurance.recover(pulseLink)
   }
   get logger() {
     return this.#engine.logger

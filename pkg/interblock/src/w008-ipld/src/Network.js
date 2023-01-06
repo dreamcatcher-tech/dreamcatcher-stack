@@ -2,6 +2,7 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 import {
   PulseLink,
+  HistoricalPulseLink,
   RequestId,
   RxRequest,
   RxReply,
@@ -65,15 +66,15 @@ export class Network extends IpldStruct {
   static create() {
     const channels = Channels.create()
     const children = ChildrenHamt.create()
-    const downlinks = DownlinksHamt.create()
     const uplinks = UplinksHamt.create()
+    const downlinks = DownlinksHamt.create()
     const symlinks = SymlinksHamt.create()
     const hardlinks = Hamt.create() // TODO move to own class
     let instance = super.clone({
       channels,
       children,
-      downlinks,
       uplinks,
+      downlinks,
       symlinks,
       hardlinks,
     })
@@ -139,7 +140,8 @@ export class Network extends IpldStruct {
     assert(request instanceof Request)
     let io = await this.getIo()
     let { rx } = io
-    let { reducer, system, tip = PulseLink.createCrossover(io.address) } = rx
+    let { reducer, system, tip } = rx
+    tip ??= HistoricalPulseLink.createCrossover(io.address)
     let requestId
     if (request.isSystem()) {
       const requestIndex = system.requestsLength
@@ -225,7 +227,7 @@ export class Network extends IpldStruct {
   async hasChild(alias) {
     assert(typeof alias === 'string', 'Alias not string')
     assert(alias)
-    return this.children.has(alias)
+    return await this.children.has(alias)
   }
   async getChild(alias) {
     assert(typeof alias === 'string', 'Alias not string')
@@ -477,7 +479,7 @@ const crossover = (channel) => {
     let { tx, rx, address } = channel
     const system = rx.system.ingestTxQueue(tx.system)
     const reducer = rx.reducer.ingestTxQueue(tx.reducer)
-    const { tip = PulseLink.createCrossover(address) } = rx
+    const { tip = HistoricalPulseLink.createCrossover(address) } = rx
     rx = rx.setMap({ tip, system, reducer })
     tx = tx.blank(tip)
     channel = channel.setMap({ tx, rx })

@@ -15,10 +15,10 @@ export default function ReactComplex({ engine, path, sync, wd, children }) {
     debug('iterator', iterator)
     const subscribe = async () => {
       let previous = complex
-      for await (const latest of iterator) {
-        debug('subscription update', latest)
+      for await (const pulse of iterator) {
+        debug('subscription update', pulse)
         // TODO allow skips if update takes longer than subscription interval
-        const next = await previous.update(latest, engine)
+        const next = await previous.update(pulse, engine)
         // TODO update complex as soon as each new info is updated
 
         if (next !== previous) {

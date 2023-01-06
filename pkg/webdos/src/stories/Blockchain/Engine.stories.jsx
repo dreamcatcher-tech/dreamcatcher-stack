@@ -1,6 +1,7 @@
 import React from 'react'
 import { system, api, apps } from '@dreamcatcher-tech/interblock'
 import { Engine, Complex } from '../..'
+import { App } from '../..'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 Debug.enable('*Actions')
@@ -24,11 +25,11 @@ Test.propTypes = {
 }
 
 const Template = (args) => {
-  Debug.enable('*Engine *Complex iplog*')
+  Debug.enable('*Engine *Complex iplog* *Nav')
   return (
     <Engine {...args}>
       <Complex path="/crm">
-        <Test />
+        <App />
       </Complex>
     </Engine>
   )

@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Dmz, Pulse, PulseLink, Transmissions } from '.'
+import { Address, Dmz, Pulse, HistoricalPulseLink, Transmissions } from '.'
 import { IpldStruct } from './IpldStruct'
 import Debug from 'debug'
 import { Validators } from './Validators'
@@ -25,7 +25,7 @@ type StateTreeNode struct {
     children { String : &StateTreeNode }
 }
 type Lineage [Link]          # TODO use a derivative of the HAMT as array ?
-type Turnovers [PulseLink]   # TODO make into a tree
+type Turnovers [HistoricalPulseLink]   # TODO make into a tree
 type Provenance struct {
     dmz &Dmz
     states &StateTreeNode
@@ -41,7 +41,7 @@ type Provenance struct {
 export class Provenance extends IpldStruct {
   static classMap = {
     dmz: Dmz,
-    lineages: PulseLink,
+    lineages: HistoricalPulseLink,
     validators: Validators,
     address: Address,
     transmissions: Transmissions,
@@ -72,9 +72,9 @@ export class Provenance extends IpldStruct {
   }
   setLineage(pulse) {
     assert(pulse instanceof Pulse)
-    const pulseLink = PulseLink.generate(pulse)
-    const lineages = [pulseLink]
-    assert(pulseLink.cid.equals(pulse.cid))
+    const historyLink = HistoricalPulseLink.generate(pulse)
+    assert(historyLink.cid.equals(pulse.cid))
+    const lineages = [historyLink]
     return this.setMap({ lineages })
   }
   async crush(resolver) {

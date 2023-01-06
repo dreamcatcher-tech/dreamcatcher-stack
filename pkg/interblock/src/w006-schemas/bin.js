@@ -1,4 +1,4 @@
-import collect from 'ipld-schema/bin/collect-input.js'
+import { collectInput } from 'ipld-schema/bin/collect-input.js'
 import { parse } from 'ipld-schema'
 import { writeFileSync } from 'fs'
 import Debug from 'debug'
@@ -6,7 +6,7 @@ const debug = Debug('interblock:schemas')
 Debug.enable('interblock:schemas')
 const run = async () => {
   const mdPath = './src/w006-schemas/IpldSchemas.md'
-  const input = await collect([mdPath])
+  const input = await collectInput([mdPath])
   debug('generating schema from: ', mdPath)
   const js = parse(input[0].contents)
   //   debug('generated schema: %O', js)

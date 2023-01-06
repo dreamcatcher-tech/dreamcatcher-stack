@@ -1,5 +1,6 @@
 import React from 'react'
 import { App } from '..'
+import { api } from '@dreamcatcher-tech/interblock'
 import * as data from './data'
 import PropTypes from 'prop-types'
 import delay from 'delay'
@@ -19,7 +20,7 @@ const Template = ({ base }) => {
     setComplex((current) => current.setWd(path))
   }
   const [complex, setComplex] = React.useState(base)
-  if (complex === base) {
+  if (complex === base && !base.isLoading) {
     let next = base.addAction({ cd })
     const routing = next.child('routing')
     const network = routing.network.map((child) => {
@@ -52,7 +53,7 @@ const Template = ({ base }) => {
   debug('complex', complex)
   return <App complex={complex} />
 }
-Template.propTypes = { base: PropTypes.object }
+Template.propTypes = { base: PropTypes.instanceOf(api.Complex) }
 
 export const Small = Template.bind({})
 export const Medium = Template.bind({})
@@ -63,3 +64,6 @@ Large.args = { base: data.large }
 // TODO add customers into the app from large and see how the app responds
 export const Growing = Template.bind({})
 Growing.args = {}
+
+export const Loading = Template.bind({})
+Loading.args = { base: api.Complex.createLoading() }

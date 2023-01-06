@@ -9,11 +9,11 @@ import {
   PublicKey,
   Dmz,
   Network,
+  PulseLink,
 } from '.'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import { fromString as from } from 'uint8arrays/from-string'
-import { PulseLink } from './PulseLink'
 /**
  type Pulse struct {
     provenance &Provenance
@@ -22,15 +22,15 @@ import { PulseLink } from './PulseLink'
  */
 export class Pulse extends IpldStruct {
   static classMap = { provenance: Provenance }
-  static async createCI() {
+  static async createCI(params) {
     const CI = true
-    return Pulse.createRoot({ CI })
+    return Pulse.createRoot({ ...params, CI })
   }
-  static async createRoot({ CI = false, validators }) {
+  static async createRoot({ CI = false, validators, ...rest }) {
     const network = await Network.createRoot()
     const covenant = 'root'
     const config = Config.createPierced()
-    const dmz = Dmz.create({ network, config, covenant }, CI)
+    const dmz = Dmz.create({ network, config, covenant, ...rest }, CI)
     // TODO assert the validators are supplied
     const provenance = Provenance.createGenesis(dmz, validators)
     return await Pulse.create(provenance)

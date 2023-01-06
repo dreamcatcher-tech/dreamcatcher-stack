@@ -19,18 +19,24 @@ export default function App({ complex }) {
         overflow: 'hidden',
       }}
     >
-      <Box sx={{ zIndex: 1 }}>
-        <Nav complex={complex} />
-      </Box>
-      <Glass.Lazy show={wd.startsWith('/schedule')}>
-        <Schedule complex={complex.child('schedule')} />
-      </Glass.Lazy>
-      <Glass.Lazy show={wd.startsWith('/customers')}>
-        <CollectionList complex={complex.child('customers')} />
-      </Glass.Lazy>
-      <Glass.Lazy show={wd.startsWith('/routing')}>
-        <Routing complex={complex.child('routing')} />
-      </Glass.Lazy>
+      {complex.isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          <Box sx={{ zIndex: 1 }}>
+            <Nav complex={complex} />
+          </Box>
+          <Glass.Lazy show={wd.startsWith('/schedule')}>
+            <Schedule complex={complex.child('schedule')} />
+          </Glass.Lazy>
+          <Glass.Lazy show={wd.startsWith('/customers')}>
+            <CollectionList complex={complex.child('customers')} />
+          </Glass.Lazy>
+          <Glass.Lazy show={wd.startsWith('/routing')}>
+            <Routing complex={complex.child('routing')} />
+          </Glass.Lazy>
+        </>
+      )}
     </Box>
   )
 }

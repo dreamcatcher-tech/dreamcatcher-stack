@@ -1,6 +1,5 @@
 import assert from 'assert-fast'
-import { Address, Pulse, PulseLink } from '.'
-import { IpldStruct } from './IpldStruct'
+import { Address, Pulse, PulseLink, HistoricalPulseLink } from '.'
 
 /**
  ## InterPulse
@@ -67,8 +66,8 @@ export class Interpulse {
   getTargetAddress() {
     return this.tx.address
   }
-  getPulseLink() {
-    return PulseLink.generate(this.#pulse)
+  getHistoricalPulseLink() {
+    return HistoricalPulseLink.generate(this.#pulse)
   }
   dir() {
     console.dir(this, { depth: Infinity })

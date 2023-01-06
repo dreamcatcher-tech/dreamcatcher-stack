@@ -7,6 +7,7 @@ import {
   Pulse,
   Address,
   PulseLink,
+  HistoricalPulseLink,
   Request,
   Validators,
   Timestamp,
@@ -53,7 +54,7 @@ type Tx struct {
 export class Tx extends IpldStruct {
   static cidLinks = ['precedent']
   static classMap = {
-    precedent: PulseLink,
+    precedent: HistoricalPulseLink,
     system: TxQueue,
     reducer: TxQueue,
   }
@@ -123,6 +124,7 @@ export class Tx extends IpldStruct {
   blank(precedent) {
     assert(!this.isEmpty())
     assert(precedent instanceof PulseLink)
+    precedent = HistoricalPulseLink.fromPulseLink(precedent)
     // TODO check precedent is not the same as the current one
     // unless loopback or io
     return this.setMap({

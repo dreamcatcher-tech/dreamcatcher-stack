@@ -11,12 +11,12 @@ type Rx struct {
 */
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
-import { Pulse, RxQueue, PulseLink, Interpulse } from '.'
+import { RxQueue, PulseLink, HistoricalPulseLink, Interpulse } from '.'
 
 export class Rx extends IpldStruct {
   static cidLinks = ['tip', 'latest']
   static classMap = {
-    tip: PulseLink, // TODO check pulselink is only used for tips
+    tip: HistoricalPulseLink,
     system: RxQueue,
     reducer: RxQueue,
     latest: PulseLink,
@@ -47,7 +47,7 @@ export class Rx extends IpldStruct {
     }
     const system = this.system.ingestTxQueue(tx.system)
     const reducer = this.reducer.ingestTxQueue(tx.reducer)
-    const tip = interpulse.getPulseLink()
+    const tip = interpulse.getHistoricalPulseLink()
     next = next.setMap({ tip, system, reducer })
     return next
   }

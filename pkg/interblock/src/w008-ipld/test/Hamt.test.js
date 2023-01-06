@@ -79,7 +79,7 @@ describe('Hamt', () => {
       'Cannot overwrite'
     )
   })
-  test.only('compare blank', async () => {
+  test('compare blank', async () => {
     const size = 53
     const raw = await hamtFactory(size)
     const base = await raw.crush()
