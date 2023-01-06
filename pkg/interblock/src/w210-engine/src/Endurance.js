@@ -126,7 +126,7 @@ export class Endurance {
   }
   assertStarted() {
     if (!this.#isStarted) {
-      throw new Error('Endurange is stopped')
+      throw new Error('Endurance is stopped')
     }
   }
   stop() {

@@ -3,7 +3,9 @@
 exports[`loopback basic 1`] = `
 Channel {
   "address": Address {},
-  "aliases": [],
+  "aliases": [
+    ".",
+  ],
   "channelId": 0,
   "rx": Rx {
     "reducer": RxQueue {

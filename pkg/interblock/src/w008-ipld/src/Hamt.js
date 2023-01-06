@@ -216,7 +216,6 @@ export class Hamt extends IpldInterface {
     assert(!other.isModified())
 
     const links = [{ cid: this.#hashmap.cid, otherCid: other.#hashmap.cid }]
-    let limit = 100000
     const mergedDiff = {
       added: new Set(),
       deleted: new Set(),
@@ -229,7 +228,7 @@ export class Hamt extends IpldInterface {
         mergedDiff.modified.add(key)
       }
     }
-    while (links.length > 0 && limit--) {
+    while (links.length > 0) {
       const { cid, otherCid } = links.shift()
       const value = await safelyGetBlock(this.#putStore, cid)
       const otherValue = await safelyGetBlock(other.#putStore, otherCid)

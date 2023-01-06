@@ -3,7 +3,9 @@
 exports[`hooker loopback cleared immediately 1`] = `
 Channel {
   "address": Address {},
-  "aliases": [],
+  "aliases": [
+    ".",
+  ],
   "channelId": 0,
   "rx": Rx {
     "reducer": RxQueue {

@@ -19,7 +19,7 @@ export class IpldInterface {
       return !!this.classMap[key]
     }
   }
-  static defaultClass
+  static defaultClass // TODO change to using a '*' key in classMap
   static classMap = {} // keys to Class mappings
   static getClassFor(key) {
     if (!this.defaultClass) {

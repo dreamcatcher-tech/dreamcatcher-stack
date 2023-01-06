@@ -73,7 +73,7 @@ export class Channel extends IpldStruct {
   }
   static createLoopback() {
     const address = Address.createLoopback()
-    return Channel.create(Network.FIXED_IDS.LOOPBACK, address)
+    return Channel.create(Network.FIXED_IDS.LOOPBACK, address).addAlias('.')
   }
   addAlias(alias) {
     assert.strictEqual(typeof alias, 'string')
@@ -119,7 +119,8 @@ export class Channel extends IpldStruct {
       const banned = ['@@OPEN_CHILD']
       const systemRequests = tx.system.requests
       assert(systemRequests.every(({ type }) => !banned.includes(type)))
-      assert(!aliases.length)
+      assert.strictEqual(aliases.length, 1)
+      assert.strictEqual(aliases[0], '.')
     }
     if (address.isRoot()) {
       assert.strictEqual(channelId, Network.FIXED_IDS.PARENT, 'Root not parent')

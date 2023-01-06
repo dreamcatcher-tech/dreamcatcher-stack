@@ -24,4 +24,11 @@ export class AddressesHamt extends Hamt {
     assert(address instanceof Address)
     return await super.get(address.getChainId())
   }
+  async compare(other) {
+    let { added, deleted, modified } = await super.compare(other)
+    added = new Set([...added].map((key) => Address.fromChainId(key)))
+    deleted = new Set([...deleted].map((key) => Address.fromChainId(key)))
+    modified = new Set([...modified].map((key) => Address.fromChainId(key)))
+    return { added, deleted, modified }
+  }
 }

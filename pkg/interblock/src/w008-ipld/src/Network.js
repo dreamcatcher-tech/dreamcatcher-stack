@@ -84,7 +84,7 @@ export class Network extends IpldStruct {
     if (await this.channels.has(FIXED.PARENT)) {
       return await this.channels.getChannel(FIXED.PARENT)
     }
-    return Channel.create(FIXED.PARENT)
+    return Channel.create(FIXED.PARENT).addAlias('..')
   }
   async resolveParent(parentAddress) {
     assert(parentAddress instanceof Address)

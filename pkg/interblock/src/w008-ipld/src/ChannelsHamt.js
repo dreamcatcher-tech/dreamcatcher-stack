@@ -30,4 +30,11 @@ export class ChannelsHamt extends Hamt {
   async uncrush(cid, resolver, options) {
     return await super.uncrush(cid, resolver, Channel, isMutable)
   }
+  async compare(other) {
+    const diff = await super.compare(other)
+    const added = new Set([...diff.added].map((key) => parseInt(key)))
+    const deleted = new Set([...diff.deleted].map((key) => parseInt(key)))
+    const modified = new Set([...diff.modified].map((key) => parseInt(key)))
+    return { added, deleted, modified }
+  }
 }

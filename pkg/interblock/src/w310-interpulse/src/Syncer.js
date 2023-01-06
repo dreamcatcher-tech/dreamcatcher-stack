@@ -88,29 +88,60 @@ export class Syncer {
     if (instance instanceof Hamt) {
       return await this.#updateHamt(instance, prior)
     }
-    // walk the classmap
-    const { classMap = {} } = instance.constructor
+
+    const { classMap = {}, defaultClass } = instance.constructor
     await Promise.all(
       Object.keys(classMap).map(async (key) => {
         const value = instance[key]
-        debug('classMap', key, value)
         await this.#update(value, prior?.[key])
       })
     )
+    if (defaultClass) {
+      const values = []
+      const priorValues = []
+      for (const [key, value] of Object.entries(instance)) {
+        values.push(value)
+        priorValues.push(prior?.[key])
+      }
+      await this.#update(values, priorValues)
+    }
   }
 
   async #updateHamt(hamt, prior) {
     assert(hamt instanceof Hamt)
     assert(!prior || prior instanceof Hamt)
+    if (hamt.bakedMap) {
+      return
+    }
     const diff = await hamt.compare(prior)
-    debug('hamt diff', diff)
+    const { added, deleted, modified } = diff
+    let map = prior?.bakedMap ?? Immutable.Map()
+    assert(map instanceof Immutable.Map)
+    for (const key of deleted) {
+      map = map.delete(key)
+    }
+    for (const key of modified) {
+      const value = await hamt.get(key)
+      map = map.set(key, value)
+      let priorValue
+      if (prior) {
+        if (prior.bakedMap.has(key)) {
+          priorValue = prior.bakedMap.get(key)
+        } else {
+          priorValue = await prior.get(key)
+        }
+      }
+      await this.#update(value, priorValue)
+    }
+    for (const key of added) {
+      const value = await hamt.get(key)
+      map = map.set(key, value)
+      await this.#update(value)
+    }
+    hamt.bake(map)
   }
 
   async *[Symbol.asyncIterator]() {
-    // each time the pulseMap changes, we need to yield a new Crisp
-    // get the latest crisp, or wait for it
-    // subscribe to all future pulses updates
-
     const source = pushable({ objectMode: true })
     this.#subscribers.add(source)
     if (this.#pulse) {

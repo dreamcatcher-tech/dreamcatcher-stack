@@ -3,7 +3,7 @@ import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 
 export class Transmissions extends IpldStruct {
-  static defaultClass = Tx
+  static defaultClass = Tx // TODO remove defaultClass and hoist this class
   static isCidLink() {
     return true
   }

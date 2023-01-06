@@ -6,8 +6,7 @@ const debug = Debug('interblock:api:Crisp')
 
 export class Crisp {
   #parent // the parent Crisp
-  // #appRoot // Pulse that is the root of the app
-  #pulse // the Pulse that we wrap
+  #pulse // the Pulse that this Crisp is wrapping
   static createRoot(rootPulse) {
     assert(rootPulse instanceof Pulse)
     const result = new Crisp()
@@ -23,7 +22,6 @@ export class Crisp {
     return result
   }
   get root() {
-    // walk the parents up until we have root
     if (!this.#parent) {
       return this
     }
@@ -70,9 +68,9 @@ export class Crisp {
     return this.#mapView
   }
   *[Symbol.iterator]() {
-    for (const [key, value] of this.#map.entries()) {
-      yield [key, value]
+    for (const [, value] of this.#map.entries()) {
+      const { aliases } = value
+      yield aliases[0]
     }
-    yield ''
   }
 }

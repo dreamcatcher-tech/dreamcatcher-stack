@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Crisp reconciles diffs 1`] = `
+[
+  "account",
+  "schedule",
+  "customers",
+  ".",
+  "..",
+  "about",
+  "settings",
+  "routing",
+]
+`;

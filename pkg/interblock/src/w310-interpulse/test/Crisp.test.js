@@ -1,3 +1,4 @@
+import { createRamRepo } from '../../w305-libp2p'
 import { Interpulse, Crisp, Syncer } from '..'
 import { crm } from '../../w301-user-apps'
 import { Pulse } from '../../w008-ipld/src'
@@ -6,7 +7,7 @@ import Debug from 'debug'
 const debug = Debug('tests')
 
 describe('Crisp', function () {
-  it.skip('should create a Crisp', async function () {
+  it('should create a Crisp', async function () {
     const pulse = await Pulse.createCI({ state: { test: true } })
     const crisp = Crisp.createRoot(pulse)
     expect(crisp).toBeInstanceOf(Crisp)
@@ -25,29 +26,32 @@ describe('Crisp', function () {
     // start the reconciler
     // test the crisp is fully loaded
   })
-  it.skip('reconciles diffs', async () => {
-    // repeat the inflates test prep
-    // make a change to the pulse deep in a child
-    // start the reconcile
-    // test the diffing was done efficiently
-
-    const engine = await Interpulse.createCI({
+  it.only('reconciles diffs', async () => {
+    const repo = createRamRepo('ram')
+    let engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
+      repo,
     })
     await engine.add('app', '/crm')
+    await engine.stop()
+    engine = await Interpulse.createCI({
+      overloads: { '/crm': crm.covenant },
+      repo,
+    })
     const approot = await engine.current('app')
     Debug.enable('iplog *Crisp *Syncer tests')
     const syncer = Syncer.create(engine.pulseResolver)
+    // restart the engine so can do timing
+    debug('starting syncer')
     await syncer.update(approot)
-    const children = []
+    debug('syncer complete')
     for await (const crisp of syncer) {
       debug('crisp', crisp)
-      for (const child of crisp) {
-        // gives just the children we are currently aware of
-        children.push(child)
-      }
+      const children = [...crisp]
+      debug(children)
+      expect(children).toMatchSnapshot()
       break
     }
-    expect(children).toEqual(['routing', 'about', 'customers', 'schedule'])
+    await engine.stop()
   }, 1500)
 })
