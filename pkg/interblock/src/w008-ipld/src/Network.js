@@ -471,7 +471,7 @@ export class Network extends IpldStruct {
     const channel = Channel.create(channelId, address).addAlias(name)
     const channels = await this.channels.addChannel(channel)
     const hardlinks = await this.hardlinks.set(name, channelId)
-    return this.setMap({ channels, hardlinks })
+    return await this.setMap({ channels, hardlinks })
   }
 }
 const crossover = (channel) => {

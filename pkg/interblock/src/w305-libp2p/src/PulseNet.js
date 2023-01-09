@@ -167,6 +167,7 @@ export class PulseNet {
     assert(isMultiaddr(multiaddr))
     assert(multiaddr.getPeerId())
     const peerId = peerIdFromString(multiaddr.getPeerId())
+    debug('addMultiAddress', multiaddr.toString(), peerId)
     await this.#net.peerStore.addressBook.set(peerId, [multiaddr])
   }
   subscribePulse(address) {

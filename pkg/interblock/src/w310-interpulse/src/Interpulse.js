@@ -249,9 +249,9 @@ export class Interpulse {
       }
 
       lastMtab = mtab
-      const network = mtab.getNetwork()
-      for await (const [, channelId] of network.hardlinks.entries()) {
-        const channel = await network.channels.getChannel(channelId)
+      const { hardlinks, channels } = mtab.getNetwork()
+      for await (const [, channelId] of hardlinks.entries()) {
+        const channel = await channels.getChannel(channelId)
         const { address } = channel
         if (subscribed.has(address.getChainId())) {
           continue
