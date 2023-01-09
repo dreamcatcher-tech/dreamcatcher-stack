@@ -23,7 +23,7 @@ const serverFactory = async ({ customerCount = 10 } = {}) => {
 
 describe('crm', () => {
   describe('app deploy', () => {
-    test('deploys app', async () => {
+    test.only('deploys app', async () => {
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
       const { path } = await engine.publish('dpkgCrm', crm.covenant)

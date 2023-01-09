@@ -16,7 +16,6 @@ import { isBrowser, isNode } from 'wherearewe'
 const debug = Debug('interpulse')
 
 /**
- *
  * The top level ORM object.
  * Assembles an Engine with all the services it needs to operate.
  *    Where networking is started.
@@ -194,17 +193,22 @@ export class Interpulse {
     const sink = pushable({
       objectMode: true,
       onEnd: () => {
-        debug('unsubscribe')
+        debug('unsubscribe', absPath)
         this.#subscribers.delete(sink)
       },
     })
     this.#subscribers.add(sink)
     const rootEmitter = this.#engine.subscribe()
     const checker = async (source) => {
+      let prior
       for await (const rootPulse of source) {
-        debug('checker pulse', rootPulse.getPulseLink())
+        debug('checker pulse %s', rootPulse.getPulseLink())
         try {
           const latest = await this.#engine.latestByPath(absPath, rootPulse)
+          if (prior?.cid.equals(latest.cid)) {
+            return
+          }
+          prior = latest
           sink.push(latest)
         } catch (error) {
           debug('error', error.message)

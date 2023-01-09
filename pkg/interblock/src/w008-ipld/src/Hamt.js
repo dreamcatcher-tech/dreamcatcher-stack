@@ -135,6 +135,7 @@ export class Hamt extends IpldInterface {
     if (!hashmap) {
       hashmap = await create(putStore, hamtOptions)
     } else {
+      // TODO why reload it and kill all the caches ?
       hashmap = await load(putStore, hashmap.cid, hamtOptions)
     }
 

@@ -12,3 +12,16 @@ exports[`Crisp reconciles diffs 1`] = `
   "settings",
 ]
 `;
+
+exports[`Crisp wd is rooted in path 1`] = `
+[
+  ".",
+  "..",
+  "about",
+  "account",
+  "customers",
+  "routing",
+  "schedule",
+  "settings",
+]
+`;

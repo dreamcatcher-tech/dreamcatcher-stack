@@ -61,7 +61,7 @@ export class PulseLink extends IpldInterface {
     return this.toString()
   }
   toString() {
-    return `PulseLink(${this.cid.toString().substring(4, 14)})`
+    return `PulseLink(${this.cid.toString().substring(6, 15)})`
   }
   crush() {
     return this

@@ -58,7 +58,7 @@ export default function Engine({ repo, ram, init, dev, children }) {
       const subscribe = async () => {
         await awaitStart
         for await (const latest of engine.subscribe('/')) {
-          debug('subscription update')
+          debug('subscription update', params)
           if (params.isStopped) {
             return
           }

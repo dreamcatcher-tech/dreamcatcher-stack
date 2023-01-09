@@ -103,10 +103,7 @@
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "maxWorkers": "95%",
-    "setupFiles": [
-      "trace-unhandled/register"
-    ]
+    "maxWorkers": "95%"
   },
   "wallaby": {
     "autoDetect": true,

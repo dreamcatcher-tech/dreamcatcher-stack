@@ -1,5 +1,5 @@
 import React from 'react'
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import AppBar from '@mui/material/AppBar'
@@ -15,17 +15,17 @@ import Settings from '@mui/icons-material/Settings'
 import Info from '@mui/icons-material/Info'
 const debug = Debug('terminal:widgets:Nav')
 
-const masked = ['.@@io', 'about', 'settings', 'account']
+const masked = ['.', '..', '.@@io', 'about', 'settings', 'account']
 /**
  * Navigation bar that renders links based on the children
  * of the root of the app complex.
  */
-const Nav = ({ complex }) => {
-  const { network, wd, actions } = complex
-  debug(`network: `, network)
-  const navLinks = network
-    .filter(({ path }) => !masked.includes(path))
-    .map(({ path }) => {
+const Nav = ({ crisp }) => {
+  const { wd, actions } = crisp
+  debug(`network: `, [...crisp])
+  const navLinks = [...crisp]
+    .filter((path) => !masked.includes(path))
+    .map((path) => {
       const title = path
       const selected = wd.startsWith('/' + path)
       return (
@@ -72,11 +72,11 @@ const Nav = ({ complex }) => {
             {navLinks}
           </List>
           <div style={{ flexGrow: 1 }} />
-          {complex.hasChild('about') &&
+          {crisp.hasChild('about') &&
             makeButtonIcon('about', <Info />, 'About the CRM')}
-          {complex.hasChild('settings') &&
+          {crisp.hasChild('settings') &&
             makeButtonIcon('settings', <Settings />, 'Application Settings')}
-          {complex.hasChild('account') &&
+          {crisp.hasChild('account') &&
             makeButtonIcon('account', <AccountCircle />, 'User Account')}
         </Toolbar>
       </AppBar>
@@ -84,7 +84,7 @@ const Nav = ({ complex }) => {
   )
 }
 Nav.propTypes = {
-  complex: PropTypes.instanceOf(api.Complex).isRequired,
+  crisp: PropTypes.instanceOf(Crisp).isRequired,
 }
 
 export default Nav
