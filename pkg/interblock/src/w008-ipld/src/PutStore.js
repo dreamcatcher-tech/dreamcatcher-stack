@@ -26,12 +26,9 @@ export class PutStore {
     next.#untrimmed = this.#untrimmed
     return next
   }
-  async get(cid) {
+  async get() {
     // used by js-ipld-hamt
-    assert(CID.asCID(cid))
-    debug('get:', cid.toString().substring(0, 9))
-    const block = await this.getBlock(cid)
-    return block.bytes
+    throw new Error('Awaiting upstream fix - use patch-package')
   }
   async getBlock(cid) {
     assert(CID.asCID(cid))
@@ -51,16 +48,9 @@ export class PutStore {
     }
     return block
   }
-  async put(cid, bytes) {
+  async put() {
     // used by js-ipld-hamt
-    assert(CID.asCID(cid))
-    assert(bytes instanceof Uint8Array)
-    this.#untrimmed = true
-    if (this.#putsMap.has(cid.toString())) {
-      return
-    }
-    const block = await create({ bytes, cid, hasher, codec })
-    return this.putBlock(block)
+    throw new Error('Awaiting upstream fix - use patch-package')
   }
   putBlock(block) {
     const { cid, bytes, value } = block
