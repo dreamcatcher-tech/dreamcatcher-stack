@@ -22,7 +22,7 @@ export class Binary extends IpldInterface {
     return instance
   }
   static async uncrush(rootCid, resolver, options) {
-    assert(rootCid instanceof CID, `rootCid must be a CID, got ${rootCid}`)
+    assert(CID.asCID(rootCid), `rootCid must be a CID, got ${rootCid}`)
     assert(typeof resolver === 'function', `resolver must be a function`)
     const ipldBlock = await resolver(rootCid)
     return this.#create(ipldBlock)

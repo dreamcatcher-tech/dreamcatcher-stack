@@ -32,10 +32,6 @@ export class IpldStruct extends IpldInterface {
   get crushedSize() {
     return this.ipldBlock.bytes.length
   }
-  get cid() {
-    const { cid } = this.ipldBlock
-    return cid
-  }
   get currentCrush() {
     return this.#crushed
   }
@@ -149,7 +145,7 @@ export class IpldStruct extends IpldInterface {
   static async uncrush(initial, resolver, options) {
     assert(typeof resolver === 'function', `resolver must be a function`)
     let block
-    if (initial instanceof CID) {
+    if (CID.asCID(initial)) {
       block = await resolver(initial)
       assert(block instanceof Block, `not instance of Block`)
       // TODO check the schema
@@ -163,7 +159,7 @@ export class IpldStruct extends IpldInterface {
     const uncrushKey = async (key) => {
       const value = initial[key]
       const isChildCidLink = this.isCidLink(key)
-      if (value instanceof CID) {
+      if (CID.asCID(value)) {
         assert(isChildCidLink)
         const childClass = this.getClassFor(key)
         instance[key] = await childClass.uncrush(value, resolver, options)

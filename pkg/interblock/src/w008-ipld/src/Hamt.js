@@ -100,7 +100,7 @@ export class Hamt extends IpldInterface {
     let value = await this.#hashmap.get(key)
     assert(value !== undefined)
     if (this.#valueClass) {
-      assert(value instanceof CID)
+      assert(CID.asCID(value))
       const resolver = (cid) => this.#putStore.getBlock(cid)
       value = await this.#valueClass.uncrush(value, resolver)
     }
@@ -113,7 +113,7 @@ export class Hamt extends IpldInterface {
   get cid() {
     assert(this.#hashmap)
     assert(!this.isModified())
-    return this.#hashmap.cid
+    return CID.asCID(this.#hashmap.cid)
   }
   get ipldBlock() {
     throw new Error('Not Implemented')
@@ -173,7 +173,7 @@ export class Hamt extends IpldInterface {
     return next
   }
   static async uncrush(cid, resolver, valueClass, isMutable) {
-    assert(cid instanceof CID, `rootCid must be a CID, got ${cid}`)
+    assert(CID.asCID(cid), `rootCid must be a CID, got ${cid}`)
     assert(typeof resolver === 'function', `resolver must be a function`)
 
     const instance = this.create(valueClass, isMutable)

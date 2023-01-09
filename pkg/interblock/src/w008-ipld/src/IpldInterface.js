@@ -1,5 +1,6 @@
 import assert from 'assert-fast'
 import { deepFreeze } from './utils'
+import { CID } from 'multiformats/cid'
 
 export class IpldInterface {
   get schema() {
@@ -37,7 +38,7 @@ export class IpldInterface {
     if (this.isModified()) {
       throw new Error('Instance must be crushed before block is encoded')
     }
-    return this.ipldBlock.cid
+    return CID.asCID(this.ipldBlock.cid)
   }
   async crush(resolver) {
     throw new Error('Not Implemented')

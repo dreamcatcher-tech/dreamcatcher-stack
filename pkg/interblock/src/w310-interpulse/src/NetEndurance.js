@@ -69,11 +69,11 @@ export class NetEndurance extends Endurance {
   }
   getResolver(treetop) {
     const netResolver = this.#net.getResolver(treetop)
-    assert(treetop instanceof CID)
+    assert(CID.asCID(treetop))
     // TODO WARNING permissions must be honoured
     // TODO use treetop to only fetch things below this CID
     return async (cid) => {
-      assert(cid instanceof CID, `not cid: ${cid}`)
+      assert(CID.asCID(cid), `not cid: ${cid}`)
       this.assertStarted()
       const key = cid.toString()
       if (this.blockCache.has(key)) {

@@ -33,7 +33,7 @@ const IO = CID.parse('QmapFBxqMFEFxSqGE45yVYKid471NoegxSriH1GpCMfUa6')
 const defines = [UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS, IO]
 
 const addressBlock = (cidV1) => {
-  assert(cidV1 instanceof CID)
+  assert(CID.asCID(cidV1))
   assert.strictEqual(cidV1.version, 1)
   const value = prepare({ Links: [cidV1] })
   const bytes = encode(value)
@@ -104,12 +104,13 @@ export class Address extends IpldInterface {
     return instance
   }
   #setCid(cid) {
-    assert(cid instanceof CID, `cid must be a CID, got ${cid}`)
+    cid = CID.asCID(cid)
+    assert(cid, `cid must be a CID`)
     assert(cid.version === 0)
     this.#cid = cid
   }
   static async uncrush(cid, resolver) {
-    assert(cid instanceof CID)
+    assert(CID.asCID(cid))
     assert.strictEqual(typeof resolver, 'function')
     for (const define of defines) {
       if (define.equals(cid)) {

@@ -41,12 +41,13 @@ export class PulseLink extends IpldInterface {
   }
   #setCid(cid) {
     assert(!this.#cid)
-    assert(cid instanceof CID, `cid must be a CID, got ${cid}`)
+    cid = CID.asCID(cid)
+    assert(cid, `cid must be a CID`)
     assert(cid.version === 1)
     this.#cid = cid
   }
   static uncrush(cid) {
-    assert(cid instanceof CID)
+    assert(CID.asCID(cid))
     const instance = new this()
     instance.#setCid(cid)
     return instance

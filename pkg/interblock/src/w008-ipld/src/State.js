@@ -44,10 +44,10 @@ export class State extends IpldInterface {
     return this.ipldBlock.bytes.length
   }
   get cid() {
-    return this.ipldBlock.cid
+    return CID.asCID(this.ipldBlock.cid)
   }
   static async uncrush(cid, resolver, options) {
-    assert(cid instanceof CID)
+    assert(CID.asCID(cid))
     assert.strictEqual(typeof resolver, 'function')
     const block = await resolver(cid)
     assert(block)

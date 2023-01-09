@@ -40,7 +40,8 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
-  test('shell based read-only mount', async () => {
+  test.only('shell based read-only mount', async () => {
+    Debug.enable('tests iplog interpulse')
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
     await server.startNetwork()
