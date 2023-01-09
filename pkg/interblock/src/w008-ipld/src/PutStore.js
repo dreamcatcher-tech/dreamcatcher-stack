@@ -33,17 +33,6 @@ export class PutStore {
     const block = await this.getBlock(cid)
     return block.bytes
   }
-  async put(cid, bytes) {
-    // used by js-ipld-hamt
-    assert(CID.asCID(cid))
-    assert(bytes instanceof Uint8Array)
-    this.#untrimmed = true
-    if (this.#putsMap.has(cid.toString())) {
-      return
-    }
-    const block = await create({ bytes, cid, hasher, codec })
-    return this.putBlock(cid, block)
-  }
   async getBlock(cid) {
     assert(CID.asCID(cid))
     debug('getBlock:', cid.toString().substring(0, 9))
@@ -62,11 +51,27 @@ export class PutStore {
     }
     return block
   }
-  putBlock(cid, block) {
+  async put(cid, bytes) {
+    // used by js-ipld-hamt
     assert(CID.asCID(cid))
-    assert(block instanceof Block)
-    assert(!this.#putsMap.has(cid.toString()))
+    assert(bytes instanceof Uint8Array)
+    this.#untrimmed = true
+    if (this.#putsMap.has(cid.toString())) {
+      return
+    }
+    const block = await create({ bytes, cid, hasher, codec })
+    return this.putBlock(block)
+  }
+  putBlock(block) {
+    const { cid, bytes, value } = block
+    assert(CID.asCID(cid))
+    assert(bytes instanceof Uint8Array)
+    assert.strictEqual(typeof value, 'object')
     debug('put: ', cid.toString().substring(0, 9))
+    this.#untrimmed = true
+    if (this.#putsMap.has(cid.toString())) {
+      return
+    }
     this.#putsMap.set(cid.toString(), block)
   }
   hasBlock(cid) {

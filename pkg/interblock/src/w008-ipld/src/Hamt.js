@@ -158,7 +158,7 @@ export class Hamt extends IpldInterface {
         const diffs = crushed.getDiffBlocks()
         for (const [, ipldBlock] of diffs) {
           if (!putStore.hasBlock(ipldBlock.cid)) {
-            putStore.putBlock(ipldBlock.cid, ipldBlock)
+            putStore.putBlock(ipldBlock)
           }
         }
       } else {
@@ -179,7 +179,7 @@ export class Hamt extends IpldInterface {
     const instance = this.create(valueClass, isMutable)
     instance.#putStore = new PutStore(resolver)
     const block = await resolver(cid)
-    instance.#putStore.putBlock(cid, block)
+    instance.#putStore.putBlock(block)
     const hashmap = await load(instance.#putStore, cid, hamtOptions)
     instance.#hashmap = hashmap
     return instance
