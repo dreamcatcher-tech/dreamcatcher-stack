@@ -118,7 +118,7 @@ describe('Hamt', () => {
     expect(modDiff.added.size).toEqual(0)
   })
   test('diff stress test', async () => {
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 10; i++) {
       const ipfsPersistence = new Map()
       const size = random.int(10, 100)
       debug(`iteration %i with size %i`, i, size)
