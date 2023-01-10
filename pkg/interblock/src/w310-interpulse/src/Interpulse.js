@@ -95,12 +95,12 @@ export class Interpulse {
     const { wd } = this
     const absPath = posix.resolve(wd, path)
     for await (const pulse of this.#engine.subscribe()) {
-      debug('pulse', pulse.getPulseLink())
+      debug('latest pulse for', path, pulse.getPulseLink())
       try {
         const latest = await this.#engine.latestByPath(absPath, pulse)
         return latest
       } catch (error) {
-        debug('error', error.message)
+        debug('latest error', error.message)
       }
     }
   }
@@ -206,7 +206,7 @@ export class Interpulse {
         try {
           const latest = await this.#engine.latestByPath(absPath, rootPulse)
           if (prior?.cid.equals(latest.cid)) {
-            return
+            continue
           }
           prior = latest
           sink.push(latest)
@@ -234,6 +234,8 @@ export class Interpulse {
         // TODO determine what to unsubscribe and unmap
       }
       const state = mtab.getState().toJS()
+      debug('mtab state', state)
+      debug('mtab hash', mtab.cid.toString())
       const peerIds = Object.keys(state)
       for (const peerId of peerIds) {
         const { multiaddrs, chainIds } = state[peerId]

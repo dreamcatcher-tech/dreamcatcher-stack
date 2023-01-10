@@ -148,7 +148,7 @@ export class Address extends IpldInterface {
     } else if (this.isIo()) {
       string = 'IO'
     } else {
-      string = this.cid.toString().substring(0, 14)
+      string = this.cid.toString().substring(0, 9)
     }
     return `Address(${string})`
   }

@@ -18,7 +18,7 @@ import { Crypto, CryptoLock } from './Crypto'
 import { Endurance } from './Endurance'
 import { Deepening } from './Deepening'
 import Debug from 'debug'
-const debug = Debug('interblock:engine')
+const debug = Debug('interpulse:Engine')
 
 /**
  * The Engine of Permanence
@@ -346,6 +346,7 @@ export class Engine {
   #notifySubscribers(pulse) {
     assert(pulse instanceof Pulse)
     if (pulse.getAddress().equals(this.selfAddress)) {
+      debug('notifying root subscribers:', pulse.getPulseLink())
       for (const sink of this.#subscribers) {
         sink.push(pulse)
       }

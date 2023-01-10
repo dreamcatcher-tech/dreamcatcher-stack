@@ -41,7 +41,6 @@ describe('mount', () => {
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
   test('shell based read-only mount', async () => {
-    Debug.enable('tests interpulse *PulseNet *net')
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
     await server.startNetwork()
@@ -62,7 +61,6 @@ describe('mount', () => {
 
     await client.multiaddr(multiAddress)
     await client.peer(peerId.toString(), chainId)
-    Debug.enable('iplog *:net')
     await client.mount(chainId, 'server')
     const remote = await client.latest('/.mtab/server')
     debug('remote', remote)
