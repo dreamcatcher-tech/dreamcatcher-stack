@@ -19,7 +19,8 @@
     "singleQuote": true
   },
   "scripts": {
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "reinstall": "lerna clean -y && rm -rf node_modules yarn.lock && yarn"
   },
   "dependencies": {
     "prop-types": "^15.8.1"

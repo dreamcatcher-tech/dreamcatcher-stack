@@ -4,9 +4,7 @@ import Debug from 'debug'
 const debug = Debug('client:tests:App')
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Demo />
-  </React.StrictMode>
+  <React.StrictMode></React.StrictMode>
 )
 
 const { VITE_GIT_HASH, VITE_GIT_DATE } = globalThis

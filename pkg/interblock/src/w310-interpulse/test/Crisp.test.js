@@ -31,7 +31,6 @@ describe('Crisp', function () {
       overloads: { '/crm': crm.covenant },
       repo,
     })
-    Debug.enable('iplog *Crisp *Syncer tests')
     const syncer = Syncer.create(engine.pulseResolver)
     // restart the engine so can do timing
     const approot = await engine.current('app')
