@@ -10348,10 +10348,9 @@ ipfs-utils@^9.0.6:
     react-native-fetch-api "^2.0.0"
     stream-to-it "^0.2.2"
 
-ipld-hashmap@^2.1.16:
+"ipld-hashmap@github:rvagg/js-ipld-hashmap#a5bd78e9e2753cd849e6a225f2927b47d774f6ab":
   version "2.1.16"
-  resolved "https://registry.npmjs.org/ipld-hashmap/-/ipld-hashmap-2.1.16.tgz"
-  integrity sha512-Z9IoVL/QQu93ZXSuGLY8qRPx7wQ0XDyNx0Jhstx2GLMHHnA2tcxPbPzxXGjYL9dCKgmAMLvrIO/Z9Gb1kOlDpQ==
+  resolved "https://codeload.github.com/rvagg/js-ipld-hashmap/tar.gz/a5bd78e9e2753cd849e6a225f2927b47d774f6ab"
   dependencies:
     iamap "^2.0.12"
     ipld-schema "^3.0.2"

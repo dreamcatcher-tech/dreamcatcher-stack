@@ -46,7 +46,7 @@
     "ipfs-bitswap": "^15.0.0",
     "ipfs-core-config": "^0.6.0",
     "ipfs-repo": "^17.0.0",
-    "ipld-hashmap": "^2.1.16",
+    "ipld-hashmap": "github:rvagg/js-ipld-hashmap#a5bd78e9e2753cd849e6a225f2927b47d774f6ab",
     "ipld-schema": "^3.0.3",
     "it-all": "^2.0.0",
     "it-drain": "^2.0.0",
