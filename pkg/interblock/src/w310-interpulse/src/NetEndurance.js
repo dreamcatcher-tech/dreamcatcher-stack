@@ -68,16 +68,15 @@ export class NetEndurance extends Endurance {
     return await this.#net.getPulse(pulselink)
   }
   getResolver(treetop) {
-    const netResolver = this.#net.getResolver(treetop)
     assert(CID.asCID(treetop))
+    const netResolver = this.#net.getResolver(treetop)
+    const resolver = super.getResolver(treetop)
     // TODO WARNING permissions must be honoured
     // TODO use treetop to only fetch things below this CID
     return async (cid) => {
-      assert(CID.asCID(cid), `not cid: ${cid}`)
-      this.assertStarted()
-      const key = cid.toString()
-      if (this.blockCache.has(key)) {
-        return this.blockCache.get(key)
+      const result = await resolver(cid)
+      if (result) {
+        return result
       }
       return await netResolver(cid)
     }

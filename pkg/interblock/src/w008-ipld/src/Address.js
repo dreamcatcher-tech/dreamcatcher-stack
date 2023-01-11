@@ -201,4 +201,7 @@ export class Address extends IpldInterface {
       this.isResolved() && !this.isRoot() && !this.isLoopback() && !this.isIo()
     )
   }
+  export() {
+    return
+  }
 }

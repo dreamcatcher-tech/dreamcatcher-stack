@@ -28,7 +28,7 @@ export class PutStore {
   }
   async get() {
     // used by js-ipld-hamt
-    throw new Error('Awaiting upstream fix - use patch-package')
+    throw new Error('Awaiting upstream fix')
   }
   async getBlock(cid) {
     assert(CID.asCID(cid))
@@ -50,7 +50,7 @@ export class PutStore {
   }
   async put() {
     // used by js-ipld-hamt
-    throw new Error('Awaiting upstream fix - use patch-package')
+    throw new Error('Awaiting upstream fix')
   }
   putBlock(block) {
     const { cid, bytes, value } = block

@@ -13,6 +13,9 @@ export class IpldInterface {
   static isCidLink(key) {
     assert(typeof key === 'string')
     assert(key)
+    if (this.defaultClass) {
+      return true
+    }
     if (this.cidLinks) {
       assert(Array.isArray(this.cidLinks))
       return this.cidLinks.includes(key)
@@ -85,5 +88,24 @@ export class IpldInterface {
     Object.assign(instance, map, classes)
     deepFreeze(instance)
     return instance
+  }
+  async export(loggingResolver) {
+    assert.strictEqual(typeof loggingResolver, 'function')
+    await loggingResolver(this.cid)
+    for (const key in this) {
+      if (!this.constructor.isCidLink(key)) {
+        continue
+      }
+      const value = this[key]
+      if (value instanceof IpldInterface) {
+        await value.export(loggingResolver)
+      } else {
+        assert(Array.isArray(value))
+        for (const v of value) {
+          assert(v instanceof IpldInterface)
+          await v.export(loggingResolver)
+        }
+      }
+    }
   }
 }

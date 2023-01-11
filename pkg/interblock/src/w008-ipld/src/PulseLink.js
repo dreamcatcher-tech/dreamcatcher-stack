@@ -84,6 +84,7 @@ export class PulseLink extends IpldInterface {
   get bakedPulse() {
     return this.#bakedPulse
   }
+  export() {}
 }
 
 export class HistoricalPulseLink extends PulseLink {

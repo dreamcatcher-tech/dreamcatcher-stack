@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
-import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
+import { decode, Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { Logger } from './Logger'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Endurance')
@@ -15,6 +15,7 @@ export class Endurance {
   #selfAddress
   #logger = new Logger()
   #blockCache = new Map()
+  #importsCache = new Map()
   #pulseCache = new Map()
   #cacheSize = 0
   #lru = new Set() // TODO make an LRU that calculates block size
@@ -98,16 +99,18 @@ export class Endurance {
   async recover(pulselink) {
     assert(pulselink instanceof PulseLink)
     this.assertStarted()
-    const cidString = pulselink.cid.toString()
-    debug(`recover`, cidString)
+    debug(`recover`, pulselink)
+    const { cid } = pulselink
+    const cidString = cid.toString()
 
     if (this.#pulseCache.has(cidString)) {
       // TODO update the LRU tracker
       return this.#pulseCache.get(cidString)
     }
-  }
-  get blockCache() {
-    return this.#blockCache
+    const resolver = this.getResolver(cid)
+    const pulse = await Pulse.uncrush(cid, resolver)
+    this.#pulseCache.set(cidString, pulse)
+    return pulse
   }
   getResolver(treetop) {
     assert(CID.asCID(treetop))
@@ -121,8 +124,19 @@ export class Endurance {
       if (this.#blockCache.has(key)) {
         return this.#blockCache.get(key)
       }
-      throw new Error(`No block for: ${key}`)
+      if (this.#importsCache.has(key)) {
+        const bytes = this.#importsCache.get(key)
+        return await decode(bytes)
+      }
     }
+  }
+  async import(blockIterable) {
+    let count = 0
+    for await (const { cid, bytes } of blockIterable) {
+      this.#importsCache.set(cid.toString(), bytes)
+      count++
+    }
+    return count
   }
   assertStarted() {
     if (!this.#isStarted) {

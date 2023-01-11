@@ -1,4 +1,5 @@
 import { pipe } from 'it-pipe'
+import { CID } from 'multiformats/cid'
 import { shell } from '../../w212-system-covenants'
 import * as apps from '../../w301-user-apps'
 import { pushable } from 'it-pushable'
@@ -10,10 +11,11 @@ import posix from 'path-browserify'
 import { PulseNet } from '../../w305-libp2p'
 import { NetEndurance } from './NetEndurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
-import { PulseLink } from '../../w008-ipld/index.mjs'
 import { isBrowser, isNode } from 'wherearewe'
+import { CarReader, CarWriter } from '@ipld/car'
+import { PulseLink, Pulse } from '../../w008-ipld'
 
-const debug = Debug('interpulse')
+const debug = Debug('Interpulse')
 
 /**
  * The top level ORM object.
@@ -95,7 +97,7 @@ export class Interpulse {
     const { wd } = this
     const absPath = posix.resolve(wd, path)
     for await (const pulse of this.#engine.subscribe()) {
-      debug('latest pulse for', path, pulse.getPulseLink())
+      debug('latest root pulse for', path, pulse.getPulseLink())
       try {
         const latest = await this.#engine.latestByPath(absPath, pulse)
         return latest
@@ -276,6 +278,63 @@ export class Interpulse {
   }
   get isCreated() {
     return !this.net || this.net.isCreated
+  }
+  async export(path = '.') {
+    const latest = await this.latest(path)
+    debug('exporting', path, latest.getPulseLink())
+    const blocks = await this.#inflate(latest)
+    const car = await this.#writeCar(latest, blocks)
+    return car
+  }
+  async #writeCar(latest, blocks) {
+    assert(latest instanceof Pulse)
+    assert(blocks instanceof Map)
+    const { writer, out } = await CarWriter.create([latest.cid])
+    for (const block of blocks.values()) {
+      writer.put(block)
+    }
+    writer.close()
+    return out
+  }
+  async #inflate(latest) {
+    const blocks = new Map()
+    const ipfsResolver = this.#endurance.getResolver(latest.cid)
+    const loggingResolver = async (cid) => {
+      const block = await ipfsResolver(cid)
+      assert(CID.asCID(block.cid))
+      assert(block.value)
+      blocks.set(block.cid.toString(), block)
+      return block
+    }
+    const toExport = [latest.getPulseLink()]
+    while (toExport.length) {
+      const pulseLink = toExport.shift()
+      const instance = await this.#endurance.recover(pulseLink)
+      await instance.export(loggingResolver)
+      const network = instance.getNetwork()
+      for await (const [, channel] of network.channels.list.entries()) {
+        if (channel.rx.latest) {
+          toExport.push(channel.rx.latest)
+        }
+      }
+    }
+    debug('exporting %d blocks', blocks.size)
+    return blocks
+  }
+  async import(carStream) {
+    const reader = await CarReader.fromIterable(carStream)
+    const count = await this.#endurance.import(reader.blocks())
+    let roots = await reader.getRoots()
+    assert(roots.every(CID.asCID))
+    debug(`imported ${count} blocks in ${roots.length} roots`)
+    roots = await Promise.all(
+      roots.map(async (cid) => {
+        const pulse = await this.#endurance.recover(PulseLink.parse(cid))
+        assert(pulse instanceof Pulse)
+        return pulse
+      })
+    )
+    return { roots, count }
   }
 }
 const mapShell = (engine) => {

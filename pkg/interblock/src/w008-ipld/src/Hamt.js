@@ -178,8 +178,6 @@ export class Hamt extends IpldInterface {
 
     const instance = this.create(valueClass, isMutable)
     instance.#putStore = new PutStore(resolver)
-    const block = await resolver(cid)
-    instance.#putStore.putBlock(block)
     const hashmap = await load(instance.#putStore, cid, hamtOptions)
     instance.#hashmap = hashmap
     return instance
@@ -209,6 +207,19 @@ export class Hamt extends IpldInterface {
   get bakedMap() {
     assert(!this.isModified())
     return this.#bakedMap
+  }
+  async export(loggingResolver) {
+    assert.strictEqual(typeof loggingResolver, 'function')
+    assert(!this.isModified())
+    assert(this.#hashmap)
+    const unwalked = await this.constructor.uncrush(this.cid, loggingResolver)
+    for await (const [key] of unwalked.entries()) {
+      if (this.#valueClass) {
+        const value = await this.get(key)
+        assert(value instanceof IpldInterface)
+        await value.export(loggingResolver)
+      }
+    }
   }
   async compare(other) {
     if (!other) {

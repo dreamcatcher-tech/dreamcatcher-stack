@@ -27,7 +27,7 @@ export class ChannelsHamt extends Hamt {
     assert(channelId >= 0)
     return await super.get(channelId)
   }
-  async uncrush(cid, resolver, options) {
+  static async uncrush(cid, resolver) {
     return await super.uncrush(cid, resolver, Channel, isMutable)
   }
   async compare(other) {
@@ -36,5 +36,17 @@ export class ChannelsHamt extends Hamt {
     const deleted = new Set([...diff.deleted].map((key) => parseInt(key)))
     const modified = new Set([...diff.modified].map((key) => parseInt(key)))
     return { added, deleted, modified }
+  }
+  async *entries() {
+    const entries = super.entries()
+    try {
+      for await (const [key] of entries) {
+        const channelId = parseInt(key)
+        const value = await this.get(channelId)
+        yield [parseInt(key), value]
+      }
+    } finally {
+      entries.return()
+    }
   }
 }

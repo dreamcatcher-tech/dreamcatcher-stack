@@ -47,15 +47,14 @@
     "ipfs-bitswap": "^15.0.0",
     "ipfs-core-config": "^0.6.0",
     "ipfs-repo": "^17.0.0",
-    "ipld-hashmap": "github:rvagg/js-ipld-hashmap#a5bd78e9e2753cd849e6a225f2927b47d774f6ab",
+    "ipld-hashmap": "github:inverted-capital/js-ipld-hashmap#a5bd78e9e2753cd849e6a225f2927b47d774f6ab",
     "ipld-schema": "^3.0.3",
     "it-all": "^2.0.0",
     "it-drain": "^2.0.0",
     "it-parallel": "^3.0.0",
     "it-pushable": "^3.1.2",
-    "libp2p": "0.41.0",
+    "libp2p": "0.42.0",
     "pad-left": "^2.1.0",
-    "patch-package": "^6.5.1",
     "path-browserify": "^1.0.1",
     "polygon-lookup": "^2.6.0",
     "pretty-bytes": "^6.0.0",
@@ -76,7 +75,7 @@
     "eslint": "^8.31.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-react": "^7.31.11",
+    "eslint-plugin-react": "^7.32.0",
     "it-last": "^2.0.0",
     "it-pair": "^2.0.3",
     "jest": "^29.3.1",
@@ -104,7 +103,10 @@
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "maxWorkers": "95%"
+    "maxWorkers": "95%",
+    "setupFiles": [
+      "trace-unhandled/register"
+    ]
   },
   "wallaby": {
     "autoDetect": true,

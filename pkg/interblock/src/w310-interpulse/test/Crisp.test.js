@@ -60,27 +60,26 @@ describe('Crisp', function () {
       overloads: { '/crm': crm.covenant },
       repo,
     })
-    Debug.enable('iplog *Crisp *Syncer tests')
     const syncer = Syncer.create(engine.pulseResolver)
     const approot = await engine.current('app')
     debug('starting syncer')
     await syncer.update(approot)
     debug('syncer complete')
 
-    let crisp
-    for await (const first of syncer.subscribe()) {
-      crisp = first
+    let first
+    for await (const crisp of syncer.subscribe()) {
+      first = crisp
       break
     }
-    debug('crisp', crisp)
-    const children = [...crisp]
+    debug('crisp', first)
+    const children = [...first]
     children.sort((a, b) => a.localeCompare(b))
     debug(children)
     expect(children).toMatchSnapshot()
-    expect(crisp.hasChild('about')).toBe(true)
-    const child = crisp.getChild('about')
+    expect(first.hasChild('about')).toBe(true)
+    const child = first.getChild('about')
     expect(child).toBeInstanceOf(Crisp)
-    expect(child.root).toStrictEqual(crisp)
+    expect(child.root).toStrictEqual(first)
     expect(child.state?.formData?.title).toEqual('CRM')
     await engine.stop()
   })

@@ -22,7 +22,7 @@ export const encode = async (value) => {
 }
 
 export const decode = async (bytes) => {
-  assert(bytes instanceof Uint8Array)
+  assert(bytes instanceof Uint8Array, `bytes not Uint8Array: ${typeof bytes}`)
   try {
     const block = await Block.decode({ bytes, codec, hasher })
     return block
