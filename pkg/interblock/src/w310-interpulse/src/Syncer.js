@@ -53,7 +53,7 @@ export class Syncer {
     if (Array.isArray(instance)) {
       assert(!prior || Array.isArray(prior))
       return await Promise.all(
-        instance.map((_, i) => this.#bake(i, prior?.[i]))
+        instance.map((v, i) => this.#bake(v, prior?.[i]))
       )
     }
     if (!(instance instanceof IpldInterface)) {

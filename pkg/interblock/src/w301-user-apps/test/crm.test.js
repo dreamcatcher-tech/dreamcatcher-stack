@@ -1,4 +1,3 @@
-import { assert } from 'chai/index.mjs'
 import { Interpulse } from '../..'
 import { crm } from '..'
 import Debug from 'debug'
@@ -27,7 +26,7 @@ describe('crm', () => {
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
       const { path } = await engine.publish('dpkgCrm', crm.covenant)
-      assert.strictEqual(path, '/dpkgCrm')
+      expect(path).toStrictEqual('/dpkgCrm')
       const installStart = Date.now()
       const latest = await engine.latest('/dpkgCrm')
       expect(latest.provenance.dmz.covenant).toEqual('covenant')
@@ -42,7 +41,7 @@ describe('crm', () => {
       debug(`pulserate: ${pulseRate}ms per block`)
 
       const exceptions = await engine.current('/crm/schedule/modifications')
-      assert(exceptions.getState().toJS().datumTemplate)
+      expect(exceptions.getState().toJS().datumTemplate).toBeTruthy()
       const about = await engine.latest('/crm/about')
       const aboutState = about.getState().toJS()
       expect(aboutState).toEqual(crm.covenant.installer.network.about.state)
@@ -91,7 +90,7 @@ describe('crm', () => {
       const realCustomers = Object.keys(children).filter(
         (key) => !key.startsWith('.')
       )
-      assert.strictEqual(realCustomers.length, 1)
+      expect(realCustomers.length).toStrictEqual(1)
       debug(realCustomers)
     })
     test.skip('large customer list', async () => {
@@ -102,7 +101,7 @@ describe('crm', () => {
       const realCustomers = Object.keys(children).filter(
         (key) => !key.startsWith('.')
       )
-      assert.strictEqual(realCustomers.length, customerCount)
+      expect(realCustomers.length).toStrictEqual(customerCount)
       debug(realCustomers)
     })
     test.skip('search by name', async () => {
@@ -111,7 +110,7 @@ describe('crm', () => {
       const results = await server.find('/crm/customers', {
         name: 'test name 3',
       })
-      assert(results)
+      expect(results).toBeTruthy()
     })
   })
   describe('data import', () => {
@@ -127,7 +126,7 @@ describe('crm', () => {
       await server.cd('/crm/routing')
       await server.rm('custNo-5')
       const state = server.cat('/crm/customers/custNo-5')
-      assert(state)
+      expect(state).toBeTruthy()
     })
   })
   describe.skip('permissioning', () => {
@@ -146,7 +145,7 @@ describe('crm', () => {
       await client.mount('/remoteApp', server.address)
       await client.cd('/remoteApp')
       const lsResult = await client.ls()
-      assert(lsResult)
+      expect(lsResult).toBeTruthy()
     })
     test('passive client updates', async () => {
       const server = await serverFactory()
@@ -161,7 +160,7 @@ describe('crm', () => {
       await passive.mount('/remoteApp', server.address)
       await passive.cd('/remoteApp/customers/custNo-5/serviceAddress')
       const state = await passive.cat()
-      assert(state)
+      expect(state).toBeTruthy()
     })
     test.todo('new client syncs with peer while server offline')
     test.todo('two peers share local changes while server offline')

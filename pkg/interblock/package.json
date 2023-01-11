@@ -23,6 +23,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@chainsafe/libp2p-noise": "^11.0.0",
+    "@ipld/car": "^5.0.3",
     "@ipld/dag-cbor": "^9.0.0",
     "@ipld/dag-pb": "^4.0.0",
     "@libp2p/mplex": "^7.1.1",

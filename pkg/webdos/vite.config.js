@@ -37,13 +37,6 @@ const VITE_GIT_DATE = JSON.stringify(git.date())
 
 const config = {
   plugins: [react()],
-  optimizeDeps: {
-    // target: es2020 added as workaround to make big ints work
-    // https://github.com/vitejs/vite/issues/9062#issuecomment-1182818044
-    esbuildOptions: {
-      target: 'es2020',
-    },
-  },
   build: {
     // done only so the size of the bundle can be inspected
     target: 'es2020',

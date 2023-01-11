@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Hamt multiple keys 1`] = `
+exports[`Hamt maps multiple keys 1`] = `
 Map {
   "bafyreig3w5cuffzshczi5xzwnp4igna5wehxcisr53jcjtrfxcnbgzwrui" => Block {
     "asBlock": [Circular],
@@ -60,7 +60,7 @@ Map {
 }
 `;
 
-exports[`Hamt with class 1`] = `
+exports[`Hamt maps with class 1`] = `
 Map {
   "bafyreibrhfhhayfcwgm3gqdokiffu2rczo6diswuhgmnt5yf2thjeawu44" => Block {
     "asBlock": [Circular],
