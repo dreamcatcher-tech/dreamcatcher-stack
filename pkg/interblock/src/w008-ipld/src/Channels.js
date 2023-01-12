@@ -153,6 +153,7 @@ export class Channels extends IpldStruct {
     if (previous && previous.rx.latest && latest.equals(previous.rx.latest)) {
       return next
     }
+    // latests has updated, so update the state tree
     const { cxs = [] } = this
     if (cxs.includes(channelId)) {
       return next

@@ -2,11 +2,10 @@ import { Interpulse } from '../..'
 import { Pulse } from '../../w008-ipld'
 import { crm } from '../../w301-user-apps'
 import Debug from 'debug'
-import all from 'it-all'
 const debug = Debug('tests')
 
 describe('Car', () => {
-  test.only('export', async () => {
+  test('export', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
     })
@@ -15,9 +14,12 @@ describe('Car', () => {
     debug('car', car)
 
     const blank = await Interpulse.createCI()
+    Debug.enable('tests Interpulse')
+    debug('import start')
     const { roots, count } = await blank.import(car)
-    expect(roots.length).toBe(1)
+    debug('import end')
     expect(count).toBe(91)
-    expect(roots.every((root) => root instanceof Pulse)).toBeTruthy()
+    expect(roots.length).toBe(1)
+    expect(roots[0]).toBeInstanceOf(Pulse)
   })
 })

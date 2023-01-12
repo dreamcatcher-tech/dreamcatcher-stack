@@ -113,6 +113,7 @@ const pulseReducer = async (type, payload) => {
       if (path !== '.') {
         // TODO make latest handle relative paths
         remotePulse = await latest(path)
+        // TODO verify that this is consistent with the approot
       }
       assert(remotePulse instanceof Pulse)
       // TODO remove the network object, to provide a static pulse
