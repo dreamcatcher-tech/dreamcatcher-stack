@@ -14,6 +14,8 @@ import {
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import { fromString as from } from 'uint8arrays/from-string'
+import Debug from 'debug'
+const debug = Debug('interblock:models:Pulse')
 /**
  type Pulse struct {
     provenance &Provenance
@@ -35,10 +37,11 @@ export class Pulse extends IpldStruct {
     const provenance = Provenance.createGenesis(dmz, validators)
     return await Pulse.create(provenance)
   }
-  static async create(provenance) {
+  static async create(provenance, resolver) {
     assert(provenance instanceof Provenance)
+    assert(!resolver || typeof resolver === 'function')
     const instance = super.clone({ provenance, signatures: [] })
-    return await instance.crushToCid()
+    return await instance.crushToCid(resolver)
   }
   static async createCovenantOverload(covenant) {
     assert.strictEqual(typeof covenant, 'object')
@@ -53,6 +56,9 @@ export class Pulse extends IpldStruct {
   }
   isGenesis() {
     return this.provenance.address.isGenesis()
+  }
+  isForkGenesis() {
+    return this.isGenesis() && !!this.provenance.lineages.length
   }
   async isRoot() {
     const parent = await this.provenance.dmz.network.getParent()
@@ -97,7 +103,7 @@ export class Pulse extends IpldStruct {
     assert.strictEqual(this.currentCrush, this)
     let next = this
     if (this.isGenesis()) {
-      assert(!this.provenance.transmissions)
+      assert(this.isForkGenesis() || !this.provenance.transmissions)
       assert(!this.signatures.length)
       // set our own address
       const address = Address.generate(this)
@@ -105,15 +111,10 @@ export class Pulse extends IpldStruct {
       const isRoot = await this.isRoot()
       if (isRoot) {
         assert.strictEqual(parent, undefined)
+      } else if (this.isForkGenesis()) {
+        next = await next.#forkUp(parent)
       } else {
-        // must set parent as part of next pulse creation
-        assert(parent instanceof Pulse)
-        assert(!parent.isGenesis())
-        const parentAddress = parent.getAddress()
-        assert(parentAddress.isRemote())
-        let { network } = next.provenance.dmz
-        network = await network.resolveParent(parentAddress)
-        next = next.setMap({ provenance: { dmz: { network } } })
+        next = await next.#resolveGenesisParent(parent)
       }
     }
     // blank the prior transmissions
@@ -121,7 +122,6 @@ export class Pulse extends IpldStruct {
     if (provenance.transmissions) {
       provenance = provenance.delete('transmissions')
     } else {
-      // TODO only allow non transmissions when genesis ?
       assert.strictEqual(provenance.dmz.network.channels.txs.length, 0)
     }
     const precedent = this.getPulseLink()
@@ -135,9 +135,45 @@ export class Pulse extends IpldStruct {
       provenance = provenance.setMap({ dmz: { network } })
     }
 
-    next = next.setMap({ provenance })
-    next = next.setMap({ signatures: [] })
+    next = next.setMap({ provenance, signatures: [] })
     return next
+  }
+  async deriveForkGenesis(parent, resolver) {
+    assert(parent instanceof Pulse)
+    assert.strictEqual(typeof resolver, 'function')
+    const { validators } = parent.provenance
+    const { timestamp } = parent.provenance.dmz
+    const dmz = this.provenance.dmz.setMap({ timestamp })
+    let provenance = Provenance.createGenesis(dmz, validators)
+    const { transmissions } = this.provenance
+    if (transmissions) {
+      provenance = provenance.setMap({ transmissions })
+    }
+    provenance = provenance.setLineage(this)
+    const next = await Pulse.create(provenance, resolver)
+    debug(`forked %s from %s`, next.getAddress(), this.getAddress())
+    return next
+  }
+  async #resolveGenesisParent(parent) {
+    assert(parent instanceof Pulse, `parent is not a pulse: ${parent}`)
+    assert(!parent.isGenesis())
+    const parentAddress = parent.getAddress()
+    assert(parentAddress.isRemote())
+    const network = await this.getNetwork().resolveParent(parentAddress)
+    return this.setNetwork(network)
+  }
+  async #forkUp(parent) {
+    assert(parent instanceof Pulse, `parent not pulse: ${parent}`)
+    assert(!parent.isGenesis())
+    const address = parent.getAddress()
+    assert(address.isRemote())
+    debug(`forking %s to have parent %s`, this.getAddress(), address)
+
+    const parentView = await parent.getNetwork().getByAddress(this.getAddress())
+    const { precedent: tip } = parentView.tx
+    const { tip: precedent } = parentView.rx
+    const network = await this.getNetwork().forkUp(address, precedent, tip)
+    return this.setNetwork(network)
   }
   async ingestInterpulse(interpulse) {
     assert(interpulse instanceof Interpulse)
@@ -184,15 +220,13 @@ export class Pulse extends IpldStruct {
     return covenantPath
   }
   async addChild(alias, installer) {
-    // TODO insert repeatable randomness to child
     assert(this.isModified())
     assert(typeof alias === 'string')
     assert(alias)
     assert(!alias.includes('/'))
     assert(typeof installer === 'object')
     let network = this.getNetwork()
-    if (await network.hasChild(alias)) {
-      // TODO check if the alias exists in symlinks or hardlinks
+    if (await network.hasChannel(alias)) {
       throw new Error(`child exists: ${alias}`)
     }
     const config = await this.provenance.dmz.config.increaseEntropy()
@@ -203,6 +237,22 @@ export class Pulse extends IpldStruct {
     const address = pulse.getAddress()
     network = await network.addChild(alias, address)
     return next.setNetwork(network)
+  }
+  async insertFork(alias, fork) {
+    assert(typeof alias === 'string')
+    assert(alias)
+    assert(!alias.includes('/'))
+    assert(fork instanceof Pulse)
+    assert(this.isModified())
+
+    let network = this.getNetwork()
+    if (await network.hasChannel(alias)) {
+      throw new Error(`child exists: ${alias}`)
+    }
+    const latest = fork.getPulseLink()
+    const childSide = await fork.getNetwork().getParent()
+    network = await network.insertFork(alias, latest, childSide)
+    return this.setNetwork(network)
   }
   async deriveChildGenesis(installer) {
     assert.strictEqual(typeof installer, 'object')

@@ -2,7 +2,14 @@ import { PublicKey, Keypair } from '.'
 import assert from 'assert-fast'
 import { IpldStruct } from './IpldStruct'
 import equals from 'fast-deep-equal'
-
+/**
+```sh
+  type Validators struct {
+      quorumThreshold Int
+      publicKeys [&PublicKey]
+  }
+```
+ */
 export class Validators extends IpldStruct {
   static createCI() {
     const kp = Keypair.createCI()

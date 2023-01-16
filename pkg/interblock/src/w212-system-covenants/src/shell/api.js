@@ -125,6 +125,7 @@ export const api = {
         This operation is essential to application data structures
         as opposed to simple filesystem data structures, which are 
         usually a tree`,
+    additionalProperties: false,
     required: ['target'],
     properties: {
       target: { type: 'string' },
@@ -144,6 +145,17 @@ export const api = {
       Can be used to force a change if a chain has stalled.
       `,
     // TODO make this a subset of all ACL type of operations
+  },
+  insert: {
+    type: 'object',
+    title: 'INSERT',
+    description: `Insert a new child at the given path using the given PulseId`,
+    additionalProperties: false,
+    required: ['pulseId'],
+    properties: {
+      pulseId: { type: 'string' }, // TODO regex for pulseId
+      path: { type: 'string', default: '.' },
+    },
   },
   //   MV: 'moveActor',
   //   LOGOUT: 'logout',

@@ -89,10 +89,20 @@ export class Network extends IpldStruct {
   async resolveParent(parentAddress) {
     assert(parentAddress instanceof Address)
     assert(parentAddress.isRemote())
-    let parent = await this.getParent()
-    assert(parent.address.isUnknown())
-    parent = parent.resolve(parentAddress)
-    return await this.updateParent(parent)
+    let parentChannel = await this.getParent()
+    assert(parentChannel.address.isUnknown())
+    parentChannel = parentChannel.resolve(parentAddress)
+    return await this.updateParent(parentChannel)
+  }
+  async forkUp(parentAddress, precedent, tip) {
+    assert(parentAddress instanceof Address)
+    assert(parentAddress.isRemote())
+    assert(precedent instanceof PulseLink)
+    assert(tip instanceof PulseLink)
+    let parentChannel = await this.getParent()
+    assert(!parentChannel.address.isUnknown())
+    parentChannel = parentChannel.forkUp(parentAddress, precedent, tip)
+    return await this.updateParent(parentChannel)
   }
   async updateParent(parent) {
     assert(parent instanceof Channel)
@@ -237,6 +247,24 @@ export class Network extends IpldStruct {
     assert(channelId >= 0 && channelId < this.channels.counter)
     const channel = await this.channels.getChannel(channelId)
     return channel
+  }
+  async insertFork(path, latest, childSide) {
+    assert(typeof path === 'string')
+    assert(path)
+    assert(!path.includes('/'))
+    assert(latest instanceof PulseLink)
+    assert(childSide instanceof Channel)
+
+    const channelId = this.channels.counter
+    const channel = Channel.create(channelId)
+      .addLatest(latest)
+      .addAlias(path)
+      .syncForkPoint(childSide)
+
+    assert(channel.isForkPoint())
+    const channels = await this.channels.addChannel(channel)
+    const children = await this.children.addChild(path, channelId)
+    return this.setMap({ channels, children })
   }
   rename(srcAlias, destAlias) {
     // needed to preserve the hash tree efficiently

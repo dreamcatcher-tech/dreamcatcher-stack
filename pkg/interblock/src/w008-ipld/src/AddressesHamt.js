@@ -18,10 +18,9 @@ export class AddressesHamt extends Hamt {
     assert(address.isRemote())
     return await super.has(address.getChainId())
   }
-  async delete(channelId) {
-    assert(Number.isInteger(channelId))
-    assert(channelId >= 0 && channelId < this.counter)
-    throw new Error('not implemented')
+  async delete(address) {
+    assert(await this.has(address), `address not present ${address}`)
+    return await super.delete(address.getChainId())
   }
   async get(address) {
     assert(address instanceof Address)

@@ -24,6 +24,7 @@ export const openPath = async ({ path }) => {
     const { segment } = await interchain('@@DEEPEST_SEGMENT', { path })
     deepest = segment
     if (deepest !== path) {
+      debug(`deepest segment of %s is %s`, path, deepest)
       const child = getNextSegment(deepest, path)
       debug(`next child of %s is %s`, deepest, child)
       const { chainId } = await interchain('@@SELF_ID')
@@ -57,10 +58,11 @@ export const deepestSegment = async (pulse, { path }) => {
   for (const segment of segments) {
     if (await network.hasChannel(segment)) {
       const channel = await network.getChannel(segment)
-      if (channel.address.isResolved()) {
+      if (channel.address.isResolved() || channel.isForkPoint()) {
         debug(`deepestSegment is:`, segment)
         return { segment }
       }
+      debug('segment is unresolved', segment)
     }
   }
 }

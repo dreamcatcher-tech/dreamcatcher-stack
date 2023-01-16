@@ -41,8 +41,9 @@ export class Rx extends IpldStruct {
       assert(this.isEmpty())
       assert(!tx.precedent)
     } else {
-      if (!this.tip.cid.equals(tx.precedent.cid)) {
-        throw new Error(`tip ${this.tip.cid} not precedent ${interpulse.cid}`)
+      // TODO to lineage checks
+      if (!this.tip.cid.equals(tx.precedent?.cid)) {
+        throw new Error(`tip ${this.tip} not precedent: ${tx.precedent}`)
       }
     }
     const system = this.system.ingestTxQueue(tx.system)
@@ -54,6 +55,7 @@ export class Rx extends IpldStruct {
   addLatest(latest) {
     // TODO check this is genuinely the successor
     assert(latest instanceof PulseLink)
+    assert(!latest.equals(this.latest))
     return this.setMap({ latest })
   }
   shiftSystemReply() {

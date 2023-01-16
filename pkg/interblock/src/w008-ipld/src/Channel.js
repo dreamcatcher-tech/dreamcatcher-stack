@@ -102,6 +102,46 @@ export class Channel extends IpldStruct {
     assert(this.isUnknown(), `Can only resolve unknown channels`)
     return this.setMap({ address })
   }
+  forkDown(address, latest, precedent) {
+    // the chain that this channel points to is being forked
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    assert(latest instanceof PulseLink)
+    assert(!latest.equals(this.rx.latest))
+    assert(precedent instanceof PulseLink)
+    assert(!this.isUnknown() || this.isForkPoint(), `Cannot fork unknown`)
+    const tx = this.tx.setMap({ precedent })
+    const rx = this.rx.setMap({ tip: latest })
+    return this.setMap({ address, tx, rx }).addLatest(latest)
+  }
+  forkUp(address, precedent, tip) {
+    // the new fork takes its first breath
+    assert(address instanceof Address)
+    assert(address.isRemote())
+    assert(precedent instanceof PulseLink)
+    assert(!precedent.equals(this.tx.precedent))
+    assert(tip instanceof PulseLink)
+    assert(!tip.equals(this.rx.tip))
+    const rx = this.rx.setMap({ tip })
+    const tx = this.tx.setMap({ precedent })
+    return this.setMap({ address, tx, rx })
+  }
+  syncForkPoint(childSide) {
+    // called in dmzReducer to add a fork with channel counters synced.
+    // tip and precedent will be is set upon softpulse.
+    assert(childSide instanceof Channel)
+    const rx = this.rx.setMap({
+      // TODO unsure how blank() interacts works with Queiscence
+      reducer: RxQueue.clone(childSide.tx.reducer.blank()),
+      system: RxQueue.clone(childSide.tx.system.blank()),
+    })
+    const tx = this.tx.setMap({
+      // TODO unsure how blank() interacts works with Queiscence
+      reducer: TxQueue.clone(childSide.rx.reducer).blank(),
+      system: TxQueue.clone(childSide.rx.system).blank(),
+    })
+    return this.setMap({ rx, tx })
+  }
   isUnknown() {
     return this.address.isUnknown()
   }
@@ -223,6 +263,9 @@ export class Channel extends IpldStruct {
     assert(latest instanceof PulseLink)
     const rx = this.rx.addLatest(latest)
     return this.setMap({ rx })
+  }
+  isForkPoint() {
+    return !this.address.isResolved() && !!this.rx.latest
   }
 }
 const rejectAll = (rxQueue, txQueue, error) => {

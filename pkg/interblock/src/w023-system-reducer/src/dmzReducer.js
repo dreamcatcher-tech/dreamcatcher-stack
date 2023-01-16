@@ -4,11 +4,10 @@ import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
 import { installReducer } from './install'
 import { genesisReducer } from './genesis'
-import { Address, Pulse } from '../../w008-ipld/index.mjs'
+import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
-import posix from 'path-browserify'
 const debug = Debug('interblock:dmz')
 
 /**
@@ -79,6 +78,18 @@ const pulseReducer = async (type, payload) => {
       assert(address.isRemote())
       const chainId = address.getChainId()
       return { alias, chainId, entropy }
+    }
+    case '@@INSERT_FORK': {
+      let { pulseId, name } = payload
+      debug(`@@INSERT_FORK`, pulseId, name)
+      const forkLatest = PulseLink.parse(pulseId)
+      const fork = await latest(forkLatest)
+      if (!name) {
+        name = await autoAlias(pulse.getNetwork())
+      }
+      pulse = await pulse.insertFork(name, fork)
+      setPulse(pulse)
+      return
     }
     case '@@GET_STATE': {
       const { path } = payload

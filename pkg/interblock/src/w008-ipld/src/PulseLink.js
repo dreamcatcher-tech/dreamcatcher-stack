@@ -71,6 +71,9 @@ export class PulseLink extends IpldInterface {
     return new Map()
   }
   equals(other) {
+    if (!other) {
+      return false
+    }
     assert(other instanceof PulseLink)
     return this.#cid.equals(other.#cid)
   }

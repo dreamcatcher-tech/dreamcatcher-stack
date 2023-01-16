@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import { assertNoUndefined } from './utils'
 import equals from 'fast-deep-equal'
 import { IpldStruct } from './IpldStruct'
-import { Binary } from '.'
+import { PulseLink, Binary } from '.'
 import schemas from '../../w006-schemas'
 
 export class Request extends IpldStruct {
@@ -33,11 +33,11 @@ export class Request extends IpldStruct {
   static get schema() {
     return schemas.types.Action
   }
-  // TODO replace with a single type, with payload based switch discriminator
   static SYSTEM_TYPES = [
     '@@PING',
     '@@SPAWN',
     '@@ADD_CHILD',
+    '@@INSERT_FORK',
     '@@GENESIS',
     '@@CONNECT',
     '@@UPLINK',
@@ -133,5 +133,11 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof path, 'string')
     assert(path)
     return this.create('@@USE_PULSE', { path })
+  }
+  // TODO move all these to use the dmzReducers api in a schema
+  static createInsertFork(pulseId, name) {
+    assert.strictEqual(typeof pulseId, 'string')
+    assert(PulseLink.parse(pulseId))
+    return this.create('@@INSERT_FORK', { pulseId, name })
   }
 }

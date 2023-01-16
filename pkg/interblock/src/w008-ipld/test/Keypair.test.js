@@ -36,7 +36,7 @@ describe('keypair', () => {
   test('generatePeerId', async () => {
     const kp = await Keypair.generate('test')
     const peerId = await kp.generatePeerId()
-    expect(peerId.type).toStrictEqual('secp256k1')
+    expect(peerId.type).toBe('secp256k1')
   })
   test('impex', async () => {
     const kp = await Keypair.generate('ipex')

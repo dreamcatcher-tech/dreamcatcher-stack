@@ -55,7 +55,7 @@ export class Channels extends IpldStruct {
   }
   async deleteChannel(channelId) {
     await this.#assertChannelIdValid(channelId)
-    const list = this.list.delete(channelId)
+    const list = await this.list.delete(channelId)
     return this.setMap({ list })
   }
   async getChannel(channelId) {
@@ -100,11 +100,15 @@ export class Channels extends IpldStruct {
     const list = await this.list.set(channelId, channel)
 
     let { addresses } = this
-    const isResolved = previous && !previous.isRemote() && channel.isRemote()
-    const isNewResolved = !previous && channel.isRemote()
-    if (isResolved || isNewResolved) {
-      const { address } = channel
-      addresses = await addresses.set(address, channelId)
+    if (channel.isRemote()) {
+      if (!previous || !channel.address.equals(previous.address)) {
+        addresses = await addresses.set(channel.address, channelId)
+        if (previous && previous.address.isRemote()) {
+          if (await addresses.has(previous.address)) {
+            addresses = await addresses.delete(previous.address)
+          }
+        }
+      }
     }
     const next = this.setMap({ list, addresses })
     return next.#updateActives(channel, previous)
@@ -136,7 +140,8 @@ export class Channels extends IpldStruct {
     }
     if (!channel.tx.isEmpty()) {
       assert(!address.isRoot())
-      if (!txs.includes(channelId) && !address.isIo() && address.isResolved()) {
+      const isRegular = !address.isIo() && address.isResolved()
+      if (!txs.includes(channelId) && (isRegular || channel.isForkPoint())) {
         txs = [...txs, channelId]
       }
     } else {

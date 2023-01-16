@@ -73,7 +73,7 @@ export class Logger {
         this.#paths.set(chainId, path)
         continue
       }
-      if (!parentChannel.address.isResolved()) {
+      if (!parentChannel.address.isResolved() || pulse.isGenesis()) {
         return unknown
       }
       let parentChainId = parentChannel.address.getChainId()

@@ -107,7 +107,7 @@ describe('Hamt', () => {
         blocks.set(cid.toString(), block)
         return block
       })
-      expect(blocks.size).toStrictEqual(3)
+      expect(blocks.size).toBe(3)
     })
   })
   describe('diffing', () => {

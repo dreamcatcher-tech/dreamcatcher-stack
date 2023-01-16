@@ -9,7 +9,7 @@ import {
   schemaToFunctions,
 } from '../../../w002-api'
 import Debug from 'debug'
-import { Pulse, Request } from '../../../w008-ipld/index.mjs'
+import { Pulse, PulseLink, Request } from '../../../w008-ipld/index.mjs'
 import { listChildren, listHardlinks } from '../../../w023-system-reducer'
 import { net } from '../..'
 import { api } from './api'
@@ -76,6 +76,21 @@ const reducer = async (request) => {
       const addActor = await interchain(spawnAction, to)
       debug(`addActor completed %O`, addActor)
       return addActor
+    }
+    case 'INSERT': {
+      const { pulseId, path } = payload
+      let [{ wd = '/' }] = await useState()
+      const absolutePath = posix.resolve(wd, path)
+      const to = posix.dirname(absolutePath)
+      let name = posix.basename(absolutePath)
+      if (!name && path) {
+        name = path
+        debug(`resetting name to ${name}`)
+      }
+      debug(`insert: ${PulseLink.parse(pulseId)} to: ${to} as: ${name}`)
+      const insert = Request.createInsertFork(pulseId, name)
+      await interchain(insert, to)
+      return { absolutePath }
     }
     case 'LS': {
       const { path } = payload
@@ -167,8 +182,7 @@ const reducer = async (request) => {
       let { target, linkName = posix.basename(target) } = payload
       debug('LN', target, linkName)
       const ln = Request.createLn(target, linkName)
-      await interchain(ln)
-      return
+      return await interchain(ln)
     }
     // check if action is part of mtab api
     // if so, ensure mtab then pass the action thru

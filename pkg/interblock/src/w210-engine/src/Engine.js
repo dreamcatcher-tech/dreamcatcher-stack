@@ -205,11 +205,13 @@ export class Engine {
       latest = await this.latestByPath('/' + alias, source)
     }
     assert(latest instanceof Pulse, `no latest found for ${address}`)
-    if (parent) {
-      assert(latest.isGenesis())
-    }
     assert(latest.isVerified())
     assert(this.#crypto.isValidatable(latest), 'No public keys for Pulse')
+    if (latest.isForkGenesis()) {
+      assert(deepening.type === Deepening.INTERPULSE)
+      parent = deepening.payload.pulse
+    }
+    assert(!parent || latest.isGenesis())
     return await latest.generateSoftPulse(parent)
   }
   async #increase(pool, lock) {
@@ -222,9 +224,13 @@ export class Engine {
     if (channels.rxs.length) {
       pool = await this.#reducer(pool)
     }
-    if (channels.cxs) {
+    if (pool.getNetwork().channels.cxs) {
+      // cxs is a transient variable
       pool = await this.#updateTree(pool)
       assert(!pool.getNetwork().channels.cxs)
+    }
+    if (pool.getNetwork().channels.txs.length) {
+      pool = await this.#fork(pool)
     }
     const resolver = this.#endurance.getResolver(pool.currentCrush.cid)
     const provenance = await pool.provenance.crushToCid(resolver)
@@ -239,6 +245,45 @@ export class Engine {
     debug('lock released', pool.getAddress())
     await this.#transmit(pulse)
   }
+  async #fork(pool) {
+    const forkDebug = debug.extend('fork')
+    assert(pool instanceof Pulse)
+    assert(pool.isModified())
+    assert(pool.currentCrush)
+
+    let { channels } = pool.getNetwork()
+    const { txs } = channels
+    assert(Array.isArray(txs))
+    assert(txs.length)
+    for (const channelId of txs) {
+      let channel = await channels.getChannel(channelId)
+      if (!channel.rx.latest) {
+        continue
+      }
+      const child = await this.#endurance.recover(channel.rx.latest)
+      assert(child instanceof Pulse)
+      const parent = await child.getNetwork().getParent()
+      forkDebug('parentAddress', parent.address)
+      forkDebug('pool address', pool.getAddress())
+      const isNestedFork = !parent.address.equals(pool.getAddress())
+      if (!channel.isForkPoint() && !isNestedFork) {
+        continue
+      }
+      forkDebug(`fork: ${channel.address} parent points to ${parent.address}`)
+      const resolver = this.#endurance.getResolver(child.cid)
+      const fork = await child.deriveForkGenesis(pool, resolver)
+      assert(!child.getAddress().equals(fork.getAddress()))
+      assert(fork.isGenesis())
+      await this.#endurance.endure(fork)
+      const forkAddress = fork.getAddress()
+      const forkLatest = fork.getPulseLink()
+      const precedent = pool.currentCrush.getPulseLink()
+      channel = channel.forkDown(forkAddress, forkLatest, precedent)
+      channels = await channels.updateChannel(channel)
+    }
+    pool = pool.setNetwork(pool.getNetwork().setMap({ channels }))
+    return pool
+  }
   async #reducer(pool) {
     assert(pool instanceof Pulse)
     assert(pool.isModified())
@@ -248,9 +293,16 @@ export class Engine {
     if (await pool.isRoot()) {
       rootPulse = pool
     }
-    const latest = (path) => {
-      path = posix.normalize(path)
-      return this.latestByPath(path, rootPulse)
+    const latest = async (path) => {
+      if (typeof path === 'string') {
+        path = posix.normalize(path)
+        return await this.latestByPath(path, rootPulse)
+      } else {
+        assert(path instanceof PulseLink, 'path must be a string or PulseLink')
+        const child = await this.#endurance.recover(path)
+        assert(child instanceof Pulse)
+        return child
+      }
     }
     return reducer(pool, isolate, latest)
   }
@@ -314,8 +366,8 @@ export class Engine {
         return this.latestByPath(resolved + segments.join('/'), rootPulse)
       }
       const channel = await network.getChannel(segment)
-      const { address } = channel
-      if (!address.isRemote()) {
+      let { address } = channel
+      if (!address.isRemote() && !channel.isForkPoint()) {
         throw new Error(`Segment not resolved: ${segment} of: ${path}`)
       }
       const { latest } = channel.rx
@@ -327,7 +379,10 @@ export class Engine {
       }
       assert(latest instanceof PulseLink)
       pulse = await this.#endurance.recover(latest)
-      this.#endurance.upsertLatest(address, latest)
+      const pulseAddress = pulse.getAddress()
+      assert(channel.isForkPoint() || pulseAddress.equals(address))
+      // TODO WARNING latest of a fork might override true latest
+      this.#endurance.upsertLatest(pulseAddress, latest)
     }
     return pulse
   }
@@ -365,6 +420,7 @@ export class Engine {
         // remote validators will receive new block proposals as announcements
         return await this.#interpulse(target, pulse)
       } else {
+        // TODO this seems broken - how are updates being broadcast ?
         this.#endurance.announceInterpulse(target, pulse)
       }
     })

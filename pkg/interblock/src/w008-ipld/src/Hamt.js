@@ -62,9 +62,9 @@ export class Hamt extends IpldInterface {
     next.#deletes = this.#deletes.remove(key)
     return next
   }
-  delete(key) {
+  async delete(key) {
     assertKey(key)
-    if (!this.#gets.has(key)) {
+    if (!(await this.#has(key))) {
       throw new Error(`non existent key: ${key}`)
     }
     const next = this.#clone()

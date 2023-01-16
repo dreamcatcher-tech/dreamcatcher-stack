@@ -102,7 +102,7 @@ describe('engine', () => {
     expect(reply.alias).toEqual('child1')
     const latest = await engine.latest('/')
     const child1 = await latest.getNetwork().getChild('child1')
-    expect(child1.address.getChainId()).toStrictEqual(reply.chainId)
+    expect(child1.address.getChainId()).toBe(reply.chainId)
   })
   test('spawn many times', async () => {
     const engine = await Interpulse.createCI()

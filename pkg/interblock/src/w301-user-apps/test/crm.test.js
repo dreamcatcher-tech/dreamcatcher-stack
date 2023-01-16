@@ -26,7 +26,7 @@ describe('crm', () => {
       const publishStart = Date.now()
       const engine = await Interpulse.createCI()
       const { path } = await engine.publish('dpkgCrm', crm.covenant)
-      expect(path).toStrictEqual('/dpkgCrm')
+      expect(path).toBe('/dpkgCrm')
       const installStart = Date.now()
       const latest = await engine.latest('/dpkgCrm')
       expect(latest.provenance.dmz.covenant).toEqual('covenant')
@@ -90,7 +90,7 @@ describe('crm', () => {
       const realCustomers = Object.keys(children).filter(
         (key) => !key.startsWith('.')
       )
-      expect(realCustomers.length).toStrictEqual(1)
+      expect(realCustomers.length).toBe(1)
       debug(realCustomers)
     })
     test.skip('large customer list', async () => {
@@ -101,7 +101,7 @@ describe('crm', () => {
       const realCustomers = Object.keys(children).filter(
         (key) => !key.startsWith('.')
       )
-      expect(realCustomers.length).toStrictEqual(customerCount)
+      expect(realCustomers.length).toBe(customerCount)
       debug(realCustomers)
     })
     test.skip('search by name', async () => {
