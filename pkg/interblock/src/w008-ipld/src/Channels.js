@@ -53,10 +53,14 @@ export class Channels extends IpldStruct {
     const channelId = await this.addresses.get(address)
     return await this.getChannel(channelId)
   }
-  async deleteChannel(channelId) {
+  async deleteChannel(channel) {
+    const { channelId } = channel
     await this.#assertChannelIdValid(channelId)
     const list = await this.list.delete(channelId)
-    return this.setMap({ list })
+    const next = this.setMap({ list })
+    // TODO may send a signal to the child
+    channel = channel.setMap({ address: Address.createInvalid() })
+    return next.#updateActives(channel)
   }
   async getChannel(channelId) {
     await this.#assertChannelIdValid(channelId)
@@ -121,6 +125,16 @@ export class Channels extends IpldStruct {
     assert(channelId >= 0)
     const { address } = channel
     let { rxs, txs } = this
+    if (address.isInvalid()) {
+      if (rxs.includes(channelId)) {
+        rxs = rxs.filter((id) => id !== channelId)
+      }
+      if (txs.includes(channelId)) {
+        txs = txs.filter((id) => id !== channelId)
+      }
+      const next = this.setMap({ rxs, txs })
+      return next
+    }
     if (!channel.rxIsEmpty()) {
       assert(!address.isRoot())
       if (!rxs.includes(channelId)) {

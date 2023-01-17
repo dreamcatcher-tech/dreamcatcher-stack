@@ -52,5 +52,14 @@ const [large, medium, small] = [largeJson, mediumJson, smallJson].map((obj) => {
   return api.Complex.create(obj)
 })
 
-export { large, medium, small, templateUrl }
-export default { large, medium, small, templateUrl }
+const dataPrefix =
+  'https://raw.githubusercontent.com/dreamcatcher-tech/crm-data/de2cc481276effbab55536e17e1d1e4f54c28617/'
+const car = {
+  blank: {
+    url: dataPrefix + 'crm.blank.car',
+    path: '/crm',
+  },
+}
+
+export { large, medium, small, templateUrl, car }
+export default { large, medium, small, templateUrl, car }

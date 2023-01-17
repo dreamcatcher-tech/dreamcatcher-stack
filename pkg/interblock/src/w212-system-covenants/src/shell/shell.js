@@ -131,10 +131,18 @@ const reducer = async (request) => {
       return { absolutePath }
     }
     case 'RM': {
-      debug(`removeActor`, event)
-      // refuse to delete self
-      // try open path to child
-      return
+      let { path } = payload
+      assert.strictEqual(typeof path, 'string')
+      assert(path)
+      let [state] = await useState()
+      const { wd = '/' } = state
+      assert(posix.isAbsolute(wd))
+      const absolutePath = posix.resolve(wd, path)
+      const basename = posix.basename(absolutePath)
+      const dirname = posix.dirname(absolutePath)
+      debug(`removeActor %s to %s`, basename, dirname)
+      const rm = Request.createRemoveActor(basename)
+      return await interchain(rm, dirname)
     }
     case 'DISPATCH': {
       const { action, path } = payload

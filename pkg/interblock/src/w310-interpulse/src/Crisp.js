@@ -10,6 +10,7 @@ export class Crisp {
   #name // the name of this Crisp, passed down from the parent
   #pulse // the Pulse that this Crisp is wrapping
   #rootActions // the actions of the engine
+  #chroot // the chroot of the Syncer that made this Crisps root
   #wd = '/' // the working directory which is only set in the root
   #snapshotChannelMap // a snapshot of the channels map
   #snapshotAliasMap // a snapshot of the aliases map
@@ -19,13 +20,16 @@ export class Crisp {
     const result = new Crisp()
     return result
   }
-  static createRoot(rootPulse, rootActions) {
+  static createRoot(rootPulse, rootActions, chroot = '/') {
     assert(rootPulse instanceof Pulse)
     assert.strictEqual(typeof rootActions, 'object')
     assert.strictEqual(typeof rootActions.dispatch, 'function')
+    assert.strictEqual(typeof chroot, 'string')
+    assert(chroot.startsWith('/'))
     const result = new Crisp()
     result.#pulse = rootPulse
     result.#rootActions = rootActions
+    result.#chroot = chroot
     return result
   }
   static createChild(pulse, parent, name) {
@@ -51,6 +55,9 @@ export class Crisp {
       return this
     }
     return this.#parent.root
+  }
+  get chroot() {
+    return this.root.#chroot
   }
   get isLoadingActions() {
     // this call signals the reconciler that loading is required
@@ -80,7 +87,7 @@ export class Crisp {
     }
     return this.#parent.path + '/' + this.#name
   }
-  getActions() {
+  get actions() {
     if (this.isLoadingActions) {
       throw new Error('cannot get actions from a loading Crisp')
     }
@@ -91,7 +98,7 @@ export class Crisp {
     const state = covenant.getState().toJS()
     const { api = {} } = state
     const actions = schemaToFunctions(api)
-    const dispatches = this.isRoot ? {} : this.#parent.getActions()
+    const dispatches = this.isRoot ? {} : this.#parent.actions
     for (const key of Object.keys(actions)) {
       dispatches[key] = (payload) => {
         const action = actions[key](payload)
@@ -163,9 +170,14 @@ export class Crisp {
   #clone() {
     const next = new Crisp()
     next.#parent = this.#parent
+    next.#name = this.#name
     next.#pulse = this.#pulse
+    next.#rootActions = this.#rootActions
+    next.#chroot = this.#chroot
     next.#wd = this.#wd
     next.#snapshotChannelMap = this.#snapshotChannelMap
+    next.#snapshotAliasMap = this.#snapshotAliasMap
+    next.#isCovenantSnapshot = this.#isCovenantSnapshot
     return next
   }
   setWd(path) {

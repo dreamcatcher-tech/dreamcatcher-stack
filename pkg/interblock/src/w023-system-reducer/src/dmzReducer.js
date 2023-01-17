@@ -198,6 +198,13 @@ const pulseReducer = async (type, payload) => {
       setPulse(pulse)
       return
     }
+    case '@@RM': {
+      const { path } = payload
+      const network = await pulse.getNetwork().rm(path)
+      pulse = pulse.setNetwork(network)
+      setPulse(pulse)
+      return
+    }
     default:
       throw new Error(`Unrecognized type: ${type}`)
   }

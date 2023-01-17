@@ -17,11 +17,6 @@ export class ChannelsHamt extends Hamt {
     assert(channelId >= 0)
     return await super.has(channelId)
   }
-  async delete(channelId) {
-    assert(Number.isInteger(channelId))
-    assert(channelId >= 0)
-    throw new Error('not implemented')
-  }
   async get(channelId) {
     assert(Number.isInteger(channelId))
     assert(channelId >= 0)

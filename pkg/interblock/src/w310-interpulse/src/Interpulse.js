@@ -76,6 +76,9 @@ export class Interpulse {
     this.#engine = engine
     this.#actions = actions
   }
+  get api() {
+    return this.#actions
+  }
   async pierce(request) {
     return await this.#engine.pierce(request)
   }

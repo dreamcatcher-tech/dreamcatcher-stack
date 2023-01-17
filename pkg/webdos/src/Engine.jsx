@@ -34,6 +34,16 @@ export default function Engine({ repo, ram, init, dev, car, children }) {
         globalThis.interpulse = engine
         setEngine(engine)
         debug(`Engine ready`)
+        if (car) {
+          const { url, path } = car
+          debug('importing car from %s to %s', url, path)
+          const response = await fetch(url)
+          const stream = toIt(response.body)
+          const { roots, count } = await engine.import(stream)
+          debug('imported %i pulses with root:', count, roots[0])
+          await engine.insert(roots[0].cid.toString(), path)
+          debug('import complete to path:', path)
+        }
         if (init && engine.isCreated) {
           debug('init', init)
           for (const action of init) {
@@ -43,17 +53,6 @@ export default function Engine({ repo, ram, init, dev, car, children }) {
             await engine[command](args)
           }
           debug('init complete')
-        }
-        if (car) {
-          const { url, path } = car
-          debug('importing car from %s to %s', url, path)
-          const response = await fetch(url)
-          const stream = toIt(response.body)
-          const { roots, count } = await engine.import(stream)
-          debug('imported %i pulses with root:', count, roots[0])
-          await engine.insert(roots[0].cid.toString(), path)
-          await engine.cd(path)
-          debug('import complete to path:', path)
         }
       }
       const stop = async () => {

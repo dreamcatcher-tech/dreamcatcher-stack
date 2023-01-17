@@ -216,10 +216,39 @@ export class Network extends IpldStruct {
       return this.setMap({ downlinks, channels })
     }
   }
-  rm(alias) {
+  async rm(path) {
     // if it was a child, then we can only fully terminate the chain
     // if it was a link, then we remove the alias mapping
     // if this is the only mapping, then we can remove the channel
+
+    if (!(await this.hasChannel(path))) {
+      throw new Error(`no such channel: ${path}`)
+    }
+    const channel = await this.getChannel(path)
+    assert(channel.aliases.includes(path))
+    const fixeds = ['.', '..', '.@@io']
+    if (fixeds.includes(path)) {
+      throw new Error(`cannot remove fixed channel: ${path}`)
+    }
+    let next = this
+    if (await this.symlinks.has(path)) {
+      next = next.setMap({ symlinks: await next.symlinks.delete(path) })
+    }
+    if (await this.children.has(path)) {
+      next = next.setMap({ children: await next.children.delete(path) })
+    }
+    if (await this.downlinks.has(path)) {
+      next = next.setMap({ downlinks: await next.downlinks.delete(path) })
+    }
+    if (await this.hardlinks.has(path)) {
+      next = next.setMap({ hardlinks: await next.hardlinks.delete(path) })
+    }
+    if (channel.aliases.length === 1) {
+      next = next.setMap({
+        channels: await next.channels.deleteChannel(channel),
+      })
+    }
+    return next
   }
   async addChild(path, address) {
     assert(typeof path === 'string')

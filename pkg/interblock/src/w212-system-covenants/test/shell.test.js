@@ -255,4 +255,14 @@ describe('shell', () => {
       debug(`pulseCount`, engine.logger.pulseCount)
     })
   })
+  describe('rm', () => {
+    test('basic', async () => {
+      Debug.enable('iplog *shell')
+      const engine = await Engine.createCI({ overloads: { root: shell } })
+      await engine.pierce(api.add('child1'))
+      const rm = api.rm('child1')
+      const result = await engine.pierce(rm)
+      assert(result)
+    })
+  })
 })

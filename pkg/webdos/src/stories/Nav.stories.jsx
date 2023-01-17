@@ -1,35 +1,31 @@
 import React from 'react'
-import { Nav } from '..'
+import { Engine, Syncer, Nav } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
-const { faker } = apps.crm
+import { car } from './data'
 import Debug from 'debug'
 const debug = Debug('Nav')
 
 export default {
   title: 'Nav',
   component: Nav,
-
-  args: { complex: faker() },
+  args: { dev: { '/dpkg/crm': apps.crm.covenant }, car: car.blank },
 }
 
 const Template = (args) => {
-  Debug.enable('*Nav')
-  const [wd, setWd] = React.useState(args.complex.wd)
-  args.complex = args.complex.setWd(wd).addAction({
-    cd: (path) => {
-      debug('cd', path)
-      setWd(path)
-    },
-  })
-  return <Nav {...args} />
+  Debug.enable('*Nav iplog')
+  return (
+    <Engine {...args}>
+      <Syncer path={args.car.path}>
+        <Nav />
+      </Syncer>
+    </Engine>
+  )
 }
 
 export const Basic = Template.bind({})
 
 export const Selection = Template.bind({})
-Selection.args = { complex: faker().setWd('/customers') }
+Selection.args = { init: [{ cd: { path: '/crm/customers' } }] }
 
 export const NoSettings = Template.bind({})
-NoSettings.args = {
-  complex: faker().rm('settings'),
-}
+NoSettings.args = { init: [{ rm: { path: '/crm/settings' } }] }

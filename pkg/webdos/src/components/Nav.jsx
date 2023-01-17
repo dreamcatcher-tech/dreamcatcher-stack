@@ -21,8 +21,19 @@ const masked = ['.', '..', '.@@io', 'about', 'settings', 'account']
  * of the root of the app complex.
  */
 const Nav = ({ crisp }) => {
+  if (crisp.isLoadingActions) {
+    return <div>Loading Navigation...</div>
+  }
   const { wd, actions } = crisp
   debug(`network: `, [...crisp])
+  debug('wd: ', wd)
+  debug('crisp: ', crisp)
+  const cdOnce = (path) => {
+    if (wd !== '/' + path) {
+      return actions.cd(crisp.chroot + '/' + path)
+    }
+  }
+
   const navLinks = [...crisp]
     .filter((path) => !masked.includes(path))
     .map((path) => {
@@ -32,7 +43,7 @@ const Nav = ({ crisp }) => {
         <ListItemButton
           key={title}
           sx={{ textTransform: 'uppercase', color: 'white' }}
-          onClick={() => actions.cd('/' + path)}
+          onClick={() => cdOnce(path)}
           selected={selected}
         >
           <ListItemText
@@ -50,7 +61,7 @@ const Nav = ({ crisp }) => {
       edge="end"
       aria-label={description}
       aria-haspopup="true"
-      onClick={() => actions.cd('/' + path)}
+      onClick={() => cdOnce(path)}
       color="inherit"
       selected={wd.startsWith('/' + path)}
     >
@@ -84,7 +95,7 @@ const Nav = ({ crisp }) => {
   )
 }
 Nav.propTypes = {
-  crisp: PropTypes.instanceOf(Crisp).isRequired,
+  crisp: PropTypes.instanceOf(Crisp),
 }
 
 export default Nav

@@ -59,6 +59,7 @@ export class Request extends IpldStruct {
     '@@LN',
     '@@HARDLINK',
     '@@COVENANT', // TODO remove this when can usePulse()
+    '@@RM',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
@@ -139,5 +140,10 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof pulseId, 'string')
     assert(PulseLink.parse(pulseId))
     return this.create('@@INSERT_FORK', { pulseId, name })
+  }
+  static createRemoveActor(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    return this.create('@@RM', { path })
   }
 }

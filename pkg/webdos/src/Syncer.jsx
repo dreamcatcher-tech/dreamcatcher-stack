@@ -18,7 +18,8 @@ export default function ReactSyncer({ engine, path, children }) {
     if (!engine) {
       return
     }
-    const syncer = Syncer.create(engine.pulseResolver)
+    const { pulseResolver, covenantResolver, api } = engine
+    const syncer = Syncer.create(pulseResolver, covenantResolver, api, path)
     const wdIterator = engine.subscribe('/')
     const pathIterator = engine.subscribe(path)
     const crispIterator = syncer.subscribe()

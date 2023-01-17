@@ -4,6 +4,7 @@ import { crm } from '../../w301-user-apps'
 import { Pulse } from '../../w008-ipld/src'
 import Debug from 'debug'
 const debug = Debug('tests')
+const ciRootActions = { dispatch: (...args) => debug('CI dispatch', args) }
 
 describe('Crisp', function () {
   let repo
@@ -18,7 +19,7 @@ describe('Crisp', function () {
   })
   it('should create a Crisp', async function () {
     const pulse = await Pulse.createCI({ state: { test: true } })
-    const crisp = Crisp.createRoot(pulse)
+    const crisp = Crisp.createRoot(pulse, ciRootActions)
     expect(crisp).toBeInstanceOf(Crisp)
     expect(crisp.state).toEqual({ test: true })
     expect(crisp.hasChild('not a path')).toBe(false)
@@ -31,7 +32,8 @@ describe('Crisp', function () {
       overloads: { '/crm': crm.covenant },
       repo,
     })
-    const syncer = Syncer.create(engine.pulseResolver)
+    const { pulseResolver, covenantResolver, api } = engine
+    const syncer = Syncer.create(pulseResolver, covenantResolver, api)
     // restart the engine so can do timing
     const approot = await engine.current('app')
     debug('starting syncer')
@@ -60,7 +62,8 @@ describe('Crisp', function () {
       overloads: { '/crm': crm.covenant },
       repo,
     })
-    const syncer = Syncer.create(engine.pulseResolver)
+    const { pulseResolver, covenantResolver, api } = engine
+    const syncer = Syncer.create(pulseResolver, covenantResolver, api)
     const approot = await engine.current('app')
     debug('starting syncer')
     await syncer.update(approot)
@@ -83,13 +86,12 @@ describe('Crisp', function () {
     expect(child.state?.formData?.title).toEqual('CRM')
     await engine.stop()
   })
-  it.only('loads actions', async () => {
+  it('loads actions', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
       repo,
     })
-    const api = await engine.actions('/')
-    const { pulseResolver, covenantResolver } = engine
+    const { api, pulseResolver, covenantResolver } = engine
     const syncer = Syncer.create(pulseResolver, covenantResolver, api)
     const approot = await engine.latest('/')
     await syncer.update(approot)
@@ -100,9 +102,8 @@ describe('Crisp', function () {
     }
     const app = first.getChild('app')
     const customers = app.getChild('customers')
-    Debug.enable('tests iplog')
     expect(customers.isLoadingActions).toBe(false)
-    const actions = customers.getActions()
+    const { actions } = customers
     expect(actions.cd).toBeDefined()
     expect(actions.batch).toBeDefined()
     expect(actions.add.schema.description).toMatch(/^Add an element/)

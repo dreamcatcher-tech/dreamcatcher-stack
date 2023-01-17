@@ -21,8 +21,4 @@ export class ChildrenHamt extends Hamt {
     assert(channelId >= 0)
     return await super.set(path, channelId)
   }
-  delete(channelId) {
-    assert(Number.isInteger(channelId))
-    assert(channelId >= 0 && channelId < this.counter)
-  }
 }

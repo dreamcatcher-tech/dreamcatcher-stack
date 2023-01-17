@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import posix from 'path-browserify'
 import Debug from 'debug'
 import {
   Dmz,
@@ -15,23 +16,26 @@ import { pushable } from 'it-pushable'
 const debug = Debug('interblock:api:Syncer')
 
 export class Syncer {
-  #pulseLinkResolver
-  #covenantPathResolver
+  #pulseResolver
+  #covenantResolver
   #actions
+  #chroot
   #pulse
   #next
   #subscribers = new Set()
 
-  static create(pulseLinkResolver, covenantPathResolver, actions) {
-    assert.strictEqual(typeof pulseLinkResolver, 'function')
-    assert.strictEqual(typeof covenantPathResolver, 'function')
+  static create(pulseResolver, covenantResolver, actions, chroot = '/') {
+    assert.strictEqual(typeof pulseResolver, 'function')
+    assert.strictEqual(typeof covenantResolver, 'function')
     assert.strictEqual(typeof actions, 'object')
     assert.strictEqual(typeof actions.dispatch, 'function')
+    assert(posix.isAbsolute(chroot), `chroot must be absolute path: ${chroot}`)
 
     const syncer = new Syncer()
-    syncer.#pulseLinkResolver = pulseLinkResolver
-    syncer.#covenantPathResolver = covenantPathResolver
+    syncer.#pulseResolver = pulseResolver
+    syncer.#covenantResolver = covenantResolver
     syncer.#actions = actions
+    syncer.#chroot = chroot || '/'
     return syncer
   }
   async update(pulse) {
@@ -75,7 +79,7 @@ export class Syncer {
       if (instance.bakedPulse) {
         return
       }
-      const pulse = await this.#pulseLinkResolver(instance)
+      const pulse = await this.#pulseResolver(instance)
       instance.bake(pulse)
       return await this.#bake(instance.bakedPulse, prior?.bakedPulse)
     }
@@ -118,7 +122,7 @@ export class Syncer {
       dmz.bake(prior.bakedCovenant)
       return
     }
-    const covenantPulse = await this.#covenantPathResolver(path)
+    const covenantPulse = await this.#covenantResolver(path)
     dmz.bake(covenantPulse)
   }
   async #updateHamt(hamt, prior) {
@@ -164,7 +168,7 @@ export class Syncer {
     }
     try {
       for await (const pulse of source) {
-        const crisp = Crisp.createRoot(pulse, this.#actions)
+        const crisp = Crisp.createRoot(pulse, this.#actions, this.#chroot)
         yield crisp
       }
     } finally {

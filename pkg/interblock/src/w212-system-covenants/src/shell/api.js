@@ -63,6 +63,11 @@ export const api = {
         default: false,
         description: `Remove the history too`,
       },
+      force: {
+        type: 'boolean',
+        default: false,
+        description: `Do not allow any cleanup for the child tree`,
+      },
     },
   },
   cd: {
