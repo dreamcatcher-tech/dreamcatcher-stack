@@ -2,10 +2,11 @@ import { Interpulse } from '../..'
 import { Pulse } from '../../w008-ipld'
 import { crm } from '../../w301-user-apps'
 import Debug from 'debug'
+
 const debug = Debug('tests')
 
 describe('Car', () => {
-  test.only('export', async () => {
+  test('export', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
     })

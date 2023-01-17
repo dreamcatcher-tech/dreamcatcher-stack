@@ -22,7 +22,7 @@ Test.propTypes = {
 }
 
 const Template = (args) => {
-  Debug.enable('*Engine *Crisp *Syncer iplog* *Nav interpulse')
+  Debug.enable('webdos:Engine *Crisp *Syncer iplog* *Nav interpulse')
   return (
     <Engine {...args}>
       <Syncer path="/crm">
@@ -39,4 +39,12 @@ CRM.args = {
   ram: true,
   // TODO make init be a function that does anything at all ?
   init: [{ add: { path: 'crm', installer: '/dpkg/crm' } }],
+}
+
+export const CAR = Template.bind({})
+const dataPrefix =
+  'https://raw.githubusercontent.com/dreamcatcher-tech/crm-data/de2cc481276effbab55536e17e1d1e4f54c28617/'
+CAR.args = {
+  ram: true,
+  car: { url: dataPrefix + 'crm.blank.car', path: '/crm' },
 }

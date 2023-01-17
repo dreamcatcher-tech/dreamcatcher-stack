@@ -35,6 +35,7 @@ export class Interpulse {
   #endurance
   #crypto
   #subscribers = new Set()
+  #actions
 
   static async createCI(options = {}) {
     options = { ...options, CI: true }
@@ -73,11 +74,15 @@ export class Interpulse {
     const actions = mapShell(engine)
     Object.assign(this, actions)
     this.#engine = engine
+    this.#actions = actions
   }
   async pierce(request) {
     return await this.#engine.pierce(request)
   }
   async actions(path = '.') {
+    if (path === '/') {
+      return this.#actions
+    }
     const pulse = await this.latest(path)
     const covenantPath = pulse.getCovenantPath()
     const covenantPulse = await this.latest(covenantPath)
@@ -121,6 +126,9 @@ export class Interpulse {
   }
   get pulseResolver() {
     return (pulseLink) => this.#endurance.recover(pulseLink)
+  }
+  get covenantResolver() {
+    return (path) => this.latest(path)
   }
   get logger() {
     return this.#engine.logger

@@ -1,7 +1,7 @@
-import delay from 'delay'
 import assert from 'assert-fast'
 import Debug from 'debug'
 import {
+  Dmz,
   Hamt,
   IpldInterface,
   Pulse,
@@ -15,15 +15,23 @@ import { pushable } from 'it-pushable'
 const debug = Debug('interblock:api:Syncer')
 
 export class Syncer {
-  #pulseResolver
+  #pulseLinkResolver
+  #covenantPathResolver
+  #actions
   #pulse
   #next
   #subscribers = new Set()
 
-  static create(pulseResolver) {
-    assert.strictEqual(typeof pulseResolver, 'function')
+  static create(pulseLinkResolver, covenantPathResolver, actions) {
+    assert.strictEqual(typeof pulseLinkResolver, 'function')
+    assert.strictEqual(typeof covenantPathResolver, 'function')
+    assert.strictEqual(typeof actions, 'object')
+    assert.strictEqual(typeof actions.dispatch, 'function')
+
     const syncer = new Syncer()
-    syncer.#pulseResolver = pulseResolver
+    syncer.#pulseLinkResolver = pulseLinkResolver
+    syncer.#covenantPathResolver = covenantPathResolver
+    syncer.#actions = actions
     return syncer
   }
   async update(pulse) {
@@ -67,14 +75,16 @@ export class Syncer {
       if (instance.bakedPulse) {
         return
       }
-      const pulse = await this.#pulseResolver(instance)
+      const pulse = await this.#pulseLinkResolver(instance)
       instance.bake(pulse)
       return await this.#bake(instance.bakedPulse, prior?.bakedPulse)
     }
     if (instance instanceof Hamt) {
       return await this.#updateHamt(instance, prior)
     }
-
+    if (instance instanceof Dmz) {
+      await this.#updateCovenant(instance, prior)
+    }
     const { classMap = {}, defaultClass } = instance.constructor
     assert(!(Object.keys(classMap).length && defaultClass))
     await Promise.all(
@@ -93,7 +103,24 @@ export class Syncer {
       await this.#bake(values, priorValues)
     }
   }
+  async #updateCovenant(dmz, prior) {
+    // TODO allow slow resolution to not block the rest of the bake
+    // TODO is there a point to bake the covenant pulse too ?
+    assert(dmz instanceof Dmz)
+    assert(!prior || prior instanceof Dmz)
+    if (dmz.bakedCovenant) {
+      return
+    }
+    const path = dmz.getCovenantPath()
+    const priorPath = prior?.getCovenantPath()
 
+    if (path === priorPath) {
+      dmz.bake(prior.bakedCovenant)
+      return
+    }
+    const covenantPulse = await this.#covenantPathResolver(path)
+    dmz.bake(covenantPulse)
+  }
   async #updateHamt(hamt, prior) {
     assert(hamt instanceof Hamt)
     assert(!prior || prior instanceof Hamt)
@@ -137,7 +164,7 @@ export class Syncer {
     }
     try {
       for await (const pulse of source) {
-        const crisp = Crisp.createRoot(pulse)
+        const crisp = Crisp.createRoot(pulse, this.#actions)
         yield crisp
       }
     } finally {

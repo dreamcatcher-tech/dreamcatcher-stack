@@ -3,11 +3,12 @@ import PropTypes from 'prop-types'
 import assert from 'assert-fast'
 import React, { useState, useEffect, useRef } from 'react'
 import { Interpulse } from '@dreamcatcher-tech/interblock'
+import toIt from 'browser-readablestream-to-it'
 import Debug from 'debug'
 const debug = Debug('webdos:Engine')
 
 const shutdownMap = new Map()
-export default function Engine({ repo, ram, init, dev, children }) {
+export default function Engine({ repo, ram, init, dev, car, children }) {
   if (ram) {
     repo = undefined
   }
@@ -42,6 +43,17 @@ export default function Engine({ repo, ram, init, dev, children }) {
             await engine[command](args)
           }
           debug('init complete')
+        }
+        if (car) {
+          const { url, path } = car
+          debug('importing car from %s to %s', url, path)
+          const response = await fetch(url)
+          const stream = toIt(response.body)
+          const { roots, count } = await engine.import(stream)
+          debug('imported %i pulses with root:', count, roots[0])
+          await engine.insert(roots[0].cid.toString(), path)
+          await engine.cd(path)
+          debug('import complete to path:', path)
         }
       }
       const stop = async () => {
@@ -124,6 +136,10 @@ Engine.propTypes = {
    * This will cause any actions in `init` to be executed after reset.
    */
   reset: PropTypes.bool,
+  /**
+   * URL of the car file to load into the engine at the given path.
+   */
+  car: PropTypes.exact({ url: PropTypes.string, path: PropTypes.string }),
   /**
    * Should be a list of <Complex/> components.
    * Each child will be cloned, and have its `engine` prop set to the engine

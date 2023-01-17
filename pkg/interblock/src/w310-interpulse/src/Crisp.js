@@ -1,3 +1,4 @@
+import { schemaToFunctions } from '../../w002-api'
 import assert from 'assert-fast'
 import Debug from 'debug'
 import { Channel, Pulse } from '../../w008-ipld'
@@ -6,29 +7,40 @@ const debug = Debug('interblock:api:Crisp')
 
 export class Crisp {
   #parent // the parent Crisp
+  #name // the name of this Crisp, passed down from the parent
   #pulse // the Pulse that this Crisp is wrapping
+  #rootActions // the actions of the engine
   #wd = '/' // the working directory which is only set in the root
   #snapshotChannelMap // a snapshot of the channels map
   #snapshotAliasMap // a snapshot of the aliases map
+  #isCovenantSnapshot = false // if true, the covenant has been snapshotted
+
   static createLoading() {
     const result = new Crisp()
     return result
   }
-  static createRoot(rootPulse) {
+  static createRoot(rootPulse, rootActions) {
     assert(rootPulse instanceof Pulse)
+    assert.strictEqual(typeof rootActions, 'object')
+    assert.strictEqual(typeof rootActions.dispatch, 'function')
     const result = new Crisp()
     result.#pulse = rootPulse
+    result.#rootActions = rootActions
     return result
   }
-  static createChild(pulse, parent) {
+  static createChild(pulse, parent, name) {
     assert(!pulse || pulse instanceof Pulse)
     assert(parent instanceof Crisp)
+    assert.strictEqual(typeof name, 'string')
+    assert(name)
     const result = new Crisp()
     result.#pulse = pulse
     result.#parent = parent
+    result.#name = name
     return result
   }
   get isLoading() {
+    // this call signals the reconciler that loading is required
     return !this.#pulse
   }
   get isRoot() {
@@ -40,10 +52,60 @@ export class Crisp {
     }
     return this.#parent.root
   }
-  get isActionsLoaded() {
-    // returns true if the actions are fully loaded
+  get isLoadingActions() {
     // this call signals the reconciler that loading is required
-    return false
+    this.#snapshotCovenant()
+    return this.isLoading || !this.#pulse.provenance.dmz.bakedCovenant
+  }
+  hasAction(name) {
+    assert.strictEqual(typeof name, 'string')
+    assert(name)
+    assert(!name.includes('/'))
+    debug('hasAction', name)
+    if (this.isLoadingActions) {
+      throw new Error('cannot get actions from a loading Crisp')
+    }
+    assert(this.#isCovenantSnapshot)
+    const covenant = this.#pulse.provenance.dmz.bakedCovenant
+    const state = covenant.getState().toJS()
+    const { api = {} } = state
+    return !!api[name]
+  }
+  get path() {
+    if (this.isRoot) {
+      return '/'
+    }
+    if (this.#parent.isRoot) {
+      return '/' + this.#name
+    }
+    return this.#parent.path + '/' + this.#name
+  }
+  getActions() {
+    if (this.isLoadingActions) {
+      throw new Error('cannot get actions from a loading Crisp')
+    }
+    if (this.isRoot) {
+      return this.#rootActions
+    }
+    const covenant = this.#pulse.provenance.dmz.bakedCovenant
+    const state = covenant.getState().toJS()
+    const { api = {} } = state
+    const actions = schemaToFunctions(api)
+    const dispatches = this.isRoot ? {} : this.#parent.getActions()
+    for (const key of Object.keys(actions)) {
+      dispatches[key] = (payload) => {
+        const action = actions[key](payload)
+        return this.root.#rootActions.dispatch(action, this.path)
+      }
+      Object.assign(dispatches[key], actions[key])
+    }
+    return dispatches
+  }
+  #snapshotCovenant() {
+    if (this.#isCovenantSnapshot) {
+      return
+    }
+    this.#isCovenantSnapshot = true
   }
   get parent() {
     return this.#parent
@@ -61,7 +123,7 @@ export class Crisp {
     const channel = this.#channelMap.get(channelId)
     assert(channel instanceof Channel)
     const childPulse = channel.rx.latest?.bakedPulse
-    const child = Crisp.createChild(childPulse, this)
+    const child = Crisp.createChild(childPulse, this, path)
     return child
   }
   hasChild(path) {

@@ -1,3 +1,4 @@
+import posix from 'path-browserify'
 import assert from 'assert-fast'
 import {
   HistoricalPulseLink,
@@ -7,6 +8,7 @@ import {
   Network,
   State,
   Pending,
+  Pulse,
 } from '.'
 import { IpldStruct } from './IpldStruct'
 
@@ -29,6 +31,7 @@ const getDefaultParams = (CI = false) => {
   }
 }
 export class Dmz extends IpldStruct {
+  #bakedCovenant
   static cidLinks = [
     'config',
     'network',
@@ -69,5 +72,24 @@ export class Dmz extends IpldStruct {
     // TODO verify that the pending buffers map to legit channels
     // TODO find how to not infect everything with async
     // assert(!network.getIo() || config.isPierced)
+  }
+  getCovenantPath() {
+    const { covenant } = this
+    assert.strictEqual(typeof covenant, 'string')
+    let covenantPath = covenant
+    if (!posix.isAbsolute(covenantPath)) {
+      // TODO be precise about assumption this is a system covenant
+      covenantPath = '/system:/' + covenantPath
+    }
+    return covenantPath
+  }
+  bake(covenantPulse) {
+    assert(covenantPulse instanceof Pulse)
+    assert(!this.#bakedCovenant)
+    assert(!covenantPulse.isModified())
+    this.#bakedCovenant = covenantPulse
+  }
+  get bakedCovenant() {
+    return this.#bakedCovenant
   }
 }

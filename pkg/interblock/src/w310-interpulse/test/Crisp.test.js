@@ -83,4 +83,32 @@ describe('Crisp', function () {
     expect(child.state?.formData?.title).toEqual('CRM')
     await engine.stop()
   })
+  it.only('loads actions', async () => {
+    const engine = await Interpulse.createCI({
+      overloads: { '/crm': crm.covenant },
+      repo,
+    })
+    const api = await engine.actions('/')
+    const { pulseResolver, covenantResolver } = engine
+    const syncer = Syncer.create(pulseResolver, covenantResolver, api)
+    const approot = await engine.latest('/')
+    await syncer.update(approot)
+    let first
+    for await (const crisp of syncer.subscribe()) {
+      first = crisp
+      break
+    }
+    const app = first.getChild('app')
+    const customers = app.getChild('customers')
+    Debug.enable('tests iplog')
+    expect(customers.isLoadingActions).toBe(false)
+    const actions = customers.getActions()
+    expect(actions.cd).toBeDefined()
+    expect(actions.batch).toBeDefined()
+    expect(actions.add.schema.description).toMatch(/^Add an element/)
+
+    expect(engine.wd).toBe('/')
+    await actions.cd('app')
+    expect(engine.wd).toBe('/app')
+  })
 })
