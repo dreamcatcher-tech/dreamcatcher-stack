@@ -20,7 +20,8 @@ export const generateConstantCids = () => {
   const INVALID = cidV0FromString('INVALID')
   const GENESIS = cidV0FromString('GENESIS')
   const IO = cidV0FromString('IO')
-  console.log({ UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS, IO })
+  const DELETED = cidV0FromString('DELETED')
+  console.log({ UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS, IO, DELETED })
 }
 // generateConstantCids()
 
@@ -30,7 +31,8 @@ const LOOPBACK = CID.parse('Qme2gGBx8EnSrXc5shQF867KPQd4jwubNov67KEKZbo4p3')
 const INVALID = CID.parse('QmYSWwmJ4w1pZ6igGRNKcVHpBU68iaumYEjsdbMpxfAQaj')
 const GENESIS = CID.parse('QmZTKF2kuFHy8isKWXpNeNa5zjeJwsHUbPbTNF1fS8HkpB')
 const IO = CID.parse('QmapFBxqMFEFxSqGE45yVYKid471NoegxSriH1GpCMfUa6')
-const defines = [UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS, IO]
+const DELETED = CID.parse('QmdnwjiEB3iVDc862hMHsRehcFceCx3Zz4bCotdZuax1ep')
+const defines = [UNKNOWN, ROOT, LOOPBACK, INVALID, GENESIS, IO, DELETED]
 
 const addressBlock = (cidV1) => {
   assert(CID.asCID(cidV1))
@@ -82,6 +84,9 @@ export class Address extends IpldInterface {
   }
   static createIo() {
     return this.#createPredefined(IO)
+  }
+  static createDeleted() {
+    return this.#createPredefined(DELETED)
   }
   static generate(pulse) {
     assert(pulse instanceof Pulse)
@@ -189,6 +194,9 @@ export class Address extends IpldInterface {
   }
   isIo() {
     return this.#cid === IO
+  }
+  isDeleted() {
+    return this.#cid === DELETED
   }
   isInvalid() {
     return this.#cid === INVALID
