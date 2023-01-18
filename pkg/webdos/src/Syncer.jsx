@@ -80,6 +80,10 @@ ReactSyncer.propTypes = {
    */
   sync: PropTypes.bool,
 }
+ReactSyncer.defaultProps = {
+  path: '/',
+  sync: true,
+}
 const stripTrailingSlash = (path) => {
   if (path === '/') {
     return path

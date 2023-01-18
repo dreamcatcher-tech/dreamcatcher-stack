@@ -67,3 +67,9 @@ Growing.args = {}
 
 export const Loading = Template.bind({})
 Loading.args = { base: api.Complex.createLoading() }
+
+// do a fresh install and display the app
+export const Install = Template.bind({})
+Install.args = {
+  init: [{ add: { path: 'crm', installer: '/dpkg/crm' } }],
+}

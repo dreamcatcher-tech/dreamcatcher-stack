@@ -142,8 +142,8 @@ export class Request extends IpldStruct {
     return this.create('@@INSERT_FORK', { pulseId, name })
   }
   static createRemoveActor(path) {
-    assert.strictEqual(typeof path, 'string')
-    assert(path)
+    assert.strictEqual(typeof path, 'string', `path must be a string`)
+    assert(path, `path must not be empty`)
     return this.create('@@RM', { path })
   }
 }

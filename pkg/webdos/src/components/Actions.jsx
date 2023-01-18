@@ -13,23 +13,21 @@ import Debug from 'debug'
 import PropTypes from 'prop-types'
 const debug = Debug('terminal:widgets:Actions')
 
-const Actions = ({ actions, onAction }) => {
+const Actions = ({ crisp }) => {
+  if (crisp.isLoadingActions) {
+    return <div>Loading Actions...</div>
+  }
+  const { actions } = crisp
   const cards = []
   for (const key in actions) {
     // TODO strip out the datum standard actions
     const action = actions[key]
-    debug(action)
-    cards.push(
-      <Action action={action} onAction={onAction} key={cards.length} />
-    )
+    cards.push(<Action action={action} key={cards.length} />)
   }
   return <Stack spacing={2}>{cards}</Stack>
 }
-Actions.propTypes = {
-  actions: PropTypes.objectOf(PropTypes.func),
-  onAction: PropTypes.func,
-}
-const Action = ({ action, onAction }) => {
+Actions.propTypes = {}
+const Action = ({ action }) => {
   const { schema = {} } = action
   const { title, ...noTitleSchema } = schema
 
@@ -48,11 +46,18 @@ const Action = ({ action, onAction }) => {
   }
   const submit = () => {
     debug('submit', liveFormData)
-    const request = action(liveFormData)
+    const promise = action(liveFormData)
     setIsPending(true)
-    onAction(request).then(() => {
-      setIsPending(false)
-    })
+    promise
+      .then((result) => {
+        debug('result', result)
+        setIsPending(false)
+      })
+      .catch((error) => {
+        setIsPending(false)
+        debug('error', error)
+        console.error(error)
+      })
   }
   return (
     <Card sx={{ maxWidth: 345 }}>
@@ -93,4 +98,5 @@ Action.propTypes = {
   action: PropTypes.func,
   onAction: PropTypes.func,
 }
+Actions.Action = Action
 export default Actions

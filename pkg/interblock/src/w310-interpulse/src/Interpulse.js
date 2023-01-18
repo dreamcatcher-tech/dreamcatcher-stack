@@ -356,6 +356,7 @@ const mapShell = (engine) => {
       const action = api[key](...args)
       return engine.pierce(action)
     }
+    Object.assign(actions[key], api[key])
   }
   const { publish } = actions
   assert(publish)
@@ -365,5 +366,7 @@ const mapShell = (engine) => {
     const { reducer, ...rest } = covenant
     return publish(name, rest, parentPath)
   }
+  Object.assign(actions.publish, api.publish)
+
   return actions
 }

@@ -1,27 +1,39 @@
 import React from 'react'
-import { system, api } from '@dreamcatcher-tech/interblock'
-import { Actions } from '..'
+import { Engine, Syncer, Actions } from '..'
 import Debug from 'debug'
-Debug.enable('*Actions')
-const { shell } = system
-const { schemaToFunctions } = api
 
-const onAction = async (action) => {
-  await new Promise((r) => setTimeout(r, 800))
-}
-const actions = schemaToFunctions(shell.api, onAction)
 export default {
   title: 'Actions',
   component: Actions,
-  args: {
-    actions,
-    onAction,
-  },
 }
 
-const Template = (args) => <Actions {...args} />
+const Template = () => {
+  Debug.enable('*Actions iplog')
+  return (
+    <Engine>
+      <Syncer>
+        <Actions />
+      </Syncer>
+    </Engine>
+  )
+}
 
-// More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
-export const Basic = Template.bind({})
-Basic.args = { actions: { ping: actions.ping } }
+export const Basic = () => {
+  Debug.enable('*Actions iplog')
+  const Single = ({ crisp }) => {
+    if (!crisp.isLoadingActions) {
+      const actions = crisp.actions
+      console.log('actions', actions)
+      return <Actions.Action action={actions.ping} />
+    }
+  }
+  return (
+    <Engine>
+      <Syncer>
+        <Single />
+      </Syncer>
+    </Engine>
+  )
+}
+
 export const Shell = Template.bind({})
