@@ -160,10 +160,10 @@ export class Interpulse {
     if (isNode) {
       if (typeof this.#repo === 'string') {
         debug('deleting directory:', this.#repo)
-        const { rimrafSync } = await import('rimraf')
+        const { default: rimraf } = await import('rimraf')
 
         // sync to purposefully block the thread from any block making
-        return rimrafSync(this.#repo)
+        return rimraf.sync(this.#repo)
       }
       debug('repo was not a filesystem path - skipping deletion')
     }
