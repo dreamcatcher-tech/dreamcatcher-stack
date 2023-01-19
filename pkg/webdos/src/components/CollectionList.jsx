@@ -99,7 +99,7 @@ const CollectionList = ({ crisp }) => {
         disableMultipleSelection
         hideFooter
         onRowClick={onRow}
-        loading={isAdding || crisp.isLoading}
+        loading={crisp.isLoading}
       />
       {onAdd ? fab : null}
     </>

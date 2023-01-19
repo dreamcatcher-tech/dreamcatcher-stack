@@ -1,5 +1,7 @@
 {
   "editor.formatOnSave": true,
   "editor.foldingMaximumRegions": 65000,
-  "json.maxItemsComputed": 65000
+  "json.maxItemsComputed": 65000,
+  "eslint.packageManager": "yarn",
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint"
 }

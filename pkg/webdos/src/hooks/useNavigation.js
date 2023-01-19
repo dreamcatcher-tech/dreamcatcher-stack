@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import debugFactory from 'debug'
 const debug = debugFactory(`webdos:hooks:useNavigation`)
 
-export default () => {
-  const { engine, wd } = useBlockchain()
+export default (engine) => {
+  const { wd } = engine
 
   const [popstate, setPopstate] = useState()
   const [isInitialized, setIsInitialized] = useState(false)

@@ -6,7 +6,6 @@
     "github.copilot",
     "ms-vscode.vscode-js-profile-flame",
     "codeandstuff.package-json-upgrade",
-    "esbenp.prettier-vscode",
     "wallabyjs.wallaby-vscode"
   ]
 }
