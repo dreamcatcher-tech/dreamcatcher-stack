@@ -87,6 +87,7 @@ export class Channel extends IpldStruct {
     }
     const aliases = [...this.aliases]
     // TODO handle relative aliases by resolving ? or leave as specified ?
+    debug('adding alias %s to %i in %o', alias, this.channelId, aliases)
     const isRemotePath = alias.includes('/')
     if (isRemotePath) {
       aliases.push(alias)

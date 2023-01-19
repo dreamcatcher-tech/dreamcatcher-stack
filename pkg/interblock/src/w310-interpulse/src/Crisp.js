@@ -91,18 +91,25 @@ export class Crisp {
     if (this.isLoadingActions) {
       throw new Error('cannot get actions from a loading Crisp')
     }
-    if (this.isRoot) {
+    if (this.isRoot && this.#chroot === '/') {
       return this.#rootActions
     }
     const covenant = this.#pulse.provenance.dmz.bakedCovenant
     const state = covenant.getState().toJS()
     const { api = {} } = state
     const actions = schemaToFunctions(api)
-    const dispatches = this.isRoot ? {} : this.#parent.actions
+    const dispatches = {}
+    if (this.isRoot && this.#chroot !== '/') {
+      Object.assign(dispatches, this.#rootActions)
+    }
+    if (!this.isRoot) {
+      Object.assign(dispatches, this.#parent.actions)
+    }
     for (const key of Object.keys(actions)) {
       dispatches[key] = (payload) => {
         const action = actions[key](payload)
-        return this.root.#rootActions.dispatch(action, this.path)
+        const to = this.isRoot ? this.#chroot : this.#chroot + '/' + this.path
+        return this.root.#rootActions.dispatch(action, to)
       }
       Object.assign(dispatches[key], actions[key])
     }
@@ -118,6 +125,9 @@ export class Crisp {
     return this.#parent
   }
   get state() {
+    if (this.isLoading) {
+      throw new Error('cannot get state from a loading Crisp')
+    }
     const state = this.#pulse.getState().toJS()
     return state
   }
@@ -161,11 +171,24 @@ export class Crisp {
     return this.#snapshotAliasMap
   }
   *[Symbol.iterator]() {
-    for (const [, value] of this.#channelMap.entries()) {
-      const { aliases } = value
+    for (const [value] of this.#channelMap.entries()) {
+      const { aliases = [] } = value
       // TODO shortcut until aliases are remodeled
-      yield aliases[0]
+      const [alias] = aliases
+      if (alias && alias !== '.' && alias !== '..') {
+        yield alias
+      }
     }
+  }
+  // get size() {
+  //   this.#snapshotMaps()
+  //   return this.#channelMap.size
+  // }
+  get covenant() {
+    if (this.isLoading) {
+      throw new Error('cannot get covenant from a loading Crisp')
+    }
+    return this.#pulse.getCovenantPath()
   }
   #clone() {
     const next = new Crisp()

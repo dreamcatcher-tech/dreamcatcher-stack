@@ -14,13 +14,7 @@ import assert from 'assert-fast'
 import { api } from '@dreamcatcher-tech/interblock'
 const debug = Debug('webdos:SectorSelector')
 
-export default function SectorSelector({
-  complex,
-  sector,
-  onSector,
-  expanded,
-  disabled,
-}) {
+function SectorSelector({ complex, sector, onSector, expanded, disabled }) {
   if (complex.network.length && !sector) {
     sector = complex.network[0].path
     debug('sector default:', sector)
@@ -130,3 +124,4 @@ Sector.propTypes = {
   path: PropTypes.string,
   sector: PropTypes.instanceOf(api.Complex).isRequired,
 }
+export default SectorSelector

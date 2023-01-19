@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import calculateSize from 'calculate-size'
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -10,30 +10,71 @@ import Add from '@mui/icons-material/Add'
 
 const debug = Debug('terminal:widgets:CollectionList')
 
-const CollectionList = ({ onAdd, onRow, complex }) => {
+const CollectionList = ({ crisp }) => {
+  // TODO assert the complex has a collection as its covenant
+  debug('crisp', crisp)
   const [isAdding, setIsAdding] = useState(false)
+  assert(crisp.isLoading || crisp.covenant === '/system:/collection')
 
-  const onAddCustomer = () => {
-    debug(`addCustomer `)
-    // TODO show an enquiring modal UI over the top to get the data we need
+  const crispRef = useRef()
+  crispRef.current = crisp
+
+  const onAddCustomer = async () => {
     assert(!isAdding)
+    assert(!crisp.isLoadingActions)
+    debug(`addCustomer `, crisp)
+    // TODO show an enquiring modal UI over the top to get the data we need
     setIsAdding(true)
-    onAdd({ formData: { custNo: 1234, name: 'bob' } }).then(() => {
-      setIsAdding(false)
-    })
+    const { add } = crisp.actions
+    debug(crisp.actions)
+    let custNo
+    let count = 0
+    const current = [...crisp]
+    do {
+      count++
+      if (!current.includes(count + '')) {
+        custNo = count
+      }
+    } while (!custNo)
+    await add({ formData: { custNo, name: 'bob' } })
+    setIsAdding(false)
   }
-  const { template } = complex.state
-  const { isLoading } = complex
-  const columns = useMemo(() => generateColumns(template), [template])
+  const valueGetter = ({ id, field }) => {
+    const child = crisp.getChild(id)
+    if (!child.isLoading && child.state.formData) {
+      return child.state.formData[field]
+    }
+    return '...'
+  }
+  const columns = useMemo(() => {
+    if (crisp.isLoading) {
+      return []
+    }
+    return generateColumns(crisp.state.template, valueGetter)
+  }, [crisp])
   const rows = useMemo(() => {
-    debug('generating rows')
-    const rows = complex.network.map((child) => ({
-      ...child.state.formData,
-      id: child.path,
-    }))
-    debug('rows generated')
+    if (crisp.isLoading) {
+      return []
+    }
+    const rows = [...crisp]
+      .sort((a, b) => {
+        const ai = Number.parseInt(a)
+        const bi = Number.parseInt(b)
+        if (Number.isInteger(ai) && Number.isInteger(bi)) {
+          return ai - bi
+        }
+        if (Number.isInteger(ai)) {
+          return 1
+        }
+        if (Number.isInteger(bi)) {
+          return -1
+        }
+        return a.localeCompare(b)
+      })
+      .map((id) => ({ id }))
+    debug('rows generated', rows)
     return rows
-  }, [complex.network])
+  }, [crisp])
   const fab = (
     <Fab
       color="primary"
@@ -44,6 +85,10 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
       <Add />
     </Fab>
   )
+  const onRow = (params) => {
+    debug('onRow', params)
+  }
+  const onAdd = crisp.isLoadingActions ? null : crisp.actions.add
   return (
     <>
       <DataGridPremium
@@ -54,16 +99,14 @@ const CollectionList = ({ onAdd, onRow, complex }) => {
         disableMultipleSelection
         hideFooter
         onRowClick={onRow}
-        loading={isAdding || isLoading}
+        loading={isAdding || crisp.isLoading}
       />
       {onAdd ? fab : null}
     </>
   )
 }
 CollectionList.propTypes = {
-  onAdd: PropTypes.func,
-  onRow: PropTypes.func,
-  complex: PropTypes.instanceOf(api.Complex).isRequired,
+  crisp: PropTypes.instanceOf(Crisp),
 }
 
 const addButtonStyle = {
@@ -75,7 +118,8 @@ const addButtonStyle = {
   position: 'fixed',
 }
 
-const generateColumns = (template) => {
+const generateColumns = (template, valueGetter) => {
+  assert.strictEqual(typeof valueGetter, 'function')
   debug(`generating columns`, template)
   const columns = []
   if (!template || !template.schema) {
@@ -108,6 +152,7 @@ const generateColumns = (template) => {
       width: width + 82,
       type,
       isEditable,
+      valueGetter,
     })
   }
   return columns

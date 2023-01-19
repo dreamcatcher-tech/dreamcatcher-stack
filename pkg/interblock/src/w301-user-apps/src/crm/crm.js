@@ -60,6 +60,12 @@ export const installer = {
             type: 'object',
             required: ['custNo', 'name'],
             properties: {
+              custNo: {
+                title: 'Customer Number',
+                type: 'integer',
+                minimum: 1,
+                maximum: 100000,
+              },
               name: { title: 'Name', type: 'string', faker: 'name.findName' },
               mobile: {
                 title: 'Mobile',
@@ -81,12 +87,6 @@ export const installer = {
                 title: 'Email Verified',
                 type: 'boolean',
                 default: false,
-              },
-              custNo: {
-                title: 'Customer Number',
-                type: 'integer',
-                minimum: 1,
-                maximum: 100000,
               },
               importedHash: { type: 'string', faker: 'git.commitSha' },
             },

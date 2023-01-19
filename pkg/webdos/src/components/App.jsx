@@ -26,7 +26,7 @@ export default function App({ crisp }) {
           <Box sx={{ zIndex: 1 }}>
             <Nav crisp={crisp} />
           </Box>
-          {/* <Glass.Lazy show={wd.startsWith('/schedule')}>
+          <Glass.Lazy show={wd.startsWith('/schedule')}>
             <Schedule complex={crisp.getChild('schedule')} />
           </Glass.Lazy>
           <Glass.Lazy show={wd.startsWith('/customers')}>
@@ -34,7 +34,7 @@ export default function App({ crisp }) {
           </Glass.Lazy>
           <Glass.Lazy show={wd.startsWith('/routing')}>
             <Routing complex={crisp.getChild('routing')} />
-          </Glass.Lazy> */}
+          </Glass.Lazy>
         </>
       )}
     </Box>

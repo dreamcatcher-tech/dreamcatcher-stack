@@ -14,7 +14,7 @@ const add = async (payload, datumTemplate) => {
   const name = getChildName(datumTemplate, formData)
 
   validateFormData(payload, datumTemplate)
-  const state = { datumTemplate: '..' }
+  const state = { datumTemplate: '..', formData }
   const covenant = 'datum'
   const installer = { state, covenant }
   if (datumTemplate.network) {
@@ -109,9 +109,6 @@ const getChildName = (datumTemplate, formData) => {
   if (typeof formData === 'number') {
     formData = formData + ''
   }
-  const prefix = datumTemplate.namePath.join('_')
-  formData = prefix + '-' + formData
-  assert.strictEqual(typeof formData, 'string')
   debug(`getChildName`, formData)
   return formData
 }

@@ -71,6 +71,22 @@ describe('crm', () => {
         formData: { custNo: 1234, name: 'test1' },
       })
     })
+    test('customer add', async () => {
+      const engine = await Interpulse.createCI({
+        overloads: { '/crm': crm.covenant },
+      })
+      await engine.add('crm', { covenant: '/crm' })
+      const crmActions = await engine.actions('/crm/customers')
+      Debug.enable('tests iplog')
+      const formData = { custNo: 100, name: 'test name 1' }
+      const newCustomer = await crmActions.add({ formData })
+      debug(`newCustomer`, newCustomer)
+      const latest = await engine.current('/crm/customers/100')
+      debug(`latest`, latest.getState().toJS())
+      const state = latest.getState().toJS()
+      expect(state.formData).toBe(formData)
+      expect(state.datumTemplate).toBe('..')
+    })
     test.todo('add customer with test data using .processes/addTestCustomer')
   })
   describe('list customers', () => {

@@ -29,14 +29,21 @@ export const api = {
   add: {
     type: 'object',
     title: 'ADD',
-    description: `Add a new chain at the optional path, with optional given installer.  If no path is given, a reasonable default will be chosen`,
+    description: `Add a new chain at the optional path, with optional given installer.  If no path is given, a reasonable default will be automatically generated`,
     additionalProperties: false,
     required: [],
     properties: {
       // TODO interpret datums and ask for extra data
       path: { type: 'string' }, // TODO regex
       installer: {
-        oneOf: [{ type: 'string' }, { type: 'object', default: {} }],
+        oneOf: [
+          { type: 'string', description: 'Name of covenant to use' },
+          {
+            type: 'object',
+            description: 'Installer object to use',
+            default: {},
+          },
+        ],
       }, // TODO use pulse to validate format
     },
   },

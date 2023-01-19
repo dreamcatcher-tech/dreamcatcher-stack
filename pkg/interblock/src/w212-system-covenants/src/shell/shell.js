@@ -21,6 +21,9 @@ const reducer = async (request) => {
   assert.strictEqual(typeof payload, 'object')
   debug('shell', request.type)
   switch (type) {
+    case '@@INIT': {
+      return
+    }
     case 'PING': {
       debug(`ping: %O`, payload)
       let { to, message } = payload

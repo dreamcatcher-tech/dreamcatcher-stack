@@ -314,6 +314,9 @@ MapComponent.propTypes = {
   onEdit: PropTypes.func,
   complex: PropTypes.instanceOf(api.Complex),
   onSector: PropTypes.func,
+  /**
+   * The selected sector
+   */
   sector: PropTypes.string,
   onMarker: PropTypes.func,
   /**
