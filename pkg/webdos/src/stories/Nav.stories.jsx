@@ -1,21 +1,21 @@
 import React from 'react'
 import { Engine, Syncer, Nav } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
-import { car } from './data'
 import Debug from 'debug'
 const debug = Debug('Nav')
+const init = [{ add: { path: 'crm', installer: '/dpkg/crm' } }]
 
 export default {
   title: 'Nav',
   component: Nav,
-  args: { dev: { '/dpkg/crm': apps.crm.covenant }, car: car.blank },
+  args: { dev: { '/dpkg/crm': apps.crm.covenant }, init, path: '/crm' },
 }
 
 const Template = (args) => {
   Debug.enable('*Nav iplog')
   return (
     <Engine {...args}>
-      <Syncer path={args.car.path}>
+      <Syncer path={args.path}>
         <Nav />
       </Syncer>
     </Engine>
@@ -25,7 +25,7 @@ const Template = (args) => {
 export const Basic = Template.bind({})
 
 export const Selection = Template.bind({})
-Selection.args = { init: [{ cd: { path: '/crm/customers' } }] }
+Selection.args = { init: [...init, { cd: { path: '/crm/customers' } }] }
 
 export const NoSettings = Template.bind({})
-NoSettings.args = { init: [{ rm: { path: '/crm/settings' } }] }
+NoSettings.args = { init: [...init, { rm: { path: '/crm/settings' } }] }

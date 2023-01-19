@@ -26,7 +26,7 @@ export default function SpeedDialFab(props) {
   return (
     <SpeedDial
       sx={{ position: 'absolute', bottom: 16, right: 16 }}
-      icon={<SpeedDialIcon />}
+      icon={<SpeedDialIcon icon={<EditIcon />} />}
       onClose={handleClose}
       onOpen={handleOpen}
       open={open}
