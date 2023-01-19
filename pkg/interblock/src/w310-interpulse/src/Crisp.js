@@ -171,11 +171,11 @@ export class Crisp {
     return this.#snapshotAliasMap
   }
   *[Symbol.iterator]() {
-    for (const [value] of this.#channelMap.entries()) {
+    for (const [, value] of this.#channelMap.entries()) {
       const { aliases = [] } = value
       // TODO shortcut until aliases are remodeled
       const [alias] = aliases
-      if (alias && alias !== '.' && alias !== '..') {
+      if (alias && !alias.startsWith('.')) {
         yield alias
       }
     }

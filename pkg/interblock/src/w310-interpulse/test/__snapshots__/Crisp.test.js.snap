@@ -2,8 +2,6 @@
 
 exports[`Crisp reconciles diffs 1`] = `
 [
-  ".",
-  "..",
   "about",
   "account",
   "customers",
@@ -15,8 +13,6 @@ exports[`Crisp reconciles diffs 1`] = `
 
 exports[`Crisp wd is rooted in path 1`] = `
 [
-  ".",
-  "..",
   "about",
   "account",
   "customers",

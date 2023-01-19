@@ -77,7 +77,6 @@ describe('crm', () => {
       })
       await engine.add('crm', { covenant: '/crm' })
       const crmActions = await engine.actions('/crm/customers')
-      Debug.enable('tests iplog')
       const formData = { custNo: 100, name: 'test name 1' }
       const newCustomer = await crmActions.add({ formData })
       debug(`newCustomer`, newCustomer)
