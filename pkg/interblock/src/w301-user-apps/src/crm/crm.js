@@ -1,31 +1,20 @@
 const address = (title) => ({
-  covenant: 'datum',
-  state: {
-    type: 'DATUM',
-    schema: {
-      title,
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        address: { type: 'string', faker: 'address.streetAddress' },
-      },
-    },
+  title,
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    address: { type: 'string', faker: 'address.streetAddress' },
   },
 })
 const gps = {
-  covenant: 'datum',
-  state: {
-    schema: {
-      title: 'Service GPS',
-      type: 'object',
-      description: `If no lat or long, then the location is not set yet`,
-      additionalProperties: false,
-      required: [],
-      properties: {
-        latitude: { type: 'number', faker: 'address.latitude' },
-        longitude: { type: 'number', faker: 'address.longitude' },
-      },
-    },
+  title: 'Service GPS',
+  type: 'object',
+  description: `If no lat or long, then the location is not set yet`,
+  additionalProperties: false,
+  required: [],
+  properties: {
+    latitude: { type: 'number', faker: 'address.latitude' },
+    longitude: { type: 'number', faker: 'address.longitude' },
   },
 }
 export const installer = {
@@ -88,6 +77,9 @@ export const installer = {
                 type: 'boolean',
                 default: false,
               },
+              serviceAddress: address('Service Address'),
+              serviceGps: gps,
+              billingAddress: address('Billing Address'),
               importedHash: { type: 'string', faker: 'git.commitSha' },
             },
           },
@@ -97,11 +89,6 @@ export const installer = {
             custNo: { 'ui:readonly': true },
           },
           namePath: ['custNo'],
-          network: {
-            serviceAddress: address('Service Address'),
-            serviceGps: gps,
-            billingAddress: address('Billing Address'),
-          },
         },
       },
     },
