@@ -11,16 +11,17 @@ import TextField from '@mui/material/TextField'
 import Autocomplete from '@mui/material/Autocomplete'
 import Debug from 'debug'
 import assert from 'assert-fast'
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 const debug = Debug('webdos:SectorSelector')
 
-function SectorSelector({ complex, sector, onSector, expanded, disabled }) {
-  if (complex.network.length && !sector) {
-    sector = complex.network[0].path
-    debug('sector default:', sector)
-  }
-  if (complex.network.length) {
-    assert(complex.hasChild(sector), `selected must exist: ${sector}`)
+function SectorSelector({ crisp, expanded, disabled }) {
+  const { wd } = crisp
+  const sectors = crisp.isLoading ? [] : [...crisp]
+  debug('wd %s path %s sectors %o', wd, crisp.path, sectors)
+  let sector
+  if (wd.startsWith(crisp.path)) {
+    // if we already have a sector selected, update 'sector'
+    // if we could have a sector, then select one
   }
   const onChange = (event, value) => {
     debug('onChange', value)
@@ -31,10 +32,11 @@ function SectorSelector({ complex, sector, onSector, expanded, disabled }) {
   const openProps = expanded
     ? { open, onOpen: () => setOpen(true), onClose: () => setOpen(false) }
     : {}
-  const options = complex.network.map(({ path }) => {
-    const sector = complex.child(path)
+  const options = sectors.map((path) => {
+    const sector = crisp.getChild(path)
     return { path, sector }
   })
+
   const value = options.find(({ path }) => path === sector)
   return (
     <Paper>
@@ -75,17 +77,10 @@ function SectorSelector({ complex, sector, onSector, expanded, disabled }) {
 }
 SectorSelector.propTypes = {
   /**
-   * The Routing complex to select a sector from
+   * The Routing Crisp to select a sector from
    */
-  complex: PropTypes.instanceOf(api.Complex).isRequired,
-  /**
-   * The selected sector
-   */
-  sector: PropTypes.string,
-  /**
-   * Callback when a sector is selected
-   */
-  onSector: PropTypes.func,
+  crisp: PropTypes.instanceOf(Crisp),
+
   /**
    * Disable the selector during editing
    */
@@ -122,6 +117,6 @@ Sector.propTypes = {
   selected: PropTypes.string,
   onClick: PropTypes.func,
   path: PropTypes.string,
-  sector: PropTypes.instanceOf(api.Complex).isRequired,
+  sector: PropTypes.instanceOf(Crisp).isRequired,
 }
 export default SectorSelector

@@ -37,12 +37,17 @@ export default function Engine({ repo, ram, init, dev, car, children }) {
         if (car) {
           const { url, path } = car
           debug('importing car from %s to %s', url, path)
-          const response = await fetch(url)
-          const stream = toIt(response.body)
-          const { roots, count } = await engine.import(stream)
-          debug('imported %i pulses with root:', count, roots[0])
-          await engine.insert(roots[0].cid.toString(), path)
-          debug('import complete to path:', path)
+          try {
+            const response = await fetch(url)
+            const stream = toIt(response.body)
+            const { roots, count } = await engine.import(stream)
+            debug('imported %i pulses with root:', count, roots[0])
+            await engine.insert(roots[0].cid.toString(), path)
+            debug('import complete to path:', path)
+          } catch (error) {
+            debug('import failed', error)
+            !debug.enabled && console.error(error)
+          }
         }
         if (init && engine.isCreated) {
           debug('init', init)

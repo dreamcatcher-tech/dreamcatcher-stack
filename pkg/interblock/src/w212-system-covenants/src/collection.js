@@ -136,7 +136,7 @@ const api = {
     additionalProperties: false,
     required: ['batch'],
     properties: {
-      batch: { type: 'array' },
+      batch: { type: 'array' }, // TODO use 'add' schema
     },
   },
   setTemplate: {
