@@ -3,7 +3,7 @@ import { Pulse, AsyncTrail } from '../../w008-ipld/index.mjs'
 import * as system from '../../w212-system-covenants'
 import { wrapReduce } from '../../w010-hooks'
 import Debug from 'debug'
-const debug = Debug('interblock:engine:services')
+const debug = Debug('interblock:engine:Isolate')
 const defaultReducer = (request) => {
   debug(`default reducer`, request)
 }
@@ -56,9 +56,26 @@ export class Isolate {
     return new Isolate()
   }
   overload(overloads) {
-    assert.strictEqual(typeof overloads, 'object')
     // the dev supplied covenants to override blockchained ones
-    this.#overloads = overloads
+    this.#overloads = Isolate.extractOverloads(overloads)
+    return this.#overloads
+  }
+  static extractOverloads(overloads, pathAccumulator = '') {
+    assert.strictEqual(typeof overloads, 'object')
+    const nextOverloads = {}
+    for (const path in overloads) {
+      const covenant = overloads[path]
+      // TODO assert matches covenant schema
+      assert.strictEqual(typeof covenant, 'object')
+      const { covenants } = covenant
+      if (covenants) {
+        const pathPrefix = pathAccumulator + path + '/'
+        const nestedOverloads = Isolate.extractOverloads(covenants, pathPrefix)
+        Object.assign(nextOverloads, nestedOverloads)
+      }
+      nextOverloads[pathAccumulator + path] = covenant
+    }
+    return nextOverloads
   }
   isCovenant(path) {
     return this.#isOverload(path) || this.#isSystem(path)

@@ -11,6 +11,15 @@ const reducer = (request) => {
  * 2. Specifying null - what if we want no options passed to this covenant ?
  * 3. Rejection of options - the covenant author should be able to refuse
  *    some options
+ *
+ * Nested covenants:
+ * There are two types of tree:
+ * 1. The chain tree
+ * 2. The covenant tree
+ *
+ * In the covenant tree, all pathing is relative to the actual filesystem
+ * if posix pathing is used, or relative to the root covenant that defined
+ * the current covenant if schemaRef pathing is used.
  */
 const covenantSchema = {
   // TODO define this schema
@@ -56,6 +65,17 @@ const covenantSchema = {
           description: 'children to be deployed',
           patternProperties: { '(.*?)': { $ref: '#/installer' } },
         },
+      },
+    },
+    covenants: {
+      type: 'object',
+      description: `Covenants to be deployed with this covenant
+      Referenced by [thisCovenantName]/[nestedCovenantName]
+      Unpacked by the overloader so lookup can occur.
+      These covenants can contain further nested covenants within them.
+      Upon publish, these might be individually published as children.`,
+      patternProperties: {
+        '(.*?)': { $ref: '#' },
       },
     },
   },

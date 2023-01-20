@@ -10,8 +10,8 @@ export const installReducer = async (payload) => {
   assert.strictEqual(typeof payload.installer, 'object')
   debug(`payload`, payload)
   const covenant = await interchain('@@COVENANT')
-  debug(`covenantState`, covenant)
-  let { installer } = covenant
+  debug(`covenant`, covenant)
+  let { installer } = covenant.state
   installer = { ...installer, ...payload.installer }
   const { network = {}, state = {} } = installer
   assert.strictEqual(typeof network, 'object')
@@ -28,12 +28,18 @@ export const installReducer = async (payload) => {
   const awaits = []
   for (const child in network) {
     debug('installing child: ', child)
-    const installer = network[child]
+    let installer = network[child]
+    if (installer.covenant?.startsWith('#')) {
+      const schemaPath = installer.covenant
+      const childPath = covenant.path + schemaPath.substring(1)
+      debug('relative covenant resolved from %s to %s', schemaPath, childPath)
+      installer = { ...installer, covenant: childPath }
+    }
     debug('installing child options: ', installer)
     const spawn = Request.createSpawn(child, installer)
     awaits.push(interchain(spawn))
   }
-  const results = await Promise.all(awaits)
+  await Promise.all(awaits)
 }
 const isState = (installer) => {
   const { state = {} } = installer

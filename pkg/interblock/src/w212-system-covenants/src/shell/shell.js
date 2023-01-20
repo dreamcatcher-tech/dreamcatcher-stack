@@ -172,6 +172,7 @@ const reducer = async (request) => {
       path = posix.resolve(wd, path)
       debug(`publish: ${name} to: ${parentPath} as`, path)
       const installer = { covenant: 'covenant', state: covenant }
+
       const { add } = api
       const apiFn = schemaToFunctions({ add })
       const result = await interchain(apiFn.add(path, installer))

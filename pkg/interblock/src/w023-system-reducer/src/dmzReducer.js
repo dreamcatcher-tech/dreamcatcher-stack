@@ -108,7 +108,7 @@ const pulseReducer = async (type, payload) => {
       debug(`@@COVENANT`, path)
       const covenant = await latest(path)
       const state = covenant.getState().toJS()
-      return state
+      return { state, path }
     }
     case '@@SET_STATE': {
       const { state } = payload

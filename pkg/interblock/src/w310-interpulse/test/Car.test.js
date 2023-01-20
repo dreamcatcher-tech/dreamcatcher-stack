@@ -18,7 +18,7 @@ describe('Car', () => {
     debug('import start')
     const { roots, count } = await blank.import(car)
     debug('import end')
-    expect(count).toBe(91)
+    expect(count).toMatchSnapshot()
     expect(roots.length).toBe(1)
     const [imported] = roots
     expect(imported).toBeInstanceOf(Pulse)

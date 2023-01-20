@@ -47,9 +47,7 @@ export class Pulse extends IpldStruct {
     const CI = true
     // TODO run thru covenant schema checker
     const { name = '', api = {}, installer = {} } = covenant
-
-    const state = { name, api, installer }
-    const dmz = Dmz.create({ state }, CI)
+    const dmz = Dmz.create({ state: { name, api, installer } }, CI)
     const provenance = Provenance.createGenesis(dmz)
     return await Pulse.create(provenance)
   }

@@ -157,6 +157,6 @@ const api = {
     description: 'Search through this collection',
   },
 }
-const state = convertToTemplate({ type: 'COLLECTION', schema: {} })
+const installer = { state: { type: 'COLLECTION', schema: {} } }
 const name = 'collection'
-export { reducer, api, state, name }
+export { reducer, api, installer, name }

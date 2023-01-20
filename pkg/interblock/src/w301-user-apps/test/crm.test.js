@@ -24,7 +24,11 @@ describe('crm', () => {
   describe('app deploy', () => {
     test('deploys app', async () => {
       const publishStart = Date.now()
-      const engine = await Interpulse.createCI()
+      const engine = await Interpulse.createCI({
+        // TODO be able to reify covenants from published chains
+        // probably using an async import
+        overloads: { '/dpkgCrm/customers': crm.covenant.covenants.customers },
+      })
       const { path } = await engine.publish('dpkgCrm', crm.covenant)
       expect(path).toBe('/dpkgCrm')
       const installStart = Date.now()
@@ -75,12 +79,12 @@ describe('crm', () => {
       const engine = await Interpulse.createCI({
         overloads: { '/crm': crm.covenant },
       })
-      await engine.add('crm', { covenant: '/crm' })
-      const crmActions = await engine.actions('/crm/customers')
+      await engine.add('app', { covenant: '/crm' })
+      const crmActions = await engine.actions('/app/customers')
       const formData = { custNo: 100, name: 'test name 1' }
       const newCustomer = await crmActions.add({ formData })
       debug(`newCustomer`, newCustomer)
-      const latest = await engine.current('/crm/customers/100')
+      const latest = await engine.current('/app/customers/100')
       debug(`latest`, latest.getState().toJS())
       const state = latest.getState().toJS()
       expect(state.formData).toBe(formData)
@@ -93,14 +97,14 @@ describe('crm', () => {
       const engine = await Interpulse.createCI({
         overloads: { '/crm': crm.covenant },
       })
-      await engine.add('crm', { covenant: '/crm' })
-      const crmActions = await engine.actions('/crm/customers')
+      await engine.add('app', { covenant: '/crm' })
+      const crmActions = await engine.actions('/app/customers')
       const newCustomer = await crmActions.add({
         formData: { custNo: 100, name: 'test name 1' },
       })
       debug(`newCustomer`, newCustomer)
 
-      const { children } = await engine.ls('crm/customers')
+      const { children } = await engine.ls('app/customers')
       debug(`customers: `, children)
       const realCustomers = Object.keys(children).filter(
         (key) => !key.startsWith('.')
