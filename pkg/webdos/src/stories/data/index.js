@@ -1,5 +1,3 @@
-import largeJson from '@dreamcatcher-tech/interblock/src/w301-user-apps/src/crm/faker/large'
-import mediumJson from '@dreamcatcher-tech/interblock/src/w301-user-apps/src/crm/faker/medium'
 import smallJson from '@dreamcatcher-tech/interblock/src/w301-user-apps/src/crm/faker/small'
 import templateUrl from './template.pdf'
 import { api, apps } from '@dreamcatcher-tech/interblock'
@@ -8,7 +6,7 @@ import Debug from 'debug'
 const debug = Debug('webdos:stories:data')
 
 const { crm } = apps
-const [large, medium, small] = [largeJson, mediumJson, smallJson].map((obj) => {
+const [small] = [smallJson].map((obj) => {
   // update the templates for customers, schedules, and routing
   // TODO we should not need to patch anything
   // maybe data should be moved to a separate repo
@@ -16,7 +14,7 @@ const [large, medium, small] = [largeJson, mediumJson, smallJson].map((obj) => {
     switch (child.path) {
       case 'customers': {
         const { schema, uiSchema } =
-          crm.covenant.installer.network.customers.state.template
+          crm.covenant.covenants.customers.installer.state.template
         return {
           ...child,
           state: {
@@ -61,5 +59,5 @@ const car = {
   },
 }
 
-export { large, medium, small, templateUrl, car }
-export default { large, medium, small, templateUrl, car }
+export { small, templateUrl, car }
+export default { small, templateUrl, car }

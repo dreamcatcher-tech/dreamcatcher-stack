@@ -12,9 +12,8 @@ const debug = Debug('terminal:widgets:CollectionList')
 
 const CollectionList = ({ crisp }) => {
   // TODO assert the complex has a collection as its covenant
-  debug('crisp', crisp)
   const [isAdding, setIsAdding] = useState(false)
-  assert(crisp.isLoading || crisp.covenant === '/system:/collection')
+  assert(crisp.isLoading || typeof crisp.covenant === 'string')
 
   const crispRef = useRef()
   crispRef.current = crisp
@@ -22,11 +21,10 @@ const CollectionList = ({ crisp }) => {
   const onAddCustomer = async () => {
     assert(!isAdding)
     assert(!crisp.isLoadingActions)
-    debug(`addCustomer `, crisp)
+    debug(`addCustomer `)
     // TODO show an enquiring modal UI over the top to get the data we need
     setIsAdding(true)
     const { add } = crisp.actions
-    debug(crisp.actions)
     let custNo
     let count = 0
     const current = [...crisp]
@@ -40,18 +38,23 @@ const CollectionList = ({ crisp }) => {
     setIsAdding(false)
   }
   const valueGetter = ({ id, field }) => {
+    const crisp = crispRef.current
+    if (!crisp.hasChild(id)) {
+      return '..'
+    }
     const child = crisp.getChild(id)
     if (!child.isLoading && child.state.formData) {
       return child.state.formData[field]
     }
     return '...'
   }
+  const template = crisp.isLoading ? {} : crisp.state.template
   const columns = useMemo(() => {
     if (crisp.isLoading) {
       return []
     }
     return generateColumns(crisp.state.template, valueGetter)
-  }, [crisp])
+  }, [template])
   const rows = useMemo(() => {
     if (crisp.isLoading) {
       return []

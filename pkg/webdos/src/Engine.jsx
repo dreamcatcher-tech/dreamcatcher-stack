@@ -55,7 +55,9 @@ export default function Engine({ repo, ram, init, dev, car, children }) {
             assert.strictEqual(Object.keys(action).length, 1)
             const command = Object.keys(action).pop()
             const args = Object.values(action).pop()
-            await engine[command](args)
+            debug('execute', command)
+            await engine.execute(command, args)
+            debug('execute done')
           }
           debug('init complete')
         }
@@ -132,7 +134,8 @@ Engine.propTypes = {
   dev: PropTypes.object,
   /**
    * A list of operations that will be applied to the engine on its first
-   * boot. Each object in the array takes the form: { path/apiCall, args }
+   * boot. Each object in the array takes the form: { path/apiCall, args }.
+   * To run multiple actions in parallel, supply many keys.
    */
   init: PropTypes.arrayOf(PropTypes.object),
   /**

@@ -101,11 +101,29 @@ export class Interpulse {
     }
     return dispatches
   }
+  async execute(actionPath, payload) {
+    debug('execute', actionPath, payload)
+    if (!posix.isAbsolute(actionPath)) {
+      actionPath = this.wd + '/' + actionPath
+    }
+    actionPath = posix.normalize(actionPath)
+    debug('actionPath normalized to:', actionPath)
+    assert(posix.isAbsolute(actionPath))
+    const asRoot = actionPath.substring('/'.length)
+    if (this[asRoot]) {
+      return await this[asRoot](payload)
+    }
+    const actions = await this.actions(posix.dirname(actionPath))
+    const basename = posix.basename(actionPath)
+    if (!actions[basename]) {
+      throw new Error(`No action found at ${actionPath}`)
+    }
+    return await actions[basename](payload)
+  }
   async latest(path = '.') {
     const { wd } = this
     const absPath = posix.resolve(wd, path)
     for await (const pulse of this.#engine.subscribe()) {
-      debug('latest root pulse for', path, pulse.getPulseLink())
       try {
         const latest = await this.#engine.latestByPath(absPath, pulse)
         return latest
