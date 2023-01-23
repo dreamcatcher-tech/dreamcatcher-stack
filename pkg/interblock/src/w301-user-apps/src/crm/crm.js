@@ -16,7 +16,7 @@ export const installer = {
           // might include reconciled manifests too
           covenant: 'collection',
           state: {
-            datumTemplate: {},
+            template: {},
           },
         },
       },

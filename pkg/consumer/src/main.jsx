@@ -28,7 +28,6 @@ import {
 import multi from './multi'
 import Debug from 'debug'
 const debug = Debug('client:tests:App')
-Debug.enable('*:widgets:* *Route *Switch')
 
 const Map = () => {
   return (

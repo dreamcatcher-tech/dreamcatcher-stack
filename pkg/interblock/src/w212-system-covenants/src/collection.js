@@ -7,18 +7,18 @@ const debug = Debug('interblock:apps:collection')
 
 const { convertToTemplate, validateDatumTemplate, validateFormData } = datum
 
-const add = async (payload, datumTemplate) => {
+const add = async (payload, template) => {
   assertFormData(payload)
-  validateDatumTemplate(datumTemplate)
+  validateDatumTemplate(template)
   const { formData } = payload
-  const name = getChildName(datumTemplate, formData)
+  const name = getChildName(template, formData)
 
-  validateFormData(payload, datumTemplate)
-  const state = { datumTemplate: '..', formData }
+  validateFormData(payload, template)
+  const state = { schema: '..', formData }
   const covenant = 'datum'
   const installer = { state, covenant }
-  if (datumTemplate.network) {
-    installer.network = datumTemplate.network
+  if (template.network) {
+    installer.network = template.network
   }
   const spawn = Request.createSpawn(name, installer)
   const result = await interchain(spawn)
@@ -61,8 +61,8 @@ const reducer = async (request) => {
     case 'SET_TEMPLATE': {
       // TODO useState() should be able to set this remotely ?
       checkNoFormData(payload)
-      const datumTemplate = convertToTemplate(payload)
-      await setState({ ...state, datumTemplate })
+      const template = convertToTemplate(payload)
+      await setState({ ...state, template })
       return
     }
     default:
@@ -98,12 +98,12 @@ const checkNoFormData = (datum) => {
   return networkValues.every(checkNoFormData)
 }
 
-const getChildName = (datumTemplate, formData) => {
-  if (!datumTemplate.namePath || !datumTemplate.namePath.length) {
+const getChildName = (template, formData) => {
+  if (!template.namePath || !template.namePath.length) {
     debug(`getChildName is blank`)
     return
   }
-  datumTemplate.namePath.forEach((name) => {
+  template.namePath.forEach((name) => {
     formData = formData[name]
   })
   if (typeof formData === 'number') {

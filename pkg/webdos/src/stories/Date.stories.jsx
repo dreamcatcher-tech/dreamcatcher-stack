@@ -1,16 +1,17 @@
 import dayjs from 'dayjs'
 import React from 'react'
 import { useState } from 'react'
-import { within, userEvent } from '@storybook/testing-library'
 import Debug from 'debug'
 import { Date, Glass } from '..'
 import PropTypes from 'prop-types'
+
+const runDate = '2022-12-28'
 
 export default {
   title: 'Date',
   component: Date,
   args: {
-    runDate: Date.weekday(),
+    runDate,
     expanded: true,
   },
 }
@@ -33,7 +34,7 @@ Template.propTypes = { runDate: PropTypes.string }
 export const Basic = Template.bind({})
 export const Tomorrow = Template.bind({})
 Tomorrow.args = {
-  runDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
+  runDate: dayjs(runDate).add(1, 'day').format('YYYY-MM-DD'),
 }
 export const Collapsed = Template.bind({})
 Collapsed.args = { expanded: false }

@@ -45,7 +45,7 @@ describe('crm', () => {
       debug(`pulserate: ${pulseRate}ms per block`)
 
       const exceptions = await engine.current('/crm/schedule/modifications')
-      expect(exceptions.getState().toJS().datumTemplate).toBeTruthy()
+      expect(exceptions.getState().toJS().template).toBeTruthy()
       const about = await engine.latest('/crm/about')
       const aboutState = about.getState().toJS()
       expect(aboutState).toEqual(crm.covenant.installer.network.about.state)
@@ -88,7 +88,7 @@ describe('crm', () => {
       debug(`latest`, latest.getState().toJS())
       const state = latest.getState().toJS()
       expect(state.formData).toBe(formData)
-      expect(state.datumTemplate).toBe('..')
+      expect(state.template).toBe('..')
     })
     test.todo('add customer with test data using .processes/addTestCustomer')
   })

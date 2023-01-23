@@ -1,4 +1,4 @@
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp, api } from '@dreamcatcher-tech/interblock'
 import React, { useEffect } from 'react'
 import Form from '@rjsf/mui'
 import validator from '@rjsf/validator-ajv8'
@@ -8,7 +8,7 @@ import Debug from 'debug'
 const debug = Debug('terminal:widgets:Datum')
 
 const SchemaForm = ({
-  complex,
+  crisp,
   pending,
   viewOnly,
   formData,
@@ -16,10 +16,11 @@ const SchemaForm = ({
   onChange,
   onSubmit,
 }) => {
-  let { schema, uiSchema } = complex.state
-  if (schema === '..') {
-    schema = complex.parent().state.template.schema
-    uiSchema = complex.parent().state.template.uiSchema
+  debug('Datum', crisp.state)
+  let { schema = {}, uiSchema } = crisp.state
+  if (schema === '..' && crisp.parent) {
+    schema = crisp.parent.state.template.schema
+    uiSchema = crisp.parent.state.template.uiSchema
   }
   uiSchema = { ...uiSchema, 'ui:submitButtonOptions': { norender: true } }
   const { title, ...noTitleSchema } = schema
@@ -55,7 +56,7 @@ const SchemaForm = ({
   )
 }
 SchemaForm.propTypes = {
-  complex: PropTypes.instanceOf(api.Complex).isRequired,
+  crisp: PropTypes.instanceOf(Crisp),
   pending: PropTypes.bool,
   viewOnly: PropTypes.bool,
   formData: PropTypes.object,

@@ -2,7 +2,6 @@ import React from 'react'
 import { apps } from '@dreamcatcher-tech/interblock'
 import { Datum, Glass } from '..'
 import Debug from 'debug'
-Debug.enable('*Datum')
 const complex = apps.crm.faker().child('settings')
 export default {
   title: 'DbSync',

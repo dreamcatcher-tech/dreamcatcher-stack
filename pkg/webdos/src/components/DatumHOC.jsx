@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
-import { api } from '@dreamcatcher-tech/interblock'
+import equals from 'fast-deep-equal'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
 import React, { useState, useEffect } from 'react'
 import Accordion from '@mui/material/Accordion'
@@ -22,30 +23,23 @@ export default function DatumHOC(Child) {
   const noDisabled = createTheme({
     palette: { text: { disabled: '0 0 0' } },
   })
-  const Datum = ({
-    complex,
-    collapsed,
-    viewOnly,
-    onEdit,
-    editing,
-    ...props
-  }) => {
+  const Datum = ({ crisp, collapsed, viewOnly, onEdit, editing, ...props }) => {
     // TODO verify the covenant is a datum
     // TODO verify the chain children match the schema children
     assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
 
-    const [formData, setFormData] = useState(complex.state.formData)
+    const [formData, setFormData] = useState(crisp.state.formData)
     const [isPending, setIsPending] = useState(false)
     const [isEditing, setIsEditing] = useState(editing)
     const [expanded, setExpanded] = useState(!collapsed)
-    const [startingState, setStartingState] = useState(complex.state)
-    if (startingState !== complex.state) {
-      debug('state changed', startingState, complex.state)
-      setStartingState(complex.state)
-      setFormData(complex.state.formData)
+    const [startingState, setStartingState] = useState(crisp.state)
+    if (!equals(startingState, crisp.state)) {
+      debug('state changed', startingState, crisp.state)
+      setStartingState(crisp.state)
+      setFormData(crisp.state.formData)
       // TODO alert if changes not saved
     }
-    const isDirty = formData !== complex.state.formData
+    const isDirty = !equals(formData, crisp.state.formData)
     debug('isDirty', isDirty)
     const onChange = ({ formData }) => {
       debug(`onChange: `, formData)
@@ -59,7 +53,7 @@ export default function DatumHOC(Child) {
     const onSubmit = () => {
       debug('onSubmit', formData)
       setIsPending(true)
-      complex.actions.set(formData).then(() => {
+      crisp.ownActions.set(formData).then(() => {
         setIsPending(false)
         onIsEditing(false)
       })
@@ -81,7 +75,7 @@ export default function DatumHOC(Child) {
       e.stopPropagation()
       onIsEditing(false)
       if (isDirty) {
-        setFormData(complex.state.formData)
+        setFormData(crisp.state.formData)
       }
     }
     const Editing = (
@@ -119,13 +113,11 @@ export default function DatumHOC(Child) {
       }
       setExpanded(isExpanded)
     }
-    let { schema } = complex.state
-    if (schema === '..') {
-      schema = complex.parent().state.template.schema
+    let { schema = {} } = crisp.state
+    if (schema === '..' && crisp.parent) {
+      schema = crisp.parent.state.template.schema
     }
     const { title } = schema
-    const { set, ...extraActions } = complex.actions
-    debug('actions', complex.actions)
     return (
       <Card>
         <Accordion expanded={expanded} onChange={onExpand}>
@@ -140,7 +132,7 @@ export default function DatumHOC(Child) {
             <ThemeProvider theme={isEditing ? theme : noDisabled}>
               <Child
                 {...{
-                  complex,
+                  crisp,
                   pending: isPending,
                   viewOnly: !isEditing,
                   onChange,
@@ -150,7 +142,7 @@ export default function DatumHOC(Child) {
                   ...props,
                 }}
               />
-              <Actions actions={extraActions}></Actions>
+              {/* <Actions crisp={crisp} exclude={['set']}></Actions> */}
             </ThemeProvider>
           </AccordionDetails>
         </Accordion>
@@ -158,11 +150,10 @@ export default function DatumHOC(Child) {
     )
   }
   Datum.propTypes = {
-    complex: PropTypes.instanceOf(api.Complex).isRequired,
     /**
-     * Used in testing to start the component in collapsed mode
+     * The crisp instance backing this Datum
      */
-    collapsed: PropTypes.bool,
+    crisp: PropTypes.instanceOf(Crisp),
     /**
      * Show no edit button - all fields are readonly
      */
@@ -171,6 +162,10 @@ export default function DatumHOC(Child) {
      * Notify when the component starts and stops editing
      */
     onEdit: PropTypes.func,
+    /**
+     * Used in testing to start the component in collapsed mode
+     */
+    collapsed: PropTypes.bool,
     /**
      * Used in testing to start the component in editing mode
      */

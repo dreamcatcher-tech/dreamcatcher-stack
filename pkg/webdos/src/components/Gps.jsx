@@ -2,7 +2,6 @@ import React, { useEffect, useId } from 'react'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'
-Debug.enable('*Gps')
 const debug = Debug('webdos:components:Gps')
 const maxNativeZoom = 18
 const maxZoom = 22

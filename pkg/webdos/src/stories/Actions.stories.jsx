@@ -7,33 +7,20 @@ export default {
   component: Actions,
 }
 
-const Template = () => {
+const Template = (args) => {
   Debug.enable('*Actions iplog')
   return (
     <Engine>
       <Syncer>
-        <Actions />
+        <Actions {...args} />
       </Syncer>
     </Engine>
   )
 }
 
-export const Basic = () => {
-  Debug.enable('*Actions iplog')
-  const Single = ({ crisp }) => {
-    if (!crisp.isLoadingActions) {
-      const actions = crisp.actions
-      console.log('actions', actions)
-      return <Actions.Action action={actions.ping} />
-    }
-  }
-  return (
-    <Engine>
-      <Syncer>
-        <Single />
-      </Syncer>
-    </Engine>
-  )
-}
+export const Basic = Template.bind({})
+Basic.args = { include: ['ping'] }
+export const ExcludePing = Template.bind({})
+ExcludePing.args = { exclude: ['ping'] }
 
 export const Shell = Template.bind({})

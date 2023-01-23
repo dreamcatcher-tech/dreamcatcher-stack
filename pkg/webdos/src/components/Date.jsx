@@ -60,7 +60,7 @@ Date.propTypes = {
   onDateChange: PropTypes.func,
   expanded: PropTypes.bool,
 }
-Date.weekday = () => {
+Date.nearestWeekday = () => {
   let now = dayjs()
   while (now.day() === 0 || now.day() === 6) {
     now = now.add(1, 'day')

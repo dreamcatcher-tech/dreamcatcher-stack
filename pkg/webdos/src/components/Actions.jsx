@@ -11,22 +11,34 @@ import Cancel from '@mui/icons-material/Cancel'
 import Send from '@mui/icons-material/Send'
 import Debug from 'debug'
 import PropTypes from 'prop-types'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 const debug = Debug('terminal:widgets:Actions')
 
-const Actions = ({ crisp }) => {
+const Actions = ({ crisp, exclude, include }) => {
   if (crisp.isLoadingActions) {
     return <div>Loading Actions...</div>
   }
-  const { actions } = crisp
+  const { ownActions } = crisp
   const cards = []
-  for (const key in actions) {
-    // TODO strip out the datum standard actions
-    const action = actions[key]
+  for (const key in ownActions) {
+    if (exclude && exclude.includes(key)) {
+      continue
+    }
+    if (include && !include.includes(key)) {
+      continue
+    }
+    const action = ownActions[key]
     cards.push(<Action action={action} key={cards.length} />)
   }
   return <Stack spacing={2}>{cards}</Stack>
 }
-Actions.propTypes = {}
+Actions.propTypes = {
+  crisp: PropTypes.instanceOf(Crisp),
+  /** Array of action names to include */
+  include: PropTypes.arrayOf(PropTypes.string),
+  /** Array of action names to exclude */
+  exclude: PropTypes.arrayOf(PropTypes.string),
+}
 const Action = ({ action }) => {
   const { schema = {} } = action
   const { title, ...noTitleSchema } = schema

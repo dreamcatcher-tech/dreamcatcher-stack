@@ -32,7 +32,7 @@ const installer = {
         exceptions: {
           covenant: 'collection',
           state: {
-            datumTemplate: {
+            template: {
               // stuff
             },
           },
@@ -44,7 +44,7 @@ const installer = {
       covenant: 'collection',
       permissions: {},
       state: {
-        datumTemplate: {
+        template: {
           schema: {
             title: 'Details',
             type: 'object',

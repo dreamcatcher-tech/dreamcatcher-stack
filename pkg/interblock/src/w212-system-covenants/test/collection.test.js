@@ -35,8 +35,8 @@ describe.skip('collection', () => {
     const col = await engine.latest('col1')
     const colState = col.getState().toJS()
     debug(colState)
-    assert(!colState.datumTemplate.formData)
-    assert(!colState.datumTemplate.network.address.formData)
+    assert(!colState.template.formData)
+    assert(!colState.template.network.address.formData)
     debug('adding item to collection')
 
     await actions.add(customerData)
@@ -63,7 +63,7 @@ describe.skip('collection', () => {
     await engine.add('col1', 'collection')
     const actions = await engine.actions('col1')
     const namePath = ['firstName']
-    await actions.setDatumTemplate({ namePath, schema, network })
+    await actions.setTemplate({ namePath, schema, network })
 
     debug('adding two customers concurrently')
 
@@ -88,7 +88,7 @@ describe.skip('collection', () => {
     await engine.add('col1', 'collection')
     const actions = await engine.actions('col1')
     const namePath = ['firstName']
-    await actions.setDatumTemplate({ namePath, schema, network })
+    await actions.setTemplate({ namePath, schema, network })
 
     debug('batch adding customers')
 

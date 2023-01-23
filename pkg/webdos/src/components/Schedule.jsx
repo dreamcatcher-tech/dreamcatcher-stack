@@ -20,7 +20,7 @@ const { utils } = apps.crm
 const debug = Debug('terminal:widgets:Schedule')
 
 const Schedule = ({ complex, expanded }) => {
-  const [runDate, setRunDate] = useState(Date.weekday())
+  const [runDate, setRunDate] = useState(Date.nearestWeekday())
   const [sector, onSector] = useState()
   const [marker, onMarker] = useState()
   const onDateChange = (date) => {

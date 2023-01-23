@@ -61,27 +61,21 @@ const reducer = async (request) => {
       // TODO check state and make new children
       return
     }
-    case 'SET': {
+    case 'SET': { 
       // TODO trouble is that if change schema, need to add data at the same time
       // so makes it hard to have separate ops for schema and data changes
       if (_isTemplateIncluded(payload)) {
         state = convertToTemplate(payload)
       }
-      state.formData = payload.formData
-      if (!Object.keys(state.children).length) {
+      state = { ...state, formData: payload.formData }
+      if (!state.network || !Object.keys(state.network).length) {
         return
       }
       // TODO WARNING if have changed children in current block, will be stale
       // TODO handle updating what the children should be
       const awaits = []
-      for (const name in state.children) {
+      for (const name in state.network) {
         debug(`creating new child: `, name)
-        // const setChild = actions.set({
-        //   ...demuxed.children[name],
-        //   ...state.children[name],
-        // })
-        // debug(`setChild`, setChild)
-        // TODO honour type somehow, if specify a collection ?
         const spawn = Request.spawn(name, { covenant: 'datum' })
         interchain(spawn)
         // const promise = interchain(setChild, name)

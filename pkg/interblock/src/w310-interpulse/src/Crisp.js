@@ -3,6 +3,7 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 import { Channel, Pulse } from '../../w008-ipld'
 import Immutable from 'immutable'
+import posix from 'path-browserify'
 const debug = Debug('interblock:api:Crisp')
 
 export class Crisp {
@@ -88,6 +89,20 @@ export class Crisp {
     return this.#parent.path + '/' + this.#name
   }
   get actions() {
+    const { ownActions } = this
+    const actions = { ...ownActions }
+    if (this.isRoot) {
+      if (this.#chroot === '/') {
+        return actions
+      } else {
+        Object.assign(actions, this.#rootActions)
+      }
+    } else {
+      Object.assign(actions, this.#parent.actions)
+    }
+    return actions
+  }
+  get ownActions() {
     if (this.isLoadingActions) {
       throw new Error('cannot get actions from a loading Crisp')
     }
@@ -99,16 +114,10 @@ export class Crisp {
     const { api = {} } = state
     const actions = schemaToFunctions(api)
     const dispatches = {}
-    if (this.isRoot && this.#chroot !== '/') {
-      Object.assign(dispatches, this.#rootActions)
-    }
-    if (!this.isRoot) {
-      Object.assign(dispatches, this.#parent.actions)
-    }
     for (const key of Object.keys(actions)) {
       dispatches[key] = (payload) => {
         const action = actions[key](payload)
-        const to = this.isRoot ? this.#chroot : this.#chroot + '/' + this.path
+        const to = posix.normalize(this.root.#chroot + '/' + this.path)
         return this.root.#rootActions.dispatch(action, to)
       }
       Object.assign(dispatches[key], actions[key])
@@ -126,10 +135,9 @@ export class Crisp {
   }
   get state() {
     if (this.isLoading) {
-      throw new Error('cannot get state from a loading Crisp')
+      return {}
     }
-    const state = this.#pulse.getState().toJS()
-    return state
+    return this.#pulse.getState().toJS()
   }
   getChild(path) {
     assert.strictEqual(typeof path, 'string')
