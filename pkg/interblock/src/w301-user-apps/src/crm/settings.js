@@ -24,7 +24,7 @@ const api = {
 }
 const state = {
   schema: {
-    title: 'Database Sync',
+    title: 'Settings',
     type: 'object',
     additionalProperties: false,
     properties: {
@@ -48,8 +48,10 @@ const state = {
   },
 }
 const reducer = ({ type, payload }) => {
+  // TODO use the datum reducer to guarantee data correctness
   debug(type, payload)
 }
 
 const name = state.schema.title
-export { name, api, state, reducer }
+const installer = { state }
+export { name, api, installer, reducer }

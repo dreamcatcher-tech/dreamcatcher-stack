@@ -1,4 +1,5 @@
 import * as customers from './customers'
+import * as settings from './settings'
 
 export const installer = {
   network: {
@@ -28,27 +29,7 @@ export const installer = {
     routing: {},
     // banking: { covenant: 'datum' },
     settings: {
-      covenant: 'datum',
-      state: {
-        schema: {
-          title: 'Settings',
-          type: 'object',
-          required: ['isTerminalVisible'],
-          additionalProperties: false,
-          properties: {
-            isTerminalVisible: {
-              title: 'Show Terminal',
-              type: 'boolean',
-              default: true,
-            },
-            isGuiVisible: {
-              title: 'Show GUI',
-              type: 'boolean',
-              default: true,
-            },
-          },
-        },
-      },
+      covenant: '#/settings',
     },
     about: {
       covenant: 'datum',
@@ -89,6 +70,7 @@ export const installer = {
 
 export const covenants = {
   customers,
+  settings,
 }
 
 export const name = 'CRM'

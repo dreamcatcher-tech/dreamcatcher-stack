@@ -12,6 +12,6 @@
     "struct"
   ],
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "git.mergeEditor": true
 }

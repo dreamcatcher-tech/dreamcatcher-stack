@@ -27,13 +27,13 @@ describe('crm', () => {
       const engine = await Interpulse.createCI({
         // TODO be able to reify covenants from published chains
         // probably using an async import
-        overloads: { '/dpkgCrm/customers': crm.covenant.covenants.customers },
+        overloads: { '/dpkgCrm': crm.covenant },
       })
       const { path } = await engine.publish('dpkgCrm', crm.covenant)
       expect(path).toBe('/dpkgCrm')
       const installStart = Date.now()
       const latest = await engine.latest('/dpkgCrm')
-      expect(latest.provenance.dmz.covenant).toEqual('covenant')
+      expect(latest.provenance.dmz.covenant).toBe('covenant')
       await engine.add('crm', { covenant: path })
 
       debug(`publish time: ${installStart - publishStart} ms`)
@@ -88,7 +88,7 @@ describe('crm', () => {
       debug(`latest`, latest.getState().toJS())
       const state = latest.getState().toJS()
       expect(state.formData).toBe(formData)
-      expect(state.template).toBe('..')
+      expect(state.schema).toBe('..')
     })
     test.todo('add customer with test data using .processes/addTestCustomer')
   })

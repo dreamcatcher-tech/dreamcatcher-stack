@@ -10,9 +10,10 @@ describe('Isolate', () => {
     const expanded = Isolate.extractOverloads(overloads)
     debug('expanded', expanded)
     expect(expanded['/crm']).toBeDefined()
-    expect(expanded['/crm/customers']).toBeDefined()
-    expect(Object.keys(expanded).length).toBe(2)
-
-    debug(overloads['/crm'].installer)
+    for (const key of Object.keys(crm.covenant.covenants)) {
+      expect(expanded['/crm/' + key]).toBeDefined()
+    }
+    const covenantsSize = Object.keys(crm.covenant.covenants).length
+    expect(Object.keys(expanded).length).toBe(covenantsSize + 1)
   })
 })

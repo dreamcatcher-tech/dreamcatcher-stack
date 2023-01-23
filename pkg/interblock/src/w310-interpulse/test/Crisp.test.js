@@ -102,6 +102,7 @@ describe('Crisp', function () {
     }
     const app = first.getChild('app')
     const customers = app.getChild('customers')
+    expect(customers.path).toBe('/app/customers')
     expect(customers.isLoadingActions).toBe(false)
     const { actions } = customers
     expect(actions.cd).toBeDefined()

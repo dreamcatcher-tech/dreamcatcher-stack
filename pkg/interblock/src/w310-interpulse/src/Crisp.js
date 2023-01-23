@@ -89,18 +89,14 @@ export class Crisp {
     return this.#parent.path + '/' + this.#name
   }
   get actions() {
-    const { ownActions } = this
-    const actions = { ...ownActions }
     if (this.isRoot) {
       if (this.#chroot === '/') {
-        return actions
+        return this.ownActions
       } else {
-        Object.assign(actions, this.#rootActions)
+        return Object.assign({}, this.#rootActions, this.ownActions)
       }
-    } else {
-      Object.assign(actions, this.#parent.actions)
     }
-    return actions
+    return Object.assign({}, this.#parent.actions, this.ownActions)
   }
   get ownActions() {
     if (this.isLoadingActions) {

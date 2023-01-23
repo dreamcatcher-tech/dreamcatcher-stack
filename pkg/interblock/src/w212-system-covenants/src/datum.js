@@ -61,7 +61,7 @@ const reducer = async (request) => {
       // TODO check state and make new children
       return
     }
-    case 'SET': { 
+    case 'SET': {
       // TODO trouble is that if change schema, need to add data at the same time
       // so makes it hard to have separate ops for schema and data changes
       if (_isTemplateIncluded(payload)) {

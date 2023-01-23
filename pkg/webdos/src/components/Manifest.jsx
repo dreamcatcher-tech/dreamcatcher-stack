@@ -11,7 +11,7 @@ import Chip from '@mui/material/Chip'
 import Box from '@mui/material/Box'
 import CancelIcon from '@mui/icons-material/Cancel'
 import DoneIcon from '@mui/icons-material/Done'
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import { InnerCollection } from '.'
 import Debug from 'debug'
 const debug = Debug('webdos:widgets:Manifest')
@@ -30,16 +30,16 @@ Status.propTypes = {
   label: PropTypes.string.isRequired,
   isPositive: PropTypes.bool,
 }
-export default function Manifest({ expanded, complex, sector, width, height }) {
+export default function Manifest({ crisp, expanded, sector, width, height }) {
   debug('Manifest w h', width, height)
   // TODO assert the state is a small collection object
-  const { isPublished, isReconciled } = complex.state.formData
-  debug('Manifest', { complex, sector })
-  const sectorComplex = complex.hasChild(sector)
-    ? complex.child(sector)
+  const { isPublished, isReconciled } = crisp.state.formData || {}
+  debug('Manifest', crisp, sector)
+  const sectorCrisp = crisp.hasChild(sector)
+    ? crisp.getChild(sector)
     : undefined
 
-  const manifestTemplate = complex.parent().state.template
+  const manifestTemplate = crisp.parent().state.template
   // due to this being a nested collection
   const sectorTemplate = manifestTemplate.template
   debug('template', sectorTemplate)
@@ -51,7 +51,9 @@ export default function Manifest({ expanded, complex, sector, width, height }) {
     <Accordion disableGutters defaultExpanded={expanded}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} ref={ref}>
         <Stack direction={'row'} spacing={1}>
-          <Typography>Manifest status:</Typography>
+          <Typography>
+            Manifest status:{crisp.isLoading ? ' (Loading...)' : ''}
+          </Typography>
           <Status label={'published'} isPositive={isPublished} />
           <Status label={'reconciled'} isPositive={isReconciled} />
         </Stack>
@@ -59,10 +61,7 @@ export default function Manifest({ expanded, complex, sector, width, height }) {
       <AccordionDetails>
         <Box sx={{ height: gridHeight }}>
           {gridHeight > 0 && (
-            <InnerCollection
-              complex={sectorComplex}
-              template={sectorTemplate}
-            />
+            <InnerCollection crisp={sectorCrisp} template={sectorTemplate} />
           )}
         </Box>
       </AccordionDetails>
@@ -70,8 +69,9 @@ export default function Manifest({ expanded, complex, sector, width, height }) {
   )
 }
 Manifest.propTypes = {
+  crisp: PropTypes.instanceOf(Crisp),
+  /** Is the manifest expanded by default */
   expanded: PropTypes.bool,
-  complex: PropTypes.instanceOf(api.Complex),
   /**
    * The selected sector
    */
