@@ -1,5 +1,7 @@
 import * as customers from './customers'
 import * as settings from './settings'
+import * as routing from './routing'
+import * as manifest from './manifest'
 
 export const installer = {
   network: {
@@ -26,7 +28,9 @@ export const installer = {
     customers: {
       covenant: '#/customers',
     },
-    routing: {},
+    routing: {
+      covenant: '#/routing',
+    },
     // banking: { covenant: 'datum' },
     settings: {
       covenant: '#/settings',
@@ -71,6 +75,7 @@ export const installer = {
 export const covenants = {
   customers,
   settings,
+  routing,
 }
 
 export const name = 'CRM'

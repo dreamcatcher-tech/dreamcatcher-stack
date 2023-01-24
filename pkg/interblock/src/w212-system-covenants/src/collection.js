@@ -8,6 +8,7 @@ const debug = Debug('interblock:apps:collection')
 const { convertToTemplate, validateDatumTemplate, validateFormData } = datum
 
 const add = async (payload, template) => {
+  debug('add', payload)
   assertFormData(payload)
   validateDatumTemplate(template)
   const { formData } = payload

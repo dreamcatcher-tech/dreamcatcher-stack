@@ -1,23 +1,32 @@
 import React from 'react'
-import { Datum, Glass } from '..'
-import data from './data'
+import { Engine, Syncer, Datum, Glass } from '..'
+import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
+import * as data from './data'
 const debug = Debug('SectorDatum')
 
+const install = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
+const add = { 'routing/add': data.sectors[0] }
 export default {
   title: 'SectorDatum',
   component: Datum,
   args: {
-    complex: data.small.child('routing').child('13'),
+    dev: { '/dpkg/crm': apps.crm.covenant },
+    path: '/routing/1',
+    init: [install, add],
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*Datum')
+  Debug.enable('*Datum iplog')
   return (
     <Glass.Container>
       <Glass.Left>
-        <Datum {...args} />
+        <Engine {...args}>
+          <Syncer path={args.path}>
+            <Datum {...args} />
+          </Syncer>
+        </Engine>
       </Glass.Left>
     </Glass.Container>
   )

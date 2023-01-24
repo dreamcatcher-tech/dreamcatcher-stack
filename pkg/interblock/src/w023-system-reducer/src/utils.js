@@ -4,14 +4,14 @@ import { Channel, Network, Pulse } from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:utils')
 
-const autoAlias = async (network, autoPrefix = 'file_') => {
+const autoAlias = async (network, autoPrefix = '') => {
   assert(network instanceof Network)
   assert.strictEqual(typeof autoPrefix, 'string')
   let height = 0
   let alias
   do {
+    alias = autoPrefix ? autoPrefix + pad(height, 5, '0') : height + ''
     height++
-    alias = autoPrefix + pad(height, 5, '0')
   } while (await network.hasChannel(alias))
   return alias
 }

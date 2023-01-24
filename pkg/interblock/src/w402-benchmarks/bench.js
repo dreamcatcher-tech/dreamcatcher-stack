@@ -143,3 +143,12 @@ const makeUnsigned = async () => {
   pulse = pulse.setState(state)
   pulse = await pulse.crushToCid()
 }
+
+/**
+ * Test batch tunables by making the operation be adding a customer to a buffer.
+ * When the buffer reaches batch count, it pauses until the add completes.
+ * Auto generate tests for a range of batch counts to see the optimum.
+ *
+ * Then time adding a single customer at different customer sizes.
+ *
+ */

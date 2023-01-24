@@ -1,4 +1,5 @@
-export const name = 'sector'
+import { collection } from '../../../w212-system-covenants'
+
 const COLORS = [
   'red',
   'orange',
@@ -20,7 +21,7 @@ const geometry = {
       title: 'GeoJSON Polygon',
       type: 'object',
       required: ['type', 'coordinates'],
-      allowAdditionalProperties: false,
+      additionalProperties: false,
       properties: {
         type: {
           type: 'string',
@@ -44,14 +45,15 @@ const geometry = {
     },
   },
 }
-export const state = {
+const template = {
+  type: 'DATUM',
   schema: {
     title: 'Sector',
     description: `A sector is a geographic area that is used to group customers 
         for scheduling purposes.`,
     type: 'object',
     required: ['name', 'color', 'geometry'],
-    allowAdditionalProperties: false,
+    additionalProperties: false,
     properties: {
       name: {
         type: 'string',
@@ -75,9 +77,43 @@ export const state = {
       geometry,
     },
   },
-  formData: {},
   uiSchema: {
     geometry: { 'ui:widget': 'hidden' },
     order: { 'ui:widget': 'hidden' },
   },
 }
+
+/**
+ * Create a "universal sector" which is used to set the zoom boundary of the app.
+ * All sectors are within this, and all customers too.
+ * It has order of customers, but this order can never be set.
+ * Whenever geometry changes, membership is checked against intersections,
+ * past intersections, and the universal set.
+ */
+
+const installer = {
+  state: {
+    type: 'COLLECTION',
+    schema: {
+      title: 'Routing',
+      description: `Routing manages geographic boundaries to group customers
+      together for service by a truck, and the order of all the customers`,
+      type: 'object',
+      required: ['commonDate'],
+      properties: {
+        commonDate: {
+          type: 'string',
+          description: `The date that all sectors share in common`,
+          format: 'date',
+        },
+      },
+    },
+    formData: {
+      commonDate: '2017-01-30',
+    },
+    template,
+  },
+}
+const name = 'Routing'
+const { api, reducer } = collection
+export { name, reducer, api, installer }

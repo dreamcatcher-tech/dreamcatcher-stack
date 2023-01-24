@@ -1,10 +1,24 @@
 import React from 'react'
-import { Map, Glass } from '..'
+import { Engine, Syncer, Map, Glass } from '..'
+import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import data from './data'
+import sectorsList from '../../../../data/sectors.mjs'
+
 const debug = Debug('Map')
+
+const add = { add: { path: 'routing', installer: '/dpkg/crm/customers' } }
+
+const makeRouting = () => {
+  const { list, ...formData } = sectorsList
+  const batch = list.map((sector) => {
+    const order = []
+    return { formData: { ...sector, order } }
+  })
+  debug('batch', batch)
+  return { 'routing/batch': { batch } }
+}
 
 export default {
   title: 'Map',
@@ -22,12 +36,21 @@ export default {
     onMarker: (marker) => {
       console.log('marker', marker)
     },
+    dev: { '/dpkg/crm': apps.crm.covenant },
+    path: '/list',
+    init: [add],
   },
 }
-const enable = () => Debug.enable('*Map')
+const enable = () => Debug.enable('*Map iplog')
 const Template = (args) => {
   enable()
-  return <Map {...args} />
+  return (
+    <Engine {...args}>
+      <Syncer path={args.path}>
+        <Map {...args} />
+      </Syncer>
+    </Engine>
+  )
 }
 
 export const Basic = Template.bind({})
@@ -52,22 +75,20 @@ NoPolygons.args = {
   onCreate: undefined,
 }
 
-const complex = data.medium.child('routing')
 export const Polygons = Template.bind({})
-// More on interaction testing: https://storybook.js.org/docs/react/writing-tests/interaction-testing
 Polygons.args = {
-  complex,
+  init: [add, makeRouting()],
 }
 
 export const WithCustomers = Template.bind({})
 WithCustomers.args = {
-  complex,
   markers: true,
   sector: '26',
 }
 export const ClickSectors = (args) => {
   enable()
   const [sector, onSector] = React.useState()
+  // use wd to know which sector is selected
   return (
     <div>
       <Glass.Container>
@@ -77,7 +98,7 @@ export const ClickSectors = (args) => {
           </Card>
         </Glass.Left>
       </Glass.Container>
-      <Map onSector={onSector} complex={complex} sector={sector} />
+      <Map onSector={onSector} sector={sector} />
     </div>
   )
   // TODO script some actual clicking
@@ -99,7 +120,6 @@ export const ClickCustomers = (args) => {
       </Glass.Container>
       <Map
         onMarker={onMarker}
-        complex={complex}
         markers
         onSector={onSector}
         marker={marker}
@@ -119,16 +139,14 @@ const Customers = (args) => {
 }
 export const SmallCustomers = Customers.bind({})
 SmallCustomers.args = {
-  complex: data.small.child('routing'),
+  // mount customers as a car import ?
   markers: true,
 }
 export const MediumCustomers = Customers.bind({})
 MediumCustomers.args = {
-  complex: data.medium.child('routing'),
   markers: true,
 }
 export const LargeCustomers = Customers.bind({})
 LargeCustomers.args = {
-  complex: data.large.child('routing'),
   markers: true,
 }

@@ -1,4 +1,4 @@
-describe('dbSyncer', () => {
+describe('settings', () => {
   test('basic', async () => {
     // load the reducer in a harness, and test it operates ?
     // load up the engine ?

@@ -1,2 +1,3 @@
-import faker from './generateComplex'
-export default faker
+import sectorsList from '../../../../../../../data/sectors.mjs'
+
+export const routing = sectorsList.list.map((formData) => ({ formData }))

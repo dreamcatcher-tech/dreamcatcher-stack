@@ -1,3 +1,5 @@
+import { collection } from '../../../w212-system-covenants'
+
 const api = {
   freeze: {
     type: 'object',
@@ -100,11 +102,13 @@ const template = {
   },
 }
 
-export const installer = {
-  covenant: 'datum',
+const installer = {
   state: {
     type: 'COLLECTION',
     template,
   },
 }
-// TODO make a network hardlink to approot at time of creation
+
+const { reducer } = collection
+const name = 'Manifest'
+export { name, reducer, api, installer }
