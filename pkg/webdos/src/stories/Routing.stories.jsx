@@ -1,6 +1,5 @@
 import React from 'react'
 import { Routing } from '..'
-import data from './data'
 import delay from 'delay'
 import Debug from 'debug'
 const debug = Debug('Routing')
@@ -9,7 +8,6 @@ export default {
   title: 'Routing',
   component: Routing,
   args: {
-    complex: data.small.child('routing'),
     sector: '13',
   },
 }
@@ -44,16 +42,6 @@ const Template = (args) => {
 }
 
 export const Blank = Template.bind({})
-Blank.args = {
-  complex: data.small.child('routing').setNetwork([]),
-  sector: undefined,
-}
 export const Small = Template.bind({})
 export const Medium = Template.bind({})
-Medium.args = {
-  complex: data.medium.child('routing'),
-}
 export const Large = Template.bind({})
-Large.args = {
-  complex: data.large.child('routing'),
-}

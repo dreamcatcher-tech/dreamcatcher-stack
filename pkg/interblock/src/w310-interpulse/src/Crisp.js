@@ -88,9 +88,12 @@ export class Crisp {
     }
     return this.#parent.path + '/' + this.#name
   }
+  get absolutePath() {
+    return posix.normalize(this.chroot + '/' + this.path)
+  }
   get actions() {
     if (this.isRoot) {
-      if (this.#chroot === '/') {
+      if (this.chroot === '/') {
         return this.ownActions
       } else {
         return Object.assign({}, this.#rootActions, this.ownActions)
@@ -102,7 +105,7 @@ export class Crisp {
     if (this.isLoadingActions) {
       throw new Error('cannot get actions from a loading Crisp')
     }
-    if (this.isRoot && this.#chroot === '/') {
+    if (this.isRoot && this.chroot === '/') {
       return this.#rootActions
     }
     const covenant = this.#pulse.provenance.dmz.bakedCovenant
@@ -113,7 +116,7 @@ export class Crisp {
     for (const key of Object.keys(actions)) {
       dispatches[key] = (payload) => {
         const action = actions[key](payload)
-        const to = posix.normalize(this.root.#chroot + '/' + this.path)
+        const to = posix.normalize(this.chroot + '/' + this.path)
         return this.root.#rootActions.dispatch(action, to)
       }
       Object.assign(dispatches[key], actions[key])
@@ -184,10 +187,24 @@ export class Crisp {
       }
     }
   }
-  // get size() {
-  //   this.#snapshotMaps()
-  //   return this.#channelMap.size
-  // }
+  get sortedChildren() {
+    const children = [...this]
+    children.sort((a, b) => {
+      const ai = Number.parseInt(a)
+      const bi = Number.parseInt(b)
+      if (Number.isNaN(ai) && Number.isNaN(bi)) {
+        return a.localeCompare(b)
+      }
+      if (Number.isNaN(ai)) {
+        return -1
+      }
+      if (Number.isNaN(bi)) {
+        return 1
+      }
+      return ai - bi
+    })
+    return children
+  }
   get covenant() {
     if (this.isLoading) {
       throw new Error('cannot get covenant from a loading Crisp')

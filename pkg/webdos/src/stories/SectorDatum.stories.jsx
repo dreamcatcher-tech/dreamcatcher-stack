@@ -5,15 +5,14 @@ import Debug from 'debug'
 const debug = Debug('SectorDatum')
 
 const install = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
-console.log(apps)
-const add1 = { 'routing/add': apps.crm.faker.routing[0] }
+const addSector = { 'routing/add': apps.crm.faker.routing[0] }
 export default {
   title: 'SectorDatum',
   component: Datum,
   args: {
     dev: { '/dpkg/crm': apps.crm.covenant },
     path: '/routing',
-    init: [install, add1],
+    init: [install, addSector],
   },
 }
 

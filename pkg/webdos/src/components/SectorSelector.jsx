@@ -10,34 +10,38 @@ import ListItemButton from '@mui/material/ListItemButton'
 import TextField from '@mui/material/TextField'
 import Autocomplete from '@mui/material/Autocomplete'
 import Debug from 'debug'
-import assert from 'assert-fast'
 import { Crisp } from '@dreamcatcher-tech/interblock'
 const debug = Debug('webdos:SectorSelector')
 
 function SectorSelector({ crisp, expanded, disabled }) {
   const { wd } = crisp
-  const sectors = crisp.isLoading ? [] : [...crisp]
+  const sectors = crisp.isLoading ? [] : crisp.sortedChildren
   debug('wd %s path %s sectors %o', wd, crisp.path, sectors)
   let sector
   if (wd.startsWith(crisp.path)) {
-    // if we already have a sector selected, update 'sector'
-    // if we could have a sector, then select one
+    const tail = wd.substring(crisp.path.length)
+    if (!crisp.isLoading && crisp.hasChild(tail)) {
+      sector = tail
+    }
   }
   const onChange = (event, value) => {
     debug('onChange', value)
-    onSector(value.path)
+    const promise = crisp.actions.cd(crisp.absolutePath + '/' + value.path)
+    // TODO disable the selector until the promise resolves
     setOpen(false)
   }
   const [open, setOpen] = React.useState(expanded)
   const openProps = expanded
     ? { open, onOpen: () => setOpen(true), onClose: () => setOpen(false) }
     : {}
+  debug('open %o', openProps)
   const options = sectors.map((path) => {
     const sector = crisp.getChild(path)
     return { path, sector }
   })
+  debug('options %o', options)
 
-  const value = options.find(({ path }) => path === sector)
+  const value = options.find(({ path }) => path === sector) || null
   return (
     <Paper>
       <Autocomplete
@@ -52,11 +56,13 @@ function SectorSelector({ crisp, expanded, disabled }) {
         onChange={onChange}
         value={value}
         blurOnSelect
+        loading={crisp.isLoading}
         {...openProps}
         renderOption={(props, value) => (
           <Sector {...{ selected: sector, ...value, ...props }} />
         )}
         renderInput={(params) => {
+          debug('renderInput', params)
           return (
             <TextField
               {...params}
@@ -64,9 +70,9 @@ function SectorSelector({ crisp, expanded, disabled }) {
               inputProps={{
                 ...params.inputProps,
                 readOnly: true,
-                autoComplete: 'new-password', // disable autocomplete and autofill
+                autoComplete: 'new-password', // disable autofill
                 placeholder: 'No sectors present',
-                value: value && value.sector.state.formData.name,
+                value: value?.sector.state.formData.name || '',
               }}
             />
           )
@@ -77,10 +83,9 @@ function SectorSelector({ crisp, expanded, disabled }) {
 }
 SectorSelector.propTypes = {
   /**
-   * The Routing Crisp to select a sector from
+   * The Routing or Schedules Crisp to select a sector from
    */
   crisp: PropTypes.instanceOf(Crisp),
-
   /**
    * Disable the selector during editing
    */
@@ -92,8 +97,8 @@ SectorSelector.propTypes = {
 }
 
 const Sector = ({ selected, path, sector, ...props }) => {
-  const { state } = sector
-  const { name, color, order } = state.formData
+  const { formData = {} } = sector.state
+  const { name = 'loading...', color, order = [] } = formData
   const primary = (
     <>
       <Typography component="span">{name}</Typography>

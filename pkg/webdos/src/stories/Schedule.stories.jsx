@@ -1,14 +1,11 @@
 import React from 'react'
 import { Schedule } from '..'
-import data from './data'
 import Debug from 'debug'
 
 export default {
   title: 'Schedule',
   component: Schedule,
-  args: {
-    complex: data.small.child('schedule'),
-  },
+  args: {},
 }
 
 const Template = (args) => {
