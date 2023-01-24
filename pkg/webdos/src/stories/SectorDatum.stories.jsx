@@ -2,29 +2,31 @@ import React from 'react'
 import { Engine, Syncer, Datum, Glass } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-import * as data from './data'
 const debug = Debug('SectorDatum')
 
 const install = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
-const add = { 'routing/add': data.sectors[0] }
+console.log(apps)
+const add1 = { 'routing/add': apps.crm.faker.routing[0] }
 export default {
   title: 'SectorDatum',
   component: Datum,
   args: {
     dev: { '/dpkg/crm': apps.crm.covenant },
-    path: '/routing/1',
-    init: [install, add],
+    path: '/routing',
+    init: [install, add1],
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*Datum iplog')
+  Debug.enable('*Datum* iplog')
   return (
     <Glass.Container>
       <Glass.Left>
         <Engine {...args}>
           <Syncer path={args.path}>
-            <Datum {...args} />
+            <Syncer.UnWrapper path="0">
+              <Datum {...args} />
+            </Syncer.UnWrapper>
           </Syncer>
         </Engine>
       </Glass.Left>

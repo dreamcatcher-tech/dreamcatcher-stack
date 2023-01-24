@@ -93,3 +93,19 @@ const stripTrailingSlash = (path) => {
   }
   return path
 }
+
+const UnWrapper = ({ crisp, path = '/', children }) => {
+  if (crisp.isLoading || !crisp.hasChild(path)) {
+    return <div>Loading...</div>
+  }
+  const child = crisp.getChild(path)
+  debug('child', child)
+  children = React.cloneElement(children, { crisp: child })
+  return children
+}
+UnWrapper.propTypes = {
+  crisp: PropTypes.instanceOf(Crisp),
+  path: PropTypes.string,
+  children: PropTypes.node,
+}
+ReactSyncer.UnWrapper = UnWrapper

@@ -34,10 +34,12 @@ const SchemaForm = ({
       delete noHidden.properties[key]
     }
   })
+  delete noHidden.additionalProperties // else rjsf errors
+
   let form
   useEffect(() => {
     if (trySubmit) {
-      debug('trySubmit triggered')
+      debug('trySubmit triggered', formData, form)
       form.submit()
     }
   }, [trySubmit])

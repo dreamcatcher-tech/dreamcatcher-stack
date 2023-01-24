@@ -3,6 +3,7 @@ import React from 'react'
 import { Engine, Syncer, Datum, Glass } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
+import { UnWrapper } from './data'
 const debug = Debug('Datum')
 
 export default {
@@ -17,15 +18,6 @@ export default {
     ],
   },
 }
-const UnWrapper = ({ crisp, ...args }) => {
-  if (crisp.isLoading || !crisp.hasChild('1')) {
-    return <div>Loading...</div>
-  }
-  const child = crisp.getChild('1')
-  debug('child', child)
-  return <Datum {...args} crisp={child} />
-}
-UnWrapper.propTypes = { crisp: PropTypes.object }
 
 const Template = (args) => {
   Debug.enable('iplog *Datum')
@@ -34,7 +26,7 @@ const Template = (args) => {
       <Glass.Left>
         <Engine {...args}>
           <Syncer path={args.path}>
-            <UnWrapper {...args} />
+            <UnWrapper path="1" {...args} />
           </Syncer>
         </Engine>
       </Glass.Left>
