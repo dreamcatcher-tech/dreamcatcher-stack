@@ -1,6 +1,5 @@
 import templateUrl from './template.pdf'
 import Debug from 'debug'
-import sectorsList from '../../../../../data/sectors.mjs'
 
 const debug = Debug('webdos:stories:data')
 
@@ -12,6 +11,5 @@ const car = {
     path: '/crm',
   },
 }
-export const sectors = sectorsList.list.map((formData) => ({ formData }))
 
 export { templateUrl, car }

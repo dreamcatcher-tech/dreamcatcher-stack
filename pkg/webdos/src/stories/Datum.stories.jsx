@@ -1,9 +1,7 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 import { Engine, Syncer, Datum, Glass } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-import { UnWrapper } from './data'
 const debug = Debug('Datum')
 
 export default {
@@ -26,7 +24,9 @@ const Template = (args) => {
       <Glass.Left>
         <Engine {...args}>
           <Syncer path={args.path}>
-            <UnWrapper path="1" {...args} />
+            <Syncer.UnWrapper path="1">
+              <Datum {...args} />
+            </Syncer.UnWrapper>
           </Syncer>
         </Engine>
       </Glass.Left>
