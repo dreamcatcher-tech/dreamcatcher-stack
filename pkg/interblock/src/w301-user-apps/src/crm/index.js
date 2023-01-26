@@ -1,5 +1,3 @@
 export * as covenant from './crm'
-export * as sector from './routing'
-export * as schedule from './manifest'
 export * as faker from './faker'
 export * as utils from './utils'

@@ -78,4 +78,6 @@ export const covenants = {
   routing,
 }
 
+export { reducer } from './reducer'
+
 export const name = 'CRM'

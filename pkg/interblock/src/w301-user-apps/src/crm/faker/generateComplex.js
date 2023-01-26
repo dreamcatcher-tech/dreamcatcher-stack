@@ -30,7 +30,6 @@ const pipMap = (sector, customersNetwork) => {
   const order = pip(geometry, gps)
   return order
 }
-
 function generateComplex(customerCount = 20) {
   const { list, ...formData } = sectorList
   debug('start generate customers')

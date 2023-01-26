@@ -234,11 +234,4 @@ export class Crisp {
   get wd() {
     return this.root.#wd
   }
-  toJS() {
-    // walk the crisp and return a single large JS object as a snapshot
-  }
-  fromJS(js) {
-    // make a Crisp from a JS object instead of a pulse.
-    // may be useful for mocking purposes
-  }
 }

@@ -36,16 +36,16 @@ const installer = {
             minimum: 1,
             maximum: 100000,
           },
-          name: { title: 'Name', type: 'string', faker: 'name.findName' },
+          name: { title: 'Name', type: 'string', faker: 'name.fullName' },
           mobile: {
             title: 'Mobile',
             type: 'string',
-            faker: 'phone.phoneNumber',
+            faker: 'phone.number',
           },
           phone: {
             title: 'Phone',
             type: 'string',
-            faker: 'phone.phoneNumber',
+            faker: 'phone.number',
           },
           email: {
             title: 'Email',
@@ -66,6 +66,7 @@ const installer = {
       },
       uiSchema: {
         importedHash: { 'ui:widget': 'hidden' },
+        serviceGps: { 'ui:widget': 'hidden' },
         isEmailVerified: { 'ui:readonly': true },
         custNo: { 'ui:readonly': true },
       },

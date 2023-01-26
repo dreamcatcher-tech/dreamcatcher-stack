@@ -114,6 +114,21 @@ const installer = {
     template,
   },
 }
+const api = {
+  ...collection.api,
+
+  update: {
+    type: 'object',
+    title: 'UPDATE',
+    description: `Something in the customers collection has changed,
+    and so the memberships in each sector should be recomputed.
+    To avoid a lot of updates, this calculation is done at the root first,
+    then only when differences are detected is the update action triggered
+    in routing.`,
+    additionalProperties: false,
+    properties: {},
+  },
+}
 const name = 'Routing'
-const { api, reducer } = collection
+const { reducer } = collection
 export { name, reducer, api, installer }
