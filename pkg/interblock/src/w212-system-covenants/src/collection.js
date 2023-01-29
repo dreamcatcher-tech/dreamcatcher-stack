@@ -104,6 +104,9 @@ const getChildName = (template, formData) => {
     debug(`getChildName is blank`)
     return
   }
+  if (typeof template === 'string') {
+    template = [template]
+  }
   template.namePath.forEach((name) => {
     formData = formData[name]
   })

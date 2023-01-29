@@ -38,6 +38,7 @@ export const installer = {
     about: {
       covenant: 'datum',
       state: {
+        readOnly: true, // TODO implement readOnly functionality
         schema: {
           title: 'About CRM',
           type: 'object',

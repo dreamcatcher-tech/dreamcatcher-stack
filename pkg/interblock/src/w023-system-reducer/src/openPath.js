@@ -11,6 +11,15 @@ export const openPath = async ({ path }) => {
 
   try {
     // TODO resolve relative paths
+    // TODO resolve higher paths like ../sibling
+    // get the latest, then find the shortest relative path.
+    // request our parent, or the highest path upwards that we have a link to
+    // then tell it to open its child for us
+    // then we walk down opening as we go
+    // OR get the open to go down and back when ready
+    // this is better for preserving permissions if shouldn't see intermediaries
+    // OR use ACL to allow instant access.
+
     await interchain(Request.tryPath('/' + path))
   } catch (error) {
     debug('path invalid', path)

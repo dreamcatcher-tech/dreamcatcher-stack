@@ -1,7 +1,8 @@
 import { assert } from 'chai/index.mjs'
-import { interchain } from '../../w002-api'
+import { interchain, useState } from '../../w002-api'
 import { Request } from '../../w008-ipld'
 import { Engine } from '../../w210-engine'
+import { Interpulse } from '../../w310-interpulse'
 import Debug from 'debug'
 const debug = Debug('interblock:tests:dmzReducer')
 
@@ -60,6 +61,7 @@ describe('dmzReducer', () => {
     test.todo('3 levels deep')
     test.todo('random path opening and closing and reopening')
     test.todo('simultaneous requests with common parent')
+    test.todo('open between two siblings using ../sibling')
   })
   describe('uplink', () => {
     test.todo('multiple requests from same chain result in single uplink')
@@ -69,5 +71,35 @@ describe('dmzReducer', () => {
     test.todo('connect resolves an address without purging queued actions')
     test.todo('connect on existing unknown transmits all queued actions')
     test.todo('connect on operational channel throws')
+  })
+  describe('useState', () => {
+    test('remote useState', async () => {
+      Debug.enable('tests iplog')
+      const engine = await Interpulse.createCI({
+        overloads: {
+          '/test': {
+            reducer: async (request) => {
+              if (request.type === '@@INIT') {
+                return
+              }
+              const [state, setState] = await useState('target')
+              expect(state).toEqual({ foo: 'bar' })
+              await setState({ foo: 'baz' })
+              const [nextState] = await useState('target')
+              expect(nextState).toEqual({ foo: 'baz' })
+            },
+          },
+        },
+      })
+      await engine.add('agent', '/test')
+      await engine.add('agent/target', { state: { foo: 'bar' } })
+      const remote = await engine.current('agent/target')
+      const state = remote.getState().toJS()
+      expect(state).toEqual({ foo: 'bar' })
+      await engine.dispatch({ type: 'BEGIN' }, 'agent')
+      const nextRemote = await engine.current('agent/target')
+      const nextState = nextRemote.getState().toJS()
+      expect(nextState).toEqual({ foo: 'baz' })
+    })
   })
 })

@@ -472,6 +472,7 @@ type Rx struct {
     latest optional PulseLink       # The latest known full Pulse
     system optional RxQueue
     reducer optional RxQueue
+    isSubscription optional Bool    # notify the reducer when latest updates
 }
 ```
 

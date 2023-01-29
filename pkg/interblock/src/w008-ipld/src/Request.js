@@ -60,6 +60,7 @@ export class Request extends IpldStruct {
     '@@HARDLINK',
     '@@COVENANT', // TODO remove this when can usePulse()
     '@@RM',
+    '@@SET_SUB', // TODO installers should allow an init array
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
@@ -145,5 +146,19 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof path, 'string', `path must be a string`)
     assert(path, `path must not be empty`)
     return this.create('@@RM', { path })
+  }
+  static createSetSubscription(path, status) {
+    assert.strictEqual(typeof path, 'string', `path must be a string`)
+    assert(path, `path must not be empty`)
+    return this.create('@@SET_SUB', { path, status })
+  }
+  static createTreeUpdate(prior, latest) {
+    assert(latest instanceof PulseLink)
+    const payload = { latest: latest.toString() }
+    if (prior) {
+      assert(prior instanceof PulseLink)
+      payload.prior = prior.toString()
+    }
+    return this.create('@@TREE_UPDATE', payload)
   }
 }

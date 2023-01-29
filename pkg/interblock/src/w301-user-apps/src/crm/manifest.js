@@ -80,8 +80,8 @@ const template = {
     allowAdditionalProperties: false,
     properties: {
       runDate: { type: 'string', format: 'date' },
-      isPublished: { type: 'boolean' },
-      isReconciled: { type: 'boolean' },
+      publishedDate: { type: 'string', format: 'datetime' },
+      reconciledDate: { type: 'string', format: 'datetime' },
     },
   },
   template: {
@@ -100,6 +100,7 @@ const template = {
     },
     uiSchema: {},
   },
+  namePath: 'runDate',
 }
 
 const installer = {

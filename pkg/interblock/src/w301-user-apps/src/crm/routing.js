@@ -1,3 +1,4 @@
+import assert from 'assert-fast'
 import { collection } from '../../../w212-system-covenants'
 
 const COLORS = [
@@ -106,7 +107,14 @@ const installer = {
           description: `The date that all sectors share in common`,
           format: 'date',
         },
+        geometryHash: {
+          type: 'string',
+          description: `Hash of the geometry to know if the sectors need recomputing`,
+        },
       },
+    },
+    uiSchema: {
+      geometryHash: { 'ui:widget': 'hidden' },
     },
     formData: {
       commonDate: '2017-01-30',
@@ -126,9 +134,101 @@ const api = {
     then only when differences are detected is the update action triggered
     in routing.`,
     additionalProperties: false,
-    properties: {},
+    properties: {
+      path: {
+        type: 'string',
+        title: 'Path to Customers collection',
+        default: '../customers',
+      },
+    },
   },
 }
 const name = 'Routing'
-const { reducer } = collection
+
+import { interchain, usePulse, useState } from '../../../w002-api'
+import Debug from 'debug'
+import { PolygonLut } from './PolygonLut'
+const debug = Debug('crm:routing')
+const reducer = async (request) => {
+  const { type, payload } = request
+  switch (type) {
+    case '_SECTORS': {
+      const routing = await usePulse()
+      const sectors = await routing.getNetwork().children.allKeys()
+      // TODO assure the sort order is based on numbers, not strings
+      debug('sector keys', sectors)
+      return sectors
+    }
+    case '_CUSTOMERS': {
+      const { path, isSectorsChanged } = payload
+      const customers = await usePulse(path)
+      let custNos
+      if (isSectorsChanged) {
+        custNos = await customers.getNetwork().children.allKeys()
+        // recompute all memberships for all customers
+      } else {
+        // diff the customers and run them
+        custNos = await customers.getNetwork().children.allKeys()
+      }
+      return custNos
+    }
+    case 'UPDATE': {
+      // read all the sectors, and check if they have changed since last compute.
+      // if sectors changed, then need to recompute all memberships
+      const sectors = await interchain('_SECTORS')
+      // TODO assure the sort order is based on numbers, not strings
+      debug('sector keys', sectors)
+      const sectorStates = {}
+      const setStates = {}
+      await Promise.all(
+        sectors.map(async (path) => {
+          const [state, setState] = await useState(path)
+          sectorStates[path] = state.formData
+          setStates[path] = [state, setState]
+        })
+      )
+      const lut = PolygonLut.create(sectorStates)
+      debug('begin')
+      const hash = await lut.hash()
+      const [state, setState] = await useState()
+      const isSectorsChanged = state.geometryHash !== hash
+      debug('isSectorsChanged', isSectorsChanged)
+
+      const { path } = payload
+      debug('update', path)
+      const cPayload = { path, isSectorsChanged }
+      if (isSectorsChanged) {
+        lut.reset()
+      }
+      const custNos = await interchain('_CUSTOMERS', cPayload)
+
+      await Promise.all(
+        custNos.map(async (custNo) => {
+          const [state] = await useState(path + '/' + custNo)
+          const gps = state.formData?.serviceGps
+          if (!gps) {
+            debug('no gps', custNo, state)
+          }
+          lut.update(custNo, gps)
+        })
+      )
+      // TODO store the customer collection as a hardlink, for diffing
+      await Promise.all(
+        Object.entries(lut.changes).map(async ([changed, formData]) => {
+          const [state, setState] = setStates[changed]
+          assert.strictEqual(typeof setState, 'function')
+          debug('update order', changed)
+          await setState({ ...state, formData })
+        })
+      )
+
+      // TODO surface customers that need approval to the top
+      await setState({ ...state, geometryHash: hash })
+
+      return
+    }
+    default:
+      return collection.reducer(request)
+  }
+}
 export { name, reducer, api, installer }

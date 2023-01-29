@@ -162,6 +162,13 @@ export class Engine {
           const { pulse } = payload
           let network = pool.getNetwork()
           let channel = await network.getByAddress(pulse.getAddress())
+          if (channel.isSubscription) {
+            // TODO test subscriptions actually work
+            const prior = channel.rx.latest
+            const update = Request.createTreeUpdate(prior, pulse.getPulseLink())
+            const loopback = await network.getLoopback()
+            network = await network.setLoopback(loopback.txRequest(update))
+          }
           channel = channel.addLatest(pulse.getPulseLink())
           network = await network.updateChannel(channel)
           pool = pool.setNetwork(network)
@@ -293,13 +300,14 @@ export class Engine {
     if (await pool.isRoot()) {
       rootPulse = pool
     }
-    const latest = async (path) => {
-      if (typeof path === 'string') {
-        path = posix.normalize(path)
-        return await this.latestByPath(path, rootPulse)
+    const latest = async (pathOrPulseLink, startingPulse = rootPulse) => {
+      assert(startingPulse instanceof Pulse)
+      if (typeof pathOrPulseLink === 'string') {
+        pathOrPulseLink = posix.normalize(pathOrPulseLink)
+        return await this.latestByPath(pathOrPulseLink, startingPulse)
       } else {
-        assert(path instanceof PulseLink, 'path must be a string or PulseLink')
-        const child = await this.#endurance.recover(path)
+        assert(pathOrPulseLink instanceof PulseLink, 'not string or PulseLink')
+        const child = await this.#endurance.recover(pathOrPulseLink)
         assert(child instanceof Pulse)
         return child
       }

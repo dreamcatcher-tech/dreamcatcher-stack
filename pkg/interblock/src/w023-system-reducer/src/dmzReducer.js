@@ -8,6 +8,7 @@ import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
+import posix from 'path-browserify'
 const debug = Debug('interblock:dmz')
 
 /**
@@ -96,7 +97,11 @@ const pulseReducer = async (type, payload) => {
       let remotePulse = pulse
       if (path !== '.') {
         // TODO make latest handle relative paths
-        remotePulse = await latest(path)
+        if (posix.isAbsolute(path)) {
+          remotePulse = await latest(path)
+        } else {
+          remotePulse = await latest(path, pulse)
+        }
       }
       const stateModel = remotePulse.getState()
       const state = stateModel.toJS()
@@ -190,7 +195,7 @@ const pulseReducer = async (type, payload) => {
       const { name, chainId } = payload
       let network = pulse.getNetwork()
       if (await network.hasChannel(name)) {
-        throw new Error('remote name already used' + name)
+        throw new Error(`remote name already used: ${name}`)
       }
       const address = Address.fromChainId(chainId)
       network = await network.setHardlink(name, address)

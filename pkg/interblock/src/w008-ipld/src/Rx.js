@@ -1,12 +1,23 @@
 /**
-type RxTracker struct { # tracks what counters each ingestion is up to
-    requestsTip Int
-    repliesTip Int
+ * type PromisedReply struct {
+    requestIndex Int
+    reply &Reply
 }
+type TxQueue struct {
+    requestsLength Int
+    requests optional [&Request]
+    repliesLength Int
+    replies optional [&Reply]
+    promisedRequestIds [Int]
+    promisedReplies optional [PromisedReply]
+}
+type RxQueue = TxQueue
 type Rx struct {
-    tip optional &Pulse          # The last Pulse this chain received
-    system optional RxTracker
-    reducer optional RxTracker
+    tip optional PulseLink          # The lastest known InterPulse
+    latest optional PulseLink       # The latest known full Pulse
+    system optional RxQueue
+    reducer optional RxQueue
+    isSubscription optional Bool    # notify the reducer when latest updates
 }
 */
 import assert from 'assert-fast'

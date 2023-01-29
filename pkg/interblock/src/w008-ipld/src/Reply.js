@@ -38,6 +38,12 @@ export class Reply extends Request {
     }
     return super.clone(reply)
   }
+  crush(...args) {
+    if (this.payload instanceof Pulse) {
+      throw new Error('Cannot crush a pulse')
+    }
+    return super.crush(...args)
+  }
   assertLogic() {
     if (this.type === '@@PROMISE') {
       assert.strictEqual(

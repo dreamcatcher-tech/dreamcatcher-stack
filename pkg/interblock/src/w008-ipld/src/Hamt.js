@@ -199,6 +199,16 @@ export class Hamt extends IpldInterface {
     assert(!this.isModified())
     return this.#hashmap.entries()
   }
+  /**
+   * Acucmulates and returns all the keys in an array
+   */
+  async allKeys() {
+    const keys = []
+    for await (const [key] of this.entries()) {
+      keys.push(key)
+    }
+    return keys
+  }
   bake(map) {
     assert(Immutable.Map.isMap(map))
     assert(!this.isModified())

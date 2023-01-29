@@ -158,9 +158,6 @@ const useState = async (path) => {
     if (typeof nextState !== 'object') {
       throw new Error(`state must be an object, but was: ${typeof nextState}`)
     }
-    if (nextState === state) {
-      return
-    }
     if (equals(nextState, state)) {
       return
     }
