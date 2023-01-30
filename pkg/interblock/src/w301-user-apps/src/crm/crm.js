@@ -1,40 +1,16 @@
 import * as customers from './customers'
 import * as settings from './settings'
 import * as routing from './routing'
-import * as manifest from './manifest'
+import * as schedules from './schedules'
 
 export const installer = {
   network: {
-    schedule: {
-      covenant: 'datum',
-      state: {
-        formData: {
-          commonDate: '2020-01-01',
-        },
-        uiSchema: 'schedule',
-      },
-      network: {
-        modifications: {
-          // any manual changes to the computed paths
-          // might include reconciled manifests too
-          covenant: 'collection',
-          state: {
-            template: {},
-          },
-        },
-      },
-    },
+    schedule: { covenant: '#/schedules' },
     // services: { covenant: 'datum' },
-    customers: {
-      covenant: '#/customers',
-    },
-    routing: {
-      covenant: '#/routing',
-    },
+    customers: { covenant: '#/customers' },
+    routing: { covenant: '#/routing' },
     // banking: { covenant: 'datum' },
-    settings: {
-      covenant: '#/settings',
-    },
+    settings: { covenant: '#/settings' },
     about: {
       covenant: 'datum',
       state: {
@@ -77,6 +53,7 @@ export const covenants = {
   customers,
   settings,
   routing,
+  schedules,
 }
 
 export { reducer } from './reducer'

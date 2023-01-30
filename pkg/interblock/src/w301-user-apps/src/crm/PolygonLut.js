@@ -45,7 +45,8 @@ export class PolygonLut {
     for (const key in this.#sectors) {
       const sector = this.#sectors[key]
       if (sector.order?.length) {
-        this.#changes[key] = { ...sector, order: [] }
+        this.#changes[key] = { ...sector }
+        delete this.#changes[key].order
       }
     }
   }
@@ -59,5 +60,12 @@ export class PolygonLut {
       this.#hash = block.cid.toString()
     }
     return this.#hash
+  }
+  get bounds() {
+    const { minX, minY, maxX, maxY } = this.#lookup.rtree.data
+    return { minX, minY, maxX, maxY }
+  }
+  includes({ latitude, longitude }) {
+    return this.#lookup.search(longitude, latitude)
   }
 }

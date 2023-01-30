@@ -44,8 +44,6 @@ describe('crm', () => {
       const pulseRate = Math.floor(testTime / engine.logger.pulseCount)
       debug(`pulserate: ${pulseRate}ms per block`)
 
-      const exceptions = await engine.current('/crm/schedule/modifications')
-      expect(exceptions.getState().toJS().template).toBeTruthy()
       const about = await engine.latest('/crm/about')
       const aboutState = about.getState().toJS()
       expect(aboutState).toEqual(crm.covenant.installer.network.about.state)

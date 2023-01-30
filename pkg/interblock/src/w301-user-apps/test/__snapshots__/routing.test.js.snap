@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`routing basic 1`] = `
+[
+  "779",
+  "778",
+  "777",
+]
+`;
+
+exports[`routing basic 2`] = `
+[
+  "780",
+  "781",
+]
+`;

@@ -62,7 +62,7 @@ describe.skip('collection', () => {
     const engine = await Interpulse.createCI()
     await engine.add('col1', 'collection')
     const actions = await engine.actions('col1')
-    const namePath = ['firstName']
+    const namePath = 'firstName'
     await actions.setTemplate({ namePath, schema, network })
 
     debug('adding two customers concurrently')
@@ -87,7 +87,7 @@ describe.skip('collection', () => {
     const engine = await Interpulse.createCI()
     await engine.add('col1', 'collection')
     const actions = await engine.actions('col1')
-    const namePath = ['firstName']
+    const namePath = 'firstName'
     await actions.setTemplate({ namePath, schema, network })
 
     debug('batch adding customers')

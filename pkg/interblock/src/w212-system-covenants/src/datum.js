@@ -33,7 +33,7 @@ const datumSchema = {
   properties: {
     type: { enum: ['COLLECTION', 'XSTATE', 'ARRAY', 'DATUM'] },
     isEditable: { type: 'boolean' },
-    namePath: { type: 'array', items: { type: 'string' } },
+    namePath: { type: 'string' },
     schema: { type: 'object' },
     uiSchema: { type: 'object' },
     formData: { type: 'object' },
@@ -45,6 +45,7 @@ const datumSchema = {
     },
     // TODO check schema if covenant type is 'datum'
     network: { type: 'object' },
+    template: { $ref: '#' },
   },
 }
 

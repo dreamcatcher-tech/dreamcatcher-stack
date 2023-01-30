@@ -9,29 +9,30 @@ describe('faker', () => {
   describe('routing', () => {
     test('single', async () => {
       const { routing } = await import('../src/crm/faker/index.js')
-      expect(routing.length).toEqual(40)
+      const batch = routing.generateBatch()
+      expect(batch.length).toEqual(40)
 
       const engine = await Interpulse.createCI({
         overloads: { '/crm': apps.crm.covenant },
       })
       await engine.add('routing', '/crm/routing')
-      debug('routing', routing[0])
-      await engine.execute('routing/add', routing[0])
+      const single = routing.generateSingle()
+      await engine.execute('routing/add', single)
       const sector = await engine.latest('routing/0')
       const state = sector.getState().toJS()
-      expect(state.formData).toEqual(routing[0].formData)
+      expect(state.formData).toEqual(single.formData)
       expect(state).toMatchSnapshot()
     })
     test('batch', async () => {
       const { routing } = await import('../src/crm/faker/index.js')
-      expect(routing.length).toEqual(40)
       const engine = await Interpulse.createCI({
         overloads: { '/crm': apps.crm.covenant },
       })
       await engine.add('routing', '/crm/routing')
-      await engine.execute('routing/batch', { batch: routing })
+      const batch = routing.generateBatch()
+      await engine.execute('routing/batch', { batch })
       let index = 0
-      for (const { formData } of routing) {
+      for (const { formData } of batch) {
         const sector = await engine.latest(`routing/${index}`)
         const state = sector.getState().toJS()
         expect(state.formData).toEqual(formData)

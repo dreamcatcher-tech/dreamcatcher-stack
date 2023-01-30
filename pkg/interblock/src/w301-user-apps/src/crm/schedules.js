@@ -1,9 +1,11 @@
 import { collection } from '../../../w212-system-covenants'
-
-const api = {
+import dayjs from 'dayjs'
+import Debug from 'debug'
+const debug = Debug('crm:schedules')
+const manifestApi = {
   freeze: {
     type: 'object',
-    title: 'DISPATCH',
+    title: 'FREEZE',
     description: `Takes the current list of customers, takes a snapshot, and stores it in a child.  This will allow the manifest to be printed, and then reconciled.  It may be undispatched`,
   },
   // rm covers removing the manifest
@@ -12,7 +14,7 @@ const api = {
     description: `modify the reconciled state of the manifest.  May be performed multiple times before finalization`,
   },
   finalize: {
-    description: `Manifest is fully reconciled, send out the emails to people, and deduct money from account balances`,
+    description: `Manifest is fully reconciled, so send out the emails to people, and deduct money from account balances`,
   },
 }
 
@@ -77,14 +79,15 @@ const template = {
     description: `A manifest is a list of customers that are to be serviced on a given day`,
     type: 'object',
     required: ['runDate'],
-    allowAdditionalProperties: false,
+    additionalProperties: false,
     properties: {
       runDate: { type: 'string', format: 'date' },
-      publishedDate: { type: 'string', format: 'datetime' },
-      reconciledDate: { type: 'string', format: 'datetime' },
+      publishedDate: { type: 'string', format: 'date-time' },
+      reconciledDate: { type: 'string', format: 'date-time' },
     },
   },
   template: {
+    type: 'DATUM',
     schema: {
       title: 'Sector Manifest',
       type: 'object',
@@ -110,6 +113,33 @@ const installer = {
   },
 }
 
-const { reducer } = collection
-const name = 'Manifest'
+const reducer = async (request) => {
+  const { type, payload } = request
+  switch (type) {
+    case 'ADD': {
+      // make sure we have a runDate - check schema format
+      const { runDate } = payload.formData
+
+      // filter out the sectors on this day
+      // for each sector, filter out the customers on this day
+      // for each customer, create a row
+
+      // set the publishedDate
+      // make a payload with network attachments
+      const publishedDate = dayjs().format()
+      debug('time', publishedDate)
+      const formData = { runDate, publishedDate }
+      // in the manifest, hold two hardlinks to the current customers and routing
+
+      const superRequest = { ...request, payload: { formData } }
+
+      return await collection.reducer(superRequest)
+    }
+    default:
+      return collection.reducer(request)
+  }
+}
+
+const { api } = collection
+const name = 'Schedules'
 export { name, reducer, api, installer }

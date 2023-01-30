@@ -165,9 +165,8 @@ const reducer = async (request) => {
       let custNos
       if (isSectorsChanged) {
         custNos = await customers.getNetwork().children.allKeys()
-        // recompute all memberships for all customers
       } else {
-        // diff the customers and run them
+        // TODO diff the customers and run them
         custNos = await customers.getNetwork().children.allKeys()
       }
       return custNos
@@ -175,19 +174,19 @@ const reducer = async (request) => {
     case 'UPDATE': {
       // read all the sectors, and check if they have changed since last compute.
       // if sectors changed, then need to recompute all memberships
-      const sectors = await interchain('_SECTORS')
+      const sectorKeys = await interchain('_SECTORS')
       // TODO assure the sort order is based on numbers, not strings
-      debug('sector keys', sectors)
-      const sectorStates = {}
+      debug('sector keys', sectorKeys)
+      const sectors = {}
       const setStates = {}
       await Promise.all(
-        sectors.map(async (path) => {
+        sectorKeys.map(async (path) => {
           const [state, setState] = await useState(path)
-          sectorStates[path] = state.formData
+          sectors[path] = state.formData
           setStates[path] = [state, setState]
         })
       )
-      const lut = PolygonLut.create(sectorStates)
+      const lut = PolygonLut.create(sectors)
       debug('begin')
       const hash = await lut.hash()
       const [state, setState] = await useState()
@@ -196,10 +195,10 @@ const reducer = async (request) => {
 
       const { path } = payload
       debug('update', path)
-      const cPayload = { path, isSectorsChanged }
       if (isSectorsChanged) {
         lut.reset()
       }
+      const cPayload = { path, isSectorsChanged }
       const custNos = await interchain('_CUSTOMERS', cPayload)
 
       await Promise.all(
@@ -214,17 +213,16 @@ const reducer = async (request) => {
       )
       // TODO store the customer collection as a hardlink, for diffing
       await Promise.all(
-        Object.entries(lut.changes).map(async ([changed, formData]) => {
-          const [state, setState] = setStates[changed]
+        Object.entries(lut.changes).map(async ([changedKey, formData]) => {
+          const [state, setState] = setStates[changedKey]
           assert.strictEqual(typeof setState, 'function')
-          debug('update order', changed)
+          debug('update order', changedKey)
           await setState({ ...state, formData })
         })
       )
 
       // TODO surface customers that need approval to the top
       await setState({ ...state, geometryHash: hash })
-
       return
     }
     default:

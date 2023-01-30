@@ -70,7 +70,7 @@ const installer = {
         isEmailVerified: { 'ui:readonly': true },
         custNo: { 'ui:readonly': true },
       },
-      namePath: ['custNo'],
+      namePath: 'custNo',
     },
   },
 }

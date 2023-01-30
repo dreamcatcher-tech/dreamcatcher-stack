@@ -34,35 +34,26 @@ const reducer = async (request) => {
   assert.strictEqual(typeof type, 'string')
   assert.strictEqual(typeof payload, 'object')
 
-  const [state, setState] = await useState()
-  const { template } = state
-
   switch (type) {
     case '@@INIT': {
       return
     }
     case 'ADD': {
       // TODO cause the child to fetch the template when it is spawned
+      const [{ template }] = await useState()
       return await add(payload, template)
     }
     case 'BATCH': {
       const { batch } = payload
       assert(Array.isArray(batch))
-
-      const awaits = []
-      for (const payload of batch) {
-        const promise = add(payload, template)
-        awaits.push(promise)
-      }
-      for (const promise of awaits) {
-        await promise
-      }
-      return state
+      const [{ template }] = await useState()
+      return await Promise.all(batch.map((payload) => add(payload, template)))
     }
     case 'SET_TEMPLATE': {
       // TODO useState() should be able to set this remotely ?
       checkNoFormData(payload)
       const template = convertToTemplate(payload)
+      const [state, setState] = await useState()
       await setState({ ...state, template })
       return
     }
@@ -104,12 +95,10 @@ const getChildName = (template, formData) => {
     debug(`getChildName is blank`)
     return
   }
-  if (typeof template === 'string') {
-    template = [template]
+  const { namePath } = template
+  if (namePath) {
+    formData = formData[namePath]
   }
-  template.namePath.forEach((name) => {
-    formData = formData[name]
-  })
   if (typeof formData === 'number') {
     formData = formData + ''
   }

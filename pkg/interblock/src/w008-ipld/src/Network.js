@@ -519,7 +519,7 @@ export class Network extends IpldStruct {
     assert.strictEqual(typeof name, 'string')
     assert(name)
     assert(address instanceof Address)
-    assert(address.isRemote())
+    assert(address.isRemote(), `address must be remote: ${name}:${address}`)
     if (await this.hasChannel(name)) {
       throw new Error(`name in use: ${name} for: ${address}`)
     }
