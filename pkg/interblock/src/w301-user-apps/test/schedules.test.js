@@ -9,29 +9,33 @@ describe('schedules', () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
     })
-    await engine.add('routing', '/crm/routing')
-    await engine.add('customers', '/crm/customers')
-    await engine.add('schedules', '/crm/schedules')
-
     const routingBatch = routing.generateBatch(1)
-    await engine.execute('routing/batch', { batch: routingBatch })
     const batch = customers.generateBatchInside(routingBatch, 1)
-    await engine.execute('customers/batch', { batch })
+    await Promise.all([
+      engine.add('routing', '/crm/routing'),
+      engine.add('customers', '/crm/customers'),
+      engine.add('schedules', '/crm/schedules'),
+      engine.execute('routing/batch', { batch: routingBatch }),
+      engine.execute('customers/batch', { batch }),
+    ])
 
-    await engine.execute('routing/update', '/customers')
-    Debug.enable('tests iplog faker:customers crm:schedules')
+    Debug.enable('tests iplog faker:customers crm:schedules crm:routing')
+    // this batch should trigger updates to the order in the sectors
+
     const runDate = '2022-01-23'
+    const publishedDate = '2023-01-30T23:42:24+00:00'
     await engine.execute('schedules/add', {
-      formData: { runDate },
+      formData: { runDate, publishedDate },
     })
 
     const manifest = await engine.current(`/schedules/${runDate}`)
-    debug(manifest.getState().toJS())
-
-    // trigger the update so the sectors compute the order of customers
+    const state = manifest.getState().toJS()
+    expect(state).toMatchSnapshot()
+    // include hardlinks to the routing and customers
 
     // use selectors to view the schedules, tolerant of being present or not
 
     // make collections allow generating a virtual js version
   })
+  test.todo('publish rejects if unordered customers')
 })

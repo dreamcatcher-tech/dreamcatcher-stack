@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`routing basic 1`] = `
+exports[`routing update 1`] = `
 [
   "779",
   "778",
@@ -8,9 +8,176 @@ exports[`routing basic 1`] = `
 ]
 `;
 
-exports[`routing basic 2`] = `
+exports[`routing update 2`] = `
 [
   "780",
   "781",
 ]
+`;
+
+exports[`routing update 3`] = `
+{
+  "formData": {
+    "commonDate": "2017-01-30",
+    "geometryHash": "bafyreidkrbk6rixk6z2vh3faopagqxq33utukmemduxskp2t2r3zdlh4pa",
+    "unassigned": [
+      "782",
+      "783",
+      "784",
+    ],
+  },
+  "schema": {
+    "description": "Routing manages geographic boundaries to group customers
+      together for service by a truck, and the order of all the customers",
+    "properties": {
+      "commonDate": {
+        "description": "The date that all sectors share in common",
+        "format": "date",
+        "type": "string",
+      },
+      "geometryHash": {
+        "description": "Hash of the geometry to know if the sectors need recomputing",
+        "type": "string",
+      },
+      "unassigned": {
+        "default": [],
+        "description": "Customers that are not assigned to any sector",
+        "items": {
+          "type": "string",
+        },
+        "title": "Unassigned",
+        "type": "array",
+        "uniqueItems": true,
+      },
+    },
+    "required": [
+      "commonDate",
+    ],
+    "title": "Routing",
+    "type": "object",
+  },
+  "template": {
+    "schema": {
+      "additionalProperties": false,
+      "description": "A sector is a geographic area that is used to group customers 
+        for scheduling purposes.",
+      "properties": {
+        "color": {
+          "description": "The color of the sector",
+          "enum": [
+            "red",
+            "orange",
+            "yellow",
+            "cyan",
+            "purple",
+            "violet",
+            "pink",
+            "green",
+            "black",
+          ],
+          "title": "Color",
+        },
+        "frequencyInDays": {
+          "title": "Frequency in Days",
+          "type": "integer",
+        },
+        "frequencyOffset": {
+          "title": "Frequency Offset",
+          "type": "integer",
+        },
+        "geometry": {
+          "properties": {
+            "geometry": {
+              "additionalProperties": false,
+              "properties": {
+                "coordinates": {
+                  "items": {
+                    "items": {
+                      "items": {
+                        "type": "number",
+                      },
+                      "minItems": 2,
+                      "type": "array",
+                    },
+                    "minItems": 4,
+                    "type": "array",
+                  },
+                  "type": "array",
+                },
+                "type": {
+                  "const": "Polygon",
+                  "type": "string",
+                },
+              },
+              "required": [
+                "type",
+                "coordinates",
+              ],
+              "title": "GeoJSON Polygon",
+              "type": "object",
+            },
+            "properties": {
+              "maxProperties": 0,
+              "type": "object",
+            },
+            "type": {
+              "const": "Feature",
+            },
+          },
+          "required": [
+            "type",
+            "properties",
+            "geometry",
+          ],
+          "type": "object",
+        },
+        "name": {
+          "description": "The name of the sector",
+          "title": "Name",
+          "type": "string",
+        },
+        "order": {
+          "default": [],
+          "items": {
+            "type": "string",
+          },
+          "title": "Order",
+          "type": "array",
+          "uniqueItems": true,
+        },
+        "unapproved": {
+          "default": [],
+          "items": {
+            "type": "string",
+          },
+          "title": "Unapproved",
+          "type": "array",
+          "uniqueItems": true,
+        },
+      },
+      "required": [
+        "name",
+        "color",
+        "geometry",
+      ],
+      "title": "Sector",
+      "type": "object",
+    },
+    "type": "DATUM",
+    "uiSchema": {
+      "geometry": {
+        "ui:widget": "hidden",
+      },
+      "order": {
+        "ui:widget": "hidden",
+      },
+    },
+  },
+  "type": "COLLECTION",
+  "uiSchema": {
+    "geometryHash": {
+      "ui:widget": "hidden",
+    },
+  },
+}
 `;

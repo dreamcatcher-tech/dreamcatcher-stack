@@ -33,7 +33,7 @@ const manifestRowTemplate = {
     'isDog',
     'isVehicleBlocking',
   ],
-  allowAdditionalProperties: false,
+  additionalProperties: false,
   properties: {
     id: { type: 'string', title: 'Customer #' },
     address: { type: 'string', title: 'Address' },
@@ -86,23 +86,6 @@ const template = {
       reconciledDate: { type: 'string', format: 'date-time' },
     },
   },
-  template: {
-    type: 'DATUM',
-    schema: {
-      title: 'Sector Manifest',
-      type: 'object',
-      description: `Scheduled collections, in order, for a given sector`,
-      additionalProperties: false,
-      properties: {
-        rows: {
-          type: 'array',
-          definition: `Scheduled collections, in order`,
-          items: manifestRowTemplate,
-        },
-      },
-    },
-    uiSchema: {},
-  },
   namePath: 'runDate',
 }
 
@@ -118,16 +101,15 @@ const reducer = async (request) => {
   switch (type) {
     case 'ADD': {
       // make sure we have a runDate - check schema format
-      const { runDate } = payload.formData
+      const { runDate, publishedDate = dayjs().format() } = payload.formData
 
       // filter out the sectors on this day
       // for each sector, filter out the customers on this day
+      // check that all customers are valid - have all been routed.
       // for each customer, create a row
 
       // set the publishedDate
       // make a payload with network attachments
-      const publishedDate = dayjs().format()
-      debug('time', publishedDate)
       const formData = { runDate, publishedDate }
       // in the manifest, hold two hardlinks to the current customers and routing
 

@@ -6,7 +6,7 @@ const debug = Debug('tests')
 
 describe('routing', () => {
   beforeEach(() => customers.reset())
-  test('basic', async () => {
+  test('update', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
     })
@@ -16,12 +16,15 @@ describe('routing', () => {
     const routingBatch = routing.generateBatch(2)
     await engine.execute('routing/batch', { batch: routingBatch })
     const batch = customers.generateBatchInside(routingBatch, 5)
+    const outsideCount = 3
+    const outside = customers.generateBatchOutside(routingBatch, outsideCount)
+    batch.push(...outside)
     await engine.execute('customers/batch', { batch })
 
     await engine.execute('routing/update', '/customers')
 
     for (const [index, { formData }] of routingBatch.entries()) {
-      const sector = await engine.latest(`routing/${index}`)
+      const sector = await engine.current(`routing/${index}`)
       const state = sector.getState().toJS()
       const {
         formData: { order, ...rest },
@@ -30,7 +33,12 @@ describe('routing', () => {
       debug('order', order)
       expect(order).toMatchSnapshot()
     }
+    const routingLatest = await engine.current('routing')
+    const state = routingLatest.getState().toJS()
+    expect(state.formData.unassigned.length).toEqual(outsideCount)
+    expect(state).toMatchSnapshot()
   })
   test.todo('edit a sector')
   test.todo('edit a customer')
+  test.todo('no sector adds to the unassigned sector')
 })

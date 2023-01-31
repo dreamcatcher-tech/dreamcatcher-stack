@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp, api } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'
@@ -13,13 +13,13 @@ const maxZoom = 22
 export default function MapComponent({
   onCreate,
   onEdit,
-  complex,
+  crisp,
   onSector,
   sector,
   onMarker,
   marker,
   markers,
-  order,
+  reorder,
 }) {
   const mapId = useId()
   const mapRef = useRef()
@@ -128,13 +128,18 @@ export default function MapComponent({
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !complex) {
+    if (!map || !crisp || crisp.isLoading) {
       return
     }
-    debug('adding sectors', complex)
+    debug('adding sectors', crisp)
     const geometryLayer = L.featureGroup().addTo(map)
-    for (const { state, path } of complex.network) {
-      const { formData: sector } = state
+    for (const path of crisp) {
+      debug('adding sector', path)
+      const child = crisp.getChild(path)
+      if (child.isLoading) {
+        continue
+      }
+      const { formData: sector } = child.state
       const opacity = 0.65
       const fillOpacity = 0.3
       const { color, geometry } = sector
@@ -161,31 +166,37 @@ export default function MapComponent({
       debug(`removing sectors`)
       geometryLayer.remove()
     }
-  }, [mapRef.current, complex])
-
+  }, [mapRef.current, crisp])
+  // TODO split out the drawing from the data generation portions
   useEffect(() => {
     let isActive = true
     const map = mapRef.current
-    if (!map || !complex || !markers || !sector) {
+    if (!map || !crisp || !markers || !sector) {
       debug('no map or complex or markers')
       return
     }
+    if (!crisp.parent || !crisp.parent.hasChild('customers')) {
+      debug('no customers')
+      return
+    }
+    debug('adding markers', sector, markers)
     let layer
     const chunkLoad = async () => {
-      debug('adding customers to sector', sector)
-
-      const customers = complex.tree.child('customers')
-      const { state } = complex.child(sector)
-
+      debug('adding customers to sector id:', sector)
+      const customers = crisp.parent.getChild('customers')
+      if (customers.isLoading) {
+        return
+      }
+      const { state } = crisp.getChild(sector)
       const { formData } = state
       const { order = [] } = formData
-
+      debug('order', order)
       const markersArray = []
       debug('adding markers', order.length)
       let count = 0
       for (const [index, custNo] of order.entries()) {
         assert(customers.hasChild(custNo), `customer ${custNo} not found`)
-        const customer = customers.child(custNo)
+        const customer = customers.getChild(custNo)
         const { serviceGps } = customer.state.formData
         const { latitude, longitude } = serviceGps
         const options = { riseOnHover: true }
@@ -208,9 +219,9 @@ export default function MapComponent({
           }
         }
       }
-      debug('markers generated')
+      debug('markers generated', markersArray.length)
       const tooManyMarkers = 300
-      if (order.length < tooManyMarkers) {
+      if (markersArray.length < tooManyMarkers) {
         layer = L.featureGroup().addTo(map)
         markersArray.forEach((marker) => layer.addLayer(marker))
       } else {
@@ -235,13 +246,13 @@ export default function MapComponent({
       }
       setMarkersArray([])
     }
-  }, [mapRef.current, complex, markers, sector])
+  }, [mapRef.current, crisp, markers, sector])
   const [markersArray, setMarkersArray] = useState([])
   useEffect(() => {
     // sweep thru markers and update the data icon
     const map = new Map()
-    if (order && order.length === markersArray.length) {
-      order.forEach((id, index) => map.set(id, index))
+    if (reorder && reorder.length === markersArray.length) {
+      reorder.forEach((id, index) => map.set(id, index))
     }
     for (const [index, marker] of markersArray.entries()) {
       let orderIndex = map.get(marker.data.id)
@@ -251,7 +262,7 @@ export default function MapComponent({
         setIcon(marker)
       }
     }
-  }, [markersArray, order])
+  }, [markersArray, reorder])
   useEffect(() => {
     debug('selected marker', marker)
     const selectedMarker = markersArray.find(({ data }) => data.id === marker)
@@ -312,7 +323,10 @@ const setIcon = (marker) => {
 MapComponent.propTypes = {
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
-  complex: PropTypes.instanceOf(api.Complex),
+  /**
+   * Crisp representing the sectors to be displayed on the map
+   */
+  crisp: PropTypes.instanceOf(Crisp),
   onSector: PropTypes.func,
   /**
    * The selected sector
@@ -328,8 +342,8 @@ MapComponent.propTypes = {
    */
   markers: PropTypes.bool, // TODO replace with implicit signal
   /**
-   * The order of the markers.
+   * The mutated order of the markers for the current sector.
    * Used to show live updates during sorting.
    */
-  order: PropTypes.arrayOf(PropTypes.string),
+  reorder: PropTypes.arrayOf(PropTypes.string),
 }

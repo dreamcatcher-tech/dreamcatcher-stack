@@ -116,7 +116,8 @@ export class Crisp {
     for (const key of Object.keys(actions)) {
       dispatches[key] = (payload) => {
         const action = actions[key](payload)
-        const to = posix.normalize(this.chroot + '/' + this.path)
+        const path = this.path === '/' ? '' : '/' + this.path
+        const to = posix.normalize(this.chroot + path)
         return this.root.#rootActions.dispatch(action, to)
       }
       Object.assign(dispatches[key], actions[key])

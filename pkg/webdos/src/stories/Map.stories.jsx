@@ -4,21 +4,17 @@ import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import sectorsList from '../../../../data/sectors.mjs'
-
+const {
+  crm: { faker },
+} = apps
 const debug = Debug('Map')
 
-const add = { add: { path: 'routing', installer: '/dpkg/crm/customers' } }
-
-const makeRouting = () => {
-  const { list, ...formData } = sectorsList
-  const batch = list.map((sector) => {
-    const order = []
-    return { formData: { ...sector, order } }
-  })
-  debug('batch', batch)
-  return { 'routing/batch': { batch } }
-}
+const sectorsAdd = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
+const sectorsBatch = faker.routing.generateBatch(5)
+const sectorsInsert = { 'routing/batch': { batch: sectorsBatch } }
+const listAdd = { add: { path: 'customers', installer: '/dpkg/crm/customers' } }
+const listBatch = faker.customers.generateBatchInside(sectorsBatch, 5)
+const listInsert = { 'customers/batch': { batch: listBatch } }
 
 export default {
   title: 'Map',
@@ -37,23 +33,114 @@ export default {
       console.log('marker', marker)
     },
     dev: { '/dpkg/crm': apps.crm.covenant },
-    path: '/list',
-    init: [add],
+    path: '/routing',
   },
 }
-const enable = () => Debug.enable('*Map iplog')
+const enable = () => Debug.enable('*Map iplog *Syncer* crm:routing')
 const Template = (args) => {
   enable()
   return (
     <Engine {...args}>
-      <Syncer path={args.path}>
-        <Map {...args} />
+      <Syncer path="/">
+        <Syncer.UnWrapper path="/routing">
+          <Map {...args} />
+        </Syncer.UnWrapper>
       </Syncer>
     </Engine>
   )
 }
 
 export const Basic = Template.bind({})
+
+export const NoPolygons = Template.bind({})
+NoPolygons.args = {
+  onCreate: undefined,
+}
+
+export const Polygons = Template.bind({})
+Polygons.args = {
+  init: [sectorsAdd, sectorsInsert],
+}
+
+export const WithCustomers = Template.bind({})
+WithCustomers.args = {
+  markers: true,
+  sector: '2',
+  init: [
+    sectorsAdd,
+    sectorsInsert,
+    listAdd,
+    listInsert,
+    { 'routing/update': { path: '/customers' } },
+  ],
+}
+export const ClickSectors = (args) => {
+  enable()
+  const [sector, onSector] = React.useState('0')
+  // use wd to know which sector is selected
+  return (
+    <div>
+      <Glass.Container>
+        <Glass.Left>
+          <Card>
+            <CardContent>Selected:{sector}</CardContent>
+          </Card>
+        </Glass.Left>
+      </Glass.Container>
+      <Engine {...args}>
+        <Syncer path={args.path}>
+          <Map {...args} onSector={onSector} sector={sector} />
+        </Syncer>
+      </Engine>
+    </div>
+  )
+  // TODO script some actual clicking
+}
+ClickSectors.args = {
+  init: [sectorsAdd, sectorsInsert],
+}
+
+export const ClickCustomers = (args) => {
+  enable()
+  const [marker, onMarker] = React.useState()
+  const [sector, onSector] = React.useState('4')
+
+  return (
+    <div>
+      <Glass.Container>
+        <Glass.Left>
+          <Card>
+            <CardContent>Selected Marker:{marker}</CardContent>
+          </Card>
+        </Glass.Left>
+      </Glass.Container>
+      <Engine {...args}>
+        <Syncer path="/">
+          <Syncer.UnWrapper path="/routing">
+            <Map
+              {...args}
+              onMarker={onMarker}
+              markers
+              onSector={onSector}
+              marker={marker}
+              sector={sector}
+            />
+          </Syncer.UnWrapper>
+        </Syncer>
+      </Engine>
+    </div>
+  )
+  // TODO script some actual clicking
+}
+ClickCustomers.args = {
+  init: [
+    sectorsAdd,
+    sectorsInsert,
+    listAdd,
+    listInsert,
+    { 'routing/update': { path: '/customers' } },
+  ],
+}
 
 export const CardColumn = (args) => {
   enable()
@@ -69,84 +156,4 @@ export const CardColumn = (args) => {
       <Map />
     </>
   )
-}
-export const NoPolygons = Template.bind({})
-NoPolygons.args = {
-  onCreate: undefined,
-}
-
-export const Polygons = Template.bind({})
-Polygons.args = {
-  init: [add, makeRouting()],
-}
-
-export const WithCustomers = Template.bind({})
-WithCustomers.args = {
-  markers: true,
-  sector: '26',
-}
-export const ClickSectors = (args) => {
-  enable()
-  const [sector, onSector] = React.useState()
-  // use wd to know which sector is selected
-  return (
-    <div>
-      <Glass.Container>
-        <Glass.Left>
-          <Card>
-            <CardContent>Selected:{sector}</CardContent>
-          </Card>
-        </Glass.Left>
-      </Glass.Container>
-      <Map onSector={onSector} sector={sector} />
-    </div>
-  )
-  // TODO script some actual clicking
-}
-export const ClickCustomers = (args) => {
-  enable()
-  const initialSector = '34'
-  const [marker, onMarker] = React.useState()
-  const [sector, onSector] = React.useState(initialSector)
-
-  return (
-    <div>
-      <Glass.Container>
-        <Glass.Left>
-          <Card>
-            <CardContent>Selected Marker:{marker}</CardContent>
-          </Card>
-        </Glass.Left>
-      </Glass.Container>
-      <Map
-        onMarker={onMarker}
-        markers
-        onSector={onSector}
-        marker={marker}
-        sector={sector}
-      />
-    </div>
-  )
-  // TODO script some actual clicking
-}
-
-const Customers = (args) => {
-  enable()
-  const [sector, onSector] = React.useState('26')
-  const [marker, onMarker] = React.useState()
-  args = { ...args, onSector, sector, onMarker, marker }
-  return <Map {...args} />
-}
-export const SmallCustomers = Customers.bind({})
-SmallCustomers.args = {
-  // mount customers as a car import ?
-  markers: true,
-}
-export const MediumCustomers = Customers.bind({})
-MediumCustomers.args = {
-  markers: true,
-}
-export const LargeCustomers = Customers.bind({})
-LargeCustomers.args = {
-  markers: true,
 }

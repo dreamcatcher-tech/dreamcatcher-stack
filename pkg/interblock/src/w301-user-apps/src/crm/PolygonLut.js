@@ -9,6 +9,7 @@ export class PolygonLut {
   #changes = {}
   #lookup
   #geometryMap = new Map()
+  #unassigned = []
   static create(sectors) {
     assert.strictEqual(typeof sectors, 'object')
     const lut = new PolygonLut()
@@ -37,6 +38,8 @@ export class PolygonLut {
       if (!order.includes(custNo)) {
         this.#changes[key] = { ...sector, order: [...order, custNo] }
       }
+    } else {
+      this.#unassigned.push(custNo)
     }
   }
   reset() {
@@ -53,6 +56,9 @@ export class PolygonLut {
   get changes() {
     // return only the sectors that have been altered
     return { ...this.#changes }
+  }
+  get unassigned() {
+    return [...this.#unassigned]
   }
   async hash() {
     if (!this.#hash) {

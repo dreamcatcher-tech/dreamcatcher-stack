@@ -3,20 +3,20 @@ import { Engine, Syncer, CollectionList } from '..'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('CollectionList')
-
-const add = { path: 'list', installer: '/dpkg/crm/customers' }
+const { crm } = apps
+const add = { add: { path: 'list', installer: '/dpkg/crm/customers' } }
 export default {
   title: 'CollectionList',
   component: CollectionList,
   args: {
-    dev: { '/dpkg/crm': apps.crm.covenant },
+    dev: { '/dpkg/crm': crm.covenant },
     path: '/list',
-    init: [{ add }],
+    init: [add],
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*CollectionList *Syncer')
+  Debug.enable('*CollectionList *Syncer iplog')
   return (
     <Engine {...args}>
       <Syncer path={args.path}>
@@ -33,7 +33,7 @@ Loading.args = {
 export const Empty = Template.bind({})
 export const SmallData = Template.bind({})
 SmallData.args = {
-  init: [{ add }, { 'list/add': { formData: { name: 'Bob', custNo: 1 } } }],
+  init: [add, { 'list/add': { formData: { name: 'Bob', custNo: 1 } } }],
 }
 export const MediumData = Template.bind({})
 const makeBatch = (start, count = 10) => {
@@ -43,12 +43,15 @@ const makeBatch = (start, count = 10) => {
   }
   return batch
 }
-const batches = []
-for (let i = 0; i <= 10; i++) {
-  const count = 10
-  const start = i * count + 1
-  batches.push({ 'list/batch': { batch: makeBatch(start, count) } })
+const batches = () => {
+  const batch = []
+  for (let i = 0; i <= 10; i++) {
+    batch.push({
+      'list/batch': { batch: crm.faker.customers.generateBatch(10) },
+    })
+  }
+  return batch
 }
 MediumData.args = {
-  init: [{ add }, ...batches],
+  init: [add, ...batches()],
 }

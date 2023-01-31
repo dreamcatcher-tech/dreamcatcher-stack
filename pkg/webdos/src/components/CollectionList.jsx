@@ -25,16 +25,7 @@ const CollectionList = ({ crisp }) => {
     // TODO show an enquiring modal UI over the top to get the data we need
     setIsAdding(true)
     const { add } = crisp.actions
-    let custNo
-    let count = 0
-    const current = [...crisp]
-    do {
-      count++
-      if (!current.includes(count + '')) {
-        custNo = count
-      }
-    } while (!custNo)
-    await add({ formData: { custNo, name: 'bob' } })
+    await add({ formData: { name: 'bob' } })
     setIsAdding(false)
   }
   const valueGetter = ({ id, field }) => {

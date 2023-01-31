@@ -68,6 +68,7 @@ const template = {
       },
       frequencyInDays: { type: 'integer', title: 'Frequency in Days' },
       frequencyOffset: { type: 'integer', title: 'Frequency Offset' },
+      geometry,
       order: {
         type: 'array',
         title: 'Order',
@@ -75,7 +76,13 @@ const template = {
         items: { type: 'string' },
         default: [],
       },
-      geometry,
+      unapproved: {
+        type: 'array',
+        title: 'Unapproved',
+        uniqueItems: true,
+        items: { type: 'string' },
+        default: [],
+      },
     },
   },
   uiSchema: {
@@ -110,6 +117,14 @@ const installer = {
         geometryHash: {
           type: 'string',
           description: `Hash of the geometry to know if the sectors need recomputing`,
+        },
+        unassigned: {
+          type: 'array',
+          title: 'Unassigned',
+          description: `Customers that are not assigned to any sector`,
+          uniqueItems: true,
+          items: { type: 'string' },
+          default: [],
         },
       },
     },
@@ -220,9 +235,11 @@ const reducer = async (request) => {
           await setState({ ...state, formData })
         })
       )
-
+      const { unassigned = [] } = state.formData
+      unassigned.push(...lut.unassigned)
       // TODO surface customers that need approval to the top
-      await setState({ ...state, geometryHash: hash })
+      const formData = { ...state.formData, geometryHash: hash, unassigned }
+      await setState({ ...state, formData })
       return
     }
     default:

@@ -1,3 +1,5 @@
+import assert from 'assert-fast'
+import { useState } from '../../../w002-api'
 import { collection } from '../../../w212-system-covenants'
 
 const address = (title) => ({
@@ -22,7 +24,15 @@ const gps = {
 const installer = {
   state: {
     type: 'COLLECTION',
-    schema: {},
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      title: 'Customers',
+      properties: {
+        maxCustNo: { type: 'integer', minimum: 1 },
+      },
+    },
+    formData: { maxCustNo: 0 },
     template: {
       type: 'DATUM',
       schema: {
@@ -74,6 +84,47 @@ const installer = {
     },
   },
 }
-const { reducer, api } = collection
+const reducer = async (request) => {
+  const { type, payload } = request
+  if (type === 'ADD') {
+    const [state, setState] = await useState()
+    const {
+      formData: { maxCustNo },
+    } = state
+    assert(Number.isInteger(maxCustNo), 'maxCustNo is not an integer')
+    const { formData } = payload
+    const { custNo = maxCustNo + 1 } = formData
+    if (custNo <= maxCustNo) {
+      throw new Error(`Customer number ${custNo} is > ${maxCustNo}`)
+    }
+    const nextPayload = { ...payload, formData: { ...formData, custNo } }
+    const result = await collection.reducer({ type, payload: nextPayload })
+    await setState({
+      ...state,
+      formData: { ...state.formData, maxCustNo: custNo },
+    })
+    return result
+  }
+  if (type === 'BATCH') {
+    const { batch } = payload
+    const [state, setState] = await useState()
+    let { maxCustNo } = state.formData
+    for (const { formData } of batch) {
+      const { custNo } = formData
+      if (custNo > maxCustNo) {
+        maxCustNo = custNo
+      }
+    }
+    if (maxCustNo > state.formData.maxCustNo) {
+      await setState({
+        ...state,
+        formData: { ...state.formData, maxCustNo },
+      })
+    }
+  }
+
+  return collection.reducer(request)
+}
+const { api } = collection
 const name = 'Customers'
 export { name, reducer, api, installer }

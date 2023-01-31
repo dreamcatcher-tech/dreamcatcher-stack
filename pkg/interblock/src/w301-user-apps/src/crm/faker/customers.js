@@ -22,11 +22,21 @@ export const reset = () => {
   custNo = 777
 }
 
-export const generateSingle = (lut) => {
+export const generateSingle = (lut, outside = false) => {
   assert(!lut || lut instanceof PolygonLut, 'lut must be a PolygonLut')
+  assert.strictEqual(typeof outside, 'boolean', 'outside must be a boolean')
   const { schema } = installer.state.template
   const formData = JSONSchemaFaker.generate(schema)
   formData.serviceGps = {}
+  const isValid = (gps) => {
+    if (!lut) {
+      return true
+    }
+    if (outside) {
+      return !lut.includes(gps)
+    }
+    return lut.includes(gps)
+  }
   do {
     formData.serviceGps.latitude = faker.datatype.number({
       min: lut?.bounds.minY || minY,
@@ -38,16 +48,16 @@ export const generateSingle = (lut) => {
       max: lut?.bounds.maxX || maxX,
       precision: 0.000001,
     })
-  } while (lut && !lut.includes(formData.serviceGps))
+  } while (!isValid(formData.serviceGps))
   formData.custNo = custNo++
   return { formData }
 }
 
-export const generateBatch = (count = 20, bounds) => {
+export const generateBatch = (count = 20, bounds, outside) => {
   debug('start customers')
   const batch = []
   for (let i = 0; i < count; i++) {
-    const customer = generateSingle(bounds)
+    const customer = generateSingle(bounds, outside)
     batch.push(customer)
   }
   debug('end customers')
@@ -62,6 +72,18 @@ export const generateBatchInside = (sectors, count = 20) => {
 
   const lut = PolygonLut.create(geometry)
   return generateBatch(count, lut)
+
+  // get the bounds of the geometry
+  // make a lut of the geometry
+}
+export const generateBatchOutside = (sectors, count = 20) => {
+  assert(Array.isArray(sectors), 'sectors must be an array')
+  assert(Number.isInteger(count), 'count must be an integer')
+  const geometry = sectors.map((sector) => sector.formData)
+  debug('generateBatchOutside', geometry)
+  const lut = PolygonLut.create(geometry)
+  const outside = true
+  return generateBatch(count, lut, outside)
 
   // get the bounds of the geometry
   // make a lut of the geometry
