@@ -237,7 +237,6 @@ const reducer = async (request) => {
       )
       const { unassigned = [] } = state.formData
       unassigned.push(...lut.unassigned)
-      // TODO surface customers that need approval to the top
       const formData = { ...state.formData, geometryHash: hash, unassigned }
       await setState({ ...state, formData })
       return

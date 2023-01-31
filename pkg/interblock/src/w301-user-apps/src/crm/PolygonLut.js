@@ -35,8 +35,14 @@ export class PolygonLut {
       const key = this.#geometryMap.get(result)
       const sector = this.#changes[key] || this.#sectors[key]
       const order = sector.order || []
+      const unapproved = sector.unapproved || []
       if (!order.includes(custNo)) {
-        this.#changes[key] = { ...sector, order: [...order, custNo] }
+        // TODO remove from all other sectors
+        this.#changes[key] = {
+          ...sector,
+          order: [...order, custNo],
+          unapproved: [...unapproved, custNo],
+        }
       }
     } else {
       this.#unassigned.push(custNo)

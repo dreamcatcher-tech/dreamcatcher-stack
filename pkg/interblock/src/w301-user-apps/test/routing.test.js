@@ -23,15 +23,20 @@ describe('routing', () => {
 
     await engine.execute('routing/update', '/customers')
 
+    Debug.enable('tests')
     for (const [index, { formData }] of routingBatch.entries()) {
       const sector = await engine.current(`routing/${index}`)
       const state = sector.getState().toJS()
       const {
-        formData: { order, ...rest },
+        formData: { order, unapproved, ...rest },
       } = state
-      expect(rest).toEqual(formData)
       debug('order', order)
+      expect(rest).toEqual(formData)
+      if (Array.isArray(order)) {
+        expect(order).toEqual(unapproved)
+      }
       expect(order).toMatchSnapshot()
+      expect(unapproved).toMatchSnapshot()
     }
     const routingLatest = await engine.current('routing')
     const state = routingLatest.getState().toJS()

@@ -10,12 +10,27 @@ exports[`routing update 1`] = `
 
 exports[`routing update 2`] = `
 [
+  "779",
+  "778",
+  "777",
+]
+`;
+
+exports[`routing update 3`] = `
+[
   "780",
   "781",
 ]
 `;
 
-exports[`routing update 3`] = `
+exports[`routing update 4`] = `
+[
+  "780",
+  "781",
+]
+`;
+
+exports[`routing update 5`] = `
 {
   "formData": {
     "commonDate": "2017-01-30",
