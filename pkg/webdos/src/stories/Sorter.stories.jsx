@@ -1,19 +1,31 @@
 import React from 'react'
 import { Glass, Sorter } from '..'
 import Debug from 'debug'
-import { apps } from '@dreamcatcher-tech/interblock'
+import { faker } from '@faker-js/faker/locale/en_AU'
 const debug = Debug('Sorter')
 export default {
   title: 'Sorter',
   component: Sorter,
-  args: {},
+  args: { count: 10 },
 }
 
+const generateCustNos = (n) => {
+  debug('generateCustNos', n)
+  const items = []
+  for (let i = 0; i < n; i++) {
+    items.push(i + '')
+  }
+  debug('generate done')
+  return items
+}
+const enrich = (id) => {
+  const int = parseInt(id)
+  faker.seed(int)
+  return faker.address.streetAddress()
+}
 const Template = (args) => {
   Debug.enable('*Datum *Sorter')
-  const enrich = apps.crm.utils.enrichCustomers(args.complex)
-  const { order } = args.complex.state.formData
-  const [items, setItems] = React.useState(order)
+  const [items, setItems] = React.useState(generateCustNos(args.count))
   const [selected, setSelected] = React.useState(args.selected)
   const onSelected = (id) => {
     debug('onSelected', id)
@@ -39,10 +51,14 @@ const Template = (args) => {
   )
 }
 
-export const Small = Template.bind({})
 export const Blank = Template.bind({})
-
+Blank.args = { count: 0 }
+export const Small = Template.bind({})
 export const Medium = Template.bind({})
+Medium.args = { count: 1000 }
 export const Large = Template.bind({})
+Large.args = { count: 20000 }
 export const Selected = Template.bind({})
+Selected.args = { selected: '5' }
 export const ReadOnly = Template.bind({})
+ReadOnly.args = { onSort: false }

@@ -1,4 +1,4 @@
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import React, { useState } from 'react'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
@@ -10,28 +10,21 @@ import Save from '@mui/icons-material/Save'
 import { Sorter } from '.'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import { apps } from '@dreamcatcher-tech/interblock'
+import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 
 const debug = Debug('terminal:widgets:SorterDatum')
 
-export default function SorterDatum({
-  complex,
-  marker,
-  viewOnly,
-  onMarker,
-  onOrder,
-  onEdit,
-  editing,
-}) {
+function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
-  const { order } = complex.state.formData
-  const enrich = apps.crm.utils.enrichCustomers(complex)
+  const { order = [] } = crisp.state.formData || {}
+  debug('order', crisp.state)
   const [items, setItems] = useState(order)
   const [isPending, setIsPending] = useState(false)
   const [isEditing, setIsEditing] = useState(editing)
   const [initialOrder, setInitialOrder] = useState(order)
-  if (initialOrder !== order) {
+  if (!equals(initialOrder, order)) {
+    debug('initialOrder !== order')
     if (isEditing) {
       debug('state changed', initialOrder, order)
     }
@@ -39,8 +32,15 @@ export default function SorterDatum({
     setItems(order)
     // TODO alert if changes not saved
   }
-  const isDirty = items !== order
+  const isDirty = !equals(items, order)
   debug('isDirty', isDirty)
+  const marker = crisp.getSelectedChild()
+  const onMarker = (marker) => {
+    const path = crisp.absolutePath + '/' + marker
+    debug('onMarker path', path)
+    const allowVirtual = true
+    crisp.actions.cd(path, allowVirtual)
+  }
   const onIsEditing = (isEditing) => {
     debug('onIsEditing', isEditing)
     setIsEditing(isEditing)
@@ -55,8 +55,8 @@ export default function SorterDatum({
   const onSubmit = () => {
     debug('onSubmit', items)
     setIsPending(true)
-    const formData = { ...complex.state.formData, order: items }
-    complex.actions.set(formData).then(() => {
+    const formData = { ...crisp.state.formData, order: items }
+    crisp.actions.set(formData).then(() => {
       setIsPending(false)
       onIsEditing(false)
       onOrder()
@@ -96,12 +96,12 @@ export default function SorterDatum({
     ? null
     : Viewing
 
-  let { schema } = complex.state
-  if (schema === '..') {
-    schema = complex.parent().state.template.schema
+  let { schema } = crisp.state
+  if (schema === '..' && crisp.parent.state.template?.schema) {
+    schema = crisp.parent.state.template.schema
   }
-  const orderSchema = schema.properties.order
-  const { title } = orderSchema
+  const orderSchema = schema?.properties.order
+  const { title = '(loading)' } = orderSchema || {}
   const minHeight = calcMinHeight(items)
   const sx = {
     flexGrow: 1,
@@ -115,7 +115,7 @@ export default function SorterDatum({
       <CardContent sx={{ flexGrow: 1, p: 0 }}>
         <Sorter
           items={items}
-          enrich={enrich}
+          enrich={enrichCustomers(crisp)}
           selected={marker}
           onSort={viewOnly || !isEditing || isPending ? undefined : onSort}
           onSelected={onMarker}
@@ -125,27 +125,23 @@ export default function SorterDatum({
   )
 }
 SorterDatum.propTypes = {
-  complex: PropTypes.instanceOf(api.Complex).isRequired,
-  /**
-   * The selected marker id
-   */
-  marker: PropTypes.string,
+  crisp: PropTypes.instanceOf(Crisp),
+
   /**
    * Show no edit button - all fields are readonly
    */
   viewOnly: PropTypes.bool,
+
   /**
-   * Callback when the selected marker changes
-   */
-  onMarker: PropTypes.func.isRequired,
-  /**
-   * Notify when the order changes so the map can update
+   * Notify when the order changes so the map markers labesl can update
    */
   onOrder: PropTypes.func,
+
   /**
    * Notify when the component starts and stops editing
    */
   onEdit: PropTypes.func,
+
   /**
    * Used in testing to start the component in editing mode
    */
@@ -158,3 +154,17 @@ const calcMinHeight = (items) => {
   const cardBottomPadding = 24
   return cardHeaderHeight + totalItemHeight + cardBottomPadding
 }
+const enrichCustomers = (sector, customers) => {
+  assert(sector instanceof Crisp)
+  assert(!customers || customers instanceof Crisp)
+  return (id = '') => {
+    assert.strictEqual(typeof id, 'string', `id must be a string, got ${id}`)
+    if (!customers || customers.isLoading || !customers.hasChild(id)) {
+      return id
+    }
+    const customer = customers.getChild(id)
+    const value = customer.state.formData.serviceAddress
+    return value || id
+  }
+}
+export default SorterDatum

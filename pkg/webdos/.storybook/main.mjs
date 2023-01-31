@@ -11,6 +11,6 @@ export default {
   },
   features: {
     // interactionsDebugger: true, // 👈 Enable playback controls
-    // storyStoreV7: true, // lazy load each story
+    storyStoreV7: true, // lazy load each story
   },
 }

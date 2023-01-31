@@ -94,16 +94,21 @@ const stripTrailingSlash = (path) => {
   return path
 }
 
-const unDebug = debug.extend('Unwrapper')
+const unDebug = debug.extend('UnWrapper')
 const UnWrapper = ({ crisp, path = '/', children }) => {
   if (path !== '/' && path.startsWith('/')) {
     path = path.substring(1)
   }
-  if (crisp.isLoading || !crisp.hasChild(path)) {
-    unDebug('loading', path, crisp.isLoading, crisp)
-    return <div>Loading...</div>
+  const segments = path.split('/')
+  unDebug('segments', segments)
+  let child = crisp
+  for (const segment of segments) {
+    if (child.isLoading || !child.hasChild(segment)) {
+      unDebug('loading', path, crisp.isLoading, crisp)
+      return <div>Loading...</div>
+    }
+    child = child.getChild(segment)
   }
-  const child = crisp.getChild(path)
   unDebug('child', child)
   children = React.cloneElement(children, { crisp: child })
   return children

@@ -34,6 +34,7 @@ export default {
     },
     dev: { '/dpkg/crm': apps.crm.covenant },
     path: '/routing',
+    init: [sectorsAdd],
   },
 }
 const enable = () => Debug.enable('*Map iplog *Syncer* crm:routing')

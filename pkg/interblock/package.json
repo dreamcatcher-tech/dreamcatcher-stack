@@ -54,6 +54,7 @@
     "it-parallel": "^3.0.0",
     "it-pushable": "^3.1.2",
     "libp2p": "0.42.0",
+    "lodash.merge": "^4.6.2",
     "pad-left": "^2.1.0",
     "path-browserify": "^1.0.1",
     "polygon-lookup": "^2.6.0",

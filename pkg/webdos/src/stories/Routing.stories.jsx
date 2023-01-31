@@ -1,44 +1,44 @@
 import React from 'react'
-import { Routing } from '..'
-import delay from 'delay'
+import { Engine, Syncer, Routing } from '..'
+import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('Routing')
+
+const { faker } = apps.crm
+const sectorsAdd = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
+const sectorsBatch = faker.routing.generateBatch(5)
+const sectorsInsert = { 'routing/batch': { batch: sectorsBatch } }
+const listAdd = { add: { path: 'customers', installer: '/dpkg/crm/customers' } }
+const listBatch = faker.customers.generateBatchInside(sectorsBatch, 5)
+const listInsert = { 'customers/batch': { batch: listBatch } }
 
 export default {
   title: 'Routing',
   component: Routing,
   args: {
-    sector: '13',
+    dev: { '/dpkg/crm': apps.crm.covenant },
+    init: [
+      sectorsAdd,
+      sectorsInsert,
+      listAdd,
+      listInsert,
+      { 'routing/update': { path: '/customers' } },
+      { cd: { path: '/routing' } },
+    ],
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*Routing  *Sorter* *SorterDatum *DatumHOC *Datum')
-  const [complex, setComplex] = React.useState(args.complex)
-  if (complex === args.complex) {
-    const network = args.complex.network.map((child) => {
-      const { path } = child
-      const set = async (formData) => {
-        debug('set', path, formData)
-        await delay(1200)
-        debug('setting done', path)
-        setComplex((current) => {
-          const network = current.network.map((child) => {
-            if (child.path === path) {
-              return { ...child, state: { ...child.state, formData } }
-            }
-            return child
-          })
-          return current.setNetwork(network)
-        })
-      }
-      return { ...child, actions: { set } }
-    })
-    setComplex(args.complex.setNetwork(network))
-  }
-  debug('complex', complex)
-  args = { ...args, complex }
-  return <Routing {...args} />
+  Debug.enable(' *Routing  *Sorter* *SorterDatum *DatumHOC *Datum')
+  return (
+    <Engine {...args}>
+      <Syncer>
+        <Syncer.UnWrapper path="/routing">
+          <Routing />
+        </Syncer.UnWrapper>
+      </Syncer>
+    </Engine>
+  )
 }
 
 export const Blank = Template.bind({})

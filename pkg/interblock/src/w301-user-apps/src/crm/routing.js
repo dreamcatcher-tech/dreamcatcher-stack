@@ -88,6 +88,7 @@ const template = {
   uiSchema: {
     geometry: { 'ui:widget': 'hidden' },
     order: { 'ui:widget': 'hidden' },
+    unapproved: { 'ui:widget': 'hidden' },
   },
 }
 

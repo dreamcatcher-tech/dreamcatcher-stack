@@ -1,14 +1,12 @@
+import merge from 'lodash.merge'
 import assert from 'assert-fast'
 import { useState } from '../../../w002-api'
 import { collection } from '../../../w212-system-covenants'
 
 const address = (title) => ({
   title,
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    address: { type: 'string', faker: 'address.streetAddress' },
-  },
+  type: 'string',
+  faker: 'address.streetAddress',
 })
 const gps = {
   title: 'Service GPS',
@@ -85,7 +83,7 @@ const installer = {
   },
 }
 const reducer = async (request) => {
-  const { type, payload } = request
+  let { type, payload } = request
   if (type === 'ADD') {
     const [state, setState] = await useState()
     const {
@@ -97,12 +95,11 @@ const reducer = async (request) => {
     if (custNo <= maxCustNo) {
       throw new Error(`Customer number ${custNo} is > ${maxCustNo}`)
     }
-    const nextPayload = { ...payload, formData: { ...formData, custNo } }
-    const result = await collection.reducer({ type, payload: nextPayload })
-    await setState({
-      ...state,
-      formData: { ...state.formData, maxCustNo: custNo },
-    })
+    if (custNo !== formData.custNo) {
+      payload = merge({}, payload, { formData: { custNo } })
+    }
+    const result = await collection.reducer({ type, payload })
+    await setState(merge({}, state, { formData: { maxCustNo: custNo } }))
     return result
   }
   if (type === 'BATCH') {

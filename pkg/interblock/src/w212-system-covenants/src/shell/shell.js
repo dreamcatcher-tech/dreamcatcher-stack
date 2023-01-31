@@ -113,7 +113,7 @@ const reducer = async (request) => {
     }
     case 'CD': {
       // TODO ignore if same as working directory
-      let { path } = payload
+      let { path, allowVirtual = false } = payload
       assert.strictEqual(typeof path, 'string')
       assert(path)
       let [state, setState] = await useState()
@@ -122,15 +122,17 @@ const reducer = async (request) => {
       assert(posix.isAbsolute(wd))
       const absolutePath = posix.resolve(wd, path)
       debug(`changeDirectory`, absolutePath)
-      try {
-        const pulse = await usePulse(absolutePath)
-        assert(pulse instanceof Pulse)
-        state = { ...state, wd: absolutePath }
-        await setState(state)
-      } catch (error) {
-        debug(`changeDirectory error:`, error.message)
-        throw error
+      if (!allowVirtual) {
+        try {
+          const pulse = await usePulse(absolutePath)
+          assert(pulse instanceof Pulse)
+        } catch (error) {
+          debug(`changeDirectory error:`, error.message)
+          throw new Error(`CD: ${absolutePath} failed: ${error.message}`)
+        }
       }
+      state = { ...state, wd: absolutePath }
+      await setState(state)
       return { absolutePath }
     }
     case 'RM': {

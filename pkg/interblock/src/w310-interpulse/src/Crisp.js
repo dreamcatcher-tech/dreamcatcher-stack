@@ -235,4 +235,14 @@ export class Crisp {
   get wd() {
     return this.root.#wd
   }
+  getSelectedChild() {
+    if (this.wd.startsWith(this.path)) {
+      const tail = this.wd.slice(this.path.length + '/'.length)
+      const [child] = tail.split('/')
+      debug('tail %s selectedChild %s', tail, child)
+      if (child) {
+        return child
+      }
+    }
+  }
 }

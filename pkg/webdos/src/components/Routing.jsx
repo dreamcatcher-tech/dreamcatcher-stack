@@ -1,4 +1,4 @@
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 import React, { useState, useRef } from 'react'
 import PropTypes from 'prop-types'
@@ -13,8 +13,9 @@ import {
 
 const debug = Debug('terminal:widgets:Routing')
 
-const Routing = ({ complex, sector: initialSector }) => {
-  const [sector, setSector] = useState(initialSector)
+const Routing = ({ crisp }) => {
+  debug('crisp', crisp)
+  const sector = crisp.getSelectedChild()
   const [marker, setMarker] = useState()
   const [order, onOrder] = useState() // the dynamic changing data
   const [isEditingSector, setIsEditingSector] = useState(false)
@@ -31,31 +32,32 @@ const Routing = ({ complex, sector: initialSector }) => {
   const disabledRef = useRef()
   disabledRef.current = disabled
   const onSector = (sector) => {
-    if (!disabledRef.current) {
-      setSector(sector)
+    debug('onSector', sector)
+    if (!disabledRef.current && !crisp.isLoadingActions) {
+      const path = crisp.absolutePath + '/' + sector
+      debug('onSector path', path)
+      const promise = crisp.actions.cd(path)
     }
   }
-  const sectorComplex = complex.hasChild(sector)
-    ? complex.child(sector)
-    : undefined
-  if (!sectorComplex && complex.network.length) {
-    onSector(complex.network[0].path)
+  const sectorCrisp = sector && crisp.hasChild(sector) && crisp.getChild(sector)
+  if (!sectorCrisp && !crisp.isLoading && crisp.sortedChildren.length) {
+    onSector(crisp.sortedChildren[0])
   }
   return (
     <>
       <Glass.Container>
         <Glass.Left>
-          <SectorSelector {...{ complex, sector, onSector, disabled }} />
-          {sectorComplex && (
+          <SectorSelector {...{ crisp, sector, onSector, disabled }} />
+          {sectorCrisp && (
             <>
               <Datum
-                complex={sectorComplex}
+                complex={sectorCrisp}
                 collapsed
                 onEdit={setIsEditingSector}
                 viewOnly={isEditingOrder}
               />
               <SorterDatum
-                complex={sectorComplex}
+                complex={sectorCrisp}
                 marker={marker}
                 onMarker={onMarker}
                 onOrder={onOrder}
@@ -69,7 +71,7 @@ const Routing = ({ complex, sector: initialSector }) => {
       <RoutingSpeedDial></RoutingSpeedDial>
       <Map
         {...{
-          complex,
+          crisp,
           onSector,
           sector,
           onMarker,
@@ -83,14 +85,9 @@ const Routing = ({ complex, sector: initialSector }) => {
 }
 Routing.propTypes = {
   /**
-   * The Routing complex
+   * The Routing node
    */
-  complex: PropTypes.instanceOf(api.Complex).isRequired,
-  /**
-   * Used only in testing
-   * The selected sector path
-   */
-  sector: PropTypes.string,
+  crisp: PropTypes.instanceOf(Crisp),
 }
 
 export default Routing

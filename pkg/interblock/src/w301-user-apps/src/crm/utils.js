@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { Complex } from '../../../w002-api'
+import { Crisp } from '../../..'
 import assert from 'assert-fast'
 import Debug from 'debug'
 const debug = Debug('crm:utils')
@@ -18,10 +18,10 @@ function calcDiffInDays(startDate, endDate) {
   const diff = endMoment.diff(startMoment, 'days')
   return diff
 }
-export const sectorsOnDay = (rootComplex, runDate) => {
-  assert(rootComplex instanceof Complex, 'rootComplex must be a Complex')
+export const sectorsOnDay = (root, runDate) => {
+  assert(root instanceof Crisp, 'root must be a Crisp')
   assert.strictEqual(typeof runDate, 'string', 'runDate must be a string')
-  const routing = rootComplex.child('routing')
+  const routing = root.getChild('routing')
   const { commonDate } = routing.state.formData
   const network = routing.network.filter(({ state: { formData: sector } }) =>
     isSectorOnDate(sector, commonDate, runDate)
@@ -30,11 +30,11 @@ export const sectorsOnDay = (rootComplex, runDate) => {
   return routing.setNetwork(network)
 }
 
-export const generateManifest = (rootComplex, runDate) => {
-  assert(rootComplex instanceof Complex, 'rootComplex must be a Complex')
+export const generateManifest = (root, runDate) => {
+  assert(root instanceof Crisp, 'root must be a Crisp')
   assert.strictEqual(typeof runDate, 'string', 'runDate must be a string')
-  const onDay = sectorsOnDay(rootComplex, runDate)
-  const schedule = rootComplex.child('schedule')
+  const onDay = sectorsOnDay(root, runDate)
+  const schedule = root.child('schedule')
   const defaultRow = {
     isDone: false,
     ebc: false,
@@ -44,7 +44,7 @@ export const generateManifest = (rootComplex, runDate) => {
     isDog: false,
     isVehicleBlocking: false,
   }
-  const customers = rootComplex.child('customers')
+  const customers = root.child('customers')
   const network = onDay.network.map(({ path, state: { formData } }) => {
     const { order, ...rest } = formData
     const rows = order.map((path) => {
@@ -69,18 +69,4 @@ export const generateManifest = (rootComplex, runDate) => {
     .setNetwork([...schedule.network, child])
     .child(runDate)
   return manifest
-}
-
-export const enrichCustomers = (sector) => {
-  assert(sector instanceof Complex)
-  const customers = sector.tree.child('customers')
-  return (id = '') => {
-    assert.strictEqual(typeof id, 'string', `id must be a string, got ${id}`)
-    if (!customers.hasChild(id)) {
-      return id
-    }
-    const customer = customers.child(id)
-    const value = customer.state.formData.serviceAddress
-    return value || id
-  }
 }

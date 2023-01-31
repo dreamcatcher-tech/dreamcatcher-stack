@@ -1,52 +1,63 @@
 import React from 'react'
-import { Glass, SorterDatum } from '..'
+import { Engine, Syncer, Glass, SorterDatum } from '..'
+import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-import delay from 'delay'
 const debug = Debug('SorterDatum')
+const { faker } = apps.crm
+
+const sectorsAdd = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
+const sectors = faker.routing.generateBatch(1)
+const sectorsInsert = { 'routing/batch': { batch: sectors } }
+const listAdd = { add: { path: 'customers', installer: '/dpkg/crm/customers' } }
+faker.customers.reset()
+const lists = faker.customers.generateBatchInside(sectors, 5)
+const listInsert = { 'customers/batch': { batch: lists } }
+const update = { 'routing/update': { path: '/customers' } }
+const cd = { cd: { path: '/routing/0/779', allowVirtual: true } }
+
+const init = [sectorsAdd, listAdd, sectorsInsert, listInsert, update]
+
 export default {
   title: 'SorterDatum',
   component: SorterDatum,
-  args: {},
+  args: {
+    dev: { '/dpkg/crm': apps.crm.covenant },
+    init,
+  },
 }
 
 const Template = (args) => {
-  Debug.enable('*Datum *Sorter *SorterDatum')
-  const [marker, onMarker] = React.useState(args.marker)
-  const [complex, setComplex] = React.useState(args.complex)
-  const set = async (formData) => {
-    debug('set', formData)
-    await delay(1200)
-    const next = complex.setState({ ...complex.state, formData })
-    setComplex(next)
-  }
-  if (!complex.actions.set) {
-    setComplex(complex.addAction({ set }))
-  }
+  Debug.enable('*UnWrapper* *Datum *Sorter *SorterDatum')
   const onOrder = (order) => {
     debug('onOrder', order)
   }
-  args = { ...args, marker, onMarker, complex, onOrder }
+  args.onOrder = onOrder
 
   return (
     <Glass.Container>
       <Glass.Left max>
-        <SorterDatum {...args} />
+        <Engine {...args}>
+          <Syncer>
+            <Syncer.UnWrapper path="/routing/0">
+              <SorterDatum {...args} />
+            </Syncer.UnWrapper>
+          </Syncer>
+        </Engine>
       </Glass.Left>
     </Glass.Container>
   )
 }
 
 export const Small = Template.bind({})
-export const Blank = Template.bind({})
 
-export const Medium = Template.bind({})
-export const Large = Template.bind({})
+export const Blank = Template.bind({})
+Blank.args = { init: [sectorsAdd, sectorsInsert] }
+
 export const Selected = Template.bind({})
+Selected.args = { init: [...init, cd] }
+
 export const ReadOnly = Template.bind({})
-ReadOnly.args = {
-  viewOnly: true,
-}
+ReadOnly.args = { viewOnly: true }
+
 export const Editing = Template.bind({})
-Editing.args = {
-  editing: true,
-}
+Editing.args = { editing: true }

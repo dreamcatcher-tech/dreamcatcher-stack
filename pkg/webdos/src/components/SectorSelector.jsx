@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { useState } from 'react'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import ListItemText from '@mui/material/ListItemText'
@@ -29,8 +29,11 @@ function SectorSelector({ crisp, expanded, disabled }) {
     const promise = crisp.actions.cd(crisp.absolutePath + '/' + value.path)
     // TODO disable the selector until the promise resolves
     setOpen(false)
+    setIsPending(true)
+    promise.finally(() => setIsPending(false))
   }
-  const [open, setOpen] = React.useState(expanded)
+  const [isPending, setIsPending] = useState(false)
+  const [open, setOpen] = useState(expanded)
   const openProps = expanded
     ? { open, onOpen: () => setOpen(true), onClose: () => setOpen(false) }
     : {}
@@ -45,7 +48,7 @@ function SectorSelector({ crisp, expanded, disabled }) {
   return (
     <Paper>
       <Autocomplete
-        disabled={disabled}
+        disabled={disabled || isPending}
         options={options}
         getOptionLabel={({ path }) => path}
         disableClearable

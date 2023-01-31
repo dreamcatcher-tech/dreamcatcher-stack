@@ -5,7 +5,7 @@ const { customers, routing } = crm.faker
 const debug = Debug('tests')
 
 describe('schedules', () => {
-  test.only('single', async () => {
+  test('single', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
     })
