@@ -19,6 +19,7 @@ function SectorSelector({ crisp, expanded, disabled }) {
   const sectors = crisp.isLoading ? [] : crisp.sortedChildren
   debug('wd %s path %s sectors %o', wd, crisp.path, sectors)
   const sector = crisp.getSelectedChild()
+  debug('sector %o', sector)
 
   const onChange = (event, value) => {
     debug('onChange', value)
@@ -47,7 +48,7 @@ function SectorSelector({ crisp, expanded, disabled }) {
       <Autocomplete
         disabled={disabled || isPending}
         options={options}
-        getOptionLabel={({ path }) => path}
+        getOptionLabel={({ path = '' }) => path}
         disableClearable
         fullWidth
         noOptionsText="No sectors present"
@@ -71,7 +72,7 @@ function SectorSelector({ crisp, expanded, disabled }) {
                 ...params.inputProps,
                 readOnly: true,
                 autoComplete: 'new-password', // disable autofill
-                placeholder: 'No sectors present',
+                placeholder: '',
                 value: value?.sector.state.formData.name || '',
               }}
             />
@@ -91,7 +92,7 @@ SectorSelector.propTypes = {
    */
   disabled: PropTypes.bool,
   /**
-   * Used for testing only
+   * Testing only: start the selector open
    */
   expanded: PropTypes.bool,
 }

@@ -6,6 +6,7 @@ const debug = Debug('SectorSelector')
 const { faker } = apps.crm
 const install = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
 const batch = { 'routing/batch': { batch: faker.routing.generateBatch(5) } }
+const cd = { cd: { path: '/routing/2' } }
 
 export default {
   title: 'SectorSelector',
@@ -53,7 +54,7 @@ Disabled.args = { disabled: true }
 export const Selected = Template.bind({})
 Selected.args = {
   expanded: true,
-  init: [install, batch, { cd: { path: '/routing/1' } }],
+  init: [install, batch, cd],
 }
 
 export const Blank = Template.bind({})

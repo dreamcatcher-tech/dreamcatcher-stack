@@ -228,6 +228,7 @@ export class Crisp {
   setWd(path) {
     assert.strictEqual(typeof path, 'string')
     assert(this.isRoot, 'wd can only be set on the root')
+    assert(posix.isAbsolute(path), 'wd must be absolute')
     const next = this.#clone()
     next.#wd = path
     return next
@@ -237,7 +238,8 @@ export class Crisp {
   }
   getSelectedChild() {
     if (this.wd.startsWith(this.path)) {
-      const tail = this.wd.slice(this.path.length + '/'.length)
+      const length = this.isRoot ? 0 : this.path.length
+      const tail = this.wd.slice(length + '/'.length)
       const [child] = tail.split('/')
       debug('tail %s selectedChild %s', tail, child)
       if (child) {

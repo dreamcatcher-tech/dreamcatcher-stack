@@ -76,12 +76,12 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
-    "@storybook/addon-docs": "^7.0.0-beta.38",
-    "@storybook/addon-essentials": "^7.0.0-beta.38",
-    "@storybook/addon-interactions": "^7.0.0-beta.38",
-    "@storybook/addon-links": "^7.0.0-beta.38",
-    "@storybook/react": "^7.0.0-beta.38",
-    "@storybook/react-vite": "^7.0.0-beta.38",
+    "@storybook/addon-docs": "^7.0.0-beta.39",
+    "@storybook/addon-essentials": "^7.0.0-beta.39",
+    "@storybook/addon-interactions": "^7.0.0-beta.39",
+    "@storybook/addon-links": "^7.0.0-beta.39",
+    "@storybook/react": "^7.0.0-beta.39",
+    "@storybook/react-vite": "^7.0.0-beta.39",
     "@storybook/testing-library": "^0.0.13",
     "chromatic": "^6.15.0",
     "dotenv": "^16.0.3",
@@ -93,7 +93,7 @@
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.9.0",
     "serve": "^14.2.0",
-    "storybook": "^7.0.0-beta.38",
+    "storybook": "^7.0.0-beta.39",
     "vite": "^4.0.4"
   },
   "repository": {
