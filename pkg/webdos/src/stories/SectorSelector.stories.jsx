@@ -43,19 +43,25 @@ const Template = (args) => {
 
 export const Collapsed = Template.bind({})
 Collapsed.args = { expanded: false }
+
 export const Expanded = Template.bind({})
 Expanded.args = { expanded: true }
+
 export const Disabled = Template.bind({})
 Disabled.args = { disabled: true }
+
 export const Selected = Template.bind({})
 Selected.args = {
   expanded: true,
   init: [install, batch, { cd: { path: '/routing/1' } }],
 }
+
 export const Blank = Template.bind({})
 Blank.args = { init: [install] }
+
 export const Duplicates = Template.bind({})
 Duplicates.args = { init: [install, batch, batch], expanded: true }
+
 export const Full = Template.bind({})
 Full.args = {
   init: [

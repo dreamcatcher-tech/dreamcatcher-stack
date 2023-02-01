@@ -27,13 +27,13 @@ export default function App({ crisp }) {
             <Nav crisp={crisp} />
           </Box>
           <Glass.Lazy show={wd.startsWith('/schedule')}>
-            <Schedule complex={crisp.getChild('schedule')} />
+            <Schedule crisp={crisp.getChild('schedule')} />
           </Glass.Lazy>
           <Glass.Lazy show={wd.startsWith('/customers')}>
-            <CollectionList complex={crisp.getChild('customers')} />
+            <CollectionList crisp={crisp.getChild('customers')} />
           </Glass.Lazy>
           <Glass.Lazy show={wd.startsWith('/routing')}>
-            <Routing complex={crisp.getChild('routing')} />
+            <Routing crisp={crisp.getChild('routing')} />
           </Glass.Lazy>
         </>
       )}

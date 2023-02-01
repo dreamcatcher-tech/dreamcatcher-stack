@@ -247,17 +247,21 @@ export class Pulse extends IpldStruct {
   }
   async deriveChildGenesis(installer) {
     assert.strictEqual(typeof installer, 'object')
-    const { entropy } = installer.config
-    assert.strictEqual(typeof entropy, 'string')
-    assert.strictEqual(entropy.length, 46)
-    const { timestamp } = this.provenance.dmz
-    const { network, ...rest } = installer
-    const dmz = Dmz.create({ ...rest, timestamp })
-    // TODO what if the validators change during this block creation ?
-    const { validators } = this.provenance
-    const genesis = Provenance.createGenesis(dmz, validators)
-    const pulse = await Pulse.create(genesis)
-    return pulse
+    if (!genesisCache.has(installer)) {
+      const { entropy } = installer.config
+      assert.strictEqual(typeof entropy, 'string')
+      assert.strictEqual(entropy.length, 46)
+      const { timestamp } = this.provenance.dmz
+      const { network, ...rest } = installer
+      const dmz = Dmz.create({ ...rest, timestamp })
+      // TODO what if the validators change during this block creation ?
+      const { validators } = this.provenance
+      const genesis = Provenance.createGenesis(dmz, validators)
+      const pulse = await Pulse.create(genesis)
+      genesisCache.set(installer, pulse)
+    }
+    // TODO test if the cache ever actually gets hit
+    return genesisCache.get(installer)
   }
   isNext(next) {
     assert(next instanceof Pulse)
@@ -267,6 +271,7 @@ export class Pulse extends IpldStruct {
     return true
   }
 }
+const genesisCache = new WeakMap()
 const injectEntropy = (installer, entropy) => {
   let { config = {} } = installer
   config = { ...config, entropy }

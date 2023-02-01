@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Crisp reconciles diffs 1`] = `
+exports[`Crisp with preload reconciles diffs 1`] = `
 [
   "about",
   "account",
@@ -11,7 +11,7 @@ exports[`Crisp reconciles diffs 1`] = `
 ]
 `;
 
-exports[`Crisp wd is rooted in path 1`] = `
+exports[`Crisp with preload wd is rooted in path 1`] = `
 [
   "about",
   "account",

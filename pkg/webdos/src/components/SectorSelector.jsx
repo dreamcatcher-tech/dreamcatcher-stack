@@ -1,3 +1,4 @@
+import assert from 'assert-fast'
 import React, { useState } from 'react'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
@@ -17,15 +18,11 @@ function SectorSelector({ crisp, expanded, disabled }) {
   const { wd } = crisp
   const sectors = crisp.isLoading ? [] : crisp.sortedChildren
   debug('wd %s path %s sectors %o', wd, crisp.path, sectors)
-  let sector
-  if (wd.startsWith(crisp.path)) {
-    const tail = wd.substring(crisp.path.length)
-    if (!crisp.isLoading && crisp.hasChild(tail)) {
-      sector = tail
-    }
-  }
+  const sector = crisp.getSelectedChild()
+
   const onChange = (event, value) => {
     debug('onChange', value)
+    assert(crisp.hasChild(value.path), `crisp has no child ${value.path}`)
     const promise = crisp.actions.cd(crisp.absolutePath + '/' + value.path)
     // TODO disable the selector until the promise resolves
     setOpen(false)

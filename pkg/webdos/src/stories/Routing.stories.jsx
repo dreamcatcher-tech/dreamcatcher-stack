@@ -5,31 +5,30 @@ import Debug from 'debug'
 const debug = Debug('Routing')
 
 const { faker } = apps.crm
-const sectorsAdd = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
-const sectorsBatch = faker.routing.generateBatch(5)
-const sectorsInsert = { 'routing/batch': { batch: sectorsBatch } }
-const listAdd = { add: { path: 'customers', installer: '/dpkg/crm/customers' } }
-const listBatch = faker.customers.generateBatchInside(sectorsBatch, 5)
-const listInsert = { 'customers/batch': { batch: listBatch } }
+faker.customers.reset()
+const sectorsAdd = { add: { path: '/routing', installer: '/crm/routing' } }
+const sectorsBatch = faker.routing.generateBatch(2)
+const sectorsInsert = { '/routing/batch': { batch: sectorsBatch } }
+const listAdd = { add: { path: '/customers', installer: '/crm/customers' } }
+const listBatch = faker.customers.generateBatchInside(sectorsBatch, 10)
+const listInsert = { '/customers/batch': { batch: listBatch } }
+const update = { '/routing/update': { path: '/customers' } }
+// const cd = { cd: { path: '/routing' } }
 
 export default {
   title: 'Routing',
   component: Routing,
   args: {
-    dev: { '/dpkg/crm': apps.crm.covenant },
-    init: [
-      sectorsAdd,
-      sectorsInsert,
-      listAdd,
-      listInsert,
-      { 'routing/update': { path: '/customers' } },
-      { cd: { path: '/routing' } },
-    ],
+    dev: { '/crm': apps.crm.covenant },
+    init: [sectorsAdd, sectorsInsert, listAdd, listInsert, update],
   },
 }
 
 const Template = (args) => {
-  Debug.enable(' *Routing  *Sorter* *SorterDatum *DatumHOC *Datum')
+  Debug.enable(
+    'webdos:Engine iplog crm:routing *Routing  *Sorter* *SorterDatum'
+  )
+  debug('args', args)
   return (
     <Engine {...args}>
       <Syncer>
@@ -42,6 +41,6 @@ const Template = (args) => {
 }
 
 export const Blank = Template.bind({})
+Blank.args = { init: [sectorsAdd, listAdd, listInsert, update] }
+
 export const Small = Template.bind({})
-export const Medium = Template.bind({})
-export const Large = Template.bind({})

@@ -18,7 +18,7 @@ const debug = Debug('terminal:widgets:SorterDatum')
 function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
   const { order = [] } = crisp.state.formData || {}
-  debug('order', crisp.state)
+  debug('order', crisp.state.formData)
   const [items, setItems] = useState(order)
   const [isPending, setIsPending] = useState(false)
   const [isEditing, setIsEditing] = useState(editing)
@@ -36,10 +36,15 @@ function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
   debug('isDirty', isDirty)
   const marker = crisp.getSelectedChild()
   const onMarker = (marker) => {
-    const path = crisp.absolutePath + '/' + marker
-    debug('onMarker path', path)
-    const allowVirtual = true
-    crisp.actions.cd(path, allowVirtual)
+    debug('onMarker', marker)
+    if (!marker) {
+      crisp.actions.cd(crisp.absolutePath)
+    } else {
+      assert(order.includes(marker), `order does not include ${marker}`)
+      const path = crisp.absolutePath + '/' + marker
+      const allowVirtual = true
+      crisp.actions.cd(path, allowVirtual)
+    }
   }
   const onIsEditing = (isEditing) => {
     debug('onIsEditing', isEditing)
@@ -143,7 +148,7 @@ SorterDatum.propTypes = {
   onEdit: PropTypes.func,
 
   /**
-   * Used in testing to start the component in editing mode
+   * Testing only: start the component in editing mode
    */
   editing: PropTypes.bool,
 }

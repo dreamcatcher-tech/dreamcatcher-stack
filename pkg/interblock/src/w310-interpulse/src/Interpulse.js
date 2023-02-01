@@ -86,9 +86,9 @@ export class Interpulse {
     if (path === '/') {
       return this.#actions
     }
-    const pulse = await this.latest(path)
+    const pulse = await this.current(path)
     const covenantPath = pulse.getCovenantPath()
-    const covenantPulse = await this.latest(covenantPath)
+    const covenantPulse = await this.current(covenantPath)
     const state = covenantPulse.getState().toJS()
     const { api = {} } = state
     const actions = schemaToFunctions(api)
@@ -220,6 +220,7 @@ export class Interpulse {
     // receive a continuous stream of pulses from a given path
     const { wd } = this
     const absPath = posix.resolve(wd, path)
+    assert(posix.isAbsolute(absPath), `path must be absolute: ${absPath}`)
     debug('subscribing to', absPath)
     const sink = pushable({
       objectMode: true,

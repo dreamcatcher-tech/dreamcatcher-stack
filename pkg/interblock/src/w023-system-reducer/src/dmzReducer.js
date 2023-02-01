@@ -128,6 +128,8 @@ const pulseReducer = async (type, payload) => {
       let remotePulse = pulse
       if (path !== '.') {
         // TODO make latest handle relative paths
+        // TODO use the pool pulse as root for walking
+        // '..' needs to walk down from appRoot again
         remotePulse = await latest(path)
         // TODO verify that this is consistent with the approot
       }

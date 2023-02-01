@@ -57,7 +57,7 @@ export default function Engine({ repo, ram, init, dev, car, children }) {
             const args = Object.values(action).pop()
             debug('execute', command)
             await engine.execute(command, args)
-            debug('execute done')
+            debug('execute done', command)
           }
           debug('init complete')
         }
