@@ -30,16 +30,15 @@ Status.propTypes = {
   label: PropTypes.string.isRequired,
   isPositive: PropTypes.bool,
 }
-export default function Manifest({ crisp, expanded, sector, width, height }) {
+export default function Manifest({ crisp, expanded, width, height }) {
   debug('Manifest w h', width, height)
-  // TODO assert the state is a small collection object
-  const { isPublished, isReconciled } = crisp.state.formData || {}
+  const { publishedDate, reconciledDate } = crisp.state.formData || {}
+  const sector = crisp.getSelectedChild()
   debug('Manifest', crisp, sector)
-  const sectorCrisp = crisp.hasChild(sector)
-    ? crisp.getChild(sector)
-    : undefined
+  const sectorCrisp =
+    sector && crisp.hasChild(sector) ? crisp.getChild(sector) : undefined
 
-  const manifestTemplate = crisp.parent().state.template
+  const manifestTemplate = crisp.parent.state.template
   // due to this being a nested collection
   const sectorTemplate = manifestTemplate.template
   debug('template', sectorTemplate)
@@ -54,8 +53,8 @@ export default function Manifest({ crisp, expanded, sector, width, height }) {
           <Typography>
             Manifest status:{crisp.isLoading ? ' (Loading...)' : ''}
           </Typography>
-          <Status label={'published'} isPositive={isPublished} />
-          <Status label={'reconciled'} isPositive={isReconciled} />
+          <Status label={'published'} isPositive={!!publishedDate} />
+          <Status label={'reconciled'} isPositive={!!reconciledDate} />
         </Stack>
       </AccordionSummary>
       <AccordionDetails>
@@ -70,18 +69,17 @@ export default function Manifest({ crisp, expanded, sector, width, height }) {
 }
 Manifest.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),
+
   /** Is the manifest expanded by default */
   expanded: PropTypes.bool,
+
   /**
-   * The selected sector
-   */
-  sector: PropTypes.string,
-  /**
-   * Passed down from Glass.Center
+   * Passed down from Glass.Center, because CSS is hard
    */
   width: PropTypes.number,
+
   /**
-   * Passed down from Glass.Center
+   * Passed down from Glass.Center, because CSS is hard
    */
   height: PropTypes.number,
 }

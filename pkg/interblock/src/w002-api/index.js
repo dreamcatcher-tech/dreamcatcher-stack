@@ -58,5 +58,3 @@ export const isSystemAction = (request) => {
 }
 
 export { schemaToFunctions } from './src/schemaToFunctions'
-
-export { default as Complex } from './src/Complex'

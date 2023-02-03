@@ -4,11 +4,11 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 const debug = Debug('crm:utils')
 
-function isSectorOnDate(sector, commonDate, runDate) {
+export function isSectorOnDate(sector, commonDate, runDate) {
   if (!commonDate) {
     return false
   }
-  const sectorFirstDate = dayjs(commonDate).add(sector.frequencyOffset, 'days')
+  const sectorFirstDate = dayjs(commonDate).add(sector.frequencyOffset, 'day')
   const diff = calcDiffInDays(sectorFirstDate, runDate)
   return diff % sector.frequencyInDays === 0
 }
@@ -70,3 +70,15 @@ export const generateManifest = (root, runDate) => {
     .child(runDate)
   return manifest
 }
+
+export const COLORS = [
+  'red',
+  'orange',
+  'yellow',
+  'cyan',
+  'purple',
+  'violet',
+  'pink',
+  'green',
+  'black',
+]

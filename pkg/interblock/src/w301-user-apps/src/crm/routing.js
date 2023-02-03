@@ -1,17 +1,7 @@
 import assert from 'assert-fast'
 import { collection } from '../../../w212-system-covenants'
+import { COLORS } from './utils'
 
-const COLORS = [
-  'red',
-  'orange',
-  'yellow',
-  'cyan',
-  'purple',
-  'violet',
-  'pink',
-  'green',
-  'black',
-]
 const geometry = {
   type: 'object',
   required: ['type', 'properties', 'geometry'],

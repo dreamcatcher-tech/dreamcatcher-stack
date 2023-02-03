@@ -1,6 +1,8 @@
 import assert from 'assert-fast'
 import Ajv from 'ajv'
+import AjvFormats from 'ajv-formats'
 const ajv = new Ajv({ allErrors: true, verbose: true, useDefaults: true })
+AjvFormats(ajv)
 // first compile is about 12ms, so burn it off
 ajv.compile({ type: 'object' })
 

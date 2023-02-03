@@ -39,3 +39,12 @@ export const Basic = Template.bind({})
 
 export const Manifest = Template.bind({})
 Manifest.args = { expanded: true }
+
+// no date selected
+// saved with modified sectors
+// unpublish
+// show with some customers that have collecitons against them
+
+// make an auto CD piece in root that changes the directory to some defaults
+// make it remember what the tail piece was of other directories, so state is restored
+// might be held in Nav component

@@ -86,22 +86,31 @@ export class Interpulse {
     if (path === '/') {
       return this.#actions
     }
-    const pulse = await this.current(path)
-    const covenantPath = pulse.getCovenantPath()
-    const covenantPulse = await this.current(covenantPath)
-    const state = covenantPulse.getState().toJS()
-    const { api = {} } = state
-    const actions = schemaToFunctions(api)
-    const dispatches = {}
-    for (const key of Object.keys(actions)) {
-      dispatches[key] = (payload) => {
-        const action = actions[key](payload)
-        return this.dispatch(action, path)
+    try {
+      const pulse = await this.current(path)
+      const covenantPath = pulse.getCovenantPath()
+      const covenantPulse = await this.current(covenantPath)
+      const state = covenantPulse.getState().toJS()
+      const { api = {} } = state
+      const actions = schemaToFunctions(api)
+      const dispatches = {}
+      for (const key of Object.keys(actions)) {
+        dispatches[key] = (...payload) => {
+          const action = actions[key](...payload)
+          return this.dispatch(action, path)
+        }
       }
+      return dispatches
+    } catch (error) {
+      throw new Error(`No actions found at ${path}: ${error.message}`)
     }
-    return dispatches
   }
-  async execute(actionPath, payload) {
+  async execute(actionPath, ...payload) {
+    if (typeof actionPath !== 'string') {
+      assert(actionPath === undefined)
+      return this.executeConcurrent(actionPath)
+    }
+    assert.strictEqual(typeof actionPath, 'string')
     debug('execute', actionPath, payload)
     if (!posix.isAbsolute(actionPath)) {
       actionPath = this.wd + '/' + actionPath
@@ -111,14 +120,26 @@ export class Interpulse {
     assert(posix.isAbsolute(actionPath))
     const asRoot = actionPath.substring('/'.length)
     if (this[asRoot]) {
-      return await this[asRoot](payload)
+      return await this[asRoot](...payload)
     }
     const actions = await this.actions(posix.dirname(actionPath))
     const basename = posix.basename(actionPath)
     if (!actions[basename]) {
       throw new Error(`No action found at ${actionPath}`)
     }
-    return await actions[basename](payload)
+    return await actions[basename](...payload)
+  }
+  async executeConcurrent(actions) {
+    actions = Array.isArray(actions) ? actions : [actions]
+    assert(actions.every((action) => typeof action === 'object'))
+    await Promise.all(
+      actions.map(async (action) => {
+        const commands = Object.keys(action)
+        await Promise.all(
+          commands.map((command) => this.execute(command, action[command]))
+        )
+      })
+    )
   }
   async latest(path = '.') {
     const { wd } = this
