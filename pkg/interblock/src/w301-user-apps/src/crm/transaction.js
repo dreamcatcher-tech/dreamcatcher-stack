@@ -1,0 +1,65 @@
+const transaction = {
+  type: 'DATUM',
+  schema: {
+    title: 'Transaction',
+    description: `A transaction is a record of a service attempt to 
+      a customer`,
+    type: 'object',
+    required: [
+      'id',
+      'address',
+      'isDone',
+      'ebc',
+      'nabc',
+      'isGateLocked',
+      'isFenced',
+      'isDog',
+      'isVehicleBlocking',
+    ],
+    additionalProperties: false,
+    properties: {
+      runDate: { type: 'string', format: 'date' },
+      id: { type: 'string', title: 'Customer #' },
+      address: { type: 'string', title: 'Address' },
+      isInvoice: { type: 'boolean', title: 'Invoice' },
+      type: { type: 'string', title: 'Type', enum: ['Bin', 'Bag'] },
+      isDone: { type: 'boolean', title: 'Done', default: false },
+      ebc: { type: 'boolean', title: 'EBC' },
+      nabc: { type: 'boolean', title: 'NABC' },
+      isGateLocked: { type: 'boolean', title: 'Gate' },
+      isFenced: { type: 'boolean', title: 'Fence' },
+      isDog: {
+        type: 'boolean',
+        title: 'Dog',
+        description: 'is there a dog stopping collection?',
+      },
+      isVehicleBlocking: {
+        type: 'boolean',
+        title: 'Vehicle',
+        description: 'Is there a vehicle blocking the gate?',
+      },
+      deliveredBin: {
+        type: 'string',
+        title: 'Delivered Bin',
+        description: 'The ID of the bin that was delivered',
+      },
+      canceledBin: {
+        type: 'string',
+        title: 'Cancelled Bin',
+        description: 'The ID of the bin that was returned',
+      },
+      notes: {
+        type: 'string',
+        title: 'Notes',
+        description: 'Any notes about the customer',
+      },
+    },
+  },
+  namePath: 'runDate',
+  uiSchema: {
+    order: { 'ui:widget': 'hidden' },
+    added: { 'ui:widget': 'hidden' },
+    removed: { 'ui:widget': 'hidden' },
+    moved: { 'ui:widget': 'hidden' },
+  },
+}

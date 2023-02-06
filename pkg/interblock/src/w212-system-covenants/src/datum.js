@@ -6,9 +6,15 @@ import { interchain, useState } from '../../w002-api'
 import Debug from 'debug'
 import { Request } from '../../w008-ipld/index.mjs'
 const debug = Debug('interblock:apps:datum')
-const ajv = new Ajv({ allErrors: true, verbose: true })
-AjvFormats(ajv)
-ajv.addKeyword('faker')
+let _ajv
+const loadAjv = () => {
+  if (!_ajv) {
+    _ajv = new Ajv({ allErrors: true, verbose: true })
+    AjvFormats(_ajv)
+    _ajv.addKeyword('faker')
+  }
+  return _ajv
+}
 
 /**
  * Requirements:
@@ -118,6 +124,7 @@ const separateFormData = (payload) => {
 }
 
 export const validateFormData = (payload, template) => {
+  const ajv = loadAjv()
   const isValid = ajv.validate(template.schema, payload.formData)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
@@ -139,26 +146,6 @@ export const validateFormData = (payload, template) => {
     validateFormData(data, child.state)
   }
 }
-const _generateFakeData = (template, payload = {}) => {
-  // TODO existing data overrides fake, provided data overrides existing
-  const { formData = {}, network: payloadNetwork = {} } = payload
-  const fake = {} // jsf.generate(template.schema)
-  const inflated = { ...fake, ...formData }
-  debug(`fake: `, inflated)
-  const result = { ...payload, formData: inflated }
-
-  if (Object.keys(template.network).length) {
-    const network = {}
-    for (const name in template.network) {
-      network[name] = _generateFakeData(
-        template.network[name],
-        payloadNetwork[name]
-      )
-    }
-    result.network = network
-  }
-  return result
-}
 
 const convertToTemplate = (template) => {
   // TODO use existing template for things like uiSchema
@@ -167,6 +154,7 @@ const convertToTemplate = (template) => {
   return template
 }
 const validateDatumTemplate = (datumTemplate) => {
+  const ajv = loadAjv()
   const isValid = ajv.validate(datumSchema, datumTemplate)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
@@ -175,6 +163,7 @@ const validateDatumTemplate = (datumTemplate) => {
 }
 const validateChildSchemas = (datum) => {
   // compilation will throw if schemas invalid
+  const ajv = loadAjv()
   try {
     ajv.compile(datum.schema)
     // TODO check that datum.uiSchema is formatted correctly

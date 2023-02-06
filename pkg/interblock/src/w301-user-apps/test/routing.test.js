@@ -5,7 +5,6 @@ const { customers, routing } = crm.faker
 const debug = Debug('tests')
 
 describe('routing', () => {
-  beforeEach(() => customers.reset())
   test('update', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
@@ -13,18 +12,19 @@ describe('routing', () => {
     await engine.add('routing', '/crm/routing')
     await engine.add('customers', '/crm/customers')
 
-    const routingBatch = routing.generateBatch(2)
-    await engine.execute('routing/batch', { batch: routingBatch })
-    const batch = customers.generateBatchInside(routingBatch, 5)
-    const outsideCount = 3
-    const outside = customers.generateBatchOutside(routingBatch, outsideCount)
-    batch.push(...outside)
+    const rBatch = routing.generateBatch(2)
+    await engine.execute('routing/batch', { batch: rBatch })
+    const batch = customers.generateBatchInside(rBatch, 5)
+    const count = 3
+    const noReset = true
+    const outs = customers.generateBatchOutside(rBatch, count, noReset)
+    batch.push(...outs)
     await engine.execute('customers/batch', { batch })
 
     await engine.execute('routing/update', '/customers')
 
     Debug.enable('tests')
-    for (const [index, { formData }] of routingBatch.entries()) {
+    for (const [index, { formData }] of rBatch.entries()) {
       const sector = await engine.current(`routing/${index}`)
       const state = sector.getState().toJS()
       const {
@@ -40,7 +40,7 @@ describe('routing', () => {
     }
     const routingLatest = await engine.current('routing')
     const state = routingLatest.getState().toJS()
-    expect(state.formData.unassigned.length).toEqual(outsideCount)
+    expect(state.formData.unassigned.length).toEqual(count)
     expect(state).toMatchSnapshot()
   })
   test.todo('edit a sector')

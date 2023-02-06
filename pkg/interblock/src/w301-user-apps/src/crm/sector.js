@@ -1,3 +1,4 @@
+// TODO make a sector be its own object
 const api = {
   approve: {
     type: 'object',

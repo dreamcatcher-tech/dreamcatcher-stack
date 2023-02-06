@@ -105,9 +105,8 @@
     "testEnvironment": "node",
     "transform": {},
     "maxWorkers": "95%",
-    "setupFiles": [
-      "trace-unhandled/register"
-    ]
+    "setupFiles": [],
+    "//": "trace-unhandled/register"
   },
   "wallaby": {
     "autoDetect": true,

@@ -17,6 +17,13 @@ const spawnReducer = async (payload) => {
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
 
+  if (installer.covenant?.startsWith('#')) {
+    const { path } = await interchain('@@COVENANT')
+    const covenant = path + installer.covenant.slice('#'.length)
+    debug(`covenant path`, covenant)
+    installer = { ...installer, covenant }
+  }
+
   const addChild = Request.createAddChild(alias, installer)
   const addChildResult = await interchain(addChild)
   if (!alias) {

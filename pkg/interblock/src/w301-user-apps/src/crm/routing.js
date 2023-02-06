@@ -130,7 +130,6 @@ const installer = {
 }
 const api = {
   ...collection.api,
-
   update: {
     type: 'object',
     title: 'UPDATE',
@@ -145,6 +144,31 @@ const api = {
         type: 'string',
         title: 'Path to Customers collection',
         default: '../customers',
+      },
+    },
+  },
+  approve: {
+    // TODO move this to be in the sector directly
+    type: 'object',
+    title: 'APPROVE',
+    description: `Approve the given customer ids for this sector`,
+    required: ['sectorId', 'approved'],
+    additionalProperties: false,
+    properties: {
+      sectorId: {
+        type: 'string',
+        title: 'Sector Id',
+        description: `The sector id to approve customers for.
+        Will be removed once collections of covenants can be used`,
+      },
+      approved: {
+        type: 'array',
+        title: 'Approved',
+        uniqueItems: true,
+        items: { type: 'string' },
+        minItems: 1,
+        description: `The customer ids to approve, which must be
+            currently unapproved`,
       },
     },
   },
@@ -229,6 +253,26 @@ const reducer = async (request) => {
       const { unassigned = [] } = state.formData
       unassigned.push(...lut.unassigned)
       const formData = { ...state.formData, geometryHash: hash, unassigned }
+      await setState({ ...state, formData })
+      return
+    }
+    case 'APPROVE': {
+      const { sectorId, approved } = payload
+      debug('approve', sectorId, approved)
+      const [state, setState] = await useState(sectorId)
+      const unapproved = new Set(state.formData.unapproved || [])
+      approved.forEach((custNo) => {
+        if (!unapproved.has(custNo)) {
+          throw new Error(`Tried to approve missing customer: ${custNo}`)
+        }
+        unapproved.delete(custNo)
+      })
+      debug('unapproved', unapproved)
+      let { formData } = state
+      formData = { ...formData, unapproved: [...unapproved] }
+      if (!unapproved.size) {
+        delete formData.unapproved
+      }
       await setState({ ...state, formData })
       return
     }

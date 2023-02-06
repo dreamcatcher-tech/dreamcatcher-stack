@@ -1,10 +1,15 @@
 import assert from 'assert-fast'
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
-const ajv = new Ajv({ allErrors: true, verbose: true, useDefaults: true })
-AjvFormats(ajv)
-// first compile is about 12ms, so burn it off
-ajv.compile({ type: 'object' })
+
+let _ajv
+const loadAjv = () => {
+  if (!_ajv) {
+    _ajv = new Ajv({ useDefaults: true, allErrors: true, verbose: true })
+    AjvFormats(_ajv)
+  }
+  return _ajv
+}
 
 export const schemaToFunctions = (jsonSchema) => {
   assert.strictEqual(typeof jsonSchema, 'object')
@@ -19,6 +24,7 @@ export const schemaToFunctions = (jsonSchema) => {
   return actions
 }
 const createAction = (type, schema) => {
+  const ajv = loadAjv()
   const validate = ajv.compile(schema)
   return (payload, ...rest) => {
     // TODO set function parameter names

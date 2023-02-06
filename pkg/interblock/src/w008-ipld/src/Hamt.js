@@ -147,7 +147,6 @@ export class Hamt extends IpldInterface {
       await hashmap.delete(key)
     }
     for (const [key, value] of next.#sets) {
-      debug('set:', key, value)
       if (!this.#isMutable && (await hashmap.has(key))) {
         throw new Error(`cannot overwrite key: ${key}`)
       }

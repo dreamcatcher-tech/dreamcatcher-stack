@@ -6,7 +6,7 @@ exports[`Crisp with preload reconciles diffs 1`] = `
   "account",
   "customers",
   "routing",
-  "schedule",
+  "schedules",
   "settings",
 ]
 `;
@@ -17,7 +17,7 @@ exports[`Crisp with preload wd is rooted in path 1`] = `
   "account",
   "customers",
   "routing",
-  "schedule",
+  "schedules",
   "settings",
 ]
 `;

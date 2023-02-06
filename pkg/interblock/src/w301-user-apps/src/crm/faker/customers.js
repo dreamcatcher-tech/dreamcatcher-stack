@@ -53,8 +53,11 @@ export const generateSingle = (lut, outside = false) => {
   return { formData }
 }
 
-export const generateBatch = (count = 20, bounds, outside) => {
+export const generateBatch = (count = 20, bounds, outside, noReset = false) => {
   debug('start customers')
+  if (!noReset) {
+    reset()
+  }
   const batch = []
   for (let i = 0; i < count; i++) {
     const customer = generateSingle(bounds, outside)
@@ -76,14 +79,14 @@ export const generateBatchInside = (sectors, count = 20) => {
   // get the bounds of the geometry
   // make a lut of the geometry
 }
-export const generateBatchOutside = (sectors, count = 20) => {
+export const generateBatchOutside = (sectors, count = 20, noReset = false) => {
   assert(Array.isArray(sectors), 'sectors must be an array')
   assert(Number.isInteger(count), 'count must be an integer')
   const geometry = sectors.map((sector) => sector.formData)
   debug('generateBatchOutside', geometry)
   const lut = PolygonLut.create(geometry)
   const outside = true
-  return generateBatch(count, lut, outside)
+  return generateBatch(count, lut, outside, noReset)
 
   // get the bounds of the geometry
   // make a lut of the geometry

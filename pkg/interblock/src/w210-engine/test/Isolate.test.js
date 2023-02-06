@@ -13,7 +13,7 @@ describe('Isolate', () => {
     for (const key of Object.keys(crm.covenant.covenants)) {
       expect(expanded['/crm/' + key]).toBeDefined()
     }
-    const covenantsSize = Object.keys(crm.covenant.covenants).length
-    expect(Object.keys(expanded).length).toBe(covenantsSize + 1)
+    expect(expanded['/crm/customers']).toBeDefined()
+    expect(expanded['/crm/schedules/schedule/run']).toBeDefined()
   })
 })

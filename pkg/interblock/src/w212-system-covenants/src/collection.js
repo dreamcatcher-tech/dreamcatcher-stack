@@ -29,6 +29,7 @@ const add = async (payload, template) => {
 }
 
 // TODO allow collection to also store formData as tho it was a datum, without children spec
+// TODO allow '.' to refer to a schema in the covenant installer state ?
 const reducer = async (request) => {
   const { type, payload } = request
   assert.strictEqual(typeof type, 'string')

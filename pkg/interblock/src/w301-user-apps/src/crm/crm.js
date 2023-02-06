@@ -1,14 +1,13 @@
 import * as customers from './customers'
 import * as settings from './settings'
 import * as routing from './routing'
-import * as schedule from './schedule'
+import * as schedules from './schedules'
 
 export const installer = {
   network: {
-    schedule: { covenant: '#/schedule' },
+    schedules: { covenant: '#/schedules' },
     customers: { covenant: '#/customers' },
     routing: { covenant: '#/routing' },
-    // banking: { covenant: 'datum' },
     settings: { covenant: '#/settings' },
     about: {
       covenant: 'datum',
@@ -52,7 +51,7 @@ export const covenants = {
   customers,
   settings,
   routing,
-  schedule,
+  schedules,
 }
 
 export { reducer } from './reducer'

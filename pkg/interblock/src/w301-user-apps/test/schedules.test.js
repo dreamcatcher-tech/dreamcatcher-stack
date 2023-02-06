@@ -5,17 +5,16 @@ const { customers, routing } = crm.faker
 const debug = Debug('tests')
 
 describe('schedule', () => {
-  test.only('single', async () => {
+  test('single', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
     })
     const routingBatch = routing.generateBatch(1)
-    customers.reset()
     const batch = customers.generateBatchInside(routingBatch, 1)
     await engine.executeConcurrent([
       { add: { path: 'routing', installer: '/crm/routing' } },
       { add: { path: 'customers', installer: '/crm/customers' } },
-      { add: { path: 'schedule', installer: '/crm/schedule' } },
+      { add: { path: 'schedules', installer: '/crm/schedules' } },
     ])
     await engine.executeConcurrent({
       '/routing/batch': { batch: routingBatch },
@@ -24,17 +23,18 @@ describe('schedule', () => {
     await engine.execute('/routing/update', { path: '/customers' })
     const sector0 = await engine.current('/routing/0')
     const approved = sector0.getState().toJS().formData.unapproved
-    await engine.execute('/routing/approve', { approved })
-
-    Debug.enable('tests iplog faker:customers crm:schedule crm:routing')
+    await engine.execute('/routing/approve', { sectorId: '0', approved })
 
     const runDate = '2023-01-23'
-    // start the scheduling procedure
-    await engine.execute('/schedule/create', runDate, '/routing')
-    const manifest = await engine.current(`/schedule/${runDate}`)
-    const state = manifest.getState().toJS()
-    // include hardlinks to the routing and customers
+    await engine.execute('/schedules/create', runDate, '/routing', '/customers')
+    const schedule = await engine.current(`/schedules/${runDate}`)
+    const state = schedule.getState().toJS()
+    debug('state', state)
 
+    const run = await engine.current(`/schedules/${runDate}/0`)
+    const runState = run.getState().toJS()
+    debug('runState', runState)
+    expect(runState.formData.order).toEqual(['777'])
     await engine.stop()
   })
   test.todo('publish rejects if unordered customers')

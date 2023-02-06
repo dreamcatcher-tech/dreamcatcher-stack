@@ -74,7 +74,6 @@ describe('dmzReducer', () => {
   })
   describe('useState', () => {
     test('remote useState', async () => {
-      Debug.enable('tests iplog')
       const engine = await Interpulse.createCI({
         overloads: {
           '/test': {
