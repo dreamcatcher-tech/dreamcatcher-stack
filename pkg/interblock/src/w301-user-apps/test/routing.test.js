@@ -23,7 +23,6 @@ describe('routing', () => {
 
     await engine.execute('routing/update', '/customers')
 
-    Debug.enable('tests')
     for (const [index, { formData }] of rBatch.entries()) {
       const sector = await engine.current(`routing/${index}`)
       const state = sector.getState().toJS()
