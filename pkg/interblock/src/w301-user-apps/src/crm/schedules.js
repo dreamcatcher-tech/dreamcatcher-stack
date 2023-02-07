@@ -49,22 +49,12 @@ const api = {
       routing: {
         type: 'string',
         description: `Path to the routing collection`,
+        default: '../routing',
       },
       customers: {
         type: 'string',
         description: `Path to the customers collection`,
-      },
-    },
-  },
-  publish: {
-    type: 'object',
-    title: 'PUBLISH',
-    description: ``,
-    properties: {
-      customers: { type: 'array', items: { type: 'string' } },
-      all: {
-        type: 'boolean',
-        description: `All customers fetched by this query at this moment will be published.`,
+        default: '../customers',
       },
     },
   },

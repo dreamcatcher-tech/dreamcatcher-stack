@@ -152,7 +152,7 @@ const api = {
     type: 'object',
     title: 'APPROVE',
     description: `Approve the given customer ids for this sector`,
-    required: ['sectorId', 'approved'],
+    required: ['sectorId'],
     additionalProperties: false,
     properties: {
       sectorId: {
@@ -169,6 +169,11 @@ const api = {
         minItems: 1,
         description: `The customer ids to approve, which must be
             currently unapproved`,
+      },
+      approveAll: {
+        type: 'boolean',
+        title: 'Approve All',
+        description: `Approve all unapproved customers`,
       },
     },
   },
@@ -257,11 +262,18 @@ const reducer = async (request) => {
       return
     }
     case 'APPROVE': {
-      const { sectorId, approved } = payload
-      debug('approve', sectorId, approved)
+      const { sectorId, approved, approveAll } = payload
+      if (!approveAll) {
+        assert(approved, `Must provide one of approved or approveAll`)
+      }
+      if (approveAll) {
+        assert(!approved, `Cannot provide approved and approveAll`)
+      }
+      debug('approve', sectorId, approved, approveAll)
       const [state, setState] = await useState(sectorId)
       const unapproved = new Set(state.formData.unapproved || [])
-      approved.forEach((custNo) => {
+      const toApprove = approveAll ? state.formData.unapproved : approved
+      toApprove.forEach((custNo) => {
         if (!unapproved.has(custNo)) {
           throw new Error(`Tried to approve missing customer: ${custNo}`)
         }

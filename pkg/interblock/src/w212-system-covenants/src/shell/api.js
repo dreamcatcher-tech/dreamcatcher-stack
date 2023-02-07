@@ -6,7 +6,7 @@ export const api = {
     additionalProperties: true,
     required: [],
     properties: {
-      to: { type: 'string' },
+      to: { type: 'string', default: '.' },
       message: { type: 'object', default: {} },
     },
   },

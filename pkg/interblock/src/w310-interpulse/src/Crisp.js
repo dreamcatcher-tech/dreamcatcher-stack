@@ -26,7 +26,7 @@ export class Crisp {
     assert.strictEqual(typeof rootActions, 'object')
     assert.strictEqual(typeof rootActions.dispatch, 'function')
     assert.strictEqual(typeof chroot, 'string')
-    assert(chroot.startsWith('/'))
+    assert(posix.isAbsolute(chroot), `chroot not absolute: ${chroot}`)
     const result = new Crisp()
     result.#pulse = rootPulse
     result.#rootActions = rootActions
@@ -89,7 +89,10 @@ export class Crisp {
     return this.#parent.path + '/' + this.#name
   }
   get absolutePath() {
-    return posix.normalize(this.chroot + '/' + this.path)
+    if (this.isRoot) {
+      return this.chroot
+    }
+    return this.chroot + this.path
   }
   get actions() {
     if (this.isRoot) {
@@ -114,8 +117,8 @@ export class Crisp {
     const actions = schemaToFunctions(api)
     const dispatches = {}
     for (const key of Object.keys(actions)) {
-      dispatches[key] = (payload) => {
-        const action = actions[key](payload)
+      dispatches[key] = (...args) => {
+        const action = actions[key](...args)
         const path = this.path === '/' ? '' : '/' + this.path
         const to = posix.normalize(this.chroot + path)
         return this.root.#rootActions.dispatch(action, to)

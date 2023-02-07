@@ -4,14 +4,14 @@ import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('CollectionList')
 const { crm } = apps
-const add = { add: { path: 'list', installer: '/dpkg/crm/customers' } }
+const install = { add: { path: 'list', installer: '/dpkg/crm/customers' } }
 export default {
   title: 'CollectionList',
   component: CollectionList,
   args: {
     dev: { '/dpkg/crm': crm.covenant },
     path: '/list',
-    init: [add],
+    init: [install],
   },
 }
 
@@ -33,25 +33,18 @@ Loading.args = {
 export const Empty = Template.bind({})
 export const SmallData = Template.bind({})
 SmallData.args = {
-  init: [add, { 'list/add': { formData: { name: 'Bob', custNo: 1 } } }],
+  init: [install, { 'list/add': { formData: { name: 'Bob', custNo: 1 } } }],
 }
 export const MediumData = Template.bind({})
-const makeBatch = (start, count = 10) => {
-  const batch = []
-  for (let i = start; i < start + count; i++) {
-    batch.push({ formData: { name: 'Bob', custNo: i } })
-  }
-  return batch
-}
 const batches = () => {
-  const batch = []
+  const full = crm.faker.customers.generateBatch(100)
+  const batches = []
   for (let i = 0; i <= 10; i++) {
-    batch.push({
-      'list/batch': { batch: crm.faker.customers.generateBatch(10) },
-    })
+    const batch = full.slice(i * 10, (i + 1) * 10)
+    batches.push({ 'list/batch': { batch } })
   }
-  return batch
+  return batches
 }
 MediumData.args = {
-  init: [add, ...batches()],
+  init: [install, ...batches()],
 }

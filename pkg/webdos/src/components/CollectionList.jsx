@@ -5,8 +5,7 @@ import { Crisp } from '@dreamcatcher-tech/interblock'
 import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium'
 import assert from 'assert-fast'
 import Debug from 'debug'
-import Fab from '@mui/material/Fab'
-import Add from '@mui/icons-material/Add'
+import FabAdd from './FabAdd'
 
 const debug = Debug('terminal:widgets:CollectionList')
 
@@ -69,16 +68,7 @@ const CollectionList = ({ crisp }) => {
     debug('rows generated', rows)
     return rows
   }, [crisp])
-  const fab = (
-    <Fab
-      color="primary"
-      style={addButtonStyle}
-      onClick={onAddCustomer}
-      disabled={isAdding}
-    >
-      <Add />
-    </Fab>
-  )
+
   const onRow = (params) => {
     debug('onRow', params)
   }
@@ -95,21 +85,12 @@ const CollectionList = ({ crisp }) => {
         onRowClick={onRow}
         loading={crisp.isLoading}
       />
-      {onAdd ? fab : null}
+      {onAdd ? <FabAdd onClick={onAddCustomer} disabled={isAdding} /> : null}
     </>
   )
 }
 CollectionList.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),
-}
-
-const addButtonStyle = {
-  margin: 0,
-  top: 'auto',
-  right: 20,
-  bottom: 20,
-  left: 'auto',
-  position: 'fixed',
 }
 
 const generateColumns = (template, valueGetter) => {

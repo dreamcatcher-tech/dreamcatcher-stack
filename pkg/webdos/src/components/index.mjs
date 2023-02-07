@@ -24,7 +24,7 @@ export { default as SorterDatum } from './SorterDatum'
 // compounds of compounds
 export { default as DialogDatum } from './DialogDatum'
 export { default as Account } from './Account'
-export { default as Schedule } from './Schedule'
+export { default as Schedules } from './Schedules'
 export { default as Routing } from './Routing'
 
 // toplevel

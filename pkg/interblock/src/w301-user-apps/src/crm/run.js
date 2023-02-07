@@ -5,7 +5,7 @@ const debug = Debug('crm:manifest')
 
 export const api = {}
 
-const Run = {
+const state = {
   type: 'DATUM',
   schema: {
     title: 'Run',
@@ -65,7 +65,7 @@ const Run = {
   },
 }
 
-export const installer = {}
+export const installer = { state }
 export const name = 'Run'
 export const reducer = async (request) => {
   const { type, payload } = request

@@ -1,6 +1,8 @@
 import assert from 'assert-fast'
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
+import Debug from 'debug'
+const debug = Debug('interblock:api:schemaToFunctions')
 
 let _ajv
 const loadAjv = () => {
@@ -41,6 +43,7 @@ const createAction = (type, schema) => {
         payload[key] = value
       }
     }
+    debug('payload: %O', payload)
     if (!validate(payload)) {
       const { errors = [] } = validate
       let concat = ''

@@ -15,8 +15,7 @@ import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Routing')
 
 const Routing = ({ crisp }) => {
-  const sector = crisp.getSelectedChild()
-  const [marker, setMarker] = useState()
+  const path = crisp.getSelectedChild()
   const [order, onOrder] = useState() // the dynamic changing data
   const [isEditingSector, setIsEditingSector] = useState(false)
   const [isEditingOrder, setIsEditingOrder] = useState(false)
@@ -32,30 +31,34 @@ const Routing = ({ crisp }) => {
       const promise = crisp.actions.cd(path)
     }
   }
-  const sectorCrisp = sector && crisp.hasChild(sector) && crisp.getChild(sector)
-  if (!sectorCrisp && !crisp.isLoading && crisp.sortedChildren.length) {
-    const firstName = crisp.sortedChildren[0]
-    debug('selecting first sector', firstName)
-    const first = crisp.getChild(firstName)
-    if (!first.isLoading) {
-      onSector(firstName)
+
+  const sector = path && crisp.hasChild(path) && crisp.getChild(path)
+  if (!sector && !crisp.isLoadingActions && crisp.sortedChildren.length) {
+    debug('no sector selected', crisp)
+    if (crisp.wd.startsWith(crisp.path)) {
+      const [first] = crisp.sortedChildren
+      debug('selecting first sector', first)
+      const firstChild = crisp.getChild(first)
+      if (!firstChild.isLoading) {
+        onSector(first)
+      }
     }
   }
   return (
     <>
       <Glass.Container>
         <Glass.Left>
-          <SectorSelector {...{ crisp, sector, onSector, disabled }} />
-          {sectorCrisp && (
+          <SectorSelector crisp={crisp} disabled={disabled} />
+          {sector && (
             <>
               <Datum
-                crisp={sectorCrisp}
+                crisp={sector}
                 collapsed
                 onEdit={setIsEditingSector}
                 viewOnly={isEditingOrder}
               />
               <SorterDatum
-                crisp={sectorCrisp}
+                crisp={sector}
                 viewOnly={isEditingSector}
                 onOrder={onOrder}
                 onEdit={setIsEditingOrder}
@@ -65,16 +68,7 @@ const Routing = ({ crisp }) => {
         </Glass.Left>
       </Glass.Container>
       <RoutingSpeedDial></RoutingSpeedDial>
-      <Map
-        {...{
-          crisp,
-          onSector,
-          sector,
-          marker,
-          order,
-        }}
-        markers
-      />
+      <Map crisp={crisp} order={order} markers />
     </>
   )
 }

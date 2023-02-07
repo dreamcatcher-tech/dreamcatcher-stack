@@ -5,12 +5,12 @@ import { Pulse } from '../../w008-ipld/src'
 import Debug from 'debug'
 const debug = Debug('tests')
 
-const ciRootActions = { dispatch: (...args) => debug('CI dispatch', args) }
+const actions = { dispatch: (...args) => debug('CI dispatch', args) }
 
 describe('Crisp', () => {
   it('should create a Crisp', async function () {
     const pulse = await Pulse.createCI({ state: { test: true } })
-    const crisp = Crisp.createRoot(pulse, ciRootActions)
+    const crisp = Crisp.createRoot(pulse, actions)
     expect(crisp).toBeInstanceOf(Crisp)
     expect(crisp.state).toEqual({ test: true })
     expect(crisp.hasChild('not a path')).toBe(false)
@@ -19,7 +19,7 @@ describe('Crisp', () => {
     let crisp
     beforeEach(async () => {
       const pulse = await Pulse.createCI()
-      crisp = Crisp.createRoot(pulse, ciRootActions)
+      crisp = Crisp.createRoot(pulse, actions)
     })
     it('getSelectedChild works when root', async () => {
       const virtualPath = '0'
@@ -35,7 +35,7 @@ describe('Crisp', () => {
     })
     it('getSelectedChild works deeply nested and root', async () => {
       const pulse = await Pulse.createCI()
-      let crisp = Crisp.createRoot(pulse, ciRootActions)
+      let crisp = Crisp.createRoot(pulse, actions)
       const virtualPath = '0'
       crisp = crisp.setWd('/' + virtualPath + '/other/paths')
       expect(crisp.getSelectedChild()).toBe(virtualPath)
@@ -43,14 +43,36 @@ describe('Crisp', () => {
     it('getSelectedChild works deeply nested and not root', async () => {
       const virtualPath = '0'
       crisp = crisp.setWd('/child/' + virtualPath + '/other/paths')
-      let child = Crisp.createChild(undefined, crisp, 'child')
+      const child = Crisp.createChild(undefined, crisp, 'child')
       expect(child.path).toBe('/child')
       expect(child.getSelectedChild()).toBe(virtualPath)
     })
     it('setWd must be absolute', async () => {
       const pulse = await Pulse.createCI()
-      const crisp = Crisp.createRoot(pulse, ciRootActions)
+      const crisp = Crisp.createRoot(pulse, actions)
       expect(() => crisp.setWd('non absolute')).toThrow('wd must be absolute')
+    })
+  })
+  describe('absolutePath', () => {
+    let pulse
+    beforeAll(async () => {
+      pulse = await Pulse.createCI()
+    })
+    it('works when chrooted', async () => {
+      const chroot = '/app'
+      const crisp = Crisp.createRoot(pulse, actions, chroot)
+      expect(crisp.absolutePath).toBe(chroot)
+      expect(crisp.path).toBe('/')
+      expect(crisp.chroot).toBe(chroot)
+
+      const child = Crisp.createChild(undefined, crisp, 'child')
+      expect(child.chroot).toBe(chroot)
+      expect(child.absolutePath).toBe('/app/child')
+      expect(child.path).toBe('/child')
+    })
+    it('errors on non absolute chroot', async () => {
+      const chroot = 'non absolute'
+      expect(() => Crisp.createRoot(pulse, actions, chroot)).toThrow('chroot')
     })
   })
   it('can CD into any path it sees', async () => {

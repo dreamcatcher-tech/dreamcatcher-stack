@@ -26,32 +26,31 @@ export default function ReactSyncer({ engine, path, children }) {
 
     debug('iterators', wdIterator, pathIterator, crispIterator)
 
-    const wdDrain = each(wdIterator, () => {
-      setCrisp((current) => {
-        debug('wd update crisp was: %s wd is: %s', current.wd, engine.wd)
-        if (!engine.wd.startsWith(path)) {
-          if (current.wd !== '/') {
-            current = current.setWd('/')
-          }
-          return current
+    const updateWd = (current) => {
+      debug('wd update crisp was: %s wd is: %s', current.wd, engine.wd)
+      if (!engine.wd.startsWith(path)) {
+        if (current.wd !== '/') {
+          current = current.setWd('/')
         }
-        const rest = engine.wd.substring(path.length) || '/'
-        if (current.wd === rest) {
-          return current
-        }
-        return current.setWd(rest)
-      })
-    })
+        return current
+      }
+      const length = path === '/' ? 0 : path.length
+      const rest = engine.wd.substring(length) || '/'
+      debug('path %s rest %s', path, rest)
+      if (current.wd === rest) {
+        return current
+      }
+      return current.setWd(rest)
+    }
+
+    const wdDrain = each(wdIterator, () => setCrisp(updateWd))
     const pathDrain = each(pathIterator, (pulse) => {
       debug('path update', pulse)
       syncer.update(pulse)
     })
     const crispDrain = each(crispIterator, (crisp) => {
-      if (crisp.wd !== engine.wd) {
-        crisp = crisp.setWd(engine.wd)
-      }
       debug('crisp update', crisp)
-      setCrisp(crisp)
+      setCrisp(updateWd(crisp))
     })
     const drains = [wdDrain, pathDrain, crispDrain]
     drains.forEach(drain)

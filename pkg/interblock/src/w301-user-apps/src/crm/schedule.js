@@ -18,10 +18,12 @@ export const api = {
       routing: {
         type: 'string',
         description: `Path to the routing collection`,
+        default: '../../routing',
       },
       customers: {
         type: 'string',
         description: `Path to the customers collection`,
+        default: '../../customers',
       },
     },
   },
@@ -60,7 +62,11 @@ export const covenants = { run }
 const addRun = async (path, run, customers) => {
   const { name, color, order, runDate } = run
   debug('addRun', path, name)
-  const state = { formData: { name, color, order, runDate }, customers }
+  const state = {
+    ...covenants.run.installer.state,
+    formData: { name, color, order, runDate },
+    customers,
+  }
   const covenant = '#/run'
   const installer = { state, covenant }
   const spawn = Request.createSpawn(path, installer)

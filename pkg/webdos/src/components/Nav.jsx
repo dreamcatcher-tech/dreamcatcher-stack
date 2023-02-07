@@ -21,6 +21,9 @@ const masked = ['.', '..', '.@@io', 'about', 'settings', 'account']
  * of the root of the app complex.
  */
 const Nav = ({ crisp }) => {
+  // TODO manage auto selection based on paths to avoid each component doing CD
+  // on change, take note of current path, then go back to that.
+  // components should handle fallback.
   if (crisp.isLoadingActions) {
     return <div>Loading Navigation...</div>
   }

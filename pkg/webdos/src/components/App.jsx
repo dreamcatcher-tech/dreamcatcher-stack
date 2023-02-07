@@ -1,7 +1,7 @@
 import Box from '@mui/system/Box'
 import { api, Crisp } from '@dreamcatcher-tech/interblock'
 import React from 'react'
-import { Glass, Nav, Schedule, CollectionList, Routing } from '.'
+import { Glass, Nav, Schedules, CollectionList, Routing } from '.'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 const debug = Debug('webdos:components:App')
@@ -26,8 +26,8 @@ export default function App({ crisp }) {
           <Box sx={{ zIndex: 1 }}>
             <Nav crisp={crisp} />
           </Box>
-          <Glass.Lazy show={wd.startsWith('/schedule')}>
-            <Schedule crisp={crisp.getChild('schedule')} />
+          <Glass.Lazy show={wd.startsWith('/schedules')}>
+            <Schedules crisp={crisp.getChild('schedules')} />
           </Glass.Lazy>
           <Glass.Lazy show={wd.startsWith('/customers')}>
             <CollectionList crisp={crisp.getChild('customers')} />
