@@ -165,13 +165,14 @@ const pulseReducer = async (type, payload) => {
       return
     }
     case '@@INVALIDATE': {
-      const { path } = payload
+      const { path, errorSerialized } = payload
+      // this is a strictly internal error
       assert.strictEqual(typeof path, 'string')
       assert(path)
       debug(`invalidate`, path)
       let network = pulse.getNetwork()
       let channel = await network.getChannel(path)
-      channel = channel.invalidate(path)
+      channel = channel.invalidate(path, errorSerialized)
       network = await network.updateChannel(channel)
       pulse = pulse.setNetwork(network)
       setPulse(pulse)

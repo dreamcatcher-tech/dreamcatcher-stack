@@ -364,7 +364,7 @@ export class Engine {
       depth.push(segment)
       const network = pulse.getNetwork()
       if (!(await network.hasChannel(segment))) {
-        const merged = depth.join('/').substring(1)
+        const merged = depth.join('/').substring('/'.length)
         throw new Error(`Segment not present: ${merged} of: ${path}`)
       }
       const isSymlink = await network.isSymlink(segment)
@@ -374,7 +374,7 @@ export class Engine {
         return this.latestByPath(resolved + segments.join('/'), rootPulse)
       }
       const channel = await network.getChannel(segment)
-      let { address } = channel
+      const { address } = channel
       if (!address.isRemote() && !channel.isForkPoint()) {
         throw new Error(`Segment not resolved: ${segment} of: ${path}`)
       }
@@ -389,8 +389,7 @@ export class Engine {
       pulse = await this.#endurance.recover(latest)
       const pulseAddress = pulse.getAddress()
       assert(channel.isForkPoint() || pulseAddress.equals(address))
-      // TODO WARNING latest of a fork might override true latest
-      this.#endurance.upsertLatest(pulseAddress, latest)
+      this.#endurance.discoverLatest(pulseAddress, latest)
     }
     return pulse
   }

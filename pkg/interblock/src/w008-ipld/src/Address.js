@@ -138,6 +138,9 @@ export class Address extends IpldInterface {
   [Symbol.for('nodejs.util.inspect.custom')]() {
     return this.toString()
   }
+  get asString() {
+    return this.toString() // used for debugging
+  }
   toString() {
     let string
     if (this.isUnknown()) {

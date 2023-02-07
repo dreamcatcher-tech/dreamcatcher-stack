@@ -39,7 +39,7 @@ export class Endurance {
     }
     return this.#latests.has(address.getChainId())
   }
-  upsertLatest(address, latestLink) {
+  discoverLatest(address, latestLink) {
     assert(address instanceof Address)
     assert(latestLink instanceof PulseLink)
     const chainId = address.getChainId()

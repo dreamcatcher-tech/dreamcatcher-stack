@@ -72,4 +72,50 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
+  test.only('writing', async () => {
+    const serverRepo = createRamRepo('server')
+    const server = await Interpulse.createCI({ repo: serverRepo })
+    await server.startNetwork()
+    await server.add('child1')
+    const clientRepo = createRamRepo('client')
+    const client = await Interpulse.create({ repo: clientRepo })
+    await client.startNetwork()
+    engines.push(client, server)
+
+    const [multiAddress] = server.net.getMultiaddrs()
+    debug('server multiAddress', multiAddress)
+
+    const { peerId } = server.net.libp2p
+    const child1 = await server.latest('/child1')
+    const address = child1.getAddress()
+    debug('child1 address', address)
+    const chainId = address.getChainId()
+
+    await client.multiaddr(multiAddress)
+    await client.peer(peerId.toString(), chainId)
+    await client.mount(chainId, 'server')
+    const remote = await client.latest('/.mtab/server')
+    debug('remote', remote)
+    expect(child1.cid.equals(remote.cid)).toBeTruthy()
+
+    const nested1 = await server.add('child1/nested1')
+    debug(nested1)
+    const nestedRemote = await client.latest('/.mtab/server/nested1')
+    expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
+    debug('nested1 pulseHash', nestedRemote.getPulseLink())
+
+    const parent = await nestedRemote.getNetwork().getParent()
+    parent.rx.tip.dir()
+
+    // now write to the remote
+    Debug.enable('iplog *Engine *openPath *dmz')
+    globalThis.meow = nestedRemote.getPulseLink()
+    try {
+      const ping = await client.ping('/.mtab/server/nested1')
+    } catch (error) {
+      Debug.disable()
+      console.error(error)
+      throw error
+    }
+  })
 })

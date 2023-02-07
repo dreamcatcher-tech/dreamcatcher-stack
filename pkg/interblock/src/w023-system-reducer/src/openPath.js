@@ -1,7 +1,7 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
 import { interchain } from '../../w002-api'
-import { Address, Pulse, Request } from '../../w008-ipld/index.mjs'
+import { Address, Pulse, Request, Reply } from '../../w008-ipld/index.mjs'
 const debug = Debug('interblock:dmz:openPath')
 
 export const openPath = async ({ path }) => {
@@ -23,7 +23,7 @@ export const openPath = async ({ path }) => {
     await interchain(Request.tryPath('/' + path))
   } catch (error) {
     debug('path invalid', path)
-    await invalidate(path)
+    await invalidate(path, error)
     throw error
   }
 
@@ -52,8 +52,10 @@ export const openPath = async ({ path }) => {
     }
   }
 }
-const invalidate = async (path) => {
-  await interchain('@@INVALIDATE', { path })
+const invalidate = async (path, error) => {
+  const rejection = Reply.createError(error)
+  const errorSerialized = rejection.payload
+  await interchain('@@INVALIDATE', { path, errorSerialized })
 }
 
 export const deepestSegment = async (pulse, { path }) => {

@@ -1,3 +1,4 @@
+import { deserializeError } from 'serialize-error'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import {
@@ -239,7 +240,7 @@ export class Channel extends IpldStruct {
     const requestIndex = this.tx[stream].requestsLength
     return RequestId.create(channelId, stream, requestIndex)
   }
-  invalidate(pathString) {
+  invalidate(pathString, errorSerialized) {
     assert.strictEqual(typeof pathString, 'string')
     assert(pathString)
     assert(!this.address.isResolved())
@@ -252,9 +253,12 @@ export class Channel extends IpldStruct {
     assert.strictEqual(this.tx.reducer.promisedReplies.length, 0)
     const address = Address.createInvalid()
     let { tx, rx } = this
-    const error = Reply.createError(new Error(`Invalid Path: ${pathString}`))
-    let system = rejectAll(rx.system, tx.system, error)
-    let reducer = rejectAll(rx.reducer, tx.reducer, error)
+    const cause = deserializeError(errorSerialized)
+    const message = `Invalid Path: ${pathString} caused by: ${cause.message}`
+    const error = new Error(message, { cause })
+    const rejection = Reply.createError(error)
+    let system = rejectAll(rx.system, tx.system, rejection)
+    let reducer = rejectAll(rx.reducer, tx.reducer, rejection)
     rx = rx.setMap({ system, reducer })
     tx = tx.setMap({ system: tx.system.blank(), reducer: tx.reducer.blank() })
 
