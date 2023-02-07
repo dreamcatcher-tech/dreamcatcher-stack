@@ -22,12 +22,9 @@ export default function Date({ runDate, onDateChange, expanded }) {
     debug(string)
     onDateChange(string)
   }
-  const onChange = (event, expanded) => {
-    debug('onChange', expanded)
-  }
   return (
     <Card>
-      <Accordion defaultExpanded={expanded} onChange={onChange}>
+      <Accordion defaultExpanded={expanded}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography>Date: {runDate}</Typography>
         </AccordionSummary>
@@ -58,6 +55,10 @@ export default function Date({ runDate, onDateChange, expanded }) {
 Date.propTypes = {
   runDate: PropTypes.string,
   onDateChange: PropTypes.func,
+
+  /**
+   * If true, the component is shown expanded.
+   */
   expanded: PropTypes.bool,
 }
 Date.nearestWeekday = () => {

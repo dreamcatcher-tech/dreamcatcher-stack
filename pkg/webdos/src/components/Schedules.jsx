@@ -77,7 +77,11 @@ const Schedules = ({ crisp, expanded }) => {
     <>
       <Glass.Container>
         <Glass.Left>
-          <Date {...{ runDate, onDateChange }}></Date>
+          <Date
+            runDate={runDate}
+            onDateChange={onDateChange}
+            expanded={!schedule}
+          />
           {schedule && <SectorSelector crisp={schedule} />}
           {run && <SorterDatum viewOnly crisp={run} />}
         </Glass.Left>

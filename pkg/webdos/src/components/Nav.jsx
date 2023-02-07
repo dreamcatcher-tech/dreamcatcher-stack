@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Crisp } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
@@ -13,6 +13,7 @@ import Home from '@mui/icons-material/Home'
 import AccountCircle from '@mui/icons-material/AccountCircle'
 import Settings from '@mui/icons-material/Settings'
 import Info from '@mui/icons-material/Info'
+import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Nav')
 
 const masked = ['.', '..', '.@@io', 'about', 'settings', 'account']
@@ -21,19 +22,30 @@ const masked = ['.', '..', '.@@io', 'about', 'settings', 'account']
  * of the root of the app complex.
  */
 const Nav = ({ crisp }) => {
-  // TODO manage auto selection based on paths to avoid each component doing CD
-  // on change, take note of current path, then go back to that.
-  // components should handle fallback.
   if (crisp.isLoadingActions) {
     return <div>Loading Navigation...</div>
   }
   const { wd, actions } = crisp
+  const children = [...crisp]
   debug(`network: `, [...crisp])
   debug('wd: ', wd)
   debug('crisp: ', crisp)
+  const [tails, setTails] = useState({})
   const cdOnce = (path) => {
-    if (wd !== '/' + path) {
-      return actions.cd(crisp.chroot + '/' + path)
+    assert(children.includes(path), `path ${path} not found in ${children}`)
+    if (!wd.startsWith('/' + path)) {
+      for (const child of children) {
+        if (wd.startsWith('/' + child)) {
+          debug('setting tails for %s to %s', child, wd)
+          // TODO determine if is virtual
+          setTails({ ...tails, [child]: wd })
+        }
+      }
+      const last = tails[path] || '/' + path
+      debug('cdOnce %s', last, tails)
+      const allowVirtual = true
+      return actions.cd(crisp.absolutePath + last, allowVirtual)
+      // TODO make components handle invalid paths being restored
     }
   }
 

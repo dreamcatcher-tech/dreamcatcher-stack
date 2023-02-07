@@ -26,7 +26,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*App *Nav *Date iplog')
+  Debug.enable('*Nav iplog')
   return (
     <Engine {...args}>
       <Syncer path="/app">
