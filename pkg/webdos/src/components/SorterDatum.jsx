@@ -17,7 +17,7 @@ const debug = Debug('terminal:widgets:SorterDatum')
 
 function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
-  const { order = [] } = crisp.state.formData || {}
+  const { order = [], unapproved = [] } = crisp.state.formData || {}
   debug('order', crisp.state.formData)
   const [items, setItems] = useState(order)
   const [isPending, setIsPending] = useState(false)

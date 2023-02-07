@@ -1,5 +1,6 @@
 import React from 'react'
-import { Engine, Syncer, Map, Glass } from '..'
+import { Engine, Syncer } from '..'
+import { Map, Glass } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 import Card from '@mui/material/Card'

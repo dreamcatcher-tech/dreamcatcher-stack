@@ -1,21 +1,21 @@
 import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
 import calculateSize from 'calculate-size'
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium'
 import assert from 'assert-fast'
 import Debug from 'debug'
 
 const debug = Debug('terminal:widgets:InnerCollection')
 
-const InnerCollection = ({ onAdd, onRow, complex = {}, template }) => {
+const InnerCollection = ({ onAdd, onRow, crisp, template }) => {
   assert(template, `template is required`)
 
-  const { state = {} } = complex
+  const { state } = crisp
   const { formData = {} } = state
   const { rows = [] } = formData
   const { uiSchema } = template
-  const { isLoading = false } = complex
+  const { isLoading } = crisp
   const rowSchema = template.schema.properties.rows.items
   const columns = useMemo(
     () => generateColumns(rowSchema, uiSchema),
@@ -37,7 +37,7 @@ const InnerCollection = ({ onAdd, onRow, complex = {}, template }) => {
 InnerCollection.propTypes = {
   onAdd: PropTypes.func,
   onRow: PropTypes.func,
-  complex: PropTypes.instanceOf(api.Complex),
+  crisp: PropTypes.instanceOf(Crisp),
   template: PropTypes.object.isRequired,
 }
 

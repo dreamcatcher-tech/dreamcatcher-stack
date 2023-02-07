@@ -21,7 +21,7 @@ export default function SpeedDialFab(props) {
   const [open, setOpen] = React.useState(initialOpen)
   const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
-  const { onAdd, onEdit, onDelete } = props
+  const { onAdd, onEdit, onDelete, disabled } = props
 
   return (
     <SpeedDial
@@ -31,6 +31,7 @@ export default function SpeedDialFab(props) {
       onOpen={handleOpen}
       open={open}
       ariaLabel="Routing Actions"
+      FabProps={{ disabled }}
     >
       {actions.map((action) => (
         <SpeedDialAction
@@ -49,4 +50,5 @@ SpeedDialFab.propTypes = {
   onAdd: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
+  disabled: PropTypes.bool,
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Glass, Sorter } from '..'
+import { Glass, Sorter } from '../components'
 import Debug from 'debug'
 import { faker } from '@faker-js/faker/locale/en_AU'
 const debug = Debug('Sorter')

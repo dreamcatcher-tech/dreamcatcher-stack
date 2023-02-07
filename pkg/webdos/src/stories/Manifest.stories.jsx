@@ -1,5 +1,6 @@
 import React from 'react'
-import { Engine, Syncer, Manifest, Glass } from '..'
+import { Engine, Syncer } from '..'
+import { Manifest, Glass } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const { crm } = apps

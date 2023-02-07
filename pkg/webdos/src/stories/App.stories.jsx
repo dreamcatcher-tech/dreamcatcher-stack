@@ -1,5 +1,6 @@
 import React from 'react'
-import { Engine, Syncer, App } from '..'
+import { Engine, Syncer } from '..'
+import { App } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import { car } from './data'
 import PropTypes from 'prop-types'
@@ -8,20 +9,23 @@ const debug = Debug('App')
 
 const { faker } = apps.crm
 faker.customers.reset()
-const install = { add: { path: '/app', installer: '/crm' } }
-const sectorsBatch = faker.routing.generateBatch(2)
-const sectorsInsert = { '/app/routing/batch': { batch: sectorsBatch } }
-const listBatch = faker.customers.generateBatchInside(sectorsBatch, 10)
-const listInsert = { '/app/customers/batch': { batch: listBatch } }
-const update = { '/app/routing/update': { path: '/app/customers' } }
-const cd = { cd: { path: '/app/routing' } }
+const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
+  const install = { add: { path: '/app', installer: '/crm' } }
+  const sectorsBatch = faker.routing.generateBatch(sectors)
+  const sectorsInsert = { '/app/routing/batch': { batch: sectorsBatch } }
+  const listBatch = faker.customers.generateBatchInside(sectorsBatch, customers)
+  const listInsert = { '/app/customers/batch': { batch: listBatch } }
+  const update = { '/app/routing/update': { path: '/app/customers' } }
+  const cd = { '/cd': { path: '/app/routing' } }
+  return [install, sectorsInsert, listInsert, update, cd]
+}
 
 export default {
   title: 'App',
   component: App,
   args: {
     dev: { '/crm': apps.crm.covenant },
-    init: [install, sectorsInsert, listInsert, update, cd],
+    init: makeInit(),
   },
 }
 
@@ -40,7 +44,12 @@ Template.propTypes = {
 }
 
 export const Small = Template.bind({})
-Small.args = { car: car.small }
+
+export const Medium = Template.bind({})
+Medium.args = { init: makeInit({ sectors: 40, customers: 200 }) }
+// make it load gradually so can see it behave during loading
+
+// can use a CAR if think all further problems are GUI related
 
 // TODO add customers into the app from large and see how the app responds
 // export const Growing = Template.bind({})

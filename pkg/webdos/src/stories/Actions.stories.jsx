@@ -1,5 +1,6 @@
 import React from 'react'
-import { Engine, Syncer, Actions } from '..'
+import { Engine, Syncer } from '..'
+import { Actions } from '../components'
 import Debug from 'debug'
 
 export default {

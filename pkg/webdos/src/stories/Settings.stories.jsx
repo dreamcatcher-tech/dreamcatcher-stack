@@ -1,6 +1,7 @@
 import React from 'react'
 import { apps } from '@dreamcatcher-tech/interblock'
-import { Engine, Syncer, Datum, Glass } from '..'
+import { Engine, Syncer } from '..'
+import { Datum, Glass } from '../components'
 import Debug from 'debug'
 
 const add = { path: 'settings', installer: '/dpkg/crm/settings' }

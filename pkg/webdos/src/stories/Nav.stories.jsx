@@ -1,5 +1,6 @@
 import React from 'react'
-import { Engine, Syncer, Nav } from '..'
+import { Engine, Syncer } from '..'
+import { Nav } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('Nav')

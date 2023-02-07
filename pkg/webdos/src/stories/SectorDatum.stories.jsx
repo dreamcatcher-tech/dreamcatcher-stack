@@ -1,5 +1,6 @@
 import React from 'react'
-import { Engine, Syncer, Datum, Glass } from '..'
+import { Engine, Syncer } from '..'
+import { Datum, Glass } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 const debug = Debug('SectorDatum')

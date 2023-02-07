@@ -1,6 +1,5 @@
 import React from 'react'
-import { within, userEvent } from '@storybook/testing-library'
-import { Gps } from '..'
+import { Gps } from '../components'
 import Debug from 'debug'
 Debug.enable('*Map')
 

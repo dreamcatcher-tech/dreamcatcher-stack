@@ -67,7 +67,7 @@ const Routing = ({ crisp }) => {
           )}
         </Glass.Left>
       </Glass.Container>
-      <RoutingSpeedDial></RoutingSpeedDial>
+      <RoutingSpeedDial disabled={isEditingOrder || isEditingSector} />
       <Map crisp={crisp} order={order} markers />
     </>
   )

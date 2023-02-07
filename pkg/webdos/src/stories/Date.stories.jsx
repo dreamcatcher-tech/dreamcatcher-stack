@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import React from 'react'
 import { useState } from 'react'
 import Debug from 'debug'
-import { Date, Glass } from '..'
+import { Date, Glass } from '../components'
 import PropTypes from 'prop-types'
 
 const runDate = '2022-12-28'

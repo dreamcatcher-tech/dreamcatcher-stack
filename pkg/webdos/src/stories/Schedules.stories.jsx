@@ -1,5 +1,6 @@
 import React from 'react'
-import { Engine, Syncer, Schedules } from '..'
+import { Engine, Syncer } from '..'
+import { Schedules } from '../components'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 

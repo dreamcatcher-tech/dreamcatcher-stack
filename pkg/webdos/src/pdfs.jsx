@@ -1,12 +1,12 @@
 import delay from 'delay'
 import React from 'react'
-import { api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import assert from 'assert-fast'
 import { PDFDocument } from 'pdf-lib'
 import Debug from 'debug'
 const debug = Debug('webdos:pdfs')
 export default function (manifests, templateUrl, sector) {
-  assert(manifests instanceof api.Complex)
+  assert(manifests instanceof Crisp)
   assert(!sector || manifests.hasChild(sector), `sector ${sector} not found`)
   let pdf, templateArray
   const { runDate } = manifests.state.formData

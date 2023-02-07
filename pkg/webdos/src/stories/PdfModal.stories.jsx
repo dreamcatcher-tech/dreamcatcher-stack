@@ -4,7 +4,7 @@ import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
 import generator from '../pdfs'
 import { templateUrl } from './data'
-import { PdfModal } from '..'
+import { PdfModal } from '../components'
 const debug = Debug('webdos:stories:PdfModal')
 const { crm } = apps
 const runDate = '2022-11-09'
