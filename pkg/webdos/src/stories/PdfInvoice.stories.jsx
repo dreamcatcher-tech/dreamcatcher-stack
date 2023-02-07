@@ -6,18 +6,15 @@ import { useAsync } from 'react-async-hook'
 import { templateUrl } from './data'
 const debug = Debug('PdfInvoice')
 const { crm } = apps
-let complex = crm.faker().child('customers')
-complex = complex.child(complex.network[0].path)
 
 export default {
   title: 'PDF Invoice',
-  args: {
-    customers: [complex.state.formData],
-  },
 }
 
 const Template = (args) => {
   Debug.enable('*PdfInvoice')
+  const [customer] = crm.faker.customers.generateBatch(1)
+  debug('customer', customer)
   const [template, setTemplate] = React.useState()
   useAsync(async () => {
     debug('loading template', templateUrl)
@@ -29,7 +26,7 @@ const Template = (args) => {
   const [invoiceUrl, setInvoiceUrl] = React.useState()
   useAsync(async () => {
     debug('generating invoice')
-    const pdf = await invoice(complex.state.formData, template)
+    const pdf = await invoice(customer.formData, template)
     debug('invoice generated', pdf)
     const { url, size } = await saveToUrl(pdf)
     debug('invoice size', size)

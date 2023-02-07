@@ -8,7 +8,7 @@ import { PdfModal } from '../components'
 const debug = Debug('webdos:stories:PdfModal')
 const { crm } = apps
 const runDate = '2022-11-09'
-const complex = crm.utils.generateManifest(crm.faker(500), runDate)
+// const complex = crm.utils.generateManifest(crm.faker(500), runDate)
 
 export default {
   title: 'PDF Modal',
@@ -53,11 +53,11 @@ Mocked.args = {
     },
   },
 }
-export const Real = Template.bind({})
-Real.args = {
-  generator: generator(complex, templateUrl),
-}
-export const SingleSector = Template.bind({})
-SingleSector.args = {
-  generator: generator(complex, templateUrl, '26'),
-}
+// export const Real = Template.bind({})
+// Real.args = {
+//   generator: generator(complex, templateUrl),
+// }
+// export const SingleSector = Template.bind({})
+// SingleSector.args = {
+//   generator: generator(complex, templateUrl, '26'),
+// }

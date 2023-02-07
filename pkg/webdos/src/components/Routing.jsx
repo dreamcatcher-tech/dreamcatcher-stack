@@ -47,7 +47,7 @@ const Routing = ({ crisp }) => {
   return (
     <>
       <Glass.Container>
-        <Glass.Left>
+        <Glass.Left min={!sector}>
           <SectorSelector crisp={crisp} disabled={disabled} />
           {sector && (
             <>
