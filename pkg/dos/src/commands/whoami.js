@@ -6,6 +6,7 @@ const debug = Debug('dos:commands:whoami')
 export const whoami = async ({ blockchain }) => {
   const latest = await blockchain.latest()
   const chainId = latest.getAddress().getChainId()
+  // TODO see if can use the validator as peerId, making this command pure.
   const peerId = await blockchain.net.keypair.generatePeerId()
   const ui = cliui()
   ui.div({ text: `Root:`, width: 15 }, chainId)

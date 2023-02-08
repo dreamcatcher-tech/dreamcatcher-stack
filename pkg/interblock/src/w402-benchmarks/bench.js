@@ -69,7 +69,7 @@ suite
   .add('boot', {
     defer: true,
     fn: async (deferred) => {
-      const engine = await Interpulse.createCI()
+      await Interpulse.createCI()
       deferred.resolve()
     },
   })
@@ -90,7 +90,7 @@ suite
   .add('publish', {
     defer: true,
     fn: async (deferred) => {
-      const engine = await publish()
+      await publish()
       deferred.resolve()
     },
   })
