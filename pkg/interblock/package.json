@@ -8,6 +8,7 @@
   },
   "homepage": "",
   "main": "src/index.mjs",
+  "files": ["src"],
   "type": "module",
   "scripts": {
     "schemas": "node src/w006-schemas/bin.js && prettier -w src/w006-schemas/ipldSchemas.js",
