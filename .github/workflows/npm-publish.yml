@@ -30,6 +30,7 @@ jobs:
     # make sure the interblock library runs on windows
     runs-on: windows-latest
     steps:
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
@@ -37,8 +38,9 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: yarn
           cache-dependency-path: yarn.lock
+      - run: cd pkg/interblock
       - run: yarn
-      - run: lerna run test --scope @dreamcatcher-tech/interblock
+      - run: yarn test 
       
   publish-npm:
     # Ensure webdos passed chromatic basic testing first
