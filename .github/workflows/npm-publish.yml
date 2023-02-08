@@ -25,8 +25,24 @@ jobs:
           # exitOnceUploaded: true
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
-  publish:
-    needs: chromatic-deployment
+
+  windows-test:
+    # make sure the interblock library runs on windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+          registry-url: https://registry.npmjs.org/
+          cache: yarn
+          cache-dependency-path: yarn.lock
+      - run: yarn
+      - run: lerna run test --scope @dreamcatcher-tech/interblock
+      
+  publish-npm:
+    # Ensure webdos passed chromatic basic testing first
+    needs: [chromatic-deployment, windows-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
