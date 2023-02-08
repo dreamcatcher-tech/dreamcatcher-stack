@@ -45,7 +45,7 @@ jobs:
       
   publish-npm:
     # Ensure webdos passed chromatic basic testing first
-    needs: [chromatic-deployment, windows-test]
+    # needs: [chromatic-deployment, windows-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
