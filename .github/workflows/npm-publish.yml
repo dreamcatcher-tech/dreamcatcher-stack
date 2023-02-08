@@ -64,6 +64,9 @@ jobs:
       # - run: yarn run build
       #   working-directory: ./pkg/interblock
       - run: npm whoami
-      - run: yarn run lerna publish patch --yes --loglevel silly --no-private
+      - run: |
+          npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
+          npm whoami
+          yarn run lerna publish patch --yes --loglevel silly --no-private
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
