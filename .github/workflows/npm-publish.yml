@@ -38,7 +38,7 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
         working-directory: ./pkg/interblock
-      - run: node --experimental-vm-modules node_modules/.bin/jest --bail
+      - run: node --experimental-vm-modules node_modules/.bin/jest.cmd --bail
         working-directory: ./pkg/interblock
       
   publish-npm:
