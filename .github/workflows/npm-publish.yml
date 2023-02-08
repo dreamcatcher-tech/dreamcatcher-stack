@@ -63,7 +63,6 @@ jobs:
       # 👇 Ensure the package can at least build for the browser
       # - run: yarn run build
       #   working-directory: ./pkg/interblock
-      - run: npm whoami
       - run: |
           npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
           npm whoami
