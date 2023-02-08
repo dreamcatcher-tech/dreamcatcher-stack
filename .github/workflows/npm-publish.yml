@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: '16.x'
           cache: yarn
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --frozen-lockfile --focus
         working-directory: ./pkg/interblock
       - run: yarn run test-windows
         working-directory: ./pkg/interblock
