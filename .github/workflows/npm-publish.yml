@@ -37,7 +37,8 @@ jobs:
         with:
           node-version: '18.x'
           cache: yarn
-      - run: yarn install --network-timeout 100000
+      # network seems very slow in windows ghrunners and will fail if default
+      - run: yarn install --frozen-lockfile --network-timeout 100000
         working-directory: ./pkg/interblock
       - run: yarn run test-windows
         working-directory: ./pkg/interblock
