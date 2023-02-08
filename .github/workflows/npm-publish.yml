@@ -28,42 +28,42 @@ jobs:
   #       env:
   #         NODE_OPTIONS: "--max-old-space-size=8192"
 
-  # windows-test:
-  #   # make sure the interblock library runs on windows
-  #   runs-on: windows-latest
-  #   steps:
-  #     # - run: Disable-NetAdapterChecksumOffload -Name * -TcpIPv4 -UdpIPv4 -TcpIPv6 -UdpIPv6
-  #     # - run: git config --global core.autocrlf false
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '18.x'
-  #         cache: yarn
-  #     # network seems very slow in windows ghrunners and will fail if default
-  #     - run: yarn install --frozen-lockfile --network-timeout 100000
-  #       working-directory: ./pkg/interblock
-  #     - run: yarn run test-windows
-  #       working-directory: ./pkg/interblock
-      
-  publish-npm:
-    # Ensure webdos passed chromatic basic testing first
-    # needs: [chromatic-deployment, windows-test]
-    runs-on: ubuntu-latest
+  windows-test:
+    # make sure the interblock library runs on windows
+    runs-on: windows-latest
     steps:
+      # - run: Disable-NetAdapterChecksumOffload -Name * -TcpIPv4 -UdpIPv4 -TcpIPv6 -UdpIPv6
+      # - run: git config --global core.autocrlf false
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '18.x'
           cache: yarn
-      - run: git config --global user.email "actions@github.com"
-      - run: git config --global user.name "interbot"
-      - run: yarn install --frozen-lockfile
-      - run: yarn run test
+      # network seems very slow in windows ghrunners and will fail if default
+      - run: yarn install --focus --frozen-lockfile --network-timeout 100000
         working-directory: ./pkg/interblock
-      # 👇 Ensure the package can at least build for the browser
-      - run: yarn run build
+      - run: yarn run test-windows
         working-directory: ./pkg/interblock
-      - run: |
-          npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
-          npm whoami
-          yarn run lerna publish patch --yes --no-private
+      
+  # publish-npm:
+  #   # Ensure webdos passed chromatic basic testing first
+  #   # needs: [chromatic-deployment, windows-test]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '18.x'
+  #         cache: yarn
+  #     - run: git config --global user.email "actions@github.com"
+  #     - run: git config --global user.name "interbot"
+  #     - run: yarn install --frozen-lockfile
+  #     - run: yarn run test
+  #       working-directory: ./pkg/interblock
+  #     # 👇 Ensure the package can at least build for the browser
+  #     - run: yarn run build
+  #       working-directory: ./pkg/interblock
+  #     - run: |
+  #         npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
+  #         npm whoami
+  #         yarn run lerna publish patch --yes --no-private
