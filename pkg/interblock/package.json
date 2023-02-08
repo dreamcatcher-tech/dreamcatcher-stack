@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/interblock",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "",
   "repository": {
     "type": "git",
@@ -8,7 +8,9 @@
   },
   "homepage": "",
   "main": "src/index.mjs",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "type": "module",
   "scripts": {
     "schemas": "node src/w006-schemas/bin.js && prettier -w src/w006-schemas/ipldSchemas.js",
