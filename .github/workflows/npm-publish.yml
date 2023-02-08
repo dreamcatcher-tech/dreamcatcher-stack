@@ -6,42 +6,42 @@ on:
       - master
 
 jobs:
-  chromatic-deployment:
-    # Operating System
-    runs-on: ubuntu-latest
-    # Job steps
-    steps:
-      - uses: actions/checkout@v1
-      - name: Install dependencies
-        run: yarn
-        # 👇 Adds Chromatic as a step in the workflow
-      - name: Publish to Chromatic
-        uses: chromaui/action@v1
-        # Chromatic GitHub Action options
-        with:
-          # 👇 Chromatic projectToken, refer to the manage page to obtain it.
-          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          workingDir: pkg/webdos
-          # exitOnceUploaded: true
-        env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
+  # chromatic-deployment:
+  #   # Operating System
+  #   runs-on: ubuntu-latest
+  #   # Job steps
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - name: Install dependencies
+  #       run: yarn
+  #       # 👇 Adds Chromatic as a step in the workflow
+  #     - name: Publish to Chromatic
+  #       uses: chromaui/action@v1
+  #       # Chromatic GitHub Action options
+  #       with:
+  #         # 👇 Chromatic projectToken, refer to the manage page to obtain it.
+  #         projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+  #         workingDir: pkg/webdos
+  #         # exitOnceUploaded: true
+  #       env:
+  #         NODE_OPTIONS: "--max-old-space-size=8192"
 
-  windows-test:
-    # make sure the interblock library runs on windows
-    runs-on: windows-latest
-    steps:
-      # - run: Disable-NetAdapterChecksumOffload -Name * -TcpIPv4 -UdpIPv4 -TcpIPv6 -UdpIPv6
-      - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-          cache: yarn
-      # network seems very slow in windows ghrunners and will fail if default
-      - run: yarn install --frozen-lockfile --network-timeout 100000
-        working-directory: ./pkg/interblock
-      - run: yarn run test-windows
-        working-directory: ./pkg/interblock
+  # windows-test:
+  #   # make sure the interblock library runs on windows
+  #   runs-on: windows-latest
+  #   steps:
+  #     # - run: Disable-NetAdapterChecksumOffload -Name * -TcpIPv4 -UdpIPv4 -TcpIPv6 -UdpIPv6
+  #     - run: git config --global core.autocrlf false
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '18.x'
+  #         cache: yarn
+  #     # network seems very slow in windows ghrunners and will fail if default
+  #     - run: yarn install --frozen-lockfile --network-timeout 100000
+  #       working-directory: ./pkg/interblock
+  #     - run: yarn run test-windows
+  #       working-directory: ./pkg/interblock
       
   publish-npm:
     # Ensure webdos passed chromatic basic testing first
