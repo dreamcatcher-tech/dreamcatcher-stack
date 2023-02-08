@@ -1,4 +1,4 @@
-name: Publish to NPM
+name: Publish to NPM and Chromatic
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
           cache-dependency-path: yarn.lock
       - run: cd pkg/interblock
       - run: yarn
-      - run: yarn test 
+      - run: yarn run test 
       
   publish-npm:
     # Ensure webdos passed chromatic basic testing first
