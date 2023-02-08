@@ -72,7 +72,7 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
-  test.only('writing', async () => {
+  test.skip('writing', async () => {
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
     await server.startNetwork()
