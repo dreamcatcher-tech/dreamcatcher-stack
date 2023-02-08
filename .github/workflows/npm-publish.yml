@@ -61,6 +61,6 @@ jobs:
       # 👇 Ensure the package can at least build for the browser
       - run: yarn run build
         working-directory: ./pkg/interblock
-      - run: lerna publish patch --yes --loglevel verbose
+      - run: lerna publish patch --yes
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
