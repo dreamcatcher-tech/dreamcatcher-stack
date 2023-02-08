@@ -107,7 +107,6 @@ describe('mount', () => {
     const parent = await nestedRemote.getNetwork().getParent()
     parent.rx.tip.dir()
 
-    // now write to the remote
     Debug.enable('iplog *Engine *openPath *dmz')
     globalThis.meow = nestedRemote.getPulseLink()
     try {
