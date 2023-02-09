@@ -40,12 +40,15 @@ jobs:
           node-version: '18.x'
           # cache: yarn
       - name: Setup yarn
+        shell: cmd
         run: npm install -g yarn
 
       # network seems very slow in windows ghrunners and will fail if default
       - run: yarn install --frozen-lockfile --network-timeout 100000
+        shell: cmd
         working-directory: ./pkg/interblock
       - run: yarn run test-windows
+        shell: cmd
         working-directory: ./pkg/interblock
       
   # publish-npm:
