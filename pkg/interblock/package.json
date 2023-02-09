@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/interblock",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "description": "",
   "repository": {
     "type": "git",
@@ -27,6 +27,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@chainsafe/libp2p-noise": "^11.0.0",
+    "@faker-js/faker": "^7.6.0",
     "@ipld/car": "^5.1.0",
     "@ipld/dag-cbor": "^9.0.0",
     "@ipld/dag-pb": "^4.0.0",
@@ -57,6 +58,7 @@
     "it-drain": "^2.0.0",
     "it-parallel": "^3.0.0",
     "it-pushable": "^3.1.2",
+    "json-schema-faker": "^0.5.0-rcv.46",
     "libp2p": "0.42.2",
     "lodash.merge": "^4.6.2",
     "pad-left": "^2.1.0",
@@ -66,8 +68,6 @@
     "rimraf": "3.0.2",
     "serialize-error": "^11.0.0",
     "uint8arrays": "^4.0.3",
-    "@faker-js/faker": "^7.6.0",
-    "json-schema-faker": "^0.5.0-rcv.46",
     "wherearewe": "^2.0.1"
   },
   "devDependencies": {
