@@ -1,4 +1,4 @@
-import sectorsList from '../../../../../../../data/sectors.mjs'
+import sectorsList from '../data/sectors.mjs'
 export const generateSingle = (index = 0) => {
   const formData = sectorsList.list[index % sectorsList.list.length]
   return { formData }
