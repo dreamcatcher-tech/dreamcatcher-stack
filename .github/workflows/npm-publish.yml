@@ -8,32 +8,47 @@ on:
       - v1.*
 
 jobs:
-  # chromatic-deployment:
-  #   # Operating System
-  #   runs-on: ubuntu-latest
-  #   # Job steps
-  #   steps:
-  #     - uses: actions/checkout@v1
-  #     - name: Install dependencies
-  #       run: yarn
-  #       # 👇 Adds Chromatic as a step in the workflow
-  #     - name: Publish to Chromatic
-  #       uses: chromaui/action@v1
-  #       # Chromatic GitHub Action options
-  #       with:
-  #         # 👇 Chromatic projectToken, refer to the manage page to obtain it.
-  #         projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-  #         workingDir: pkg/webdos
-  #         # exitOnceUploaded: true
-  #       env:
-  #         NODE_OPTIONS: "--max-old-space-size=8192"
+  chromatic-deployment:
+    # Operating System
+    runs-on: ubuntu-latest
+    # Job steps
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: yarn
+        # 👇 Adds Chromatic as a step in the workflow
+      - name: Publish to Chromatic
+        uses: chromaui/action@v1
+        # Chromatic GitHub Action options
+        with:
+          # 👇 Chromatic projectToken, refer to the manage page to obtain it.
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: pkg/webdos
+          # exitOnceUploaded: true
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
 
   windows-test:
     # make sure the interblock library runs on windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: yarn
+      # network seems very slow in windows ghrunners and will fail if default
+      - run: yarn install --frozen-lockfile --network-timeout 100000
+        shell: cmd
+        working-directory: ./pkg/interblock
+      - run: yarn run test-windows
+        shell: cmd
+        working-directory: ./pkg/interblock
+
+  windows-test-self-hosted:
+    # make sure the interblock library runs on windows
     runs-on: level1
     steps:
-      # - run: Disable-NetAdapterChecksumOffload -Name * -TcpIPv4 -UdpIPv4 -TcpIPv6 -UdpIPv6
-      # - run: git config --global core.autocrlf false
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
@@ -51,25 +66,25 @@ jobs:
         shell: cmd
         working-directory: ./pkg/interblock
       
-  # publish-npm:
-  #   # Ensure webdos passed chromatic basic testing first
-  #   # needs: [chromatic-deployment, windows-test]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '18.x'
-  #         cache: yarn
-  #     - run: git config --global user.email "actions@github.com"
-  #     - run: git config --global user.name "interbot"
-  #     - run: yarn install --frozen-lockfile
-  #     - run: yarn run test
-  #       working-directory: ./pkg/interblock
-  #     # 👇 Ensure the package can at least build for the browser
-  #     - run: yarn run build
-  #       working-directory: ./pkg/interblock
-  #     - run: |
-  #         npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
-  #         npm whoami
-  #         yarn run lerna publish patch --yes --no-private
+  publish-npm:
+    # Ensure webdos passed chromatic basic testing first
+    needs: [chromatic-deployment, windows-test-self-hosted]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: yarn
+      - run: git config --global user.email "actions@github.com"
+      - run: git config --global user.name "interbot"
+      - run: yarn install --frozen-lockfile
+      - run: yarn run test
+        working-directory: ./pkg/interblock
+      # 👇 Ensure the package can at least build for the browser
+      - run: yarn run build
+        working-directory: ./pkg/interblock
+      - run: |
+          npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
+          npm whoami
+          yarn run lerna publish patch --yes --no-private
