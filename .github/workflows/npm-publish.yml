@@ -30,7 +30,7 @@ jobs:
 
   windows-test:
     # make sure the interblock library runs on windows
-    runs-on: self-hosted
+    runs-on: level1
     steps:
       # - run: Disable-NetAdapterChecksumOffload -Name * -TcpIPv4 -UdpIPv4 -TcpIPv6 -UdpIPv6
       # - run: git config --global core.autocrlf false
@@ -41,7 +41,7 @@ jobs:
           # cache: yarn
       - name: Setup yarn
         run: npm install -g yarn
-        
+
       # network seems very slow in windows ghrunners and will fail if default
       - run: yarn install --frozen-lockfile --network-timeout 100000
         working-directory: ./pkg/interblock
