@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import './index.css'
 import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
 import { apps } from '@dreamcatcher-tech/interblock'
 
@@ -18,11 +17,11 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Engine dev={{ '/crm': apps.crm.covenant }} init={makeInit()}>
-      <Syncer path="/app">
-        <App />
-      </Syncer>
-    </Engine>
-  </React.StrictMode>,
+  // <React.StrictMode>
+  <Engine dev={{ '/crm': apps.crm.covenant }} init={makeInit()}>
+    <Syncer path="/app">
+      <App />
+    </Syncer>
+  </Engine>
+  // </React.StrictMode>
 )
