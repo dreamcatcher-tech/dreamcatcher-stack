@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/consumer",
-  "version": "1.0.22",
+  "version": "1.0.28",
   "description": "Test consumer of webdos package",
   "author": "evil_liskov <evil_liskov@protonmail.com>",
   "homepage": "https://github.com/dreamcatcher-tech/interblock#readme",
@@ -14,8 +14,8 @@
     "url": "https://github.com/dreamcatcher-tech/interblock/issues"
   },
   "dependencies": {
-    "@dreamcatcher-tech/interblock": "^1.0.27",
-    "@dreamcatcher-tech/webdos": "^1.0.27",
+    "@dreamcatcher-tech/interblock": "^1.0.28",
+    "@dreamcatcher-tech/webdos": "^1.0.28",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
