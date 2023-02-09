@@ -1,107 +1,28 @@
-import { version } from '../package.json'
-import './demo.css'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import './index.css'
+import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
+import { apps } from '@dreamcatcher-tech/interblock'
 
-import React, { useEffect, Component } from 'react'
-import ReactDOM from 'react-dom'
-import {
-  Blockchain,
-  Terminal,
-  Router,
-  Switch,
-  Route,
-} from '@dreamcatcher-tech/webdos'
-
-import {
-  About,
-  Account,
-  DialogDatum,
-  CollectionList,
-  Datum,
-  Explorer,
-  Nav,
-  OpenDialog,
-  Settings,
-  MapBackground,
-  AppContainer,
-  Geometry,
-} from '@dreamcatcher-tech/webdos'
-import multi from './multi'
-import Debug from 'debug'
-const debug = Debug('client:tests:App')
-
-const Map = () => {
-  return (
-    <MapBackground>
-      <h1>child drawn on top of map</h1>
-    </MapBackground>
-  )
+const { faker } = apps.crm
+const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
+  faker.customers.reset()
+  const install = { add: { path: '/app', installer: '/crm' } }
+  const sectorsBatch = faker.routing.generateBatch(sectors)
+  const sectorsInsert = { '/app/routing/batch': { batch: sectorsBatch } }
+  const listBatch = faker.customers.generateBatchInside(sectorsBatch, customers)
+  const listInsert = { '/app/customers/batch': { batch: listBatch } }
+  const update = { '/app/routing/update': { path: '/app/customers' } }
+  const cd = { '/cd': { path: '/app/routing' } }
+  return [install, sectorsInsert, listInsert, update, cd]
 }
 
-const Timesheets = () => {
-  return (
-    <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
-      <h4>Demo version: {version}</h4>
-      <Blockchain dev={multi}>
-        <Terminal style={{ height: '280px', background: 'black' }} />
-        <Router>
-          <Switch>
-            <Route covenant="multi">
-              <AppContainer>
-                <Nav />
-                <MapBackground>
-                  <Switch>
-                    <Route path="/timesheets" component={<CollectionList />}>
-                      <Route path="/custNo-*" component={<DialogDatum />} />
-                    </Route>
-                    <Route path="/personnel" component={<CollectionList />}>
-                      <Route path="/custNo-*" component={<DialogDatum />} />
-                    </Route>
-                    <Route path="/sites" component={<Geometry />} />
-                    <Route path="/payments" component={<CollectionList />}>
-                      <Route path="/payNo-*" component={<DialogDatum />} />
-                    </Route>
-                    <Route path="/about" component={<About />} />
-                    <Route path="/settings" component={<Settings />} />
-                    <Route path="/account" component={<Account />} />
-                  </Switch>
-                </MapBackground>
-              </AppContainer>
-            </Route>
-            <Route component={<Explorer />} />
-          </Switch>
-        </Router>
-      </Blockchain>
-    </div>
-  )
-}
-export default class Demo extends Component {
-  render() {
-    return (
-      <div style={{ display: 'flex', flexFlow: 'column', flex: 1 }}>
-        <h4>Demo version: {version}</h4>
-        <Blockchain dev={multi}>
-          <Terminal style={{ height: '280px', background: 'black' }} />
-          <Router>
-            <Switch>
-              <Route covenant="multi">
-                <AppContainer>
-                  <Nav />
-                  <MapBackground>
-                    <Switch>
-                      <Route path="/customers" component={<CollectionList />} />
-                      <Route path="/services" component={<Geometry />} />
-                    </Switch>
-                  </MapBackground>
-                  <Route path="/custNo-*" component={<DialogDatum />} />
-                </AppContainer>
-              </Route>
-              <Route component={<Explorer />} />
-            </Switch>
-          </Router>
-        </Blockchain>
-      </div>
-    )
-  }
-}
-
-ReactDOM.render(<Demo />, document.querySelector('#root'))
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <Engine dev={{ '/crm': apps.crm.covenant }} init={makeInit()}>
+      <Syncer path="/app">
+        <App />
+      </Syncer>
+    </Engine>
+  </React.StrictMode>,
+)
