@@ -1,4 +1,4 @@
-import { Request } from '../../../w008-ipld'
+import { Request } from '../../../w008-ipld/index.mjs'
 import { interchain, usePulse, useState } from '../../../w002-api'
 import { isSectorOnDate, COLORS } from './utils'
 import { collection } from '../../../w212-system-covenants'
