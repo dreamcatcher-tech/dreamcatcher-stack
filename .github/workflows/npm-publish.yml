@@ -41,7 +41,7 @@ jobs:
       - run: yarn install --frozen-lockfile --network-timeout 100000
         shell: cmd
         working-directory: ./pkg/interblock
-      - run: yarn run test-windows
+      - run: yarn run test
         shell: cmd
         working-directory: ./pkg/interblock
 
@@ -57,12 +57,11 @@ jobs:
       - name: Setup yarn
         shell: cmd
         run: npm install -g yarn
-
       # network seems very slow in windows ghrunners and will fail if default
       - run: yarn install --frozen-lockfile --network-timeout 100000
         shell: cmd
         working-directory: ./pkg/interblock
-      - run: yarn run test-windows
+      - run: yarn run test
         shell: cmd
         working-directory: ./pkg/interblock
       
@@ -79,12 +78,18 @@ jobs:
       - run: git config --global user.email "actions@github.com"
       - run: git config --global user.name "interbot"
       - run: yarn install --frozen-lockfile
+      
+      - name Test
+        run: yarn run lint
+        working-directory: ./pkg/interblock
       - run: yarn run test
         working-directory: ./pkg/interblock
-      # 👇 Ensure the package can at least build for the browser
+        # 👇 Ensure the package can at least build for the browser
       - run: yarn run build
         working-directory: ./pkg/interblock
-      - run: |
+
+      - name Publish
+        run: |
           npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
           npm whoami
           yarn run lerna publish patch --yes --no-private
