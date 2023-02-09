@@ -79,7 +79,7 @@ jobs:
       - run: git config --global user.name "interbot"
       - run: yarn install --frozen-lockfile
 
-      - name Test
+      - name: Test
         run: yarn run lint
         working-directory: ./pkg/interblock
       - run: yarn run test
@@ -88,7 +88,7 @@ jobs:
       - run: yarn run build
         working-directory: ./pkg/interblock
 
-      - name Publish
+      - name: Publish
         run: |
           npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
           npm whoami
