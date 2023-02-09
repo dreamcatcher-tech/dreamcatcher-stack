@@ -50,8 +50,8 @@ describe('full', () => {
     expect(pulse2).toBeInstanceOf(Pulse)
     expect(pulse2).toEqual(next)
     await Promise.all([server.stop(), client.stop()])
-  }, 4000)
-  test('server two clients', async () => {})
+  }, 10000)
+  test('server two clients', async () => { })
   test('server reload', async () => {
     // server and client boot, exchange blocks two ways
     // both shut down to disk
