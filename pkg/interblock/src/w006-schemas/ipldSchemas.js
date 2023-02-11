@@ -602,6 +602,10 @@ export default {
             type: 'RxQueue',
             optional: true,
           },
+          isSubscription: {
+            type: 'Bool',
+            optional: true,
+          },
         },
         representation: {
           map: {},
@@ -757,7 +761,7 @@ export default {
     },
     Turnovers: {
       list: {
-        valueType: 'PulseLink',
+        valueType: 'HistoricalPulseLink',
       },
     },
     Provenance: {

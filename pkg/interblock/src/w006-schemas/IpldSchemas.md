@@ -403,7 +403,7 @@ type Dmz struct {
     network Network                     # block implies network changed
     state &State
     pending optional &Pending
-    appRoot optional PulseLink          # The latest known approot
+    appRoot optional HistoricalPulseLink          # The latest known approot
     binary optional Binary
     covenant Covenant
 }

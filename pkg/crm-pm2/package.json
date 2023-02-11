@@ -1,0 +1,48 @@
+{
+  "name": "@dreamcatcher-tech/crm-pm2",
+  "version": "0.0.1",
+  "description": "Server side CRM instance",
+  "main": "app.mjs",
+  "type": "module",
+  "scripts": {
+    "dev": "pm2 flush && pm2 install . && pm2 logs",
+    "rm": "pm2 delete @dreamcatcher-tech/crm-pm2 -f",
+    "re": "yarn rm && yarn dev"
+  },
+  "dependencies": {
+    "@dreamcatcher-tech/interblock": "^1.0.29",
+    "@pm2/io": "^5.0.0",
+    "debug": "^4.3.4",
+    "pmx": "1.6.7",
+    "process": "^0.11.10"
+  },
+  "devDependencies": {
+    "pm2": "^5.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keymetrics/pmx.git"
+  },
+  "config": {
+    "meow": "myvalue2"
+  },
+  "apps": {
+    "merge_logs": true,
+    "max_memory_restart": "200M",
+    "script": "app.js",
+    "node_args": "--experimental-specifier-resolution=node",
+    "env": {
+      "NODE_ENV": "production",
+      "PORT": 3000,
+      "WITH_FAKE_DATA": "200"
+    }
+  },
+  "author": "",
+  "license": "AGPL-3.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": "18"
+  }
+}

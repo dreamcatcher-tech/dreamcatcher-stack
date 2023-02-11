@@ -26,7 +26,7 @@ jobs:
           workingDir: pkg/webdos
           # exitOnceUploaded: true
         env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
+          NODE_OPTIONS: --max-old-space-size=8192
 
   windows-test:
     # make sure the interblock library runs on windows

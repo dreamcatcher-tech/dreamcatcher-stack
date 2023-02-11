@@ -1,7 +1,7 @@
 {
-  "name": "@dreamcatcher-tech/consumer",
+  "name": "@dreamcatcher-tech/crm-gui",
   "version": "1.0.29",
-  "description": "Test consumer of webdos package",
+  "description": "CRM GUI consuming the webdos component library",
   "author": "evil_liskov <evil_liskov@protonmail.com>",
   "homepage": "https://github.com/dreamcatcher-tech/interblock#readme",
   "license": "AGPL-3.0",
