@@ -27,7 +27,6 @@
     "url": "https://github.com/keymetrics/pmx.git"
   },
   "config": {
-    "meow": "myvalue2"
   },
   "apps": {
     "merge_logs": true,
@@ -36,8 +35,7 @@
     "node_args": "--experimental-specifier-resolution=node",
     "env": {
       "NODE_ENV": "production",
-      "PORT": 3000,
-      "WITH_FAKE_DATA": "200"
+      "PORT": 3000
     }
   },
   "author": "",
@@ -46,6 +44,6 @@
     "access": "public"
   },
   "engines": {
-    "node": "18"
+    "node": "<19"
   }
 }
