@@ -1,7 +1,7 @@
 import Debug from 'debug'
 import JSONbig from 'json-bigint'
 import pmx from '@pm2/io'
-import { Interpulse } from '@dreamcatcher-tech/interblock'
+import { Interpulse, apps } from '@dreamcatcher-tech/interblock'
 import { createRequire } from 'module'
 import process from 'process'
 import chalk from 'ansi-colors-browserify'
@@ -9,7 +9,7 @@ import cliui from 'cliui'
 const require = createRequire(import.meta.url)
 const moduleJson = require('./package.json')
 const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
-
+const { crm } = apps
 const debug = Debug('crm:pm2')
 Debug.enable('crm:pm2* iplog Interpulse')
 debug('starting pm2 app version:', moduleJson.version)
@@ -59,9 +59,10 @@ const boot = async () => {
   const tcpHost = '0.0.0.0'
   const tcpPort = PORT || '8789'
   const repo = REPO || '../../tmp/crm-pm2-test'
-  const engine = await Interpulse.create({ repo, tcpHost, tcpPort })
+  const overloads = { '/crm': crm.covenant }
+  const engine = await Interpulse.create({ repo, tcpHost, tcpPort, overloads })
   await engine.startNetwork()
-  debug('blockchain created')
+  debug('blockchain started')
 
   const latest = await engine.latest()
   const chainId = latest.getAddress().getChainId()
@@ -81,6 +82,14 @@ const boot = async () => {
   console.log(ui.toString())
   debug('stats', await engine.stats())
 
+  if (engine.isCreated) {
+    debug('begin app install on uninitialized engine')
+    await engine.add('/app', '/crm')
+    const allSectors = crm.faker.routing.generateBatch()
+    await engine.execute('/app/routing/batch', { batch: allSectors })
+    debug('app installaction complete')
+  }
+
   pmx.action('stats', async (cb) => {
     debug('action: stats')
     const stats = await engine.stats()
@@ -95,6 +104,7 @@ const boot = async () => {
     debug('action: Hard Reset')
     await engine.hardReset()
     cb('Reset complete.  Restart the service to start fresh')
+    setTimeout(process.exit, 1000)
   })
   pmx.action('ID', async (cb) => {
     debug('action: ID')
@@ -102,7 +112,14 @@ const boot = async () => {
     const chainId = latest.getAddress().getChainId()
     const peerId = await engine.net.keypair.generatePeerId()
     const addrs = engine.net.getMultiaddrs()
-    cb({ chainId, peerId, addrs })
+    const result = { chainId, peerId, addrs }
+    try {
+      const app = await engine.current('/app')
+      result.app = app.getAddress().getChainId()
+    } catch (err) {
+      debug('no app installed', err)
+    }
+    cb(result)
   })
 }
 boot()

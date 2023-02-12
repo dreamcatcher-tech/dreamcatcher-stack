@@ -8,7 +8,17 @@ import Debug from 'debug'
 const debug = Debug('webdos:Engine')
 
 const shutdownMap = new Map()
-export default function Engine({ repo, ram, init, dev, car, children }) {
+export default function Engine({
+  repo,
+  ram,
+  peers,
+  addrs,
+  mounts,
+  init,
+  dev,
+  car,
+  children,
+}) {
   if (ram) {
     repo = undefined
   }
@@ -60,6 +70,30 @@ export default function Engine({ repo, ram, init, dev, car, children }) {
             debug('execute done', command)
           }
           debug('init complete')
+        }
+        if (peers) {
+          debug('peers', peers)
+          for (const [chainId, peerId] of Object.entries(peers)) {
+            const result = await engine.peer(chainId, peerId)
+            debug('peer result', result)
+          }
+          debug('peers connected')
+        }
+        if (addrs) {
+          debug('addrs', addrs)
+          for (const multiaddr of addrs) {
+            const result = await engine.multiaddr(multiaddr)
+            debug('addrs result', result)
+          }
+          debug('addrs added')
+        }
+        if (mounts) {
+          debug('mounts', mounts)
+          for (const [name, chainId] of Object.entries(mounts)) {
+            const result = await engine.mount(name, chainId)
+            debug('mount result', result)
+          }
+          debug('mounts complete')
         }
       }
       const stop = async () => {
@@ -113,40 +147,52 @@ Engine.propTypes = {
    * If `ram` is true, this prop is ignored.
    */
   repo: PropTypes.string,
+
   /**
    * Should the engine be run in RAM only?
    */
   ram: PropTypes.bool,
+
   /**
    * Map of chainIds to arrays of peerIds.
    *
    */
-  peers: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)),
+  peers: PropTypes.objectOf(PropTypes.string),
+
   /**
-   * Map of peerIds to arrays of multiaddresses.
-   * Each multiaddress has the peerId removed from it.   *
+   * Array of multiaddresses to use.  Each one has a peerId included.
    */
-  addrs: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)),
+  addrs: PropTypes.arrayOf(PropTypes.string),
+
+  /**
+   * Map of paths in mtab to chainIds to mount at that path.
+   */
+  mounts: PropTypes.objectOf(PropTypes.string),
+
   /**
    * Map of covenant paths to reified covenants that will be replaced by this
    * engine.
    */
   dev: PropTypes.object,
+
   /**
    * A list of operations that will be applied to the engine on its first
    * boot. Each object in the array takes the form: { path/apiCall, args }.
    * To run multiple actions in parallel, supply many keys.
    */
   init: PropTypes.arrayOf(PropTypes.object),
+
   /**
    * When the engine mounts, should it be reset to its initial state?
    * This will cause any actions in `init` to be executed after reset.
    */
   reset: PropTypes.bool,
+
   /**
    * URL of the car file to load into the engine at the given path.
    */
   car: PropTypes.exact({ url: PropTypes.string, path: PropTypes.string }),
+
   /**
    * Should be a list of <Complex/> components.
    * Each child will be cloned, and have its `engine` prop set to the engine

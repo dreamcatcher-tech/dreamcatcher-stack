@@ -2,6 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
 import { apps } from '@dreamcatcher-tech/interblock'
+import Debug from 'debug'
+Debug.enable('iplog webdos:Engine')
 
 const { faker } = apps.crm
 const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
@@ -16,10 +18,16 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   return [install, sectorsInsert, listInsert, update, cd]
 }
 
+const appRemoteChainId = 'QmdPGintwAps6KjRLBYkd3sNBcwmDNgFXJzReyrUgHHDdj'
+const serverPeerId = '16Uiu2HAmCd9KKpPA1AMTCAMcbpsNS3i9cT79k9xAF35Bh14i4xpu'
+const peers = { [appRemoteChainId]: serverPeerId }
+const addrs = ['/ip4/127.0.0.1/tcp/3000/ws/p2p/' + serverPeerId]
+const mounts = { remote: appRemoteChainId }
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>
-  <Engine dev={{ '/crm': apps.crm.covenant }} init={makeInit()}>
-    <Syncer path="/app">
+  <Engine peers={peers} addrs={addrs} mounts={mounts}>
+    <Syncer path="/.mtab/remote">
       <App />
     </Syncer>
   </Engine>

@@ -86,11 +86,11 @@ const api = {
     type: 'object',
     title: 'PEER',
     description: `Add a new multiaddr to network memory`,
-    required: ['peerId', 'chainId'],
+    required: ['chainId', 'peerId'],
     properties: {
       // TODO regex
-      peerId: { type: 'string' },
       chainId: { type: 'string' },
+      peerId: { type: 'string' },
     },
   },
   mount: {
@@ -99,10 +99,10 @@ const api = {
     description: `Attempt to mount the given chainId at the given mountPath.
       This will make an entry in mtab if there is not one already.`,
     additionalProperties: false,
-    required: ['chainId', 'name'],
+    required: ['name', 'chainId'],
     properties: {
-      chainId: { type: 'string', pattern: 'Qm[1-9A-Za-z]{44}' },
       name: { type: 'string' }, // TODO regex to have no path elements
+      chainId: { type: 'string', pattern: 'Qm[1-9A-Za-z]{44}' },
       noSkip: {
         type: 'boolean',
         description: `When fetching updates for the remote, ensure every pulse in the lineage is fetched, as opposed to lazily fetching only the latest known`,
