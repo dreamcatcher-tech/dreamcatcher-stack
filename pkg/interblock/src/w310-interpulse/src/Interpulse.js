@@ -202,7 +202,10 @@ export class Interpulse {
         const { default: rimraf } = await import('rimraf')
 
         // sync to purposefully block the thread from any block making
-        return rimraf.sync(this.#repo)
+        debug('deleting using rimraf.sync')
+        rimraf.sync(this.#repo)
+        debug('deletion complete')
+        return
       }
       debug('repo was not a filesystem path - skipping deletion')
     }

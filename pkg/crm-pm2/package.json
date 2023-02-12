@@ -12,7 +12,10 @@
   "dependencies": {
     "@dreamcatcher-tech/interblock": "^1.0.29",
     "@pm2/io": "^5.0.0",
+    "ansi-colors-browserify": "^4.1.2",
+    "cliui": "^8.0.1",
     "debug": "^4.3.4",
+    "json-bigint": "^1.0.0",
     "pmx": "1.6.7",
     "process": "^0.11.10"
   },
