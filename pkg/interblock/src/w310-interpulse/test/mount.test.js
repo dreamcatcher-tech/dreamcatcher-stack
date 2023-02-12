@@ -59,8 +59,8 @@ describe('mount', () => {
     debug('child1 address', address)
     const chainId = address.getChainId()
 
-    await client.multiaddr(multiAddress)
     await client.peer(chainId, peerId.toString())
+    await client.multiaddr(multiAddress)
     await client.mount('server', chainId)
     const remote = await client.latest('/.mtab/server')
     debug('remote', remote)

@@ -17,6 +17,7 @@ export default function Engine({
   init,
   dev,
   car,
+  reset,
   children,
 }) {
   const [latest, setLatest] = useState()
@@ -35,6 +36,11 @@ export default function Engine({
           debug(`Engine already running, awaiting stop`)
           await engineStop
           debug('previous engine has stopped')
+        }
+        if (reset) {
+          debug('resetting engine')
+          await Interpulse.hardReset()
+          debug('reset complete')
         }
         const overloads = dev
         engine = await Interpulse.createCI({ ram, repo, overloads })
@@ -69,14 +75,6 @@ export default function Engine({
           }
           debug('init complete')
         }
-        if (peers) {
-          debug('peers', peers)
-          for (const [chainId, peerId] of Object.entries(peers)) {
-            const result = await engine.peer(chainId, peerId)
-            debug('peer result', result)
-          }
-          debug('peers connected')
-        }
         if (addrs) {
           debug('addrs', addrs)
           for (const multiaddr of addrs) {
@@ -85,11 +83,39 @@ export default function Engine({
           }
           debug('addrs added')
         }
+        if (peers) {
+          debug('peers', peers)
+          let mtab
+          try {
+            mtab = await engine.current('/.mtab')
+          } catch (error) {
+            debug('mtab error:', error.message)
+          }
+          if (mtab) {
+            const state = mtab.getState().toJS()
+            debug('mtab state', state)
+          }
+          for (const [chainId, peerId] of Object.entries(peers)) {
+            const result = await engine.peer(chainId, peerId)
+            debug('peer result', result)
+          }
+          debug('peers connected')
+        }
         if (mounts) {
           debug('mounts', mounts)
           for (const [name, chainId] of Object.entries(mounts)) {
-            const result = await engine.mount(name, chainId)
-            debug('mount result', result)
+            let exists
+            try {
+              exists = await engine.current('./mtab/' + name)
+            } catch (error) {
+              debug('mount error:', error.message)
+            }
+            if (!exists) {
+              const result = await engine.mount(name, chainId)
+              debug('mount result', result)
+            } else {
+              debug('mount exists', name, chainId)
+            }
           }
           debug('mounts complete')
         }

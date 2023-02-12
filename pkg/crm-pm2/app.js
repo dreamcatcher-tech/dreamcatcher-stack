@@ -1,4 +1,4 @@
-import Debug from 'debug'
+import Debug from 'debug' 
 import JSONbig from 'json-bigint'
 import pmx from '@pm2/io'
 import { Interpulse, apps } from '@dreamcatcher-tech/interblock'
@@ -11,7 +11,7 @@ const moduleJson = require('./package.json')
 const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
 const { crm } = apps
 const debug = Debug('crm:pm2')
-Debug.enable('crm:pm2* iplog Interpulse')
+Debug.enable('crm:pm2* iplog Interpulse *Announcer *Connection *PulseNet')
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)
 

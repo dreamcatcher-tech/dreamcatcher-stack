@@ -192,6 +192,9 @@ export class Interpulse {
   }
   async hardReset() {
     await this.stop()
+    await Interpulse.hardReset(this.#repo)
+  }
+  static async hardReset(repo) {
     if (isBrowser) {
       const dbs = await window.indexedDB.databases()
       const awaits = []
@@ -208,13 +211,13 @@ export class Interpulse {
       return await Promise.all(awaits)
     }
     if (isNode) {
-      if (typeof this.#repo === 'string') {
-        debug('deleting directory:', this.#repo)
+      if (typeof repo === 'string') {
+        debug('deleting directory:', repo)
         const { default: rimraf } = await import('rimraf')
 
         // sync to purposefully block the thread from any block making
         debug('deleting using rimraf.sync')
-        rimraf.sync(this.#repo)
+        rimraf.sync(repo)
         debug('deletion complete')
         return
       }
@@ -234,7 +237,10 @@ export class Interpulse {
   }
   async startNetwork() {
     if (this.net) {
+      debug('starting network')
       await this.net.start()
+    } else {
+      debug('no network configured - skipping startNetwork')
     }
   }
   async stop() {
@@ -293,6 +299,7 @@ export class Interpulse {
    */
   async #watchMtab() {
     assert(this.net)
+    debug('watching mtab')
     const subscribed = new Set()
     const multiaddrsSet = new Set()
     let lastMtab
@@ -331,6 +338,7 @@ export class Interpulse {
         const stream = this.net.subscribePulse(address)
         const updater = async (source) => {
           for await (const pulselink of source) {
+            debug('stream', pulselink.toString())
             assert(pulselink instanceof PulseLink)
             const latest = await this.#endurance.recover(pulselink)
             const target = mtab.getAddress()

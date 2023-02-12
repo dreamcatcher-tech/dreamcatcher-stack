@@ -33,10 +33,12 @@ export class Announcer {
       debug(`protocols`, protocols)
       const peerIdString = peerId.toString()
       if (this.#connections.has(peerIdString)) {
+        debug('already connected to peer', peerIdString)
         return
       }
       const wantedChainIds = this.#getWantlist(peerId)
       if (!wantedChainIds.size) {
+        debug('no wanted chainIds for peer', peerIdString)
         return
       }
       const connection = this.#dial(peerId)
@@ -78,7 +80,7 @@ export class Announcer {
   addAddressPeer(forAddress, peerId) {
     assert(forAddress instanceof Address)
     assert(isPeerId(peerId))
-    debug('addAddressPeer')
+    debug('addAddressPeer', forAddress.toString(), peerId.toString())
     const chainId = forAddress.getChainId()
     if (!this.#peerMap.has(chainId)) {
       this.#peerMap.set(chainId, new Set())
@@ -106,7 +108,7 @@ export class Announcer {
     // TODO handle concurrent subscribes gracefully
     assert(forAddress instanceof Address)
     assert(forAddress.isRemote())
-    debug(`subscribe`, forAddress)
+    debug(`subscribe`, forAddress.toString())
     const chainId = forAddress.getChainId()
     if (!this.#subscriptions.has(chainId)) {
       this.#subscriptions.set(chainId, new Set())
