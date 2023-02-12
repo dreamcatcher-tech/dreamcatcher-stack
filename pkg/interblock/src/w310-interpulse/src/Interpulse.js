@@ -14,6 +14,7 @@ import { Crypto } from '../../w210-engine/src/Crypto'
 import { isBrowser, isNode } from 'wherearewe'
 import { CarReader, CarWriter } from '@ipld/car'
 import { PulseLink, Pulse } from '../../w008-ipld'
+import { createRamRepo } from '../../w305-libp2p'
 
 const debug = Debug('Interpulse')
 
@@ -42,13 +43,23 @@ export class Interpulse {
     return this.create(options)
   }
   static async create(options = {}) {
+    debug('creating interpulse', options)
     let overloads = options.overloads ? { ...options.overloads } : {}
     overloads.root = shell
     Object.assign(overloads, apps)
     // if announcer is inside net, how to trigger on interpulse received ?
     // could connect via Interpulse ?
     let { net, crypto, endurance = Endurance.create() } = options
-    const { repo, CI } = options
+    let { repo, CI } = options
+    if (options.ram) {
+      if (repo === undefined) {
+        repo = 'ram'
+      }
+      if (typeof repo === 'string') {
+        debug('creating ram repo:', repo)
+        repo = createRamRepo(repo)
+      }
+    }
     if (repo) {
       // no repo => no net - storage and network are one 🙏
       const { tcpHost, tcpPort } = options

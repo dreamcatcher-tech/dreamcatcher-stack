@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-Debug.enable('iplog webdos:Engine')
+
+Debug.enable('iplog webdos:Engine *libp2p* *PulseNet Interpulse')
 
 const { faker } = apps.crm
 const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
@@ -25,11 +26,39 @@ const addrs = ['/ip4/127.0.0.1/tcp/3000/ws/p2p/' + serverPeerId]
 const mounts = { remote: appRemoteChainId }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  // <React.StrictMode>
-  <Engine peers={peers} addrs={addrs} mounts={mounts}>
-    <Syncer path="/.mtab/remote">
-      <App />
-    </Syncer>
-  </Engine>
-  // </React.StrictMode>
+  <>
+    <table>
+      <tbody>
+        <tr>
+          <td width={'200px'}>App remote chain ID</td>
+          <td>
+            <pre>{appRemoteChainId}</pre>
+          </td>
+        </tr>
+        <tr>
+          <td>Server peer ID</td>
+          <td>
+            <pre>{serverPeerId}</pre>
+          </td>
+        </tr>
+        <tr>
+          <td>Chain Peers mapping</td>
+          <td>
+            <pre>{Object.entries(peers).pop().join(' : ')}</pre>
+          </td>
+        </tr>
+        <tr>
+          <td>Server address</td>
+          <td>
+            <pre>{addrs[0]}</pre>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <Engine peers={peers} addrs={addrs} mounts={mounts} ram reset>
+      <Syncer path="/.mtab/remote">
+        <App />
+      </Syncer>
+    </Engine>
+  </>
 )

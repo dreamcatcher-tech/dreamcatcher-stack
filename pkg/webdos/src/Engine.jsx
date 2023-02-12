@@ -19,9 +19,6 @@ export default function Engine({
   car,
   children,
 }) {
-  if (ram) {
-    repo = undefined
-  }
   const [latest, setLatest] = useState()
   const [state, setState] = useState({})
   const [wd, setWd] = useState('/')
@@ -40,10 +37,11 @@ export default function Engine({
           debug('previous engine has stopped')
         }
         const overloads = dev
-        engine = await Interpulse.createCI({ repo, overloads })
+        engine = await Interpulse.createCI({ ram, repo, overloads })
         globalThis.interpulse = engine
         setEngine(engine)
         debug(`Engine ready`)
+        await engine.startNetwork()
         if (car) {
           const { url, path } = car
           debug('importing car from %s to %s', url, path)

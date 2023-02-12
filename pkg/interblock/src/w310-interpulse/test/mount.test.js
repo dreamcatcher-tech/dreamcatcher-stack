@@ -28,7 +28,7 @@ describe('mount', () => {
     client.net.addAddressPeer(address, peerId)
     const child1ChainId = address.getChainId()
 
-    await client.mount(child1ChainId, 'server')
+    await client.mount('server', child1ChainId)
     await client.ln('/.mtab/server', 'serverChild1')
     const remote = await client.latest('/serverChild1')
     debug('remote', remote)
@@ -42,7 +42,7 @@ describe('mount', () => {
   })
   test('shell based read-only mount', async () => {
     const serverRepo = createRamRepo('server')
-    const server = await Interpulse.createCI({ repo: serverRepo })
+    const server = await Interpulse.create({ repo: serverRepo })
     await server.startNetwork()
     await server.add('child1')
     const clientRepo = createRamRepo('client')
@@ -60,8 +60,8 @@ describe('mount', () => {
     const chainId = address.getChainId()
 
     await client.multiaddr(multiAddress)
-    await client.peer(peerId.toString(), chainId)
-    await client.mount(chainId, 'server')
+    await client.peer(chainId, peerId.toString())
+    await client.mount('server', chainId)
     const remote = await client.latest('/.mtab/server')
     debug('remote', remote)
     expect(child1.cid.equals(remote.cid)).toBeTruthy()

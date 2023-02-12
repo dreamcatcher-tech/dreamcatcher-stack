@@ -18,7 +18,7 @@ export class Announcer {
     const instance = new Announcer()
     instance.#libp2p = libp2p
     libp2p.addEventListener('peer:discovery', instance.#getPeerListener())
-    libp2p.handle(protocol, instance.#getHandler())
+    libp2p.handle(PROTOCOL, instance.#getHandler())
     instance.#listen()
     return instance
   }
@@ -130,7 +130,7 @@ export class Announcer {
     if (this.#peerMap.has(chainId)) {
       const peers = this.#peerMap.get(chainId)
       for (const peerIdString of peers) {
-        if (!this.#connections.has(chainId)) {
+        if (!this.#connections.has(peerIdString)) {
           const peerId = peerIdFromString(peerIdString)
           const connection = this.#dial(peerId)
           this.#connections.set(peerIdString, connection)
@@ -152,7 +152,7 @@ export class Announcer {
     assert(forAddress instanceof Address)
     assert(latest instanceof PulseLink)
     assert.strictEqual(typeof path, 'string')
-    debug(`announce`, forAddress, latest, path)
+    debug(`announce`, forAddress.toString(), latest.toString(), path)
 
     const chainId = forAddress.getChainId()
     if (this.#latests.has(chainId)) {
@@ -194,9 +194,16 @@ export class Announcer {
     }
   }
   #dial(peerId) {
+    debug('dial', peerId.toString())
+    this.#libp2p.peerStore.addressBook.get(peerId).then((addresses) => {
+      debug('dial addresses', addresses)
+      addresses.forEach((address) => {
+        debug('address', address.multiaddr.toString())
+      })
+    })
     const cx = Connection.create(this.#rxAnnounce, this.#latests)
     // TODO check if we have any addresses first
-    this.#libp2p.dialProtocol(peerId, protocol).then((stream) => {
+    this.#libp2p.dialProtocol(peerId, PROTOCOL).then((stream) => {
       cx.connectStream(stream)
     })
     // TODO handle rejection and clean up the connection
@@ -204,4 +211,4 @@ export class Announcer {
   }
 }
 const isPeerId = (peerId) => !!peerId[Symbol.for('@libp2p/peer-id')]
-const protocol = '/pulse/0.0.1'
+const PROTOCOL = '/pulse/0.0.1'
