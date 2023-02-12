@@ -14,9 +14,9 @@ jobs:
     # Job steps
     steps:
       - uses: actions/checkout@v1
-      - name: Install dependencies
         with:
             node-version: '18.x'
+      - name: Install dependencies
         run: yarn install --frozen-lockfile
         # 👇 Adds Chromatic as a step in the workflow
       - name: Publish to Chromatic
