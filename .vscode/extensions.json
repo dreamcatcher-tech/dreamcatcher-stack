@@ -6,6 +6,7 @@
     "github.copilot",
     "ms-vscode.vscode-js-profile-flame",
     "codeandstuff.package-json-upgrade",
-    "wallabyjs.wallaby-vscode"
+    "wallabyjs.wallaby-vscode",
+    "dbaeumer.vscode-eslint"
   ]
 }
