@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1676241026446,
+  "lastUpdate": 1676256805974,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interpulse Benchmark": [
@@ -20780,6 +20780,86 @@ window.BENCHMARK_DATA = {
             "range": "±0.40%",
             "unit": "ops/sec",
             "extra": "85 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted-capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "4046e4bd180dbcd430adc0ee402e6ac7313652af",
+          "message": "add serve api function to net.\nconnect insecure websockets.",
+          "timestamp": "2023-02-13T15:51:23+13:00",
+          "tree_id": "27f4f3f4a4b20ce349e8b246324406fce9e6b332",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/4046e4bd180dbcd430adc0ee402e6ac7313652af"
+        },
+        "date": 1676256804537,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 703,
+            "range": "±4.12%",
+            "unit": "ops/sec",
+            "extra": "80 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 200,
+            "range": "±3.28%",
+            "unit": "ops/sec",
+            "extra": "85 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 322,
+            "range": "±0.59%",
+            "unit": "ops/sec",
+            "extra": "89 samples"
+          },
+          {
+            "name": "publish",
+            "value": 30.47,
+            "range": "±7.90%",
+            "unit": "ops/sec",
+            "extra": "73 samples"
+          },
+          {
+            "name": "install",
+            "value": 9.72,
+            "range": "±0.79%",
+            "unit": "ops/sec",
+            "extra": "50 samples"
+          },
+          {
+            "name": "add customer",
+            "value": 25.01,
+            "range": "±9.49%",
+            "unit": "ops/sec",
+            "extra": "67 samples"
+          },
+          {
+            "name": "block making",
+            "value": 1125,
+            "range": "±0.22%",
+            "unit": "ops/sec",
+            "extra": "89 samples"
+          },
+          {
+            "name": "unsigned block making",
+            "value": 9996,
+            "range": "±0.38%",
+            "unit": "ops/sec",
+            "extra": "88 samples"
           }
         ]
       }
