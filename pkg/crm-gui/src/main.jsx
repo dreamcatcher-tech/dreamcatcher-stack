@@ -25,7 +25,7 @@ const peers = { [appRemoteChainId]: serverPeerId }
 const addrs = ['/ip4/127.0.0.1/tcp/3000/ws/p2p/' + serverPeerId]
 const mounts = { remote: appRemoteChainId }
 
-const overloads = { '/crm': apps.crm.covenant }
+const dev = { '/crm': apps.crm.covenant }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <>
@@ -57,13 +57,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         </tr>
       </tbody>
     </table>
-    <Engine
-      peers={peers}
-      addrs={addrs}
-      mounts={mounts}
-      ram
-      overloads={overloads}
-    >
+    <Engine peers={peers} addrs={addrs} mounts={mounts} ram dev={dev}>
       <Syncer path="/.mtab/remote">
         <App />
       </Syncer>

@@ -91,6 +91,8 @@ const boot = async () => {
     await engine.execute('/app/routing/batch', { batch: allSectors })
     debug('app installaction complete')
   }
+  const serve = await engine.serve('/app')
+  debug('serve', serve)
 
   pmx.action('stats', async (cb) => {
     debug('action: stats')

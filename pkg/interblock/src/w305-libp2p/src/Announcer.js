@@ -66,7 +66,7 @@ export class Announcer {
     return ({ connection: cx, stream }) => {
       const peerId = cx.remotePeer
       const peerIdString = peerId.toString()
-      debug('connection', peerIdString)
+      debug('connection', peerIdString, this.#connections.has(peerIdString))
       assert(!this.#connections.has(peerIdString))
       // TODO what about teardown ?
       const connection = Connection.create(this.#rxAnnounce, this.#latests)
