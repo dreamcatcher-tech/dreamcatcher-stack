@@ -43,7 +43,7 @@ export default function Engine({
           debug('reset complete')
         }
         const overloads = dev
-        engine = await Interpulse.createCI({ ram, repo, overloads })
+        engine = await Interpulse.create({ ram, repo, overloads })
         globalThis.interpulse = engine
         setEngine(engine)
         debug(`Engine ready`)
