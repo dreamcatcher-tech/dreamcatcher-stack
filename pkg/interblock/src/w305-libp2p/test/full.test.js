@@ -15,7 +15,7 @@ describe('full', () => {
     debug('pulselink', genesis.getPulseLink())
     const address = genesis.getAddress()
     await server.endure(genesis)
-
+    server.serve(genesis)
     const client = await PulseNet.create(createRamRepo('client'))
     await client.start()
     await client.dialCI(server)
@@ -52,10 +52,4 @@ describe('full', () => {
     await Promise.all([server.stop(), client.stop()])
   })
   test.todo('serve two clients')
-  test('server reload', async () => {
-    // server and client boot, exchange blocks two ways
-    // both shut down to disk
-    // boot server, make some new pulses
-    // boot client, observe it catch up
-  })
 })

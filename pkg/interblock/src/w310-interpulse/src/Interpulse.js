@@ -303,6 +303,7 @@ export class Interpulse {
     const subscribed = new Set()
     const multiaddrsSet = new Set()
     let lastMtab
+    const serves = new Map()
     for await (const mtab of this.subscribe('/.mtab')) {
       if (lastMtab) {
         // TODO determine what to unsubscribe and unmap
@@ -310,9 +311,23 @@ export class Interpulse {
       const state = mtab.getState().toJS()
       debug('mtab state', state)
       debug('mtab hash', mtab.cid.toString())
-      const peerIds = Object.keys(state)
+
+      const { serve = {} } = state
+      for (const [path, chainId] of Object.entries(serve)) {
+        if (serves.has(path)) {
+          if (serves.get(path) !== chainId) {
+            console.error('path already served', path, chainId)
+          }
+          continue
+        }
+        serves.set(path, chainId)
+        const latest = await this.current(path)
+        this.net.serve(latest)
+      }
+
+      const peerIds = Object.keys(state.peers || {})
       for (const peerId of peerIds) {
-        const { multiaddrs, chainIds } = state[peerId]
+        const { multiaddrs, chainIds } = state.peers[peerId]
         for (const multiaddr of multiaddrs) {
           if (!multiaddrsSet.has(multiaddr)) {
             multiaddrsSet.add(multiaddr)
@@ -408,6 +423,19 @@ export class Interpulse {
       })
     )
     return { roots, count }
+  }
+  async getIdentifiers(path) {
+    assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
+    const multiaddrs = this.net.getMultiaddrs()
+    const { peerId } = this.net.libp2p
+    const child = await this.current(path)
+    const address = child.getAddress()
+    const chainId = address.getChainId()
+    return {
+      peerId: peerId.toString(),
+      multiaddrs,
+      chainId,
+    }
   }
 }
 const mapShell = (engine) => {

@@ -19,11 +19,13 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   return [install, sectorsInsert, listInsert, update, cd]
 }
 
-const appRemoteChainId = 'QmdPGintwAps6KjRLBYkd3sNBcwmDNgFXJzReyrUgHHDdj'
-const serverPeerId = '16Uiu2HAmCd9KKpPA1AMTCAMcbpsNS3i9cT79k9xAF35Bh14i4xpu'
+const appRemoteChainId = 'QmbLnYLHKymFDXZSbskTaZZ7kbSvxyCLnNtbsbMgEvYgiy'
+const serverPeerId = '16Uiu2HAmHqdocSZ8iV9CNEv8P7jztfpEM25SaeixMrFhLSKyux7a'
 const peers = { [appRemoteChainId]: serverPeerId }
 const addrs = ['/ip4/127.0.0.1/tcp/3000/ws/p2p/' + serverPeerId]
 const mounts = { remote: appRemoteChainId }
+
+const overloads = { '/crm': apps.crm.covenant }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <>
@@ -55,7 +57,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         </tr>
       </tbody>
     </table>
-    <Engine peers={peers} addrs={addrs} mounts={mounts} ram reset>
+    <Engine
+      peers={peers}
+      addrs={addrs}
+      mounts={mounts}
+      ram
+      overloads={overloads}
+    >
       <Syncer path="/.mtab/remote">
         <App />
       </Syncer>

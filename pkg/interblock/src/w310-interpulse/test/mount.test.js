@@ -14,6 +14,7 @@ describe('mount', () => {
     const server = await Interpulse.createCI({ repo: serverRepo })
     await server.startNetwork()
     const addResult = await server.add('child1')
+    await server.serve('/child1')
     debug(addResult)
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })
@@ -45,6 +46,7 @@ describe('mount', () => {
     const server = await Interpulse.create({ repo: serverRepo })
     await server.startNetwork()
     await server.add('child1')
+    await server.serve('/child1')
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })
     await client.startNetwork()
@@ -108,7 +110,6 @@ describe('mount', () => {
     const parent = await nestedRemote.getNetwork().getParent()
     parent.rx.tip.dir()
 
-    Debug.enable('iplog *Engine *openPath *dmz')
     globalThis.meow = nestedRemote.getPulseLink()
     try {
       const ping = await client.ping('/.mtab/server/nested1')
@@ -117,5 +118,30 @@ describe('mount', () => {
       console.error(error)
       throw error
     }
+  })
+  test('server and client reload', async () => {
+    const serverRepo = createRamRepo('server')
+    const preServer = await Interpulse.createCI({ repo: serverRepo })
+    await preServer.add('child1')
+    await preServer.serve('/child1')
+    const id = await preServer.getIdentifiers('/child1')
+    const { chainId, peerId } = id
+
+    await preServer.stop()
+    const server = await Interpulse.createCI({ repo: serverRepo })
+    await server.startNetwork() // remove need to start at all
+
+    const clientRepo = createRamRepo('client')
+    const client = await Interpulse.create({ repo: clientRepo })
+    engines.push(server, client)
+    await client.startNetwork()
+
+    await client.peer(chainId, peerId)
+    await client.multiaddr(server.net.getMultiaddrs()[0])
+    await client.mount('server', chainId)
+    const remote = await client.latest('/.mtab/server')
+    debug('remote', remote)
+    const child1 = await server.current('/child1')
+    expect(child1.cid.equals(remote.cid)).toBeTruthy()
   })
 })

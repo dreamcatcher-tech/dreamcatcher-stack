@@ -23,9 +23,10 @@ import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
 import { libp2pConfig } from 'ipfs-core-config/libp2p'
 import { Announcer } from './Announcer'
 import { peerIdFromString } from '@libp2p/peer-id'
+import { all as filter } from '@libp2p/websockets/filters'
 import Debug from 'debug'
 
-const debug = Debug('interpulse:PulseNet')
+const debug = Debug('interpulse:libp2p:PulseNet')
 
 const ciRepo = () => createRepo('ciRepo', loadCodec, createBackend())
 
@@ -62,7 +63,7 @@ export class PulseNet {
       datastore: repo.datastore, // definitely correct as per ipfs
     }
     delete options.metrics // TODO remove once libp2p is fixed
-    const websocketsOptions = {}
+    const websocketsOptions = { filter }
     if (isNode) {
       const listen = [`/ip4/${tcpHost}/tcp/${tcpPort}/ws`]
       const { SSL_PRIVATE_KEY, SSL_CERT_CHAIN } = process.env
@@ -206,5 +207,11 @@ export class PulseNet {
   getMultiaddrs() {
     const addrs = this.#net.getMultiaddrs()
     return addrs.map((addr) => addr.toString())
+  }
+  serve(pulse) {
+    assert(pulse instanceof Pulse)
+    const address = pulse.getAddress()
+    const pulseLink = pulse.getPulseLink()
+    this.#announcer.serve(address, pulseLink)
   }
 }

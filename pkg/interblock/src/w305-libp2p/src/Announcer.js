@@ -68,6 +68,7 @@ export class Announcer {
       const peerIdString = peerId.toString()
       debug('connection', peerIdString)
       assert(!this.#connections.has(peerIdString))
+      // TODO what about teardown ?
       const connection = Connection.create(this.#rxAnnounce, this.#latests)
       connection.connectStream(stream)
       this.#connections.set(peerIdString, connection)
@@ -150,17 +151,17 @@ export class Announcer {
       return announcement
     }
   }
-  async announce(forAddress, latest, path = '') {
+  async announce(forAddress, latest) {
     assert(forAddress instanceof Address)
     assert(latest instanceof PulseLink)
-    assert.strictEqual(typeof path, 'string')
-    debug(`announce`, forAddress.toString(), latest.toString(), path)
-
     const chainId = forAddress.getChainId()
-    if (this.#latests.has(chainId)) {
-      const previous = this.#latests.get(chainId)
-      assert(!latest.equals(previous))
+    if (!this.#latests.has(chainId)) {
+      return
     }
+    debug(`announce`, forAddress.toString(), latest.toString())
+
+    const previous = this.#latests.get(chainId)
+    assert(!latest.equals(previous))
     this.#latests.set(chainId, latest)
     for (const connection of this.#connections.values()) {
       connection.txAnnounce(forAddress, latest)
@@ -197,19 +198,21 @@ export class Announcer {
   }
   #dial(peerId) {
     debug('dial', peerId.toString())
-    this.#libp2p.peerStore.addressBook.get(peerId).then((addresses) => {
-      debug('dial addresses', addresses)
-      addresses.forEach((address) => {
-        debug('address', address.multiaddr.toString())
-      })
-    })
     const cx = Connection.create(this.#rxAnnounce, this.#latests)
     // TODO check if we have any addresses first
+    // TODO endelessly try to dial
     this.#libp2p.dialProtocol(peerId, PROTOCOL).then((stream) => {
       cx.connectStream(stream)
     })
     // TODO handle rejection and clean up the connection
     return cx
+  }
+  serve(forAddress, latest) {
+    assert(forAddress instanceof Address)
+    assert(latest instanceof PulseLink)
+    assert(forAddress.isRemote())
+    assert(!this.#latests.has(forAddress.getChainId()))
+    this.#latests.set(forAddress.getChainId(), latest)
   }
 }
 const isPeerId = (peerId) => !!peerId[Symbol.for('@libp2p/peer-id')]

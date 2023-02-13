@@ -30,21 +30,20 @@ describe('protocol', () => {
     debug(`node1`, node1.peerId.toString())
     debug(`node2`, node2.peerId.toString())
 
-    const announcer1 = Announcer.create(node1)
-    const announcer2 = Announcer.create(node2)
-    const address = Address.createCI('test address')
+    const client = Announcer.create(node1)
+    const server = Announcer.create(node2)
     debug(address)
 
-    announcer2.announce(address, pulselink)
-    const self = announcer2.subscribe(address)
+    server.serve(address, pulselink)
+    const self = server.subscribe(address)
     for await (const announcement of self) {
       assert.strictEqual(announcement, pulselink)
       debug('self announce')
       break
     }
 
-    announcer1.addAddressPeer(address, node2.peerId)
-    const stream = announcer1.subscribe(address)
+    client.addAddressPeer(address, node2.peerId)
+    const stream = client.subscribe(address)
     await node1.peerStore.addressBook.set(node2.peerId, node2.getMultiaddrs())
     debug(`nodes connected`)
     for await (const announcement of stream) {

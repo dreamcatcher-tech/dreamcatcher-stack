@@ -15,6 +15,7 @@ describe('netReboot', () => {
     const server = await Interpulse.createCI({ repo: serverRepo })
     await server.startNetwork()
     const addResult = await server.add('child1')
+    await server.serve('/child1')
     debug(addResult)
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })

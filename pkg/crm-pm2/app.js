@@ -1,4 +1,4 @@
-import Debug from 'debug' 
+import Debug from 'debug'
 import JSONbig from 'json-bigint'
 import pmx from '@pm2/io'
 import { Interpulse, apps } from '@dreamcatcher-tech/interblock'
@@ -11,7 +11,9 @@ const moduleJson = require('./package.json')
 const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
 const { crm } = apps
 const debug = Debug('crm:pm2')
+
 Debug.enable('crm:pm2* iplog Interpulse *Announcer *Connection *PulseNet')
+
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)
 
@@ -108,18 +110,8 @@ const boot = async () => {
   })
   pmx.action('ID', async (cb) => {
     debug('action: ID')
-    const latest = await engine.latest()
-    const chainId = latest.getAddress().getChainId()
-    const peerId = await engine.net.keypair.generatePeerId()
-    const addrs = engine.net.getMultiaddrs()
-    const result = { chainId, peerId, addrs }
-    try {
-      const app = await engine.current('/app')
-      result.app = app.getAddress().getChainId()
-    } catch (err) {
-      debug('no app installed', err)
-    }
-    cb(result)
+    const id = await engine.getIdentifiers('/app')
+    cb(id)
   })
 }
 boot()
