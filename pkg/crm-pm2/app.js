@@ -20,11 +20,7 @@ debug('node version', process.version)
 /**
 --faker 123 Generate fake data, using the given number of customers
 
---port 1234 Listen on the given port number, or use a default random one
-
 --admin rootChainId Supply a chainId to allow to connect without being authd
-
-repo required as this is installed globally, so must say where the repo will be. KV store is in repo/interpulse/.
 
 .env provided as a file which holds SSL keys. If a .env file is found at the same place as the repo, it will be loaded ie: repo/.env will be loaded.
 
@@ -39,7 +35,7 @@ const config = pmx.initModule({
       actions: true,
       issues: true,
       meta: true,
-      main_probes: ['test-probe'],
+      // main_probes: ['test-probe'],
     },
   },
 })
@@ -103,6 +99,10 @@ const boot = async () => {
   })
   pmx.action('fake', async (cb) => {
     debug('action: fake')
+    const allSectors = crm.faker.routing.generateBatch()
+    const batch = crm.faker.customers.generateBatchInside(allSectors)
+    await engine.execute('/app/customers/batch', { batch })
+    cb('Fake data added ' + batch.length + ' customers')
   })
   pmx.action('Hard Reset', async (cb) => {
     debug('action: Hard Reset')
