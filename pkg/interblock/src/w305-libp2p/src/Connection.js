@@ -33,13 +33,18 @@ export class Connection {
       const { chainId } = payload
       switch (type) {
         case 'ANNOUNCE': {
-          const { pulselink, path } = payload
+          const { pulselink, target } = payload
           const latest = PulseLink.parse(pulselink)
+          const fromAddress = Address.fromChainId(chainId)
+          const announcement = { fromAddress, latest }
+          if (target) {
+            const targetAddress = Address.parse(target)
+            announcement.targetAddress = targetAddress
+          }
           // TODO check this was a requested announcement
           // TODO update our tracker before announcing
-          const forAddress = Address.fromChainId(chainId)
-          this.#announce.push({ forAddress, latest })
-          continue
+          this.#announce.push(announcement)
+          break
         }
         case 'SUBSCRIBE': {
           const { isSingle } = payload
@@ -52,12 +57,12 @@ export class Connection {
             const forAddress = Address.fromChainId(chainId)
             this.txAnnounce(forAddress, latest)
           }
-          continue
+          break
         }
         case 'UNSUBSCRIBE': {
           assert(this.#rxSubscriptions.has(chainId))
           this.#rxSubscriptions.delete(chainId)
-          continue
+          break
         }
       }
     }
@@ -94,10 +99,10 @@ export class Connection {
     this.#txSubscriptions.add(chainId)
     this.#tx.push(subscribe)
   }
-  txAnnounce(forAddress, pulselink, path = '') {
+  txAnnounce(forAddress, pulselink, target) {
     assert(forAddress instanceof Address)
     assert(pulselink instanceof PulseLink)
-    assert.strictEqual(typeof path, 'string')
+    assert(!target || typeof target === 'string')
     const chainId = forAddress.getChainId()
     if (!this.#rxSubscriptions.has(chainId)) {
       return
@@ -106,7 +111,7 @@ export class Connection {
     if (isSingle) {
       this.#rxSubscriptions.delete(chainId)
     }
-    const announce = Connection.ANNOUNCE(forAddress, pulselink, path)
+    const announce = Connection.ANNOUNCE(forAddress, pulselink, target)
     this.#tx.push(announce)
   }
   connectStream(stream) {
@@ -122,14 +127,17 @@ export class Connection {
     const payload = { chainId, isSingle, proof }
     return { type: 'SUBSCRIBE', payload }
   }
-  static ANNOUNCE(forAddress, pulselink, path) {
+  static ANNOUNCE(forAddress, pulselink, target) {
     assert(forAddress instanceof Address)
     assert(pulselink instanceof PulseLink)
-    assert.strictEqual(typeof path, 'string')
+    assert(!target || typeof target === 'string')
     const payload = {
       chainId: forAddress.getChainId(),
       pulselink: pulselink.cid.toString(),
-      path,
+    }
+    if (target) {
+      Address.parse(target)
+      payload.target = target
     }
     return { type: 'ANNOUNCE', payload }
   }

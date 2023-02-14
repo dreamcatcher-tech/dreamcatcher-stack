@@ -126,6 +126,7 @@ const api = {
     },
   },
   mount: {
+    // TODO take name, chainId, and multiAddrs to mount in one shot
     type: 'object',
     title: 'MOUNT',
     description: `Attempt to mount the given chainId at the given mountPath.

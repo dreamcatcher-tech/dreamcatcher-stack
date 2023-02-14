@@ -100,9 +100,19 @@ const boot = async () => {
   pmx.action('fake', async (cb) => {
     debug('action: fake')
     const allSectors = crm.faker.routing.generateBatch()
-    const batch = crm.faker.customers.generateBatchInside(allSectors)
-    await engine.execute('/app/customers/batch', { batch })
-    cb('Fake data added ' + batch.length + ' customers')
+    const fullBatch = crm.faker.customers.generateBatchInside(allSectors, 1000)
+    debug('fake data', fullBatch.length, 'customers')
+    const batch = []
+    let count = 0
+    for (const customer of fullBatch) {
+      batch.push(customer)
+      if (batch.length % 50 === 0) {
+        await engine.execute('/app/customers/batch', { batch: fullBatch })
+        count += batch.length
+        batch.length = 0
+      }
+    }
+    cb('Fake data added ' + count + ' customers')
   })
   pmx.action('Hard Reset', async (cb) => {
     debug('action: Hard Reset')
@@ -114,6 +124,14 @@ const boot = async () => {
     debug('action: ID')
     const id = await engine.getIdentifiers('/app')
     cb(id)
+  })
+  pmx.action('Import', async (cb) => {
+    debug('action: Import')
+    // try connect to moneyworks
+    // begin pulling in customers and updating them
+    // report progress to the user
+    // TODO make this be a scoped action that takes a long time
+    cb('Importing complete')
   })
 }
 boot()

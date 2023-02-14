@@ -106,8 +106,6 @@ export class PulseNet {
     this.#repo = repo
     const bsOptions = { statsEnabled: true }
     this.#bitswap = createBitswap(this.#net, this.#repo.blocks, bsOptions)
-  }
-  async start() {
     await this.#bitswap.start()
     debug('listening on', this.#net.getMultiaddrs())
   }

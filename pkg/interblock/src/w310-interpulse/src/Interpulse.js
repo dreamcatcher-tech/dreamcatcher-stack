@@ -235,21 +235,13 @@ export class Interpulse {
      */
     throw new Error('not implemented')
   }
-  async startNetwork() {
-    if (this.net) {
-      debug('starting network')
-      await this.net.start()
-    } else {
-      debug('no network configured - skipping startNetwork')
-    }
-  }
   async stop() {
+    await this.#engine.stop() // stop all interpulsing
     if (this.net) {
       this.#crypto.stop()
       await this.#endurance.stop() // complete all disk writes
       await this.net.stop()
     }
-    await this.#engine.stop() // stop all interpulsing
   }
   async stats() {
     if (!this.net) {

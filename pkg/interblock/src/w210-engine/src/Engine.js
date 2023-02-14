@@ -96,7 +96,6 @@ export class Engine {
       pulse.getAddress(),
       pulse.getPulseLink()
     )
-
     const deepening = Deepening.createInterpulse(target, pulse)
     return await this.#pool(deepening)
   }
@@ -213,7 +212,11 @@ export class Engine {
     }
     assert(latest instanceof Pulse, `no latest found for ${address}`)
     assert(latest.isVerified())
-    assert(this.#crypto.isValidatable(latest), 'No public keys for Pulse')
+    if (!this.#crypto.isValidatable(latest)) {
+      throw new Error(
+        `No keys for ${latest.getAddress()} in engine ${this.selfAddress}`
+      )
+    }
     if (latest.isForkGenesis()) {
       assert(deepening.type === Deepening.INTERPULSE)
       parent = deepening.payload.pulse
@@ -237,7 +240,11 @@ export class Engine {
       assert(!pool.getNetwork().channels.cxs)
     }
     if (pool.getNetwork().channels.txs.length) {
-      pool = await this.#fork(pool)
+      if (pool.getCovenantPath() !== '/system:/net') {
+        pool = await this.#fork(pool)
+      } else {
+        debug('avoiding forking any channels in network covenant')
+      }
     }
     const resolver = this.#endurance.getResolver(pool.currentCrush.cid)
     const provenance = await pool.provenance.crushToCid(resolver)

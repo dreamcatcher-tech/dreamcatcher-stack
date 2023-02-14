@@ -6,7 +6,7 @@ When used in conjunction with bitswap, nodes are able to receive new Pulses crea
 
 ## Contracts
 
-There are two other parts of the system that contracts are offered to. The first is the internal contract with the Interpulse Engine, and the other are is with remote instances of the protocol manager on other nodes, which are not to be trusted.
+There are two other parts of the system that contracts are offered to. The first is the internal contract with the Interpulse Engine, and the other is with remote instances of the protocol manager on other nodes, which are not to be trusted.
 
 > The contract with the engine is Interpulses in order, and consecutive. <br/>
 > The contract with local subscribers is Pulses in order and consecutive. <br/>
@@ -18,20 +18,22 @@ Note that the engine never has reason to ask for remote Pulses. This is because 
 ## Principles
 
 1. Announcing an Interpulse is push, and is the responsibility of the transmitter, Pulse is pull, and is the responsibility of the consumer.
-2. Interpulses cannot be subscribed to
+2. Interpulses cannot be subscribed to, they are merely announced - only Pulses can be subscribed to
 3. A node can have only one crypto key
 4. Nodes can end an Announce connection for any reason, such as over capacity or idleness
 5. No gossiping or relaying of information
 6. This protocol is at best a hint, as even honest nodes have delays and disconnections, so the reference data is always the signed pulses. Later a punishment may be enacted against corrupt nodes.
 7. If a quorum of validators state the same view of latest, the recipient can trust this result
-8. This protocol is for announcing a new latest pulse and a new latest Interpulse. Fetching an arbitrary subsequence of pulses is done using the lineage tree, hence there is no query support
+8. This protocol is for announcing a new latest pulse and a new latest Interpulse. Fetching an arbitrary subsequence of pulses is done using the lineage tree, hence there is no query support.  Catchup of Interpulses is done by walking `tip` pulseIds back from latest
 9. No advertisement of available chain addresses is provided for privacy reasons
 10. Announcements for Pulses are only done for approot pulses, as this is all that is required to know if some child has changed
-11. The same subscription methods are used for pulses as well as for interpulses, with the only difference in the payload being the `path` key on an interpulse, so the recipient knows what path in the Pulse to request to avoid getting blacklisted for probing forbidden paths
+11. The same subscription methods are used for pulses as well as for interpulses, with the only difference in the payload being the `target` key on an interpulse, so the recipient knows what path in the Pulse to request to avoid getting blacklisted for probing forbidden paths
 12. Programmatically subscriptions are managed using [async iterables](https://www.npmjs.com/package/streaming-iterables) because this is the default way libp2p handles protocol transmissions
 13. Protocol state is stored in ram because a reboot requires the connections to be re-established and re-authenticated. We may store peer:address mappings later, to help speed up rediscovery
 14. No subscription request is refused, it may have been silently discarded if the requester failed to meet permissions
 
+## Pathing on the target engine
+There is no map of chainIds on the engine, so the target chain must be discovered by path.  The sender must know the path relative to the share they are receiving.  In the advent that the path changes between when they transmit and when they send a result, they can resent the announce with the new path.  They should not be punished for sending with an invalid path, provided the attempt was in earnest, so they should send the pulselink for the share they are basing the path off.
 ## Implementation
 
 Each new pulse that triggers the announce() function in endurance, triggers this process:
@@ -46,20 +48,22 @@ Each new pulse that triggers the announce() function in endurance, triggers this
 The internal design is such that the wishes of the system are recorded, and then a worker attempts to discover what nodes are required in order to pass on the announcements. The recipient of an announcment triggers an async iterator yield with shape:
 
 ```js
-{ forAddress, pulselink[, path] }
+{ fromAddress, latestPulseLink[, targetAddress] }
 ```
 
-where path is provided when an interpulse is being sent, and tells the recipient what path to ask for in the interpulse to avoid any security triggers. `forAddress` is used to allow multiplexing on the connection. It is an error to send a response that was not asked for, and this may result in disconnection.
+where targetAddress is provided when an interpulse is being sent, and tells the recipient what path to ask for in the interpulse to avoid any security triggers. `fromAddress` is used to allow multiplexing on the connection. It is an error to send a response that was not asked for, and this may result in disconnection.
 
 ## Message Types
 
-### `SUBSCRIBE { forAddress, isSingle, proof }`
+### `SUBSCRIBE { fromAddress, isSingle, proof }`
 
-### `UNSUBSCRIBE { forAddress }`
+### `UNSUBSCRIBE { fromAddress }`
 
-### `ANNOUNCE { forAddress, pulselink, path }`
+### `ANNOUNCE { fromAddress, latestPulseLink, targetAddress, path, root }`
 
-Subscribe and unsubscribe are for full Pulses only, whereas interpulse is validator to validator, and uses Announce as it is a push event.
+Subscribe and unsubscribe are for full Pulses only, whereas interpulse is validator to validator, and uses Announce as it is a push event.  Later relayers that are not validators may be permitted to push interpulse announces to the validators of the recipients.
+
+Path is the absolute path to the targetAddress, starting with the given root pulselink.  Path and root are supplied so that recipients can know if a legit path was supplied, even if the path has shifted since transmission began.
 
 ## Extensions
 

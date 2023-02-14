@@ -182,10 +182,11 @@ export class Announcer {
   async #listen() {
     for await (const announcement of this.#rxAnnounce) {
       debug(`announcement`, announcement)
-      const { forAddress, latest } = announcement
-      assert(forAddress instanceof Address)
+      const { fromAddress, latest, targetAddress } = announcement
+      assert(fromAddress instanceof Address)
       assert(latest instanceof PulseLink)
-      const chainId = forAddress.getChainId()
+      assert(!targetAddress || targetAddress instanceof Address)
+      const chainId = fromAddress.getChainId()
       if (!this.#subscriptions.has(chainId)) {
         continue
       }
