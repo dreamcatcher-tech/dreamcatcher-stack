@@ -55,15 +55,20 @@ where targetAddress is provided when an interpulse is being sent, and tells the 
 
 ## Message Types
 
+Subscribe and unsubscribe are for full Pulses only, whereas interpulse is validator to validator, and uses Announce as it is a push event.  Later relayers that are not validators may be permitted to push interpulse announces to the validators of the recipients.
 ### `SUBSCRIBE { fromAddress, isSingle, proof }`
 
 ### `UNSUBSCRIBE { fromAddress }`
 
-### `ANNOUNCE { fromAddress, latestPulseLink, targetAddress, path, root }`
+### `ANNOUNCE { fromAddress, latestPulseLink, targetAddress, pathToTarget, root }`
 
-Subscribe and unsubscribe are for full Pulses only, whereas interpulse is validator to validator, and uses Announce as it is a push event.  Later relayers that are not validators may be permitted to push interpulse announces to the validators of the recipients.
+Announces either new Pulses to subscribers, or new Interpulses.  Interpulses are pushed out actively - they do not use subscriptions.  Peers will blacklist those that send invalid Interpulse announcements.
 
 Path is the absolute path to the targetAddress, starting with the given root pulselink.  Path and root are supplied so that recipients can know if a legit path was supplied, even if the path has shifted since transmission began.
+
+If the path shifts during transmit, the sender needs to acknowledge that.
+
+Sender needs to track its own chainIds that it sends from since the receiver will not know this info when it sents back.
 
 ## Extensions
 
