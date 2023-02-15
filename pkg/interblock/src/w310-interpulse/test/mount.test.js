@@ -5,7 +5,7 @@ const debug = Debug('tests')
 
 describe('mount', () => {
   afterEach(async () => {
-    await Promise.all(engines.map((e) => e.stop()))
+    Promise.all(engines.map((e) => e.stop()))
     engines.length = 0
   })
   const engines = []
@@ -86,6 +86,7 @@ describe('mount', () => {
     await client.peer(chainId, peerId)
     await client.multiaddr(multiaddrs[0])
     await client.mount('server', chainId)
+    await client.latest('/.mtab/server')
     Debug.enable('tests iplog interpulse:Engine')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()
