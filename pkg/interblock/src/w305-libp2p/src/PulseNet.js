@@ -110,9 +110,9 @@ export class PulseNet {
     debug('listening on', this.#net.getMultiaddrs())
   }
   async stop() {
-    await this.#bitswap.stop()
-    await this.#net.stop()
-    await this.#repo.close()
+    await stopSafe(this.#bitswap.stop())
+    await stopSafe(this.#net.stop())
+    await stopSafe(this.#repo.close())
   }
   get repo() {
     return this.#repo
@@ -211,5 +211,12 @@ export class PulseNet {
     const address = pulse.getAddress()
     const pulseLink = pulse.getPulseLink()
     this.#announcer.serve(address, pulseLink)
+  }
+}
+const stopSafe = async (promise) => {
+  try {
+    await promise
+  } catch (err) {
+    debug('stop error', err)
   }
 }

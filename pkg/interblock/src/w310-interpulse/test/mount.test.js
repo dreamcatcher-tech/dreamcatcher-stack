@@ -44,12 +44,10 @@ describe('mount', () => {
   test('shell based read-only mount', async () => {
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.create({ repo: serverRepo })
-    await server.startNetwork()
     await server.add('child1')
     await server.serve('/child1')
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })
-    await client.startNetwork()
     engines.push(client, server)
 
     const [multiAddress] = server.net.getMultiaddrs()
@@ -75,7 +73,7 @@ describe('mount', () => {
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
   test.only('writing', async () => {
-    Debug.enable('iplog *fork')
+    Debug.enable('iplog *fork tests')
     const server = await Interpulse.createCI({ ram: true, repo: 'server' })
     await server.add('child1')
     await server.serve('/child1')
@@ -88,8 +86,6 @@ describe('mount', () => {
     await client.peer(chainId, peerId)
     await client.multiaddr(multiaddrs[0])
     await client.mount('server', chainId)
-    const remote = await client.latest('/.mtab/server')
-    debug('remote', remote)
     Debug.enable('tests iplog interpulse:Engine')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()

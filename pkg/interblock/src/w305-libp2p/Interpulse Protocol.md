@@ -15,6 +15,8 @@ There are two other parts of the system that contracts are offered to. The first
 
 Note that the engine never has reason to ask for remote Pulses. This is because to ensure determinism, references to remote chains must be done using reference to an approot, which in turn must be supplied at pulse creation time.
 
+There are two types of communication - intra validator where a group seek consensus on a chain, and inter validator where one group of validators wants one of their chains to talk with a chain managed by another group of validators.
+
 ## Principles
 
 1. Announcing an Interpulse is push, and is the responsibility of the transmitter, Pulse is pull, and is the responsibility of the consumer.
@@ -31,10 +33,21 @@ Note that the engine never has reason to ask for remote Pulses. This is because 
 12. Programmatically subscriptions are managed using [async iterables](https://www.npmjs.com/package/streaming-iterables) because this is the default way libp2p handles protocol transmissions
 13. Protocol state is stored in ram because a reboot requires the connections to be re-established and re-authenticated. We may store peer:address mappings later, to help speed up rediscovery
 14. No subscription request is refused, it may have been silently discarded if the requester failed to meet permissions
+15. Requests need to provide path information so the receivers know how to find the destination chain.  Replies do not provide path info as the sender is responsible for having their chains ready to receive.  Basically Requesters have the energy burden, and replies are the laziest possible.
 
 ## Pathing on the target engine
+
 There is no map of chainIds on the engine, so the target chain must be discovered by path.  The sender must know the path relative to the share they are receiving.  In the advent that the path changes between when they transmit and when they send a result, they can resent the announce with the new path.  They should not be punished for sending with an invalid path, provided the attempt was in earnest, so they should send the pulselink for the share they are basing the path off.
+
+Interpulses that are replies only and not requests need not provide pathing information. If the sender rebooted, then tension records would cause it to recover what the outbound requests were already, permitting a direct lookup of the address.
+
+## Complex to Complex communication
+
+If the ACL permits it, then nested chains in one complex could talk to nested chains in another complex by referencing the root of the complex.  The root acts like a socket in this case, and provides a means for receiver to work out permissions, and on response, for the sender to locate the sender if they have crashed and lost their cache of latest.
+
 ## Implementation
+
+### New Pulse created
 
 Each new pulse that triggers the announce() function in endurance, triggers this process:
 
@@ -48,14 +61,33 @@ Each new pulse that triggers the announce() function in endurance, triggers this
 The internal design is such that the wishes of the system are recorded, and then a worker attempts to discover what nodes are required in order to pass on the announcements. The recipient of an announcment triggers an async iterator yield with shape:
 
 ```js
-{ fromAddress, latestPulseLink[, targetAddress] }
+{ fromAddress, latest[, targetAddress] }
 ```
 
 where targetAddress is provided when an interpulse is being sent, and tells the recipient what path to ask for in the interpulse to avoid any security triggers. `fromAddress` is used to allow multiplexing on the connection. It is an error to send a response that was not asked for, and this may result in disconnection.
 
+### Interpulse Received
+
+Each announce must be valid or the connection will be closed.  Repeated bad behavior will blacklist a peer.
+
+1. try lookup the address directly
+1. if fail, lookup the root pulselink
+1. walk the path to target
+1. if no latests, use this as the latest
+1. check if interpulse precedent matches
+1. use bitswap to walk the interpulses back until find the required precedent
+1. insert all the walked interpulses into the pool
+
+### Interpulse sent back
+
+When a server has received an interpulse into one of the chains it is serving, then it will need to send an interpulse back.  When it responds, the requester may have rebooted, so it needs a way to relocate the sending chain.  The server has no path info from the origin request, and so it can cannot provide a path back.
+
+For this reason, any outbound chains need to be kept somewhere the engine knows how to find quickly.  So on reply, if pathToTarget is not given, it defaults to `/` and root defaults to the last received pulseLink on the inbound.  On reboot, tensions should be loaded first before announces are processed.  Announces received before recovery is complete should be buffered, as the network should start listening as soon as possible.
+
 ## Message Types
 
 Subscribe and unsubscribe are for full Pulses only, whereas interpulse is validator to validator, and uses Announce as it is a push event.  Later relayers that are not validators may be permitted to push interpulse announces to the validators of the recipients.
+
 ### `SUBSCRIBE { fromAddress, isSingle, proof }`
 
 ### `UNSUBSCRIBE { fromAddress }`
@@ -69,6 +101,10 @@ Path is the absolute path to the targetAddress, starting with the given root pul
 If the path shifts during transmit, the sender needs to acknowledge that.
 
 Sender needs to track its own chainIds that it sends from since the receiver will not know this info when it sents back.
+
+Don't need targetAddress if provide path and root pulselink.
+
+## Process for announce
 
 ## Extensions
 

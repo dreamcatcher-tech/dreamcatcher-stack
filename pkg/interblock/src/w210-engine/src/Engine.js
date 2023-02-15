@@ -194,6 +194,7 @@ export class Engine {
     }
     const { address } = deepening
     let latest
+    // TODO expand to use announcements
     if (this.#endurance.hasLatest(address)) {
       latest = await this.#endurance.findLatest(address)
       debug('endurance had', address)
@@ -498,7 +499,13 @@ export class Engine {
     )
     this.#piercers.add(piercer)
     const deepening = Deepening.createPierce(address, request, piercer)
-    await this.#pool(deepening)
+    try {
+      await this.#pool(deepening)
+    } catch (error) {
+      this.#piercers.delete(piercer)
+      debug('engine fault', error)
+      piercer.reject(error)
+    }
     return promise
   }
   #piercers = new Set()
