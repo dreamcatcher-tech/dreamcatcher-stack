@@ -5,7 +5,7 @@ const debug = Debug('tests')
 
 describe('mount', () => {
   afterEach(async () => {
-    Promise.all(engines.map((e) => e.stop()))
+    await Promise.all(engines.map((e) => e.stop()))
     engines.length = 0
   })
   const engines = []
@@ -73,7 +73,7 @@ describe('mount', () => {
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
   test.only('writing', async () => {
-    Debug.enable('iplog *fork tests')
+    Debug.enable('iplog *fork tests *Announcer')
     const server = await Interpulse.createCI({ ram: true, repo: 'server' })
     await server.add('child1')
     await server.serve('/child1')
@@ -87,7 +87,7 @@ describe('mount', () => {
     await client.multiaddr(multiaddrs[0])
     await client.mount('server', chainId)
     await client.latest('/.mtab/server')
-    Debug.enable('tests iplog interpulse:Engine')
+    Debug.enable('tests iplog interpulse:Engine *announce *Announcer')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()
   }, 2000)

@@ -34,6 +34,8 @@ There are two types of communication - intra validator where a group seek consen
 13. Protocol state is stored in ram because a reboot requires the connections to be re-established and re-authenticated. We may store peer:address mappings later, to help speed up rediscovery
 14. No subscription request is refused, it may have been silently discarded if the requester failed to meet permissions
 15. Requests need to provide path information so the receivers know how to find the destination chain.  Replies do not provide path info as the sender is responsible for having their chains ready to receive.  Basically Requesters have the energy burden, and replies are the laziest possible.
+16. All chains have a root somewhere, and all chains have a parent.  There can be no chains refered to by purely addresses since we would never know how to find them within an engine.  The path gives the notion of latest, since it is latest relative to the current root latest.
+17. Every pulse stored in an engine can be reached by walking a path from root
 
 ## Pathing on the target engine
 
@@ -92,9 +94,20 @@ Subscribe and unsubscribe are for full Pulses only, whereas interpulse is valida
 
 ### `UNSUBSCRIBE { fromAddress }`
 
-### `ANNOUNCE { fromAddress, latestPulseLink, targetAddress, pathToTarget, root }`
+### `UPDATE { address, latest }`
+Announces new Pulses to subscribers.  
 
-Announces either new Pulses to subscribers, or new Interpulses.  Interpulses are pushed out actively - they do not use subscriptions.  Peers will blacklist those that send invalid Interpulse announcements.
+### `ANNOUNCE { source, target, root, path }`
+`source` is a PulseLink.
+`target` is an Address.
+`root` is a PulseLink.
+`path` is an absolute path.
+
+`source` is required to be downloaded in good faith by the receiver.  If it is slow or malicious it will be abandoned.  If the combination of all provided vars proves not to be valid, the peer will be blacklisted, so the pre-emptive acquisition of the pulselink contents is not an attack vector.
+
+`root` is a pulselink that we will try and look up amongst our served items, if not present this request will be considered malicious.
+
+Interpulses are pushed out actively - they do not use subscriptions.
 
 Path is the absolute path to the targetAddress, starting with the given root pulselink.  Path and root are supplied so that recipients can know if a legit path was supplied, even if the path has shifted since transmission began.
 
@@ -104,9 +117,14 @@ Sender needs to track its own chainIds that it sends from since the receiver wil
 
 Don't need targetAddress if provide path and root pulselink.
 
+Announce will have a response, which is the latest transmission from the receiver, if there is one.  If there isn't one, then this will be sent once it is available.  There are no tracking IDs as the contract is loose.  If receiver crashes, requester will need to retry.
+
 ## Process for announce
 
 ## Extensions
+
+### Use Tension in approot to reduce cross complex announces
+Instead of targeting each recipient directly, we could roll up into the approot and just trade those top level announcements
 
 ### Receive announces from multiple conflicting sources
 

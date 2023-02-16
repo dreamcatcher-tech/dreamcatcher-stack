@@ -1,10 +1,11 @@
 import assert from 'assert-fast'
 import { peerIdFromString } from '@libp2p/peer-id'
-import { Address, PulseLink } from '../../w008-ipld/index.mjs'
+import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { pushable } from 'it-pushable'
 import { Connection } from './Connection'
 import Debug from 'debug'
 const debug = Debug('interpulse:libp2p:Announcer')
+const PROTOCOL = '/pulse/0.0.1'
 
 export class Announcer {
   #libp2p
@@ -13,13 +14,17 @@ export class Announcer {
   #latests = new Map() // chainId : pulselink
   #peerMap = new Map() // chainId : peerIdString[]
   #connections = new Map() // peerIdString : Connection
+  #rxUpdate = pushable({ objectMode: true })
+  #rxAnnounce = pushable({ objectMode: true })
   static create(libp2p) {
     assert(typeof libp2p.dialProtocol, 'function')
     const instance = new Announcer()
     instance.#libp2p = libp2p
     libp2p.addEventListener('peer:discovery', instance.#getPeerListener())
     libp2p.handle(PROTOCOL, instance.#getHandler())
-    instance.#listen()
+    instance.#listenUpdate()
+    instance.#listenAnnounce()
+
     return instance
   }
   #getPeerListener() {
@@ -32,24 +37,18 @@ export class Announcer {
       }
       debug(`protocols`, protocols)
       const peerIdString = peerId.toString()
-      if (this.#connections.has(peerIdString)) {
-        debug('already connected to peer', peerIdString)
-        return
-      }
-      const wantedChainIds = this.#getWantlist(peerId)
+      const wantedChainIds = this.#getWantlist(peerIdString)
       if (!wantedChainIds.size) {
         debug('no wanted chainIds for peer', peerIdString)
         return
       }
-      const connection = this.#dial(peerId)
-      this.#connections.set(peerIdString, connection)
+      const connection = this.#ensureConnection(peerIdString)
       for (const chainId of wantedChainIds) {
         connection.txSubscribe(chainId)
       }
     }
   }
-  #getWantlist(peerId) {
-    const peerIdString = peerId.toString()
+  #getWantlist(peerIdString) {
     const wantedChainIds = new Set()
     for (const chainId of this.#subscriptions.keys()) {
       if (this.#peerMap.has(chainId)) {
@@ -63,16 +62,19 @@ export class Announcer {
     return wantedChainIds
   }
   #getHandler() {
-    return ({ connection: cx, stream }) => {
-      const peerId = cx.remotePeer
-      const peerIdString = peerId.toString()
+    return ({ connection: { remotePeer }, stream }) => {
+      const peerIdString = remotePeer.toString()
       debug('connection', peerIdString, this.#connections.has(peerIdString))
       assert(!this.#connections.has(peerIdString))
       // TODO what about teardown ?
-      const connection = Connection.create(this.#rxAnnounce, this.#latests)
+      const connection = Connection.create(
+        this.#rxUpdate,
+        this.#rxAnnounce,
+        this.#latests
+      )
       connection.connectStream(stream)
       this.#connections.set(peerIdString, connection)
-      const wantedChainIds = this.#getWantlist(peerId)
+      const wantedChainIds = this.#getWantlist(peerIdString)
       for (const chainId of wantedChainIds) {
         connection.txSubscribe(chainId)
       }
@@ -96,13 +98,7 @@ export class Announcer {
       return
     }
 
-    let connection
-    if (this.#connections.has(peerIdString)) {
-      connection = this.#connections.get(peerIdString)
-    } else {
-      connection = this.#dial(peerId)
-      this.#connections.set(peerIdString, connection)
-    }
+    const connection = this.#ensureConnection(peerIdString)
     connection.txSubscribe(chainId)
   }
   subscribe(forAddress, onlyLatest = false) {
@@ -130,19 +126,33 @@ export class Announcer {
     if (this.#latests.has(chainId)) {
       sink.push(this.#latests.get(chainId))
     }
+    this.#broadcast(chainId, (cx) => cx.txSubscribe(chainId))
+    return sink
+  }
+  #broadcast(chainId, operation) {
+    assert.strictEqual(typeof chainId, 'string')
+    assert.strictEqual(typeof operation, 'function')
+    const results = []
     if (this.#peerMap.has(chainId)) {
       const peers = this.#peerMap.get(chainId)
       for (const peerIdString of peers) {
-        if (!this.#connections.has(peerIdString)) {
-          const peerId = peerIdFromString(peerIdString)
-          const connection = this.#dial(peerId)
-          this.#connections.set(peerIdString, connection)
-        }
-        const connection = this.#connections.get(peerIdString)
-        connection.txSubscribe(chainId)
+        const connection = this.#ensureConnection(peerIdString)
+        results.push(operation(connection))
+        debug('broadcast', chainId, peerIdString)
       }
+    } else {
+      debug('no peers for chainId', chainId)
     }
-    return sink
+    return results
+    // TODO store the operation to be done when new peers appear ?
+  }
+  #ensureConnection(peerIdString) {
+    if (!this.#connections.has(peerIdString)) {
+      const peerId = peerIdFromString(peerIdString)
+      const connection = this.#dial(peerId)
+      this.#connections.set(peerIdString, connection)
+    }
+    return this.#connections.get(peerIdString)
   }
   async latest(forAddress) {
     const onlyLatest = true
@@ -151,7 +161,7 @@ export class Announcer {
       return announcement
     }
   }
-  async announce(forAddress, latest) {
+  async announcePulse(forAddress, latest) {
     assert(forAddress instanceof Address)
     assert(latest instanceof PulseLink)
     const chainId = forAddress.getChainId()
@@ -164,7 +174,7 @@ export class Announcer {
     assert(!latest.equals(previous))
     this.#latests.set(chainId, latest)
     for (const connection of this.#connections.values()) {
-      connection.txAnnounce(forAddress, latest)
+      connection.txUpdate(forAddress, latest)
     }
     if (!this.#subscriptions.has(chainId)) {
       return
@@ -174,15 +184,28 @@ export class Announcer {
       sink(latest)
     }
   }
+  announceInterpulse(source, target, root, path) {
+    assert(source instanceof Pulse)
+    assert(target instanceof Address)
+    assert(root instanceof Pulse)
+    assert.strictEqual(typeof path, 'string')
+    // try dial some peers if none exist
+
+    const rootChainId = root.getAddress().getChainId()
+    debug('seeking peers for', root.getAddress())
+    this.#broadcast(rootChainId, (cx) =>
+      cx.txAnnounce(source, target, root, path)
+    )
+  }
   unsubscribe(forAddress) {
     assert(forAddress instanceof Address)
     throw new Error('not implemented')
   }
-  #rxAnnounce = pushable({ objectMode: true })
-  async #listen() {
-    for await (const announcement of this.#rxAnnounce) {
-      debug(`announcement`, announcement)
-      const { fromAddress, latest, targetAddress } = announcement
+
+  async #listenUpdate() {
+    for await (const update of this.#rxUpdate) {
+      debug(`update`, update)
+      const { fromAddress, latest, targetAddress } = update
       assert(fromAddress instanceof Address)
       assert(latest instanceof PulseLink)
       assert(!targetAddress || targetAddress instanceof Address)
@@ -196,17 +219,42 @@ export class Announcer {
         sink.push(latest)
       }
     }
+    debug('rxUpdate ended')
+  }
+  async #listenAnnounce() {
+    for await (const announce of this.#rxAnnounce) {
+      debug(`announce`, announce)
+
+      const { fromAddress, latest, targetAddress } = announce
+      assert(fromAddress instanceof Address)
+      assert(latest instanceof PulseLink)
+      assert(!targetAddress || targetAddress instanceof Address)
+      const chainId = fromAddress.getChainId()
+      if (!this.#subscriptions.has(chainId)) {
+        continue
+      }
+      this.#latests.set(chainId, latest)
+      const subscribers = this.#subscriptions.get(chainId)
+      for (const sink of subscribers) {
+        sink.push(latest)
+      }
+    }
+    debug('rxUpdate ended')
   }
   #dial(peerId) {
     debug('dial', peerId.toString())
-    const cx = Connection.create(this.#rxAnnounce, this.#latests)
+    const connection = Connection.create(
+      this.#rxUpdate,
+      this.#rxAnnounce,
+      this.#latests
+    )
     // TODO check if we have any addresses first
     // TODO endelessly try to dial
     this.#libp2p.dialProtocol(peerId, PROTOCOL).then((stream) => {
-      cx.connectStream(stream)
+      connection.connectStream(stream)
     })
     // TODO handle rejection and clean up the connection
-    return cx
+    return connection
   }
   serve(forAddress, latest) {
     assert(forAddress instanceof Address)
@@ -215,6 +263,17 @@ export class Announcer {
     assert(!this.#latests.has(forAddress.getChainId()))
     this.#latests.set(forAddress.getChainId(), latest)
   }
+  stop() {
+    this.#rxUpdate.return()
+    this.#rxAnnounce.return()
+    for (const connection of this.#connections.values()) {
+      connection.stop()
+    }
+    for (const chainSubscribers of this.#subscriptions.values()) {
+      for (const sink of chainSubscribers) {
+        sink.return()
+      }
+    }
+  }
 }
 const isPeerId = (peerId) => !!peerId[Symbol.for('@libp2p/peer-id')]
-const PROTOCOL = '/pulse/0.0.1'

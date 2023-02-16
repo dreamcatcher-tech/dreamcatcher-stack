@@ -3,28 +3,40 @@ import { fromString } from 'uint8arrays/from-string'
 import { toString } from 'uint8arrays/to-string'
 import { pipe } from 'it-pipe'
 import assert from 'assert-fast'
-import { Address, PulseLink } from '../../w008-ipld/index.mjs'
+import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
+import posix from 'path-browserify'
 const debug = Debug('interpulse:libp2p:Connection')
 
 export class Connection {
   #latests = new Map()
   #tx
   #rx
+  #update
   #announce
   #txSubscriptions = new Set() // chainId
   #rxSubscriptions = new Map() // chainId : isSingle
   #debounces = new Map() // chainId : {remote, local[]}
-  static create(announce, latests) {
-    assert.strictEqual(typeof announce.push, 'function')
+  #stream
+  static create(updateStream, announceStream, latests) {
+    assert.strictEqual(typeof updateStream.push, 'function')
+    assert.strictEqual(typeof announceStream.push, 'function')
     assert(latests instanceof Map)
     const instance = new Connection()
     instance.#tx = pushable({ objectMode: true })
     instance.#rx = pushable({ objectMode: true })
-    instance.#announce = announce
+    instance.#update = updateStream
+    instance.#announce = announceStream
     instance.#latests = latests
     instance.#listen()
     return instance
+  }
+  stop() {
+    this.#rx.return()
+    this.#tx.return()
+    if (this.#stream) {
+      this.#stream.abort()
+    }
   }
   async #listen() {
     for await (const received of this.#rx) {
@@ -32,7 +44,7 @@ export class Connection {
       const { type, payload } = received
       const { chainId } = payload
       switch (type) {
-        case 'ANNOUNCE': {
+        case 'UPDATE': {
           const { pulselink, target } = payload
           const latest = PulseLink.parse(pulselink)
           const fromAddress = Address.fromChainId(chainId)
@@ -43,7 +55,7 @@ export class Connection {
           }
           // TODO check this was a requested announcement
           // TODO update our tracker before announcing
-          this.#announce.push(announcement)
+          this.#update.push(announcement)
           break
         }
         case 'SUBSCRIBE': {
@@ -55,7 +67,7 @@ export class Connection {
             const latest = this.#latests.get(chainId)
             assert(latest instanceof PulseLink)
             const forAddress = Address.fromChainId(chainId)
-            this.txAnnounce(forAddress, latest)
+            this.txUpdate(forAddress, latest)
           }
           break
         }
@@ -64,8 +76,20 @@ export class Connection {
           this.#rxSubscriptions.delete(chainId)
           break
         }
+        case 'ANNOUNCE': {
+          // we just received news that an interpulse is ready for us
+          const { source, target, root, path } = payload
+          // verify the interpulse is legit
+          // if so, store the peer against this chainId, since there will be
+          // something sent back eventually
+
+          break
+        }
+        default:
+          throw new Error(`unknown type ${type}`)
       }
     }
+    debug('rx ended')
   }
   updateRxAnnounce(forAddress, pulselink) {
     // called from parent when another peer updates latest first
@@ -93,16 +117,18 @@ export class Connection {
   txSubscribe(chainId, proof = []) {
     assert.strictEqual(typeof chainId, 'string')
     assert(Array.isArray(proof))
-    assert(!this.#txSubscriptions.has(chainId))
+    if (this.#txSubscriptions.has(chainId)) {
+      debug('already subscribed')
+      return
+    }
     const isSingle = false
-    const subscribe = Connection.SUBSCRIBE(chainId, isSingle, proof)
+    const subscribe = SUBSCRIBE(chainId, isSingle, proof)
     this.#txSubscriptions.add(chainId)
     this.#tx.push(subscribe)
   }
-  txAnnounce(forAddress, pulselink, target) {
+  txUpdate(forAddress, pulselink) {
     assert(forAddress instanceof Address)
     assert(pulselink instanceof PulseLink)
-    assert(!target || typeof target === 'string')
     const chainId = forAddress.getChainId()
     if (!this.#rxSubscriptions.has(chainId)) {
       return
@@ -111,42 +137,57 @@ export class Connection {
     if (isSingle) {
       this.#rxSubscriptions.delete(chainId)
     }
-    const announce = Connection.ANNOUNCE(forAddress, pulselink, target)
+    const update = UPDATE(forAddress, pulselink)
+    this.#tx.push(update)
+  }
+  txAnnounce(source, target, root, path) {
+    const announce = ANNOUNCE(source, target, root, path)
     this.#tx.push(announce)
   }
   connectStream(stream) {
+    this.#stream = stream
     assert(stream.sink)
     assert(stream.source)
     pipe(this.#tx, jsTransform, stream, sinkJs(this.#rx))
   }
-  static SUBSCRIBE(chainId, isSingle = false, proof = []) {
-    assert.strictEqual(typeof chainId, 'string')
-    assert.strictEqual(typeof isSingle, 'boolean')
-    assert(Array.isArray(proof))
-    assert(proof.every((p) => p instanceof Address))
-    const payload = { chainId, isSingle, proof }
-    return { type: 'SUBSCRIBE', payload }
+}
+function SUBSCRIBE(chainId, isSingle = false, proof = []) {
+  assert.strictEqual(typeof chainId, 'string')
+  assert.strictEqual(typeof isSingle, 'boolean')
+  assert(Array.isArray(proof))
+  assert(proof.every((p) => p instanceof Address))
+  const payload = { chainId, isSingle, proof }
+  return { type: 'SUBSCRIBE', payload }
+}
+function UPDATE(forAddress, pulselink) {
+  assert(forAddress instanceof Address)
+  assert(pulselink instanceof PulseLink)
+  const payload = {
+    chainId: forAddress.getChainId(),
+    pulselink: pulselink.cid.toString(),
   }
-  static ANNOUNCE(forAddress, pulselink, target) {
-    assert(forAddress instanceof Address)
-    assert(pulselink instanceof PulseLink)
-    assert(!target || typeof target === 'string')
-    const payload = {
-      chainId: forAddress.getChainId(),
-      pulselink: pulselink.cid.toString(),
-    }
-    if (target) {
-      Address.parse(target)
-      payload.target = target
-    }
-    return { type: 'ANNOUNCE', payload }
+  return { type: 'UPDATE', payload }
+}
+function ANNOUNCE(source, target, root, path) {
+  assert(source instanceof Pulse)
+  assert(target instanceof Address)
+  assert(root instanceof Pulse)
+  assert.strictEqual(typeof path, 'string')
+  assert(posix.isAbsolute(path))
+  const payload = {
+    source: source.cid.toString(),
+    target: target.getChainId(),
+    root: root.cid.toString(),
+    path,
   }
+  return { type: 'ANNOUNCE', payload }
 }
 async function* jsTransform(source) {
   for await (const object of source) {
     const arraylist = to(object)
     yield arraylist
   }
+  debug('jsTransform ended')
 }
 const to = (js) => {
   return fromString(JSON.stringify(js), 'utf8')
@@ -158,9 +199,10 @@ const sinkJs = (pushable) => {
         const object = from(arraylist)
         pushable.push(object)
       }
+      debug('sinkJs ended')
     } catch (e) {
-      // console.error(e)
-      // TODO tear down the connection
+      console.error(e)
+      pushable.end(e)
     }
   }
 }

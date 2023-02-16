@@ -49,7 +49,7 @@ export class Interpulse {
     Object.assign(overloads, apps)
     // if announcer is inside net, how to trigger on interpulse received ?
     // could connect via Interpulse ?
-    let { net, crypto, endurance = Endurance.create() } = options
+    let { net, crypto, endurance = Endurance.create(), announce } = options
     let { repo, CI } = options
     if (options.ram) {
       if (repo === undefined) {
@@ -66,8 +66,9 @@ export class Interpulse {
       net = await PulseNet.create(repo, CI, tcpHost, tcpPort)
       crypto = Crypto.create(net.keypair)
       endurance = await NetEndurance.create(net)
+      announce = net.announce
     }
-    const opts = { ...options, overloads, crypto, endurance }
+    const opts = { ...options, overloads, crypto, endurance, announce }
     const engine = await Engine.create(opts)
 
     const instance = new Interpulse(engine)
@@ -163,6 +164,7 @@ export class Interpulse {
         debug('latest error', error.message)
       }
     }
+    debug('latest search ended')
   }
   /**
    * Get whatever pulse is available in local storage for the given path.
@@ -236,6 +238,9 @@ export class Interpulse {
     throw new Error('not implemented')
   }
   async stop() {
+    for (const subscriber of this.#subscribers) {
+      subscriber.return()
+    }
     await this.#engine.stop() // stop all interpulsing
     if (this.net) {
       this.#crypto.stop()
@@ -279,6 +284,7 @@ export class Interpulse {
           debug('error', error.message)
         }
       }
+      debug('checker ended')
     }
     pipe(rootEmitter, checker)
     return sink
@@ -351,10 +357,12 @@ export class Interpulse {
             const target = mtab.getAddress()
             await this.#engine.updateLatest(target, latest)
           }
+          debug('updater ended')
         }
         pipe(stream, updater)
       }
     }
+    debug('mtab ended')
   }
   get isCreated() {
     return !this.net || this.net.isCreated

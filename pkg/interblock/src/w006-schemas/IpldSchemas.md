@@ -509,6 +509,8 @@ Channel stores rx and tx only after all the activity has been wrung out of them.
 
 Channel has functions to transmit actions, because it needs to update both tx and rx to shift the next reply to be processed. In contrast, receiving actions is done by calling the rx slice directly, as no modifications occur.
 
+If the channel has an address, that implies the channel is open for Requests.  We may very well know that a path resolves to a certain address, but until we have a direct connection to the chain, the address is left off.
+
 ```sh
 type Channel struct {
     channelId Int

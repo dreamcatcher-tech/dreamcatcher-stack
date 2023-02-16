@@ -23,6 +23,7 @@ export class Keypair {
   static createCI(name = 'CI') {
     assert.strictEqual(typeof name, 'string')
     if (!CI_PRIVATE_KEY) {
+      // TODO move to using pure @noble/secp256k1 to avoid this slow call
       CI_PRIVATE_KEY = new Secp256k1PrivateKey(CI.pri, CI.pub)
     }
     return this.create(name, CI_PRIVATE_KEY)

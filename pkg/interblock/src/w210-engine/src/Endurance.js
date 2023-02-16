@@ -39,7 +39,7 @@ export class Endurance {
     }
     return this.#latests.has(address.getChainId())
   }
-  discoverLatest(address, latestLink) {
+  suggestLatest(address, latestLink) {
     assert(address instanceof Address)
     assert(latestLink instanceof PulseLink)
     const chainId = address.getChainId()
@@ -116,6 +116,7 @@ export class Endurance {
     assert(CID.asCID(treetop))
     // TODO WARNING permissions must be honoured
     // use treetop to only fetch things below this CID
+    // TODO block historical pulselinks
     return async (cid) => {
       assert(CID.asCID(cid), `not cid: ${cid}`)
       this.assertStarted()

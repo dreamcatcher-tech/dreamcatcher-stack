@@ -31,7 +31,7 @@ const debug = Debug('interpulse:libp2p:PulseNet')
 const ciRepo = () => createRepo('ciRepo', loadCodec, createBackend())
 
 export class PulseNet {
-  #net
+  #libp2p
   #repo
   #bitswap
   #keypair
@@ -100,25 +100,45 @@ export class PulseNet {
     if (repo.closed) {
       await repo.open()
     }
-    this.#net = await createLibp2p(options)
-    this.#announcer = Announcer.create(this.#net)
+    // TODO lazy load this
+    this.#libp2p = await createLibp2p(options)
+    this.#announcer = Announcer.create(this.#libp2p)
 
     this.#repo = repo
     const bsOptions = { statsEnabled: true }
-    this.#bitswap = createBitswap(this.#net, this.#repo.blocks, bsOptions)
+    this.#bitswap = createBitswap(this.#libp2p, this.#repo.blocks, bsOptions)
     await this.#bitswap.start()
-    debug('listening on', this.#net.getMultiaddrs())
+    debug('listening on', this.#libp2p.getMultiaddrs())
   }
   async stop() {
-    await stopSafe(this.#bitswap.stop())
-    await stopSafe(this.#net.stop())
-    await stopSafe(this.#repo.close())
+    await stopSafe(() => this.#announcer.stop())
+    await stopSafe(() => this.#bitswap.stop())
+    await stopSafe(() => this.#libp2p.stop())
+    await stopSafe(() => this.#repo.close())
   }
   get repo() {
     return this.#repo
   }
   get libp2p() {
-    return this.#net
+    return this.#libp2p
+  }
+  get announce() {
+    const dbg = debug.extend('announce')
+    return (source, target, root, path) => {
+      assert(source instanceof Pulse)
+      assert(source.isVerified())
+      assert(target instanceof Address)
+      assert(root instanceof Pulse)
+      assert.strictEqual(typeof path, 'string')
+      // root address is so we know what peers to talk to
+      // root pulselink is to prove we had a valid path at time of sending
+      // path is so the server can recover the latest pulse from its kv store
+      // pulse is to form the interpulse out of
+      // target is to know which address to focus the interpulse upon
+      dbg('announce', source.getPulseLink(), target, root.getPulseLink(), path)
+
+      return this.#announcer.announceInterpulse(source, target, root, path)
+    }
   }
   get keypair() {
     return this.#keypair
@@ -135,19 +155,19 @@ export class PulseNet {
     const manyBlocks = [...blocks.entries()].map(([, block]) => {
       return { key: block.cid, value: block.bytes }
     })
-    const bitswap = await all(this.#bitswap.putMany(manyBlocks))
+    const bitswapResults = await all(this.#bitswap.putMany(manyBlocks))
     const address = pulse.getAddress()
     const pulselink = pulse.getPulseLink()
-    await this.#announcer.announce(address, pulselink)
-    return bitswap
+    await this.#announcer.announcePulse(address, pulselink)
+    return bitswapResults
   }
   async dialCI(other) {
     assert(other instanceof PulseNet)
     // make a direct connection to the other pulsenet, for testing
-    const { peerId } = other.#net
-    const addrs = other.#net.getMultiaddrs()
-    await this.#net.peerStore.addressBook.set(peerId, addrs)
-    await this.#net.dial(peerId)
+    const { peerId } = other.#libp2p
+    const addrs = other.#libp2p.getMultiaddrs()
+    await this.#libp2p.peerStore.addressBook.set(peerId, addrs)
+    await this.#libp2p.dial(peerId)
   }
   addAddressPeer(address, peerId) {
     // TODO make different trust levels, as well as a default peer
@@ -167,9 +187,7 @@ export class PulseNet {
     assert(multiaddr.getPeerId())
     const peerId = peerIdFromString(multiaddr.getPeerId())
     debug('addMultiAddress', multiaddr.toString(), peerId.toString())
-    await this.#net.peerStore.addressBook.set(peerId, [multiaddr])
-    const test = await this.#net.peerStore.addressBook.get(peerId)
-    test.forEach((addr) => debug('addr', addr.multiaddr.toString()))
+    await this.#libp2p.peerStore.addressBook.set(peerId, [multiaddr])
   }
   subscribePulse(address) {
     assert(address instanceof Address)
@@ -203,7 +221,7 @@ export class PulseNet {
     return { repo, bitswap }
   }
   getMultiaddrs() {
-    const addrs = this.#net.getMultiaddrs()
+    const addrs = this.#libp2p.getMultiaddrs()
     return addrs.map((addr) => addr.toString())
   }
   serve(pulse) {
@@ -213,9 +231,9 @@ export class PulseNet {
     this.#announcer.serve(address, pulseLink)
   }
 }
-const stopSafe = async (promise) => {
+const stopSafe = async (fn) => {
   try {
-    await promise
+    await fn()
   } catch (err) {
     debug('stop error', err)
   }

@@ -37,7 +37,7 @@ describe('Connection', () => {
     const announcedPulselink = createTestPulselink()
     assert(!announcedPulselink.equals(cachedPulselink))
     debug(`announcing`, announcedPulselink)
-    west.txAnnounce(address, announcedPulselink)
+    west.txUpdate(address, announcedPulselink)
     {
       const { value: announcement } = await announce.next()
       assert(announcement.latest.equals(announcedPulselink))

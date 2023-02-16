@@ -37,6 +37,7 @@ export class Engine {
   #crypto
   #endurance
   #scale
+  #announce
 
   #subscribers = new Set()
 
@@ -56,20 +57,20 @@ export class Engine {
     return await this.create(ciOptions)
   }
   static async create(opts = {}) {
-    const instance = new Engine(opts)
-    const { overloads } = opts
+    const { overloads, CI = false, ...rest } = opts
+    const instance = new Engine(rest)
     if (overloads) {
       instance.overload(overloads)
     }
-    const { CI = false } = opts // make deterministic chain addresses
-    await instance.#init(CI)
+    await instance.#init(CI) // CI means make deterministic chain addresses
     return instance
   }
-  constructor({ isolate, crypto, endurance, scale } = {}) {
+  constructor({ isolate, crypto, endurance, scale, announce } = {}) {
     this.#isolate = isolate || Isolate.create()
     this.#crypto = crypto || Crypto.createCI()
     this.#endurance = endurance || Endurance.create()
     this.#scale = scale || Scale.create()
+    this.#announce = announce || (() => {})
   }
   overload(overloads) {
     assert.strictEqual(typeof overloads, 'object')
@@ -241,7 +242,7 @@ export class Engine {
       assert(!pool.getNetwork().channels.cxs)
     }
     if (pool.getNetwork().channels.txs.length) {
-      if (pool.getCovenantPath() !== '/system:/net') {
+      if (!isMtab(pool)) {
         pool = await this.#fork(pool)
       } else {
         debug('avoiding forking any channels in network covenant')
@@ -397,7 +398,7 @@ export class Engine {
       pulse = await this.#endurance.recover(latest)
       const pulseAddress = pulse.getAddress()
       assert(channel.isForkPoint() || pulseAddress.equals(address))
-      this.#endurance.discoverLatest(pulseAddress, latest)
+      this.#endurance.suggestLatest(pulseAddress, latest)
     }
     return pulse
   }
@@ -435,8 +436,9 @@ export class Engine {
         // remote validators will receive new block proposals as announcements
         return await this.#interpulse(target, pulse)
       } else {
-        // TODO this seems broken - how are updates being broadcast ?
-        this.#endurance.announceInterpulse(target, pulse)
+        const { path, root } = await this.#remotePath(channel)
+        // TODO handle path changing in mtab
+        this.#announce(pulse, target, root, path)
       }
     })
     awaits.unshift(updateParent)
@@ -446,6 +448,22 @@ export class Engine {
       this.#checkPierceTracker(io, this.selfAddress)
     }
     debug('transmit complete', pulse.getAddress(), pulse.getPulseLink())
+  }
+  async #remotePath(channel) {
+    // if this is a child, then it must be a child of mtab
+    // else, it will go thru mtab
+    assert(channel instanceof Channel)
+    const [alias] = channel.aliases
+    if (!alias.includes('/')) {
+      // we must be talking to the channel directly
+      const root = await this.#endurance.recover(channel.rx.latest)
+      return { path: '/', root }
+    }
+    assert(alias.startsWith('.mtab/'), `invalid alias: ${alias}`)
+
+    const mtab = await this.latestByPath('.mtab')
+
+    channel.dir()
   }
   async #updateParent(pulse) {
     assert(pulse instanceof Pulse)
@@ -460,28 +478,35 @@ export class Engine {
   }
   async whoami(pulse) {
     assert(pulse instanceof Pulse)
+    // TODO make recursive like Crisp or use approot
+    // TODO get the approot from the pulse
+    // const treeTop = pulse.getAppRoot()
+    // const resolver = this.#endurance.getResolver(treeTop)
+    // return await pulse.path(resolver)
+    // ? could make approot be the current path to this pulse.
   }
   async #isLocal(toChannel, fromPulse) {
     assert(toChannel instanceof Channel)
     assert(fromPulse instanceof Pulse)
-    // if its a hardlink, get the total path
-    // based on path alone, we can tell if this channel is remote ?
-
-    const fromPath = await this.whoami(fromPulse)
-
-    // get the path of the address
-    // use the path to determine local or remote
-
-    /**
-     * How would we know if this address is local or remote ?
-     * If we had the alias info, then we could figure this part out.
-     * But we would need to enforce pathing
-     * So uplinks cannot be pure addresses - need to be pathed
-     *
-     */
-    // find out if we are the validator or not
-    return true // TODO fetch the pulse validators only, then check
-    // validators check is acceptable for ours or remote
+    assert(toChannel.aliases.length === 1, `remodel aliasing not supported`)
+    const [alias] = toChannel.aliases
+    if (isMtab(fromPulse)) {
+      // TODO move to using aliases sychronously
+      const isHardlink = await fromPulse.getNetwork().hardlinks.has(alias)
+      if (isHardlink) {
+        return false
+      }
+    }
+    // else if the channel alias goes thru mtab, then is remote
+    // TODO safer to work off the full supervisor path using whoami()
+    if (alias.startsWith('.mtab/')) {
+      return false
+    }
+    return true
+    // TODO investigate using validator check on the destination pulse
+    // because the interpulse would send back validators anyway
+    // if there is a tip, we could read this from there
+    // so connect might send back the first pulselink too
   }
   async pierce(request, address = this.selfAddress) {
     assert(address instanceof Address)
@@ -503,7 +528,7 @@ export class Engine {
       await this.#pool(deepening)
     } catch (error) {
       this.#piercers.delete(piercer)
-      debug('engine fault', error)
+      debug('engine fault:', error.message)
       piercer.reject(error)
     }
     return promise
@@ -546,7 +571,7 @@ export class Engine {
   async stop() {
     // TODO reject calls to a stopped engine
     for (const sink of this.#subscribers) {
-      sink.end()
+      sink.return()
     }
     while (this.#poolBuffers.size) {
       for (const cycle of this.#poolBuffers.values()) {
@@ -572,4 +597,8 @@ const prioritizeUpdates = (queue) => {
     const bU = b.type === Deepening.UPDATE ? 1 : 0
     return aU - bU
   })
+}
+const isMtab = (pulse) => {
+  assert(pulse instanceof Pulse)
+  return pulse.getCovenantPath() === '/system:/net'
 }
