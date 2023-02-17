@@ -45,17 +45,13 @@ export class Connection {
       const { chainId } = payload
       switch (type) {
         case 'UPDATE': {
-          const { pulselink, target } = payload
+          const { pulselink } = payload
           const latest = PulseLink.parse(pulselink)
           const fromAddress = Address.fromChainId(chainId)
-          const announcement = { fromAddress, latest }
-          if (target) {
-            const targetAddress = Address.parse(target)
-            announcement.targetAddress = targetAddress
-          }
+          const update = { fromAddress, latest }
           // TODO check this was a requested announcement
           // TODO update our tracker before announcing
-          this.#update.push(announcement)
+          this.#update.push(update)
           break
         }
         case 'SUBSCRIBE': {
@@ -77,12 +73,15 @@ export class Connection {
           break
         }
         case 'ANNOUNCE': {
-          // we just received news that an interpulse is ready for us
           const { source, target, root, path } = payload
-          // verify the interpulse is legit
-          // if so, store the peer against this chainId, since there will be
-          // something sent back eventually
 
+          const announcement = {
+            source: PulseLink.parse(source),
+            target: Address.fromChainId(target),
+            root: PulseLink.parse(root),
+            path,
+          }
+          this.#announce.push(announcement)
           break
         }
         default:

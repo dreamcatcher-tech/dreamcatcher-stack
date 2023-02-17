@@ -14,10 +14,11 @@ const createTestPulselink = () => {
 
 describe('Connection', () => {
   test('basic', async () => {
+    const update = pushable({ objectMode: true })
     const announce = pushable({ objectMode: true })
     const latests = new Map()
-    const east = Connection.create(announce, latests)
-    const west = Connection.create(announce, latests)
+    const east = Connection.create(update, announce, latests)
+    const west = Connection.create(update, announce, latests)
     const [eastSide, westSide] = duplexPair()
     east.connectStream(eastSide)
     west.connectStream(westSide)
@@ -30,18 +31,18 @@ describe('Connection', () => {
 
     east.txSubscribe(chainId)
     {
-      const { value: announcement } = await announce.next()
+      const { value: announcement } = await update.next()
       assert(announcement.latest.equals(cachedPulselink))
-      assert(announcement.forAddress.equals(address))
+      assert(announcement.fromAddress.equals(address))
     }
     const announcedPulselink = createTestPulselink()
     assert(!announcedPulselink.equals(cachedPulselink))
     debug(`announcing`, announcedPulselink)
     west.txUpdate(address, announcedPulselink)
     {
-      const { value: announcement } = await announce.next()
+      const { value: announcement } = await update.next()
       assert(announcement.latest.equals(announcedPulselink))
-      assert(announcement.forAddress.equals(address))
+      assert(announcement.fromAddress.equals(address))
     }
   })
 })

@@ -24,6 +24,7 @@ type InterPulse struct {
 
 export class Interpulse {
   #pulse
+  #target
   static extract(pulse, target) {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
@@ -31,7 +32,7 @@ export class Interpulse {
     assert(target instanceof Address)
     assert(target.isRemote())
     assert(!target.equals(pulse.getAddress()), 'interpulse is to self')
-    let { provenance, signatures } = pulse
+    const { provenance, signatures } = pulse
     const { validators, turnovers, address, transmissions } = provenance
     const chainId = target.getChainId()
     assert(transmissions[chainId])
@@ -46,6 +47,7 @@ export class Interpulse {
       tx,
     })
     instance.#pulse = pulse
+    instance.#target = target
     return instance
   }
   get cid() {
@@ -64,7 +66,7 @@ export class Interpulse {
     throw new Error('cannot modify an Interpulse')
   }
   getTargetAddress() {
-    return this.tx.address
+    return this.#target
   }
   getHistoricalPulseLink() {
     return HistoricalPulseLink.generate(this.#pulse)

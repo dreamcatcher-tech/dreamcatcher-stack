@@ -122,24 +122,6 @@ export class PulseNet {
   get libp2p() {
     return this.#libp2p
   }
-  get announce() {
-    const dbg = debug.extend('announce')
-    return (source, target, root, path) => {
-      assert(source instanceof Pulse)
-      assert(source.isVerified())
-      assert(target instanceof Address)
-      assert(root instanceof Pulse)
-      assert.strictEqual(typeof path, 'string')
-      // root address is so we know what peers to talk to
-      // root pulselink is to prove we had a valid path at time of sending
-      // path is so the server can recover the latest pulse from its kv store
-      // pulse is to form the interpulse out of
-      // target is to know which address to focus the interpulse upon
-      dbg('announce', source.getPulseLink(), target, root.getPulseLink(), path)
-
-      return this.#announcer.announceInterpulse(source, target, root, path)
-    }
-  }
   get keypair() {
     return this.#keypair
   }
@@ -158,8 +140,12 @@ export class PulseNet {
     const bitswapResults = await all(this.#bitswap.putMany(manyBlocks))
     const address = pulse.getAddress()
     const pulselink = pulse.getPulseLink()
-    await this.#announcer.announcePulse(address, pulselink)
+    this.#announcer.updatePulse(address, pulselink)
+
     return bitswapResults
+  }
+  async announce(source, target, root, path) {
+    return await this.#announcer.announceInterpulse(source, target, root, path)
   }
   async dialCI(other) {
     assert(other instanceof PulseNet)
@@ -189,13 +175,15 @@ export class PulseNet {
     debug('addMultiAddress', multiaddr.toString(), peerId.toString())
     await this.#libp2p.peerStore.addressBook.set(peerId, [multiaddr])
   }
+  interpulses() {
+    return this.#announcer.interpulses()
+  }
   subscribePulse(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
     debug('subscribing to', address.toString())
 
-    const stream = this.#announcer.subscribe(address)
-    return stream
+    return this.#announcer.subscribe(address)
     // TODO use a worker to verify and catch up on announcements
   }
   async getPulse(pulselink) {

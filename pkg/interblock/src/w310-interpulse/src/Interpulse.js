@@ -13,7 +13,7 @@ import { NetEndurance } from './NetEndurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
 import { isBrowser, isNode } from 'wherearewe'
 import { CarReader, CarWriter } from '@ipld/car'
-import { PulseLink, Pulse } from '../../w008-ipld'
+import { Address, PulseLink, Pulse, Interpulse as Inter } from '../../w008-ipld'
 import { createRamRepo } from '../../w305-libp2p'
 
 const debug = Debug('Interpulse')
@@ -78,6 +78,7 @@ export class Interpulse {
       instance.#repo = repo
       instance.#crypto = crypto
       instance.#watchMtab()
+      instance.#watchInterpulses()
     }
     return instance
   }
@@ -288,6 +289,33 @@ export class Interpulse {
     }
     pipe(rootEmitter, checker)
     return sink
+  }
+  async #watchInterpulses() {
+    assert(this.net)
+    for await (const announcement of this.net.interpulses()) {
+      // const payload = {
+      //   source: source.cid.toString(),
+      //   target: target.getChainId(),
+      //   root: root.cid.toString(),
+      //   path,
+      // }
+      const { source, target, root, path } = announcement
+      // TODO must make interpulse be genuinely recovered as an interpulse
+      assert(source instanceof PulseLink)
+      assert(target instanceof Address)
+      assert(root instanceof PulseLink)
+      assert.strictEqual(typeof path, 'string')
+      const evilFullPulse = await this.#endurance.recover(source)
+      const interpulse = Inter.extract(evilFullPulse, target)
+      debug('interpulse', interpulse)
+      // fetch the target so it is discoverable by path
+      try {
+        this.#engine.interpulse(interpulse)
+      } catch (error) {
+        debug('watchInterpulses error', error.message)
+      }
+    }
+    debug('interpulse ended')
   }
   /**
    * get the latest mtab pulse, then:

@@ -8,7 +8,6 @@ describe('full', () => {
   test('server with late client', async () => {
     const engine = await Engine.createCI()
     const server = await PulseNet.create(createRamRepo('server'))
-    await server.start()
     debug(server)
     const genesis = engine.selfLatest
     debug('address', genesis.getAddress())
@@ -17,7 +16,6 @@ describe('full', () => {
     await server.endure(genesis)
     server.serve(genesis)
     const client = await PulseNet.create(createRamRepo('client'))
-    await client.start()
     await client.dialCI(server)
     const serverPeerId = await server.keypair.generatePeerId()
     client.addAddressPeer(address, serverPeerId)

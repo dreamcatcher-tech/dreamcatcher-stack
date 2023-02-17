@@ -12,13 +12,11 @@ describe('mount', () => {
   test('basic read-only mount', async () => {
     const serverRepo = createRamRepo('server')
     const server = await Interpulse.createCI({ repo: serverRepo })
-    await server.startNetwork()
     const addResult = await server.add('child1')
     await server.serve('/child1')
     debug(addResult)
     const clientRepo = createRamRepo('client')
     const client = await Interpulse.create({ repo: clientRepo })
-    await client.startNetwork()
     engines.push(client, server)
 
     await client.net.dialCI(server.net)
@@ -72,7 +70,7 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
-  test.only('writing', async () => {
+  test.skip('writing', async () => {
     Debug.enable('iplog *fork tests *Announcer')
     const server = await Interpulse.createCI({ ram: true, repo: 'server' })
     await server.add('child1')

@@ -204,7 +204,11 @@ export class Channels extends IpldStruct {
   async ingestInterpulse(interpulse) {
     assert(interpulse instanceof Interpulse)
     const { source } = interpulse
-    assert(await this.hasAddress(source), `No address: ${source}`)
+    const isAddress = await this.hasAddress(source)
+    if (!isAddress) {
+      const pulseLink = interpulse.getHistoricalPulseLink()
+      throw new Error(`No address: ${source} from ${pulseLink}`)
+    }
     let channel = await this.getByAddress(source)
     channel = channel.ingestInterpulse(interpulse)
     return await this.updateChannel(channel)

@@ -209,6 +209,7 @@ describe('Crisp', () => {
       expect(engine.wd).toBe('/')
       await actions.cd('app')
       expect(engine.wd).toBe('/app')
+      await engine.stop()
     })
   })
 })

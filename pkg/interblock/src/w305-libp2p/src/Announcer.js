@@ -23,7 +23,6 @@ export class Announcer {
     libp2p.addEventListener('peer:discovery', instance.#getPeerListener())
     libp2p.handle(PROTOCOL, instance.#getHandler())
     instance.#listenUpdate()
-    instance.#listenAnnounce()
 
     return instance
   }
@@ -101,6 +100,9 @@ export class Announcer {
     const connection = this.#ensureConnection(peerIdString)
     connection.txSubscribe(chainId)
   }
+  interpulses() {
+    return this.#rxAnnounce
+  }
   subscribe(forAddress, onlyLatest = false) {
     // TODO handle concurrent subscribes gracefully
     assert(forAddress instanceof Address)
@@ -161,7 +163,7 @@ export class Announcer {
       return announcement
     }
   }
-  async announcePulse(forAddress, latest) {
+  updatePulse(forAddress, latest) {
     assert(forAddress instanceof Address)
     assert(latest instanceof PulseLink)
     const chainId = forAddress.getChainId()
@@ -206,26 +208,6 @@ export class Announcer {
     for await (const update of this.#rxUpdate) {
       debug(`update`, update)
       const { fromAddress, latest, targetAddress } = update
-      assert(fromAddress instanceof Address)
-      assert(latest instanceof PulseLink)
-      assert(!targetAddress || targetAddress instanceof Address)
-      const chainId = fromAddress.getChainId()
-      if (!this.#subscriptions.has(chainId)) {
-        continue
-      }
-      this.#latests.set(chainId, latest)
-      const subscribers = this.#subscriptions.get(chainId)
-      for (const sink of subscribers) {
-        sink.push(latest)
-      }
-    }
-    debug('rxUpdate ended')
-  }
-  async #listenAnnounce() {
-    for await (const announce of this.#rxAnnounce) {
-      debug(`announce`, announce)
-
-      const { fromAddress, latest, targetAddress } = announce
       assert(fromAddress instanceof Address)
       assert(latest instanceof PulseLink)
       assert(!targetAddress || targetAddress instanceof Address)

@@ -88,16 +88,15 @@ export class Engine {
     assert(this.selfAddress.equals(this.selfLatest.getAddress()))
     // TODO verify we have the crypto keys required to be this block
   }
-  async #interpulse(target, pulse) {
-    assert(target instanceof Address)
-    assert(pulse instanceof Pulse)
-    debug(
-      `interpulse for %s from %s pulselink %s`,
-      target,
-      pulse.getAddress(),
-      pulse.getPulseLink()
-    )
-    const deepening = Deepening.createInterpulse(target, pulse)
+  async interpulse(interpulse) {
+    assert(interpulse instanceof Interpulse)
+    const deepening = Deepening.createInterpulse(interpulse)
+    return await this.#pool(deepening)
+  }
+  async #internalInterpulse(interpulse, source) {
+    assert(interpulse instanceof Interpulse)
+    assert(source instanceof Pulse)
+    const deepening = Deepening.createInterpulse(interpulse, source)
     return await this.#pool(deepening)
   }
   #poolBuffers = new Map() // chainId: deepening[]
@@ -144,7 +143,7 @@ export class Engine {
       debug('deepening %s for %s', type, address)
       switch (type) {
         case Deepening.INTERPULSE: {
-          const interpulse = Interpulse.extract(payload.pulse, address)
+          const { interpulse } = payload
           pool = await pool.ingestInterpulse(interpulse)
           break
         }
@@ -159,17 +158,20 @@ export class Engine {
         }
         case Deepening.UPDATE: {
           // TODO verify update is actually what comes next
-          const { pulse } = payload
+          const { source } = payload
           let network = pool.getNetwork()
-          let channel = await network.getByAddress(pulse.getAddress())
+          let channel = await network.getByAddress(source.getAddress())
           if (channel.isSubscription) {
             // TODO test subscriptions actually work
             const prior = channel.rx.latest
-            const update = Request.createTreeUpdate(prior, pulse.getPulseLink())
+            const update = Request.createTreeUpdate(
+              prior,
+              source.getPulseLink()
+            )
             const loopback = await network.getLoopback()
             network = await network.setLoopback(loopback.txRequest(update))
           }
-          channel = channel.addLatest(pulse.getPulseLink())
+          channel = channel.addLatest(source.getPulseLink())
           network = await network.updateChannel(channel)
           pool = pool.setNetwork(network)
           break
@@ -183,12 +185,12 @@ export class Engine {
     assert(deepening instanceof Deepening)
     let parent
     if (deepening.type === Deepening.INTERPULSE) {
-      const { pulse } = deepening.payload
-      const interpulse = Interpulse.extract(pulse, deepening.address)
+      const { interpulse, source } = deepening.payload
       if (interpulse.tx.isGenesisRequest()) {
+        assert(source instanceof Pulse)
+        parent = source
         const installer = interpulse.tx.getGenesisInstaller()
-        parent = pulse
-        const genesis = await parent.deriveChildGenesis(installer)
+        const genesis = await source.deriveChildGenesis(installer)
         await this.#endurance.endure(genesis)
         debug(`genesis endured`, genesis.getAddress())
       }
@@ -201,7 +203,7 @@ export class Engine {
       debug('endurance had', address)
     } else {
       debug('endurance no cache for', address)
-      const source = deepening.payload.pulse
+      const { source } = deepening.payload
       assert(source instanceof Pulse)
       const channel = await source.getNetwork().getByAddress(address)
       // TODO make aliases discern between child and symlink aliases
@@ -221,7 +223,7 @@ export class Engine {
     }
     if (latest.isForkGenesis()) {
       assert(deepening.type === Deepening.INTERPULSE)
-      parent = deepening.payload.pulse
+      parent = deepening.payload.source
     }
     assert(!parent || latest.isGenesis())
     return await latest.generateSoftPulse(parent)
@@ -259,7 +261,7 @@ export class Engine {
     this.#notifySubscribers(pulse) // TODO move pierce tracker to a subscriber
     await lock.release()
     debug('lock released', pool.getAddress())
-    await this.#transmit(pulse)
+    await this.#internalTransmit(pulse)
   }
   async #fork(pool) {
     const forkDebug = debug.extend('fork')
@@ -423,48 +425,30 @@ export class Engine {
       }
     }
   }
-  async #transmit(pulse) {
-    assert(pulse instanceof Pulse)
-    assert(pulse.isVerified())
-    const network = pulse.getNetwork()
-    const updateParent = this.#updateParent(pulse)
+  async #internalTransmit(source) {
+    assert(source instanceof Pulse)
+    assert(source.isVerified())
+    const network = source.getNetwork()
     const awaits = network.channels.txs.map(async (channelId) => {
       const channel = await network.channels.getChannel(channelId)
       const { address: target } = channel
       assert(target.isRemote())
-      if (await this.#isLocal(channel, pulse)) {
+      if (await this.#isLocal(channel, source)) {
         // remote validators will receive new block proposals as announcements
-        return await this.#interpulse(target, pulse)
-      } else {
-        const { path, root } = await this.#remotePath(channel)
-        // TODO handle path changing in mtab
-        this.#announce(pulse, target, root, path)
+        const interpulse = Interpulse.extract(source, target)
+        return await this.#internalInterpulse(interpulse, source)
       }
     })
+    const updateParent = this.#updateParent(source)
     awaits.unshift(updateParent)
     await Promise.all(awaits)
-    if (pulse.getAddress().equals(this.selfAddress)) {
+    if (source.getAddress().equals(this.selfAddress)) {
       const io = await network.getIo()
       this.#checkPierceTracker(io, this.selfAddress)
     }
-    debug('transmit complete', pulse.getAddress(), pulse.getPulseLink())
+    debug('transmit complete', source.getAddress(), source.getPulseLink())
   }
-  async #remotePath(channel) {
-    // if this is a child, then it must be a child of mtab
-    // else, it will go thru mtab
-    assert(channel instanceof Channel)
-    const [alias] = channel.aliases
-    if (!alias.includes('/')) {
-      // we must be talking to the channel directly
-      const root = await this.#endurance.recover(channel.rx.latest)
-      return { path: '/', root }
-    }
-    assert(alias.startsWith('.mtab/'), `invalid alias: ${alias}`)
 
-    const mtab = await this.latestByPath('.mtab')
-
-    channel.dir()
-  }
   async #updateParent(pulse) {
     assert(pulse instanceof Pulse)
     if (await pulse.isRoot()) {
@@ -488,6 +472,9 @@ export class Engine {
   async #isLocal(toChannel, fromPulse) {
     assert(toChannel instanceof Channel)
     assert(fromPulse instanceof Pulse)
+    if (!toChannel.aliases.length) {
+      return true
+    }
     assert(toChannel.aliases.length === 1, `remodel aliasing not supported`)
     const [alias] = toChannel.aliases
     if (isMtab(fromPulse)) {
