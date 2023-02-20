@@ -71,70 +71,51 @@ export class NetEndurance extends Endurance {
       const channel = await network.channels.getChannel(channelId)
       const { address: target } = channel
       assert(target.isRemote())
-      const isLocal = await this.#isLocal(channel, source)
+      const isLocal = await this.isLocal(channel, source)
       if (!isLocal) {
-        const { path, root } = await this.#remotePath(channel)
+        const { address, root, path } = await this.#remotePath(channel)
         // TODO handle path changing in mtab
         assert(source instanceof Pulse)
-        assert(root instanceof Pulse)
+        assert(root instanceof PulseLink)
         assert.strictEqual(typeof path, 'string')
         // root address is so we know what peers to talk to
         // root pulselink is to prove we had a valid path at time of sending
         // path is so the server can recover the latest pulse from its kv store
-        // pulse is to form the interpulse out of
+        // source is to form the interpulse out of
         // target is to know which address to focus the interpulse upon
-        debug(
-          'transmit',
-          source.getPulseLink(),
-          target,
-          root.getPulseLink(),
-          path
-        )
-        return this.#net.announce(source, target, root, path)
+        debug('transmit', source.getPulseLink(), target, root, path)
+        return this.#net.announce(source, target, address, root, path)
       }
     })
     await Promise.all(awaits)
     debug('transmit complete', source.getAddress(), source.getPulseLink())
   }
-  async #isLocal(toChannel, fromPulse) {
-    assert(toChannel instanceof Channel)
-    assert(fromPulse instanceof Pulse)
-    assert(toChannel.aliases.length === 1, `remodel aliasing not supported`)
-    const [alias] = toChannel.aliases
-    if (isMtab(fromPulse)) {
-      // TODO move to using aliases sychronously
-      const isHardlink = await fromPulse.getNetwork().hardlinks.has(alias)
-      if (isHardlink) {
-        return false
-      }
-    }
-    // else if the channel alias goes thru mtab, then is remote
-    // TODO safer to work off the full supervisor path using whoami()
-    if (alias.startsWith('.mtab/')) {
-      return false
-    }
-    return true
-    // TODO investigate using validator check on the destination pulse
-    // because the interpulse would send back validators anyway
-    // if there is a tip, we could read this from there
-    // so connect might send back the first pulselink too
-  }
+
   async #remotePath(channel) {
-    // if this is a child, then it must be a child of mtab
-    // else, it will go thru mtab
     assert(channel instanceof Channel)
+    const { address } = channel
     const [alias] = channel.aliases
+    if (!alias) {
+      const { tip } = channel.rx
+      assert(tip, `can only transmit without alias in reply`)
+      return { path: '/', root: tip, address }
+    }
     if (!alias.includes('/')) {
       // we must be talking to the channel directly
-
-      const root = await this.recover(channel.rx.latest)
-      return { path: '/', root }
+      const root = channel.rx.latest
+      return { path: '/', root, address }
     }
-    assert(alias.startsWith('.mtab/'), `invalid alias: ${alias}`)
-
-    const mtab = await this.latestByPath('.mtab')
-
+    if (alias.startsWith('.mtab/')) {
+      const rest = alias.slice('.mtab/'.length)
+      const [mtabAlias, ...segments] = rest.split('/')
+      const path = '/' + segments.join('/')
+      const mtab = await this.selfLatest.getNetwork().getChannel('.mtab')
+      const root = mtab.rx.latest
+      return { path, root, address }
+    }
     channel.dir()
+    // if no pathing, then we can get the parent path ?
+    throw new Error(`no pathing information found for channel: ${alias}`)
   }
   async recover(pulselink) {
     const result = await super.recover(pulselink)

@@ -67,6 +67,7 @@ export class Announcer {
       assert(!this.#connections.has(peerIdString))
       // TODO what about teardown ?
       const connection = Connection.create(
+        peerIdString,
         this.#rxUpdate,
         this.#rxAnnounce,
         this.#latests
@@ -97,10 +98,10 @@ export class Announcer {
       return
     }
 
-    const connection = this.#ensureConnection(peerIdString)
-    connection.txSubscribe(chainId)
+    // const connection = this.#ensureConnection(peerIdString)
+    // connection.txSubscribe(chainId)
   }
-  interpulses() {
+  subscribeInterpulses() {
     return this.#rxAnnounce
   }
   subscribe(forAddress, onlyLatest = false) {
@@ -186,17 +187,18 @@ export class Announcer {
       sink(latest)
     }
   }
-  announceInterpulse(source, target, root, path) {
+  announce(source, target, address, root, path) {
     assert(source instanceof Pulse)
     assert(target instanceof Address)
-    assert(root instanceof Pulse)
+    assert(address instanceof Address)
+    assert(root instanceof PulseLink)
     assert.strictEqual(typeof path, 'string')
     // try dial some peers if none exist
 
-    const rootChainId = root.getAddress().getChainId()
-    debug('seeking peers for', root.getAddress())
-    this.#broadcast(rootChainId, (cx) =>
-      cx.txAnnounce(source, target, root, path)
+    const rootChainId = address.getChainId()
+    debug('seeking peers for', address)
+    this.#broadcast(rootChainId, (connection) =>
+      connection.txAnnounce(source, target, root, path)
     )
   }
   unsubscribe(forAddress) {
@@ -224,8 +226,10 @@ export class Announcer {
     debug('rxUpdate ended')
   }
   #dial(peerId) {
-    debug('dial', peerId.toString())
+    const peerIdString = peerId.toString()
+    debug('dial', peerIdString)
     const connection = Connection.create(
+      peerIdString,
       this.#rxUpdate,
       this.#rxAnnounce,
       this.#latests

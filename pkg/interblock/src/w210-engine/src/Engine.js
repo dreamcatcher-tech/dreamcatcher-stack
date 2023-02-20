@@ -90,13 +90,17 @@ export class Engine {
   }
   async interpulse(interpulse) {
     assert(interpulse instanceof Interpulse)
+    const { source, target } = interpulse
+    debug('interpulse from %s to %s pl %s', source, target)
     const deepening = Deepening.createInterpulse(interpulse)
     return await this.#pool(deepening)
   }
-  async #internalInterpulse(interpulse, source) {
+  async #internalInterpulse(interpulse, origin) {
     assert(interpulse instanceof Interpulse)
-    assert(source instanceof Pulse)
-    const deepening = Deepening.createInterpulse(interpulse, source)
+    assert(origin instanceof Pulse)
+    const { source, target } = interpulse
+    debug('internal interpulse from %s to %s pl %s', source, target)
+    const deepening = Deepening.createInterpulse(interpulse, origin)
     return await this.#pool(deepening)
   }
   #poolBuffers = new Map() // chainId: deepening[]
@@ -433,7 +437,7 @@ export class Engine {
       const channel = await network.channels.getChannel(channelId)
       const { address: target } = channel
       assert(target.isRemote())
-      if (await this.#isLocal(channel, source)) {
+      if (await this.#endurance.isLocal(channel, source)) {
         // remote validators will receive new block proposals as announcements
         const interpulse = Interpulse.extract(source, target)
         return await this.#internalInterpulse(interpulse, source)
@@ -448,7 +452,6 @@ export class Engine {
     }
     debug('transmit complete', source.getAddress(), source.getPulseLink())
   }
-
   async #updateParent(pulse) {
     assert(pulse instanceof Pulse)
     if (await pulse.isRoot()) {
@@ -468,32 +471,6 @@ export class Engine {
     // const resolver = this.#endurance.getResolver(treeTop)
     // return await pulse.path(resolver)
     // ? could make approot be the current path to this pulse.
-  }
-  async #isLocal(toChannel, fromPulse) {
-    assert(toChannel instanceof Channel)
-    assert(fromPulse instanceof Pulse)
-    if (!toChannel.aliases.length) {
-      return true
-    }
-    assert(toChannel.aliases.length === 1, `remodel aliasing not supported`)
-    const [alias] = toChannel.aliases
-    if (isMtab(fromPulse)) {
-      // TODO move to using aliases sychronously
-      const isHardlink = await fromPulse.getNetwork().hardlinks.has(alias)
-      if (isHardlink) {
-        return false
-      }
-    }
-    // else if the channel alias goes thru mtab, then is remote
-    // TODO safer to work off the full supervisor path using whoami()
-    if (alias.startsWith('.mtab/')) {
-      return false
-    }
-    return true
-    // TODO investigate using validator check on the destination pulse
-    // because the interpulse would send back validators anyway
-    // if there is a tip, we could read this from there
-    // so connect might send back the first pulselink too
   }
   async pierce(request, address = this.selfAddress) {
     assert(address instanceof Address)

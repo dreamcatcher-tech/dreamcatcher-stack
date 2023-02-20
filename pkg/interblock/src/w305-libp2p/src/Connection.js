@@ -9,6 +9,7 @@ import posix from 'path-browserify'
 const debug = Debug('interpulse:libp2p:Connection')
 
 export class Connection {
+  #peerIdString
   #latests = new Map()
   #tx
   #rx
@@ -18,17 +19,19 @@ export class Connection {
   #rxSubscriptions = new Map() // chainId : isSingle
   #debounces = new Map() // chainId : {remote, local[]}
   #stream
-  static create(updateStream, announceStream, latests) {
+  static create(peerIdString, updateStream, announceStream, latests) {
+    assert.strictEqual(typeof peerIdString, 'string')
     assert.strictEqual(typeof updateStream.push, 'function')
     assert.strictEqual(typeof announceStream.push, 'function')
     assert(latests instanceof Map)
     const instance = new Connection()
+    instance.#peerIdString = peerIdString
     instance.#tx = pushable({ objectMode: true })
     instance.#rx = pushable({ objectMode: true })
     instance.#update = updateStream
     instance.#announce = announceStream
     instance.#latests = latests
-    instance.#listen()
+    instance.#listen().catch((error) => instance.stop())
     return instance
   }
   stop() {
@@ -74,12 +77,12 @@ export class Connection {
         }
         case 'ANNOUNCE': {
           const { source, target, root, path } = payload
-
           const announcement = {
             source: PulseLink.parse(source),
             target: Address.fromChainId(target),
             root: PulseLink.parse(root),
             path,
+            peerIdString: this.#peerIdString,
           }
           this.#announce.push(announcement)
           break
@@ -170,7 +173,7 @@ function UPDATE(forAddress, pulselink) {
 function ANNOUNCE(source, target, root, path) {
   assert(source instanceof Pulse)
   assert(target instanceof Address)
-  assert(root instanceof Pulse)
+  assert(root instanceof PulseLink)
   assert.strictEqual(typeof path, 'string')
   assert(posix.isAbsolute(path))
   const payload = {
@@ -200,7 +203,6 @@ const sinkJs = (pushable) => {
       }
       debug('sinkJs ended')
     } catch (e) {
-      console.error(e)
       pushable.end(e)
     }
   }

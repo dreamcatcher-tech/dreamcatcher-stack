@@ -528,7 +528,17 @@ export class Network extends IpldStruct {
     const channel = Channel.create(channelId, address).addAlias(name)
     const channels = await this.channels.addChannel(channel)
     const hardlinks = await this.hardlinks.set(name, channelId)
-    return await this.setMap({ channels, hardlinks })
+    return this.setMap({ channels, hardlinks })
+  }
+  async connectPublicly(source) {
+    assert(source instanceof Address)
+    assert(source.isRemote(), `target must be remote: ${source}`)
+    const isChannel = await this.channels.hasAddress(source)
+    assert(!isChannel, `target is already a channel: ${source}`)
+    const channelId = this.channels.counter
+    const channel = Channel.create(channelId, source)
+    const channels = await this.channels.addChannel(channel)
+    return this.setMap({ channels })
   }
 }
 const crossover = (channel) => {

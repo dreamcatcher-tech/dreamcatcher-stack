@@ -50,4 +50,8 @@ export class Validators extends IpldStruct {
     assert(publicKey instanceof PublicKey)
     return this.publicKeys.findIndex((key) => equals(key, publicKey))
   }
+  hasOverlap(other) {
+    assert(other instanceof Validators)
+    return this.publicKeys.some((key) => other.has(key))
+  }
 }

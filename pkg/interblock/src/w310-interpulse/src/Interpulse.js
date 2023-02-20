@@ -292,27 +292,23 @@ export class Interpulse {
   }
   async #watchInterpulses() {
     assert(this.net)
-    for await (const announcement of this.net.interpulses()) {
-      // const payload = {
-      //   source: source.cid.toString(),
-      //   target: target.getChainId(),
-      //   root: root.cid.toString(),
-      //   path,
-      // }
-      const { source, target, root, path } = announcement
-      // TODO must make interpulse be genuinely recovered as an interpulse
+    for await (const announcement of this.net.subscribeInterpulses()) {
+      const { source, target, root, path, peerIdString } = announcement
       assert(source instanceof PulseLink)
       assert(target instanceof Address)
       assert(root instanceof PulseLink)
       assert.strictEqual(typeof path, 'string')
+      assert.strictEqual(typeof peerIdString, 'string')
+      // TODO must make interpulse be genuinely recovered as an interpulse
       const evilFullPulse = await this.#endurance.recover(source)
       const interpulse = Inter.extract(evilFullPulse, target)
-      debug('interpulse', interpulse)
-      // fetch the target so it is discoverable by path
+      debug('interpulse for %s from %s', interpulse.target, interpulse.source)
+      this.net.addAddressPeer(interpulse.source, peerIdString)
+      // TODO fetch the target so it is discoverable by path
       try {
-        this.#engine.interpulse(interpulse)
+        await this.#engine.interpulse(interpulse)
       } catch (error) {
-        debug('watchInterpulses error', error.message)
+        debug('watchInterpulses error', error)
       }
     }
     debug('interpulse ended')
@@ -335,8 +331,6 @@ export class Interpulse {
         // TODO determine what to unsubscribe and unmap
       }
       const state = mtab.getState().toJS()
-      debug('mtab state', state)
-      debug('mtab hash', mtab.cid.toString())
 
       const { serve = {} } = state
       for (const [path, chainId] of Object.entries(serve)) {

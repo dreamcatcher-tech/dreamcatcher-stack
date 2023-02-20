@@ -144,8 +144,8 @@ export class PulseNet {
 
     return bitswapResults
   }
-  async announce(source, target, root, path) {
-    return await this.#announcer.announceInterpulse(source, target, root, path)
+  async announce(source, target, address, root, path) {
+    return await this.#announcer.announce(source, target, address, root, path)
   }
   async dialCI(other) {
     assert(other instanceof PulseNet)
@@ -175,8 +175,8 @@ export class PulseNet {
     debug('addMultiAddress', multiaddr.toString(), peerId.toString())
     await this.#libp2p.peerStore.addressBook.set(peerId, [multiaddr])
   }
-  interpulses() {
-    return this.#announcer.interpulses()
+  subscribeInterpulses() {
+    return this.#announcer.subscribeInterpulses()
   }
   subscribePulse(address) {
     assert(address instanceof Address)

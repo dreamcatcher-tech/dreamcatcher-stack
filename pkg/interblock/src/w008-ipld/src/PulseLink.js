@@ -99,6 +99,6 @@ export class HistoricalPulseLink extends PulseLink {
     return this.toString()
   }
   toString() {
-    return `HistoricalPulseLink(${this.cid.toString().substring(4, 14)})`
+    return `HPulseLink(${this.cid.toString().substring(6, 15)})`
   }
 }

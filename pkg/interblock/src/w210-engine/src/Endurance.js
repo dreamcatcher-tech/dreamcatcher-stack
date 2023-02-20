@@ -1,6 +1,12 @@
 import assert from 'assert-fast'
 import { CID } from 'multiformats/cid'
-import { decode, Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
+import {
+  decode,
+  Address,
+  Pulse,
+  PulseLink,
+  Channel,
+} from '../../w008-ipld/index.mjs'
 import { Logger } from './Logger'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Endurance')
@@ -147,4 +153,36 @@ export class Endurance {
   stop() {
     this.#isStarted = false
   }
+  async isLocal(toChannel, fromPulse) {
+    assert(toChannel instanceof Channel)
+    assert(fromPulse instanceof Pulse)
+    const { tip } = toChannel.rx
+    if (tip) {
+      // TODO recover just the validators
+      const evilFullPulse = await this.recover(tip)
+      const { validators } = evilFullPulse.provenance
+      if (fromPulse.provenance.validators.hasOverlap(validators)) {
+        return true
+      }
+      return false
+    }
+    const [alias] = toChannel.aliases
+    if (isMtab(fromPulse)) {
+      // TODO move to using aliases sychronously
+      const isHardlink = await fromPulse.getNetwork().hardlinks.has(alias)
+      if (isHardlink) {
+        return false
+      }
+    }
+    // else if the channel alias goes thru mtab, then is remote
+    // TODO safer to work off the full supervisor path using whoami()
+    if (alias && alias.startsWith('.mtab/')) {
+      return false
+    }
+    return true
+  }
+}
+const isMtab = (pulse) => {
+  assert(pulse instanceof Pulse)
+  return pulse.getCovenantPath() === '/system:/net'
 }

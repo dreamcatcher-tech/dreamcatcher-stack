@@ -177,9 +177,21 @@ export class Pulse extends IpldStruct {
     assert(interpulse instanceof Interpulse)
     let next = this
     assert(next.isModified())
-    const { target } = interpulse
+    const { target, source } = interpulse
     assert(next.getAddress().equals(target))
     let network = next.getNetwork()
+    if (!interpulse.tx.isGenesisRequest()) {
+      const isChannel = await network.channels.hasAddress(source)
+      if (!isChannel) {
+        if (this.provenance.dmz.config.isPublicChannelOpen) {
+          // TODO require a specific action to be able to open
+          // to give the reducer a chance to reject
+          debug('public channel to %s from %s', target, source)
+          network = await network.connectPublicly(source)
+        }
+      }
+    }
+
     network = await network.ingestInterpulse(interpulse)
     return next.setNetwork(network)
   }

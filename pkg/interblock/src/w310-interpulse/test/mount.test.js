@@ -70,10 +70,10 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
-  test.skip('writing', async () => {
-    Debug.enable('iplog *fork tests *Announcer')
+  test.only('writing', async () => {
+    Debug.enable(' tests *Announcer')
     const server = await Interpulse.createCI({ ram: true, repo: 'server' })
-    await server.add('child1')
+    await server.add('child1', { config: { isPublicChannelOpen: true } })
     await server.serve('/child1')
     const id = await server.getIdentifiers('/child1')
     const { chainId, peerId, multiaddrs } = id
@@ -84,8 +84,9 @@ describe('mount', () => {
     await client.peer(chainId, peerId)
     await client.multiaddr(multiaddrs[0])
     await client.mount('server', chainId)
+    // TODO make work without latest() call
     await client.latest('/.mtab/server')
-    Debug.enable('tests iplog interpulse:Engine *announce *Announcer')
+    Debug.enable('tests iplog  *announce *Announcer Interpulse *Pulse')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()
   }, 2000)
