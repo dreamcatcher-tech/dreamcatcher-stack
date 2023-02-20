@@ -70,8 +70,7 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
-  test.only('writing', async () => {
-    Debug.enable(' tests *Announcer')
+  test('writing', async () => {
     const server = await Interpulse.createCI({ ram: true, repo: 'server' })
     await server.add('child1', { config: { isPublicChannelOpen: true } })
     await server.serve('/child1')
@@ -86,7 +85,6 @@ describe('mount', () => {
     await client.mount('server', chainId)
     // TODO make work without latest() call
     await client.latest('/.mtab/server')
-    Debug.enable('tests iplog  *announce *Announcer Interpulse *Pulse')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()
   }, 2000)
