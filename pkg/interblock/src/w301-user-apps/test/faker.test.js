@@ -67,7 +67,7 @@ describe('faker', () => {
         expect(state.formData).toEqual(formData)
       }
     })
-    test.only('progressive batch', async () => {
+    test('progressive batch', async () => {
       const engine = await Interpulse.createCI({ overloads })
       await engine.add('app', '/crm')
       const { routing, customers } = await import('../src/crm/faker/index.js')
