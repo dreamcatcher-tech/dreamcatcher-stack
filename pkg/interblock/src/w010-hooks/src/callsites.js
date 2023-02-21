@@ -73,13 +73,15 @@ const awaitActivity = async (result, id, timeout) => {
   } else {
     const racecarSymbol = Symbol()
     const ripcordSymbol = Symbol()
-    const racecar = new Promise((resolve) =>
-      setTimeout(() => resolve(racecarSymbol), timeout)
-    )
+    let timeoutId
+    const racecar = new Promise((resolve) => {
+      timeoutId = setTimeout(() => resolve(racecarSymbol), timeout)
+    })
     const ripcord = new Promise(
       (resolve) => (invocation.ripcord = () => resolve(ripcordSymbol))
     )
     const nextResult = await Promise.race([racecar, result, ripcord])
+    clearTimeout(timeoutId)
     if (nextResult === racecarSymbol) {
       throw new Error(`timeout exceeded: ${timeout} ms`)
     }
