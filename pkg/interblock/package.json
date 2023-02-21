@@ -48,6 +48,7 @@
     "debug": "^4.3.4",
     "fast-deep-equal": "^3.1.3",
     "fast-memoize": "^2.5.2",
+    "fs-extra": "^11.1.0",
     "immutable": "^4.2.4",
     "ipfs-bitswap": "^16.0.0",
     "ipfs-core-config": "^0.7.0",
@@ -65,7 +66,6 @@
     "path-browserify": "^1.0.1",
     "polygon-lookup": "^2.6.0",
     "pretty-bytes": "^6.1.0",
-    "rimraf": "3.0.2",
     "serialize-error": "^11.0.0",
     "uint8arrays": "^4.0.3",
     "wherearewe": "^2.0.1"

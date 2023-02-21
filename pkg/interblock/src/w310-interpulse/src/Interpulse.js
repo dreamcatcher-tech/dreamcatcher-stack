@@ -1,3 +1,4 @@
+import { removeSync } from 'fs-extra/esm'
 import { pipe } from 'it-pipe'
 import { CID } from 'multiformats/cid'
 import { shell } from '../../w212-system-covenants'
@@ -216,11 +217,10 @@ export class Interpulse {
     if (isNode) {
       if (typeof repo === 'string') {
         debug('deleting directory:', repo)
-        const { default: rimraf } = await import('rimraf')
 
         // sync to purposefully block the thread from any block making
-        debug('deleting using rimraf.sync')
-        rimraf.sync(repo)
+        debug('deleting using fs-extra remoteSync')
+        removeSync(repo)
         debug('deletion complete')
         return
       }

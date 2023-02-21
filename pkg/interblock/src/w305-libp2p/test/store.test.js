@@ -1,4 +1,4 @@
-import rimraf from 'rimraf'
+import { removeSync } from 'fs-extra/esm'
 import { createRepo } from 'ipfs-repo'
 import { createBackend } from '../src/createBackend'
 import { loadCodec } from '../src/loadCodec'
@@ -51,7 +51,7 @@ describe('store', () => {
       await reload.stop()
     } finally {
       debug(`deleting ${path}`)
-      rimraf.sync(path)
+      removeSync(path)
       debug(`deleted ${path}`)
     }
   })

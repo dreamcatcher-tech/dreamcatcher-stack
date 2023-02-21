@@ -1,4 +1,4 @@
-import rimraf from 'rimraf'
+import { removeSync } from 'fs-extra/esm'
 import { createRamRepo } from '../../w305-libp2p'
 import Debug from 'debug'
 import { Interpulse } from '..'
@@ -46,7 +46,7 @@ describe('reload', () => {
       expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
     } finally {
       debug(`deleting ${repo}`)
-      rimraf.sync(repo)
+      removeSync(repo)
       debug(`deleted ${repo}`)
     }
   }, 4000)
