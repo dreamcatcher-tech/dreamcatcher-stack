@@ -209,7 +209,7 @@ export class Network extends IpldStruct {
       return this.setMap({ channels })
     } else {
       const channelId = this.channels.counter
-      const channel = Channel.create(channelId, address)
+      const channel = Channel.create(channelId, address).addAlias(path)
       const channels = await this.channels.addChannel(channel)
       assert.strictEqual(await channels.getChannel(channelId), channel)
       const downlinks = await this.downlinks.setDownlink(path, channelId)

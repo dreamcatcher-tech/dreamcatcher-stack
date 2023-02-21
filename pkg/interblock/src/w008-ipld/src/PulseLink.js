@@ -58,9 +58,6 @@ export class PulseLink extends IpldInterface {
   get cid() {
     return this.#cid
   }
-  [Symbol.for('nodejs.util.inspect.custom')]() {
-    return this.toString()
-  }
   toString() {
     return `PulseLink(${this.cid.toString().substring(6, 15)})`
   }
@@ -94,9 +91,6 @@ export class HistoricalPulseLink extends PulseLink {
   static fromPulseLink(pulseLink) {
     assert(pulseLink instanceof PulseLink)
     return this.parse(pulseLink.cid)
-  }
-  [Symbol.for('nodejs.util.inspect.custom')]() {
-    return this.toString()
   }
   toString() {
     return `HPulseLink(${this.cid.toString().substring(6, 15)})`

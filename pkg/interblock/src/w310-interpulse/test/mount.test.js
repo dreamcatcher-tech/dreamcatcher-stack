@@ -87,6 +87,25 @@ describe('mount', () => {
     await client.latest('/.mtab/server')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()
+  })
+  test('writing to a deep path', async () => {
+    const server = await Interpulse.createCI({ ram: true, repo: 'server' })
+    await server.add('child1', { config: { isPublicChannelOpen: true } })
+    await server.add('child1/nested1')
+    await server.serve('/child1')
+    const id = await server.getIdentifiers('/child1')
+    const { chainId, peerId, multiaddrs } = id
+
+    const client = await Interpulse.create({ ram: true, repo: 'client' })
+    engines.push(server, client)
+
+    await client.peer(chainId, peerId)
+    await client.multiaddr(multiaddrs[0])
+    await client.mount('server', chainId)
+    // TODO make work without latest() call
+    await client.latest('/.mtab/server')
+    const ping = await client.ping('/.mtab/server/nested1')
+    expect(ping).toBeTruthy()
   }, 2000)
   test('server reload', async () => {
     const serverRepo = createRamRepo('server')

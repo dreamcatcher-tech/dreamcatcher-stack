@@ -12,7 +12,9 @@ const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
 const { crm } = apps
 const debug = Debug('crm:pm2')
 
-Debug.enable('crm:pm2* iplog Interpulse *Announcer *Connection *PulseNet')
+Debug.enable(
+  'crm:pm2* iplog Interpulse *Announcer *Connection *PulseNet *Engine'
+)
 
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)
@@ -59,7 +61,6 @@ const boot = async () => {
   const repo = REPO || '../../tmp/crm-pm2-test'
   const overloads = { '/crm': crm.covenant }
   const engine = await Interpulse.create({ repo, tcpHost, tcpPort, overloads })
-  await engine.startNetwork()
   debug('blockchain started')
 
   const latest = await engine.latest()
@@ -82,7 +83,8 @@ const boot = async () => {
 
   if (engine.isCreated) {
     debug('begin app install on uninitialized engine')
-    await engine.add('/app', '/crm')
+    const config = { isPublicChannelOpen: true }
+    await engine.add('/app', { covenant: '/crm', config })
     const allSectors = crm.faker.routing.generateBatch()
     await engine.execute('/app/routing/batch', { batch: allSectors })
     debug('app installaction complete')
@@ -100,11 +102,16 @@ const boot = async () => {
   pmx.action('fake', async (cb) => {
     debug('action: fake')
     const allSectors = crm.faker.routing.generateBatch()
-    const fullBatch = crm.faker.customers.generateBatchInside(allSectors, 1000)
+    const fullBatch = crm.faker.customers.generateBatchInside(allSectors, 100)
     debug('fake data', fullBatch.length, 'customers')
     const batch = []
     let count = 0
+    const used = new Set()
     for (const customer of fullBatch) {
+      if (used.has(customer.formData.custNo)) {
+        throw new Error('Duplicate customer number' + customer.formData.custNo)
+      }
+      used.add(customer.formData.custNo)
       batch.push(customer)
       if (batch.length % 50 === 0) {
         await engine.execute('/app/customers/batch', { batch: fullBatch })

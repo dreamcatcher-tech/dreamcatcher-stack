@@ -29,9 +29,9 @@
   "config": {},
   "apps": {
     "merge_logs": true,
-    "max_memory_restart": "200M",
+    "max_memory_restart": "9000M",
     "script": "app.js",
-    "node_args": "--experimental-specifier-resolution=node",
+    "node_args": "--experimental-specifier-resolution=node --max-old-space-size=8192",
     "env": {
       "NODE_ENV": "production",
       "PORT": 3000

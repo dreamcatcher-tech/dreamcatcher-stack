@@ -207,7 +207,7 @@ export class Channels extends IpldStruct {
     const isAddress = await this.hasAddress(source)
     if (!isAddress) {
       const pulseLink = interpulse.getHistoricalPulseLink()
-      throw new Error(`No address: ${source} from ${pulseLink}`)
+      throw new Error(`No address: ${source} from interpulse ${pulseLink}`)
     }
     let channel = await this.getByAddress(source)
     channel = channel.ingestInterpulse(interpulse)

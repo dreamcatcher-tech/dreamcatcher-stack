@@ -129,6 +129,7 @@ export class Announcer {
     if (this.#latests.has(chainId)) {
       sink.push(this.#latests.get(chainId))
     }
+    debug('broadcast txSubscribe', chainId)
     this.#broadcast(chainId, (cx) => cx.txSubscribe(chainId))
     return sink
   }
@@ -138,6 +139,7 @@ export class Announcer {
     const results = []
     if (this.#peerMap.has(chainId)) {
       const peers = this.#peerMap.get(chainId)
+      debug('found peers %s for chainId %s', peers.size, chainId)
       for (const peerIdString of peers) {
         const connection = this.#ensureConnection(peerIdString)
         results.push(operation(connection))
@@ -196,7 +198,7 @@ export class Announcer {
     // try dial some peers if none exist
 
     const rootChainId = address.getChainId()
-    debug('seeking peers for', address)
+    debug('seeking peers for txAnnounce', address)
     this.#broadcast(rootChainId, (connection) =>
       connection.txAnnounce(source, target, root, path)
     )

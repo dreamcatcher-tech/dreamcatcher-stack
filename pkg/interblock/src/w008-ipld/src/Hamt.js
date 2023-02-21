@@ -45,7 +45,7 @@ export class Hamt extends IpldInterface {
     }
     return next
   }
-  [Symbol.for('nodejs.util.inspect.custom')]() {
+  toString() {
     return this.#gets.toJS()
   }
   async set(key, value) {

@@ -4,7 +4,7 @@ import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 
-Debug.enable('iplog webdos:Engine *libp2p* *PulseNet Interpulse')
+Debug.enable('iplog webdos:Engine *PulseNet *Announcer Interpulse')
 
 const { faker } = apps.crm
 const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
@@ -19,8 +19,8 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   return [install, sectorsInsert, listInsert, update, cd]
 }
 
-const appRemoteChainId = 'QmbLnYLHKymFDXZSbskTaZZ7kbSvxyCLnNtbsbMgEvYgiy'
-const serverPeerId = '16Uiu2HAmHqdocSZ8iV9CNEv8P7jztfpEM25SaeixMrFhLSKyux7a'
+const appRemoteChainId = 'QmVZii2h3oJFKJKEK6mKQaUZfp1UBdgBj8ZSPFG63rmFzw'
+const serverPeerId = '16Uiu2HAkx6mZn5sRfHWjeJGTbMAhPj1zQjXg5mCrLhzcuENZWs5y'
 const peers = { [appRemoteChainId]: serverPeerId }
 const addrs = ['/ip4/127.0.0.1/tcp/3000/ws/p2p/' + serverPeerId]
 const mounts = { remote: appRemoteChainId }

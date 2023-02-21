@@ -108,4 +108,7 @@ export class IpldInterface {
       }
     }
   }
+  [Symbol.for('nodejs.util.inspect.custom')]() {
+    return this.toString()
+  }
 }

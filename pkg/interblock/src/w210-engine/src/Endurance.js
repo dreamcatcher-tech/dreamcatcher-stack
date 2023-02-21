@@ -156,6 +156,7 @@ export class Endurance {
   async isLocal(toChannel, fromPulse) {
     assert(toChannel instanceof Channel)
     assert(fromPulse instanceof Pulse)
+
     const { tip } = toChannel.rx
     if (tip) {
       // TODO recover just the validators

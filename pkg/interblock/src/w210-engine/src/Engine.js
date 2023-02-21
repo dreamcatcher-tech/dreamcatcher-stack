@@ -221,9 +221,7 @@ export class Engine {
     assert(latest instanceof Pulse, `no latest found for ${address}`)
     assert(latest.isVerified())
     if (!this.#crypto.isValidatable(latest)) {
-      throw new Error(
-        `No keys for ${latest.getAddress()} in engine ${this.selfAddress}`
-      )
+      throw new Error(`No keys for ${address} in engine ${this.selfAddress}`)
     }
     if (latest.isForkGenesis()) {
       assert(deepening.type === Deepening.INTERPULSE)

@@ -188,6 +188,8 @@ export class Pulse extends IpldStruct {
           // to give the reducer a chance to reject
           debug('public channel to %s from %s', target, source)
           network = await network.connectPublicly(source)
+        } else {
+          throw new Error(`public channel shut in %s from %s`, target, source)
         }
       }
     }
@@ -281,6 +283,9 @@ export class Pulse extends IpldStruct {
     // TODO check lineage
     assert(!this.getPulseLink().equals(next.getPulseLink()))
     return true
+  }
+  toString() {
+    return `Pulse(${this.cid.toString().substring(6, 15)})`
   }
 }
 const genesisCache = new WeakMap()

@@ -135,9 +135,6 @@ export class Address extends IpldInterface {
   get cid() {
     return this.#cid
   }
-  [Symbol.for('nodejs.util.inspect.custom')]() {
-    return this.toString()
-  }
   get asString() {
     return this.toString() // used for debugging
   }

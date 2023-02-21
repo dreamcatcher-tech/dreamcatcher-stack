@@ -47,7 +47,6 @@ export default function Engine({
         globalThis.interpulse = engine
         setEngine(engine)
         debug(`Engine ready`)
-        await engine.startNetwork()
         if (car) {
           const { url, path } = car
           debug('importing car from %s to %s', url, path)

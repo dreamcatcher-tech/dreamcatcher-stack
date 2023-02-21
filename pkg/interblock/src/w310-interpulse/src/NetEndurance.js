@@ -83,7 +83,7 @@ export class NetEndurance extends Endurance {
         // path is so the server can recover the latest pulse from its kv store
         // source is to form the interpulse out of
         // target is to know which address to focus the interpulse upon
-        debug('transmit', source.getPulseLink(), target, root, path)
+        debug('transmit', source, target, address, root, path)
         return this.#net.announce(source, target, address, root, path)
       }
     })
@@ -109,8 +109,11 @@ export class NetEndurance extends Endurance {
       const rest = alias.slice('.mtab/'.length)
       const [mtabAlias, ...segments] = rest.split('/')
       const path = '/' + segments.join('/')
-      const mtab = await this.selfLatest.getNetwork().getChannel('.mtab')
-      const root = mtab.rx.latest
+      const mtabChannel = await this.selfLatest.getNetwork().getChannel('.mtab')
+      const mtab = await this.recover(mtabChannel.rx.latest)
+      const hardlink = await mtab.getNetwork().getChannel(mtabAlias)
+      const root = hardlink.rx.latest
+      const { address } = hardlink
       return { path, root, address }
     }
     channel.dir()
