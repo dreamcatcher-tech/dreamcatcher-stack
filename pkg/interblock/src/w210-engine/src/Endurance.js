@@ -25,6 +25,7 @@ export class Endurance {
   #pulseCache = new Map()
   #cacheSize = 0
   #lru = new Set() // TODO make an LRU that calculates block size
+  #latests = new Map() // chainId : PulseLink
   get logger() {
     return this.#logger
   }
@@ -37,7 +38,6 @@ export class Endurance {
   _flushLatests() {
     this.#latests.clear()
   }
-  #latests = new Map()
   hasLatest(address) {
     assert(address instanceof Address)
     if (address.equals(this.selfAddress)) {
@@ -83,6 +83,7 @@ export class Endurance {
     if (latestLink) {
       const current = await this.recover(latestLink)
       assert(current.isNext(latest))
+      this.#pulseCache.delete(current.cid.toString())
     }
     this.#latests.set(chainId, latest.getPulseLink())
 
