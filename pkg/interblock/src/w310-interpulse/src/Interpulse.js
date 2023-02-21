@@ -43,7 +43,7 @@ export class Interpulse {
     return this.create(options)
   }
   static async create(options = {}) {
-    debug('creating interpulse', options)
+    debug('creating interpulse')
     let overloads = options.overloads ? { ...options.overloads } : {}
     overloads.root = shell
     Object.assign(overloads, apps)
@@ -293,9 +293,11 @@ export class Interpulse {
   async #watchInterpulses() {
     assert(this.net)
     for await (const announcement of this.net.subscribeInterpulses()) {
-      const { source, target, root, path, peerIdString } = announcement
+      const { source, target, address, root, path, peerIdString } = announcement
       assert(source instanceof PulseLink)
       assert(target instanceof Address)
+      // TODO maybe do not need address if root loads
+      assert(address instanceof Address)
       assert(root instanceof PulseLink)
       assert.strictEqual(typeof path, 'string')
       assert.strictEqual(typeof peerIdString, 'string')
@@ -303,9 +305,14 @@ export class Interpulse {
       const evilFullPulse = await this.#endurance.recover(source)
       const interpulse = Inter.extract(evilFullPulse, target)
       debug('interpulse for %s from %s', interpulse.target, interpulse.source)
-      this.net.addAddressPeer(interpulse.source, peerIdString)
-      // TODO fetch the target so it is discoverable by path
+
       try {
+        // TODO ensure everything in mtab:serve is preloaded
+        const rootPulse = await this.#endurance.recover(root)
+        assert(rootPulse.getAddress().equals(address))
+        const isPathValid = await this.#engine.latestByPath(path, rootPulse)
+        assert(isPathValid)
+        this.net.addAddressPeer(interpulse.source, peerIdString)
         await this.#engine.interpulse(interpulse)
       } catch (error) {
         debug('watchInterpulses error', error)

@@ -200,7 +200,7 @@ export class Announcer {
     const rootChainId = address.getChainId()
     debug('seeking peers for txAnnounce', address)
     this.#broadcast(rootChainId, (connection) =>
-      connection.txAnnounce(source, target, root, path)
+      connection.txAnnounce(source, target, address, root, path)
     )
   }
   unsubscribe(forAddress) {

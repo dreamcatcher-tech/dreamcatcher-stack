@@ -76,10 +76,11 @@ export class Connection {
           break
         }
         case 'ANNOUNCE': {
-          const { source, target, root, path } = payload
+          const { source, target, address, root, path } = payload
           const announcement = {
             source: PulseLink.parse(source),
             target: Address.fromChainId(target),
+            address: Address.fromChainId(address),
             root: PulseLink.parse(root),
             path,
             peerIdString: this.#peerIdString,
@@ -142,11 +143,15 @@ export class Connection {
     const update = UPDATE(forAddress, pulselink)
     this.#tx.push(update)
   }
-  txAnnounce(source, target, root, path) {
-    const announce = ANNOUNCE(source, target, root, path)
+  txAnnounce(source, target, address, root, path) {
+    const announce = ANNOUNCE(source, target, address, root, path)
     this.#tx.push(announce)
   }
   connectStream(stream) {
+    if (this.#stream) {
+      console.error(stream)
+      throw new Error(`already connected`)
+    }
     this.#stream = stream
     assert(stream.sink)
     assert(stream.source)
@@ -170,15 +175,16 @@ function UPDATE(forAddress, pulselink) {
   }
   return { type: 'UPDATE', payload }
 }
-function ANNOUNCE(source, target, root, path) {
+function ANNOUNCE(source, target, address, root, path) {
   assert(source instanceof Pulse)
   assert(target instanceof Address)
+  assert(address instanceof Address)
   assert(root instanceof PulseLink)
-  assert.strictEqual(typeof path, 'string')
   assert(posix.isAbsolute(path))
   const payload = {
     source: source.cid.toString(),
     target: target.getChainId(),
+    address: address.getChainId(),
     root: root.cid.toString(),
     path,
   }
