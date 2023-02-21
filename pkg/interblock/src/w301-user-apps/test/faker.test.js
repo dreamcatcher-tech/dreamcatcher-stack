@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url'
 import Debug from 'debug'
 import fs from 'fs'
 const debug = Debug('tests')
+const overloads = { '/crm': apps.crm.covenant }
 
 describe('faker', () => {
   describe('routing', () => {
@@ -12,9 +13,7 @@ describe('faker', () => {
       const batch = routing.generateBatch()
       expect(batch.length).toEqual(40)
 
-      const engine = await Interpulse.createCI({
-        overloads: { '/crm': apps.crm.covenant },
-      })
+      const engine = await Interpulse.createCI({ overloads })
       await engine.add('routing', '/crm/routing')
       const single = routing.generateSingle()
       await engine.execute('routing/add', single)
@@ -25,9 +24,7 @@ describe('faker', () => {
     })
     test('batch', async () => {
       const { routing } = await import('../src/crm/faker/index.js')
-      const engine = await Interpulse.createCI({
-        overloads: { '/crm': apps.crm.covenant },
-      })
+      const engine = await Interpulse.createCI({ overloads })
       await engine.add('routing', '/crm/routing')
       const batch = routing.generateBatch()
       await engine.execute('routing/batch', { batch })
@@ -40,15 +37,14 @@ describe('faker', () => {
       }
     })
   })
+
   describe('customers', () => {
     test('single', async () => {
       const { customers } = await import('../src/crm/faker/index.js')
       const single = customers.generateSingle()
       debug('single', single)
 
-      const engine = await Interpulse.createCI({
-        overloads: { '/crm': apps.crm.covenant },
-      })
+      const engine = await Interpulse.createCI({ overloads })
       await engine.add('customers', '/crm/customers')
       debug('customers', single)
       await engine.execute('customers/add', single)
@@ -62,9 +58,7 @@ describe('faker', () => {
       const batchSize = 11
       const batch = customers.generateBatch(batchSize)
       expect(batch.length).toEqual(batchSize)
-      const engine = await Interpulse.createCI({
-        overloads: { '/crm': apps.crm.covenant },
-      })
+      const engine = await Interpulse.createCI({ overloads })
       await engine.add('customers', '/crm/customers')
       await engine.execute('customers/batch', { batch })
       for (const { formData } of batch) {
@@ -73,38 +67,25 @@ describe('faker', () => {
         expect(state.formData).toEqual(formData)
       }
     })
-  })
-})
-
-describe.skip('generators', () => {
-  // TODO generate using the installer, then add new customers
-  // using a harness
-
-  const write = (complex, filename) => {
-    delete complex.tree
-    const path = `${__dirname}/${filename}.js`
-    fs.writeFileSync(path, 'export default ' + JSON.stringify(complex, null, 2))
-  }
-  const __dirname = dirname(fileURLToPath(import.meta.url))
-  test('small', async () => {
-    const { default: faker } = await import('../src/crm/faker')
-    const complex = faker(100)
-    const customers = complex.child('customers')
-    expect(customers.network.length).toEqual(100)
-    write(complex, 'small')
-  })
-  test('medium', async () => {
-    const { default: faker } = await import('../src/crm/faker')
-    const complex = faker(1000)
-    const customers = complex.child('customers')
-    expect(customers.network.length).toEqual(1000)
-    write(complex, 'medium')
-  })
-  test('large', async () => {
-    const { default: faker } = await import('../src/crm/faker')
-    const complex = faker(20000)
-    const customers = complex.child('customers')
-    expect(customers.network.length).toEqual(20000)
-    write(complex, 'large')
+    test.only('progressive batch', async () => {
+      const engine = await Interpulse.createCI({ overloads })
+      await engine.add('app', '/crm')
+      const { routing, customers } = await import('../src/crm/faker/index.js')
+      const allSectors = routing.generateBatch()
+      const fullBatch = customers.generateBatchInside(allSectors, 100)
+      Debug.enable('tests')
+      debug('fake data', fullBatch.length, 'customers')
+      let batch = []
+      let count = 0
+      for (const customer of fullBatch) {
+        batch.push(customer)
+        if (batch.length % 50 === 0) {
+          await engine.execute('/app/customers/batch', { batch })
+          count += batch.length
+          batch = []
+          debug('Fake data added ' + count + ' customers')
+        }
+      }
+    })
   })
 })

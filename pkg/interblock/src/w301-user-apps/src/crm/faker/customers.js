@@ -21,6 +21,10 @@ export const reset = () => {
   faker.seed(0)
   custNo = 777
 }
+export const setCustNo = (newCustNo) => {
+  assert(Number.isInteger(newCustNo), 'newCustNo must be an integer')
+  custNo = newCustNo
+}
 
 export const generateSingle = (lut, outside = false) => {
   assert(!lut || lut instanceof PolygonLut, 'lut must be a PolygonLut')
@@ -67,17 +71,15 @@ export const generateBatch = (count = 20, bounds, outside, noReset = false) => {
   return batch
 }
 
-export const generateBatchInside = (sectors, count = 20) => {
+export const generateBatchInside = (sectors, count = 20, noReset) => {
   assert(Array.isArray(sectors), 'sectors must be an array')
   assert(Number.isInteger(count), 'count must be an integer')
   const geometry = sectors.map((sector) => sector.formData)
   debug('generateBatchInside', geometry)
 
   const lut = PolygonLut.create(geometry)
-  return generateBatch(count, lut)
-
-  // get the bounds of the geometry
-  // make a lut of the geometry
+  const outside = false
+  return generateBatch(count, lut, outside, noReset)
 }
 export const generateBatchOutside = (sectors, count = 20, noReset = false) => {
   assert(Array.isArray(sectors), 'sectors must be an array')

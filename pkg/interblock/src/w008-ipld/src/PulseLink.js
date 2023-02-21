@@ -76,7 +76,6 @@ export class PulseLink extends IpldInterface {
   }
   bake(pulse) {
     assert(pulse instanceof Pulse)
-    assert(!this.#bakedPulse)
     assert(!pulse.isModified())
     assert(this.cid.equals(pulse.cid))
     this.#bakedPulse = pulse

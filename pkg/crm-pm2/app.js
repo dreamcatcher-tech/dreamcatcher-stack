@@ -12,9 +12,7 @@ const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
 const { crm } = apps
 const debug = Debug('crm:pm2')
 
-Debug.enable(
-  'crm:pm2* iplog Interpulse *Announcer *Connection *PulseNet *Engine'
-)
+Debug.enable('crm:pm2* iplog')
 
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)
@@ -99,24 +97,89 @@ const boot = async () => {
     const js = JSON.parse(string)
     cb(js)
   })
-  pmx.action('fake', async (cb) => {
+  pmx.action('100', async (cb) => {
     debug('action: fake')
-    const allSectors = crm.faker.routing.generateBatch()
-    const fullBatch = crm.faker.customers.generateBatchInside(allSectors, 100)
+    const bounds = crm.faker.routing.generateBatch()
+    const customers = await engine.latest('/app/customers')
+    const {
+      formData: { maxCustNo },
+    } = customers.getState().toJS()
+
+    crm.faker.customers.setCustNo(maxCustNo + 1)
+    const noReset = true
+    const fullBatch = crm.faker.customers.generateBatchInside(
+      bounds,
+      100,
+      noReset
+    )
     debug('fake data', fullBatch.length, 'customers')
-    const batch = []
+    let batch = []
     let count = 0
-    const used = new Set()
     for (const customer of fullBatch) {
-      if (used.has(customer.formData.custNo)) {
-        throw new Error('Duplicate customer number' + customer.formData.custNo)
-      }
-      used.add(customer.formData.custNo)
       batch.push(customer)
       if (batch.length % 50 === 0) {
-        await engine.execute('/app/customers/batch', { batch: fullBatch })
+        await engine.execute('/app/customers/batch', { batch })
         count += batch.length
-        batch.length = 0
+        batch = []
+        debug('Fake data added ' + count + ' customers')
+      }
+    }
+    cb('Fake data added ' + count + ' customers')
+  })
+  pmx.action('1,000', async (cb) => {
+    debug('action: fake')
+    const bounds = crm.faker.routing.generateBatch()
+    const customers = await engine.latest('/app/customers')
+    const {
+      formData: { maxCustNo },
+    } = customers.getState().toJS()
+
+    crm.faker.customers.setCustNo(maxCustNo + 1)
+    const noReset = true
+    const fullBatch = crm.faker.customers.generateBatchInside(
+      bounds,
+      1000,
+      noReset
+    )
+    debug('fake data', fullBatch.length, 'customers')
+    let batch = []
+    let count = 0
+    for (const customer of fullBatch) {
+      batch.push(customer)
+      if (batch.length % 50 === 0) {
+        await engine.execute('/app/customers/batch', { batch })
+        count += batch.length
+        batch = []
+        debug('Fake data added ' + count + ' customers')
+      }
+    }
+    cb('Fake data added ' + count + ' customers')
+  })
+  pmx.action('10,000', async (cb) => {
+    debug('action: fake')
+    const bounds = crm.faker.routing.generateBatch()
+    const customers = await engine.latest('/app/customers')
+    const {
+      formData: { maxCustNo },
+    } = customers.getState().toJS()
+
+    crm.faker.customers.setCustNo(maxCustNo + 1)
+    const noReset = true
+    const fullBatch = crm.faker.customers.generateBatchInside(
+      bounds,
+      10000,
+      noReset
+    )
+    debug('fake data', fullBatch.length, 'customers')
+    let batch = []
+    let count = 0
+    for (const customer of fullBatch) {
+      batch.push(customer)
+      if (batch.length % 50 === 0) {
+        await engine.execute('/app/customers/batch', { batch })
+        count += batch.length
+        batch = []
+        debug('Fake data added ' + count + ' customers')
       }
     }
     cb('Fake data added ' + count + ' customers')
