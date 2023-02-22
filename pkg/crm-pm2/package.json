@@ -29,6 +29,7 @@
   },
   "config": {},
   "apps": {
+    "ignore_watch": ["crm-pm2-repo"],
     "merge_logs": true,
     "max_memory_restart": "9000M",
     "script": "app.js",

@@ -1,4 +1,5 @@
 import Debug from 'debug'
+import * as dotenv from 'dotenv'
 import { posix } from 'path'
 import * as fs from 'node:fs/promises'
 import JSONbig from 'json-bigint'
@@ -9,6 +10,7 @@ import process from 'process'
 import chalk from 'ansi-colors-browserify'
 import cliui from 'cliui'
 import du from 'du'
+dotenv.config()
 const require = createRequire(import.meta.url)
 const moduleJson = require('./package.json')
 const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
@@ -20,15 +22,6 @@ Debug.enable('crm:pm2* iplog')
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)
 
-/**
---faker 123 Generate fake data, using the given number of customers
-
---admin rootChainId Supply a chainId to allow to connect without being authd
-
-.env provided as a file which holds SSL keys. If a .env file is found at the same place as the repo, it will be loaded ie: repo/.env will be loaded.
-
-
- */
 const config = pmx.initModule({
   widget: {
     logo: 'https://app.keymetrics.io/img/logo/keymetrics-300.png',
@@ -38,7 +31,6 @@ const config = pmx.initModule({
       actions: true,
       issues: true,
       meta: true,
-      // main_probes: ['test-probe'],
     },
   },
 })
@@ -46,12 +38,13 @@ debug.extend('init')('config', config)
 
 const boot = async () => {
   debug('pwd', process.cwd())
-  const { PORT, WITH_FAKE_DATA, ADMIN_CHAIN_ID, REPO, SSL_PATH } = process.env
+  const { PORT, WITH_FAKE_DATA, ADMIN_CHAIN_ID, REPO, SSL_HOSTNAME } =
+    process.env
   debug('PORT', PORT)
   debug('WITH_FAKE_DATA', WITH_FAKE_DATA)
   debug('ADMIN_CHAIN_ID', ADMIN_CHAIN_ID)
   debug('REPO', REPO)
-  debug('SSL_PATH', SSL_PATH) // load the keys from this path
+  debug('SSL_HOSTNAME', SSL_HOSTNAME) // loaded from .env file in project root
   debug(
     `Starting CRM blockchain engine...
       @dreamcatcher-tech/interblock:    v${interblockJson.version}
