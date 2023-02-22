@@ -1,4 +1,6 @@
 import Debug from 'debug'
+import { posix } from 'path'
+import * as fs from 'node:fs/promises'
 import JSONbig from 'json-bigint'
 import pmx from '@pm2/io'
 import { Interpulse, apps } from '@dreamcatcher-tech/interblock'
@@ -6,6 +8,7 @@ import { createRequire } from 'module'
 import process from 'process'
 import chalk from 'ansi-colors-browserify'
 import cliui from 'cliui'
+import du from 'du'
 const require = createRequire(import.meta.url)
 const moduleJson = require('./package.json')
 const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
@@ -42,6 +45,7 @@ const config = pmx.initModule({
 debug.extend('init')('config', config)
 
 const boot = async () => {
+  debug('pwd', process.cwd())
   const { PORT, WITH_FAKE_DATA, ADMIN_CHAIN_ID, REPO, SSL_PATH } = process.env
   debug('PORT', PORT)
   debug('WITH_FAKE_DATA', WITH_FAKE_DATA)
@@ -56,7 +60,7 @@ const boot = async () => {
   )
   const tcpHost = '0.0.0.0'
   const tcpPort = PORT || '8789'
-  const repo = REPO || '../../tmp/crm-pm2-test'
+  const repo = REPO || './crm-pm2-repo'
   const overloads = { '/crm': crm.covenant }
   const engine = await Interpulse.create({ repo, tcpHost, tcpPort, overloads })
   debug('blockchain started')
@@ -77,7 +81,6 @@ const boot = async () => {
     ui.div({ text: `Address:`, width: 15 }, addr)
   }
   console.log(ui.toString())
-  debug('stats', await engine.stats())
 
   if (engine.isCreated) {
     debug('begin app install on uninitialized engine')
@@ -97,111 +100,149 @@ const boot = async () => {
     const js = JSON.parse(string)
     cb(js)
   })
-  pmx.action('100', async (cb) => {
-    debug('action: fake')
-    const bounds = crm.faker.routing.generateBatch()
-    const customers = await engine.latest('/app/customers')
-    const {
-      formData: { maxCustNo },
-    } = customers.getState().toJS()
 
-    crm.faker.customers.setCustNo(maxCustNo + 1)
-    const noReset = true
-    const fullBatch = crm.faker.customers.generateBatchInside(
-      bounds,
-      100,
-      noReset
-    )
-    debug('fake data', fullBatch.length, 'customers')
-    let batch = []
-    let count = 0
-    for (const customer of fullBatch) {
-      batch.push(customer)
-      if (batch.length % 50 === 0) {
-        await engine.execute('/app/customers/batch', { batch })
-        count += batch.length
-        batch = []
-        debug('Fake data added ' + count + ' customers')
-      }
-    }
-    cb('Fake data added ' + count + ' customers')
-  })
-  pmx.action('1,000', async (cb) => {
-    debug('action: fake')
-    const bounds = crm.faker.routing.generateBatch()
-    const customers = await engine.latest('/app/customers')
-    const {
-      formData: { maxCustNo },
-    } = customers.getState().toJS()
+  const custPerSec = pmx.metric({ name: 'Customers / sec' })
+  custPerSec.set(0)
+  if (WITH_FAKE_DATA) {
+    pmx.action('100', async (reply) => {
+      debug('action: fake')
+      const bounds = crm.faker.routing.generateBatch()
+      const customers = await engine.latest('/app/customers')
+      const {
+        formData: { maxCustNo },
+      } = customers.getState().toJS()
 
-    crm.faker.customers.setCustNo(maxCustNo + 1)
-    const noReset = true
-    const fullBatch = crm.faker.customers.generateBatchInside(
-      bounds,
-      1000,
-      noReset
-    )
-    debug('fake data', fullBatch.length, 'customers')
-    let batch = []
-    let count = 0
-    for (const customer of fullBatch) {
-      batch.push(customer)
-      if (batch.length % 50 === 0) {
-        await engine.execute('/app/customers/batch', { batch })
-        count += batch.length
-        batch = []
-        debug('Fake data added ' + count + ' customers')
+      crm.faker.customers.setCustNo(maxCustNo + 1)
+      const noReset = true
+      const fullBatch = crm.faker.customers.generateBatchInside(
+        bounds,
+        100,
+        noReset
+      )
+      debug('fake data', fullBatch.length, 'customers')
+      let batch = []
+      let count = 0
+      for (const customer of fullBatch) {
+        batch.push(customer)
+        const batchSize = 50
+        if (batch.length % batchSize === 0) {
+          const start = Date.now()
+          await engine.execute('/app/customers/batch', { batch })
+          custPerSec.set(batchSize / ((Date.now() - start) / 1000))
+          count += batch.length
+          batch = []
+          debug('Fake data added ' + count + ' customers')
+        }
       }
-    }
-    cb('Fake data added ' + count + ' customers')
-  })
-  pmx.action('10,000', async (cb) => {
-    debug('action: fake')
-    const bounds = crm.faker.routing.generateBatch()
-    const customers = await engine.latest('/app/customers')
-    const {
-      formData: { maxCustNo },
-    } = customers.getState().toJS()
+      reply('Fake data added ' + count + ' customers')
+      doDu()
+    })
+    pmx.action('1,000', async (reply) => {
+      debug('action: fake')
+      const bounds = crm.faker.routing.generateBatch()
+      const customers = await engine.latest('/app/customers')
+      const {
+        formData: { maxCustNo },
+      } = customers.getState().toJS()
 
-    crm.faker.customers.setCustNo(maxCustNo + 1)
-    const noReset = true
-    const fullBatch = crm.faker.customers.generateBatchInside(
-      bounds,
-      10000,
-      noReset
-    )
-    debug('fake data', fullBatch.length, 'customers')
-    let batch = []
-    let count = 0
-    for (const customer of fullBatch) {
-      batch.push(customer)
-      if (batch.length % 50 === 0) {
-        await engine.execute('/app/customers/batch', { batch })
-        count += batch.length
-        batch = []
-        debug('Fake data added ' + count + ' customers')
+      crm.faker.customers.setCustNo(maxCustNo + 1)
+      const noReset = true
+      const fullBatch = crm.faker.customers.generateBatchInside(
+        bounds,
+        1000,
+        noReset
+      )
+      debug('fake data', fullBatch.length, 'customers')
+      let batch = []
+      let count = 0
+      const batchSize = 50
+      for (const customer of fullBatch) {
+        batch.push(customer)
+        if (batch.length % batchSize === 0) {
+          const start = Date.now()
+          await engine.execute('/app/customers/batch', { batch })
+          custPerSec.set(batchSize / ((Date.now() - start) / 1000))
+          count += batch.length
+          batch = []
+          debug('Fake data added ' + count + ' customers')
+        }
       }
-    }
-    cb('Fake data added ' + count + ' customers')
-  })
-  pmx.action('Hard Reset', async (cb) => {
-    debug('action: Hard Reset')
-    await engine.hardReset()
-    cb('Reset complete.  Restart the service to start fresh')
-    setTimeout(process.exit, 1000)
-  })
-  pmx.action('ID', async (cb) => {
+      reply('Fake data added ' + count + ' customers')
+      doDu()
+    })
+    pmx.action('10,000', async (reply) => {
+      debug('action: fake')
+      const bounds = crm.faker.routing.generateBatch()
+      const customers = await engine.latest('/app/customers')
+      const {
+        formData: { maxCustNo },
+      } = customers.getState().toJS()
+
+      crm.faker.customers.setCustNo(maxCustNo + 1)
+      const noReset = true
+      const fullBatch = crm.faker.customers.generateBatchInside(
+        bounds,
+        10000,
+        noReset
+      )
+      debug('fake data', fullBatch.length, 'customers')
+      let batch = []
+      let count = 0
+      const batchSize = 50
+      for (const customer of fullBatch) {
+        batch.push(customer)
+        if (batch.length % batchSize === 0) {
+          const start = Date.now()
+          await engine.execute('/app/customers/batch', { batch })
+          custPerSec.set(batchSize / ((Date.now() - start) / 1000))
+          count += batch.length
+          batch = []
+          debug('Fake data added ' + count + ' customers')
+        }
+      }
+      reply('Fake data added ' + count + ' customers')
+      doDu()
+    })
+    pmx.action('Hard Reset', async (reply) => {
+      debug('action: Hard Reset')
+      await engine.hardReset()
+      reply('Reset complete.  Restart the service to start fresh')
+      setTimeout(process.exit, 1000)
+    })
+  }
+  pmx.action('ID', async (reply) => {
     debug('action: ID')
     const id = await engine.getIdentifiers('/app')
-    cb(id)
+    reply(id)
   })
-  pmx.action('Import', async (cb) => {
+  pmx.action('Import', async (reply) => {
     debug('action: Import')
     // try connect to moneyworks
     // begin pulling in customers and updating them
     // report progress to the user
     // TODO make this be a scoped action that takes a long time
-    cb('Importing complete')
+    reply('Importing complete')
+    doDu()
+  })
+
+  let duSize
+  function doDu() {
+    debug('du start')
+    du(repo, { disk: true }, (err, size) => {
+      if (err) {
+        debug('du error', err)
+      }
+      duSize = size
+      debug('du complete', size)
+    })
+  }
+  doDu()
+  pmx.metric({
+    name: 'du',
+    unit: 'bytes',
+    value: () => {
+      return duSize
+    },
   })
 }
 boot()

@@ -1,4 +1,3 @@
-import { removeSync } from 'fs-extra/esm'
 import { pipe } from 'it-pipe'
 import { CID } from 'multiformats/cid'
 import { shell } from '../../w212-system-covenants'
@@ -217,6 +216,7 @@ export class Interpulse {
     if (isNode) {
       if (typeof repo === 'string') {
         debug('deleting directory:', repo)
+        const { removeSync } = await import('fs-extra/esm')
 
         // sync to purposefully block the thread from any block making
         debug('deleting using fs-extra remoteSync')
@@ -282,7 +282,7 @@ export class Interpulse {
           prior = latest
           sink.push(latest)
         } catch (error) {
-          debug('error', error.message)
+          debug('subscribe error', path, error.message)
         }
       }
       debug('checker ended')

@@ -238,9 +238,14 @@ export class Announcer {
     )
     // TODO check if we have any addresses first
     // TODO endelessly try to dial
-    this.#libp2p.dialProtocol(peerId, PROTOCOL).then((stream) => {
-      connection.connectStream(stream)
-    })
+    this.#libp2p
+      .dialProtocol(peerId, PROTOCOL)
+      .then((stream) => {
+        connection.connectStream(stream)
+      })
+      .catch((err) => {
+        debug('dial error', err)
+      })
     // TODO handle rejection and clean up the connection
     return connection
   }

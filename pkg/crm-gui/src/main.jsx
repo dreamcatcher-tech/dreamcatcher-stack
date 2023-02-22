@@ -19,8 +19,8 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   return [install, sectorsInsert, listInsert, update, cd]
 }
 
-const appRemoteChainId = 'QmaxmfM2e1uk7tWRkzHEfxLV4HbbTQoR55NDsoA4yGsLaQ'
-const serverPeerId = '16Uiu2HAkvkdm6jgVruRixynJdvQcSMz81fLANyvmF5LvHCWFWFij'
+const appRemoteChainId = 'Qme6QKAnwf4Aq2vnc5CL2bTUq9GYskMZp5Ed7riwkdfTEy'
+const serverPeerId = '16Uiu2HAmVjndUdV7JpeqKoz41krjxwF9ff1c5XmbuFk5uV8yG3Eu'
 const peers = { [appRemoteChainId]: serverPeerId }
 const addrs = ['/ip4/127.0.0.1/tcp/3000/ws/p2p/' + serverPeerId]
 const mounts = { remote: appRemoteChainId }

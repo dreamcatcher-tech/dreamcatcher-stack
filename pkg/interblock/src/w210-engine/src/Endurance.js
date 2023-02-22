@@ -83,7 +83,7 @@ export class Endurance {
     if (latestLink) {
       const current = await this.recover(latestLink)
       assert(current.isNext(latest))
-      this.#pulseCache.delete(current.cid.toString())
+      // TODO implement some cache ejection
     }
     this.#latests.set(chainId, latest.getPulseLink())
 

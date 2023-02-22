@@ -74,6 +74,7 @@ export class PulseNet {
           cert: SSL_CERT_CHAIN,
           key: SSL_PRIVATE_KEY,
         })
+        listen.length = 0
         listen.push(`/ip4/${tcpHost}/tcp/${tcpPort}/wss`)
       }
       options.addresses = { listen }
