@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677105650914,
+  "lastUpdate": 1677107254457,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interpulse Benchmark": [
@@ -22279,6 +22279,86 @@ window.BENCHMARK_DATA = {
             "range": "±1.58%",
             "unit": "ops/sec",
             "extra": "80 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted_capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted_capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "66fe595df1f40be8cd02deb38cc431ca5f36d182",
+          "message": "chromatic",
+          "timestamp": "2023-02-23T12:05:23+13:00",
+          "tree_id": "2119aeaf79d24da6859f90ef1ba078ff309ad033",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/66fe595df1f40be8cd02deb38cc431ca5f36d182"
+        },
+        "date": 1677107253112,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 654,
+            "range": "±4.30%",
+            "unit": "ops/sec",
+            "extra": "78 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 190,
+            "range": "±2.22%",
+            "unit": "ops/sec",
+            "extra": "84 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 300,
+            "range": "±3.32%",
+            "unit": "ops/sec",
+            "extra": "84 samples"
+          },
+          {
+            "name": "publish",
+            "value": 25.42,
+            "range": "±7.41%",
+            "unit": "ops/sec",
+            "extra": "63 samples"
+          },
+          {
+            "name": "install",
+            "value": 7.95,
+            "range": "±10.28%",
+            "unit": "ops/sec",
+            "extra": "42 samples"
+          },
+          {
+            "name": "add customer",
+            "value": 24.44,
+            "range": "±4.81%",
+            "unit": "ops/sec",
+            "extra": "62 samples"
+          },
+          {
+            "name": "block making",
+            "value": 1075,
+            "range": "±0.25%",
+            "unit": "ops/sec",
+            "extra": "90 samples"
+          },
+          {
+            "name": "unsigned block making",
+            "value": 7570,
+            "range": "±13.76%",
+            "unit": "ops/sec",
+            "extra": "77 samples"
           }
         ]
       }
