@@ -3,8 +3,12 @@ import ReactDOM from 'react-dom/client'
 import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-
 Debug.enable('iplog webdos:Engine *PulseNet *Announcer Interpulse')
+
+const { VITE_APP_CHAIN_ID, VITE_PEER_ID, VITE_PEER_MULTIADDR } = import.meta.env
+console.log('VITE_APP_CHAIN_ID', VITE_APP_CHAIN_ID)
+console.log('VITE_PEER_ID', VITE_PEER_ID)
+console.log('VITE_PEER_MULTIADDR', VITE_PEER_MULTIADDR)
 
 const { faker } = apps.crm
 const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
@@ -19,48 +23,18 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   return [install, sectorsInsert, listInsert, update, cd]
 }
 
-const appRemoteChainId = 'QmcEg3oyF5awNTuQ4t1BTSywrf8nqeKjwRGKfW9JJ35oVa'
-const serverPeerId = '16Uiu2HAmLmhx7rd3iB9pHi1ykRmPpMhDmicg9YoWqHg6UJwQZEcw'
+const appRemoteChainId = VITE_APP_CHAIN_ID
+const serverPeerId = VITE_PEER_ID
 const peers = { [appRemoteChainId]: serverPeerId }
-const addrs = ['/ip4/127.0.0.1/tcp/3000/wss/p2p/' + serverPeerId]
+const addrs = [VITE_PEER_MULTIADDR + serverPeerId]
 const mounts = { remote: appRemoteChainId }
 
 const dev = { '/crm': apps.crm.covenant }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <>
-    <table>
-      <tbody>
-        <tr>
-          <td width={'200px'}>App remote chain ID</td>
-          <td>
-            <pre>{appRemoteChainId}</pre>
-          </td>
-        </tr>
-        <tr>
-          <td>Server peer ID</td>
-          <td>
-            <pre>{serverPeerId}</pre>
-          </td>
-        </tr>
-        <tr>
-          <td>Chain Peers mapping</td>
-          <td>
-            <pre>{Object.entries(peers).pop().join(' : ')}</pre>
-          </td>
-        </tr>
-        <tr>
-          <td>Server address</td>
-          <td>
-            <pre>{addrs[0]}</pre>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <Engine peers={peers} addrs={addrs} mounts={mounts} ram dev={dev}>
-      <Syncer path="/.mtab/remote">
-        <App />
-      </Syncer>
-    </Engine>
-  </>
+  <Engine peers={peers} addrs={addrs} mounts={mounts} dev={dev}>
+    <Syncer path="/.mtab/remote">
+      <App />
+    </Syncer>
+  </Engine>
 )
