@@ -58,8 +58,8 @@ export class PulseNet {
     const baseOptions = libp2pConfig()
     const options = {
       ...baseOptions,
-      streamMuxers: [new mplex()],
-      connectionEncryption: [new noise()],
+      streamMuxers: [mplex()],
+      connectionEncryption: [noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
     }
     delete options.metrics // TODO remove once libp2p is fixed
@@ -68,6 +68,7 @@ export class PulseNet {
       const listen = [`/ip4/${tcpHost}/tcp/${tcpPort}/ws`]
       const { SSL_PRIVATE_KEY, SSL_CERT_CHAIN } = process.env
       if (SSL_PRIVATE_KEY && SSL_CERT_CHAIN) {
+        await checkCertificate(SSL_CERT_CHAIN)
         debug('using SSL certificates')
         const https = await import('https')
         websocketsOptions.server = https.createServer({
@@ -79,7 +80,7 @@ export class PulseNet {
       }
       options.addresses = { listen }
     }
-    options.transports = [new webSockets(websocketsOptions)]
+    options.transports = [webSockets(websocketsOptions)]
 
     if (!(await repo.isInitialized())) {
       debug('initializing repo', repo.path)
@@ -226,4 +227,17 @@ const stopSafe = async (fn) => {
   } catch (err) {
     debug('stop error', err)
   }
+}
+const checkCertificate = async (cert) => {
+  assert.strictEqual(typeof cert, 'string')
+  const { default: pem } = await import('pem')
+  const { promisify } = await import('util')
+  const info = promisify(pem.readCertificateInfo)
+  const check = await info(cert)
+  const { end } = check.validity
+  if (Date.now() > end) {
+    const date = new Date(end)
+    throw new Error('Certificate Expired on: ' + date)
+  }
+  debug('Certificate expiry:', new Date(end))
 }

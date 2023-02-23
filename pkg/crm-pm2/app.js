@@ -17,7 +17,7 @@ const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
 const { crm } = apps
 const debug = Debug('crm:pm2')
 
-Debug.enable('crm:pm2* iplog')
+Debug.enable('crm:pm2* iplog *PulseNet')
 
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)

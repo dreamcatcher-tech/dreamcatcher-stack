@@ -19,10 +19,10 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   return [install, sectorsInsert, listInsert, update, cd]
 }
 
-const appRemoteChainId = 'Qme6QKAnwf4Aq2vnc5CL2bTUq9GYskMZp5Ed7riwkdfTEy'
-const serverPeerId = '16Uiu2HAmVjndUdV7JpeqKoz41krjxwF9ff1c5XmbuFk5uV8yG3Eu'
+const appRemoteChainId = 'QmcEg3oyF5awNTuQ4t1BTSywrf8nqeKjwRGKfW9JJ35oVa'
+const serverPeerId = '16Uiu2HAmLmhx7rd3iB9pHi1ykRmPpMhDmicg9YoWqHg6UJwQZEcw'
 const peers = { [appRemoteChainId]: serverPeerId }
-const addrs = ['/ip4/127.0.0.1/tcp/3000/ws/p2p/' + serverPeerId]
+const addrs = ['/ip4/127.0.0.1/tcp/3000/wss/p2p/' + serverPeerId]
 const mounts = { remote: appRemoteChainId }
 
 const dev = { '/crm': apps.crm.covenant }
