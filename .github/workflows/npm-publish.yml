@@ -8,7 +8,7 @@ on:
       - v1.*
 
 jobs:
-  linux-test:
+  linux-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -16,8 +16,7 @@ jobs:
         with:
           node-version: 18.x
           cache: yarn
-      - run: yarn install --focus --frozen-lockfile
-        working-directory: ./pkg/interblock
+      - run: yarn install --frozen-lockfile
         
       - name: Test
         run: yarn run lint
@@ -28,9 +27,17 @@ jobs:
       - run: yarn run build
         working-directory: ./pkg/interblock
 
+      - name: Publish
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "interbot"
+          npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
+          npm whoami
+          yarn run lerna publish patch --yes --no-private    
+
   windows-test:
     # make sure the interblock library runs on windows
-    needs: [linux-test]
+    needs: [linux-publish]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -71,22 +78,3 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
-  publish-npm:
-    # Ensure webdos passed chromatic basic testing first
-    needs: [chromatic-deployment]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-          cache: yarn
-      - run: yarn install --frozen-lockfile
-      - run: git config --global user.email "actions@github.com"
-      - run: git config --global user.name "interbot"
-
-      - name: Publish
-        run: |
-          npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
-          npm whoami
-          yarn run lerna publish patch --yes --no-private
