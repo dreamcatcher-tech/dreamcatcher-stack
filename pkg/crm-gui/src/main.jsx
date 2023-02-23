@@ -32,7 +32,7 @@ const mounts = { remote: appRemoteChainId }
 const dev = { '/crm': apps.crm.covenant }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <Engine peers={peers} addrs={addrs} mounts={mounts} dev={dev}>
+  <Engine peers={peers} addrs={addrs} mounts={mounts} dev={dev} ram>
     <Syncer path="/.mtab/remote">
       <App />
     </Syncer>

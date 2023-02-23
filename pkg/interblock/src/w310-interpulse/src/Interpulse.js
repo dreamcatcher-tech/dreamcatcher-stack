@@ -196,6 +196,9 @@ export class Interpulse {
   async hardReset() {
     await this.stop()
     await Interpulse.hardReset(this.#repo)
+    if (isBrowser) {
+      window.location.reload()
+    }
   }
   static async hardReset(repo) {
     if (isBrowser) {
