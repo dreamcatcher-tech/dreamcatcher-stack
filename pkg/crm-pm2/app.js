@@ -8,6 +8,7 @@ import process from 'process'
 import chalk from 'ansi-colors-browserify'
 import cliui from 'cliui'
 import du from 'du'
+import assert from 'assert-fast'
 dotenv.config()
 dotenv.config({ path: '../../../../../../.env' }) // for pm2 module installation
 const require = createRequire(import.meta.url)
@@ -16,12 +17,12 @@ const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
 const { crm } = apps
 const debug = Debug('crm:pm2')
 
-Debug.enable('crm:pm2* iplog *PulseNet')
+Debug.enable('crm:pm2* *PulseNet')
 
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)
 
-const config = pmx.initModule({
+pmx.initModule({
   widget: {
     logo: 'https://app.keymetrics.io/img/logo/keymetrics-300.png',
     theme: ['#141A1F', '#222222', '#3ff', '#3ff'],
@@ -33,7 +34,6 @@ const config = pmx.initModule({
     },
   },
 })
-debug.extend('init')('config', config)
 
 const boot = async () => {
   debug('pwd', process.cwd())
@@ -90,14 +90,18 @@ const boot = async () => {
     const stats = await engine.stats()
     const string = JSONbig.stringify(stats, null, 2)
     const js = JSON.parse(string)
+    js.pwd = process.cwd()
+    js.repo = repo
     cb(js)
   })
 
   const custPerSec = pmx.metric({ name: 'Customers / sec' })
   custPerSec.set(0)
   if (WITH_FAKE_DATA) {
-    pmx.action('100', async (reply) => {
-      debug('action: fake')
+    const addFakeCustomers = async (count, reply) => {
+      assert(Number.isInteger(count))
+      assert.strictEqual(typeof reply, 'function')
+      debug('action: fake', count)
       const bounds = crm.faker.routing.generateBatch()
       const customers = await engine.latest('/app/customers')
       const {
@@ -108,98 +112,37 @@ const boot = async () => {
       const noReset = true
       const fullBatch = crm.faker.customers.generateBatchInside(
         bounds,
-        100,
+        count,
         noReset
       )
       debug('fake data', fullBatch.length, 'customers')
       let batch = []
-      let count = 0
+      let total = 0
       for (const customer of fullBatch) {
         batch.push(customer)
         const batchSize = 50
-        if (batch.length % batchSize === 0) {
+        if (batch.length % batchSize === 0 || batch.length === count) {
           const start = Date.now()
           await engine.execute('/app/customers/batch', { batch })
           custPerSec.set(batchSize / ((Date.now() - start) / 1000))
-          count += batch.length
+          debug('Fake data added ' + batch.length + ' customers')
+          total += batch.length
           batch = []
-          debug('Fake data added ' + count + ' customers')
         }
       }
-      reply('Fake data added ' + count + ' customers')
+      reply('Fake data added ' + total + ' customers')
       doDu()
-    })
-    pmx.action('1,000', async (reply) => {
-      debug('action: fake')
-      const bounds = crm.faker.routing.generateBatch()
-      const customers = await engine.latest('/app/customers')
-      const {
-        formData: { maxCustNo },
-      } = customers.getState().toJS()
+    }
 
-      crm.faker.customers.setCustNo(maxCustNo + 1)
-      const noReset = true
-      const fullBatch = crm.faker.customers.generateBatchInside(
-        bounds,
-        1000,
-        noReset
-      )
-      debug('fake data', fullBatch.length, 'customers')
-      let batch = []
-      let count = 0
-      const batchSize = 50
-      for (const customer of fullBatch) {
-        batch.push(customer)
-        if (batch.length % batchSize === 0) {
-          const start = Date.now()
-          await engine.execute('/app/customers/batch', { batch })
-          custPerSec.set(batchSize / ((Date.now() - start) / 1000))
-          count += batch.length
-          batch = []
-          debug('Fake data added ' + count + ' customers')
-        }
-      }
-      reply('Fake data added ' + count + ' customers')
-      doDu()
-    })
-    pmx.action('10,000', async (reply) => {
-      debug('action: fake')
-      const bounds = crm.faker.routing.generateBatch()
-      const customers = await engine.latest('/app/customers')
-      const {
-        formData: { maxCustNo },
-      } = customers.getState().toJS()
-
-      crm.faker.customers.setCustNo(maxCustNo + 1)
-      const noReset = true
-      const fullBatch = crm.faker.customers.generateBatchInside(
-        bounds,
-        10000,
-        noReset
-      )
-      debug('fake data', fullBatch.length, 'customers')
-      let batch = []
-      let count = 0
-      const batchSize = 50
-      for (const customer of fullBatch) {
-        batch.push(customer)
-        if (batch.length % batchSize === 0) {
-          const start = Date.now()
-          await engine.execute('/app/customers/batch', { batch })
-          custPerSec.set(batchSize / ((Date.now() - start) / 1000))
-          count += batch.length
-          batch = []
-          debug('Fake data added ' + count + ' customers')
-        }
-      }
-      reply('Fake data added ' + count + ' customers')
-      doDu()
-    })
+    pmx.action('10', (reply) => addFakeCustomers(10, reply))
+    pmx.action('100', (reply) => addFakeCustomers(100, reply))
+    pmx.action('1,000', (reply) => addFakeCustomers(1000, reply))
+    pmx.action('10,000', (reply) => addFakeCustomers(10000, reply))
     pmx.action('Hard Reset', async (reply) => {
       debug('action: Hard Reset')
       await engine.hardReset()
       reply('Reset complete.  Restart the service to start fresh')
-      setTimeout(process.exit, 1000)
+      setTimeout(process.exit, 800)
     })
   }
   pmx.action('ID', async (reply) => {
@@ -236,5 +179,17 @@ const boot = async () => {
       return duSize
     },
   })
+  process.on('SIGINT', async () => {
+    debug('SIGINT')
+    let result
+    try {
+      result = await engine.stop()
+      debug('engine stopped')
+    } catch (error) {
+      debug('error stopping engine', error)
+    }
+    process.exit(result ? 0 : 1)
+  })
+  process.send('ready')
 }
 boot()
