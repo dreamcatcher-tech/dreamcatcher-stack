@@ -44,6 +44,7 @@
     "assert-fast": "^1.0.3",
     "callsites": "^4.0.0",
     "columnify": "^1.6.0",
+    "dayjs": "^1.11.7",
     "debounce": "^1.2.1",
     "debug": "^4.3.4",
     "fast-deep-equal": "^3.1.3",
