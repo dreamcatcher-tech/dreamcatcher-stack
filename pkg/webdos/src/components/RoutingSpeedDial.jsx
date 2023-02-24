@@ -7,27 +7,32 @@ import SpeedDialAction from '@mui/material/SpeedDialAction'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
+import UpdateIcon from '@mui/icons-material/EditLocationAlt'
 
-const debug = Debug('terminal:widgets:SpeedDial')
-
-const actions = [
-  { icon: <AddIcon />, name: 'Add' },
-  { icon: <EditIcon />, name: 'Edit' },
-  { icon: <DeleteIcon />, name: 'Delete' },
-]
+const debug = Debug('terminal:widgets:RoutingSpeedDial')
 
 export default function SpeedDialFab(props) {
   const { initialOpen = false } = props
   const [open, setOpen] = React.useState(initialOpen)
   const handleOpen = () => setOpen(true)
-  const handleClose = () => setOpen(false)
-  const { onAdd, onEdit, onDelete, disabled } = props
+  const handleClose = (on) => () => {
+    debug('close')
+    setOpen(false)
+    on && on()
+  }
+  const { onUpdate, onAdd, onEdit, onDelete, disabled } = props
+  const actions = [
+    { icon: <UpdateIcon />, name: 'Update', on: onUpdate },
+    { icon: <AddIcon />, name: 'Add', on: onAdd },
+    { icon: <EditIcon />, name: 'Edit', on: onEdit },
+    { icon: <DeleteIcon />, name: 'Delete', on: onDelete },
+  ]
 
   return (
     <SpeedDial
       sx={{ position: 'absolute', bottom: 16, right: 16 }}
       icon={<SpeedDialIcon icon={<EditIcon />} />}
-      onClose={handleClose}
+      onClose={handleClose()}
       onOpen={handleOpen}
       open={open}
       ariaLabel="Routing Actions"
@@ -39,14 +44,18 @@ export default function SpeedDialFab(props) {
           icon={action.icon}
           tooltipTitle={action.name}
           tooltipOpen
-          onClick={handleClose}
+          onClick={handleClose(action.on)}
         />
       ))}
     </SpeedDial>
   )
 }
 SpeedDialFab.propTypes = {
+  /**
+   * Testing only
+   */
   initialOpen: PropTypes.bool,
+  onUpdate: PropTypes.func,
   onAdd: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,

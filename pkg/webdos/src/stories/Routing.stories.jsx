@@ -16,12 +16,13 @@ const listInsert = { '/customers/batch': { batch: listBatch } }
 const update = { '/routing/update': { path: '/customers' } }
 const cd = { cd: { path: '/routing' } }
 
+const init = [sectorsAdd, sectorsInsert, listAdd, listInsert, cd, update]
 export default {
   title: 'Routing',
   component: Routing,
   args: {
     dev: { '/crm': apps.crm.covenant },
-    init: [sectorsAdd, sectorsInsert, listAdd, listInsert, update, cd],
+    init,
   },
 }
 
@@ -43,3 +44,6 @@ export const Blank = Template.bind({})
 Blank.args = { init: [sectorsAdd, listAdd, listInsert, update] }
 
 export const Small = Template.bind({})
+export const NoUpdate = Template.bind({})
+NoUpdate.args = { init: [...init] }
+NoUpdate.args.init.pop()

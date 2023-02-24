@@ -12,6 +12,7 @@ import PropTypes from 'prop-types'
 import Debug from 'debug'
 import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
+import ApproveAll from '@mui/icons-material/DoneAll'
 
 const debug = Debug('terminal:widgets:SorterDatum')
 

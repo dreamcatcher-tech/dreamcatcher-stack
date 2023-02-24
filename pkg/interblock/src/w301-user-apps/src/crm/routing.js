@@ -227,12 +227,12 @@ const reducer = async (request) => {
       const [state, setState] = await useState()
       const isSectorsChanged = state.geometryHash !== hash
       debug('isSectorsChanged', isSectorsChanged)
-
-      const { path } = payload
-      debug('update', path)
       if (isSectorsChanged) {
         lut.reset()
       }
+
+      const { path = '../customers' } = payload
+      debug('update', path)
       const cPayload = { path, isSectorsChanged }
       const custNos = await interchain('_CUSTOMERS', cPayload)
 
@@ -255,7 +255,8 @@ const reducer = async (request) => {
           await setState({ ...state, formData })
         })
       )
-      const { unassigned = [] } = state.formData
+      let { unassigned = [] } = state.formData
+      unassigned = [...unassigned]
       unassigned.push(...lut.unassigned)
       const formData = { ...state.formData, geometryHash: hash, unassigned }
       await setState({ ...state, formData })

@@ -391,18 +391,23 @@ export class Engine {
       if (!address.isRemote() && !channel.isForkPoint()) {
         throw new Error(`Segment not resolved: ${segment} of: ${path}`)
       }
-      const { latest } = channel.rx
-      if (!latest) {
-        const rootAddress = rootPulse.getAddress()
-        throw Error(
-          `No latest for ${address} relative to ${rootAddress} in path: ${path} at segment: ${segment}`
-        )
+      if (segment === '..') {
+        // TODO this should be walked down from the app root for consistency
+        pulse = await this.#endurance.findLatest(channel.address)
+      } else {
+        const { latest } = channel.rx
+        if (!latest) {
+          const rootAddress = rootPulse.getAddress()
+          throw Error(
+            `No latest for ${address} relative to ${rootAddress} in path: ${path} at segment: ${segment}`
+          )
+        }
+        assert(latest instanceof PulseLink)
+        pulse = await this.#endurance.recover(latest)
+        const pulseAddress = pulse.getAddress()
+        assert(channel.isForkPoint() || pulseAddress.equals(address))
+        this.#endurance.suggestLatest(pulseAddress, latest)
       }
-      assert(latest instanceof PulseLink)
-      pulse = await this.#endurance.recover(latest)
-      const pulseAddress = pulse.getAddress()
-      assert(channel.isForkPoint() || pulseAddress.equals(address))
-      this.#endurance.suggestLatest(pulseAddress, latest)
     }
     return pulse
   }

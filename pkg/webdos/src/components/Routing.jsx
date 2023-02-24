@@ -16,10 +16,11 @@ const debug = Debug('terminal:widgets:Routing')
 
 const Routing = ({ crisp }) => {
   const path = crisp.getSelectedChild()
+  const [isUpdating, setIsUpdating] = useState(false)
   const [order, onOrder] = useState() // the dynamic changing data
   const [isEditingSector, setIsEditingSector] = useState(false)
   const [isEditingOrder, setIsEditingOrder] = useState(false)
-  const disabled = isEditingSector || isEditingOrder
+  const disabled = isEditingSector || isEditingOrder || isUpdating
   const disabledRef = useRef()
   disabledRef.current = disabled
   const onSector = (sector) => {
@@ -44,6 +45,15 @@ const Routing = ({ crisp }) => {
       }
     }
   }
+
+  const onUpdate = async () => {
+    debug('onUpdate')
+    setIsUpdating(true)
+    const result = await crisp.actions.update()
+    debug('onUpdate result', result)
+    setIsUpdating(false)
+  }
+  const dialDisabled = disabled || crisp.isLoadingActions
   return (
     <>
       <Glass.Container>
@@ -67,7 +77,7 @@ const Routing = ({ crisp }) => {
           )}
         </Glass.Left>
       </Glass.Container>
-      <RoutingSpeedDial disabled={isEditingOrder || isEditingSector} />
+      <RoutingSpeedDial disabled={dialDisabled} onUpdate={onUpdate} />
       <Map crisp={crisp} order={order} markers />
     </>
   )

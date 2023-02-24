@@ -15,16 +15,19 @@ export default {
   },
 }
 
-const Template = (args) => (
-  <Glass.Container>
-    <Glass.Left>
-      <Engine {...args}>
-        <Syncer path={args.path}>
-          <Datum {...args} />
-        </Syncer>
-      </Engine>
-    </Glass.Left>
-  </Glass.Container>
-)
+const Template = (args) => {
+  Debug.enable('*Engine Interpulse')
+  return (
+    <Glass.Container>
+      <Glass.Left>
+        <Engine {...args}>
+          <Syncer path={args.path}>
+            <Datum {...args} />
+          </Syncer>
+        </Engine>
+      </Glass.Left>
+    </Glass.Container>
+  )
+}
 
 export const Basic = Template.bind({})

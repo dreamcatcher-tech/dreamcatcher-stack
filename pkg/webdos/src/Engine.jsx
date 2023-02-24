@@ -9,7 +9,7 @@ const debug = Debug('webdos:Engine')
 
 const shutdownMap = new Map()
 export default function Engine({
-  repo = 'interpulse',
+  repo,
   ram,
   peers,
   addrs,
