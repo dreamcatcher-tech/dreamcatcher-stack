@@ -9,6 +9,7 @@ import chalk from 'ansi-colors-browserify'
 import cliui from 'cliui'
 import du from 'du'
 dotenv.config()
+dotenv.config({ path: '../../../../../.env' }) // for pm2 module installation
 const require = createRequire(import.meta.url)
 const moduleJson = require('./package.json')
 const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
