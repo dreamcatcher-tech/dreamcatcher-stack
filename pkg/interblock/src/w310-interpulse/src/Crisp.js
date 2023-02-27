@@ -16,12 +16,27 @@ export class Crisp {
   #snapshotChannelMap // a snapshot of the channels map
   #snapshotAliasMap // a snapshot of the aliases map
   #isCovenantSnapshot = false // if true, the covenant has been snapshotted
+  #isDeepLoaded // if true, the pulse is now fully baked
 
+  #clone() {
+    const next = new Crisp()
+    next.#parent = this.#parent
+    next.#name = this.#name
+    next.#pulse = this.#pulse
+    next.#rootActions = this.#rootActions
+    next.#chroot = this.#chroot
+    next.#wd = this.#wd
+    next.#snapshotChannelMap = this.#snapshotChannelMap
+    next.#snapshotAliasMap = this.#snapshotAliasMap
+    next.#isCovenantSnapshot = this.#isCovenantSnapshot
+    next.#isDeepLoaded = this.#isDeepLoaded
+    return next
+  }
   static createLoading() {
     const result = new Crisp()
     return result
   }
-  static createRoot(rootPulse, rootActions, chroot = '/') {
+  static createRoot(rootPulse, rootActions, chroot = '/', isDeepLoaded) {
     assert(rootPulse instanceof Pulse)
     assert.strictEqual(typeof rootActions, 'object')
     assert.strictEqual(typeof rootActions.dispatch, 'function')
@@ -31,6 +46,7 @@ export class Crisp {
     result.#pulse = rootPulse
     result.#rootActions = rootActions
     result.#chroot = chroot
+    result.#isDeepLoaded = !!isDeepLoaded
     return result
   }
   static createChild(pulse, parent, name) {
@@ -157,7 +173,11 @@ export class Crisp {
   hasChild(path) {
     assert.strictEqual(typeof path, 'string')
     this.#snapshotMaps()
-    return this.#aliasMap.has(path)
+    if (!this.#aliasMap.has(path)) {
+      return false
+    }
+    const channelId = this.#aliasMap.get(path)
+    return this.#channelMap.has(channelId)
   }
   #snapshotMaps() {
     if (this.isLoading) {
@@ -215,19 +235,6 @@ export class Crisp {
     }
     return this.#pulse.getCovenantPath()
   }
-  #clone() {
-    const next = new Crisp()
-    next.#parent = this.#parent
-    next.#name = this.#name
-    next.#pulse = this.#pulse
-    next.#rootActions = this.#rootActions
-    next.#chroot = this.#chroot
-    next.#wd = this.#wd
-    next.#snapshotChannelMap = this.#snapshotChannelMap
-    next.#snapshotAliasMap = this.#snapshotAliasMap
-    next.#isCovenantSnapshot = this.#isCovenantSnapshot
-    return next
-  }
   setWd(path) {
     assert.strictEqual(typeof path, 'string')
     assert(this.isRoot, 'wd can only be set on the root')
@@ -249,5 +256,11 @@ export class Crisp {
         return child
       }
     }
+  }
+  get isDeepLoaded() {
+    return this.root.#isDeepLoaded
+  }
+  get pulse() {
+    return this.#pulse
   }
 }

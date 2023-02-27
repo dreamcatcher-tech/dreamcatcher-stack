@@ -73,7 +73,6 @@ describe('faker', () => {
       const { routing, customers } = await import('../src/crm/faker/index.js')
       const allSectors = routing.generateBatch()
       const fullBatch = customers.generateBatchInside(allSectors, 100)
-      Debug.enable('tests')
       debug('fake data', fullBatch.length, 'customers')
       let batch = []
       let count = 0

@@ -144,6 +144,11 @@ const boot = async () => {
       reply('Reset complete.  Restart the service to start fresh')
       setTimeout(process.exit, 800)
     })
+    pmx.action('Soft Reset', async (reply) => {
+      debug('action: Soft Reset')
+      // keep the keys of the engine, but reset everything else
+      reply('not implemented yet')
+    })
   }
   pmx.action('ID', async (reply) => {
     debug('action: ID')

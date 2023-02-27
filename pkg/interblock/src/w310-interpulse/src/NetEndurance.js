@@ -125,7 +125,10 @@ export class NetEndurance extends Endurance {
     if (result) {
       return result
     }
-    return await this.#net.getPulse(pulselink)
+    const pulse = await this.#net.getPulse(pulselink)
+    // TODO feed into the pulsecache with ejection
+    await super.endure(pulse)
+    return pulse
   }
   getResolver(treetop) {
     assert(CID.asCID(treetop))
@@ -138,6 +141,7 @@ export class NetEndurance extends Endurance {
       if (result) {
         return result
       }
+      // TODO feed into the blockcache with ejection
       return await netResolver(cid)
     }
   }

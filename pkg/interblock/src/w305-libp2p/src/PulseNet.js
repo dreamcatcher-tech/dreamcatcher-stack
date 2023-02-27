@@ -193,14 +193,20 @@ export class PulseNet {
     const resolver = this.getResolver(pulselink.cid)
     const pulse = await Pulse.uncrush(pulselink.cid, resolver)
     return pulse
+
+    // go thru the list of connections we have, and ask for the pulse.
+    // if multiple connections, round robin between them all, and timeout each one
+    // if one times out, ask another two, then another 4, so that we
+    // are quickly broadcasting for weakly held pulses, but efficient
+    // on strongly held ones.
   }
   getResolver(treetop) {
     assert(CID.asCID(treetop))
     // TODO WARNING permissions must be honoured
     // TODO use treetop to only fetch things below this CID
-    return async (cid) => {
+    return async (cid, { signal } = {}) => {
       assert(CID.asCID(cid), `not cid: ${cid}`)
-      const bytes = await this.#bitswap.get(cid)
+      const bytes = await this.#bitswap.get(cid, { signal })
       const block = await decode(bytes)
       return block
     }

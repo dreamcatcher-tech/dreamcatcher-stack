@@ -39,6 +39,8 @@ const Template = (args) => {
   args.events = events
   return <ScheduleSpeedDial {...args} />
 }
+export const Add = Template.bind({})
+Add.args = { add: true, onCreate: () => debug('create') }
 export const Closed = Template.bind({})
 Closed.args = { initialOpen: false }
 export const Schedule = Template.bind({})
@@ -47,3 +49,5 @@ export const Published = Template.bind({})
 Published.args = { isPublished: true }
 export const Reconciled = Template.bind({})
 Reconciled.args = { isPublished: true, isReconciled: true }
+export const Disabled = Template.bind({})
+Disabled.args = { disabled: true, initialOpen: false }

@@ -1,3 +1,4 @@
+import equals from 'fast-deep-equal'
 import { createRamRepo } from '../../w305-libp2p'
 import { Interpulse, Crisp, Syncer } from '..'
 import { crm } from '../../w301-user-apps'
@@ -92,12 +93,13 @@ describe('Crisp', () => {
     syncerDrain()
     const crispDrain = async () => {
       for await (const crisp of syncer.subscribe()) {
-        debug('crisp', [...crisp])
-        if (!crisp.isLoading && crisp.hasChild('app')) {
-          debug('has /app')
+        if (crisp.isLoading) {
+          continue
+        }
+        debug('crisp', crisp.sortedChildren, crisp.pulse)
+        if (crisp.hasChild('app')) {
           const app = crisp.getChild('app')
           if (!app.isLoading && app.hasChild('0')) {
-            debug('has /app/0')
             const app0 = app.getChild('0')
             if (!app0.isLoading) {
               return await engine.cd('/app/0')
@@ -107,11 +109,10 @@ describe('Crisp', () => {
       }
     }
     const crispDrainPromise = crispDrain()
-
     const batch = crm.faker.routing.generateBatch(5)
     await engine.execute('app/batch', { batch })
-    await engine.stop()
     await crispDrainPromise
+    await engine.stop()
   })
   describe('with preload', () => {
     let repo
@@ -211,5 +212,51 @@ describe('Crisp', () => {
       expect(engine.wd).toBe('/app')
       await engine.stop()
     })
+    it('loads gracefully', async () => {
+      const engine = await Interpulse.createCI({
+        overloads: { '/crm': crm.covenant },
+        repo,
+      })
+      const { api, pulseResolver, covenantResolver } = engine
+      const syncer = Syncer.create(pulseResolver, covenantResolver, api)
+      syncer.concurrency = 1
+      const approot = await engine.latest('/')
+      syncer.update(approot)
+      let last
+      function deepJs(crisp) {
+        if (crisp.isLoading) {
+          return { isLoading: true }
+        }
+        const js = {}
+        js['_state'] = 'loaded'
+        if (Object.keys(crisp.state).length) {
+          js['_state'] = 'loaded: ' + Object.keys(crisp.state).join(', ')
+        }
+        for (const child of crisp.sortedChildren) {
+          js[child] = deepJs(crisp.getChild(child))
+        }
+        return js
+      }
+      const crisps = []
+      for await (const crisp of syncer.subscribe()) {
+        crisps.push(crisp)
+        // needs to seek breadth first
+        const js = deepJs(crisp)
+        if (!equals(last, js)) {
+          last = js
+          debug('crisp', js)
+        } else {
+          debug('crisp same')
+        }
+        if (crisp.isDeepLoaded) {
+          break
+        }
+      }
+      debug('crisps', crisps)
+      await engine.stop()
+    })
+    // make a list of a thousand customers and observe the size growing as sync expands
+    it.todo('does not flicker between pulses')
+    it.todo('tears without flickering between pulses')
   })
 })

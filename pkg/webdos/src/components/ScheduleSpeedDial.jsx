@@ -10,7 +10,7 @@ import ExpandIcon from '@mui/icons-material/Expand'
 import UnpublishedIcon from '@mui/icons-material/Unpublished'
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges'
 import PrintIcon from '@mui/icons-material/Print'
-const debug = Debug('terminal:widgets:SpeedDial')
+const debug = Debug('terminal:widgets:ScheduleSpeedDial')
 
 const createActions = (events) => {
   const { onPublish, onUnpublish, onReconcile, onUnReconcile, onPrint } = events
@@ -51,20 +51,27 @@ const createActions = (events) => {
 }
 
 export default function ScheduleSpeedDial(props) {
-  const { initialOpen = false, events = {} } = props
-  const [open, setOpen] = React.useState(initialOpen)
-  const handleOpen = () => setOpen(true)
+  const { initialOpen = false, events = {}, disabled, onCreate, add } = props
+  const [open, setOpen] = React.useState(add ? false : initialOpen)
+  const handleOpen = () => {
+    if (add) {
+      onCreate()
+      return
+    }
+    setOpen(true)
+  }
   const handleClose = () => setOpen(false)
-  const actions = createActions(events)
-
+  const actions = add ? [] : createActions(events)
+  const icon = add ? <AddIcon /> : <PrintIcon />
   return (
     <SpeedDial
       sx={{ position: 'absolute', bottom: 16, right: 16 }}
-      icon={<SpeedDialIcon icon={<PrintIcon />} />}
+      icon={<SpeedDialIcon icon={icon} />}
       onClose={handleClose}
       onOpen={handleOpen}
       open={open}
       ariaLabel="Schedule Actions"
+      FabProps={{ disabled }}
     >
       {actions.map((action) => (
         <SpeedDialAction
@@ -84,4 +91,7 @@ export default function ScheduleSpeedDial(props) {
 ScheduleSpeedDial.propTypes = {
   initialOpen: PropTypes.bool,
   events: PropTypes.objectOf(PropTypes.func),
+  disabled: PropTypes.bool,
+  onCreate: PropTypes.func,
+  add: PropTypes.bool,
 }

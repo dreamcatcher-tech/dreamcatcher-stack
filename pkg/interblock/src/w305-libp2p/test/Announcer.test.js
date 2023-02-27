@@ -52,13 +52,12 @@ describe('protocol', () => {
     }
     await Promise.all([node1.stop(), node2.stop()])
   })
-  test.only('redial', async () => {
+  test('redial', async () => {
     const [node1, node2] = await Promise.all([createNode(), createNode()])
     const client = Announcer.create(node1)
 
     client.addAddressPeer(address, node2.peerId)
-    Debug.enable('*Announcer')
-    const stream = client.subscribe(address)
+    client.subscribe(address)
     await Promise.all([node1.stop(), node2.stop()])
   })
 })

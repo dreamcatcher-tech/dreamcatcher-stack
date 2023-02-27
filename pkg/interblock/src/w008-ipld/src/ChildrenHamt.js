@@ -21,4 +21,10 @@ export class ChildrenHamt extends Hamt {
     assert(channelId >= 0)
     return await super.set(path, channelId)
   }
+  async get(key) {
+    const value = await super.get(key)
+    const result = Number.parseInt(value)
+    assert(result >= 0)
+    return result
+  }
 }

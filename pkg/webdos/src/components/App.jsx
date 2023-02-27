@@ -19,7 +19,7 @@ export default function App({ crisp }) {
         overflow: 'hidden',
       }}
     >
-      {crisp.isLoading ? (
+      {isLoading(crisp) ? (
         <div>Loading...</div>
       ) : (
         <>
@@ -42,4 +42,15 @@ export default function App({ crisp }) {
 }
 App.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),
+}
+
+const isLoading = (crisp) => {
+  if (crisp.isLoading) {
+    return true
+  }
+  return (
+    !crisp.hasChild('schedules') ||
+    !crisp.hasChild('customers') ||
+    !crisp.hasChild('routing')
+  )
 }

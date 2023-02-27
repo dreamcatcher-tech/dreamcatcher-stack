@@ -181,10 +181,10 @@ export class Interpulse {
     return latest
   }
   get pulseResolver() {
-    return (pulseLink) => this.#endurance.recover(pulseLink)
+    return (pulseLink, abort) => this.#endurance.recover(pulseLink, abort)
   }
   get covenantResolver() {
-    return (path) => this.latest(path)
+    return (path, abort) => this.latest(path, abort)
   }
   get logger() {
     return this.#engine.logger
@@ -420,6 +420,8 @@ export class Interpulse {
     const blocks = new Map()
     const ipfsResolver = this.#endurance.getResolver(latest.cid)
     const loggingResolver = async (cid) => {
+      // could start streaming out each time a resolve occurs
+      // but ignore duplicates
       const block = await ipfsResolver(cid)
       assert(CID.asCID(block.cid))
       assert(block.value)
