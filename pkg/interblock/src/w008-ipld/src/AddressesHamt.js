@@ -33,4 +33,16 @@ export class AddressesHamt extends Hamt {
     modified = new Set([...modified].map((key) => Address.fromChainId(key)))
     return { added, deleted, modified }
   }
+  async *entries() {
+    const entries = super.entries()
+    try {
+      for await (const [key] of entries) {
+        const address = Address.fromChainId(key)
+        const value = await this.get(address)
+        yield [address, value]
+      }
+    } finally {
+      entries.return()
+    }
+  }
 }

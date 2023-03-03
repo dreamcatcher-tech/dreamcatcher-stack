@@ -11,6 +11,7 @@ export const hasher = from({
   encode: sha256,
 })
 
+// TODO collect stats about size of blocks, blockrate self, blockrate wall
 export const encode = async (value) => {
   try {
     const block = await Block.encode({ value, codec, hasher })

@@ -16,9 +16,10 @@ describe('Connection', () => {
   test('basic', async () => {
     const update = pushable({ objectMode: true })
     const announce = pushable({ objectMode: true })
+    const lifts = pushable({ objectMode: true })
     const latests = new Map()
-    const east = Connection.create('peerIdString1', update, announce, latests)
-    const west = Connection.create('peerIdString2', update, announce, latests)
+    const east = Connection.create('peer1', update, announce, lifts, latests)
+    const west = Connection.create('peer2', update, announce, lifts, latests)
     const [eastSide, westSide] = duplexPair()
     east.connectStream(eastSide)
     west.connectStream(westSide)

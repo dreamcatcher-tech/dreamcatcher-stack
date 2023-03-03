@@ -5,5 +5,5 @@ import { loadCodec } from './src/loadCodec'
 export const createRamRepo = (name) =>
   createRepo(name, loadCodec, createBackend())
 export * from './src/PulseNet'
-
+export * from './src/NetEndurance'
 export * from './src/Announcer'

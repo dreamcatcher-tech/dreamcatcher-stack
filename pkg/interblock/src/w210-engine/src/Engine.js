@@ -37,10 +37,9 @@ export class Engine {
   #crypto
   #endurance
   #scale
-  #announce
 
   #subscribers = new Set()
-
+  #started = true
   /** the address of the base chain of this engine */
   get selfAddress() {
     return this.#endurance.selfAddress
@@ -65,12 +64,11 @@ export class Engine {
     await instance.#init(CI) // CI means make deterministic chain addresses
     return instance
   }
-  constructor({ isolate, crypto, endurance, scale, announce } = {}) {
+  constructor({ isolate, crypto, endurance, scale } = {}) {
     this.#isolate = isolate || Isolate.create()
     this.#crypto = crypto || Crypto.createCI()
     this.#endurance = endurance || Endurance.create()
     this.#scale = scale || Scale.create()
-    this.#announce = announce || (() => {})
   }
   overload(overloads) {
     assert.strictEqual(typeof overloads, 'object')
@@ -90,6 +88,9 @@ export class Engine {
   }
   async interpulse(interpulse) {
     assert(interpulse instanceof Interpulse)
+    if (!this.#started) {
+      throw new Error('Engine is stopped')
+    }
     const { source, target } = interpulse
     debug('interpulse from %s to %s pl %s', source, target)
     const deepening = Deepening.createInterpulse(interpulse)
@@ -478,6 +479,9 @@ export class Engine {
   async pierce(request, address = this.selfAddress) {
     assert(address instanceof Address)
     assert(address.isRemote())
+    if (!this.#started) {
+      throw new Error('Engine is stopped')
+    }
     if (!(request instanceof Request)) {
       assert(request instanceof Object)
       request = Request.create(request)
@@ -537,6 +541,7 @@ export class Engine {
   async multiThreadStop() {}
   async stop() {
     // TODO reject calls to a stopped engine
+    this.#started = false
     for (const sink of this.#subscribers) {
       sink.return()
     }

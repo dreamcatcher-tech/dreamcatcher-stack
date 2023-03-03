@@ -24,7 +24,9 @@ function SectorSelector({ crisp, expanded, disabled }) {
   const onChange = (event, value) => {
     debug('onChange', value)
     assert(crisp.hasChild(value.path), `crisp has no child ${value.path}`)
-    const promise = crisp.actions.cd(crisp.absolutePath + '/' + value.path)
+    const allowVirtual = true
+    const path = crisp.absolutePath + '/' + value.path
+    const promise = crisp.actions.cd(path, allowVirtual)
     // TODO disable the selector until the promise resolves
     setOpen(false)
     setIsPending(true)

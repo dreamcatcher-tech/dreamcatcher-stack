@@ -13,7 +13,7 @@ export class CryptoLock {
   #keypair
   #address
   #timestamp
-  #resolve
+  #release
   get timestamp() {
     return this.#timestamp
   }
@@ -26,7 +26,7 @@ export class CryptoLock {
     assert(keypair instanceof Keypair)
     const instance = new this()
     instance.isReleased = new Promise((resolve) => {
-      instance.#resolve = resolve
+      instance.#release = resolve
     })
     instance.#keypair = keypair
     instance.#address = address
@@ -34,8 +34,8 @@ export class CryptoLock {
     return instance
   }
   release() {
-    debug(`release`)
-    this.#resolve()
+    debug(`release %i %s`, this.id, this.#address)
+    this.#release()
     this.#keypair = undefined
   }
   isValid() {
@@ -82,18 +82,19 @@ export class Crypto {
     const lock = await CryptoLock.create(address, this.#keypair)
     lock.id = this.#counter++
     debug(`lock.id`, lock.id)
-    queue.push(lock)
 
-    if (queue.length > 1) {
-      const last = queue[queue.length - 2]
+    if (queue.length) {
+      const last = queue[queue.length - 1]
       const start = Date.now()
       debug(`queue start length: `, queue.length)
       await last.isReleased
-      // TODO update timestamp which might be stale now
+      // TODO update lock timestamp which might be stale now
       debug(`lock waited: ${Date.now() - start}ms`)
     }
+    queue.push(lock)
     lock.isReleased.then(() => {
-      queue.shift()
+      const released = queue.shift()
+      assert.strictEqual(lock, released)
       debug(`queue end length: `, queue.length)
       if (!queue.length) {
         debug(`queue empty`)
@@ -107,7 +108,14 @@ export class Crypto {
     assert(pulse.isVerified())
     return pulse.provenance.validators.has(this.publicKey)
   }
-  stop() {
+  async stop() {
+    const remaining = [...this.#locks.keys()]
+    debug('stopping crypto %i locks for', this.#locks.size, remaining)
+    const awaits = [...this.#locks.values()].map((queue) => {
+      assert(queue.length)
+      return queue[queue.length - 1].isReleased
+    })
+    await Promise.all(awaits)
     const openCount = this.#locks.size
     assert(!openCount, `Open lock count: ${openCount}`)
     this.#keypair = undefined

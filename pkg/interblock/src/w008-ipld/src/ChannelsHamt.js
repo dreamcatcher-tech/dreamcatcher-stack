@@ -38,7 +38,7 @@ export class ChannelsHamt extends Hamt {
       for await (const [key] of entries) {
         const channelId = parseInt(key)
         const value = await this.get(channelId)
-        yield [parseInt(key), value]
+        yield [channelId, value]
       }
     } finally {
       entries.return()

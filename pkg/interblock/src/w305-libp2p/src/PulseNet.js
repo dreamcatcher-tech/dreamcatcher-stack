@@ -22,6 +22,7 @@ import all from 'it-all'
 import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
 import { libp2pConfig } from 'ipfs-core-config/libp2p'
 import { Announcer } from './Announcer'
+import { Lifter } from './Lifter'
 import { peerIdFromString } from '@libp2p/peer-id'
 import { all as filter } from '@libp2p/websockets/filters'
 import Debug from 'debug'
@@ -36,6 +37,7 @@ export class PulseNet {
   #bitswap
   #keypair
   #announcer
+  #lifter
   #isCreated = false
   static async createCI(repo = ciRepo()) {
     const CI = true
@@ -105,6 +107,7 @@ export class PulseNet {
     // TODO lazy load this
     this.#libp2p = await createLibp2p(options)
     this.#announcer = Announcer.create(this.#libp2p)
+    this.#lifter = Lifter.create(this.#announcer, this.#libp2p)
 
     this.#repo = repo
     const bsOptions = { statsEnabled: true }
@@ -180,6 +183,9 @@ export class PulseNet {
   subscribeInterpulses() {
     return this.#announcer.subscribeInterpulses()
   }
+  resolveLifts() {
+    return this.#lifter.resolveLifts()
+  }
   subscribePulse(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
@@ -188,25 +194,25 @@ export class PulseNet {
     return this.#announcer.subscribe(address)
     // TODO use a worker to verify and catch up on announcements
   }
-  async getPulse(pulselink) {
+  async pullCar(pulselink) {
     assert(pulselink instanceof PulseLink)
-    const resolver = this.getResolver(pulselink.cid)
-    const pulse = await Pulse.uncrush(pulselink.cid, resolver)
-    return pulse
-
-    // go thru the list of connections we have, and ask for the pulse.
-    // if multiple connections, round robin between them all, and timeout each one
-    // if one times out, ask another two, then another 4, so that we
-    // are quickly broadcasting for weakly held pulses, but efficient
-    // on strongly held ones.
+    const carReader = await this.#lifter.pullCar(pulselink)
+    // TODO fall back to bitswap if not found
+    return carReader
   }
-  getResolver(treetop) {
+  getLocalResolver(treetop) {
+    return this.#getResolver(treetop, this.#repo.blocks)
+  }
+  getBitswapResolver(treetop) {
+    return this.#getResolver(treetop, this.#bitswap)
+  }
+  #getResolver = (treetop, store) => {
     assert(CID.asCID(treetop))
     // TODO WARNING permissions must be honoured
     // TODO use treetop to only fetch things below this CID
     return async (cid, { signal } = {}) => {
       assert(CID.asCID(cid), `not cid: ${cid}`)
-      const bytes = await this.#bitswap.get(cid, { signal })
+      const bytes = await store.get(cid, { signal })
       const block = await decode(bytes)
       return block
     }

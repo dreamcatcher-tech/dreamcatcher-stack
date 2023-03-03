@@ -1,3 +1,5 @@
+import delay from 'delay'
+import throttle from 'lodash.throttle'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import Debug from 'debug'
@@ -16,7 +18,7 @@ import { pushable } from 'it-pushable'
 const debug = Debug('interblock:api:Syncer')
 
 export class Syncer {
-  #concurrency = 1
+  #concurrency = 20
   #pulseResolver
   #covenantResolver
   #actions
@@ -64,7 +66,7 @@ export class Syncer {
       return
     }
     const isDeepLoaded = true
-    this.yield(isDeepLoaded)
+    this.#yield(isDeepLoaded)
 
     // TODO handle race conditions if called quickly
   }
@@ -93,11 +95,11 @@ export class Syncer {
     return promise
   }
   #tickle() {
+    if (this.#pulseResolves.size >= this.#concurrency) {
+      // debug('concurrency limit over by: %s', this.#pulseResolvesQueue.size)
+      return
+    }
     for (const request of this.#pulseResolvesQueue) {
-      if (this.#pulseResolves.size >= this.#concurrency) {
-        debug('concurrency limit over by: %s', this.#pulseResolvesQueue.size)
-        return
-      }
       this.#pulseResolvesQueue.delete(request)
       const promise = request()
       this.#pulseResolves.add(promise)
@@ -134,18 +136,18 @@ export class Syncer {
       const pulse = await this.#resolve(instance)
       debug('pulse resolved', pulse)
       instance.bake(pulse)
-      this.yield()
+      this.#yield()
       await this.#bake(instance.bakedPulse, prior?.bakedPulse)
       return
     }
     if (instance instanceof Hamt) {
       await this.#updateHamt(instance, prior)
-      this.yield()
+      this.#yield()
       return
     }
     if (instance instanceof Dmz) {
       await this.#updateCovenant(instance, prior)
-      this.yield()
+      this.#yield()
     }
     const { classMap = {}, defaultClass } = instance.constructor
     assert(!(Object.keys(classMap).length && defaultClass))
@@ -197,12 +199,12 @@ export class Syncer {
     for (const key of deleted) {
       map = map.delete(key)
       hamt.bake(map)
-      this.yield()
+      this.#yield()
     }
     const set = (key, value) => {
       map = map.set(key, value)
       hamt.bake(map)
-      this.yield()
+      this.#yield()
     }
     const mods = [...modified].map(async (key) => {
       const value = await hamt.get(key)
@@ -224,7 +226,10 @@ export class Syncer {
     })
     await Promise.all([...mods, ...adds])
   }
-  yield(isDeepLoaded = false) {
+  #yield(isDeepLoaded = false) {
+    throttledYield(() => this.#yieldRaw(isDeepLoaded))
+  }
+  #yieldRaw(isDeepLoaded = false) {
     debug('creating crisp for pulse %s', this.#pulse)
     // TODO include the prievous crisp in the new crisp
     // TODO only yield if something useful occured, like new child or state
@@ -257,3 +262,8 @@ export class Syncer {
     this.#tickle()
   }
 }
+
+const throttledYield = throttle((fn) => fn(), 200, {
+  leading: false,
+  trailing: true,
+})

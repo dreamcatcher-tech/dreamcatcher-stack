@@ -12,7 +12,7 @@ import {
   ChildrenHamt,
   DownlinksHamt,
   SymlinksHamt,
-  UplinksHamt,
+  AddressesHamt,
   Request,
   Reply,
   Rx,
@@ -49,7 +49,7 @@ export class Network extends IpldStruct {
     channels: Channels,
 
     children: ChildrenHamt,
-    uplinks: UplinksHamt,
+    uplinks: AddressesHamt,
     downlinks: DownlinksHamt,
     symlinks: SymlinksHamt,
     hardlinks: Hamt,
@@ -66,7 +66,7 @@ export class Network extends IpldStruct {
   static create() {
     const channels = Channels.create()
     const children = ChildrenHamt.create()
-    const uplinks = UplinksHamt.create()
+    const uplinks = AddressesHamt.create()
     const downlinks = DownlinksHamt.create()
     const symlinks = SymlinksHamt.create()
     const hardlinks = Hamt.create() // TODO move to own class
@@ -191,7 +191,7 @@ export class Network extends IpldStruct {
   async getUplink(address) {
     assert(address instanceof Address)
     assert(address.isRemote())
-    assert(await this.uplinks.hasUplink(address))
+    assert(await this.uplinks.has(address))
     const channelId = await this.uplinks.get(address)
     return await this.channels.getChannel(channelId)
   }
@@ -539,6 +539,18 @@ export class Network extends IpldStruct {
     const channel = Channel.create(channelId, source)
     const channels = await this.channels.addChannel(channel)
     return this.setMap({ channels })
+  }
+  async walkHamts() {
+    const hamts = [
+      this.children,
+      this.uplinks,
+      this.downlinks,
+      this.symlinks,
+      this.hardlinks,
+      this.channels.list,
+      this.channels.addresses,
+    ].filter((hamt) => !hamt.isBakeSkippable)
+    await Promise.all(hamts.map((hamt) => hamt.walk()))
   }
 }
 const crossover = (channel) => {

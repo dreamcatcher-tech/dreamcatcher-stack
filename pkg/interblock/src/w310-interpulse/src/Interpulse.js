@@ -9,7 +9,7 @@ import assert from 'assert-fast'
 import Debug from 'debug'
 import posix from 'path-browserify'
 import { PulseNet } from '../../w305-libp2p'
-import { NetEndurance } from './NetEndurance'
+import { NetEndurance } from '../../w305-libp2p/src/NetEndurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
 import { isBrowser, isNode } from 'wherearewe'
 import { CarReader, CarWriter } from '@ipld/car'
@@ -47,9 +47,7 @@ export class Interpulse {
     let overloads = options.overloads ? { ...options.overloads } : {}
     overloads.root = shell
     Object.assign(overloads, apps)
-    // if announcer is inside net, how to trigger on interpulse received ?
-    // could connect via Interpulse ?
-    let { net, crypto, endurance = Endurance.create(), announce } = options
+    let { net, crypto, endurance = Endurance.create() } = options
     let { repo, CI } = options
     if (options.ram) {
       if (repo === undefined) {
@@ -66,9 +64,8 @@ export class Interpulse {
       net = await PulseNet.create(repo, CI, tcpHost, tcpPort)
       crypto = Crypto.create(net.keypair)
       endurance = await NetEndurance.create(net)
-      announce = net.announce
     }
-    const opts = { ...options, overloads, crypto, endurance, announce }
+    const opts = { ...options, overloads, crypto, endurance }
     const engine = await Engine.create(opts)
 
     const instance = new Interpulse(engine)
@@ -246,11 +243,11 @@ export class Interpulse {
       subscriber.return()
     }
     await this.#engine.stop() // stop all interpulsing
+    const awaits = [this.#endurance.stop(), this.#crypto.stop()]
     if (this.net) {
-      this.#crypto.stop()
-      await this.#endurance.stop() // complete all disk writes
-      await this.net.stop()
+      awaits.push(this.net.stop())
     }
+    await Promise.all(awaits)
   }
   async stats() {
     if (!this.net) {
@@ -296,6 +293,9 @@ export class Interpulse {
   async #watchInterpulses() {
     assert(this.net)
     for await (const announcement of this.net.subscribeInterpulses()) {
+      // TODO reduce to: source, target, tip, peerIdString
+      // since we can load tip, and then walk to get path, then
+      // walk to get local latest, even if path changed since
       const { source, target, address, root, path, peerIdString } = announcement
       assert(source instanceof PulseLink)
       assert(target instanceof Address)
@@ -417,6 +417,7 @@ export class Interpulse {
     return out
   }
   async #inflate(latest) {
+    assert(latest instanceof Pulse)
     const blocks = new Map()
     const ipfsResolver = this.#endurance.getResolver(latest.cid)
     const loggingResolver = async (cid) => {

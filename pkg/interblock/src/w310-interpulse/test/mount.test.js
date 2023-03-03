@@ -1,6 +1,7 @@
 import { Interpulse } from '..'
 import { createRamRepo } from '../../w305-libp2p'
 import Debug from 'debug'
+import delay from 'delay'
 const debug = Debug('tests')
 
 describe('mount', () => {
@@ -70,7 +71,7 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
-  test('writing', async () => {
+  test.only('writing', async () => {
     const server = await Interpulse.createCI({ ram: true, repo: 'server w' })
     await server.add('child1', { config: { isPublicChannelOpen: true } })
     await server.serve('/child1')
@@ -78,7 +79,7 @@ describe('mount', () => {
     const { chainId, peerId, multiaddrs } = id
 
     const client = await Interpulse.create({ ram: true, repo: 'client w' })
-    engines.push(server, client)
+    engines.push(client, server)
 
     await client.peer(chainId, peerId)
     await client.multiaddr(multiaddrs[0])
@@ -86,6 +87,13 @@ describe('mount', () => {
     await client.latest('/.mtab/server')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()
+    Debug.enable('iplog tests *Crypto *PulseNet *Connection')
+    // problem is that server shut down before the client could fetch
+    // so the engine took out a lock BEFORE it had everything it
+    // needed to produce the pulses
+    // TODO make sure that before pulsemaking starts, we have everything
+    // and that if usePulse fetches something remote, we can wait indefinitely
+    await delay(1000)
   })
   test('writing to a deep path', async () => {
     const server = await Interpulse.createCI({ ram: true, repo: 'server wd' })

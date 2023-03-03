@@ -130,6 +130,7 @@ describe('Crisp', () => {
         overloads: { '/crm': crm.covenant },
         repo,
       })
+      debug('starting syncer')
       const { pulseResolver, covenantResolver, api } = engine
       const syncer = Syncer.create(pulseResolver, covenantResolver, api)
       // restart the engine so can do timing

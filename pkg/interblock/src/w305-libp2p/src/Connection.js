@@ -15,21 +15,25 @@ export class Connection {
   #rx
   #update
   #announce
+  #lift
   #txSubscriptions = new Set() // chainId
   #rxSubscriptions = new Map() // chainId : isSingle
   #debounces = new Map() // chainId : {remote, local[]}
   #stream
-  static create(peerIdString, updateStream, announceStream, latests) {
+  // TODO merge all streams into one with action types
+  static create(peerIdString, update, announce, lift, latests) {
     assert.strictEqual(typeof peerIdString, 'string')
-    assert.strictEqual(typeof updateStream.push, 'function')
-    assert.strictEqual(typeof announceStream.push, 'function')
+    assert.strictEqual(typeof update.push, 'function')
+    assert.strictEqual(typeof announce.push, 'function')
+    assert.strictEqual(typeof lift.push, 'function')
     assert(latests instanceof Map)
     const instance = new Connection()
     instance.#peerIdString = peerIdString
     instance.#tx = pushable({ objectMode: true })
     instance.#rx = pushable({ objectMode: true })
-    instance.#update = updateStream
-    instance.#announce = announceStream
+    instance.#update = update
+    instance.#announce = announce
+    instance.#lift = lift
     instance.#latests = latests
     instance.#listen().catch((error) => instance.stop())
     return instance
@@ -43,7 +47,7 @@ export class Connection {
   }
   async #listen() {
     for await (const received of this.#rx) {
-      debug(`received`, received)
+      debug(`received`, received.type)
       const { type, payload } = received
       const { chainId } = payload
       switch (type) {
@@ -54,6 +58,7 @@ export class Connection {
           const update = { fromAddress, latest }
           // TODO check this was a requested announcement
           // TODO update our tracker before announcing
+          debug('update chainId %s pulseLink %s', fromAddress, latest)
           this.#update.push(update)
           break
         }
@@ -85,7 +90,14 @@ export class Connection {
             path,
             peerIdString: this.#peerIdString,
           }
+          debug('announce %o', announcement)
           this.#announce.push(announcement)
+          break
+        }
+        case 'PULL': {
+          const pulseLink = PulseLink.parse(payload.pulselink)
+          debug('pull %s', pulseLink)
+          this.#lift.push({ pulseLink, peerIdString: this.#peerIdString })
           break
         }
         default:
@@ -157,6 +169,16 @@ export class Connection {
     assert(stream.source)
     pipe(this.#tx, jsTransform, stream, sinkJs(this.#rx))
   }
+  txPullCar(pulseLink) {
+    assert(pulseLink instanceof PulseLink)
+    const pull = PULL(pulseLink)
+    this.#tx.push(pull)
+  }
+}
+function PULL(pulseLink) {
+  assert(pulseLink instanceof PulseLink)
+  const payload = { pulselink: pulseLink.cid.toString() }
+  return { type: 'PULL', payload }
 }
 function SUBSCRIBE(chainId, isSingle = false, proof = []) {
   assert.strictEqual(typeof chainId, 'string')

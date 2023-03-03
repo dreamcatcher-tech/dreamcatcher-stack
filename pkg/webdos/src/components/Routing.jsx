@@ -29,7 +29,8 @@ const Routing = ({ crisp }) => {
       assert(crisp.hasChild(sector), `crisp has no child ${sector}`)
       const path = crisp.absolutePath + '/' + sector
       debug('onSector path', path)
-      const promise = crisp.actions.cd(path)
+      const allowVirtual = true
+      crisp.actions.cd(path, allowVirtual)
     }
   }
 

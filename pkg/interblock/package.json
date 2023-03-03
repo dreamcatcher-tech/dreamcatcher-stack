@@ -58,6 +58,7 @@
     "ipld-schema": "^3.0.3",
     "it-all": "^2.0.0",
     "it-drain": "^2.0.0",
+    "it-length-prefixed": "^8.0.4",
     "it-parallel": "^3.0.0",
     "it-pushable": "^3.1.2",
     "json-schema-faker": "^0.5.0-rcv.46",

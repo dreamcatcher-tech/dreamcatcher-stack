@@ -90,17 +90,27 @@ export class Endurance {
     if (this.selfAddress.equals(latest.getAddress())) {
       this.#selfLatest = latest
     }
-
-    this.#pulseCache.set(latest.cid.toString(), latest)
+    this.cachePulse(latest)
     this.#cacheBlocks(latest)
 
     await this.#logger.pulse(latest)
     debug(`endure`, latest.getAddress(), latest.getPulseLink())
   }
+  cachePulse(pulse) {
+    assert(pulse instanceof Pulse)
+    const key = pulse.cid.toString()
+    this.#pulseCache.set(key, pulse)
+  }
+  cacheBlock(block) {
+    assert(CID.asCID(block.cid))
+    assert.strictEqual(typeof block.value, 'object')
+    const key = block.cid.toString()
+    this.#blockCache.set(key, block)
+  }
   #cacheBlocks(latest) {
     const diffs = latest.getDiffBlocks()
-    for (const [key, block] of diffs) {
-      this.#blockCache.set(key, block)
+    for (const [, block] of diffs) {
+      this.cacheBlock(block)
     }
   }
   async recover(pulselink) {
@@ -114,10 +124,13 @@ export class Endurance {
       // TODO update the LRU tracker
       return this.#pulseCache.get(cidString)
     }
-    const resolver = this.getResolver(cid)
-    const pulse = await Pulse.uncrush(cid, resolver)
-    this.#pulseCache.set(cidString, pulse)
-    return pulse
+    if (this.#blockCache.has(cidString) || this.#importsCache.has(cidString)) {
+      const resolver = this.getResolver(cid)
+      const pulse = await Pulse.uncrush(cid, resolver)
+      assert(pulse, `pulse not found but root block is in cache`)
+      this.cachePulse(pulse)
+      return pulse
+    }
   }
   getResolver(treetop) {
     assert(CID.asCID(treetop))
@@ -129,12 +142,13 @@ export class Endurance {
       this.assertStarted()
 
       const key = cid.toString()
-      if (this.#blockCache.has(key)) {
-        return this.#blockCache.get(key)
-      }
       if (this.#importsCache.has(key)) {
         const bytes = this.#importsCache.get(key)
-        return await decode(bytes)
+        const block = await decode(bytes)
+        this.cacheBlock(block)
+      }
+      if (this.#blockCache.has(key)) {
+        return this.#blockCache.get(key)
       }
     }
   }

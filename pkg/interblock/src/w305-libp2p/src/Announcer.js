@@ -5,7 +5,7 @@ import { pushable } from 'it-pushable'
 import { Connection } from './Connection'
 import Debug from 'debug'
 const debug = Debug('interpulse:libp2p:Announcer')
-const PROTOCOL = '/pulse/0.0.1'
+const INTERPULSE = '/pulse/0.0.1'
 
 export class Announcer {
   #libp2p
@@ -14,14 +14,16 @@ export class Announcer {
   #latests = new Map() // chainId : pulselink
   #peerMap = new Map() // chainId : peerIdString[]
   #connections = new Map() // peerIdString : Connection
+  // TODO merge all these into one stream with type switching
   #rxUpdate = pushable({ objectMode: true })
   #rxAnnounce = pushable({ objectMode: true })
+  #rxLifts = pushable({ objectMode: true })
   static create(libp2p) {
     assert(typeof libp2p.dialProtocol, 'function')
     const instance = new Announcer()
     instance.#libp2p = libp2p
     libp2p.addEventListener('peer:discovery', instance.#getPeerListener())
-    libp2p.handle(PROTOCOL, instance.#getHandler())
+    libp2p.handle(INTERPULSE, instance.#getHandler())
     instance.#listenUpdate()
 
     return instance
@@ -70,6 +72,7 @@ export class Announcer {
         peerIdString,
         this.#rxUpdate,
         this.#rxAnnounce,
+        this.#rxLifts,
         this.#latests
       )
       connection.connectStream(stream)
@@ -234,12 +237,13 @@ export class Announcer {
       peerIdString,
       this.#rxUpdate,
       this.#rxAnnounce,
+      this.#rxLifts,
       this.#latests
     )
     // TODO check if we have any addresses first
     // TODO endelessly try to dial
     this.#libp2p
-      .dialProtocol(peerId, PROTOCOL)
+      .dialProtocol(peerId, INTERPULSE)
       .then((stream) => {
         connection.connectStream(stream)
       })
@@ -259,6 +263,7 @@ export class Announcer {
   stop() {
     this.#rxUpdate.return()
     this.#rxAnnounce.return()
+    this.#rxLifts.return()
     for (const connection of this.#connections.values()) {
       connection.stop()
     }
@@ -267,6 +272,18 @@ export class Announcer {
         sink.return()
       }
     }
+  }
+  broadCastPullCar(pulseLink, withoutHamts = false) {
+    assert(pulseLink instanceof PulseLink)
+    if (!this.#connections.size) {
+      throw new Error('no connections')
+    }
+    for (const connection of this.#connections.values()) {
+      connection.txPullCar(pulseLink, withoutHamts)
+    }
+  }
+  rxLifts() {
+    return this.#rxLifts
   }
 }
 const isPeerId = (peerId) => !!peerId[Symbol.for('@libp2p/peer-id')]

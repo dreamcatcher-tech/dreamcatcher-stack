@@ -309,6 +309,12 @@ export class Hamt extends IpldInterface {
 
     return mergedDiff
   }
+  async walk() {
+    const keys = await this.allKeys()
+    for (const key of keys) {
+      await this.get(key)
+    }
+  }
 }
 const safelyGetBlock = async (putStore, cid) => {
   if (!cid) {

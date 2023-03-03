@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
 import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-Debug.enable('*App *api:Syncer *bitswap:engine*')
+Debug.enable('*api:Syncer')
 
 const { VITE_APP_CHAIN_ID, VITE_PEER_ID, VITE_PEER_MULTIADDR } = import.meta.env
 console.log('VITE_APP_CHAIN_ID', VITE_APP_CHAIN_ID)
