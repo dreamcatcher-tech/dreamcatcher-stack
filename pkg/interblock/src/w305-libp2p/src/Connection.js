@@ -35,7 +35,7 @@ export class Connection {
     instance.#announce = announce
     instance.#lift = lift
     instance.#latests = latests
-    instance.#listen().catch((error) => instance.stop(error))
+    instance.#listen()
     return instance
   }
   stop(error) {
@@ -185,7 +185,8 @@ const sinkJs = (pushable, redial) => {
       }
       debug('sinkJs ended')
     } catch (e) {
-      pushable.end(e)
+      // pushable.end(e)
+      await Promise.resolve()
       redial()
     }
   }
