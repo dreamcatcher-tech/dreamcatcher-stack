@@ -168,20 +168,22 @@ describe('Crisp', () => {
       await syncer.update(approot)
       debug('syncer complete')
 
-      let first
+      let final
       for await (const crisp of syncer.subscribe()) {
-        first = crisp
-        break
+        final = crisp
+        if (final.isDeepLoaded) {
+          break
+        }
       }
-      debug('crisp', first)
-      const children = [...first]
+      debug('crisp', final)
+      const children = [...final]
       children.sort((a, b) => a.localeCompare(b))
       debug(children)
       expect(children).toMatchSnapshot()
-      expect(first.hasChild('about')).toBe(true)
-      const child = first.getChild('about')
+      expect(final.hasChild('about')).toBe(true)
+      const child = final.getChild('about')
       expect(child).toBeInstanceOf(Crisp)
-      expect(child.root).toBe(first)
+      expect(child.root).toBe(final)
       expect(child.state?.formData?.title).toEqual('CRM')
       await engine.stop()
     })
@@ -197,7 +199,9 @@ describe('Crisp', () => {
       let first
       for await (const crisp of syncer.subscribe()) {
         first = crisp
-        break
+        if (!first.isLoading && first.hasChild('app')) {
+          break
+        }
       }
       const app = first.getChild('app')
       const customers = app.getChild('customers')

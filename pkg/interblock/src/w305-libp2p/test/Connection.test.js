@@ -11,7 +11,9 @@ const createTestPulselink = () => {
   const address = Address.createCI(`test ${count++}`)
   return PulseLink.createCrossover(address)
 }
-
+const nullRedial = () => {
+  throw new Error('nullRedial')
+}
 describe('Connection', () => {
   test('basic', async () => {
     const update = pushable({ objectMode: true })
@@ -21,8 +23,8 @@ describe('Connection', () => {
     const east = Connection.create('peer1', update, announce, lifts, latests)
     const west = Connection.create('peer2', update, announce, lifts, latests)
     const [eastSide, westSide] = duplexPair()
-    east.connectStream(eastSide)
-    west.connectStream(westSide)
+    east.connectStream(eastSide, nullRedial)
+    west.connectStream(westSide, nullRedial)
 
     const cachedPulselink = createTestPulselink()
     const address = Address.createCI('address 1')

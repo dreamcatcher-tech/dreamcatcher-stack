@@ -2,7 +2,7 @@
 
 exports[`Hamt maps multiple keys 1`] = `
 Map {
-  "bafyreig3w5cuffzshczi5xzwnp4igna5wehxcisr53jcjtrfxcnbgzwrui" => Block {
+  "bafyreia5gnmyzjyrs4kzk7vz7d3r7aijpknfwvpdcehn3ggniph4tvrpoq" => Block {
     "asBlock": [Circular],
     "bytes": Uint8Array [
       163,
@@ -12,9 +12,7 @@ Map {
       109,
       116,
       130,
-      68,
-      0,
-      0,
+      66,
       0,
       0,
       128,
@@ -38,17 +36,15 @@ Map {
       105,
       122,
       101,
-      3,
+      8,
     ],
     "cid": {
-      "/": "bafyreig3w5cuffzshczi5xzwnp4igna5wehxcisr53jcjtrfxcnbgzwrui",
+      "/": "bafyreia5gnmyzjyrs4kzk7vz7d3r7aijpknfwvpdcehn3ggniph4tvrpoq",
     },
     "value": {
-      "bucketSize": 3,
+      "bucketSize": 8,
       "hamt": [
         Uint8Array [
-          0,
-          0,
           0,
           0,
         ],
@@ -62,7 +58,7 @@ Map {
 
 exports[`Hamt maps with class 1`] = `
 Map {
-  "bafyreibrhfhhayfcwgm3gqdokiffu2rczo6diswuhgmnt5yf2thjeawu44" => Block {
+  "bafyreibp77uhokvvyccdcrmc75vm6wgtfskqnjaehw5kegkkdfbfjztbiu" => Block {
     "asBlock": [Circular],
     "bytes": Uint8Array [
       163,
@@ -72,11 +68,9 @@ Map {
       109,
       116,
       130,
-      68,
+      66,
       0,
-      0,
-      8,
-      0,
+      2,
       129,
       129,
       130,
@@ -146,19 +140,17 @@ Map {
       105,
       122,
       101,
-      3,
+      8,
     ],
     "cid": {
-      "/": "bafyreibrhfhhayfcwgm3gqdokiffu2rczo6diswuhgmnt5yf2thjeawu44",
+      "/": "bafyreibp77uhokvvyccdcrmc75vm6wgtfskqnjaehw5kegkkdfbfjztbiu",
     },
     "value": {
-      "bucketSize": 3,
+      "bucketSize": 8,
       "hamt": [
         Uint8Array [
           0,
-          0,
-          8,
-          0,
+          2,
         ],
         [
           [

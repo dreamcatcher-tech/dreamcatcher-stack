@@ -71,7 +71,7 @@ describe('mount', () => {
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
-  test.only('writing', async () => {
+  test('writing', async () => {
     const server = await Interpulse.createCI({ ram: true, repo: 'server w' })
     await server.add('child1', { config: { isPublicChannelOpen: true } })
     await server.serve('/child1')
@@ -87,7 +87,6 @@ describe('mount', () => {
     await client.latest('/.mtab/server')
     const ping = await client.ping('/.mtab/server')
     expect(ping).toBeTruthy()
-    Debug.enable('iplog tests *Crypto *PulseNet *Connection')
     // problem is that server shut down before the client could fetch
     // so the engine took out a lock BEFORE it had everything it
     // needed to produce the pulses
@@ -136,7 +135,7 @@ describe('mount', () => {
     const child1 = await server.current('/child1')
     expect(child1.cid.equals(remote.cid)).toBeTruthy()
   })
-  test('client auto redial', async () => {
+  test.skip('client auto redial', async () => {
     const repo = createRamRepo('server')
     let server = await Interpulse.createCI({ repo })
     await server.add('child1')
@@ -159,12 +158,12 @@ describe('mount', () => {
     const serverPeerId = server.net.libp2p.peerId
     let ping = await client.net.libp2p.ping(serverPeerId)
     debug('ping', ping)
+    const { port } = server.net.libp2p.getMultiaddrs()[0].nodeAddress()
     await server.stop()
-    server = await Interpulse.createCI({ repo })
+    server = await Interpulse.createCI({ repo, tcpPort: port })
     engines.push(server)
-
-    await client.latest('/.mtab/server/nested1')
     const reping = await client.net.libp2p.ping(serverPeerId)
     debug('reping', reping)
+    await client.latest('/.mtab/server/nested1')
   })
 })

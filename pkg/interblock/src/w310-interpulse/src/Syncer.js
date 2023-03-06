@@ -18,7 +18,7 @@ import { pushable } from 'it-pushable'
 const debug = Debug('interblock:api:Syncer')
 
 export class Syncer {
-  #concurrency = 20
+  #concurrency = 2
   #pulseResolver
   #covenantResolver
   #actions

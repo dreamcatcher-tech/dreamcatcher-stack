@@ -243,9 +243,9 @@ export class Interpulse {
       subscriber.return()
     }
     await this.#engine.stop() // stop all interpulsing
-    const awaits = [this.#endurance.stop(), this.#crypto.stop()]
+    const awaits = [this.#endurance.stop()]
     if (this.net) {
-      awaits.push(this.net.stop())
+      awaits.push(this.net.stop(), this.#crypto.stop())
     }
     await Promise.all(awaits)
   }

@@ -35,14 +35,14 @@ export class Connection {
     instance.#announce = announce
     instance.#lift = lift
     instance.#latests = latests
-    instance.#listen().catch((error) => instance.stop())
+    instance.#listen().catch((error) => instance.stop(error))
     return instance
   }
-  stop() {
-    this.#rx.return()
-    this.#tx.return()
+  stop(error) {
+    this.#rx.return(error)
+    this.#tx.return(error)
     if (this.#stream) {
-      this.#stream.abort()
+      this.#stream.abort(error)
     }
   }
   async #listen() {
@@ -159,20 +159,35 @@ export class Connection {
     const announce = ANNOUNCE(source, target, address, root, path)
     this.#tx.push(announce)
   }
-  connectStream(stream) {
+  connectStream(stream, redial) {
     if (this.#stream) {
       console.error(stream)
       throw new Error(`already connected`)
     }
-    this.#stream = stream
     assert(stream.sink)
     assert(stream.source)
-    pipe(this.#tx, jsTransform, stream, sinkJs(this.#rx))
+    assert.strictEqual(typeof redial, 'function')
+    this.#stream = stream
+    pipe(this.#tx, jsTransform, stream, sinkJs(this.#rx, redial))
   }
   txPullCar(pulseLink) {
     assert(pulseLink instanceof PulseLink)
     const pull = PULL(pulseLink)
     this.#tx.push(pull)
+  }
+}
+const sinkJs = (pushable, redial) => {
+  return async function (source) {
+    try {
+      for await (const arraylist of source) {
+        const object = from(arraylist)
+        pushable.push(object)
+      }
+      debug('sinkJs ended')
+    } catch (e) {
+      pushable.end(e)
+      redial()
+    }
   }
 }
 function PULL(pulseLink) {
@@ -221,19 +236,6 @@ async function* jsTransform(source) {
 }
 const to = (js) => {
   return fromString(JSON.stringify(js), 'utf8')
-}
-const sinkJs = (pushable) => {
-  return async function (source) {
-    try {
-      for await (const arraylist of source) {
-        const object = from(arraylist)
-        pushable.push(object)
-      }
-      debug('sinkJs ended')
-    } catch (e) {
-      pushable.end(e)
-    }
-  }
 }
 const from = (arraylist) => {
   return JSON.parse(toString(arraylist.subarray(), 'utf8'))

@@ -110,6 +110,59 @@ describe('Hamt', () => {
       expect(blocks.size).toBe(3)
     })
   })
+  describe('sizing', () => {
+    test.skip('basic', async () => {
+      Debug.enable('tests')
+      const large = await hamtFactory(10)
+      const largeCrushed = await large.crush()
+      const diffs = largeCrushed.getDiffBlocks()
+      diffs.size //?
+      debug('diffs', diffs.size)
+
+      const { open } = await import('fs/promises')
+      const file = await open('crush.csv', 'w')
+      let csv = 'bitWidth,bucketSize,'
+      const counts = [10, 100, 1000, 10000]
+      const zAxes = counts
+        .map((c) => `blocks-${c},bytes-${c},time-${c}`)
+        .join(',')
+      csv += zAxes + '\n'
+      await file.appendFile(csv)
+
+      for (let bitWidth = 3; bitWidth < 17; bitWidth++) {
+        for (let bucketSize = 2; bucketSize < 20; bucketSize++) {
+          let row = `${bitWidth},${bucketSize}`
+          for (const count of counts) {
+            const hamt = await hamtFactory(count, bitWidth, bucketSize)
+            hamt.bitWidth = bitWidth
+            hamt.bucketSize = bucketSize
+            const start = Date.now()
+            const crushed = await hamt.crush()
+            const time = Date.now() - start
+            Debug.enable()
+            debug(`bitWidth ${bitWidth} bucketSize ${bucketSize}`)
+            debug(`crush ${count} items in ${time} ms`)
+
+            const diff = crushed.getDiffBlocks()
+            debug(`diffs ${diff.size} blocks`)
+            const size = [...diff.values()].reduce(
+              (acc, block) => acc + block.bytes.length,
+              0
+            )
+            debug(`size ${size} bytes`)
+            debug(`keySize ${diff.size * 32}`)
+            const bytes = size + diff.size * 32
+            debug(`total ${bytes}`)
+            const blocks = diff.size
+            row += `,${blocks},${bytes},${time}`
+          }
+          csv += row + '\n'
+          await file.appendFile(row + '\n')
+        }
+      }
+      await file.close()
+    })
+  })
   describe('diffing', () => {
     test('basic', async () => {
       const raw = await hamtFactory()

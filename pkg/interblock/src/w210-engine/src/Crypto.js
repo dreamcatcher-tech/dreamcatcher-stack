@@ -83,15 +83,17 @@ export class Crypto {
     lock.id = this.#counter++
     debug(`lock.id`, lock.id)
 
+    let waitPrior = Promise.resolve()
+    const start = Date.now()
     if (queue.length) {
       const last = queue[queue.length - 1]
-      const start = Date.now()
       debug(`queue start length: `, queue.length)
-      await last.isReleased
+      waitPrior = last.isReleased
       // TODO update lock timestamp which might be stale now
-      debug(`lock waited: ${Date.now() - start}ms`)
     }
     queue.push(lock)
+    await waitPrior
+    debug(`lock waited: ${Date.now() - start}ms`)
     lock.isReleased.then(() => {
       const released = queue.shift()
       assert.strictEqual(lock, released)

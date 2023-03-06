@@ -12,7 +12,15 @@ import Debug from 'debug'
 import { PutStore } from './PutStore'
 const debug = Debug('interblock:models:hamt')
 
-const hamtOptions = { blockHasher, blockCodec }
+/**
+ * Tweaks
+ * hashBytes (seems private)
+ * bitWidth max 16, recommended max 8
+ * bucketSize seems can be as big as 30
+ * from ipld-hashmap source bitwidth 5, bucketSize 3
+ */
+const hamtOptions = { blockHasher, blockCodec, bitWidth: 4, bucketSize: 8 }
+
 export class Hamt extends IpldInterface {
   #valueClass
   #isMutable
@@ -22,6 +30,9 @@ export class Hamt extends IpldInterface {
   #sets = Immutable.Map()
   #deletes = Immutable.Set()
   #bakedMap
+  #bitWidth = hamtOptions.bitWidth
+  #bucketSize = hamtOptions.bucketSize
+
   static create(valueClass, isMutable = false) {
     if (valueClass) {
       assert(valueClass.prototype instanceof IpldStruct, 'Not IpldStruct type')
@@ -30,6 +41,17 @@ export class Hamt extends IpldInterface {
     instance.#valueClass = valueClass
     instance.#isMutable = isMutable
     return instance
+  }
+  set bitWidth(bitWidth) {
+    assert(Number.isInteger(bitWidth))
+    assert(bitWidth > 2)
+    assert(bitWidth < 17)
+    this.#bitWidth = bitWidth
+  }
+  set bucketSize(bucketSize) {
+    assert(Number.isInteger(bucketSize))
+    assert(bucketSize > 1)
+    this.#bucketSize = bucketSize
   }
   // TODO allow WeakGet, WeakEntries, to only give what is loaded
   #clone() {
@@ -40,6 +62,8 @@ export class Hamt extends IpldInterface {
     next.#gets = this.#gets
     next.#sets = this.#sets
     next.#deletes = this.#deletes
+    next.#bitWidth = this.#bitWidth
+    next.#bucketSize = this.#bucketSize
     if (this.#hashmap) {
       next.#hashmap = new this.#hashmap.constructor(this.#hashmap._iamap)
     }
@@ -132,11 +156,16 @@ export class Hamt extends IpldInterface {
     }
     let hashmap = next.#hashmap
     const putStore = new PutStore(resolver, next.#putStore)
+    const options = {
+      ...hamtOptions,
+      bitWidth: this.#bitWidth,
+      bucketSize: this.#bucketSize,
+    }
     if (!hashmap) {
-      hashmap = await create(putStore, hamtOptions)
+      hashmap = await create(putStore, options)
     } else {
       // TODO why reload it and kill all the caches ?
-      hashmap = await load(putStore, hashmap.cid, hamtOptions)
+      hashmap = await load(putStore, hashmap.cid, options)
     }
 
     for (const key of next.#deletes) {

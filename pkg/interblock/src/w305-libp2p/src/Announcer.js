@@ -75,7 +75,8 @@ export class Announcer {
         this.#rxLifts,
         this.#latests
       )
-      connection.connectStream(stream)
+      const redial = () => this.#redial(peerIdString, connection)
+      connection.connectStream(stream, redial)
       this.#connections.set(peerIdString, connection)
       const wantedChainIds = this.#getWantlist(peerIdString)
       for (const chainId of wantedChainIds) {
@@ -242,16 +243,21 @@ export class Announcer {
     )
     // TODO check if we have any addresses first
     // TODO endelessly try to dial
+
+    // TODO handle rejection and clean up the connection
+    this.#redial(peerId, connection)
+    return connection
+  }
+  #redial(peerId, connection) {
+    const redial = () => this.#redial(peerId, connection)
     this.#libp2p
       .dialProtocol(peerId, INTERPULSE)
       .then((stream) => {
-        connection.connectStream(stream)
+        connection.connectStream(stream, redial)
       })
       .catch((err) => {
         debug('dial error', err)
       })
-    // TODO handle rejection and clean up the connection
-    return connection
   }
   serve(forAddress, latest) {
     assert(forAddress instanceof Address)

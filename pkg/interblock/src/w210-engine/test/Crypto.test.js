@@ -1,3 +1,4 @@
+import delay from 'delay'
 import assert from 'assert-fast'
 import { Address } from '../../w008-ipld'
 import { Crypto, CryptoLock } from '../src/Crypto'
@@ -25,17 +26,18 @@ describe('Crypto', () => {
     const lock1 = await crypto.lock(address)
     const lock2Promise = crypto.lock(address)
     const lock3Promise = crypto.lock(address)
-    const delay1 = new Promise((r) => setTimeout(r, 5))
+    const token = Symbol('delay')
+    const delay1 = delay(5).then(() => token)
     const result1 = await Promise.race([lock2Promise, delay1])
-    assert(!(result1 instanceof CryptoLock))
+    assert.strictEqual(result1, token)
 
     lock1.release()
     const lock2 = await lock2Promise
     assert(lock2 instanceof CryptoLock)
 
-    const delay2 = new Promise((r) => setTimeout(r, 5))
+    const delay2 = delay(5).then(() => token)
     const result2 = await Promise.race([lock3Promise, delay2])
-    assert(!(result2 instanceof CryptoLock))
+    assert.strictEqual(result2, token)
 
     lock2.release()
     const lock3 = await lock3Promise

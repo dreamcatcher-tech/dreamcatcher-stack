@@ -18,7 +18,7 @@ AsyncTrail {
   "reply": Reply {
     "payload": {
       "alias": "0",
-      "chainId": "QmTCDsB4dvHKRPnJNC9s3g8U1J6JuXpGCcaw5W7mqjFg1Z",
+      "chainId": "QmechWb3YfuAtXR9zMsUSLkzRoJL8nZRn8pkEBzobVHLmy",
     },
     "type": "@@RESOLVE",
   },
@@ -39,7 +39,7 @@ AsyncTrail {
       "settled": Reply {
         "payload": {
           "alias": "0",
-          "chainId": "QmTCDsB4dvHKRPnJNC9s3g8U1J6JuXpGCcaw5W7mqjFg1Z",
+          "chainId": "QmechWb3YfuAtXR9zMsUSLkzRoJL8nZRn8pkEBzobVHLmy",
           "entropy": "EiD1qt/osfoIBnwZup1m2BjAGzG/uIWduhXz5P2pO9hVSA",
         },
         "type": "@@RESOLVE",
