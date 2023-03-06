@@ -178,7 +178,8 @@ export class Interpulse {
     return latest
   }
   get pulseResolver() {
-    return (pulseLink, abort) => this.#endurance.recover(pulseLink, abort)
+    return (pulseLink, type, abort) =>
+      this.#endurance.recover(pulseLink, type, abort)
   }
   get covenantResolver() {
     return (path, abort) => this.latest(path, abort)
@@ -305,8 +306,7 @@ export class Interpulse {
       assert.strictEqual(typeof path, 'string')
       assert.strictEqual(typeof peerIdString, 'string')
       // TODO must make interpulse be genuinely recovered as an interpulse
-      const evilFullPulse = await this.#endurance.recover(source)
-      const interpulse = Inter.extract(evilFullPulse, target)
+      const interpulse = await this.#endurance.recoverInterpulse(source, target)
       debug('interpulse for %s from %s', interpulse.target, interpulse.source)
 
       try {

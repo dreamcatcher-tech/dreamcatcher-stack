@@ -125,7 +125,7 @@ describe('Crisp', () => {
       await engine.add('app', '/crm')
       await engine.stop()
     })
-    it('reconciles diffs', async () => {
+    it('fully syncs', async () => {
       const engine = await Interpulse.createCI({
         overloads: { '/crm': crm.covenant },
         repo,
@@ -133,16 +133,17 @@ describe('Crisp', () => {
       debug('starting syncer')
       const { pulseResolver, covenantResolver, api } = engine
       const syncer = Syncer.create(pulseResolver, covenantResolver, api)
-      // restart the engine so can do timing
       const approot = await engine.current('app')
       debug('starting syncer')
       await syncer.update(approot)
       debug('syncer complete')
 
       let crisp
-      for await (const first of syncer.subscribe()) {
-        crisp = first
-        break
+      for await (const update of syncer.subscribe()) {
+        crisp = update
+        if (crisp.isDeepLoaded) {
+          break
+        }
       }
       debug('crisp', crisp)
       const children = [...crisp]

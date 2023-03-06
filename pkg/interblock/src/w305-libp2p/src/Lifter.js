@@ -31,10 +31,11 @@ export class Lifter {
     return this.#resolveLifts
   }
   async #listen() {
-    for await (const { peerIdString, pulseLink } of this.#announcer.rxLifts()) {
-      debug('got lift request from %s for %s', peerIdString, pulseLink)
+    for await (const request of this.#announcer.rxLifts()) {
+      const { peerIdString, pulseLink, type } = request
+      debug('lift from %s for %s of type %s', peerIdString, pulseLink, type)
       new Promise((resolve, reject) => {
-        this.#resolveLifts.push({ pulseLink, resolve, reject })
+        this.#resolveLifts.push({ pulseLink, type, resolve, reject })
       })
         .then(async (car) => {
           // make sure we have a connection to the peer
@@ -87,9 +88,9 @@ export class Lifter {
     }
     return this.#connections.get(peerIdString)
   }
-  async pullCar(pulseLink, withoutHamts = false) {
+  async pullCar(pulseLink, type) {
     assert(pulseLink instanceof PulseLink)
-    assert.strictEqual(typeof withoutHamts, 'boolean')
+    assert(Lifter.RECOVERY_TYPES[type])
     const cidString = pulseLink.cid.toString()
     if (this.#promises.has(cidString)) {
       return this.#promises.get(cidString).promise
@@ -99,7 +100,7 @@ export class Lifter {
       tracker = { resolve, reject }
       // TODO get feedback from announcer
       try {
-        this.#announcer.broadCastPullCar(pulseLink, withoutHamts)
+        this.#announcer.broadCastPullCar(pulseLink, type)
       } catch (error) {
         reject(error)
       }
@@ -128,5 +129,15 @@ export class Lifter {
     const push = pushable()
     pipe(push, lp.encode(), stream.sink)
     this.#connections.set(peerIdString, push)
+  }
+  static get RECOVERY_TYPES() {
+    return {
+      pulse: 'The full pulse, without and hamts',
+      hamtPulse: 'The full pulse, with hamts',
+      deepPulse: 'The full pulse, with hamts, and with children, recursively',
+      interpulse: 'Subset of the pulse, focused on a single address',
+      crispPulse: 'Just enough pulse for browser applications, with hamts',
+      crispDeepPulse: 'crispPulse, with hamts, and with children, recursively',
+    }
   }
 }

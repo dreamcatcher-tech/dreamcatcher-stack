@@ -4,6 +4,7 @@ import { toString } from 'uint8arrays/to-string'
 import { pipe } from 'it-pipe'
 import assert from 'assert-fast'
 import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
+import { Lifter } from './Lifter'
 import Debug from 'debug'
 import posix from 'path-browserify'
 const debug = Debug('interpulse:libp2p:Connection')
@@ -96,8 +97,10 @@ export class Connection {
         }
         case 'PULL': {
           const pulseLink = PulseLink.parse(payload.pulselink)
-          debug('pull %s', pulseLink)
-          this.#lift.push({ pulseLink, peerIdString: this.#peerIdString })
+          const { type } = payload
+          assert(Lifter.RECOVERY_TYPES[type])
+          debug('pull %s type %s', pulseLink, type)
+          this.#lift.push({ pulseLink, peerIdString: this.#peerIdString, type })
           break
         }
         default:
@@ -170,9 +173,10 @@ export class Connection {
     this.#stream = stream
     pipe(this.#tx, jsTransform, stream, sinkJs(this.#rx, redial))
   }
-  txPullCar(pulseLink) {
+  txPullCar(pulseLink, type) {
     assert(pulseLink instanceof PulseLink)
-    const pull = PULL(pulseLink)
+    assert(Lifter.RECOVERY_TYPES[type])
+    const pull = PULL(pulseLink, type)
     this.#tx.push(pull)
   }
 }
@@ -191,9 +195,10 @@ const sinkJs = (pushable, redial) => {
     }
   }
 }
-function PULL(pulseLink) {
+function PULL(pulseLink, type) {
   assert(pulseLink instanceof PulseLink)
-  const payload = { pulselink: pulseLink.cid.toString() }
+  assert(Lifter.RECOVERY_TYPES[type])
+  const payload = { pulselink: pulseLink.cid.toString(), type }
   return { type: 'PULL', payload }
 }
 function SUBSCRIBE(chainId, isSingle = false, proof = []) {

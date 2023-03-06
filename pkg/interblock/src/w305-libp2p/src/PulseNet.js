@@ -194,9 +194,10 @@ export class PulseNet {
     return this.#announcer.subscribe(address)
     // TODO use a worker to verify and catch up on announcements
   }
-  async pullCar(pulselink) {
+  async pullCar(pulselink, type) {
     assert(pulselink instanceof PulseLink)
-    const carReader = await this.#lifter.pullCar(pulselink)
+    assert(Lifter.RECOVERY_TYPES[type])
+    const carReader = await this.#lifter.pullCar(pulselink, type)
     // TODO fall back to bitswap if not found
     return carReader
   }

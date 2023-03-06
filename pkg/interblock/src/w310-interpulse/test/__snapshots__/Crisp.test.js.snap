@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Crisp with preload reconciles diffs 1`] = `
+exports[`Crisp with preload fully syncs 1`] = `
 [
   "about",
   "account",

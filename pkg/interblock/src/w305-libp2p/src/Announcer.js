@@ -3,6 +3,7 @@ import { peerIdFromString } from '@libp2p/peer-id'
 import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { pushable } from 'it-pushable'
 import { Connection } from './Connection'
+import { Lifter } from './Lifter'
 import Debug from 'debug'
 const debug = Debug('interpulse:libp2p:Announcer')
 const INTERPULSE = '/pulse/0.0.1'
@@ -279,13 +280,14 @@ export class Announcer {
       }
     }
   }
-  broadCastPullCar(pulseLink, withoutHamts = false) {
+  broadCastPullCar(pulseLink, type) {
     assert(pulseLink instanceof PulseLink)
+    assert(Lifter.RECOVERY_TYPES[type])
     if (!this.#connections.size) {
       throw new Error('no connections')
     }
     for (const connection of this.#connections.values()) {
-      connection.txPullCar(pulseLink, withoutHamts)
+      connection.txPullCar(pulseLink, type)
     }
   }
   rxLifts() {

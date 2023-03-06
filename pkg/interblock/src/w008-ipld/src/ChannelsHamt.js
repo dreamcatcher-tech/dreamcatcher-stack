@@ -18,7 +18,9 @@ export class ChannelsHamt extends Hamt {
     return await super.has(channelId)
   }
   async get(channelId) {
-    assert(Number.isInteger(channelId))
+    if (!Number.isInteger(channelId)) {
+      channelId = Number.parseInt(channelId)
+    }
     assert(channelId >= 0)
     return await super.get(channelId)
   }

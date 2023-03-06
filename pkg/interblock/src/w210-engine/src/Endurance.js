@@ -99,7 +99,12 @@ export class Endurance {
   cachePulse(pulse) {
     assert(pulse instanceof Pulse)
     const key = pulse.cid.toString()
+    if (this.#pulseCache.has(key)) {
+      // TODO update the LRU tracker
+      return
+    }
     this.#pulseCache.set(key, pulse)
+    this.#cacheBlocks(pulse)
   }
   cacheBlock(block) {
     assert(CID.asCID(block.cid))
@@ -107,8 +112,8 @@ export class Endurance {
     const key = block.cid.toString()
     this.#blockCache.set(key, block)
   }
-  #cacheBlocks(latest) {
-    const diffs = latest.getDiffBlocks()
+  #cacheBlocks(pulse) {
+    const diffs = pulse.getDiffBlocks()
     for (const [, block] of diffs) {
       this.cacheBlock(block)
     }

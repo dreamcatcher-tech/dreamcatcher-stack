@@ -2,10 +2,18 @@ import { concat } from 'uint8arrays'
 import all from 'it-all'
 import { CarWriter } from '@ipld/car'
 import { CID } from 'multiformats/cid'
-import { decode, PulseLink, Channel, Pulse } from '../../w008-ipld/index.mjs'
+import {
+  Interpulse,
+  Address,
+  decode,
+  PulseLink,
+  Channel,
+  Pulse,
+} from '../../w008-ipld/index.mjs'
 import assert from 'assert-fast'
 import { Endurance } from '../../w210-engine'
 import { PulseNet } from '..'
+import { Lifter } from './Lifter'
 import Debug from 'debug'
 const debug = Debug('interblock:interpulse:NetEndurance')
 
@@ -53,8 +61,8 @@ export class NetEndurance extends Endurance {
     // if lift requests come in, we will fulfill them
     for await (const lift of this.#net.resolveLifts()) {
       // TODO run these requests in parallel
-      const { pulseLink, resolve, reject } = lift
-      debug('got lift request for %s', pulseLink)
+      const { pulseLink, type, resolve, reject } = lift
+      debug('got lift request for %s of type %s', pulseLink, type)
       assert(pulseLink instanceof PulseLink)
       assert.strictEqual(typeof resolve, 'function')
       assert.strictEqual(typeof reject, 'function')
@@ -62,7 +70,7 @@ export class NetEndurance extends Endurance {
         try {
           const pulse = await this.#recoverLocal(pulseLink)
           const start = Date.now()
-          const blocks = await this.#walk(pulse)
+          const blocks = await this.#walk(pulse, type)
           const blockMs = Date.now() - start
           const carIterable = await this.#writeCar(pulse, blocks)
           const carArrays = await all(carIterable)
@@ -95,10 +103,14 @@ export class NetEndurance extends Endurance {
     writer.close()
     return out
   }
-  async #walk(pulse, withChildren = false, noHamts = false) {
+  async #walk(pulse, type) {
     assert(pulse instanceof Pulse)
+    assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
+    const types = Lifter.RECOVERY_TYPES
+    const withChildren = [types.deepPulse, types.crispDeepPulse].includes(type)
+    const noHamts = [types.pulse, types.interpulse].includes(type)
     const blocks = new Map()
-    const localResolver = this.getLocalResolver(pulse.cid)
+    const localResolver = this.#getLocalResolver(pulse.cid)
     const loggingResolver = async (cid) => {
       const block = await localResolver(cid)
       assert(CID.asCID(block.cid))
@@ -109,6 +121,7 @@ export class NetEndurance extends Endurance {
     const toExport = [pulse.getPulseLink()]
     while (toExport.length) {
       const pulseLink = toExport.shift()
+      debug('exporting %s', pulseLink)
       const instance = await Pulse.uncrush(pulseLink.cid, loggingResolver)
       const network = instance.getNetwork()
       if (!noHamts) {
@@ -124,6 +137,7 @@ export class NetEndurance extends Endurance {
       if (withChildren) {
         for await (const [, channel] of network.channels.list.entries()) {
           if (channel.rx.latest) {
+            debug('queuing child for export %s', channel.rx.latest)
             toExport.push(channel.rx.latest)
           }
         }
@@ -159,27 +173,53 @@ export class NetEndurance extends Endurance {
    * Gradually transfer the blocks over to our storage.
    * Ultimately remove the the car resolver and use just the blocks.
    */
-  async recover(pulseLink) {
+  async recover(pulseLink, type = 'pulse', abort) {
     assert(pulseLink instanceof PulseLink)
+    assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
     const cachedResult = await super.recover(pulseLink)
     if (cachedResult) {
       return cachedResult
     }
+
+    // try read from disk
+    const localResolver = this.#getLocalResolver(pulseLink.cid)
     try {
-      const car = await this.#net.pullCar(pulseLink)
+      const pulse = await Pulse.uncrush(pulseLink.cid, localResolver)
+      super.cachePulse(pulse)
+      return pulse
+    } catch (error) {
+      debug(`failed to locally recover pulse %s`, pulseLink, error)
+    }
+
+    // try pull whole pulse from peers
+    try {
+      const car = await this.#net.pullCar(pulseLink, type)
       const [root, ...rest] = await car.getRoots()
       assert(rest.length === 0)
-      const resolver = this.getCarResolver(car)
+      const resolver = this.#getCarResolver(car)
       const pulse = await Pulse.uncrush(root, resolver)
       super.cachePulse(pulse)
       return pulse
     } catch (error) {
-      debug(`failed to recover pulse %s`, pulseLink, error)
+      debug(`failed to car recover pulse %s`, pulseLink, error)
     }
+
+    // fallback to bitswap
     const resolver = this.getResolver(pulseLink.cid)
     const pulse = await Pulse.uncrush(pulseLink.cid, resolver)
     super.cachePulse(pulse)
     return pulse
+  }
+  async recoverInterpulse(source, target) {
+    assert(source instanceof PulseLink)
+    assert(target instanceof Address)
+    debug('recovering interpulse from %s targetting %s', source, target)
+
+    // TODO recovery an Interpulse without a full pulse
+    const evilFullPulse = await this.recover(source, 'interpulse')
+    assert(evilFullPulse instanceof Pulse)
+    const interpulse = Interpulse.extract(evilFullPulse, target)
+    return interpulse
   }
   async endure(latest) {
     let isBootstrapPulse = !this.selfAddress
@@ -255,7 +295,7 @@ export class NetEndurance extends Endurance {
     // if no pathing, then we can get the parent path ?
     throw new Error(`no pathing information found for channel: ${alias}`)
   }
-  getLocalResolver(treetop) {
+  #getLocalResolver(treetop) {
     const onlyLocal = true
     return this.getResolver(treetop, onlyLocal)
   }
@@ -281,7 +321,7 @@ export class NetEndurance extends Endurance {
       return block
     }
   }
-  getCarResolver(car) {
+  #getCarResolver(car) {
     assert.strictEqual(typeof car.get, 'function')
     return async (cid) => {
       assert(CID.asCID(cid), `not cid: ${cid}`)
@@ -304,8 +344,4 @@ export class NetEndurance extends Endurance {
   async fade(pulse) {
     // remove the pulse from local storage whenever next convenience arises
   }
-}
-const isMtab = (pulse) => {
-  assert(pulse instanceof Pulse)
-  return pulse.getCovenantPath() === '/system:/net'
 }

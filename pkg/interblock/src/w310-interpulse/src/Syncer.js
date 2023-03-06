@@ -16,6 +16,7 @@ import Immutable from 'immutable'
 import { pushable } from 'it-pushable'
 
 const debug = Debug('interblock:api:Syncer')
+const TYPE = 'crispDeepPulse'
 
 export class Syncer {
   #concurrency = 2
@@ -59,12 +60,9 @@ export class Syncer {
     // TODO permit skips in lineage
     const prior = this.#pulse
     this.#pulse = pulse
-    try {
-      await this.#bake(pulse, prior)
-    } catch (error) {
-      debug('bake error', error)
-      return
-    }
+    const pulseLink = pulse.getPulseLink()
+    const deep = await this.#resolve(pulseLink)
+    await this.#bake(deep, prior)
     const isDeepLoaded = true
     this.#yield(isDeepLoaded)
 
@@ -79,7 +77,7 @@ export class Syncer {
       const request = async () => {
         try {
           const startTime = Date.now()
-          const pulse = await this.#pulseResolver(pulseLink, this.#abort)
+          const pulse = await this.#pulseResolver(pulseLink, TYPE, this.#abort)
           const endTime = Date.now()
           const qTime = startTime - initTime
           const rTime = endTime - startTime
@@ -133,7 +131,7 @@ export class Syncer {
       if (instance.bakedPulse) {
         return
       }
-      const pulse = await this.#resolve(instance)
+      const pulse = await this.#resolve(instance, TYPE, this.#abort)
       debug('pulse resolved', pulse)
       instance.bake(pulse)
       this.#yield()
