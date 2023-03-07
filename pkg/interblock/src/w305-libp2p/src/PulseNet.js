@@ -1,23 +1,15 @@
 import { isNode } from 'wherearewe'
 import process from 'process'
-import { createBitswap } from 'ipfs-bitswap'
 import { createRepo } from 'ipfs-repo'
 import { loadCodec } from '../src/loadCodec'
 import { createBackend } from '../src/createBackend'
 import assert from 'assert-fast'
-import {
-  Address,
-  Keypair,
-  Pulse,
-  PulseLink,
-  decode,
-} from '../../w008-ipld/index.mjs'
+import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { createLibp2p } from 'libp2p'
 import { mplex } from '@libp2p/mplex'
 import { noise } from '@chainsafe/libp2p-noise'
 import { webSockets } from '@libp2p/websockets'
 import { isMultiaddr, multiaddr as fromString } from '@multiformats/multiaddr'
-import { CID } from 'multiformats/cid'
 import all from 'it-all'
 import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
 import { libp2pConfig } from 'ipfs-core-config/libp2p'
@@ -34,7 +26,6 @@ const ciRepo = () => createRepo('ciRepo', loadCodec, createBackend())
 export class PulseNet {
   #libp2p
   #repo
-  #bitswap
   #keypair
   #announcer
   #lifter
@@ -110,14 +101,10 @@ export class PulseNet {
     this.#lifter = Lifter.create(this.#announcer, this.#libp2p)
 
     this.#repo = repo
-    const bsOptions = { statsEnabled: true }
-    this.#bitswap = createBitswap(this.#libp2p, this.#repo.blocks, bsOptions)
-    await this.#bitswap.start()
     debug('listening on', this.#libp2p.getMultiaddrs())
   }
   async stop() {
     await stopSafe(() => this.#announcer.stop())
-    await stopSafe(() => this.#bitswap.stop())
     await stopSafe(() => this.#libp2p.stop())
     await stopSafe(() => this.#repo.close())
   }
@@ -142,12 +129,12 @@ export class PulseNet {
     const manyBlocks = [...blocks.entries()].map(([, block]) => {
       return { key: block.cid, value: block.bytes }
     })
-    const bitswapResults = await all(this.#bitswap.putMany(manyBlocks))
+    const repoResults = await all(this.#repo.blocks.putMany(manyBlocks))
     const address = pulse.getAddress()
     const pulselink = pulse.getPulseLink()
     this.#announcer.updatePulse(address, pulselink)
 
-    return bitswapResults
+    return repoResults
   }
   async announce(source, target, address, root, path) {
     return await this.#announcer.announce(source, target, address, root, path)
@@ -183,8 +170,8 @@ export class PulseNet {
   subscribeInterpulses() {
     return this.#announcer.subscribeInterpulses()
   }
-  resolveLifts() {
-    return this.#lifter.resolveLifts()
+  uglyInjection(netEndurance) {
+    this.#lifter.uglyInjection(netEndurance)
   }
   subscribePulse(address) {
     assert(address instanceof Address)
@@ -194,34 +181,17 @@ export class PulseNet {
     return this.#announcer.subscribe(address)
     // TODO use a worker to verify and catch up on announcements
   }
-  async pullCar(pulselink, type) {
-    assert(pulselink instanceof PulseLink)
+  async lift(pulse, prior, type) {
+    assert(pulse instanceof PulseLink)
+    assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type])
-    const carReader = await this.#lifter.pullCar(pulselink, type)
-    // TODO fall back to bitswap if not found
-    return carReader
-  }
-  getLocalResolver(treetop) {
-    return this.#getResolver(treetop, this.#repo.blocks)
-  }
-  getBitswapResolver(treetop) {
-    return this.#getResolver(treetop, this.#bitswap)
-  }
-  #getResolver = (treetop, store) => {
-    assert(CID.asCID(treetop))
-    // TODO WARNING permissions must be honoured
-    // TODO use treetop to only fetch things below this CID
-    return async (cid, { signal } = {}) => {
-      assert(CID.asCID(cid), `not cid: ${cid}`)
-      const bytes = await store.get(cid, { signal })
-      const block = await decode(bytes)
-      return block
-    }
+    await this.#lifter.lift(pulse, prior, type)
+    debug('lifted %s', pulse)
   }
   async stats() {
     const repo = await this.#repo.stat()
-    const bitswap = this.#bitswap.stat().snapshot
-    return { repo, bitswap }
+    // TODO collect Lifter stats
+    return { repo }
   }
   getMultiaddrs() {
     const addrs = this.#libp2p.getMultiaddrs()

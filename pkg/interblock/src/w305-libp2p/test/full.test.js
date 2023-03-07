@@ -29,9 +29,8 @@ describe('full', () => {
     debug('emit', p1)
     expect(p1.equals(genesis.getPulseLink())).toBeTruthy()
     debug('getting pulse')
-    Debug.enable('tests *PulseNet *Lifter *Connection *NetEndurance')
 
-    const pulse1 = await clientEndurance.recover(p1)
+    const pulse1 = await clientEndurance.recoverRemote(p1)
     debug('got pulse1')
     expect(pulse1).toBeInstanceOf(Pulse)
     expect(pulse1).toEqual(genesis)
@@ -46,9 +45,8 @@ describe('full', () => {
     debug('emit', p2)
     expect(p2.equals(next.getPulseLink())).toBeTruthy()
 
-    Debug.enable('tests *PulseNet *Lifter *Connection *NetEndurance')
     debug('get pulse2', p2)
-    const pulse2 = await clientEndurance.recover(p2)
+    const pulse2 = await clientEndurance.recoverRemote(p2)
     debug('got pulse2')
     expect(pulse2).toBeInstanceOf(Pulse)
     expect(pulse2).toEqual(next)

@@ -112,7 +112,6 @@ describe('Hamt', () => {
   })
   describe('sizing', () => {
     test.skip('basic', async () => {
-      Debug.enable('tests')
       const large = await hamtFactory(10)
       const largeCrushed = await large.crush()
       const diffs = largeCrushed.getDiffBlocks()
@@ -139,7 +138,6 @@ describe('Hamt', () => {
             const start = Date.now()
             const crushed = await hamt.crush()
             const time = Date.now() - start
-            Debug.enable()
             debug(`bitWidth ${bitWidth} bucketSize ${bucketSize}`)
             debug(`crush ${count} items in ${time} ms`)
 

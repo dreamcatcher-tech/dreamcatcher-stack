@@ -280,14 +280,15 @@ export class Announcer {
       }
     }
   }
-  broadCastPullCar(pulseLink, type) {
-    assert(pulseLink instanceof PulseLink)
+  broadCastLift(pulse, prior, type) {
+    assert(pulse instanceof PulseLink)
+    assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type])
     if (!this.#connections.size) {
       throw new Error('no connections')
     }
     for (const connection of this.#connections.values()) {
-      connection.txPullCar(pulseLink, type)
+      connection.txLift(pulse, prior, type)
     }
   }
   rxLifts() {

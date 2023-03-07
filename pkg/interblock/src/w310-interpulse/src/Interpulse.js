@@ -159,7 +159,7 @@ export class Interpulse {
         const latest = await this.#engine.latestByPath(absPath, pulse)
         return latest
       } catch (error) {
-        debug('latest error', error.message)
+        debug('latest error %s %s', absPath, error.message)
       }
     }
     debug('latest search ended')
@@ -274,7 +274,7 @@ export class Interpulse {
     const checker = async (source) => {
       let prior
       for await (const rootPulse of source) {
-        debug('checker pulse %s', rootPulse.getPulseLink())
+        debug('checker pulse %s for %s', rootPulse.getPulseLink(), absPath)
         try {
           const latest = await this.#engine.latestByPath(absPath, rootPulse)
           if (prior?.cid.equals(latest.cid)) {
@@ -382,12 +382,14 @@ export class Interpulse {
 
         const stream = this.net.subscribePulse(address)
         const updater = async (source) => {
-          for await (const pulselink of source) {
-            debug('stream', pulselink.toString())
-            assert(pulselink instanceof PulseLink)
-            const latest = await this.#endurance.recover(pulselink)
+          let prior
+          for await (const pulse of source) {
+            debug('stream', pulse.toString())
+            assert(pulse instanceof PulseLink)
+            const latest = await this.#endurance.recoverRemote(pulse, prior)
             const target = mtab.getAddress()
             await this.#engine.updateLatest(target, latest)
+            prior = latest.getPulseLink()
           }
           debug('updater ended')
         }

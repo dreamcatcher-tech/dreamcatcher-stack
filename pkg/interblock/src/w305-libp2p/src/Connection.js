@@ -95,12 +95,14 @@ export class Connection {
           this.#announce.push(announcement)
           break
         }
-        case 'PULL': {
-          const pulseLink = PulseLink.parse(payload.pulselink)
+        case 'LIFT': {
+          const pulse = PulseLink.parse(payload.pulse)
           const { type } = payload
           assert(Lifter.RECOVERY_TYPES[type])
-          debug('pull %s type %s', pulseLink, type)
-          this.#lift.push({ pulseLink, peerIdString: this.#peerIdString, type })
+          debug('pull %s type %s', pulse, type)
+          const peerIdString = this.#peerIdString
+          const prior = payload.prior && PulseLink.parse(payload.prior)
+          this.#lift.push({ peerIdString, pulse, prior, type })
           break
         }
         default:
@@ -173,11 +175,12 @@ export class Connection {
     this.#stream = stream
     pipe(this.#tx, jsTransform, stream, sinkJs(this.#rx, redial))
   }
-  txPullCar(pulseLink, type) {
-    assert(pulseLink instanceof PulseLink)
+  txLift(pulse, prior, type) {
+    assert(pulse instanceof PulseLink)
+    assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type])
-    const pull = PULL(pulseLink, type)
-    this.#tx.push(pull)
+    const lift = LIFT(pulse, prior, type)
+    this.#tx.push(lift)
   }
 }
 const sinkJs = (pushable, redial) => {
@@ -195,11 +198,15 @@ const sinkJs = (pushable, redial) => {
     }
   }
 }
-function PULL(pulseLink, type) {
-  assert(pulseLink instanceof PulseLink)
+function LIFT(pulse, prior, type) {
+  assert(pulse instanceof PulseLink)
+  assert(!prior || prior instanceof PulseLink)
   assert(Lifter.RECOVERY_TYPES[type])
-  const payload = { pulselink: pulseLink.cid.toString(), type }
-  return { type: 'PULL', payload }
+  const payload = { pulse: pulse.cid.toString(), type }
+  if (prior) {
+    payload.prior = prior.cid.toString()
+  }
+  return { type: 'LIFT', payload }
 }
 function SUBSCRIBE(chainId, isSingle = false, proof = []) {
   assert.strictEqual(typeof chainId, 'string')

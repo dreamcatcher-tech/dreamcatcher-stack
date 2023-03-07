@@ -404,6 +404,7 @@ export class Engine {
           )
         }
         assert(latest instanceof PulseLink)
+
         pulse = await this.#endurance.recover(latest)
         const pulseAddress = pulse.getAddress()
         assert(channel.isForkPoint() || pulseAddress.equals(address))

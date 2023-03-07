@@ -35,7 +35,6 @@ describe('mount', () => {
     expect(child1.cid.equals(remote.cid)).toBeTruthy()
 
     const nested1 = await server.add('child1/nested1')
-    debug(nested1)
     const nestedRemote = await client.latest('/.mtab/server/nested1')
     expect(nested1.chainId).toEqual(nestedRemote.getAddress().getChainId())
     debug('nested1 pulseHash', nestedRemote.getPulseLink())

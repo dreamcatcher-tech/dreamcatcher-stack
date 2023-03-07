@@ -28,6 +28,8 @@ export class Syncer {
   #subscribers = new Set()
   #abort = new AbortController()
   #crisp = Crisp.createLoading()
+  #pulseResolvesQueue = new Set()
+  #pulseResolves = new Set()
 
   static create(pulseResolver, covenantResolver, actions, chroot = '/') {
     assert.strictEqual(typeof pulseResolver, 'function')
@@ -51,11 +53,6 @@ export class Syncer {
     this.#pulseResolvesQueue.clear()
     this.#pulseResolves.clear()
 
-    // the pulse inflation process should preserve the bakes ?
-    // or the crisp query function should preserve the last result
-    // ie: do not change the crisp result unless know for sure it is invalid
-    // so if still loading, then go with what we last knew
-
     // TODO assert lineage matches
     // TODO permit skips in lineage
     const prior = this.#pulse
@@ -64,12 +61,11 @@ export class Syncer {
     const deep = await this.#resolve(pulseLink)
     await this.#bake(deep, prior)
     const isDeepLoaded = true
-    this.#yield(isDeepLoaded)
+    await this.#yield(isDeepLoaded)
 
     // TODO handle race conditions if called quickly
   }
-  #pulseResolvesQueue = new Set()
-  #pulseResolves = new Set()
+
   async #resolve(pulseLink) {
     assert(pulseLink instanceof PulseLink)
     const promise = new Promise((resolve, reject) => {
@@ -131,21 +127,22 @@ export class Syncer {
       if (instance.bakedPulse) {
         return
       }
+
       const pulse = await this.#resolve(instance, TYPE, this.#abort)
       debug('pulse resolved', pulse)
       instance.bake(pulse)
-      this.#yield()
+      await this.#yield()
       await this.#bake(instance.bakedPulse, prior?.bakedPulse)
       return
     }
     if (instance instanceof Hamt) {
       await this.#updateHamt(instance, prior)
-      this.#yield()
+      await this.#yield()
       return
     }
     if (instance instanceof Dmz) {
       await this.#updateCovenant(instance, prior)
-      this.#yield()
+      await this.#yield()
     }
     const { classMap = {}, defaultClass } = instance.constructor
     assert(!(Object.keys(classMap).length && defaultClass))
@@ -197,16 +194,16 @@ export class Syncer {
     for (const key of deleted) {
       map = map.delete(key)
       hamt.bake(map)
-      this.#yield()
+      await this.#yield()
     }
-    const set = (key, value) => {
+    const set = async (key, value) => {
       map = map.set(key, value)
       hamt.bake(map)
-      this.#yield()
+      await this.#yield()
     }
     const mods = [...modified].map(async (key) => {
       const value = await hamt.get(key)
-      set(key, value)
+      await set(key, value)
       let priorValue
       if (prior) {
         if (prior.bakedMap.has(key)) {
@@ -219,15 +216,15 @@ export class Syncer {
     })
     const adds = [...added].map(async (key) => {
       const value = await hamt.get(key)
-      set(key, value)
+      await set(key, value)
       await this.#bake(value)
     })
     await Promise.all([...mods, ...adds])
   }
   #yield(isDeepLoaded = false) {
-    throttledYield(() => this.#yieldRaw(isDeepLoaded))
+    return throttledYield(() => this.#yieldRaw(isDeepLoaded))
   }
-  #yieldRaw(isDeepLoaded = false) {
+  async #yieldRaw(isDeepLoaded = false) {
     debug('creating crisp for pulse %s', this.#pulse)
     // TODO include the prievous crisp in the new crisp
     // TODO only yield if something useful occured, like new child or state
@@ -241,6 +238,8 @@ export class Syncer {
     for (const subscriber of this.#subscribers) {
       subscriber.push(crisp)
     }
+    // delay to allow thread a break to hopefully help react renders
+    await delay(10)
   }
   subscribe() {
     const subscriber = pushable({

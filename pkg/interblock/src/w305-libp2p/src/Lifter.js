@@ -1,12 +1,11 @@
 import { pipe } from 'it-pipe'
-import * as lp from 'it-length-prefixed'
 import assert from 'assert-fast'
 import { peerIdFromString } from '@libp2p/peer-id'
 import { PulseLink } from '../../w008-ipld/index.mjs'
 import { pushable } from 'it-pushable'
 import Debug from 'debug'
 import { Announcer } from './Announcer.js'
-import { CarReader } from '@ipld/car'
+import { NetEndurance } from '../index.js'
 const debug = Debug('interpulse:libp2p:Lifter')
 const PULSELIFTER = '/pulse/lifter/0.0.1'
 
@@ -15,7 +14,7 @@ export class Lifter {
   #announcer
   #promises = new Map() // pulseLink : Promise
   #connections = new Map() // peerIdString : stream
-  #resolveLifts = pushable({ objectMode: true })
+  #netEndurance
   static create(announcer, libp2p) {
     assert(typeof libp2p.dialProtocol, 'function')
     assert(announcer instanceof Announcer)
@@ -26,51 +25,37 @@ export class Lifter {
     instance.#listen()
     return instance
   }
-  resolveLifts() {
-    // netEndurance hooks itself up here
-    return this.#resolveLifts
+  uglyInjection(netEndurance) {
+    assert(netEndurance instanceof NetEndurance)
+    this.#netEndurance = netEndurance
   }
   async #listen() {
     for await (const request of this.#announcer.rxLifts()) {
-      const { peerIdString, pulseLink, type } = request
-      debug('lift from %s for %s of type %s', peerIdString, pulseLink, type)
-      new Promise((resolve, reject) => {
-        this.#resolveLifts.push({ pulseLink, type, resolve, reject })
+      const { peerIdString, pulse, prior, type } = request
+      debug('rxLifts %o', request)
+      const blockStream = pushable({ objectMode: true })
+      this.#netEndurance.streamWalk(blockStream, pulse, prior, type)
+      const stream = await this.#ensureConnection(peerIdString)
+      assert.strictEqual(typeof stream.push, 'function')
+      pipe(blockStream, async (source) => {
+        for await (const block of source) {
+          debug('pushing block', PulseLink.parse(block.cid))
+          stream.push(block.bytes)
+        }
       })
-        .then(async (car) => {
-          // make sure we have a connection to the peer
-          const stream = await this.#ensureConnection(peerIdString)
-          assert.strictEqual(typeof stream.push, 'function')
-          stream.push(car)
-        })
-        .catch((error) => {
-          // TODO send error back to announcer
-          console.error(error)
-        })
     }
     debug('rxLifts ended')
   }
   async #listenLifts(source) {
-    pipe(source, lp.decode({ maxDataLength: Infinity }), async (source) => {
-      let last = Date.now()
-      for await (const chunk of source) {
-        debug('got lift payload', chunk.length)
-        const ms = Date.now() - last
-        last = Date.now()
-        if (chunk.length > 1e6) {
-          console.error('got chunk of length', chunk.length, 'in', ms, 'ms')
-        }
-        const car = await CarReader.fromBytes(chunk.subarray())
-        debug('got car')
-        const [root, ...rest] = await car.getRoots()
-        assert(rest.length === 0)
-        const cidString = root.toString()
-        const tracker = this.#promises.get(cidString)
-        if (tracker) {
-          tracker.resolve(car)
-        }
+    for await (const chunk of source) {
+      const bytes = chunk.subarray()
+      const block = await this.#netEndurance.pushLiftedBytes(bytes)
+      debug('got block', PulseLink.parse(block.cid))
+      const tracker = this.#promises.get(block.cid.toString())
+      if (tracker) {
+        tracker.resolve()
       }
-    })
+    }
   }
   async #ensureConnection(peerIdString) {
     const peerId = peerIdFromString(peerIdString)
@@ -88,10 +73,11 @@ export class Lifter {
     }
     return this.#connections.get(peerIdString)
   }
-  async pullCar(pulseLink, type) {
-    assert(pulseLink instanceof PulseLink)
+  async lift(pulse, prior, type) {
+    assert(pulse instanceof PulseLink)
+    assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type])
-    const cidString = pulseLink.cid.toString()
+    const cidString = pulse.cid.toString()
     if (this.#promises.has(cidString)) {
       return this.#promises.get(cidString).promise
     }
@@ -100,7 +86,7 @@ export class Lifter {
       tracker = { resolve, reject }
       // TODO get feedback from announcer
       try {
-        this.#announcer.broadCastPullCar(pulseLink, type)
+        this.#announcer.broadCastLift(pulse, prior, type)
       } catch (error) {
         reject(error)
       }
@@ -108,10 +94,9 @@ export class Lifter {
     tracker.promise = promise
     this.#promises.set(cidString, tracker)
     try {
-      const car = await promise
-      return car
+      await promise
     } finally {
-      debug('promise finally %s', pulseLink)
+      debug('promise finally %s', pulse)
       this.#promises.delete(cidString)
     }
   }
@@ -127,7 +112,7 @@ export class Lifter {
     assert(!this.#connections.has(peerIdString))
     this.#listenLifts(stream.source)
     const push = pushable()
-    pipe(push, lp.encode(), stream.sink)
+    pipe(push, stream.sink)
     this.#connections.set(peerIdString, push)
   }
   static get RECOVERY_TYPES() {

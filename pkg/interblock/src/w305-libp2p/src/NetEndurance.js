@@ -1,6 +1,3 @@
-import { concat } from 'uint8arrays'
-import all from 'it-all'
-import { CarWriter } from '@ipld/car'
 import { CID } from 'multiformats/cid'
 import {
   Interpulse,
@@ -55,84 +52,41 @@ export class NetEndurance extends Endurance {
       const latest = await this.recover(pulselink)
       await super.endure(latest) // acts like the bootstrap pulse
     }
-    this.#listen()
+    this.#net.uglyInjection(this)
   }
-  async #listen() {
-    // if lift requests come in, we will fulfill them
-    for await (const lift of this.#net.resolveLifts()) {
-      // TODO run these requests in parallel
-      const { pulseLink, type, resolve, reject } = lift
-      debug('got lift request for %s of type %s', pulseLink, type)
-      assert(pulseLink instanceof PulseLink)
-      assert.strictEqual(typeof resolve, 'function')
-      assert.strictEqual(typeof reject, 'function')
-      Promise.resolve().then(async () => {
-        try {
-          const pulse = await this.#recoverLocal(pulseLink)
-          const start = Date.now()
-          const blocks = await this.#walk(pulse, type)
-          const blockMs = Date.now() - start
-          const carIterable = await this.#writeCar(pulse, blocks)
-          const carArrays = await all(carIterable)
-          const car = concat(carArrays)
-          const ms = Date.now() - start
-          if (car.length > 1e6) {
-            console.error(
-              'car is %i took %i ms blocks took %i ms',
-              car.length,
-              ms,
-              blockMs
-            )
-          }
-          // TODO use streaming to save peak ram usage
-          // TODO ensure writer uses block bytes by reference
-          resolve(car)
-        } catch (error) {
-          reject(error)
-        }
-      })
-    }
-  }
-  async #writeCar(pulse, blocks) {
-    assert(pulse instanceof Pulse)
-    assert(blocks instanceof Map)
-    const { writer, out } = await CarWriter.create([pulse.cid])
-    for (const block of blocks.values()) {
-      writer.put(block)
-    }
-    writer.close()
-    return out
-  }
-  async #walk(pulse, type) {
-    assert(pulse instanceof Pulse)
+  async streamWalk(stream, pulse, prior, type) {
+    assert.strictEqual(typeof stream.push, 'function')
+    assert(pulse instanceof PulseLink)
+    assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
     const types = Lifter.RECOVERY_TYPES
-    const withChildren = [types.deepPulse, types.crispDeepPulse].includes(type)
-    const noHamts = [types.pulse, types.interpulse].includes(type)
-    const blocks = new Map()
-    const localResolver = this.#getLocalResolver(pulse.cid)
+    const withChildren = [types.deepPulse, types.crispDeepPulse].includes(
+      types[type]
+    )
+    const noHamts = [types.pulse, types.interpulse].includes(types[type])
+
+    const blocks = new Set()
+    const localResolver = this.getResolver(pulse.cid)
     const loggingResolver = async (cid) => {
+      // TODO move queue to be LIFO by buffering older resolvers behind newer
       const block = await localResolver(cid)
       assert(CID.asCID(block.cid))
       assert(block.value)
-      blocks.set(block.cid.toString(), block)
+      if (blocks.has(block.cid.toString())) {
+        return block
+      }
+      blocks.add(block.cid.toString())
+      stream.push(block)
       return block
     }
-    const toExport = [pulse.getPulseLink()]
+    const toExport = [pulse]
     while (toExport.length) {
-      const pulseLink = toExport.shift()
-      debug('exporting %s', pulseLink)
-      const instance = await Pulse.uncrush(pulseLink.cid, loggingResolver)
+      const pulse = toExport.shift()
+      debug('exporting %s', pulse)
+      const instance = await Pulse.uncrush(pulse.cid, loggingResolver)
       const network = instance.getNetwork()
       if (!noHamts) {
-        const startSize = blocks.size
-        const start = Date.now()
         await network.walkHamts()
-        const walkDiff = blocks.size - startSize
-        const ms = Date.now() - start
-        if (walkDiff > 1000) {
-          console.error('walked %i blocks in %i ms', walkDiff, ms)
-        }
       }
       if (withChildren) {
         for await (const [, channel] of network.channels.list.entries()) {
@@ -144,71 +98,37 @@ export class NetEndurance extends Endurance {
       }
     }
     debug('exporting %d blocks', blocks.size)
-    return blocks
-  }
-  async #recoverLocal(pulseLink) {
-    const cachedResult = await super.recover(pulseLink)
-    if (cachedResult) {
-      return cachedResult
-    }
-    const resolver = this.#net.getLocalResolver(pulseLink.cid)
-    const pulse = await Pulse.uncrush(pulseLink.cid, resolver)
-    super.cachePulse(pulse)
-    return pulse
   }
   /**
    * @param {PulseLink} pulseLink
    * @returns {Promise<Pulse>}
-   *
-   * Block any other requests for this pulse
-   * First, check the Pulse cache.
-   * If no pulse, check the block cache.
-   * If no block, check the network.
-   * Try get the latest prior pulse that we do have.
-   * Try pull the whole pulse, using the prior pulse for diffing
-   * Try use bitswap to find the pulse, waiting forever until it arrives
-   *
-   * Once it arrives,
-   * Cache the pulse.
-   * Gradually transfer the blocks over to our storage.
-   * Ultimately remove the the car resolver and use just the blocks.
    */
-  async recover(pulseLink, type = 'pulse', abort) {
+  async recover(pulseLink, type = 'hamtPulse', abort) {
     assert(pulseLink instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
+    debug('recovering %s type %s', pulseLink, type)
+
     const cachedResult = await super.recover(pulseLink)
     if (cachedResult) {
       return cachedResult
     }
-
-    // try read from disk
-    const localResolver = this.#getLocalResolver(pulseLink.cid)
+    const resolver = this.getResolver(pulseLink.cid)
     try {
-      const pulse = await Pulse.uncrush(pulseLink.cid, localResolver)
+      const pulse = await Pulse.uncrush(pulseLink.cid, resolver)
       super.cachePulse(pulse)
       return pulse
     } catch (error) {
       debug(`failed to locally recover pulse %s`, pulseLink, error)
+      throw error
     }
-
-    // try pull whole pulse from peers
-    try {
-      const car = await this.#net.pullCar(pulseLink, type)
-      const [root, ...rest] = await car.getRoots()
-      assert(rest.length === 0)
-      const resolver = this.#getCarResolver(car)
-      const pulse = await Pulse.uncrush(root, resolver)
-      super.cachePulse(pulse)
-      return pulse
-    } catch (error) {
-      debug(`failed to car recover pulse %s`, pulseLink, error)
-    }
-
-    // fallback to bitswap
-    const resolver = this.getResolver(pulseLink.cid)
-    const pulse = await Pulse.uncrush(pulseLink.cid, resolver)
-    super.cachePulse(pulse)
-    return pulse
+  }
+  async recoverRemote(pulse, prior, abort) {
+    assert(pulse instanceof PulseLink)
+    assert(!prior || prior instanceof PulseLink)
+    this.#net.lift(pulse, prior, 'deepPulse')
+    // TODO recover should not require prior knowledge, only lift
+    const result = await this.recover(pulse, 'deepPulse', prior)
+    return result
   }
   async recoverInterpulse(source, target) {
     assert(source instanceof PulseLink)
@@ -216,6 +136,7 @@ export class NetEndurance extends Endurance {
     debug('recovering interpulse from %s targetting %s', source, target)
 
     // TODO recovery an Interpulse without a full pulse
+    await this.#net.lift(source, undefined, 'interpulse')
     const evilFullPulse = await this.recover(source, 'interpulse')
     assert(evilFullPulse instanceof Pulse)
     const interpulse = Interpulse.extract(evilFullPulse, target)
@@ -295,21 +216,10 @@ export class NetEndurance extends Endurance {
     // if no pathing, then we can get the parent path ?
     throw new Error(`no pathing information found for channel: ${alias}`)
   }
-  #getLocalResolver(treetop) {
-    const onlyLocal = true
-    return this.getResolver(treetop, onlyLocal)
-  }
-  getResolver(treetop, onlyLocal = false) {
+  getResolver(treetop) {
     assert(CID.asCID(treetop))
-    let netResolver
-    if (onlyLocal) {
-      netResolver = this.#net.getLocalResolver(treetop)
-    } else {
-      netResolver = this.#net.getBitswapResolver(treetop)
-    }
     const cacheResolver = super.getResolver(treetop)
-    // TODO WARNING permissions must be honoured
-    // TODO use treetop to only fetch things below this CID
+    const netResolver = this.#getNetResolver(treetop)
     return async (cid) => {
       const cachedResult = await cacheResolver(cid)
       if (cachedResult) {
@@ -317,22 +227,46 @@ export class NetEndurance extends Endurance {
       }
       // TODO feed into the blockcache with ejection
       const block = await netResolver(cid)
-      super.cacheBlock(block)
       return block
     }
   }
-  #getCarResolver(car) {
-    assert.strictEqual(typeof car.get, 'function')
-    return async (cid) => {
+  #wantList = new Map() // cidString -> promise
+  #getNetResolver(treetop) {
+    assert(CID.asCID(treetop))
+    // TODO WARNING permissions must be honoured
+    // TODO use treetop to only fetch things below this CID
+    return async (cid, { signal } = {}) => {
       assert(CID.asCID(cid), `not cid: ${cid}`)
-      debug('resolving', PulseLink.parse(cid))
-      // TODO use the blockCache
-      const result = await car.get(cid)
-      assert(cid.equals(result.cid))
-      const block = await decode(result.bytes)
-      super.cacheBlock(block)
-      return block
+      const cidString = cid.toString()
+      if (!this.#wantList.has(cidString)) {
+        const tracker = {}
+        const promise = new Promise((resolve) => {
+          tracker.resolve = resolve
+        })
+        tracker.promise = promise
+        this.#wantList.set(cidString, tracker)
+
+        if (await this.#net.repo.blocks.has(cid)) {
+          const bytes = await this.#net.repo.blocks.get(cid, { signal })
+          const block = await decode(bytes)
+          super.cacheBlock(block)
+          tracker.resolve(block)
+        }
+      }
+      return await this.#wantList.get(cidString).promise
     }
+  }
+  async pushLiftedBytes(bytes) {
+    const block = await decode(bytes)
+    super.cacheBlock(block)
+    const cidString = block.cid.toString()
+    if (this.#wantList.has(cidString)) {
+      const tracker = this.#wantList.get(cidString)
+      this.#wantList.delete(cidString)
+      tracker.resolve(block)
+    }
+    this.#net.repo.blocks.put(block.cid, block.bytes)
+    return block
   }
   async stop() {
     super.stop()
