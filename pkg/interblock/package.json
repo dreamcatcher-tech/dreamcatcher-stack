@@ -65,6 +65,7 @@
     "json-schema-faker": "^0.5.0-rcv.46",
     "libp2p": "0.42.2",
     "lodash.merge": "^4.6.2",
+    "lodash.throttle": "^4.1.1",
     "pad-left": "^2.1.0",
     "path-browserify": "^1.0.1",
     "pem": "^1.14.6",
