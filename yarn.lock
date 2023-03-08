@@ -8339,7 +8339,7 @@ event-iterator@^2.0.0:
   resolved "https://registry.yarnpkg.com/event-iterator/-/event-iterator-2.0.0.tgz#10f06740cc1e9fd6bc575f334c2bc1ae9d2dbf62"
   integrity sha512-KGft0ldl31BZVV//jj+IAIGCxkvvUkkON+ScH6zfoX+l+omX6001ggyRSpI0Io2Hlro0ThXotswCtfzS8UkIiQ==
 
-event-loop-spinner@^2.0.0, event-loop-spinner@^2.1.0:
+event-loop-spinner@^2.0.0, event-loop-spinner@^2.1.0, event-loop-spinner@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/event-loop-spinner/-/event-loop-spinner-2.2.0.tgz#5b9bdf1759a5d9600576260ae770446a1a16c9b0"
   integrity sha512-KB44sV4Mv7uLIkJHJ5qhiZe5um6th2g57nHQL/uqnPHKP2IswoTRWUteEXTJQL4gW++1zqWUni+H2hGkP51c9w==
@@ -10569,10 +10569,10 @@ it-parallel-batch@^2.0.0:
   dependencies:
     it-batch "^2.0.0"
 
-it-parallel@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/it-parallel/-/it-parallel-3.0.0.tgz#30e376c579da9f755d02b2735a69aac19cf5373b"
-  integrity sha512-/y70cY7VoZ7natLbWrPxoRaKWMD67RvtWx21cyLJr6kkuHrUWOrHNr8CPMBqzDRh73aig/uUT82hzTTmTTkDUg==
+it-parallel@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/it-parallel/-/it-parallel-3.0.1.tgz#cdffdad1af4681cd3738afbb47f34cc38647fa8e"
+  integrity sha512-Wq9DcoLrFV9n5YzWC4BlOQT+v5qgir/iIO/CJ1eV0T5t9rcCZFPKOZB3E8wIhZ5ruSApc2w7UKrbn5iENqew5A==
   dependencies:
     p-defer "^4.0.0"
 

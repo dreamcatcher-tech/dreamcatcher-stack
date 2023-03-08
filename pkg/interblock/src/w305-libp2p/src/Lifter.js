@@ -22,14 +22,14 @@ export class Lifter {
     instance.#libp2p = libp2p
     instance.#announcer = announcer
     libp2p.handle(PULSELIFTER, instance.#getHandler())
-    instance.#listen()
+    instance.#listenLiftRequests()
     return instance
   }
   uglyInjection(netEndurance) {
     assert(netEndurance instanceof NetEndurance)
     this.#netEndurance = netEndurance
   }
-  async #listen() {
+  async #listenLiftRequests() {
     for await (const request of this.#announcer.rxLifts()) {
       const { peerIdString, pulse, prior, type } = request
       debug('rxLifts %o', request)
@@ -46,16 +46,29 @@ export class Lifter {
     }
     debug('rxLifts ended')
   }
-  async #listenLifts(source) {
-    for await (const chunk of source) {
-      const bytes = chunk.subarray()
-      const block = await this.#netEndurance.pushLiftedBytes(bytes)
-      debug('got block', PulseLink.parse(block.cid))
-      const tracker = this.#promises.get(block.cid.toString())
-      if (tracker) {
-        tracker.resolve()
+  async #listenLiftsReceived(source) {
+    function buffer(source) {
+      // must drain the stream asap to avoid buffer overflow
+      const queue = pushable()
+      const drain = async () => {
+        for await (const chunk of source) {
+          const bytes = chunk.subarray()
+          queue.push(bytes)
+        }
       }
+      drain().catch((error) => queue.end(error))
+      return queue
     }
+    pipe(source, buffer, async (source) => {
+      for await (const bytes of source) {
+        const block = await this.#netEndurance.pushLiftedBytes(bytes)
+        debug('got block', PulseLink.parse(block.cid))
+        const tracker = this.#promises.get(block.cid.toString())
+        if (tracker) {
+          tracker.resolve()
+        }
+      }
+    })
   }
   async #ensureConnection(peerIdString) {
     const peerId = peerIdFromString(peerIdString)
@@ -110,7 +123,7 @@ export class Lifter {
   }
   #setStream(peerIdString, stream) {
     assert(!this.#connections.has(peerIdString))
-    this.#listenLifts(stream.source)
+    this.#listenLiftsReceived(stream.source)
     const push = pushable()
     pipe(push, stream.sink)
     this.#connections.set(peerIdString, push)

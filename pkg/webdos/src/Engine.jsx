@@ -15,6 +15,7 @@ export default function Engine({
   addrs,
   mounts,
   init,
+  actions,
   dev,
   car,
   reset,
@@ -73,6 +74,18 @@ export default function Engine({
             debug('execute done', command)
           }
           debug('init complete')
+        }
+        if (actions) {
+          debug('actions', actions)
+          for (const action of actions) {
+            assert.strictEqual(Object.keys(action).length, 1)
+            const command = Object.keys(action).pop()
+            const args = Object.values(action).pop()
+            debug('execute', command)
+            // TODO use in build init function in engine
+            await engine.execute(command, args)
+            debug('execute done', command)
+          }
         }
         if (addrs) {
           debug('addrs', addrs)
@@ -204,6 +217,13 @@ Engine.propTypes = {
    * To run multiple actions in parallel, supply many keys.
    */
   init: PropTypes.arrayOf(PropTypes.object),
+
+  /**
+   * A list of operations that will be applied to the engine on mount.
+   * Each object in the array takes the form: { path/apiCall, args }.
+   * To run multiple actions in parallel, supply many keys.
+   */
+  actions: PropTypes.arrayOf(PropTypes.object),
 
   /**
    * When the engine mounts, should it be reset to its initial state?

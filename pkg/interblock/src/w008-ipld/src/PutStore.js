@@ -1,6 +1,4 @@
-import { Block, create } from 'multiformats/block'
-import { hasher } from './IpldUtils'
-import * as codec from '@ipld/dag-cbor'
+import { eventLoopSpinner } from 'event-loop-spinner'
 import { CID } from 'multiformats/cid'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -32,6 +30,9 @@ export class PutStore {
   }
   async getBlock(cid) {
     assert(CID.asCID(cid))
+    if (eventLoopSpinner.isStarving()) {
+      await eventLoopSpinner.spin()
+    }
     debug('getBlock:', cid.toString().substring(0, 9))
     if (this.#putsMap.has(cid.toString())) {
       return this.#putsMap.get(cid.toString())

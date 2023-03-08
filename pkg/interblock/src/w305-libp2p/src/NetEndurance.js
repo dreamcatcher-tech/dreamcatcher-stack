@@ -1,4 +1,5 @@
 import { CID } from 'multiformats/cid'
+import { eventLoopSpinner } from 'event-loop-spinner'
 import {
   Interpulse,
   Address,
@@ -67,6 +68,8 @@ export class NetEndurance extends Endurance {
 
     const blocks = new Set()
     const localResolver = this.getResolver(pulse.cid)
+    let length = 0
+    let hashLength = 0
     const loggingResolver = async (cid) => {
       // TODO move queue to be LIFO by buffering older resolvers behind newer
       const block = await localResolver(cid)
@@ -77,9 +80,12 @@ export class NetEndurance extends Endurance {
       }
       blocks.add(block.cid.toString())
       stream.push(block)
+      length += block.bytes.length
+      hashLength += block.cid.bytes.length
       return block
     }
     const toExport = [pulse]
+    const start = Date.now()
     while (toExport.length) {
       const pulse = toExport.shift()
       debug('exporting %s', pulse)
@@ -89,7 +95,7 @@ export class NetEndurance extends Endurance {
         await network.walkHamts()
       }
       if (withChildren) {
-        for await (const [, channel] of network.channels.list.entries()) {
+        for await (const [id, channel] of network.channels.list.entries()) {
           if (channel.rx.latest) {
             debug('queuing child for export %s', channel.rx.latest)
             toExport.push(channel.rx.latest)
@@ -98,6 +104,11 @@ export class NetEndurance extends Endurance {
       }
     }
     debug('exporting %d blocks', blocks.size)
+    console.log(
+      `lift completed in ${Date.now() - start}ms for ${
+        blocks.size
+      } blocks with ${length} bytes and ${hashLength} hashes size`
+    )
   }
   /**
    * @param {PulseLink} pulseLink
@@ -221,6 +232,9 @@ export class NetEndurance extends Endurance {
     const cacheResolver = super.getResolver(treetop)
     const netResolver = this.#getNetResolver(treetop)
     return async (cid) => {
+      if (eventLoopSpinner.isStarving()) {
+        await eventLoopSpinner.spin()
+      }
       const cachedResult = await cacheResolver(cid)
       if (cachedResult) {
         return cachedResult
@@ -245,7 +259,7 @@ export class NetEndurance extends Endurance {
         })
         tracker.promise = promise
         this.#wantList.set(cidString, tracker)
-
+        promise.then(() => this.#wantList.delete(cidString))
         if (await this.#net.repo.blocks.has(cid)) {
           const bytes = await this.#net.repo.blocks.get(cid, { signal })
           const block = await decode(bytes)
@@ -257,16 +271,33 @@ export class NetEndurance extends Endurance {
     }
   }
   async pushLiftedBytes(bytes) {
+    if (eventLoopSpinner.isStarving()) {
+      await eventLoopSpinner.spin()
+    }
     const block = await decode(bytes)
     super.cacheBlock(block)
     const cidString = block.cid.toString()
     if (this.#wantList.has(cidString)) {
       const tracker = this.#wantList.get(cidString)
-      this.#wantList.delete(cidString)
       tracker.resolve(block)
     }
-    this.#net.repo.blocks.put(block.cid, block.bytes)
+    // TODO turn this back on once storing to disk
+    // await this.#bufferedWrite(block)
     return block
+  }
+  #queue = []
+  async #bufferedWrite(block) {
+    this.#queue.push(block)
+    if (this.#queue.length === 1) {
+      setTimeout(() => {
+        const writes = this.#queue.map((block) => ({
+          key: block.cid,
+          value: block.bytes,
+        }))
+        this.#net.repo.blocks.putMany(writes)
+        this.#queue.length = 0
+      }, 500)
+    }
   }
   async stop() {
     super.stop()

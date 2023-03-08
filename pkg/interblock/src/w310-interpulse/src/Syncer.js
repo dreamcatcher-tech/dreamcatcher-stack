@@ -1,4 +1,6 @@
-import delay from 'delay'
+import parallel from 'it-parallel'
+import { pipe } from 'it-pipe'
+import { eventLoopSpinner } from 'event-loop-spinner'
 import throttle from 'lodash.throttle'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
@@ -17,9 +19,10 @@ import { pushable } from 'it-pushable'
 
 const debug = Debug('interblock:api:Syncer')
 const TYPE = 'crispDeepPulse'
+const BAKE_TEAR = 'BAKE_TEAR'
 
 export class Syncer {
-  #concurrency = 2
+  #concurrency = 20
   #pulseResolver
   #covenantResolver
   #actions
@@ -28,9 +31,7 @@ export class Syncer {
   #subscribers = new Set()
   #abort = new AbortController()
   #crisp = Crisp.createLoading()
-  #pulseResolvesQueue = new Set()
-  #pulseResolves = new Set()
-
+  #bakeQueue = pushable({ objectMode: true })
   static create(pulseResolver, covenantResolver, actions, chroot = '/') {
     assert.strictEqual(typeof pulseResolver, 'function')
     assert.strictEqual(typeof covenantResolver, 'function')
@@ -50,65 +51,72 @@ export class Syncer {
     assert(!pulse.cid.equals(this.#pulse?.cid))
     this.#abort.abort('new pulse received' + pulse.toString())
     this.#abort = new AbortController()
-    this.#pulseResolvesQueue.clear()
-    this.#pulseResolves.clear()
+    this.#tearBakeQueue()
 
     // TODO assert lineage matches
     // TODO permit skips in lineage
     const prior = this.#pulse
     this.#pulse = pulse
-    const pulseLink = pulse.getPulseLink()
-    const deep = await this.#resolve(pulseLink)
-    await this.#bake(deep, prior)
-    const isDeepLoaded = true
-    await this.#yield(isDeepLoaded)
-
-    // TODO handle race conditions if called quickly
+    const totallyBaked = this.#startBakeQueue()
+    this.#pulseBake(pulse.getPulseLink(), prior?.getPulseLink())
+    await totallyBaked
   }
-
-  async #resolve(pulseLink) {
-    assert(pulseLink instanceof PulseLink)
-    const promise = new Promise((resolve, reject) => {
-      const initTime = Date.now()
-      const request = async () => {
-        try {
-          const startTime = Date.now()
-          const pulse = await this.#pulseResolver(pulseLink, TYPE, this.#abort)
-          const endTime = Date.now()
-          const qTime = startTime - initTime
-          const rTime = endTime - startTime
-          debug('pulse q time: %s resolve time: %s', qTime, rTime)
-          resolve(pulse)
-        } catch (error) {
-          reject(error)
-        }
-      }
-      this.#pulseResolvesQueue.add(request)
-    })
-    this.#tickle()
-    return promise
+  #tearBakeQueue() {
+    this.#bakeQueue.return(new Error(BAKE_TEAR))
+    this.#bakeQueue = undefined
   }
-  #tickle() {
-    if (this.#pulseResolves.size >= this.#concurrency) {
-      // debug('concurrency limit over by: %s', this.#pulseResolvesQueue.size)
-      return
-    }
-    for (const request of this.#pulseResolvesQueue) {
-      this.#pulseResolvesQueue.delete(request)
-      const promise = request()
-      this.#pulseResolves.add(promise)
-      promise.then(() => {
-        this.#pulseResolves.delete(promise)
-        this.#tickle()
-      })
-    }
-  }
-
   /**
    * Will mutate instance and all children of instance
    * by expanding any PulseLinks to Pulses, and any Hamts to Maps.
    * @param {IpldInterface | [IpldInterface]} instance
    */
+  async #pulseBake(pulse, prior) {
+    assert(pulse instanceof PulseLink)
+    assert(!prior || prior instanceof PulseLink)
+    // bakes pulses one at a time, so we load breadth first
+    this.#bakeQueue.push({ pulse, prior })
+  }
+
+  async #startBakeQueue() {
+    assert(!this.#bakeQueue)
+    this.#bakeQueue = pushable({ objectMode: true })
+    return new Promise((resolve, reject) => {
+      const drain = async () => {
+        try {
+          for await (const { pulse, prior } of this.#bakeQueue) {
+            assert(pulse instanceof PulseLink)
+            assert(!pulse.bakedPulse)
+            assert(!prior || prior instanceof PulseLink)
+            debug('bakeQueue length', this.#bakeQueue.readableLength + 1)
+            const fullPulse = await this.#resolve(pulse)
+            debug('pulse resolved %s', pulse)
+            pulse.bake(fullPulse)
+            await this.#yield()
+            await this.#bake(pulse.bakedPulse, prior?.bakedPulse)
+
+            if (this.#bakeQueue.readableLength === 0) {
+              this.#bakeQueue.end()
+            }
+          }
+          // maybe should only yield once a new pulse has been baked ?
+          // not *that* useful to yield partial hamts
+          const isDeepLoaded = true
+          await this.#yield(isDeepLoaded)
+        } catch (error) {
+          if (error.message !== BAKE_TEAR) {
+            return reject(error)
+          }
+        }
+        resolve()
+      }
+      drain()
+    })
+  }
+  async #resolve(pulseLink) {
+    assert(pulseLink instanceof PulseLink)
+    const pulse = await this.#pulseResolver(pulseLink, TYPE, this.#abort)
+    return pulse
+  }
   async #bake(instance, prior) {
     if (Array.isArray(instance)) {
       assert(!prior || Array.isArray(prior))
@@ -127,12 +135,7 @@ export class Syncer {
       if (instance.bakedPulse) {
         return
       }
-
-      const pulse = await this.#resolve(instance, TYPE, this.#abort)
-      debug('pulse resolved', pulse)
-      instance.bake(pulse)
-      await this.#yield()
-      await this.#bake(instance.bakedPulse, prior?.bakedPulse)
+      this.#pulseBake(instance, prior)
       return
     }
     if (instance instanceof Hamt) {
@@ -188,7 +191,11 @@ export class Syncer {
     }
     let map = prior?.bakedMap ?? Immutable.Map()
     hamt.bake(map)
-    const diff = await hamt.compare(prior)
+    const start = Date.now()
+    const diff = await hamt.compare(prior) // this definitely locks the event loop
+    if (Date.now() - start > 1000) {
+      console.log('slow compare', Date.now() - start)
+    }
     const { added, deleted, modified } = diff
     assert(map instanceof Immutable.Map)
     for (const key of deleted) {
@@ -201,6 +208,7 @@ export class Syncer {
       hamt.bake(map)
       await this.#yield()
     }
+    // maybe these should be queued and throttled
     const mods = [...modified].map(async (key) => {
       const value = await hamt.get(key)
       await set(key, value)
@@ -221,11 +229,13 @@ export class Syncer {
     })
     await Promise.all([...mods, ...adds])
   }
-  #yield(isDeepLoaded = false) {
+  async #yield(isDeepLoaded = false) {
+    if (eventLoopSpinner.isStarving()) {
+      await eventLoopSpinner.spin()
+    }
     return throttledYield(() => this.#yieldRaw(isDeepLoaded))
   }
   async #yieldRaw(isDeepLoaded = false) {
-    debug('creating crisp for pulse %s', this.#pulse)
     // TODO include the prievous crisp in the new crisp
     // TODO only yield if something useful occured, like new child or state
     const crisp = Crisp.createRoot(
@@ -238,8 +248,6 @@ export class Syncer {
     for (const subscriber of this.#subscribers) {
       subscriber.push(crisp)
     }
-    // delay to allow thread a break to hopefully help react renders
-    await delay(10)
   }
   subscribe() {
     const subscriber = pushable({
@@ -256,7 +264,6 @@ export class Syncer {
     assert(Number.isInteger(value))
     assert(value > 0, 'concurrency must be greater than 0')
     this.#concurrency = value
-    this.#tickle()
   }
 }
 

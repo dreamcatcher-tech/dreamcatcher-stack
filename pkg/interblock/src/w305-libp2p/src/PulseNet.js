@@ -51,7 +51,8 @@ export class PulseNet {
     const baseOptions = libp2pConfig()
     const options = {
       ...baseOptions,
-      streamMuxers: [mplex()],
+      // minSendBytes is like nagles algorithm, to prevent small packets
+      streamMuxers: [mplex({ minSendBytes: 2 * 1024 * 1024 })],
       connectionEncryption: [noise()],
       datastore: repo.datastore, // definitely correct as per ipfs
     }
