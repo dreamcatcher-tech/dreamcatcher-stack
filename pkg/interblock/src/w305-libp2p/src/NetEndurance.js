@@ -103,8 +103,7 @@ export class NetEndurance extends Endurance {
         }
       }
     }
-    debug('exporting %d blocks', blocks.size)
-    console.log(
+    debug(
       `lift completed in ${Date.now() - start}ms for ${
         blocks.size
       } blocks with ${length} bytes and ${hashLength} hashes size`
