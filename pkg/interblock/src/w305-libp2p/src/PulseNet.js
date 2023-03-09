@@ -214,21 +214,21 @@ const stopSafe = async (fn) => {
 }
 const checkCertificate = async (cert) => {
   assert.strictEqual(typeof cert, 'string')
-  let pem
+  let expiresOn
   try {
-    const { default: _pem } = await import('pem')
-    pem = _pem
+    const { default: pem } = await import('pem')
+    const { promisify } = await import('util')
+    const info = promisify(pem.readCertificateInfo)
+    const check = await info(cert)
+    const { end } = check.validity
+    expiresOn = end
   } catch (error) {
     console.log('could not load pem:', error.message)
     return
   }
-  const { promisify } = await import('util')
-  const info = promisify(pem.readCertificateInfo)
-  const check = await info(cert)
-  const { end } = check.validity
-  if (Date.now() > end) {
-    const date = new Date(end)
+  if (Date.now() > expiresOn) {
+    const date = new Date(expiresOn)
     throw new Error('Certificate Expired on: ' + date)
   }
-  debug('Certificate expiry:', new Date(end))
+  console.log('Certificate expiry:', new Date(expiresOn))
 }
