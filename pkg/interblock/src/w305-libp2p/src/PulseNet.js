@@ -214,7 +214,14 @@ const stopSafe = async (fn) => {
 }
 const checkCertificate = async (cert) => {
   assert.strictEqual(typeof cert, 'string')
-  const { default: pem } = await import('pem')
+  let pem
+  try {
+    const { default: _pem } = await import('pem')
+    pem = _pem
+  } catch (error) {
+    console.log('could not load pem:', error.message)
+    return
+  }
   const { promisify } = await import('util')
   const info = promisify(pem.readCertificateInfo)
   const check = await info(cert)

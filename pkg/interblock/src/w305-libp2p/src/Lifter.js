@@ -62,7 +62,6 @@ export class Lifter {
     pipe(source, buffer, async (source) => {
       for await (const bytes of source) {
         const block = await this.#netEndurance.pushLiftedBytes(bytes)
-        debug('got block', PulseLink.parse(block.cid))
         const tracker = this.#promises.get(block.cid.toString())
         if (tracker) {
           tracker.resolve()

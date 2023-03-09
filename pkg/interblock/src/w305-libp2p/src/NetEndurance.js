@@ -1,3 +1,4 @@
+import bytes from 'pretty-bytes'
 import { CID } from 'multiformats/cid'
 import { eventLoopSpinner } from 'event-loop-spinner'
 import {
@@ -88,7 +89,6 @@ export class NetEndurance extends Endurance {
     const start = Date.now()
     while (toExport.length) {
       const pulse = toExport.shift()
-      debug('exporting %s', pulse)
       const instance = await Pulse.uncrush(pulse.cid, loggingResolver)
       const network = instance.getNetwork()
       if (!noHamts) {
@@ -97,7 +97,6 @@ export class NetEndurance extends Endurance {
       if (withChildren) {
         for await (const [id, channel] of network.channels.list.entries()) {
           if (channel.rx.latest) {
-            debug('queuing child for export %s', channel.rx.latest)
             toExport.push(channel.rx.latest)
           }
         }
@@ -106,7 +105,7 @@ export class NetEndurance extends Endurance {
     debug(
       `lift completed in ${Date.now() - start}ms for ${
         blocks.size
-      } blocks with ${length} bytes and ${hashLength} hashes size`
+      } blocks with ${bytes(length)} bytes and ${bytes(hashLength)} hashes size`
     )
   }
   /**
@@ -258,13 +257,13 @@ export class NetEndurance extends Endurance {
         })
         tracker.promise = promise
         this.#wantList.set(cidString, tracker)
-        promise.then(() => this.#wantList.delete(cidString))
         if (await this.#net.repo.blocks.has(cid)) {
           const bytes = await this.#net.repo.blocks.get(cid, { signal })
           const block = await decode(bytes)
           super.cacheBlock(block)
           tracker.resolve(block)
         }
+        promise.then(() => this.#wantList.delete(cidString))
       }
       return await this.#wantList.get(cidString).promise
     }

@@ -9,6 +9,7 @@ import chalk from 'ansi-colors-browserify'
 import cliui from 'cliui'
 import du from 'du'
 import assert from 'assert-fast'
+
 dotenv.config()
 dotenv.config({ path: '../../../../../../.env' }) // for pm2 module installation
 const require = createRequire(import.meta.url)
@@ -17,7 +18,7 @@ const interblockJson = require('@dreamcatcher-tech/interblock/package.json')
 const { crm } = apps
 const debug = Debug('crm:pm2')
 
-Debug.enable('crm:pm2* *PulseNet')
+Debug.enable('crm:pm2* *PulseNet *NetEndurance')
 
 debug('starting pm2 app version:', moduleJson.version)
 debug('node version', process.version)

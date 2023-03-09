@@ -123,14 +123,15 @@ const SyncStatus = ({ isLoaded }) => {
   const buttonSx = {
     ...(isLoaded && {
       bgcolor: green[500],
-      '&:hover': {
-        bgcolor: green[700],
-      },
     }),
+    pointerEvents: 'none',
   }
   const Icon = isLoaded ? PublishedWithChangesIcon : Sync
   const text = isLoaded ? 'Syncing...' : 'Synced'
   // TODO make progress definite based on queue length and peak queue length
+  // show percentage in the button
+  // tooltip showing the time it has been loading for, and once finished
+  // the time it took to load
   return (
     <>
       <IconButton

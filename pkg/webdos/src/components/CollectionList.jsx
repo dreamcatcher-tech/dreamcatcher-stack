@@ -9,6 +9,9 @@ import FabAdd from './FabAdd'
 
 const debug = Debug('terminal:widgets:CollectionList')
 
+// TODO lazy load with skeletons https://mui.com/x/react-data-grid/row-updates/
+// give a more responsive feel during loading
+
 const CollectionList = ({ crisp }) => {
   // TODO assert the complex has a collection as its covenant
   const [isAdding, setIsAdding] = useState(false)
@@ -29,7 +32,7 @@ const CollectionList = ({ crisp }) => {
   }
   const valueGetter = ({ id, field }) => {
     const crisp = crispRef.current
-    if (!crisp.hasChild(id)) {
+    if (crisp.isLoading || !crisp.hasChild(id)) {
       return '..'
     }
     const child = crisp.getChild(id)
