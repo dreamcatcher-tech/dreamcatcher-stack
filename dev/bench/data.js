@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678327218804,
+  "lastUpdate": 1678397343356,
   "repoUrl": "https://github.com/dreamcatcher-tech/dreamcatcher-stack",
   "entries": {
     "Interpulse Benchmark": [
@@ -23719,6 +23719,86 @@ window.BENCHMARK_DATA = {
             "range": "±0.37%",
             "unit": "ops/sec",
             "extra": "87 samples"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted_capital",
+            "username": "inverted-capital"
+          },
+          "committer": {
+            "email": "evil_liskov@protonmail.com",
+            "name": "inverted_capital",
+            "username": "inverted-capital"
+          },
+          "distinct": true,
+          "id": "f446e2c0d9ae42a6547d8b8b06b9ee153f3ac107",
+          "message": "Silence openssl errors on windows.\nNav stories better show loading indicator.",
+          "timestamp": "2023-03-10T10:27:07+13:00",
+          "tree_id": "9cb69e4c41a957c0bb2b2357ab50bbf71c71fa8b",
+          "url": "https://github.com/dreamcatcher-tech/dreamcatcher-stack/commit/f446e2c0d9ae42a6547d8b8b06b9ee153f3ac107"
+        },
+        "date": 1678397342441,
+        "tool": "benchmarkjs",
+        "benches": [
+          {
+            "name": "boot",
+            "value": 594,
+            "range": "±2.75%",
+            "unit": "ops/sec",
+            "extra": "82 samples"
+          },
+          {
+            "name": "cold ping",
+            "value": 175,
+            "range": "±1.17%",
+            "unit": "ops/sec",
+            "extra": "84 samples"
+          },
+          {
+            "name": "hot ping",
+            "value": 272,
+            "range": "±5.70%",
+            "unit": "ops/sec",
+            "extra": "88 samples"
+          },
+          {
+            "name": "publish",
+            "value": 27.77,
+            "range": "±0.66%",
+            "unit": "ops/sec",
+            "extra": "68 samples"
+          },
+          {
+            "name": "install",
+            "value": 7.14,
+            "range": "±0.72%",
+            "unit": "ops/sec",
+            "extra": "38 samples"
+          },
+          {
+            "name": "add customer",
+            "value": 21.08,
+            "range": "±13.85%",
+            "unit": "ops/sec",
+            "extra": "54 samples"
+          },
+          {
+            "name": "block making",
+            "value": 996,
+            "range": "±0.35%",
+            "unit": "ops/sec",
+            "extra": "90 samples"
+          },
+          {
+            "name": "unsigned block making",
+            "value": 8796,
+            "range": "±0.99%",
+            "unit": "ops/sec",
+            "extra": "81 samples"
           }
         ]
       }
