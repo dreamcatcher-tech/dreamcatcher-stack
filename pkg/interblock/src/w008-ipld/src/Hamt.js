@@ -1,3 +1,4 @@
+import { eventLoopSpinner } from 'event-loop-spinner'
 import equals from 'fast-deep-equal'
 import { toString } from 'uint8arrays/to-string'
 import Immutable from 'immutable'
@@ -333,6 +334,10 @@ export class Hamt extends IpldInterface {
             mergedDiff.modified.add(key)
           }
         }
+      }
+      // TODO check if this makes any difference
+      if (eventLoopSpinner.isStarving()) {
+        await eventLoopSpinner.spin()
       }
     }
 

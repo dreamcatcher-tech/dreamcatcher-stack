@@ -1,3 +1,5 @@
+import CircularProgress from '@mui/material/CircularProgress'
+import { green } from '@mui/material/colors'
 import React, { useState } from 'react'
 import { Crisp } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
@@ -13,6 +15,8 @@ import Home from '@mui/icons-material/Home'
 import AccountCircle from '@mui/icons-material/AccountCircle'
 import Settings from '@mui/icons-material/Settings'
 import Info from '@mui/icons-material/Info'
+import Sync from '@mui/icons-material/Sync'
+import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges'
 import assert from 'assert-fast'
 const debug = Debug('terminal:widgets:Nav')
 
@@ -83,6 +87,7 @@ const Nav = ({ crisp }) => {
       {icon}
     </IconButton>
   )
+
   return (
     <>
       <AppBar position="static">
@@ -98,6 +103,7 @@ const Nav = ({ crisp }) => {
             {navLinks}
           </List>
           <div style={{ flexGrow: 1 }} />
+          <SyncStatus isLoaded={crisp.isDeepLoaded} />
           {crisp.hasChild('about') &&
             makeButtonIcon('about', <Info />, 'About the CRM')}
           {crisp.hasChild('settings') &&
@@ -113,4 +119,39 @@ Nav.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),
 }
 
+const SyncStatus = ({ isLoaded }) => {
+  const buttonSx = {
+    ...(isLoaded && {
+      bgcolor: green[500],
+      '&:hover': {
+        bgcolor: green[700],
+      },
+    }),
+  }
+  const Icon = isLoaded ? PublishedWithChangesIcon : Sync
+  const text = isLoaded ? 'Syncing...' : 'Synced'
+  // TODO make progress definite based on queue length and peak queue length
+  return (
+    <>
+      <IconButton
+        edge="end"
+        aria-label={text}
+        aria-haspopup="true"
+        color="inherit"
+        sx={buttonSx}
+      >
+        <Icon />
+        {!isLoaded && (
+          <CircularProgress
+            sx={{
+              color: green[500],
+              position: 'absolute',
+            }}
+          />
+        )}
+      </IconButton>
+    </>
+  )
+}
+SyncStatus.propTypes = { isLoaded: PropTypes.bool }
 export default Nav
