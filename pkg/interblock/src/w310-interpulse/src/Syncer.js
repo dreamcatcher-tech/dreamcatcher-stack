@@ -31,7 +31,9 @@ export class Syncer {
   #subscribers = new Set()
   #abort = new AbortController()
   #crisp = Crisp.createLoading()
+  #loadedCrisp
   #bakeQueue = pushable({ objectMode: true })
+
   static create(pulseResolver, covenantResolver, actions, chroot = '/') {
     assert.strictEqual(typeof pulseResolver, 'function')
     assert.strictEqual(typeof covenantResolver, 'function')
@@ -245,6 +247,12 @@ export class Syncer {
       isDeepLoaded
     )
     this.#crisp = crisp
+    if (this.#loadedCrisp && !isDeepLoaded) {
+      return
+    }
+    if (isDeepLoaded) {
+      this.#loadedCrisp = crisp
+    }
     for (const subscriber of this.#subscribers) {
       subscriber.push(crisp)
     }
@@ -255,7 +263,9 @@ export class Syncer {
       onEnd: () => this.#subscribers.delete(subscriber),
     })
     this.#subscribers.add(subscriber)
-    if (this.#crisp) {
+    if (this.#loadedCrisp) {
+      subscriber.push(this.#loadedCrisp)
+    } else if (this.#crisp) {
       subscriber.push(this.#crisp)
     }
     return subscriber
