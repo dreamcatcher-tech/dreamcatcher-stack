@@ -1,3 +1,4 @@
+import { pipe } from 'it-pipe'
 import bytes from 'pretty-bytes'
 import { CID } from 'multiformats/cid'
 import { eventLoopSpinner } from 'event-loop-spinner'
@@ -14,6 +15,7 @@ import { Endurance } from '../../w210-engine'
 import { PulseNet } from '..'
 import { Lifter } from './Lifter'
 import Debug from 'debug'
+import { pushable } from 'it-pushable'
 const debug = Debug('interblock:interpulse:NetEndurance')
 
 export class NetEndurance extends Endurance {
@@ -56,37 +58,104 @@ export class NetEndurance extends Endurance {
     }
     this.#net.uglyInjection(this)
   }
+  #blockSetPromises = new Map() // cid -> promise<Set<cid>>
   async streamWalk(stream, pulse, prior, type) {
     assert.strictEqual(typeof stream.push, 'function')
     assert(pulse instanceof PulseLink)
     assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
+
+    debug(`streamWalk ${pulse} ${prior} ${type}`)
+    const start = Date.now()
+
     const types = Lifter.RECOVERY_TYPES
     const withChildren = [types.deepPulse, types.crispDeepPulse].includes(
       types[type]
     )
     const noHamts = [types.pulse, types.interpulse].includes(types[type])
 
-    const blocks = new Set()
-    const localResolver = this.getResolver(pulse.cid)
+    // TODO cache by pulse cid rather than whole tree, for child reuse
+    let priorSet = new Set()
+    let isPulseCached = false
+
+    const all = pushable({ objectMode: true })
     let length = 0
     let hashLength = 0
+    let blockCount = 0
+    pipe(all, async (source) => {
+      for await (const block of source) {
+        const cidString = block.cid.toString()
+        if (!priorSet.has(cidString)) {
+          length += block.bytes.length
+          hashLength += block.cid.bytes.length
+          blockCount++
+          stream.push(block.bytes)
+        }
+      }
+    })
+
+    if (prior) {
+      const cacheKey = `${prior.cid.toString()}-${withChildren}-${noHamts}`
+      if (!this.#blockSetPromises.has(cacheKey)) {
+        const { promise, resolve } = flippedPromise()
+        this.#blockSetPromises.set(cacheKey, promise)
+        // TODO start streaming earlier as each pulse is walked
+        const set = await this.#blockSetWalk(prior, withChildren, noHamts)
+        resolve(set)
+      }
+      priorSet = await this.#blockSetPromises.get(cacheKey)
+    }
+
+    const cacheKey = `${pulse.cid.toString()}-${withChildren}-${noHamts}`
+    if (!this.#blockSetPromises.has(cacheKey)) {
+      const { promise, resolve } = flippedPromise()
+      this.#blockSetPromises.set(cacheKey, promise)
+      // TODO splice into an existing walk to stream partially with catchup
+      const set = await this.#blockSetWalk(pulse, withChildren, noHamts, all)
+      resolve(set)
+    } else {
+      isPulseCached = true
+      const set = await this.#blockSetPromises.get(cacheKey)
+      for (const cidString of set) {
+        const localResolver = this.getResolver(pulse.cid)
+        if (!priorSet.has(cidString)) {
+          const block = await localResolver(CID.parse(cidString))
+          all.push(block)
+        }
+      }
+    }
+
+    debug(`lift completed in ${Date.now() - start}ms for ${blockCount} blocks`)
+    debug(`with ${bytes(length)} bytes and ${bytes(hashLength)} hashes size`)
+    if (priorSet.size) {
+      return isPulseCached
+    }
+    return false
+  }
+
+  async #blockSetWalk(pulse, withChildren, noHamts, stream) {
+    assert(pulse instanceof PulseLink)
+    assert.strictEqual(typeof withChildren, 'boolean')
+    assert.strictEqual(typeof noHamts, 'boolean')
+    assert(!stream || typeof stream.push === 'function')
+
+    const blocks = new Set()
+    const localResolver = this.getResolver(pulse.cid)
     const loggingResolver = async (cid) => {
-      // TODO move queue to be LIFO by buffering older resolvers behind newer
       const block = await localResolver(cid)
       assert(CID.asCID(block.cid))
+      const cidString = block.cid.toString()
       assert(block.value)
-      if (blocks.has(block.cid.toString())) {
+      if (blocks.has(cidString)) {
         return block
       }
-      blocks.add(block.cid.toString())
-      stream.push(block)
-      length += block.bytes.length
-      hashLength += block.cid.bytes.length
+      blocks.add(cidString)
+      if (stream) {
+        stream.push(block)
+      }
       return block
     }
     const toExport = [pulse]
-    const start = Date.now()
     while (toExport.length) {
       const pulse = toExport.shift()
       const instance = await Pulse.uncrush(pulse.cid, loggingResolver)
@@ -95,18 +164,14 @@ export class NetEndurance extends Endurance {
         await network.walkHamts()
       }
       if (withChildren) {
-        for await (const [id, channel] of network.channels.list.entries()) {
+        for await (const [, channel] of network.channels.list.entries()) {
           if (channel.rx.latest) {
             toExport.push(channel.rx.latest)
           }
         }
       }
     }
-    debug(
-      `lift completed in ${Date.now() - start}ms for ${
-        blocks.size
-      } blocks with ${bytes(length)} bytes and ${bytes(hashLength)} hashes size`
-    )
+    return blocks
   }
   /**
    * @param {PulseLink} pulseLink
@@ -307,4 +372,12 @@ export class NetEndurance extends Endurance {
   async fade(pulse) {
     // remove the pulse from local storage whenever next convenience arises
   }
+}
+const flippedPromise = () => {
+  let resolve, reject
+  const promise = new Promise((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
 }
