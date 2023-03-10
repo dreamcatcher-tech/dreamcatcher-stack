@@ -89,7 +89,7 @@ export class NetEndurance extends Endurance {
           length += block.bytes.length
           hashLength += block.cid.bytes.length
           blockCount++
-          stream.push(block.bytes)
+          stream.push(block)
         }
       }
     })

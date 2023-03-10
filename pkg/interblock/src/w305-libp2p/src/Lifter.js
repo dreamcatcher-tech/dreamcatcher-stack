@@ -39,7 +39,6 @@ export class Lifter {
       assert.strictEqual(typeof stream.push, 'function')
       pipe(blockStream, async (source) => {
         for await (const block of source) {
-          debug('pushing block', PulseLink.parse(block.cid))
           stream.push(block.bytes)
         }
       })
