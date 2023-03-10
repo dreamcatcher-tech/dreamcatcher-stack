@@ -92,6 +92,7 @@ export class NetEndurance extends Endurance {
           stream.push(block)
         }
       }
+      debug('streamWalk ended')
     })
 
     if (prior) {
@@ -124,6 +125,7 @@ export class NetEndurance extends Endurance {
         }
       }
     }
+    all.end()
 
     debug(`lift completed in ${Date.now() - start}ms for ${blockCount} blocks`)
     debug(`with ${bytes(length)} bytes and ${bytes(hashLength)} hashes size`)

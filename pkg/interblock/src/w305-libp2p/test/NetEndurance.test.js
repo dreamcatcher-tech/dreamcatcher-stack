@@ -36,5 +36,6 @@ describe('NetEndurance', () => {
     const repeat = pushable({ objectMode: true })
     const cached = await endurance.streamWalk(repeat, dlink, blink, 'deepPulse')
     expect(cached).toBeTruthy()
+    await net.stop()
   })
 })
