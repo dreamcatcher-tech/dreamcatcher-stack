@@ -167,6 +167,7 @@ export class NetEndurance extends Endurance {
       }
       if (withChildren) {
         for await (const [, channel] of network.channels.list.entries()) {
+          // cheap diff way is to see if prior had this channel and if it changed
           if (channel.rx.latest) {
             toExport.push(channel.rx.latest)
           }

@@ -147,13 +147,15 @@ export class Endurance {
       this.assertStarted()
 
       const key = cid.toString()
+      if (this.#blockCache.has(key)) {
+        const block = this.#blockCache.get(key)
+        return block
+      }
       if (this.#importsCache.has(key)) {
         const bytes = this.#importsCache.get(key)
         const block = await decode(bytes)
         this.cacheBlock(block)
-      }
-      if (this.#blockCache.has(key)) {
-        return this.#blockCache.get(key)
+        return block
       }
     }
   }

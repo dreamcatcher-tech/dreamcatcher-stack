@@ -7,6 +7,7 @@ const debug = Debug('tests')
 
 describe('NetEndurance', () => {
   test('diffing', async () => {
+    Debug.enable('tests *NetEndurance')
     const repo = createRamRepo('diffing')
     const engine = await Interpulse.createCI({
       overloads: { '/crm': apps.crm.covenant },

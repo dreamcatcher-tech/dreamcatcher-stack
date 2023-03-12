@@ -1,9 +1,10 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
-import { apps } from '@dreamcatcher-tech/interblock'
+import { apps, Crisp } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-Debug.enable('iplog *Lifter *Announcer')
+Debug.enable('iplog *Lifter *Announcer *App')
 
 const { VITE_APP_CHAIN_ID, VITE_PEER_ID, VITE_PEER_MULTIADDR } = import.meta.env
 console.log('VITE_APP_CHAIN_ID', VITE_APP_CHAIN_ID)
@@ -48,6 +49,7 @@ const Test = ({ crisp }) => {
     </div>
   )
 }
+Test.propTypes = { crisp: PropTypes.instanceof(Crisp) }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Engine peers={peers} addrs={addrs} mounts={mounts} dev={dev} ram actions={a}>

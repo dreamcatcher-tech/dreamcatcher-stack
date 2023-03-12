@@ -260,6 +260,13 @@ export class Hamt extends IpldInterface {
       }
     }
   }
+  // TODO make this stream results out
+  // when bucket patches are found, confirm them against other
+  // if confirmed, emit a result of either added, deleted, or modified
+  // if not confirmed, remove patch and carry on, cache the key result
+  // confirmations should be cached, so very fast to check again in case
+  // a bucket just got moved around.
+  // stream could be backpressure aware, so it didn't just rip ahead
   async compare(other) {
     if (!other) {
       other = this.constructor.create(this.#valueClass, this.#isMutable)

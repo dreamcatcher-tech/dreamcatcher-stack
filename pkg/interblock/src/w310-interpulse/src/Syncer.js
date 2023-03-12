@@ -64,6 +64,7 @@ export class Syncer {
     await totallyBaked
   }
   #tearBakeQueue() {
+    debug('tearing bake queue for %s', this.#pulse)
     this.#bakeQueue.return(new Error(BAKE_TEAR))
     this.#bakeQueue = undefined
   }
@@ -248,7 +249,18 @@ export class Syncer {
     )
     this.#crisp = crisp
     if (this.#loadedCrisp && !isDeepLoaded) {
-      return
+      if (this.#loadedCrisp.isDeepLoaded) {
+        // WRONG need to provide the previous crisp and return the most advanced one
+        // turn off isDeepLoaded so the gui signals it is loading
+        const { pulse, actions, chroot } = this.#loadedCrisp
+        const noGuiTear = false
+        this.#loadedCrisp = Crisp.createRoot(pulse, actions, chroot, noGuiTear)
+        for (const subscriber of this.#subscribers) {
+          subscriber.push(this.#loadedCrisp)
+        }
+      } else {
+        return // do not tear the GUI while preparing the next Crisp
+      }
     }
     if (isDeepLoaded) {
       this.#loadedCrisp = crisp
