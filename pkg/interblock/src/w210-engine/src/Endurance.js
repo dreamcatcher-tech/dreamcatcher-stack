@@ -11,6 +11,8 @@ import { Logger } from './Logger'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Endurance')
 
+let cacheCount = 0
+
 export class Endurance {
   static create() {
     const instance = new Endurance()
@@ -22,7 +24,7 @@ export class Endurance {
   #logger = new Logger()
   #blockCache = new Map()
   #importsCache = new Map()
-  #pulseCache = new Map()
+  #uncrushings = new Map() // cidString : promise
   #cacheSize = 0
   #lru = new Set() // TODO make an LRU that calculates block size
   #latests = new Map() // chainId : PulseLink
@@ -90,21 +92,10 @@ export class Endurance {
     if (this.selfAddress.equals(latest.getAddress())) {
       this.#selfLatest = latest
     }
-    this.cachePulse(latest)
     this.#cacheBlocks(latest)
 
     await this.#logger.pulse(latest)
     debug(`endure`, latest.getAddress(), latest.getPulseLink())
-  }
-  cachePulse(pulse) {
-    assert(pulse instanceof Pulse)
-    const key = pulse.cid.toString()
-    if (this.#pulseCache.has(key)) {
-      // TODO update the LRU tracker
-      return
-    }
-    this.#pulseCache.set(key, pulse)
-    this.#cacheBlocks(pulse)
   }
   cacheBlock(block) {
     assert(CID.asCID(block.cid))
@@ -113,6 +104,7 @@ export class Endurance {
     this.#blockCache.set(key, block)
   }
   #cacheBlocks(pulse) {
+    // TODO cache the objects during crush, and dedupe them
     const diffs = pulse.getDiffBlocks()
     for (const [, block] of diffs) {
       this.cacheBlock(block)
@@ -125,15 +117,10 @@ export class Endurance {
     const { cid } = pulselink
     const cidString = cid.toString()
 
-    if (this.#pulseCache.has(cidString)) {
-      // TODO update the LRU tracker
-      return this.#pulseCache.get(cidString)
-    }
     if (this.#blockCache.has(cidString) || this.#importsCache.has(cidString)) {
       const resolver = this.getResolver(cid)
       const pulse = await Pulse.uncrush(cid, resolver)
       assert(pulse, `pulse not found but root block is in cache`)
-      this.cachePulse(pulse)
       return pulse
     }
   }
@@ -142,21 +129,48 @@ export class Endurance {
     // TODO WARNING permissions must be honoured
     // use treetop to only fetch things below this CID
     // TODO block historical pulselinks
-    return async (cid) => {
+    return async (cid, { noObjectCache = false, ...rest } = {}) => {
+      assert(!Object.keys(rest).length, `unknown options: ${Object.keys(rest)}`)
       assert(CID.asCID(cid), `not cid: ${cid}`)
       this.assertStarted()
 
       const key = cid.toString()
+      let block, resolveUncrush
       if (this.#blockCache.has(key)) {
-        const block = this.#blockCache.get(key)
-        return block
+        block = this.#blockCache.get(key)
       }
       if (this.#importsCache.has(key)) {
         const bytes = this.#importsCache.get(key)
-        const block = await decode(bytes)
+        block = await decode(bytes)
         this.cacheBlock(block)
-        return block
+        block
       }
+      if (noObjectCache) {
+        return [block]
+      }
+      if (this.#uncrushings.has(key)) {
+        await this.#uncrushings.get(key)
+        assert(block.uncrushed, `uncrushed not set for ${key}`)
+      }
+      if (block && !block.uncrushed) {
+        let resolve
+        const promise = new Promise((r) => (resolve = r))
+        this.#uncrushings.set(key, promise)
+        resolveUncrush = (uncrushed) => {
+          assert(uncrushed)
+          assert(!uncrushed.isModified())
+          assert.strictEqual(uncrushed.ipldBlock, block)
+          block.uncrushed = uncrushed
+          this.#uncrushings.delete(key)
+          resolve()
+        }
+      }
+      if (block && block.uncrushed) {
+        cacheCount += block.bytes.length
+        debug('cache total saved', cacheCount)
+      }
+
+      return [block, resolveUncrush]
     }
   }
   async import(blockIterable) {

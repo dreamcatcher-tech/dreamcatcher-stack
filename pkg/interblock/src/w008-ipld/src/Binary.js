@@ -21,10 +21,10 @@ export class Binary extends IpldInterface {
     instance.#ipldBlock = ipldBlock
     return instance
   }
-  static async uncrush(rootCid, resolver, options) {
+  static async uncrush(rootCid, resolver) {
     assert(CID.asCID(rootCid), `rootCid must be a CID, got ${rootCid}`)
     assert(typeof resolver === 'function', `resolver must be a function`)
-    const ipldBlock = await resolver(rootCid)
+    const [ipldBlock] = await resolver(rootCid, { noObjectCache: true })
     return this.#create(ipldBlock)
   }
   isModified() {

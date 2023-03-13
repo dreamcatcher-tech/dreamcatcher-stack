@@ -48,7 +48,7 @@ describe('Request', () => {
     assert(diffBlocks instanceof Map)
     assert.strictEqual(diffBlocks.size, 2)
 
-    const resolver = (cid) => diffBlocks.get(cid.toString())
+    const resolver = (cid) => [diffBlocks.get(cid.toString())]
     const rootCid = crushedRequest.cid
     const revived = await Request.uncrush(rootCid, resolver)
     assert(crushedRequest !== revived) // TODO make a cache so objects are equal

@@ -126,7 +126,7 @@ export class Hamt extends IpldInterface {
     assert(value !== undefined)
     if (this.#valueClass) {
       assert(CID.asCID(value))
-      const resolver = (cid) => this.#putStore.getBlock(cid)
+      const { resolver } = this.#putStore
       value = await this.#valueClass.uncrush(value, resolver)
     }
     this.#gets = this.#gets.set(key, value)

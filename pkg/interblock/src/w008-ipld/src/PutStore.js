@@ -43,11 +43,14 @@ export class PutStore {
     if (!this.#ipfsResolver) {
       throw new Error('No ipfs resolver set')
     }
-    const block = await this.#ipfsResolver(cid)
+    const [block] = await this.#ipfsResolver(cid, { noObjectCache: true })
     if (!block) {
       throw new Error(`No block found for ${cid}`)
     }
     return block
+  }
+  get resolver() {
+    return this.#ipfsResolver
   }
   async put() {
     // used by js-ipld-hamt

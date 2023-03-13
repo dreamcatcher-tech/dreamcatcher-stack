@@ -11,7 +11,7 @@ describe('state', () => {
     assert(!state.isModified())
     let diff = state.getDiffBlocks()
     assert.strictEqual(diff.size, 1)
-    let resolver = (cid) => diff.get(cid.toString())
+    let resolver = (cid) => [diff.get(cid.toString())]
     let uncrushed = await State.uncrush(state.cid, resolver)
     assert(!state.isModified())
     assert.deepEqual(state.toJS(), uncrushed.toJS())
@@ -21,7 +21,7 @@ describe('state', () => {
     state = await state.crush()
     diff = state.getDiffBlocks()
     assert.strictEqual(diff.size, 1)
-    resolver = (cid) => diff.get(cid.toString())
+    resolver = (cid) => [diff.get(cid.toString())]
     uncrushed = await State.uncrush(state.cid, resolver)
     assert(!state.isModified())
     assert.deepEqual(state.toJS(), uncrushed.toJS())

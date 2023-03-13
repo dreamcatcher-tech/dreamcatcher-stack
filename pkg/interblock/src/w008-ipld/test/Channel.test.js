@@ -19,7 +19,8 @@ describe('channel', () => {
       assert(!channel.rx.tip)
       const crushed = await channel.crushToCid()
       const blocks = crushed.getDiffBlocks()
-      const resolver = (cid) => blocks.get(cid.toString())
+      const resolver = (cid) => [blocks.get(cid.toString())]
+
       const uncrushed = await Channel.uncrush(crushed.cid, resolver)
       assert.deepEqual(crushed, uncrushed)
 

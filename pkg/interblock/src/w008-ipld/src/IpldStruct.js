@@ -144,11 +144,16 @@ export class IpldStruct extends IpldInterface {
   }
   static async uncrush(initial, resolver, options) {
     assert(typeof resolver === 'function', `resolver must be a function`)
-    let block
+    let block, resolveUncrush
     if (CID.asCID(initial)) {
-      block = await resolver(initial)
-      assert(block instanceof Block, `not instance of Block`)
-      // TODO check the schema
+      const [raw, cache] = await resolver(initial)
+      assert(raw instanceof Block, `not instance of Block`)
+      if (raw.uncrushed) {
+        assert(raw.uncrushed instanceof this)
+        return raw.uncrushed
+      }
+      block = raw
+      resolveUncrush = cache
       initial = { ...block.value }
     } else {
       assert.strictEqual(typeof initial, 'object')
@@ -185,18 +190,20 @@ export class IpldStruct extends IpldInterface {
 
     const keyCount = Object.keys(initial).length
     assert.strictEqual(Object.keys(instance).length, keyCount)
+    instance.#crushed = instance
+    instance.#previous = instance
     if (block) {
       instance.#ipldBlock = block
     } else {
       instance.#ipldInitial = initial
     }
-    instance.#crushed = instance
-    instance.#previous = instance
     if (typeof instance.assertLogic === 'function') {
       instance.assertLogic()
     }
-    // TODO run the schema check here
-    // instance.constructor.name //?
+    // TODO run the ipld schema check here ?
+    if (resolveUncrush) {
+      resolveUncrush(instance)
+    }
     return instance
   }
   setMap(map) {

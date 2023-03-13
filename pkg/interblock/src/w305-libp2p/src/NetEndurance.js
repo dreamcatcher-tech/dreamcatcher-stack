@@ -31,6 +31,7 @@ export class NetEndurance extends Endurance {
   #writeResolve
   #writeCount = 0
   #writeStart() {
+    // TODO change all this to be streams
     if (!this.#writeCount) {
       this.#writePromise = new Promise((resolve) => {
         this.#writeResolve = resolve
@@ -120,7 +121,8 @@ export class NetEndurance extends Endurance {
       for (const cidString of set) {
         const localResolver = this.getResolver(pulse.cid)
         if (!priorSet.has(cidString)) {
-          const block = await localResolver(CID.parse(cidString))
+          const options = { noObjectCache: true }
+          const [block] = await localResolver(CID.parse(cidString), options)
           all.push(block)
         }
       }
@@ -143,19 +145,18 @@ export class NetEndurance extends Endurance {
 
     const blocks = new Set()
     const localResolver = this.getResolver(pulse.cid)
-    const loggingResolver = async (cid) => {
-      const block = await localResolver(cid)
+    const loggingResolver = async (cid, options) => {
+      const [block, resolveUncrush] = await localResolver(cid, options)
       assert(CID.asCID(block.cid))
       const cidString = block.cid.toString()
       assert(block.value)
-      if (blocks.has(cidString)) {
-        return block
+      if (!blocks.has(cidString)) {
+        blocks.add(cidString)
+        if (stream) {
+          stream.push(block)
+        }
       }
-      blocks.add(cidString)
-      if (stream) {
-        stream.push(block)
-      }
-      return block
+      return [block, resolveUncrush]
     }
     const toExport = [pulse]
     while (toExport.length) {
@@ -185,14 +186,9 @@ export class NetEndurance extends Endurance {
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
     debug('recovering %s type %s', pulseLink, type)
 
-    const cachedResult = await super.recover(pulseLink)
-    if (cachedResult) {
-      return cachedResult
-    }
     const resolver = this.getResolver(pulseLink.cid)
     try {
       const pulse = await Pulse.uncrush(pulseLink.cid, resolver)
-      super.cachePulse(pulse)
       return pulse
     } catch (error) {
       debug(`failed to locally recover pulse %s`, pulseLink, error)
@@ -233,7 +229,7 @@ export class NetEndurance extends Endurance {
       .then(() => this.#transmit(latest))
     if (isBootstrapPulse || this.selfAddress.equals(latest.getAddress())) {
       const pulselink = latest.getPulseLink().cid.toString()
-      this.#net.repo.config.set('latest', pulselink)
+      await this.#net.repo.config.set('latest', pulselink)
     }
     return netEndurePromise
   }
@@ -297,17 +293,19 @@ export class NetEndurance extends Endurance {
     assert(CID.asCID(treetop))
     const cacheResolver = super.getResolver(treetop)
     const netResolver = this.#getNetResolver(treetop)
-    return async (cid) => {
+    return async (cid, options) => {
       if (eventLoopSpinner.isStarving()) {
         await eventLoopSpinner.spin()
       }
-      const cachedResult = await cacheResolver(cid)
-      if (cachedResult) {
+      const cachedResult = await cacheResolver(cid, options)
+      if (cachedResult[0]) {
         return cachedResult
       }
       // TODO feed into the blockcache with ejection
       const block = await netResolver(cid)
-      return block
+      super.cacheBlock(block)
+      const result = await cacheResolver(cid, options)
+      return result
     }
   }
   #wantList = new Map() // cidString -> promise
@@ -315,6 +313,7 @@ export class NetEndurance extends Endurance {
     assert(CID.asCID(treetop))
     // TODO WARNING permissions must be honoured
     // TODO use treetop to only fetch things below this CID
+    const raceResolver = super.getResolver(treetop)
     return async (cid, { signal } = {}) => {
       assert(CID.asCID(cid), `not cid: ${cid}`)
       const cidString = cid.toString()
@@ -328,12 +327,17 @@ export class NetEndurance extends Endurance {
         if (await this.#net.repo.blocks.has(cid)) {
           const bytes = await this.#net.repo.blocks.get(cid, { signal })
           const block = await decode(bytes)
-          super.cacheBlock(block)
           tracker.resolve(block)
+        }
+        const [raceCheck] = await raceResolver(cid, { noObjectCache: true })
+        if (raceCheck) {
+          tracker.resolve(raceCheck)
         }
         promise.then(() => this.#wantList.delete(cidString))
       }
-      return await this.#wantList.get(cidString).promise
+
+      const block = await this.#wantList.get(cidString).promise
+      return block
     }
   }
   async pushLiftedBytes(bytes) {

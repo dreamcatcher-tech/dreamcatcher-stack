@@ -18,7 +18,7 @@ describe('Hamt', () => {
       const crushed = await hamt.crush()
       const diffs = crushed.getDiffBlocks()
       assert.strictEqual(diffs.size, 1)
-      const resolver = (cid) => diffs.get(cid.toString())
+      const resolver = (cid) => [diffs.get(cid.toString())]
       const uncrushed = await Hamt.uncrush(crushed.cid, resolver)
       assert(await uncrushed.has('testkey'))
       const result = await uncrushed.get('testkey')
@@ -30,7 +30,7 @@ describe('Hamt', () => {
       const diffs = hamt.getDiffBlocks()
       assert.strictEqual(diffs.size, 1)
       expect(diffs).toMatchSnapshot()
-      const resolver = (cid) => diffs.get(cid.toString())
+      const resolver = (cid) => [diffs.get(cid.toString())]
       hamt = await Hamt.uncrush(hamt.cid, resolver)
       for (let i = 0; i < 100; i++) {
         hamt = await hamt.set('test-' + i, { test: 'test-' + i })
@@ -42,7 +42,7 @@ describe('Hamt', () => {
       const bigDiffs = hamt.getDiffBlocks()
       debug(`diffs: ${Date.now() - start} ms`)
       start = Date.now()
-      const bigResolver = (cid) => bigDiffs.get(cid.toString())
+      const bigResolver = (cid) => [bigDiffs.get(cid.toString())]
       hamt = await Hamt.uncrush(hamt.cid, bigResolver)
       debug(`uncrush: ${Date.now() - start} ms`)
 
@@ -66,7 +66,7 @@ describe('Hamt', () => {
       const diffs = hamt.getDiffBlocks()
       expect(diffs.size).toBe(2)
       expect(diffs).toMatchSnapshot()
-      const resolver = (cid) => diffs.get(cid.toString())
+      const resolver = (cid) => [diffs.get(cid.toString())]
       hamt = await Hamt.uncrush(hamt.cid, resolver, TestClass)
       const result = await hamt.get('test')
       assert(result instanceof TestClass)
@@ -105,7 +105,7 @@ describe('Hamt', () => {
       await hamt.export((cid) => {
         const block = diff.get(cid.toString())
         blocks.set(cid.toString(), block)
-        return block
+        return [block]
       })
       expect(blocks.size).toBe(3)
     })
@@ -240,7 +240,7 @@ describe('Hamt', () => {
 })
 const crush = async (hamt, ipfsMap) => {
   debug('crushing')
-  const resolver = (cid) => ipfsMap.get(cid.toString())
+  const resolver = (cid) => [ipfsMap.get(cid.toString())]
   hamt = await hamt.crush(resolver)
   const diffBlocks = hamt.getDiffBlocks()
   diffBlocks.forEach((v, k) => ipfsMap.set(k, v))

@@ -46,16 +46,23 @@ export class State extends IpldInterface {
   get cid() {
     return CID.asCID(this.ipldBlock.cid)
   }
-  static async uncrush(cid, resolver, options) {
+  static async uncrush(cid, resolver) {
     assert(CID.asCID(cid))
     assert.strictEqual(typeof resolver, 'function')
-    const block = await resolver(cid)
+    const [block, resolveUncrushed] = await resolver(cid)
     assert(block)
     assert.strictEqual(typeof block.value, 'object')
+    if (block.uncrushed) {
+      assert(block.uncrushed instanceof State)
+      return block.uncrushed
+    }
     const instance = new State()
     instance.#state = block.value
     instance.#ipldBlock = block
     instance.assertLogic()
+    if (resolveUncrushed) {
+      resolveUncrushed(instance)
+    }
     return instance
   }
   getDiffBlocks() {

@@ -41,7 +41,7 @@ describe('network', () => {
     network = await network.updateChannel(channel)
     network = await network.crushToCid()
     const diffs = network.getDiffBlocks()
-    const resolver = (cid) => diffs.get(cid.toString())
+    const resolver = (cid) => [diffs.get(cid.toString())]
     const uncrushed = await Network.uncrush(network.cid, resolver)
     assert.deepEqual(uncrushed, network)
     const rediffs = uncrushed.getDiffBlocks()
