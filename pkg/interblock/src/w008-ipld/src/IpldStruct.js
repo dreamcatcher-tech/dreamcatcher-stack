@@ -4,6 +4,8 @@ import { Block } from 'multiformats/block'
 import { encode } from './IpldUtils'
 import { IpldInterface } from './IpldInterface'
 import equals from 'fast-deep-equal'
+import Debug from 'debug'
+const debug = Debug('interpulse:models:ipld-struct')
 
 export class IpldStruct extends IpldInterface {
   #ipldBlock
@@ -147,7 +149,7 @@ export class IpldStruct extends IpldInterface {
     let block, resolveUncrush
     if (CID.asCID(initial)) {
       const [raw, cache] = await resolver(initial)
-      assert(raw instanceof Block, `not instance of Block`)
+      assert(raw instanceof Block, `not Block ${CID.asCID(initial)}`)
       if (raw.uncrushed) {
         assert(raw.uncrushed instanceof this)
         return raw.uncrushed

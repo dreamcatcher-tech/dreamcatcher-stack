@@ -1,6 +1,8 @@
 import assert from 'assert-fast'
 import { deepFreeze } from './utils'
 import { CID } from 'multiformats/cid'
+import Debug from 'debug'
+const debug = Debug('interpulse:models:IpldInterface')
 
 export class IpldInterface {
   get schema() {
@@ -93,17 +95,28 @@ export class IpldInterface {
     assert.strictEqual(typeof loggingResolver, 'function')
     await loggingResolver(this.cid)
     for (const key in this) {
-      if (!this.constructor.isCidLink(key)) {
-        continue
-      }
-      const value = this[key]
-      if (value instanceof IpldInterface) {
-        await value.export(loggingResolver)
-      } else {
-        assert(Array.isArray(value))
-        for (const v of value) {
-          assert(v instanceof IpldInterface)
-          await v.export(loggingResolver)
+      if (this.constructor.isCidLink(key)) {
+        const value = this[key]
+        if (value instanceof IpldInterface) {
+          await value.export(loggingResolver)
+        } else {
+          assert(Array.isArray(value))
+          for (const v of value) {
+            assert(v instanceof IpldInterface)
+            await v.export(loggingResolver)
+          }
+        }
+      } else if (this.constructor.classMap[key]) {
+        const value = this[key]
+        if (value instanceof IpldInterface) {
+          await value.export(loggingResolver)
+        } else {
+          assert(Array.isArray(value))
+          for (const v of value) {
+            if (v instanceof IpldInterface) {
+              await v.export(loggingResolver)
+            }
+          }
         }
       }
     }

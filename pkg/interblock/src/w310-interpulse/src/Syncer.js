@@ -23,6 +23,8 @@ const BAKE_TEAR = 'BAKE_TEAR'
 
 export class Syncer {
   #concurrency = 20
+  #throttleMs = 200
+  #throttledYield
   #pulseResolver
   #covenantResolver
   #actions
@@ -31,8 +33,9 @@ export class Syncer {
   #subscribers = new Set()
   #abort = new AbortController()
   #crisp = Crisp.createLoading()
-  #loadedCrisp
   #bakeQueue = pushable({ objectMode: true })
+  #yieldQueue = pushable({ objectMode: true })
+  #totallyBaked = Promise.resolve()
 
   static create(pulseResolver, covenantResolver, actions, chroot = '/') {
     assert.strictEqual(typeof pulseResolver, 'function')
@@ -46,6 +49,8 @@ export class Syncer {
     syncer.#covenantResolver = covenantResolver
     syncer.#actions = actions
     syncer.#chroot = chroot
+    syncer.throttleMs = syncer.#throttleMs
+    syncer.#startYieldQueue()
     return syncer
   }
   async update(pulse) {
@@ -53,19 +58,33 @@ export class Syncer {
     assert(!pulse.cid.equals(this.#pulse?.cid))
     this.#abort.abort('new pulse received' + pulse.toString())
     this.#abort = new AbortController()
-    this.#tearBakeQueue()
+    this.#tearBake()
 
     // TODO assert lineage matches
     // TODO permit skips in lineage
     const prior = this.#pulse
-    this.#pulse = pulse
-    const totallyBaked = this.#startBakeQueue()
+    // TODO split the bake cache so pulse does not have to be reference equal
+    this.#pulse = await this.#resolve(pulse.getPulseLink())
+
+    this.#totallyBaked = this.#startBakeQueue()
     this.#pulseBake(pulse.getPulseLink(), prior?.getPulseLink())
-    await totallyBaked
+    // priors should walk back to the last one we had data on, not tears
+    try {
+      await this.#totallyBaked
+    } catch (error) {
+      if (error.message === BAKE_TEAR) {
+        debug('bake queue torn')
+      } else {
+        throw error
+      }
+    }
   }
-  #tearBakeQueue() {
-    debug('tearing bake queue for %s', this.#pulse)
-    this.#bakeQueue.return(new Error(BAKE_TEAR))
+  get awaitDeepLoad() {
+    return this.#totallyBaked
+  }
+  #tearBake() {
+    debug('tearing bake for %s', this.#pulse)
+    this.#bakeQueue.throw(new Error(BAKE_TEAR))
     this.#bakeQueue = undefined
   }
   /**
@@ -82,29 +101,30 @@ export class Syncer {
 
   async #startBakeQueue() {
     assert(!this.#bakeQueue)
-    this.#bakeQueue = pushable({ objectMode: true })
+    const queue = pushable({ objectMode: true })
+    this.#bakeQueue = queue
     return new Promise((resolve, reject) => {
       const drain = async () => {
         try {
-          for await (const { pulse, prior } of this.#bakeQueue) {
+          for await (const { pulse, prior } of queue) {
             assert(pulse instanceof PulseLink)
             assert(!pulse.bakedPulse)
             assert(!prior || prior instanceof PulseLink)
-            debug('bakeQueue length', this.#bakeQueue.readableLength + 1)
+            debug('bakeQueue length', queue.readableLength + 1)
             const fullPulse = await this.#resolve(pulse)
             debug('pulse resolved %s', pulse)
             pulse.bake(fullPulse)
             await this.#yield()
             await this.#bake(pulse.bakedPulse, prior?.bakedPulse)
 
-            if (this.#bakeQueue.readableLength === 0) {
-              this.#bakeQueue.end()
+            if (this.#bakeQueue === queue && queue.readableLength === 0) {
+              // maybe should only yield once a new pulse has been baked ?
+              // not *that* useful to yield partial hamts
+              const isDeepLoaded = true
+              await this.#yield(isDeepLoaded)
+              queue.end()
             }
           }
-          // maybe should only yield once a new pulse has been baked ?
-          // not *that* useful to yield partial hamts
-          const isDeepLoaded = true
-          await this.#yield(isDeepLoaded)
         } catch (error) {
           if (error.message !== BAKE_TEAR) {
             return reject(error)
@@ -152,12 +172,7 @@ export class Syncer {
     }
     const { classMap = {}, defaultClass } = instance.constructor
     assert(!(Object.keys(classMap).length && defaultClass))
-    await Promise.all(
-      Object.keys(classMap).map(async (key) => {
-        const value = instance[key]
-        await this.#bake(value, prior?.[key])
-      })
-    )
+
     if (defaultClass) {
       const values = []
       const priorValues = []
@@ -166,6 +181,13 @@ export class Syncer {
         priorValues.push(prior?.[key])
       }
       await this.#bake(values, priorValues)
+    } else {
+      await Promise.all(
+        Object.keys(classMap).map(async (key) => {
+          const value = instance[key]
+          await this.#bake(value, prior?.[key])
+        })
+      )
     }
   }
   async #updateCovenant(dmz, prior) {
@@ -192,7 +214,7 @@ export class Syncer {
     if (hamt.isBakeSkippable) {
       return
     }
-    let map = prior?.bakedMap ?? Immutable.Map()
+    let map = hamt.bakedMap ?? prior?.bakedMap ?? Immutable.Map()
     hamt.bake(map)
     const start = Date.now()
     const diff = await hamt.compare(prior) // this definitely locks the event loop
@@ -207,11 +229,12 @@ export class Syncer {
       await this.#yield()
     }
     const set = async (key, value) => {
+      debug('set', key, value)
       map = map.set(key, value)
       hamt.bake(map)
       await this.#yield()
     }
-    // maybe these should be queued and throttled
+    // TODO queue these using emitter hamt walker
     const mods = [...modified].map(async (key) => {
       const value = await hamt.get(key)
       await set(key, value)
@@ -233,38 +256,22 @@ export class Syncer {
     await Promise.all([...mods, ...adds])
   }
   async #yield(isDeepLoaded = false) {
-    if (eventLoopSpinner.isStarving()) {
-      await eventLoopSpinner.spin()
-    }
-    return throttledYield(() => this.#yieldRaw(isDeepLoaded))
+    const pulse = this.#pulse
+    const actions = this.#actions
+    const chroot = this.#chroot
+    const args = { pulse, actions, chroot, isDeepLoaded }
+    this.#yieldQueue.push(args)
   }
-  async #yieldRaw(isDeepLoaded = false) {
+  async #startYieldQueue() {
+    for await (const args of this.#yieldQueue) {
+      this.#yieldRaw(args)
+    }
+  }
+  #yieldRaw({ pulse, actions, chroot, isDeepLoaded }) {
     // TODO include the prievous crisp in the new crisp
     // TODO only yield if something useful occured, like new child or state
-    const crisp = Crisp.createRoot(
-      this.#pulse,
-      this.#actions,
-      this.#chroot,
-      isDeepLoaded
-    )
+    const crisp = Crisp.createRoot(pulse, actions, chroot, isDeepLoaded)
     this.#crisp = crisp
-    if (this.#loadedCrisp && !isDeepLoaded) {
-      if (this.#loadedCrisp.isDeepLoaded) {
-        // WRONG need to provide the previous crisp and return the most advanced one
-        // turn off isDeepLoaded so the gui signals it is loading
-        const { pulse, actions, chroot } = this.#loadedCrisp
-        const noGuiTear = false
-        this.#loadedCrisp = Crisp.createRoot(pulse, actions, chroot, noGuiTear)
-        for (const subscriber of this.#subscribers) {
-          subscriber.push(this.#loadedCrisp)
-        }
-      } else {
-        return // do not tear the GUI while preparing the next Crisp
-      }
-    }
-    if (isDeepLoaded) {
-      this.#loadedCrisp = crisp
-    }
     for (const subscriber of this.#subscribers) {
       subscriber.push(crisp)
     }
@@ -275,9 +282,7 @@ export class Syncer {
       onEnd: () => this.#subscribers.delete(subscriber),
     })
     this.#subscribers.add(subscriber)
-    if (this.#loadedCrisp) {
-      subscriber.push(this.#loadedCrisp)
-    } else if (this.#crisp) {
+    if (this.#crisp) {
       subscriber.push(this.#crisp)
     }
     return subscriber
@@ -287,9 +292,17 @@ export class Syncer {
     assert(value > 0, 'concurrency must be greater than 0')
     this.#concurrency = value
   }
+  set throttleMs(value) {
+    assert(Number.isInteger(value))
+    assert(value >= 0, 'throttleMs must be >= than 0')
+    this.#throttleMs = value
+    if (!value) {
+      this.#throttledYield = (fn) => fn()
+      return
+    }
+    this.#throttledYield = throttle((fn) => fn(), value, {
+      leading: false,
+      trailing: true,
+    })
+  }
 }
-
-const throttledYield = throttle((fn) => fn(), 200, {
-  leading: false,
-  trailing: true,
-})

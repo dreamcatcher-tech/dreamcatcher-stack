@@ -25,6 +25,7 @@ export class Endurance {
   #blockCache = new Map()
   #importsCache = new Map()
   #uncrushings = new Map() // cidString : promise
+  #importsDecodings = new Map() // cidString : promise
   #cacheSize = 0
   #lru = new Set() // TODO make an LRU that calculates block size
   #latests = new Map() // chainId : PulseLink
@@ -136,19 +137,30 @@ export class Endurance {
 
       const key = cid.toString()
       let block, resolveUncrush
+      if (!this.#blockCache.has(key)) {
+        if (this.#importsCache.has(key)) {
+          if (!this.#importsDecodings.has(key)) {
+            // TODO merge this with uncrushings map
+            let resolve
+            const promise = new Promise((r) => (resolve = r))
+            this.#importsDecodings.set(key, promise)
+            const bytes = this.#importsCache.get(key)
+            block = await decode(bytes)
+            this.cacheBlock(block)
+            this.#importsDecodings.delete(key)
+            resolve()
+          }
+          await this.#importsDecodings.get(key)
+        }
+      }
       if (this.#blockCache.has(key)) {
         block = this.#blockCache.get(key)
-      }
-      if (this.#importsCache.has(key)) {
-        const bytes = this.#importsCache.get(key)
-        block = await decode(bytes)
-        this.cacheBlock(block)
-        block
       }
       if (noObjectCache) {
         return [block]
       }
       if (this.#uncrushings.has(key)) {
+        debug('waiting', cid)
         await this.#uncrushings.get(key)
         assert(block.uncrushed, `uncrushed not set for ${key}`)
       }
@@ -162,7 +174,7 @@ export class Endurance {
           assert.strictEqual(uncrushed.ipldBlock, block)
           block.uncrushed = uncrushed
           this.#uncrushings.delete(key)
-          resolve()
+          resolve(block)
         }
       }
       if (block && block.uncrushed) {

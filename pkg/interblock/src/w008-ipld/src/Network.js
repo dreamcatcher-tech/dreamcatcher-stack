@@ -540,7 +540,8 @@ export class Network extends IpldStruct {
     const channels = await this.channels.addChannel(channel)
     return this.setMap({ channels })
   }
-  async walkHamts() {
+  async walkHamts({ isBakeSkippable = false, ...rest } = {}) {
+    assert(!Object.keys(rest).length, `Unexpected keys: ${Object.keys(rest)}`)
     const hamts = [
       this.children,
       this.uplinks,
@@ -549,7 +550,12 @@ export class Network extends IpldStruct {
       this.hardlinks,
       this.channels.list,
       this.channels.addresses,
-    ].filter((hamt) => !hamt.isBakeSkippable)
+    ].filter((hamt) => {
+      if (isBakeSkippable) {
+        return !hamt.isBakeSkippable
+      }
+      return true
+    })
     await Promise.all(hamts.map((hamt) => hamt.walk()))
   }
 }

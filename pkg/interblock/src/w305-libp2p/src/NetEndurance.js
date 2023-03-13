@@ -164,7 +164,7 @@ export class NetEndurance extends Endurance {
       const instance = await Pulse.uncrush(pulse.cid, loggingResolver)
       const network = instance.getNetwork()
       if (!noHamts) {
-        await network.walkHamts()
+        await network.walkHamts({ isBakeSkippable: true })
       }
       if (withChildren) {
         for await (const [, channel] of network.channels.list.entries()) {

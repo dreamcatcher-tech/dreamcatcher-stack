@@ -1,3 +1,4 @@
+import { Block } from 'multiformats/block'
 import { pipe } from 'it-pipe'
 import { CID } from 'multiformats/cid'
 import { shell } from '../../w212-system-covenants'
@@ -423,20 +424,25 @@ export class Interpulse {
     const blocks = new Map()
     const ipfsResolver = this.#endurance.getResolver(latest.cid)
     const loggingResolver = async (cid) => {
+      // TODO merge this with bake and lift walks
       // could start streaming out each time a resolve occurs
       // but ignore duplicates
-      const block = await ipfsResolver(cid)
+      const [block] = await ipfsResolver(cid, { noObjectCache: true })
       assert(CID.asCID(block.cid))
       assert(block.value)
+      if (!blocks.has(block.cid.toString())) {
+        debug('exporting', block.cid.toString())
+      }
       blocks.set(block.cid.toString(), block)
-      return block
+      const noObjectCache = new Block(block)
+      return [noObjectCache]
     }
     const toExport = [latest.getPulseLink()]
     while (toExport.length) {
       const pulseLink = toExport.shift()
-      const instance = await this.#endurance.recover(pulseLink)
-      await instance.export(loggingResolver)
+      const instance = await Pulse.uncrush(pulseLink.cid, loggingResolver)
       const network = instance.getNetwork()
+      await network.walkHamts({ isBakeSkippable: false })
       for await (const [, channel] of network.channels.list.entries()) {
         if (channel.rx.latest) {
           toExport.push(channel.rx.latest)

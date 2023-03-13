@@ -85,6 +85,7 @@ describe('Crisp', () => {
     const pathIterator = engine.subscribe('/')
     const { pulseResolver, covenantResolver, api } = engine
     const syncer = Syncer.create(pulseResolver, covenantResolver, api)
+    syncer.throttleMs = 0
     const syncerDrain = async () => {
       for await (const pulse of pathIterator) {
         syncer.update(pulse)
@@ -99,10 +100,13 @@ describe('Crisp', () => {
         debug('crisp', crisp.sortedChildren, crisp.pulse)
         if (crisp.hasChild('app')) {
           const app = crisp.getChild('app')
-          if (!app.isLoading && app.hasChild('0')) {
-            const app0 = app.getChild('0')
-            if (!app0.isLoading) {
-              return await engine.cd('/app/0')
+          if (!app.isLoading) {
+            debug('app', app.sortedChildren, app.pulse)
+            if (app.hasChild('0')) {
+              const app0 = app.getChild('0')
+              if (!app0.isLoading) {
+                return await engine.cd('/app/0')
+              }
             }
           }
         }
@@ -112,8 +116,9 @@ describe('Crisp', () => {
     const batch = crm.faker.routing.generateBatch(5)
     await engine.execute('app/batch', { batch })
     await crispDrainPromise
+    await syncer.awaitDeepLoad
     await engine.stop()
-  })
+  }, 2000)
   describe('with preload', () => {
     let repo
     beforeAll(async () => {
@@ -186,6 +191,7 @@ describe('Crisp', () => {
       expect(child).toBeInstanceOf(Crisp)
       expect(child.root).toBe(final)
       expect(child.state?.formData?.title).toEqual('CRM')
+      await syncer.awaitDeepLoad
       await engine.stop()
     })
     it('loads actions', async () => {
@@ -216,6 +222,7 @@ describe('Crisp', () => {
       expect(engine.wd).toBe('/')
       await actions.cd('app')
       expect(engine.wd).toBe('/app')
+      await syncer.awaitDeepLoad
       await engine.stop()
     })
     it('loads gracefully', async () => {
@@ -259,6 +266,7 @@ describe('Crisp', () => {
         }
       }
       debug('crisps', crisps)
+      await syncer.awaitDeepLoad
       await engine.stop()
     })
     // make a list of a thousand customers and observe the size growing as sync expands
