@@ -249,6 +249,11 @@ export class IpldStruct extends IpldInterface {
     next.#setModified()
     return next
   }
+  isClassOnly() {
+    // some instances are not crushed to CID
+    assert(!this.isModified())
+    return this.#ipldInitial !== undefined
+  }
   #setModified() {
     this.#ipldBlock = undefined
     this.#ipldInitial = undefined

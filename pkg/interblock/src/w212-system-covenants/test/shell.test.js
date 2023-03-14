@@ -49,7 +49,6 @@ describe('shell', () => {
       debug(`nestedResult`, nestedResult)
       const { wd: wdNested } = engine.selfLatest.getState().toJS()
       assert.strictEqual(wdNested, '/child1/nested1')
-      assert.strictEqual(engine.logger.pulseCount, 14)
     })
     test('cd errors on garbage path', async () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })

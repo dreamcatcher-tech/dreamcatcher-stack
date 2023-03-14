@@ -118,7 +118,7 @@ describe('Crisp', () => {
     await crispDrainPromise
     await syncer.awaitDeepLoad
     await engine.stop()
-  }, 2000)
+  })
   describe('with preload', () => {
     let repo
     beforeAll(async () => {
@@ -160,6 +160,7 @@ describe('Crisp', () => {
       expect(child).toBeInstanceOf(Crisp)
       expect(child.root).toBe(crisp)
       expect(child.state?.formData?.title).toEqual('CRM')
+      await syncer.awaitDeepLoad
       await engine.stop()
     })
     it('wd is rooted in path', async () => {

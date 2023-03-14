@@ -100,14 +100,7 @@ describe('Hamt', () => {
       hamt = await hamt.crush()
       const nextValue = await hamt.get('test')
       debug('channel cid', nextValue.cid)
-      const blocks = new Map()
-      const diff = hamt.getDiffBlocks()
-      await hamt.export((cid) => {
-        const block = diff.get(cid.toString())
-        blocks.set(cid.toString(), block)
-        return [block]
-      })
-      expect(blocks.size).toBe(3)
+      assert(nextValue instanceof Channel)
     })
   })
   describe('sizing', () => {

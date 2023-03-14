@@ -163,7 +163,7 @@ export class Interpulse {
         debug('latest error %s %s', absPath, error.message)
       }
     }
-    debug('latest search ended')
+    throw new Error(`No pulse found at ${absPath}`)
   }
   /**
    * Get whatever pulse is available in local storage for the given path.
@@ -245,11 +245,11 @@ export class Interpulse {
       subscriber.return()
     }
     await this.#engine.stop() // stop all interpulsing
-    const awaits = [this.#endurance.stop()]
     if (this.net) {
-      awaits.push(this.net.stop(), this.#crypto.stop())
+      await this.net.stop()
+      await this.#crypto.stop()
     }
-    await Promise.all(awaits)
+    await this.#endurance.stop()
   }
   async stats() {
     if (!this.net) {

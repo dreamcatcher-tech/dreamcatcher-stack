@@ -41,9 +41,10 @@ export class Lifter {
         for await (const block of source) {
           stream.push(block.bytes)
         }
+        debug('rxLifts ended')
       })
     }
-    debug('rxLifts ended')
+    debug('#listenLiftRequests ended')
   }
   async #listenLiftsReceived(source) {
     function buffer(source) {
@@ -107,7 +108,7 @@ export class Lifter {
     try {
       await promise
     } finally {
-      debug('promise finally %s', pulse)
+      debug('lift tip received for %s', pulse)
       this.#promises.delete(cidString)
     }
   }

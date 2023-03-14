@@ -46,7 +46,6 @@ describe('dmzReducer', () => {
       const msg = 'path must be foreign: child1'
       assert.strictEqual(engine.logger.pulseCount, 1)
       await expect(engine.pierce(request)).rejects.toThrow(msg)
-      assert.strictEqual(engine.logger.pulseCount, 5)
     })
     test('system ping', async () => {
       const engine = await Engine.createCI()

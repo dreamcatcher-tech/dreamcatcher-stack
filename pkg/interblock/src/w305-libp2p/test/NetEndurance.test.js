@@ -22,7 +22,6 @@ describe('NetEndurance', () => {
     const net = await PulseNet.createCI(repo)
     const endurance = await NetEndurance.create(net)
 
-    Debug.enable('*NetEndurance')
     const dlink = diff.getPulseLink()
     const blink = base.getPulseLink()
 

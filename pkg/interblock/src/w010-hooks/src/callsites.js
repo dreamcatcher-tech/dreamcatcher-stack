@@ -22,7 +22,7 @@ let activeInvocations = new Map()
  * @returns { reply, txs }
 
  */
-export const wrapReduce = async (trail, reducer, timeout = 600) => {
+export const wrapReduce = async (trail, reducer, timeout = 500) => {
   assert(trail instanceof AsyncTrail)
   assert(trail.isPending())
   assert(trail.isFulfilled())

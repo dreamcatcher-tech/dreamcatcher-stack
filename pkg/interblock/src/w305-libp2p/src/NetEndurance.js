@@ -10,6 +10,7 @@ import {
   Channel,
   Pulse,
   IpldInterface,
+  IpldStruct,
   HistoricalPulseLink,
   Hamt,
 } from '../../w008-ipld/index.mjs'
@@ -86,6 +87,7 @@ export class NetEndurance extends Endurance {
         blockSet.set(key, block)
         stream.push(block)
       }
+      stream.end()
     })
 
     const walks = pushable({ objectMode: true })
@@ -100,6 +102,8 @@ export class NetEndurance extends Endurance {
 
       if (!noHamts) {
         await this.#hamtWalk(fullPulse, fullPrior, any)
+      } else {
+        await this.#tipHamts(fullPulse, fullPrior, any)
       }
       if (withChildren) {
         const network = fullPulse.getNetwork()
@@ -124,6 +128,7 @@ export class NetEndurance extends Endurance {
 
       if (!walks.readableLength) {
         walks.end()
+        any.end()
       }
     }
     debug('streamWalk done %s %s', pulse, type)
@@ -132,6 +137,23 @@ export class NetEndurance extends Endurance {
     debug(
       `streamWalk count: ${count} bytes: ${bytes} hashes: ${hashes} in ${ms}ms children: ${walkCount}`
     )
+  }
+  async #tipHamts(instance, prior, stream) {
+    assert(instance instanceof Pulse)
+    assert(!prior || prior instanceof Pulse)
+    assert(typeof stream.push === 'function')
+    const network = instance.getNetwork()
+    const pNetwork = prior?.getNetwork()
+    const hamts = network.getHamts()
+    const pHamts = pNetwork?.getHamts()
+    const resolver = this.getResolver(instance.cid)
+    for (const [index, hamt] of hamts.entries()) {
+      if (hamt.cid.equals(pHamts?.[index]?.cid)) {
+        continue
+      }
+      const [block] = await resolver(hamt.cid, { noObjectCache: true })
+      stream.push(block)
+    }
   }
   async #hamtWalk(instance, prior, stream) {
     assert(instance instanceof Pulse)
@@ -144,9 +166,6 @@ export class NetEndurance extends Endurance {
     const resolver = this.getResolver(instance.cid)
 
     for (const [index, hamt] of hamts.entries()) {
-      if (hamt.isBakeSkippable) {
-        continue
-      }
       const pHamt = pHamts?.[index]
       const priorBlocks = new Set()
       if (pHamt) {
@@ -166,7 +185,10 @@ export class NetEndurance extends Endurance {
       }
       for await (const [key, value] of hamt.entries()) {
         if (value instanceof IpldInterface) {
-          const pValue = await pHamt?.get(key)
+          let pValue
+          if (await pHamt?.has(key)) {
+            pValue = await pHamt?.get(key)
+          }
           this.#cidWalk(value, pValue, stream)
         }
       }
@@ -176,7 +198,6 @@ export class NetEndurance extends Endurance {
     assert(instance instanceof IpldInterface)
     assert(!prior || prior instanceof IpldInterface)
     assert(typeof stream.push === 'function')
-    // walk everything except hamts and history, so long as no prior
     assert(!instance.isModified())
     assert(!prior?.isModified())
 
@@ -189,13 +210,21 @@ export class NetEndurance extends Endurance {
     if (instance instanceof HistoricalPulseLink) {
       return
     }
-    if (instance.cid.equals(prior?.cid)) {
+    if (instance instanceof PulseLink) {
       return
     }
-    stream.push(instance.ipldBlock)
+    const isClassOnly = instance instanceof IpldStruct && instance.isClassOnly()
+    if (!isClassOnly) {
+      if (instance.cid.equals(prior?.cid)) {
+        return
+      }
+      stream.push(instance.ipldBlock)
+    }
 
     for (const key in instance) {
-      if (instance.constructor.isCidLink(key)) {
+      const isCidLink = instance.constructor.isCidLink(key)
+      const isCidClass = !!instance.constructor.classMap[key]
+      if (isCidLink || isCidClass) {
         const value = instance[key]
         const pValue = prior?.[key]
         if (Array.isArray(value)) {
@@ -205,12 +234,14 @@ export class NetEndurance extends Endurance {
             this.#cidWalk(v, p, stream)
           }
         } else {
-          assert(value instanceof IpldInterface)
-          this.#cidWalk(value, pValue, stream)
+          if (value instanceof IpldInterface) {
+            this.#cidWalk(value, pValue, stream)
+          }
         }
       }
     }
   }
+
   /**
    * @param {PulseLink} pulseLink
    * @returns {Promise<Pulse>}
@@ -234,7 +265,7 @@ export class NetEndurance extends Endurance {
     assert(!prior || prior instanceof PulseLink)
     this.#net.lift(pulse, prior, 'deepPulse')
     // TODO recover should not require prior knowledge, only lift
-    const result = await this.recover(pulse, 'deepPulse', prior)
+    const result = await this.recover(pulse, 'deepPulse', abort)
     return result
   }
   async recoverInterpulse(source, target) {
@@ -378,8 +409,9 @@ export class NetEndurance extends Endurance {
     if (eventLoopSpinner.isStarving()) {
       await eventLoopSpinner.spin()
     }
-    const block = await decode(bytes)
-    super.cacheBlock(block)
+    let block = await decode(bytes)
+    block = super.cacheBlock(block)
+
     const cidString = block.cid.toString()
     if (this.#wantList.has(cidString)) {
       const tracker = this.#wantList.get(cidString)

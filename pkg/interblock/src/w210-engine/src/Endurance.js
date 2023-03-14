@@ -102,7 +102,10 @@ export class Endurance {
     assert(CID.asCID(block.cid))
     assert.strictEqual(typeof block.value, 'object')
     const key = block.cid.toString()
-    this.#blockCache.set(key, block)
+    if (!this.#blockCache.has(key)) {
+      this.#blockCache.set(key, block)
+    }
+    return this.#blockCache.get(key)
   }
   #cacheBlocks(pulse) {
     // TODO cache the objects during crush, and dedupe them
