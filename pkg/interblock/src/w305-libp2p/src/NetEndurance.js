@@ -164,8 +164,13 @@ export class NetEndurance extends Endurance {
         const [block] = await resolver(cid, { noObjectCache: true })
         stream.push(block)
       }
+      for await (const [key, value] of hamt.entries()) {
+        if (value instanceof IpldInterface) {
+          const pValue = await pHamt?.get(key)
+          this.#cidWalk(value, pValue, stream)
+        }
+      }
     }
-    // TODO cidwalk the children
   }
   #cidWalk(instance, prior, stream) {
     assert(instance instanceof IpldInterface)
