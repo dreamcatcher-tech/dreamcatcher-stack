@@ -22,6 +22,7 @@ describe('NetEndurance', () => {
     const net = await PulseNet.createCI(repo)
     const endurance = await NetEndurance.create(net)
 
+    Debug.enable('*NetEndurance')
     const dlink = diff.getPulseLink()
     const blink = base.getPulseLink()
 
@@ -33,9 +34,6 @@ describe('NetEndurance', () => {
     const saved = fullStream.readableLength - diffStream.readableLength
     expect(saved).toBeGreaterThan(0)
 
-    const repeat = pushable({ objectMode: true })
-    const cached = await endurance.streamWalk(repeat, dlink, blink, 'deepPulse')
-    expect(cached).toBeTruthy()
     await net.stop()
   })
 })

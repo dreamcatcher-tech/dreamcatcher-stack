@@ -6,6 +6,7 @@ const debug = Debug('tests')
 
 describe('mount', () => {
   afterEach(async () => {
+    Debug.enable()
     await Promise.all(engines.map((e) => e.stop()))
     engines.length = 0
   })
@@ -28,6 +29,7 @@ describe('mount', () => {
     client.net.addAddressPeer(address, peerId)
     const child1ChainId = address.getChainId()
 
+    Debug.enable('*Announcer *Lifter *Endurance')
     await client.mount('server', child1ChainId)
     await client.ln('/.mtab/server', 'serverChild1')
     const remote = await client.latest('/serverChild1')

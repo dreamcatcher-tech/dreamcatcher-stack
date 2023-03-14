@@ -168,6 +168,7 @@ export class Endurance {
         let resolve
         const promise = new Promise((r) => (resolve = r))
         this.#uncrushings.set(key, promise)
+        // TODO this is an annoying interface - make opt in
         resolveUncrush = (uncrushed) => {
           assert(uncrushed)
           assert(!uncrushed.isModified())

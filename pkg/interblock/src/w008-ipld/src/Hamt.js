@@ -356,6 +356,11 @@ export class Hamt extends IpldInterface {
       await this.get(key)
     }
   }
+  cids() {
+    assert(this.#hashmap)
+    assert(!this.isModified())
+    return this.#hashmap.cids()
+  }
 }
 const safelyGetBlock = async (putStore, cid) => {
   if (!cid) {
