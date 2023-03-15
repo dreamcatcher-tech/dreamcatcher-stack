@@ -49,7 +49,7 @@ const Test = ({ crisp }) => {
     </div>
   )
 }
-Test.propTypes = { crisp: PropTypes.instanceof(Crisp) }
+Test.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Engine peers={peers} addrs={addrs} mounts={mounts} dev={dev} ram actions={a}>

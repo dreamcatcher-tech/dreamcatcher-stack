@@ -1,3 +1,4 @@
+import throttle from 'lodash.throttle'
 import PropTypes from 'prop-types'
 import assert from 'assert-fast'
 import React, { useState, useEffect, useRef } from 'react'
@@ -48,9 +49,14 @@ export default function ReactSyncer({ engine, path, children }) {
       debug('path update', pulse)
       syncer.update(pulse)
     })
+    const delayMs = 300
+    const trailingEdge = throttle(
+      (crisp) => setCrisp(updateWd(crisp)),
+      delayMs,
+      { leading: false, trailing: true }
+    )
     const crispDrain = each(crispIterator, (crisp) => {
-      debug('crisp update', crisp)
-      setCrisp(updateWd(crisp))
+      trailingEdge(crisp)
     })
     const drains = [wdDrain, pathDrain, crispDrain]
     drains.forEach(drain)

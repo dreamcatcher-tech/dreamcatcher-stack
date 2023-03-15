@@ -94,7 +94,6 @@ export class NetEndurance extends Endurance {
     walks.push({ pulse, prior, withChildren, noHamts })
     let walkCount = 0
     for await (const { pulse, prior, withChildren, noHamts } of walks) {
-      debug('walk %s %s', pulse, prior)
       const fullPulse = await this.recover(pulse)
       const fullPrior = prior ? await this.recover(prior) : undefined
 
@@ -168,10 +167,15 @@ export class NetEndurance extends Endurance {
     for (const [index, hamt] of hamts.entries()) {
       const pHamt = pHamts?.[index]
       const priorBlocks = new Set()
+      if (pHamt?.cid.equals(hamt.cid)) {
+        continue
+      }
+      if (hamt.isBakeSkippable) {
+        const [block] = await resolver(hamt.cid, { noObjectCache: true })
+        stream.push(block)
+        continue
+      }
       if (pHamt) {
-        if (pHamt.cid.equals(hamt.cid)) {
-          continue
-        }
         for await (const cid of pHamt.cids()) {
           priorBlocks.add(cid.toString())
         }
@@ -249,7 +253,6 @@ export class NetEndurance extends Endurance {
   async recover(pulseLink, type = 'hamtPulse', abort) {
     assert(pulseLink instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
-    debug('recovering %s type %s', pulseLink, type)
 
     const resolver = this.getResolver(pulseLink.cid)
     try {
