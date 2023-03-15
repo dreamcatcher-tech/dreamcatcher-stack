@@ -58,11 +58,11 @@ export class Syncer {
     const prior = this.#pulse
     // TODO split the bake cache so pulse does not have to be reference equal
 
-    this.#totallyBaked = this.#startBakeQueue()
-    this.#pulseBake(pulse.getPulseLink(), prior?.getPulseLink())
     // priors should walk back to the last one we had data on, not tears
     try {
       this.#pulse = await this.#resolve(pulse.getPulseLink())
+      this.#totallyBaked = this.#startBakeQueue()
+      this.#pulseBake(pulse.getPulseLink(), prior?.getPulseLink())
       await this.#totallyBaked
     } catch (error) {
       if (error.message === BAKE_TEAR) {
@@ -79,6 +79,11 @@ export class Syncer {
   }
   #tearBake() {
     debug('tearing bake for %s', this.#pulse)
+    console.log(
+      'tear bake %s with remaining %i walks',
+      this.#pulse,
+      this.#bakeQueue?.readableLength
+    )
     this.#bakeQueue?.throw(new Error(BAKE_TEAR))
     this.#bakeQueue = undefined
     this.#abort?.abort('tear bake')
@@ -109,9 +114,7 @@ export class Syncer {
             assert(pulse instanceof PulseLink)
             assert(!pulse.bakedPulse)
             assert(!prior || prior instanceof PulseLink)
-            debug('bakeQueue length', queue.readableLength + 1)
             const fullPulse = await this.#resolve(pulse, abort)
-            debug('pulse resolved %s', pulse)
             pulse.bake(fullPulse)
             await this.#yield()
             await this.#bake(pulse.bakedPulse, prior?.bakedPulse, abort)
@@ -238,7 +241,6 @@ export class Syncer {
       await this.#yield()
     }
     const set = async (key, value) => {
-      debug('set', key, value)
       map = map.set(key, value)
       hamt.bake(map)
       await this.#yield()
@@ -300,5 +302,21 @@ export class Syncer {
     assert(Number.isInteger(value))
     assert(value > 0, 'concurrency must be greater than 0')
     this.#concurrency = value
+  }
+}
+
+class BakeCache {
+  #pulses = new Map() // cids -> pulse
+  #covenants = new Map() // paths -> pulse
+  static create() {
+    return new BakeCache()
+  }
+  getCovenant(path) {
+    assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
+    return this.#covenants.get(path)
+  }
+  getPulse(pulseLink) {
+    assert(pulseLink instanceof PulseLink)
+    return this.#pulses.get(pulseLink.cid.toString())
   }
 }

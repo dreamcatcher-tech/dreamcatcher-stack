@@ -36,15 +36,15 @@ export class Crisp {
     const result = new Crisp()
     return result
   }
-  static createRoot(rootPulse, rootActions, chroot = '/', isDeepLoaded) {
-    assert(rootPulse instanceof Pulse)
-    assert.strictEqual(typeof rootActions, 'object')
-    assert.strictEqual(typeof rootActions.dispatch, 'function')
+  static createRoot(root, actions, chroot = '/', isDeepLoaded) {
+    assert(root instanceof Pulse)
+    assert.strictEqual(typeof actions, 'object')
+    assert.strictEqual(typeof actions.dispatch, 'function')
     assert.strictEqual(typeof chroot, 'string')
     assert(posix.isAbsolute(chroot), `chroot not absolute: ${chroot}`)
     const result = new Crisp()
-    result.#pulse = rootPulse
-    result.#rootActions = rootActions
+    result.#pulse = root
+    result.#rootActions = actions
     result.#chroot = chroot
     result.#isDeepLoaded = !!isDeepLoaded
     return result
@@ -54,6 +54,7 @@ export class Crisp {
     assert(parent instanceof Crisp)
     assert.strictEqual(typeof name, 'string')
     assert(name)
+    assert(!posix.isAbsolute(name), `name must be relative: ${name}`)
     const result = new Crisp()
     result.#pulse = pulse
     result.#parent = parent
