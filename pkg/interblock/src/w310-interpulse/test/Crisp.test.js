@@ -8,7 +8,7 @@ const debug = Debug('tests')
 
 const actions = { dispatch: (...args) => debug('CI dispatch', args) }
 
-describe('Crisp', () => {
+describe.only('Crisp', () => {
   it('should create a Crisp', async function () {
     const pulse = await Pulse.createCI({ state: { test: true } })
     const crisp = Crisp.createRoot(pulse, actions)

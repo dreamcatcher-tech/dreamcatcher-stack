@@ -79,11 +79,6 @@ export class Syncer {
   }
   #tearBake() {
     debug('tearing bake for %s', this.#pulse)
-    console.log(
-      'tear bake %s with remaining %i walks',
-      this.#pulse,
-      this.#bakeQueue?.readableLength
-    )
     this.#bakeQueue?.throw(new Error(BAKE_TEAR))
     this.#bakeQueue = undefined
     this.#abort?.abort('tear bake')
