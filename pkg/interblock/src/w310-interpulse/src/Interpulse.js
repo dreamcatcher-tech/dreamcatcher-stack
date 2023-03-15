@@ -244,11 +244,9 @@ export class Interpulse {
     for (const subscriber of this.#subscribers) {
       subscriber.return()
     }
+    await this.net?.stop()
     await this.#engine.stop() // stop all interpulsing
-    if (this.net) {
-      await this.net.stop()
-      await this.#crypto.stop()
-    }
+    await this.#crypto?.stop()
     await this.#endurance.stop()
   }
   async stats() {
@@ -384,13 +382,17 @@ export class Interpulse {
         const stream = this.net.subscribePulse(address)
         const updater = async (source) => {
           let prior
-          for await (const pulse of source) {
-            debug('stream', pulse.toString())
-            assert(pulse instanceof PulseLink)
-            const latest = await this.#endurance.recoverRemote(pulse, prior)
-            const target = mtab.getAddress()
-            await this.#engine.updateLatest(target, latest)
-            prior = latest.getPulseLink()
+          try {
+            for await (const pulse of source) {
+              debug('stream', pulse.toString())
+              assert(pulse instanceof PulseLink)
+              const latest = await this.#endurance.recoverRemote(pulse, prior)
+              const target = mtab.getAddress()
+              await this.#engine.updateLatest(target, latest)
+              prior = latest.getPulseLink()
+            }
+          } catch (error) {
+            debug('updater error', error)
           }
           debug('updater ended')
         }

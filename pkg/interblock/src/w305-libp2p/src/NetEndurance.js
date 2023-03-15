@@ -107,6 +107,8 @@ export class NetEndurance extends Endurance {
       if (withChildren) {
         const network = fullPulse.getNetwork()
         const pNetwork = fullPrior?.getNetwork()
+        // TODO use hamt diffing
+        // TODO entries should eagerly load ahead into a buffer
         for await (const [id, channel] of network.channels.list.entries()) {
           // takes advantage of id's being stable
           if (channel.rx.latest) {
@@ -154,6 +156,7 @@ export class NetEndurance extends Endurance {
       stream.push(block)
     }
   }
+
   async #hamtWalk(instance, prior, stream) {
     assert(instance instanceof Pulse)
     assert(!prior || prior instanceof Pulse)
@@ -171,16 +174,19 @@ export class NetEndurance extends Endurance {
         continue
       }
       if (hamt.isBakeSkippable) {
+        // TODO switch based on type of lift requested
         const [block] = await resolver(hamt.cid, { noObjectCache: true })
         stream.push(block)
         continue
       }
       if (pHamt) {
+        // TODO cache here
         for await (const cid of pHamt.cids()) {
           priorBlocks.add(cid.toString())
         }
       }
       for await (const cid of hamt.cids()) {
+        // TODO cache here
         if (priorBlocks.has(cid.toString())) {
           continue
         }

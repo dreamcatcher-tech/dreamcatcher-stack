@@ -1,7 +1,5 @@
 import parallel from 'it-parallel'
 import { pipe } from 'it-pipe'
-import { eventLoopSpinner } from 'event-loop-spinner'
-import throttle from 'lodash.throttle'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import Debug from 'debug'
@@ -23,8 +21,6 @@ const BAKE_TEAR = 'BAKE_TEAR'
 
 export class Syncer {
   #concurrency = 20
-  #throttleMs = 200
-  #throttledYield
   #pulseResolver
   #covenantResolver
   #actions
@@ -49,31 +45,30 @@ export class Syncer {
     syncer.#covenantResolver = covenantResolver
     syncer.#actions = actions
     syncer.#chroot = chroot
-    syncer.throttleMs = syncer.#throttleMs
     syncer.#startYieldQueue()
     return syncer
   }
   async update(pulse) {
     assert(pulse instanceof Pulse)
     assert(!pulse.cid.equals(this.#pulse?.cid))
-    this.#abort.abort('new pulse received' + pulse.toString())
-    this.#abort = new AbortController()
     this.#tearBake()
 
     // TODO assert lineage matches
     // TODO permit skips in lineage
     const prior = this.#pulse
     // TODO split the bake cache so pulse does not have to be reference equal
-    this.#pulse = await this.#resolve(pulse.getPulseLink())
 
     this.#totallyBaked = this.#startBakeQueue()
     this.#pulseBake(pulse.getPulseLink(), prior?.getPulseLink())
     // priors should walk back to the last one we had data on, not tears
     try {
+      this.#pulse = await this.#resolve(pulse.getPulseLink())
       await this.#totallyBaked
     } catch (error) {
       if (error.message === BAKE_TEAR) {
         debug('bake queue torn')
+      } else if (error.message === 'Endurance is stopped') {
+        debug('endurance stopped')
       } else {
         throw error
       }
@@ -84,8 +79,9 @@ export class Syncer {
   }
   #tearBake() {
     debug('tearing bake for %s', this.#pulse)
-    this.#bakeQueue.throw(new Error(BAKE_TEAR))
+    this.#bakeQueue?.throw(new Error(BAKE_TEAR))
     this.#bakeQueue = undefined
+    this.#abort?.abort('tear bake')
   }
   /**
    * Will mutate instance and all children of instance
@@ -102,20 +98,23 @@ export class Syncer {
   async #startBakeQueue() {
     assert(!this.#bakeQueue)
     const queue = pushable({ objectMode: true })
+    const abort = new AbortController()
     this.#bakeQueue = queue
+    this.#abort = abort
     return new Promise((resolve, reject) => {
       const drain = async () => {
         try {
           for await (const { pulse, prior } of queue) {
+            // TODO allow parallel walks
             assert(pulse instanceof PulseLink)
             assert(!pulse.bakedPulse)
             assert(!prior || prior instanceof PulseLink)
             debug('bakeQueue length', queue.readableLength + 1)
-            const fullPulse = await this.#resolve(pulse)
+            const fullPulse = await this.#resolve(pulse, abort)
             debug('pulse resolved %s', pulse)
             pulse.bake(fullPulse)
             await this.#yield()
-            await this.#bake(pulse.bakedPulse, prior?.bakedPulse)
+            await this.#bake(pulse.bakedPulse, prior?.bakedPulse, abort)
 
             if (this.#bakeQueue === queue && queue.readableLength === 0) {
               // maybe should only yield once a new pulse has been baked ?
@@ -127,7 +126,9 @@ export class Syncer {
           }
         } catch (error) {
           if (error.message !== BAKE_TEAR) {
-            return reject(error)
+            if (error.message !== 'Endurance is stopped') {
+              return reject(error)
+            }
           }
         }
         resolve()
@@ -135,16 +136,20 @@ export class Syncer {
       drain()
     })
   }
-  async #resolve(pulseLink) {
+  async #resolve(pulseLink, abort) {
     assert(pulseLink instanceof PulseLink)
-    const pulse = await this.#pulseResolver(pulseLink, TYPE, this.#abort)
+    const pulse = await this.#pulseResolver(pulseLink, TYPE, abort)
     return pulse
   }
-  async #bake(instance, prior) {
+  async #bake(instance, prior, abort) {
+    assert(abort instanceof AbortController)
+    if (abort.signal.aborted) {
+      return
+    }
     if (Array.isArray(instance)) {
       assert(!prior || Array.isArray(prior))
       return await Promise.all(
-        instance.map((v, i) => this.#bake(v, prior?.[i]))
+        instance.map((v, i) => this.#bake(v, prior?.[i], abort))
       )
     }
     if (!(instance instanceof IpldInterface)) {
@@ -162,7 +167,7 @@ export class Syncer {
       return
     }
     if (instance instanceof Hamt) {
-      await this.#updateHamt(instance, prior)
+      await this.#updateHamt(instance, prior, abort)
       await this.#yield()
       return
     }
@@ -180,12 +185,12 @@ export class Syncer {
         values.push(value)
         priorValues.push(prior?.[key])
       }
-      await this.#bake(values, priorValues)
+      await this.#bake(values, priorValues, abort)
     } else {
       await Promise.all(
         Object.keys(classMap).map(async (key) => {
           const value = instance[key]
-          await this.#bake(value, prior?.[key])
+          await this.#bake(value, prior?.[key], abort)
         })
       )
     }
@@ -208,9 +213,13 @@ export class Syncer {
     const covenantPulse = await this.#covenantResolver(path)
     dmz.bake(covenantPulse)
   }
-  async #updateHamt(hamt, prior) {
+  async #updateHamt(hamt, prior, abort) {
     assert(hamt instanceof Hamt)
     assert(!prior || prior instanceof Hamt)
+    assert(abort instanceof AbortController)
+    if (abort.signal.aborted) {
+      return
+    }
     if (hamt.isBakeSkippable) {
       return
     }
@@ -246,12 +255,12 @@ export class Syncer {
           priorValue = await prior.get(key)
         }
       }
-      await this.#bake(value, priorValue)
+      await this.#bake(value, priorValue, abort)
     })
     const adds = [...added].map(async (key) => {
       const value = await hamt.get(key)
       await set(key, value)
-      await this.#bake(value)
+      await this.#bake(value, undefined, abort)
     })
     await Promise.all([...mods, ...adds])
   }
@@ -291,18 +300,5 @@ export class Syncer {
     assert(Number.isInteger(value))
     assert(value > 0, 'concurrency must be greater than 0')
     this.#concurrency = value
-  }
-  set throttleMs(value) {
-    assert(Number.isInteger(value))
-    assert(value >= 0, 'throttleMs must be >= than 0')
-    this.#throttleMs = value
-    if (!value) {
-      this.#throttledYield = (fn) => fn()
-      return
-    }
-    this.#throttledYield = throttle((fn) => fn(), value, {
-      leading: false,
-      trailing: true,
-    })
   }
 }

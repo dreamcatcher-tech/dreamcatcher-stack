@@ -6,17 +6,18 @@ const debug = Debug('tests')
 
 describe('mount', () => {
   afterEach(async () => {
-    await Promise.all(engines.map((e) => e.stop()))
+    const _engines = [...engines]
     engines.length = 0
+    await Promise.all(_engines.map((e) => e.stop()))
   })
   const engines = []
   test('basic read-only mount', async () => {
-    const serverRepo = createRamRepo('server bro')
+    const serverRepo = createRamRepo()
     const server = await Interpulse.createCI({ repo: serverRepo })
     const addResult = await server.add('child1')
     await server.serve('/child1')
     debug(addResult)
-    const clientRepo = createRamRepo('client bro')
+    const clientRepo = createRamRepo()
     const client = await Interpulse.create({ repo: clientRepo })
     engines.push(client, server)
 
@@ -40,11 +41,11 @@ describe('mount', () => {
     debug('nested1 pulseHash', nestedRemote.getPulseLink())
   })
   test('shell based read-only mount', async () => {
-    const serverRepo = createRamRepo('server sro')
+    const serverRepo = createRamRepo()
     const server = await Interpulse.create({ repo: serverRepo })
     await server.add('child1')
     await server.serve('/child1')
-    const clientRepo = createRamRepo('client sro')
+    const clientRepo = createRamRepo()
     const client = await Interpulse.create({ repo: clientRepo })
     engines.push(client, server)
 
@@ -112,7 +113,7 @@ describe('mount', () => {
     expect(ping).toBeTruthy()
   })
   test('server reload', async () => {
-    const serverRepo = createRamRepo('server rl')
+    const serverRepo = createRamRepo()
     const preServer = await Interpulse.createCI({ repo: serverRepo })
     await preServer.add('child1')
     await preServer.serve('/child1')
@@ -122,7 +123,7 @@ describe('mount', () => {
     await preServer.stop()
     const server = await Interpulse.createCI({ repo: serverRepo })
 
-    const clientRepo = createRamRepo('client rl')
+    const clientRepo = createRamRepo()
     const client = await Interpulse.create({ repo: clientRepo })
     engines.push(server, client)
 
@@ -135,7 +136,7 @@ describe('mount', () => {
     expect(child1.cid.equals(remote.cid)).toBeTruthy()
   })
   test.skip('client auto redial', async () => {
-    const repo = createRamRepo('server')
+    const repo = createRamRepo()
     let server = await Interpulse.createCI({ repo })
     await server.add('child1')
     await server.add('child1/nested1')

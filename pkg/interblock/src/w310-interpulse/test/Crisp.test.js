@@ -116,7 +116,6 @@ describe('Crisp', () => {
     const batch = crm.faker.routing.generateBatch(5)
     await engine.execute('app/batch', { batch })
     await crispDrainPromise
-    await syncer.awaitDeepLoad
     await engine.stop()
   })
   describe('with preload', () => {
@@ -160,7 +159,6 @@ describe('Crisp', () => {
       expect(child).toBeInstanceOf(Crisp)
       expect(child.root).toBe(crisp)
       expect(child.state?.formData?.title).toEqual('CRM')
-      await syncer.awaitDeepLoad
       await engine.stop()
     })
     it('wd is rooted in path', async () => {
@@ -192,7 +190,6 @@ describe('Crisp', () => {
       expect(child).toBeInstanceOf(Crisp)
       expect(child.root).toBe(final)
       expect(child.state?.formData?.title).toEqual('CRM')
-      await syncer.awaitDeepLoad
       await engine.stop()
     })
     it('loads actions', async () => {
@@ -223,7 +220,6 @@ describe('Crisp', () => {
       expect(engine.wd).toBe('/')
       await actions.cd('app')
       expect(engine.wd).toBe('/app')
-      await syncer.awaitDeepLoad
       await engine.stop()
     })
     it('loads gracefully', async () => {
@@ -267,7 +263,6 @@ describe('Crisp', () => {
         }
       }
       debug('crisps', crisps)
-      await syncer.awaitDeepLoad
       await engine.stop()
     })
     // make a list of a thousand customers and observe the size growing as sync expands
