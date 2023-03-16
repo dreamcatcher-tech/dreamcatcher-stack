@@ -1,22 +1,28 @@
 import { schemaToFunctions } from '../../w002-api'
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { Channel, Pulse } from '../../w008-ipld'
-import Immutable from 'immutable'
+import { PulseLink } from '../../w008-ipld'
 import posix from 'path-browserify'
+import { BakeCache } from './BakeCache'
 const debug = Debug('interblock:api:Crisp')
 
 export class Crisp {
   #parent // the parent Crisp
   #name // the name of this Crisp, passed down from the parent
-  #pulse // the Pulse that this Crisp is wrapping
-  #rootActions // the actions of the engine
+  #pulse // the PulseLink that this Crisp is wrapping
+  #rootActions // the base actions of the engine
   #chroot // the chroot of the Syncer that made this Crisps root
-  #wd = '/' // the working directory which is only set in the root
-  #snapshotChannelMap // a snapshot of the channels map
-  #snapshotAliasMap // a snapshot of the aliases map
-  #isCovenantSnapshot = false // if true, the covenant has been snapshotted
-  #isDeepLoaded // if true, the pulse is now fully baked
+  #wd = '/' // the working directory which is only set in the root Crisp
+  #cache
+  #isDeepLoaded // if true, the pulse tree is now fully baked
+
+  // snapshot tracking
+  #isPulseSnapshotted = false
+  #pulseSnapshot
+  #isChildrenSnapshotted = false
+  #childrenSnapshot
+  #isCovenantSnapshotted = false
+  #covenantSnapshot
 
   #clone() {
     const next = new Crisp()
@@ -26,31 +32,37 @@ export class Crisp {
     next.#rootActions = this.#rootActions
     next.#chroot = this.#chroot
     next.#wd = this.#wd
-    next.#snapshotChannelMap = this.#snapshotChannelMap
-    next.#snapshotAliasMap = this.#snapshotAliasMap
-    next.#isCovenantSnapshot = this.#isCovenantSnapshot
+    next.#cache = this.#cache
     next.#isDeepLoaded = this.#isDeepLoaded
+    next.#isPulseSnapshotted = this.#isPulseSnapshotted
+    next.#pulseSnapshot = this.#pulseSnapshot
+    next.#isChildrenSnapshotted = this.#isChildrenSnapshotted
+    next.#childrenSnapshot = this.#childrenSnapshot
+    next.#isCovenantSnapshotted = this.#isCovenantSnapshotted
+    next.#covenantSnapshot = this.#covenantSnapshot
     return next
   }
   static createLoading() {
     const result = new Crisp()
     return result
   }
-  static createRoot(root, actions, chroot = '/', isDeepLoaded) {
-    assert(root instanceof Pulse)
+  static createRoot(root, actions, chroot = '/', cache, isDeepLoaded) {
+    assert(root instanceof PulseLink)
     assert.strictEqual(typeof actions, 'object')
     assert.strictEqual(typeof actions.dispatch, 'function')
-    assert.strictEqual(typeof chroot, 'string')
     assert(posix.isAbsolute(chroot), `chroot not absolute: ${chroot}`)
+    cache = cache || BakeCache.createCI()
+    assert(cache instanceof BakeCache)
     const result = new Crisp()
     result.#pulse = root
     result.#rootActions = actions
     result.#chroot = chroot
+    result.#cache = cache
     result.#isDeepLoaded = !!isDeepLoaded
     return result
   }
-  static createChild(pulse, parent, name) {
-    assert(!pulse || pulse instanceof Pulse)
+  static #createChild(pulse, parent, name) {
+    assert(pulse instanceof PulseLink)
     assert(parent instanceof Crisp)
     assert.strictEqual(typeof name, 'string')
     assert(name)
@@ -62,8 +74,9 @@ export class Crisp {
     return result
   }
   get isLoading() {
-    // this call signals the reconciler that loading is required
-    return !this.#pulse
+    // this call should signal the reconciler that loading is required
+    this.#snapshotPulse()
+    return !this.#pulseSnapshot
   }
   get isRoot() {
     return !this.#parent
@@ -77,10 +90,23 @@ export class Crisp {
   get chroot() {
     return this.root.#chroot
   }
+  #snapshotCovenant() {
+    if (this.#isCovenantSnapshotted) {
+      return
+    }
+    this.#isCovenantSnapshotted = true
+    if (this.isLoading) {
+      return
+    }
+    const path = this.#pulseSnapshot.getCovenantPath()
+    if (this.root.#cache.hasCovenant(path)) {
+      this.#covenantSnapshot = this.root.#cache.getCovenant(path)
+    }
+  }
   get isLoadingActions() {
     // this call signals the reconciler that loading is required
     this.#snapshotCovenant()
-    return this.isLoading || !this.#pulse.provenance.dmz.bakedCovenant
+    return !this.#covenantSnapshot
   }
   hasAction(name) {
     assert.strictEqual(typeof name, 'string')
@@ -90,9 +116,7 @@ export class Crisp {
     if (this.isLoadingActions) {
       throw new Error('cannot get actions from a loading Crisp')
     }
-    assert(this.#isCovenantSnapshot)
-    const covenant = this.#pulse.provenance.dmz.bakedCovenant
-    const state = covenant.getState().toJS()
+    const state = this.#covenantSnapshot.getState().toJS()
     const { api = {} } = state
     return !!api[name]
   }
@@ -128,8 +152,7 @@ export class Crisp {
     if (this.isRoot && this.chroot === '/') {
       return this.#rootActions
     }
-    const covenant = this.#pulse.provenance.dmz.bakedCovenant
-    const state = covenant.getState().toJS()
+    const state = this.#covenantSnapshot.getState().toJS()
     const { api = {} } = state
     const actions = schemaToFunctions(api)
     const dispatches = {}
@@ -144,70 +167,63 @@ export class Crisp {
     }
     return dispatches
   }
-  #snapshotCovenant() {
-    if (this.#isCovenantSnapshot) {
-      return
-    }
-    this.#isCovenantSnapshot = true
-  }
+
   get parent() {
     return this.#parent
+  }
+  #snapshotPulse() {
+    if (this.#isPulseSnapshotted) {
+      return
+    }
+    this.#isPulseSnapshotted = true
+    if (this.root.#cache.hasPulse(this.#pulse)) {
+      this.#pulseSnapshot = this.root.#cache.getPulse(this.#pulse)
+    }
   }
   get state() {
     if (this.isLoading) {
       return {}
     }
-    return this.#pulse.getState().toJS()
+    return this.#pulseSnapshot.getState().toJS()
+  }
+  get isLoadingChildren() {
+    this.#snapshotChildren()
+    return !this.#childrenSnapshot
+  }
+  #snapshotChildren() {
+    if (this.#isChildrenSnapshotted) {
+      return
+    }
+    this.#isChildrenSnapshotted = true
+    if (this.isLoading) {
+      return
+    }
+    if (this.root.#cache.hasChildren(this.#pulse)) {
+      this.#childrenSnapshot = this.root.#cache.getChildren(this.#pulse)
+    }
+  }
+  hasChild(path) {
+    assert.strictEqual(typeof path, 'string')
+    if (this.isLoadingChildren) {
+      throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
+    }
+    return this.#childrenSnapshot.has(path)
   }
   getChild(path) {
     assert.strictEqual(typeof path, 'string')
     if (!this.hasChild(path)) {
       throw new Error(`child not found: ${path}`)
     }
-    const channelId = this.#aliasMap.get(path)
-    const channel = this.#channelMap.get(channelId)
-    assert(channel instanceof Channel)
-    const childPulse = channel.rx.latest?.bakedPulse
-    const child = Crisp.createChild(childPulse, this, path)
+    const childPulse = this.#childrenSnapshot.get(path)
+    const child = Crisp.#createChild(childPulse, this, path)
     return child
   }
-  hasChild(path) {
-    assert.strictEqual(typeof path, 'string')
-    this.#snapshotMaps()
-    if (!this.#aliasMap.has(path)) {
-      return false
-    }
-    const channelId = this.#aliasMap.get(path)
-    return this.#channelMap.has(channelId)
-  }
-  #snapshotMaps() {
-    if (this.isLoading) {
-      throw new Error('cannot get map from a loading Crisp')
-    }
-    const isBoth = this.#snapshotChannelMap && this.#snapshotAliasMap
-    const isNeither = !this.#snapshotChannelMap && !this.#snapshotAliasMap
-    assert(!(isBoth && isNeither), 'either both or neither should be set')
-    if (isBoth) {
-      return
-    }
-    const network = this.#pulse.getNetwork()
-    this.#snapshotChannelMap = network.channels.list.bakedMap ?? Immutable.Map()
-    this.#snapshotAliasMap = network.children.bakedMap ?? Immutable.Map()
-  }
-  get #channelMap() {
-    this.#snapshotMaps()
-    return this.#snapshotChannelMap
-  }
-  get #aliasMap() {
-    this.#snapshotMaps()
-    return this.#snapshotAliasMap
-  }
   *[Symbol.iterator]() {
-    for (const [alias] of this.#aliasMap.entries()) {
-      // TODO shortcut until aliases are remodeled
-      if (!alias.startsWith('.') && this.hasChild(alias)) {
-        yield alias
-      }
+    if (this.isLoadingChildren) {
+      throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
+    }
+    for (const [path] of this.#childrenSnapshot.entries()) {
+      yield path
     }
   }
   get sortedChildren() {
@@ -228,7 +244,7 @@ export class Crisp {
     })
     return children
   }
-  get covenant() {
+  get covenantPath() {
     if (this.isLoading) {
       throw new Error('cannot get covenant from a loading Crisp')
     }

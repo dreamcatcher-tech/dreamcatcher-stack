@@ -3,24 +3,40 @@ import { createRamRepo } from '../../w305-libp2p'
 import { Interpulse, Crisp, Syncer } from '..'
 import { crm } from '../../w301-user-apps'
 import { Pulse } from '../../w008-ipld/src'
+import { BakeCache } from '../src/BakeCache'
 import Debug from 'debug'
+import Immutable from 'immutable'
 const debug = Debug('tests')
 
 const actions = { dispatch: (...args) => debug('CI dispatch', args) }
 
-describe.only('Crisp', () => {
+const createCiCache = (fullPulse) => {
+  const pulse = fullPulse.getPulseLink()
+  const cache = BakeCache.createCI()
+  cache.initialize(pulse)
+  cache.setPulse(pulse, fullPulse)
+  const children = Immutable.Map({ child: pulse })
+  cache.updateChildren(pulse, children)
+  return cache
+}
+
+describe('Crisp', () => {
   it('should create a Crisp', async function () {
-    const pulse = await Pulse.createCI({ state: { test: true } })
-    const crisp = Crisp.createRoot(pulse, actions)
+    const fullPulse = await Pulse.createCI({ state: { test: true } })
+    const pulse = fullPulse.getPulseLink()
+    const cache = createCiCache(fullPulse)
+    const crisp = Crisp.createRoot(pulse, actions, '/', cache)
     expect(crisp).toBeInstanceOf(Crisp)
     expect(crisp.state).toEqual({ test: true })
     expect(crisp.hasChild('not a path')).toBe(false)
   })
   describe('getSelectedChild', () => {
-    let crisp
+    let crisp, pulse
     beforeEach(async () => {
-      const pulse = await Pulse.createCI()
-      crisp = Crisp.createRoot(pulse, actions)
+      const fullPulse = await Pulse.createCI()
+      pulse = fullPulse.getPulseLink()
+      const cache = createCiCache(fullPulse)
+      crisp = Crisp.createRoot(pulse, actions, '/', cache)
     })
     it('getSelectedChild works when root', async () => {
       const virtualPath = '0'
@@ -30,12 +46,11 @@ describe.only('Crisp', () => {
     it('getSelectedChild works when not root', async () => {
       const virtualPath = '0'
       crisp = crisp.setWd('/child/' + virtualPath)
-      let child = Crisp.createChild(undefined, crisp, 'child')
+      const child = crisp.getChild('child')
       expect(child.path).toBe('/child')
       expect(child.getSelectedChild()).toBe(virtualPath)
     })
     it('getSelectedChild works deeply nested and root', async () => {
-      const pulse = await Pulse.createCI()
       let crisp = Crisp.createRoot(pulse, actions)
       const virtualPath = '0'
       crisp = crisp.setWd('/' + virtualPath + '/other/paths')
@@ -44,29 +59,30 @@ describe.only('Crisp', () => {
     it('getSelectedChild works deeply nested and not root', async () => {
       const virtualPath = '0'
       crisp = crisp.setWd('/child/' + virtualPath + '/other/paths')
-      const child = Crisp.createChild(undefined, crisp, 'child')
+      const child = crisp.getChild('child')
       expect(child.path).toBe('/child')
       expect(child.getSelectedChild()).toBe(virtualPath)
     })
     it('setWd must be absolute', async () => {
-      const pulse = await Pulse.createCI()
       const crisp = Crisp.createRoot(pulse, actions)
       expect(() => crisp.setWd('non absolute')).toThrow('wd must be absolute')
     })
   })
   describe('absolutePath', () => {
-    let pulse
+    let pulse, cache
     beforeAll(async () => {
-      pulse = await Pulse.createCI()
+      const fullPulse = await Pulse.createCI()
+      pulse = fullPulse.getPulseLink()
+      cache = createCiCache(fullPulse)
     })
     it('works when chrooted', async () => {
       const chroot = '/app'
-      const crisp = Crisp.createRoot(pulse, actions, chroot)
+      const crisp = Crisp.createRoot(pulse, actions, chroot, cache)
       expect(crisp.absolutePath).toBe(chroot)
       expect(crisp.path).toBe('/')
       expect(crisp.chroot).toBe(chroot)
 
-      const child = Crisp.createChild(undefined, crisp, 'child')
+      const child = crisp.getChild('child')
       expect(child.chroot).toBe(chroot)
       expect(child.absolutePath).toBe('/app/child')
       expect(child.path).toBe('/child')
@@ -85,7 +101,6 @@ describe.only('Crisp', () => {
     const pathIterator = engine.subscribe('/')
     const { pulseResolver, covenantResolver, api } = engine
     const syncer = Syncer.create(pulseResolver, covenantResolver, api)
-    syncer.throttleMs = 0
     const syncerDrain = async () => {
       for await (const pulse of pathIterator) {
         syncer.update(pulse)
@@ -94,13 +109,13 @@ describe.only('Crisp', () => {
     syncerDrain()
     const crispDrain = async () => {
       for await (const crisp of syncer.subscribe()) {
-        if (crisp.isLoading) {
+        if (crisp.isLoadingChildren) {
           continue
         }
         debug('crisp', crisp.sortedChildren, crisp.pulse)
         if (crisp.hasChild('app')) {
           const app = crisp.getChild('app')
-          if (!app.isLoading) {
+          if (!app.isLoadingChildren) {
             debug('app', app.sortedChildren, app.pulse)
             if (app.hasChild('0')) {
               const app0 = app.getChild('0')
@@ -234,7 +249,7 @@ describe.only('Crisp', () => {
       syncer.update(approot)
       let last
       function deepJs(crisp) {
-        if (crisp.isLoading) {
+        if (crisp.isLoadingChildren) {
           return { isLoading: true }
         }
         const js = {}

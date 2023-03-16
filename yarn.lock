@@ -2264,7 +2264,7 @@
   resolved "https://registry.yarnpkg.com/@libp2p/interface-keys/-/interface-keys-1.0.7.tgz#ad09ee7dc9c1495f1dd3e1785133c317befb4d7b"
   integrity sha512-DRMPY9LfcnGJKrjaqIkY62U3fW2dya3VLy4x986ExtMrGn4kxIHeQ1IKk8/Vs9CJHTKmXEMID4of1Cjnw4aJpA==
 
-"@libp2p/interface-libp2p@^1.0.0", "@libp2p/interface-libp2p@^1.1.1":
+"@libp2p/interface-libp2p@^1.0.0":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@libp2p/interface-libp2p/-/interface-libp2p-1.1.1.tgz#0e75af940dcc0f48c6abd677902d3eafc69ac7e8"
   integrity sha512-cELZZv/tzFxbUzL3Jvbk+AM2J6kDhIUNBIMMMLuR3LIHfmVJkh31G3ChLUZuKhBwB8wXJ1Ssev3fk1tfz/5DWA==
@@ -2305,7 +2305,7 @@
   dependencies:
     multiformats "^11.0.0"
 
-"@libp2p/interface-peer-info@^1.0.0", "@libp2p/interface-peer-info@^1.0.3", "@libp2p/interface-peer-info@^1.0.8":
+"@libp2p/interface-peer-info@^1.0.0", "@libp2p/interface-peer-info@^1.0.3":
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/@libp2p/interface-peer-info/-/interface-peer-info-1.0.8.tgz#8380e9e40d0ec2c8be8e1a43e8a82ae97a0687c4"
   integrity sha512-LRvZt/9bZFYW7seAwuSg2hZuPl+FRTAsij5HtyvVwmpfVxipm6yQrKjQ+LiK/SZhIDVsSJ+UjF0mluJj+jeAzQ==
@@ -2352,7 +2352,7 @@
     "@libp2p/interface-peer-id" "^2.0.0"
     uint8arraylist "^2.1.2"
 
-"@libp2p/interface-registrar@^2.0.0", "@libp2p/interface-registrar@^2.0.3", "@libp2p/interface-registrar@^2.0.8":
+"@libp2p/interface-registrar@^2.0.0", "@libp2p/interface-registrar@^2.0.3":
   version "2.0.9"
   resolved "https://registry.yarnpkg.com/@libp2p/interface-registrar/-/interface-registrar-2.0.9.tgz#160eaa9294642928f272894c23989f6b719538c3"
   integrity sha512-+aZg7SB8fIddE4/PojnHY2Y29vwr4YtnXxro3db/TYWAsWNGlgZusFEZYqBMpV/1KpEFBdi3O7r50bv/2fRusQ==
@@ -5376,11 +5376,6 @@
   integrity sha512-pet5WJ9U8yPVRhkwuEIp5ktAeAqRZOq4UdAyWLWzxbtpyXnzbtLdKiXAjJzi/KLmPGS9wk86lUFWZFN6sISo4g==
   dependencies:
     "@types/yargs-parser" "*"
-
-"@vascosantos/moving-average@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@vascosantos/moving-average/-/moving-average-1.1.0.tgz#8d5793b09b2d6021ba5e620c6a0f876c20db7eaa"
-  integrity sha512-MVEJ4vWAPNbrGLjz7ITnHYg+YXZ6ijAqtH5/cHwSoCpbvuJ98aLXwFfPKAUfZpJMQR5uXB58UJajbY130IRF/w==
 
 "@vitejs/plugin-react@^3.0.0", "@vitejs/plugin-react@^3.0.1", "@vitejs/plugin-react@^3.1.0":
   version "3.1.0"
@@ -9710,37 +9705,6 @@ ipaddr.js@^2.0.1:
   resolved "https://registry.yarnpkg.com/ipaddr.js/-/ipaddr.js-2.0.1.tgz#eca256a7a877e917aeb368b0a7497ddf42ef81c0"
   integrity sha512-1qTgH9NG+IIJ4yfKs2e6Pp1bZg8wbDbKHT21HrLIeYBTRLgMYKnMTPAuI3Lcs61nfx5h1xlXnbJtH1kX5/d/ng==
 
-ipfs-bitswap@^16.0.0:
-  version "16.0.0"
-  resolved "https://registry.yarnpkg.com/ipfs-bitswap/-/ipfs-bitswap-16.0.0.tgz#7f2f20754dad411320d4b36183ef165a454d7db8"
-  integrity sha512-xM88o9eQRcyu2SD+W5osTdMYm6EiAL3oa0PeTHktdUo5AgE5txaXyxXjZl9tVE9jRtMxxbn05XWeCUM13EAEkA==
-  dependencies:
-    "@libp2p/interface-connection" "^3.0.1"
-    "@libp2p/interface-libp2p" "^1.1.1"
-    "@libp2p/interface-peer-id" "^2.0.0"
-    "@libp2p/interface-peer-info" "^1.0.8"
-    "@libp2p/interface-registrar" "^2.0.8"
-    "@libp2p/interfaces" "^3.2.0"
-    "@libp2p/logger" "^2.0.5"
-    "@libp2p/topology" "^4.0.0"
-    "@libp2p/tracked-map" "^3.0.0"
-    "@multiformats/multiaddr" "^11.0.0"
-    "@vascosantos/moving-average" "^1.1.0"
-    abortable-iterator "^4.0.2"
-    any-signal "^3.0.0"
-    blockstore-core "^3.0.0"
-    interface-blockstore "^4.0.0"
-    it-length-prefixed "^8.0.2"
-    it-pipe "^2.0.4"
-    just-debounce-it "^3.0.1"
-    multiformats "^11.0.0"
-    protons-runtime "^5.0.0"
-    timeout-abort-controller "^3.0.0"
-    uint8arraylist "^2.4.3"
-    uint8arrays "^4.0.2"
-    varint "^6.0.0"
-    varint-decoder "^1.0.0"
-
 ipfs-core-config@^0.7.0:
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/ipfs-core-config/-/ipfs-core-config-0.7.0.tgz#81f77adf411633bbe0fbd96745d20926bf44fcc1"
@@ -11228,11 +11192,6 @@ jszip@^3.5.0:
     pako "~1.0.2"
     readable-stream "~2.3.6"
     setimmediate "^1.0.5"
-
-just-debounce-it@^3.0.1:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/just-debounce-it/-/just-debounce-it-3.2.0.tgz#4352265f4af44188624ce9fdbc6bff4d49c63a80"
-  integrity sha512-WXzwLL0745uNuedrCsCs3rpmfD6DBaf7uuVwaq98/8dafURfgQaBsSpjiPp5+CW6Vjltwy9cOGI6qE71b3T8iQ==
 
 just-diff-apply@^5.2.0:
   version "5.5.0"
@@ -16163,18 +16122,6 @@ validate.io-number@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/validate.io-number/-/validate.io-number-1.0.3.tgz#f63ffeda248bf28a67a8d48e0e3b461a1665baf8"
   integrity sha512-kRAyotcbNaSYoDnXvb4MHg/0a1egJdLwS6oJ38TJY7aw9n93Fl/3blIXdyYvPOp55CNxywooG/3BcrwNrBpcSg==
-
-varint-decoder@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/varint-decoder/-/varint-decoder-1.0.0.tgz#289dab7887ee58d0c7be3a3353abeab4ca60aa77"
-  integrity sha512-JkOvdztASWGUAsXshCFHrB9f6AgR2Q8W08CEyJ+43b1qtFocmI8Sp1R/M0E/hDOY2FzVIqk63tOYLgDYWuJ7IQ==
-  dependencies:
-    varint "^5.0.0"
-
-varint@^5.0.0:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/varint/-/varint-5.0.2.tgz#5b47f8a947eb668b848e034dcfa87d0ff8a7f7a4"
-  integrity sha512-lKxKYG6H03yCZUpAGOPOsMcGxd1RHCu1iKvEHYDPmTyq2HueGhD73ssNBqqQWfvYs04G9iUFRvmAVLW20Jw6ow==
 
 varint@^6.0.0:
   version "6.0.0"

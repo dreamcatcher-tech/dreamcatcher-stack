@@ -52,7 +52,6 @@
     "fast-memoize": "^2.5.2",
     "fs-extra": "^11.1.0",
     "immutable": "^4.3.0",
-    "ipfs-bitswap": "^16.0.0",
     "ipfs-core-config": "^0.7.0",
     "ipfs-repo": "^17.0.0",
     "ipld-hashmap": "github:inverted-capital/js-ipld-hashmap#a5bd78e9e2753cd849e6a225f2927b47d774f6ab",
