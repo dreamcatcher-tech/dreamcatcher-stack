@@ -269,6 +269,7 @@ export class Hamt extends IpldInterface {
   // stream could be backpressure aware, so it didn't just rip ahead
   async compare(other) {
     if (!other) {
+      // TODO simply walk the hamt and emit all the keys
       other = this.constructor.create(this.#valueClass, this.#isMutable)
       other = await other.crush()
     }
@@ -291,9 +292,10 @@ export class Hamt extends IpldInterface {
     }
     while (links.length > 0) {
       const { cid, otherCid } = links.shift()
-      const value = await safelyGetBlock(this.#putStore, cid)
-      const otherValue = await safelyGetBlock(other.#putStore, otherCid)
+      const v = safelyGetBlock(this.#putStore, cid)
+      const oV = safelyGetBlock(other.#putStore, otherCid)
 
+      const [value, otherValue] = await Promise.all([v, oV])
       const [, data] = value
       const [, otherData] = otherValue
       const max = Math.max(data.length, otherData.length)

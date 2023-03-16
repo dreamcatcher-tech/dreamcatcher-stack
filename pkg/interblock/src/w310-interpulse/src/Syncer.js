@@ -71,6 +71,8 @@ export class Syncer {
     this.#bakeQueue = pushable({ objectMode: true })
     this.#abort?.abort('tear bake')
     this.#abort = new AbortController()
+    this.#isDeepLoaded = false
+    // TODO WARNING initialized pulses are not torn
   }
   #pulseBake(pulse, prior) {
     assert(pulse instanceof PulseLink)
@@ -146,11 +148,18 @@ export class Syncer {
     let children =
       this.#cache.hasChildren(pulse) && this.#cache.getChildren(pulse)
     const network = fullPulse.getNetwork()
+    const start = Date.now()
+    // TODO pull in the entries via streaming, so it reads ahead
     for await (const [alias, channelId] of network.children.entries()) {
       if (abort.signal.aborted) {
         debug('bake aborted during hamt walk for %s', pulse)
         throw new Error(BAKE_TEAR)
       }
+
+      // get the last prior that produced the current cached children list
+      // use this to get a diff
+
+      // TODO walk the channels array and look up aliases, since would be faster ?
       const channel = await get(network.channels, channelId, abort)
       if (channel.rx.latest) {
         const { latest } = channel.rx
@@ -169,15 +178,37 @@ export class Syncer {
           }
         }
         nextChildren = nextChildren.set(alias, latest)
-        if (children) {
-          children = children.set(alias, latest)
-          this.#cache.updateChildren(pulse, children)
-        } else {
-          this.#cache.updateChildren(pulse, nextChildren)
-        }
+        // if (children) {
+        //   children = children.set(alias, latest)
+        //   this.#cache.updateChildren(pulse, children)
+        // } else {
+        //   this.#cache.updateChildren(pulse, nextChildren)
+        // }
+
+        // options are:
+        // walk with buffer
+        // use the diff
+        // walk channels directly
       }
     }
     this.#cache.updateChildren(pulse, nextChildren)
+    if (Date.now() > start + 1000) {
+      debug('slow bake for %s %ims', pulse, Date.now() - start)
+      if (prior && this.#cache.hasPulse(prior)) {
+        const fullPrior = this.#cache.getPulse(prior)
+        const priorNetwork = fullPrior.getNetwork()
+        const start = Date.now()
+        const diff = await network.children.compare()
+        debug('hamt diff %ims', Date.now() - start, diff)
+
+        {
+          const start = Date.now()
+          for await (const [alias, channelId] of network.children.entries()) {
+          }
+          debug('hamt walk %ims', Date.now() - start)
+        }
+      }
+    }
   }
   async #startYieldQueue() {
     for await (const { type } of this.#yieldQueue) {

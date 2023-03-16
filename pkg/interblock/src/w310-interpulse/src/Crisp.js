@@ -193,6 +193,7 @@ export class Crisp {
     return this.#pulseSnapshot.getState().toJS()
   }
   get isLoadingChildren() {
+    // TODO MUST handle presenting a cached view to stop tearing
     this.#snapshotChildren()
     return !this.#childrenSnapshot
   }

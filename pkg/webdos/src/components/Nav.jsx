@@ -26,7 +26,7 @@ const masked = ['.', '..', '.@@io', 'about', 'settings', 'account']
  * of the root of the app complex.
  */
 const Nav = ({ crisp }) => {
-  if (crisp.isLoadingActions) {
+  if (crisp.isLoadingChildren) {
     return <div>Loading Navigation...</div>
   }
   const { wd, actions } = crisp
