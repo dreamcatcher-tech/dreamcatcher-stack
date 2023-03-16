@@ -28,7 +28,6 @@ export default function ReactSyncer({ engine, path, children }) {
     debug('iterators', wdIterator, pathIterator, crispIterator)
 
     const updateWd = (current) => {
-      debug('wd update crisp was: %s wd is: %s', current.wd, engine.wd)
       if (!engine.wd.startsWith(path)) {
         if (current.wd !== '/') {
           current = current.setWd('/')
@@ -37,7 +36,6 @@ export default function ReactSyncer({ engine, path, children }) {
       }
       const length = path === '/' ? 0 : path.length
       const rest = engine.wd.substring(length) || '/'
-      debug('path %s rest %s', path, rest)
       if (current.wd === rest) {
         return current
       }

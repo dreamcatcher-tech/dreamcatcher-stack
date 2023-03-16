@@ -1,7 +1,7 @@
 import { schemaToFunctions } from '../../w002-api'
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { PulseLink } from '../../w008-ipld'
+import { Address, PulseLink } from '../../w008-ipld'
 import posix from 'path-browserify'
 import { BakeCache } from './BakeCache'
 const debug = Debug('interblock:api:Crisp')
@@ -42,9 +42,15 @@ export class Crisp {
     next.#covenantSnapshot = this.#covenantSnapshot
     return next
   }
-  static createLoading() {
-    const result = new Crisp()
-    return result
+  static createLoading(chroot = '/') {
+    const address = Address.createRoot()
+    const pulse = PulseLink.createCrossover(address)
+    const actions = {
+      dispatch: () => {
+        throw new Error('cannot dispatch from loading Crisp')
+      },
+    }
+    return Crisp.createRoot(pulse, actions, chroot)
   }
   static createRoot(root, actions, chroot = '/', cache, isDeepLoaded) {
     assert(root instanceof PulseLink)
@@ -248,7 +254,7 @@ export class Crisp {
     if (this.isLoading) {
       throw new Error('cannot get covenant from a loading Crisp')
     }
-    return this.#pulse.getCovenantPath()
+    return this.pulse.getCovenantPath()
   }
   setWd(path) {
     assert.strictEqual(typeof path, 'string')
@@ -276,6 +282,9 @@ export class Crisp {
     return this.root.#isDeepLoaded
   }
   get pulse() {
-    return this.#pulse
+    if (this.isLoading) {
+      throw new Error('cannot get pulse from a loading Crisp')
+    }
+    return this.root.#cache.getPulse(this.#pulse)
   }
 }

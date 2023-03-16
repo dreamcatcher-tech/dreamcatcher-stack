@@ -19,24 +19,26 @@ export default function App({ crisp }) {
         overflow: 'hidden',
       }}
     >
-      {isLoading(crisp) ? (
-        <div>Loading...</div>
-      ) : (
-        <>
-          <Box sx={{ zIndex: 1 }}>
-            <Nav crisp={crisp} />
-          </Box>
-          <Glass.Lazy show={wd.startsWith('/schedules')}>
-            <Schedules crisp={crisp.getChild('schedules')} />
-          </Glass.Lazy>
-          <Glass.Lazy show={wd.startsWith('/customers')}>
-            <CollectionList crisp={crisp.getChild('customers')} />
-          </Glass.Lazy>
-          <Glass.Lazy show={wd.startsWith('/routing')}>
-            <Routing crisp={crisp.getChild('routing')} />
-          </Glass.Lazy>
-        </>
-      )}
+      <>
+        <Box sx={{ zIndex: 1 }}>
+          <Nav crisp={crisp} />
+        </Box>
+        {isLoading(crisp) ? (
+          <div>Loading...</div>
+        ) : (
+          <>
+            <Glass.Lazy show={wd.startsWith('/schedules')}>
+              <Schedules crisp={crisp.getChild('schedules')} />
+            </Glass.Lazy>
+            <Glass.Lazy show={wd.startsWith('/customers')}>
+              <CollectionList crisp={crisp.getChild('customers')} />
+            </Glass.Lazy>
+            <Glass.Lazy show={wd.startsWith('/routing')}>
+              <Routing crisp={crisp.getChild('routing')} />
+            </Glass.Lazy>
+          </>
+        )}
+      </>
     </Box>
   )
 }
@@ -45,7 +47,7 @@ App.propTypes = {
 }
 
 const isLoading = (crisp) => {
-  if (crisp.isLoading) {
+  if (crisp.isLoadingChildren) {
     return true
   }
   return (

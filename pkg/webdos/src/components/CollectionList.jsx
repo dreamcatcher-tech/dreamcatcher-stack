@@ -15,7 +15,6 @@ const debug = Debug('terminal:widgets:CollectionList')
 const CollectionList = ({ crisp }) => {
   // TODO assert the complex has a collection as its covenant
   const [isAdding, setIsAdding] = useState(false)
-  assert(crisp.isLoading || typeof crisp.covenant === 'string')
 
   const crispRef = useRef()
   crispRef.current = crisp
@@ -49,7 +48,7 @@ const CollectionList = ({ crisp }) => {
     return generateColumns(crisp.state.template, valueGetter)
   }, [template])
   const rows = useMemo(() => {
-    if (crisp.isLoading) {
+    if (crisp.isLoadingChildren) {
       return []
     }
     const rows = [...crisp]
@@ -86,7 +85,7 @@ const CollectionList = ({ crisp }) => {
         disableMultipleSelection
         hideFooter
         onRowClick={onRow}
-        loading={crisp.isLoading}
+        loading={crisp.isLoadingChildren}
       />
       {onAdd ? <FabAdd onClick={onAddCustomer} disabled={isAdding} /> : null}
     </>

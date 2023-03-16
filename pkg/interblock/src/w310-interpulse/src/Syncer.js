@@ -23,6 +23,7 @@ export class Syncer {
   #subscribers = new Set()
   #abort = new AbortController()
   #crisp
+  #isDeepLoaded = false
   #bakeQueue
   #yieldQueue = pushable({ objectMode: true })
   #cache = BakeCache.create(this.#yieldQueue)
@@ -39,6 +40,7 @@ export class Syncer {
     syncer.#covenantResolver = covenantResolver
     syncer.#actions = actions
     syncer.#chroot = chroot
+    syncer.#crisp = Crisp.createLoading(chroot)
     syncer.#startYieldQueue()
     return syncer
   }
@@ -46,7 +48,7 @@ export class Syncer {
     assert(fullPulse instanceof Pulse)
     const pulse = fullPulse.getPulseLink()
     assert(!pulse.cid.equals(this.#pulse?.cid), `identical update ${pulse}`)
-    this.#tearBake()
+    this.#tearBake(pulse)
     const prior = this.#pulse
     this.#pulse = pulse
 
@@ -63,8 +65,8 @@ export class Syncer {
       }
     }
   }
-  #tearBake() {
-    debug('tearing bake for %s', this.#pulse)
+  #tearBake(nextPulse) {
+    debug('tearing bake for %s in favour of %s', this.#pulse, nextPulse)
     this.#bakeQueue?.throw(new Error(BAKE_TEAR))
     this.#bakeQueue = pushable({ objectMode: true })
     this.#abort?.abort('tear bake')
@@ -91,14 +93,14 @@ export class Syncer {
         // TODO allow parallel walks
         assert(pulse instanceof PulseLink)
         assert(!prior || prior instanceof PulseLink)
-
         const fullPulse = await this.#resolve(pulse, abort)
         this.#cache.setPulse(pulse, fullPulse)
         await this.#bake(fullPulse, prior, abort)
-
         if (this.#bakeQueue === queue && queue.readableLength === 0) {
+          this.#isDeepLoaded = true
           this.#yieldQueue.push({ type: 'DEEP_LOADED' })
           queue.end()
+          debug('bake queue drained for %s', this.#pulse, this.#crisp)
         }
       }
     } catch (error) {
@@ -111,6 +113,7 @@ export class Syncer {
   }
   async #resolve(pulse, abort) {
     assert(pulse instanceof PulseLink)
+    assert(abort instanceof AbortController)
     const TYPE = 'crispDeepPulse'
     const fullPulse = await this.#pulseResolver(pulse, TYPE, abort)
     if (abort.signal.aborted) {
@@ -119,6 +122,8 @@ export class Syncer {
     return fullPulse
   }
   async #resolveCovenant(covenantPath, abort) {
+    assert.strictEqual(typeof covenantPath, 'string')
+    assert(abort instanceof AbortController)
     const covenant = await this.#covenantResolver(covenantPath, abort)
     if (abort.signal.aborted) {
       throw new Error(BAKE_TEAR)
@@ -143,29 +148,32 @@ export class Syncer {
     const network = fullPulse.getNetwork()
     for await (const [alias, channelId] of network.children.entries()) {
       if (abort.signal.aborted) {
+        debug('bake aborted during hamt walk for %s', pulse)
         throw new Error(BAKE_TEAR)
       }
       const channel = await get(network.channels, channelId, abort)
       if (channel.rx.latest) {
         const { latest } = channel.rx
-        if (this.#cache.hasPulse(latest)) {
-          continue
+        if (!this.#cache.hasPulse(latest)) {
+          let priorLatest
+          if (prior && this.#cache.hasPulse(prior)) {
+            const fullPrior = this.#cache.getPulse(prior)
+            const priorNetwork = fullPrior.getNetwork()
+            const pc = await get(priorNetwork.channels, channelId, abort)
+            priorLatest = pc.rx.latest
+          }
+          if (!this.#cache.hasPulse(latest)) {
+            // TODO handle race conditions if latest already in the bake queue
+            // probably handle at the same time as prioritizing the queue
+            this.#pulseBake(latest, priorLatest)
+          }
         }
-        let priorLatest
-        if (prior && this.#cache.hasPulse(prior)) {
-          const fullPrior = this.#cache.getPulse(prior)
-          const priorNetwork = fullPrior.getNetwork()
-          const pc = await get(priorNetwork.channels, channelId, abort)
-          priorLatest = pc.rx.latest
-        }
-        if (this.#cache.hasPulse(latest)) {
-          continue // handle race conditions
-        }
-        this.#pulseBake(latest, priorLatest)
         nextChildren = nextChildren.set(alias, latest)
         if (children) {
           children = children.set(alias, latest)
           this.#cache.updateChildren(pulse, children)
+        } else {
+          this.#cache.updateChildren(pulse, nextChildren)
         }
       }
     }
@@ -177,7 +185,7 @@ export class Syncer {
       const actions = this.#actions
       const chroot = this.#chroot
       const cache = this.#cache
-      const isDeepLoaded = type === 'DEEP_LOADED'
+      const isDeepLoaded = this.#isDeepLoaded
       this.#crisp = Crisp.createRoot(
         pulse,
         actions,
@@ -196,9 +204,7 @@ export class Syncer {
       onEnd: () => this.#subscribers.delete(subscriber),
     })
     this.#subscribers.add(subscriber)
-    if (this.#crisp) {
-      subscriber.push(this.#crisp)
-    }
+    subscriber.push(this.#crisp)
     return subscriber
   }
   set concurrency(value) {
