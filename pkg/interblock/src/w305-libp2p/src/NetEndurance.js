@@ -107,6 +107,7 @@ export class NetEndurance extends Endurance {
       if (withChildren) {
         const network = fullPulse.getNetwork()
         const pNetwork = fullPrior?.getNetwork()
+        // TODO unify with the syncer walk
         // TODO use hamt diffing
         // TODO entries should eagerly load ahead into a buffer
         for await (const [id, channel] of network.channels.list.entries()) {
@@ -122,6 +123,8 @@ export class NetEndurance extends Endurance {
               continue
             }
             walkCount++
+            // TODO use network.streamChildren( pNetwork )
+
             walks.push({ pulse, prior, withChildren, noHamts })
           }
         }
@@ -193,9 +196,11 @@ export class NetEndurance extends Endurance {
         const [block] = await resolver(cid, { noObjectCache: true })
         stream.push(block)
       }
+      // readahead cache here
       for await (const [key, value] of hamt.entries()) {
         if (value instanceof IpldInterface) {
           let pValue
+          // multithread here
           if (await pHamt?.has(key)) {
             pValue = await pHamt?.get(key)
           }

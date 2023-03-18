@@ -3,7 +3,7 @@ import { pipe } from 'it-pipe'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import Debug from 'debug'
-import { Pulse, PulseLink } from '../../w008-ipld'
+import { Address, Pulse, PulseLink } from '../../w008-ipld'
 import { Crisp } from '..'
 import { BakeCache } from './BakeCache'
 import Immutable from 'immutable'
@@ -14,14 +14,15 @@ const BAKE_TEAR = 'BAKE_TEAR'
 
 export class Syncer {
   #concurrency = 20
-  #pulse
+  #address
+  #pulseId
   #pulseResolver
   #covenantResolver
   #actions
   #chroot
 
   #subscribers = new Set()
-  #abort = new AbortController()
+  #abort
   #crisp
   #isDeepLoaded = false
   #bakeQueue
@@ -44,16 +45,21 @@ export class Syncer {
     syncer.#startYieldQueue()
     return syncer
   }
-  async update(fullPulse) {
-    assert(fullPulse instanceof Pulse)
-    const pulse = fullPulse.getPulseLink()
-    assert(!pulse.cid.equals(this.#pulse?.cid), `identical update ${pulse}`)
-    this.#tearBake(pulse)
-    const prior = this.#pulse
-    this.#pulse = pulse
+  async update(pulse) {
+    assert(pulse instanceof Pulse)
+    if (!this.#address) {
+      this.#address = pulse.getAddress()
+    } else {
+      assert(this.#address.equals(pulse.getAddress()))
+    }
+    const pulseId = pulse.getPulseLink()
+    assert(!pulseId.equals(this.#pulseId), `identical update ${pulseId}`)
+    this.#tearBake(pulseId)
+    this.#pulseId = pulseId
 
     try {
-      this.#pulseBake(pulse, prior)
+      const address = pulse.getAddress()
+      this.#treeBake(address, pulseId)
       await this.#drainBakeQueue()
     } catch (error) {
       if (error.message === BAKE_TEAR) {
@@ -66,62 +72,63 @@ export class Syncer {
     }
   }
   #tearBake(nextPulse) {
-    debug('tearing bake for %s in favour of %s', this.#pulse, nextPulse)
+    debug('tearing bake for %s in favour of %s', this.#pulseId, nextPulse)
     this.#bakeQueue?.throw(new Error(BAKE_TEAR))
     this.#bakeQueue = pushable({ objectMode: true })
     this.#abort?.abort('tear bake')
     this.#abort = new AbortController()
+    this.#abort.message = BAKE_TEAR
     this.#isDeepLoaded = false
-    // TODO WARNING initialized pulses are not torn
   }
-  #pulseBake(pulse, prior) {
-    assert(pulse instanceof PulseLink)
-    assert(!prior || prior instanceof PulseLink)
-    assert(!this.#cache.hasPulse(pulse), `already baked: ${pulse}`)
-    this.#cache.initialize(pulse)
-    if (prior) {
-      if (this.#cache.hasChildren(prior)) {
-        const children = this.#cache.getChildren(prior)
-        this.#cache.updateChildren(pulse, children)
-      }
-    }
-    this.#bakeQueue.push({ pulse, prior })
+  #treeBake(address, pulseId) {
+    assert(address instanceof Address)
+    assert(pulseId instanceof PulseLink)
+    this.#cache.preBake(address, pulseId)
+    this.#bakeQueue.push({ address, pulseId })
+    // assumes that in a given tree there is exactly one pulseId per address
+    // this is false when we allow snapshots
   }
   async #drainBakeQueue() {
     const queue = this.#bakeQueue
     const abort = this.#abort
-    try {
-      for await (const { pulse, prior } of queue) {
-        // TODO allow parallel walks
-        assert(pulse instanceof PulseLink)
-        assert(!prior || prior instanceof PulseLink)
-        const fullPulse = await this.#resolve(pulse, abort)
-        this.#cache.setPulse(pulse, fullPulse)
-        await this.#bake(fullPulse, prior, abort)
-        if (this.#bakeQueue === queue && queue.readableLength === 0) {
-          this.#isDeepLoaded = true
-          this.#yieldQueue.push({ type: 'DEEP_LOADED' })
-          queue.end()
-          debug('bake queue drained for %s', this.#pulse, this.#crisp)
+    for await (const { address, pulseId } of queue) {
+      assert(address instanceof Address)
+      assert(pulseId instanceof PulseLink)
+      if (this.#cache.isBaked(address, pulseId)) {
+        continue
+      }
+      let pulse
+      if (this.#cache.hasPulse(address)) {
+        const lastPulse = this.#cache.getPulse(address)
+        assert(lastPulse instanceof Pulse)
+        if (lastPulse.getPulseLink().equals(pulseId)) {
+          pulse = lastPulse
         }
       }
-    } catch (error) {
-      if (error.message !== BAKE_TEAR) {
-        if (error.message !== 'Endurance is stopped') {
-          throw error
-        }
+      if (!pulse) {
+        pulse = await this.#resolve(pulseId, abort)
+      }
+      if (this.#cache.isVirgin(address)) {
+        this.#cache.setVirginPulse(address, pulse)
+      }
+      await this.#bake(address, pulse, abort)
+      if (this.#bakeQueue === queue && queue.readableLength === 0) {
+        this.#isDeepLoaded = true
+        this.#yieldQueue.push({ type: 'DEEP_LOADED' })
+        queue.end()
+        debug('bake queue drained for %s', this.#pulseId, this.#crisp)
       }
     }
   }
-  async #resolve(pulse, abort) {
-    assert(pulse instanceof PulseLink)
+  async #resolve(pulseId, abort) {
+    assert(pulseId instanceof PulseLink)
     assert(abort instanceof AbortController)
     const TYPE = 'crispDeepPulse'
-    const fullPulse = await this.#pulseResolver(pulse, TYPE, abort)
+    const pulse = await this.#pulseResolver(pulseId, TYPE, abort)
     if (abort.signal.aborted) {
       throw new Error(BAKE_TEAR)
     }
-    return fullPulse
+    return pulse
   }
   async #resolveCovenant(covenantPath, abort) {
     assert.strictEqual(typeof covenantPath, 'string')
@@ -132,98 +139,62 @@ export class Syncer {
     }
     return covenant
   }
-  async #bake(fullPulse, prior, abort) {
-    assert(fullPulse instanceof Pulse)
-    assert(!prior || prior instanceof PulseLink)
+  async #bake(address, pulse, abort) {
+    assert(address instanceof Address)
+    assert(pulse instanceof Pulse)
     assert(abort instanceof AbortController)
-
-    const covenantPath = fullPulse.getCovenantPath()
+    const covenantPath = pulse.getCovenantPath()
     if (!this.#cache.hasCovenant(covenantPath)) {
+      // TODO multithread this
       const covenant = await this.#resolveCovenant(covenantPath, abort)
       this.#cache.setCovenant(covenantPath, covenant)
     }
 
-    let nextChildren = Immutable.Map()
-    const pulse = fullPulse.getPulseLink()
-    let children =
-      this.#cache.hasChildren(pulse) && this.#cache.getChildren(pulse)
-    const network = fullPulse.getNetwork()
+    let channels = Immutable.Map()
+    let prior
+    if (this.#cache.isDone(address)) {
+      prior = this.#cache.getPulse(address)
+      channels = this.#cache.getChannels(address)
+    }
+    const network = pulse.getNetwork()
+    const priorNet = prior?.getNetwork()
     const start = Date.now()
-    // TODO pull in the entries via streaming, so it reads ahead
-    for await (const [alias, channelId] of network.children.entries()) {
-      if (abort.signal.aborted) {
-        debug('bake aborted during hamt walk for %s', pulse)
-        throw new Error(BAKE_TEAR)
-      }
 
-      // get the last prior that produced the current cached children list
-      // use this to get a diff
-
-      // TODO walk the channels array and look up aliases, since would be faster ?
-      const channel = await get(network.channels, channelId, abort)
-      if (channel.rx.latest) {
-        const { latest } = channel.rx
-        if (!this.#cache.hasPulse(latest)) {
-          let priorLatest
-          if (prior && this.#cache.hasPulse(prior)) {
-            const fullPrior = this.#cache.getPulse(prior)
-            const priorNetwork = fullPrior.getNetwork()
-            const pc = await get(priorNetwork.channels, channelId, abort)
-            priorLatest = pc.rx.latest
-          }
-          if (!this.#cache.hasPulse(latest)) {
-            // TODO handle race conditions if latest already in the bake queue
-            // probably handle at the same time as prioritizing the queue
-            this.#pulseBake(latest, priorLatest)
-          }
-        }
-        nextChildren = nextChildren.set(alias, latest)
-        // if (children) {
-        //   children = children.set(alias, latest)
-        //   this.#cache.updateChildren(pulse, children)
-        // } else {
-        //   this.#cache.updateChildren(pulse, nextChildren)
-        // }
-
-        // options are:
-        // walk with buffer
-        // use the diff
-        // walk channels directly
-      }
+    const [deleted, dIterator] = await network.diffChannels(priorNet, abort)
+    for (const channelId of deleted) {
+      assert(Number.isInteger(channelId))
+      channels = channels.delete(channelId)
     }
-    this.#cache.updateChildren(pulse, nextChildren)
-    if (Date.now() > start + 1000) {
-      debug('slow bake for %s %ims', pulse, Date.now() - start)
-      if (prior && this.#cache.hasPulse(prior)) {
-        const fullPrior = this.#cache.getPulse(prior)
-        const priorNetwork = fullPrior.getNetwork()
-        const start = Date.now()
-        const diff = await network.children.compare()
-        debug('hamt diff %ims', Date.now() - start, diff)
+    for await (const channel of dIterator) {
+      channels = channels.set(channel.channelId, channel)
+      const latest = channel.rx.latest && PulseLink.parse(channel.rx.latest)
 
-        {
-          const start = Date.now()
-          for await (const [alias, channelId] of network.children.entries()) {
-          }
-          debug('hamt walk %ims', Date.now() - start)
+      if (latest) {
+        const [alias] = channel.aliases // TODO fix alias model
+        if (!alias || alias === '.' || alias === '..') {
+          continue
+        }
+        const address = Address.fromCID(channel.address)
+        this.#treeBake(address, latest)
+        // if not done, updates, else ignores
+        if (!this.#cache.isDone(address)) {
+          this.#cache.updateChannels(address, channels)
         }
       }
     }
+    this.#cache.finalize(address, pulse, channels)
   }
   async #startYieldQueue() {
     for await (const { type } of this.#yieldQueue) {
-      const pulse = this.#pulse
+      const address = this.#address
+      // crisp should defer its pulse until asked for it
       const actions = this.#actions
       const chroot = this.#chroot
       const cache = this.#cache
       const isDeepLoaded = this.#isDeepLoaded
-      this.#crisp = Crisp.createRoot(
-        pulse,
-        actions,
-        chroot,
-        cache,
-        isDeepLoaded
-      )
+      // TODO throttle this to stop rapid crisp creation
+      const args = [address, actions, chroot, cache, isDeepLoaded]
+      this.#crisp = Crisp.createRoot(...args)
       for (const subscriber of this.#subscribers) {
         subscriber.push(this.#crisp)
       }
@@ -243,11 +214,4 @@ export class Syncer {
     assert(value > 0, 'concurrency must be greater than 0')
     this.#concurrency = value
   }
-}
-async function get(hamt, channelId, abort) {
-  const channel = await hamt.getChannel(channelId)
-  if (abort.signal.aborted) {
-    throw new Error(BAKE_TEAR)
-  }
-  return channel
 }

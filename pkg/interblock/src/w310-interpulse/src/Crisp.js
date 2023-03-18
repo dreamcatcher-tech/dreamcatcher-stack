@@ -1,7 +1,7 @@
 import { schemaToFunctions } from '../../w002-api'
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { Address, PulseLink } from '../../w008-ipld'
+import { Pulse, Address } from '../../w008-ipld'
 import posix from 'path-browserify'
 import { BakeCache } from './BakeCache'
 const debug = Debug('interblock:api:Crisp')
@@ -9,7 +9,7 @@ const debug = Debug('interblock:api:Crisp')
 export class Crisp {
   #parent // the parent Crisp
   #name // the name of this Crisp, passed down from the parent
-  #pulse // the PulseLink that this Crisp is wrapping
+  #address // the address backing this Crisp
   #rootActions // the base actions of the engine
   #chroot // the chroot of the Syncer that made this Crisps root
   #wd = '/' // the working directory which is only set in the root Crisp
@@ -17,64 +17,64 @@ export class Crisp {
   #isDeepLoaded // if true, the pulse tree is now fully baked
 
   // snapshot tracking
-  #isPulseSnapshotted = false
+  #isPulseAndChannelsSnapshotted = false
   #pulseSnapshot
-  #isChildrenSnapshotted = false
-  #childrenSnapshot
+  #channelsSnapshot
   #isCovenantSnapshotted = false
   #covenantSnapshot
+
+  #cachedAliases
 
   #clone() {
     const next = new Crisp()
     next.#parent = this.#parent
     next.#name = this.#name
-    next.#pulse = this.#pulse
+    next.#address = this.#address
     next.#rootActions = this.#rootActions
     next.#chroot = this.#chroot
     next.#wd = this.#wd
     next.#cache = this.#cache
     next.#isDeepLoaded = this.#isDeepLoaded
-    next.#isPulseSnapshotted = this.#isPulseSnapshotted
+    next.#isPulseAndChannelsSnapshotted = this.#isPulseAndChannelsSnapshotted
     next.#pulseSnapshot = this.#pulseSnapshot
-    next.#isChildrenSnapshotted = this.#isChildrenSnapshotted
-    next.#childrenSnapshot = this.#childrenSnapshot
+    next.#channelsSnapshot = this.#channelsSnapshot
     next.#isCovenantSnapshotted = this.#isCovenantSnapshotted
     next.#covenantSnapshot = this.#covenantSnapshot
+    next.#cachedAliases = this.#cachedAliases
     return next
   }
   static createLoading(chroot = '/') {
     const address = Address.createRoot()
-    const pulse = PulseLink.createCrossover(address)
     const actions = {
       dispatch: () => {
         throw new Error('cannot dispatch from loading Crisp')
       },
     }
-    return Crisp.createRoot(pulse, actions, chroot)
+    return Crisp.createRoot(address, actions, chroot)
   }
   static createRoot(root, actions, chroot = '/', cache, isDeepLoaded) {
-    assert(root instanceof PulseLink)
+    assert(root instanceof Address)
     assert.strictEqual(typeof actions, 'object')
     assert.strictEqual(typeof actions.dispatch, 'function')
     assert(posix.isAbsolute(chroot), `chroot not absolute: ${chroot}`)
     cache = cache || BakeCache.createCI()
     assert(cache instanceof BakeCache)
     const result = new Crisp()
-    result.#pulse = root
+    result.#address = root
     result.#rootActions = actions
     result.#chroot = chroot
     result.#cache = cache
     result.#isDeepLoaded = !!isDeepLoaded
     return result
   }
-  static #createChild(pulse, parent, name) {
-    assert(pulse instanceof PulseLink)
+  static #createChild(address, parent, name) {
+    assert(address instanceof Address)
     assert(parent instanceof Crisp)
     assert.strictEqual(typeof name, 'string')
     assert(name)
     assert(!posix.isAbsolute(name), `name must be relative: ${name}`)
     const result = new Crisp()
-    result.#pulse = pulse
+    result.#address = address
     result.#parent = parent
     result.#name = name
     return result
@@ -178,12 +178,15 @@ export class Crisp {
     return this.#parent
   }
   #snapshotPulse() {
-    if (this.#isPulseSnapshotted) {
+    if (this.#isPulseAndChannelsSnapshotted) {
       return
     }
-    this.#isPulseSnapshotted = true
-    if (this.root.#cache.hasPulse(this.#pulse)) {
-      this.#pulseSnapshot = this.root.#cache.getPulse(this.#pulse)
+    this.#isPulseAndChannelsSnapshotted = true
+    if (this.root.#cache.hasPulse(this.#address)) {
+      this.#pulseSnapshot = this.root.#cache.getPulse(this.#address)
+      if (this.root.#cache.hasChannels(this.#address)) {
+        this.#channelsSnapshot = this.root.#cache.getChannels(this.#address)
+      }
     }
   }
   get state() {
@@ -193,44 +196,55 @@ export class Crisp {
     return this.#pulseSnapshot.getState().toJS()
   }
   get isLoadingChildren() {
-    // TODO MUST handle presenting a cached view to stop tearing
-    this.#snapshotChildren()
-    return !this.#childrenSnapshot
-  }
-  #snapshotChildren() {
-    if (this.#isChildrenSnapshotted) {
-      return
-    }
-    this.#isChildrenSnapshotted = true
+    // TODO isLoadingChildren can still have children to show during first load
     if (this.isLoading) {
-      return
+      return true
     }
-    if (this.root.#cache.hasChildren(this.#pulse)) {
-      this.#childrenSnapshot = this.root.#cache.getChildren(this.#pulse)
-    }
+    return !this.#channelsSnapshot
   }
   hasChild(path) {
     assert.strictEqual(typeof path, 'string')
     if (this.isLoadingChildren) {
       throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
     }
-    return this.#childrenSnapshot.has(path)
+    for (const alias of this) {
+      if (alias === path) {
+        return true
+      }
+    }
+    return false
   }
   getChild(path) {
     assert.strictEqual(typeof path, 'string')
     if (!this.hasChild(path)) {
       throw new Error(`child not found: ${path}`)
     }
-    const childPulse = this.#childrenSnapshot.get(path)
-    const child = Crisp.#createChild(childPulse, this, path)
+    const address = this.#cachedAliases.get(path)
+    const child = Crisp.#createChild(address, this, path)
     return child
   }
+
   *[Symbol.iterator]() {
     if (this.isLoadingChildren) {
       throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
     }
-    for (const [path] of this.#childrenSnapshot.entries()) {
-      yield path
+    if (!this.#cachedAliases) {
+      this.#cachedAliases = new Map()
+      for (const channel of this.#channelsSnapshot.values()) {
+        if (!channel.aliases) {
+          continue
+        }
+        const [alias = ''] = channel.aliases
+        assert.strictEqual(typeof alias, 'string', `invalid alias: ${alias}`)
+        if (alias && alias !== '.' && alias !== '..') {
+          assert(!this.#cachedAliases.has(alias), `duplicate alias: ${alias}`)
+          const address = Address.fromCID(channel.address)
+          this.#cachedAliases.set(alias, address)
+        }
+      }
+    }
+    for (const alias of this.#cachedAliases.keys()) {
+      yield alias
     }
   }
   get sortedChildren() {
@@ -252,9 +266,6 @@ export class Crisp {
     return children
   }
   get covenantPath() {
-    if (this.isLoading) {
-      throw new Error('cannot get covenant from a loading Crisp')
-    }
     return this.pulse.getCovenantPath()
   }
   setWd(path) {
@@ -286,6 +297,14 @@ export class Crisp {
     if (this.isLoading) {
       throw new Error('cannot get pulse from a loading Crisp')
     }
-    return this.root.#cache.getPulse(this.#pulse)
+    assert(this.#pulseSnapshot instanceof Pulse)
+    return this.#pulseSnapshot
+  }
+  isStale() {
+    // TODO compare the pulse and pulseId in the cache
+  }
+  isPathStale() {
+    // TODO walk up to root and check if anything is stale
+    // if so, means that we *might* be stale
   }
 }

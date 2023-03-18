@@ -1,5 +1,8 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
+import parallel from 'it-parallel'
+import { pipe } from 'it-pipe'
+import { pushable } from 'it-pushable'
 import {
   PulseLink,
   HistoricalPulseLink,
@@ -560,6 +563,49 @@ export class Network extends IpldStruct {
       return true
     })
     await Promise.all(hamts.map((hamt) => hamt.walk()))
+  }
+  async diffChannels(prior, abort) {
+    assert(!prior || prior instanceof Network)
+    checkAbort(abort)
+    const diff = await this.channels.list.compare(prior?.channels.list)
+    checkAbort(abort)
+    assert(diff.added)
+    assert(diff.modified)
+    const keys = [...diff.added, ...diff.modified]
+    const network = this
+
+    const tasker = function* (keys) {
+      for (const key of keys) {
+        yield async () => {
+          const { value } = await network.channels.list.getBlock(key)
+          checkAbort(abort)
+          return value
+        }
+      }
+    }
+
+    const collector = pushable({ objectMode: true })
+    pipe(keys, tasker, parallel, async (source) => {
+      for await (const value of source) {
+        collector.push(value)
+      }
+      collector.end()
+    })
+
+    const exporter = async function* (source) {
+      for await (const value of source) {
+        checkAbort(abort)
+        yield value
+      }
+    }
+    const iterator = exporter(collector)
+    return [diff.deleted, iterator]
+  }
+}
+const checkAbort = (abort) => {
+  assert(abort instanceof AbortController)
+  if (abort.signal.aborted) {
+    throw new Error(abort.message || `aborted`)
   }
 }
 const crossover = (channel) => {

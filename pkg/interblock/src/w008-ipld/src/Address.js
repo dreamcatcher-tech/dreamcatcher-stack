@@ -47,6 +47,11 @@ const addressBlock = (cidV1) => {
 
 export class Address extends IpldInterface {
   #cid
+  static fromCID(cid) {
+    const instance = new this()
+    instance.#setCid(cid)
+    return instance
+  }
   static fromChainId(chainId) {
     assert.strictEqual(typeof chainId, 'string')
     assert(chainId)

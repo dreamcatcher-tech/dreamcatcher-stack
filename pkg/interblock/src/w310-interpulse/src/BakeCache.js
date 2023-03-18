@@ -1,15 +1,25 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import Debug from 'debug'
-import { Pulse, PulseLink } from '../../w008-ipld'
+import { Address, Pulse, PulseLink } from '../../w008-ipld'
 import Immutable from 'immutable'
 import { pushable } from 'it-pushable'
 
 const debug = Debug('interblock:api:BakeCache')
 
+/**
+ * Format is: chainId -> {
+ *    pulseId, // latest known pulseId, which may be ahead of the pulse
+ *    pulse, // the last fully walked pulse, or the first unwalked pulse
+ *    channels<Map<channelId, channel>>, // the last fully walked channels, or the first progressively walked channels
+ *    done // true if the pulse has been fully walked, so it can be used as a prior
+ * }
+ *
+ * pulse and channels are a matched pair
+ */
 export class BakeCache {
   #yieldStream
-  #pulses = new Map() // cids -> { pulse, children<Map( path -> cid )> }
+  #chains = new Map() // cids -> { pulseId, pulse, channels, done }
   #covenants = new Map() // paths -> pulse
   static create(yieldStream) {
     assert.strictEqual(typeof yieldStream.push, 'function')
@@ -28,33 +38,113 @@ export class BakeCache {
     this.#covenants.set(path, pulse)
     this.#yieldStream.push({ type: 'COVENANT' })
   }
-  initialize(pulseLink) {
-    assert(pulseLink instanceof PulseLink)
-    const key = pulseLink.cid.toString()
-    assert(!this.#pulses.has(key), `already initialized: ${pulseLink}`)
-    this.#pulses.set(key, {})
-    this.#yieldStream.push({ type: 'INITIALIZE' })
+  preBake(address, pulseId) {
+    assert(address instanceof Address)
+    assert(pulseId instanceof PulseLink)
+    const key = address.getChainId()
+    if (!this.#chains.has(key)) {
+      this.#chains.set(key, {})
+    }
+    const tracker = this.#chains.get(key)
+    if (!pulseId.equals(tracker.pulseId)) {
+      this.#chains.set(key, { ...tracker, pulseId })
+      this.#yieldStream.push({ type: 'PRE_BAKE' })
+    }
   }
-  setPulse(pulseLink, pulse) {
-    assert(pulseLink instanceof PulseLink)
+  isBaked(address, pulseId) {
+    assert(address instanceof Address)
+    assert(pulseId instanceof PulseLink)
+    const key = address.getChainId()
+    assert(this.#chains.has(key), `not initialized: ${address}`)
+    const tracker = this.#chains.get(key)
+    assert(pulseId.equals(tracker.pulseId))
+    if (tracker.pulse) {
+      if (!tracker.pulse.getPulseLink().equals(pulseId)) {
+        return false
+      }
+      return !!tracker.done
+    }
+    return false
+  }
+  hasPulse(address) {
+    assert(address instanceof Address)
+    const key = address.getChainId()
+    if (!this.#chains.has(key)) {
+      return false
+    }
+    const { pulse } = this.#chains.get(key)
+    return !!pulse
+  }
+  getPulse(address) {
+    assert(address instanceof Address)
+    const key = address.getChainId()
+    const { pulse } = this.#chains.get(key)
+    assert(pulse instanceof Pulse, `no pulse for ${address}`)
+    return pulse
+  }
+  setVirginPulse(address, pulse) {
+    assert(address instanceof Address)
     assert(pulse instanceof Pulse)
-    const key = pulseLink.cid.toString()
-    assert(this.#pulses.has(key), `not initialized: ${pulseLink}`)
-    const tracker = this.#pulses.get(key)
-    assert(!tracker.pulse)
-    this.#pulses.set(key, { ...tracker, pulse })
-    this.#yieldStream.push({ type: 'PULSE' })
+    const key = address.getChainId()
+    assert(this.isVirgin(address), `already baked: ${address}`)
+    const tracker = this.#chains.get(key)
+    const { pulseId } = tracker
+    assert(pulseId instanceof PulseLink)
+    assert(pulseId.equals(pulse.getPulseLink()))
+    this.#chains.set(key, { ...tracker, pulse })
+    this.#yieldStream.push({ type: 'VIRGIN_PULSE' })
   }
-  updateChildren(pulseLink, nextChildren) {
-    assert(pulseLink instanceof PulseLink)
-    assert(Immutable.Map.isMap(nextChildren))
-    const key = pulseLink.cid.toString()
-    const { pulse, children, ...rest } = this.#pulses.get(key)
-    assert(!pulse || pulse instanceof Pulse)
-    assert(!children || Immutable.Map.isMap(children))
-    assert.strictEqual(Object.keys(rest).length, 0)
-    this.#pulses.set(key, { pulse, children: nextChildren })
-    this.#yieldStream.push({ type: 'CHILDREN' })
+  isVirgin(address) {
+    assert(address instanceof Address)
+    const key = address.getChainId()
+    assert(this.#chains.has(key), `not initialized: ${address}`)
+    const { pulse, done, channels } = this.#chains.get(key)
+    return !pulse && !done && !channels
+  }
+  isDone(address) {
+    assert(address instanceof Address)
+    const key = address.getChainId()
+    assert(this.#chains.has(key), `not initialized: ${address}`)
+    const { done, pulse, channels } = this.#chains.get(key)
+    if (done) {
+      assert(pulse instanceof Pulse)
+      assert(Immutable.Map.isMap(channels))
+    }
+    return !!done
+  }
+  hasChannels(address) {
+    assert(address instanceof Address)
+    const key = address.getChainId()
+    assert(this.#chains.has(key), `not initialized: ${address}`)
+    const { channels } = this.#chains.get(key)
+    return !!channels
+  }
+  getChannels(address) {
+    assert(address instanceof Address)
+    const key = address.getChainId()
+    assert(this.#chains.has(key), `not initialized: ${address}`)
+    const { channels } = this.#chains.get(key)
+    assert(Immutable.Map.isMap(channels))
+    return channels
+  }
+  updateChannels(address, channels) {
+    assert(address instanceof Address)
+    assert(Immutable.Map.isMap(channels))
+    const key = address.getChainId()
+    const { done, ...rest } = this.#chains.get(key)
+    assert(!done, `already done: ${address}`)
+    this.#chains.set(key, { ...rest, channels })
+    this.#yieldStream.push({ type: 'UPDATE_CHANNELS' })
+  }
+  finalize(address, pulse, channels) {
+    assert(address instanceof Address)
+    assert(pulse instanceof Pulse)
+    assert(Immutable.Map.isMap(channels))
+    const key = address.getChainId()
+    const { done, pulseId } = this.#chains.get(key)
+    assert(pulseId.equals(pulse.getPulseLink()))
+    this.#chains.set(key, { pulseId, pulse, channels, done: true })
+    this.#yieldStream.push({ type: 'FINALIZE' })
   }
   hasCovenant(path) {
     assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
@@ -64,38 +154,5 @@ export class BakeCache {
     assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
     assert(this.#covenants.has(path), `no covenant for path: ${path}`)
     return this.#covenants.get(path)
-  }
-  hasPulse(pulseLink) {
-    assert(pulseLink instanceof PulseLink)
-    const key = pulseLink.cid.toString()
-    if (!this.#pulses.has(key)) {
-      return false
-    }
-    const { pulse } = this.#pulses.get(key)
-    return !!pulse
-  }
-  getPulse(pulseLink) {
-    assert(pulseLink instanceof PulseLink)
-    const key = pulseLink.cid.toString()
-    const { pulse } = this.#pulses.get(key)
-    assert(pulse instanceof Pulse)
-    return pulse
-  }
-  hasChildren(pulseLink) {
-    assert(pulseLink instanceof PulseLink)
-    const key = pulseLink.cid.toString()
-    if (!this.#pulses.has(key)) {
-      return false
-    }
-    const { children } = this.#pulses.get(key)
-    return !!children
-  }
-  getChildren(pulseLink) {
-    assert(pulseLink instanceof PulseLink)
-    const key = pulseLink.cid.toString()
-    assert(this.#pulses.has(key))
-    const { children } = this.#pulses.get(key)
-    assert(Immutable.Map.isMap(children))
-    return children
   }
 }

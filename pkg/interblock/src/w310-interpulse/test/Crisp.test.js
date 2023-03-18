@@ -10,33 +10,34 @@ const debug = Debug('tests')
 
 const actions = { dispatch: (...args) => debug('CI dispatch', args) }
 
-const createCiCache = (fullPulse) => {
-  const pulse = fullPulse.getPulseLink()
+const createCiCache = (pulse) => {
+  const pulseId = pulse.getPulseLink()
   const cache = BakeCache.createCI()
-  cache.initialize(pulse)
-  cache.setPulse(pulse, fullPulse)
-  const children = Immutable.Map({ child: pulse })
-  cache.updateChildren(pulse, children)
+  const address = pulse.getAddress()
+  cache.preBake(address, pulseId)
+  cache.setVirginPulse(address, pulse)
+  const channels = Immutable.Map().set(3, {
+    aliases: ['child'],
+    address: address.cid,
+  })
+  cache.updateChannels(address, channels)
   return cache
 }
 
 describe('Crisp', () => {
-  it('should create a Crisp', async function () {
-    const fullPulse = await Pulse.createCI({ state: { test: true } })
-    const pulse = fullPulse.getPulseLink()
-    const cache = createCiCache(fullPulse)
-    const crisp = Crisp.createRoot(pulse, actions, '/', cache)
-    expect(crisp).toBeInstanceOf(Crisp)
-    expect(crisp.state).toEqual({ test: true })
-    expect(crisp.hasChild('not a path')).toBe(false)
-  })
-  describe('getSelectedChild', () => {
-    let crisp, pulse
+  describe('direct', () => {
+    let crisp, pulseId
     beforeEach(async () => {
-      const fullPulse = await Pulse.createCI()
-      pulse = fullPulse.getPulseLink()
-      const cache = createCiCache(fullPulse)
-      crisp = Crisp.createRoot(pulse, actions, '/', cache)
+      const pulse = await Pulse.createCI({ state: { test: true } })
+      pulseId = pulse.getPulseLink()
+      const cache = createCiCache(pulse)
+      const address = pulse.getAddress()
+      crisp = Crisp.createRoot(address, actions, '/', cache)
+    })
+    it('should create a Crisp', async function () {
+      expect(crisp).toBeInstanceOf(Crisp)
+      expect(crisp.state).toEqual({ test: true })
+      expect(crisp.hasChild('not a path')).toBe(false)
     })
     it('getSelectedChild works when root', async () => {
       const virtualPath = '0'
@@ -51,7 +52,6 @@ describe('Crisp', () => {
       expect(child.getSelectedChild()).toBe(virtualPath)
     })
     it('getSelectedChild works deeply nested and root', async () => {
-      let crisp = Crisp.createRoot(pulse, actions)
       const virtualPath = '0'
       crisp = crisp.setWd('/' + virtualPath + '/other/paths')
       expect(crisp.getSelectedChild()).toBe(virtualPath)
@@ -64,20 +64,19 @@ describe('Crisp', () => {
       expect(child.getSelectedChild()).toBe(virtualPath)
     })
     it('setWd must be absolute', async () => {
-      const crisp = Crisp.createRoot(pulse, actions)
       expect(() => crisp.setWd('non absolute')).toThrow('wd must be absolute')
     })
   })
   describe('absolutePath', () => {
-    let pulse, cache
+    let address, cache
     beforeAll(async () => {
-      const fullPulse = await Pulse.createCI()
-      pulse = fullPulse.getPulseLink()
-      cache = createCiCache(fullPulse)
+      const pulse = await Pulse.createCI()
+      address = pulse.getAddress()
+      cache = createCiCache(pulse)
     })
     it('works when chrooted', async () => {
       const chroot = '/app'
-      const crisp = Crisp.createRoot(pulse, actions, chroot, cache)
+      const crisp = Crisp.createRoot(address, actions, chroot, cache)
       expect(crisp.absolutePath).toBe(chroot)
       expect(crisp.path).toBe('/')
       expect(crisp.chroot).toBe(chroot)
@@ -89,7 +88,7 @@ describe('Crisp', () => {
     })
     it('errors on non absolute chroot', async () => {
       const chroot = 'non absolute'
-      expect(() => Crisp.createRoot(pulse, actions, chroot)).toThrow('chroot')
+      expect(() => Crisp.createRoot(address, actions, chroot)).toThrow('chroot')
     })
   })
   it('can CD into any path it sees', async () => {

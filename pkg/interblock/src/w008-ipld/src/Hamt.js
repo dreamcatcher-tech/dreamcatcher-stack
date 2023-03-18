@@ -132,6 +132,18 @@ export class Hamt extends IpldInterface {
     this.#gets = this.#gets.set(key, value)
     return value
   }
+  async getBlock(key) {
+    assertKey(key)
+    assert(this.#valueClass, `no valueClass => no blocks: ${key}`)
+    if (!(await this.#has(key))) {
+      throw new Error(`key not present: ${key}`)
+    }
+    let cid = await this.#hashmap.get(key)
+    assert(cid !== undefined)
+    assert(CID.asCID(cid))
+    const block = await this.#putStore.getBlock(cid)
+    return block
+  }
   isModified() {
     return !!this.#sets.size || !!this.#deletes.size || !this.#hashmap
   }
@@ -260,16 +272,8 @@ export class Hamt extends IpldInterface {
       }
     }
   }
-  // TODO make this stream results out
-  // when bucket patches are found, confirm them against other
-  // if confirmed, emit a result of either added, deleted, or modified
-  // if not confirmed, remove patch and carry on, cache the key result
-  // confirmations should be cached, so very fast to check again in case
-  // a bucket just got moved around.
-  // stream could be backpressure aware, so it didn't just rip ahead
   async compare(other) {
     if (!other) {
-      // TODO simply walk the hamt and emit all the keys
       other = this.constructor.create(this.#valueClass, this.#isMutable)
       other = await other.crush()
     }
