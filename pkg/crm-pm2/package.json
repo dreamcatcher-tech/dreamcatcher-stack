@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/crm-pm2",
-  "version": "1.0.67",
+  "version": "1.0.68",
   "description": "Server side CRM instance",
   "main": "app.mjs",
   "type": "module",
@@ -10,7 +10,7 @@
     "re": "yarn rm && yarn dev"
   },
   "dependencies": {
-    "@dreamcatcher-tech/interblock": "^1.0.67",
+    "@dreamcatcher-tech/interblock": "^1.0.68",
     "@pm2/io": "^5.0.0",
     "ansi-colors-browserify": "^4.1.2",
     "assert-fast": "^1.0.3",
