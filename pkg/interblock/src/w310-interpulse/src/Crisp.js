@@ -207,15 +207,12 @@ export class Crisp {
     if (this.isLoadingChildren) {
       throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
     }
-    for (const alias of this) {
-      if (alias === path) {
-        return true
-      }
-    }
-    return false
+    this.#cacheAliases()
+    return this.#cachedAliases.has(path)
   }
   getChild(path) {
     assert.strictEqual(typeof path, 'string')
+    this.#cacheAliases()
     if (!this.hasChild(path)) {
       throw new Error(`child not found: ${path}`)
     }
@@ -223,12 +220,9 @@ export class Crisp {
     const child = Crisp.#createChild(address, this, path)
     return child
   }
-
-  *[Symbol.iterator]() {
-    if (this.isLoadingChildren) {
-      throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
-    }
+  #cacheAliases() {
     if (!this.#cachedAliases) {
+      this.#snapshotPulse()
       this.#cachedAliases = new Map()
       for (const channel of this.#channelsSnapshot.values()) {
         if (!channel.aliases) {
@@ -243,6 +237,12 @@ export class Crisp {
         }
       }
     }
+  }
+  *[Symbol.iterator]() {
+    if (this.isLoadingChildren) {
+      throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
+    }
+    this.#cacheAliases()
     for (const alias of this.#cachedAliases.keys()) {
       yield alias
     }

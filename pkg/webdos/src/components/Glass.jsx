@@ -97,6 +97,7 @@ Center.propTypes = {
   debug: PropTypes.bool,
 }
 const Lazy = ({ show, children }) => {
+  // TODO replace lazy with https://www.npmjs.com/package/react-lazyload
   const [mounted, setMounted] = React.useState(show)
   if (show && !mounted) {
     setMounted(true)

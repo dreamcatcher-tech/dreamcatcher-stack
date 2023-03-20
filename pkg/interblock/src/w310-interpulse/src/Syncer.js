@@ -1,5 +1,6 @@
 import parallel from 'it-parallel'
 import { pipe } from 'it-pipe'
+import throttle from 'lodash.throttle'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import Debug from 'debug'
@@ -161,10 +162,14 @@ export class Syncer {
     const start = Date.now()
 
     const [deleted, dIterator] = await network.diffChannels(priorNet, abort)
+    const diff = Date.now() - start
+    const dstart = Date.now()
     for (const channelId of deleted) {
       assert(Number.isInteger(channelId))
       channels = channels.delete(channelId)
     }
+    const deletes = Date.now() - dstart
+    const istart = Date.now()
     for await (const channel of dIterator) {
       channels = channels.set(channel.channelId, channel)
       const latest = channel.rx.latest && PulseLink.parse(channel.rx.latest)
@@ -178,10 +183,21 @@ export class Syncer {
         this.#treeBake(address, latest)
         // if not done, updates, else ignores
         if (!this.#cache.isDone(address)) {
-          this.#cache.updateChannels(address, channels)
+          // this.#cache.updateChannels(address, channels)
         }
       }
     }
+    const inserts = Date.now() - istart
+    if (channels.size > 10) {
+      debug(
+        'diff took %dms, %dms deletes, %dms inserts for size %i',
+        diff,
+        deletes,
+        inserts,
+        channels.size
+      )
+    }
+
     this.#cache.finalize(address, pulse, channels)
   }
   async #startYieldQueue() {
@@ -192,12 +208,13 @@ export class Syncer {
       const chroot = this.#chroot
       const cache = this.#cache
       const isDeepLoaded = this.#isDeepLoaded
-      // TODO throttle this to stop rapid crisp creation
       const args = [address, actions, chroot, cache, isDeepLoaded]
+      // throttled(() => {
       this.#crisp = Crisp.createRoot(...args)
       for (const subscriber of this.#subscribers) {
         subscriber.push(this.#crisp)
       }
+      // })
     }
   }
   subscribe() {
@@ -215,3 +232,4 @@ export class Syncer {
     this.#concurrency = value
   }
 }
+const throttled = throttle((fn) => fn(), 100)

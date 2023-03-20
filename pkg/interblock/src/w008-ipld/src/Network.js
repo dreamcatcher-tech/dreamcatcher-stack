@@ -585,7 +585,9 @@ export class Network extends IpldStruct {
     }
 
     const collector = pushable({ objectMode: true })
-    pipe(keys, tasker, parallel, async (source) => {
+    const concurrency = 4
+    const propeller = (source) => parallel(source, { concurrency })
+    pipe(keys, tasker, propeller, async (source) => {
       for await (const value of source) {
         collector.push(value)
       }

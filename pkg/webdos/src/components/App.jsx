@@ -9,6 +9,7 @@ const debug = Debug('webdos:components:App')
 export default function App({ crisp }) {
   const { wd } = crisp
   debug('wd', wd)
+  // TODO replace lazy with https://www.npmjs.com/package/react-lazyload
   return (
     <Box
       sx={{
