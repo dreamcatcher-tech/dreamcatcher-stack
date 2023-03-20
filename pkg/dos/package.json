@@ -1,7 +1,7 @@
 {
   "name": "@dreamcatcher-tech/dos",
   "type": "module",
-  "version": "1.0.68",
+  "version": "1.0.69",
   "description": "Terminal interface to the HyperNet",
   "main": "src/index.mjs",
   "files": [
@@ -18,7 +18,7 @@
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@dreamcatcher-tech/interblock": "^1.0.68",
+    "@dreamcatcher-tech/interblock": "^1.0.69",
     "@multiformats/multiaddr": "^11.1.4",
     "@vitejs/plugin-react": "^3.0.0",
     "ansi-colors-browserify": "^4.1.2",
