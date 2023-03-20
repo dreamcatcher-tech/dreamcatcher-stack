@@ -68,6 +68,7 @@ export class NetEndurance extends Endurance {
     assert(pulse instanceof PulseLink)
     assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
+    const abort = new AbortController()
 
     debug(`streamWalk ${pulse} ${type}`)
     const start = Date.now()
@@ -93,6 +94,7 @@ export class NetEndurance extends Endurance {
     const walks = pushable({ objectMode: true })
     walks.push({ pulse, prior, withChildren, noHamts })
     let walkCount = 0
+    // TODO maybe parallelize the walks
     for await (const { pulse, prior, withChildren, noHamts } of walks) {
       const fullPulse = await this.recover(pulse)
       const fullPrior = prior ? await this.recover(prior) : undefined
@@ -107,25 +109,23 @@ export class NetEndurance extends Endurance {
       if (withChildren) {
         const network = fullPulse.getNetwork()
         const pNetwork = fullPrior?.getNetwork()
-        // TODO unify with the syncer walk
-        // TODO use hamt diffing
-        // TODO entries should eagerly load ahead into a buffer
-        for await (const [id, channel] of network.channels.list.entries()) {
-          // takes advantage of id's being stable
-          if (channel.rx.latest) {
-            const pulse = channel.rx.latest
+        const [, dIterator] = await network.diffChannels(pNetwork, abort)
+        for await (const channel of dIterator) {
+          const latest = channel.rx.latest && PulseLink.parse(channel.rx.latest)
+          if (latest) {
             let prior
             if (pNetwork) {
-              const pChannel = await pNetwork.channels.list.get(id)
-              prior = pChannel?.rx.latest
+              const { channelId } = channel
+              if (pNetwork.channels.list.has(channelId)) {
+                const pChannel = await pNetwork.channels.list.get(channelId)
+                prior = pChannel?.rx.latest
+              }
             }
-            if (pulse.equals(prior)) {
+            if (latest.equals(prior)) {
               continue
             }
             walkCount++
-            // TODO use network.streamChildren( pNetwork )
-
-            walks.push({ pulse, prior, withChildren, noHamts })
+            walks.push({ pulse: latest, prior, withChildren, noHamts })
           }
         }
       }
@@ -172,7 +172,6 @@ export class NetEndurance extends Endurance {
 
     for (const [index, hamt] of hamts.entries()) {
       const pHamt = pHamts?.[index]
-      const priorBlocks = new Set()
       if (pHamt?.cid.equals(hamt.cid)) {
         continue
       }
@@ -182,32 +181,69 @@ export class NetEndurance extends Endurance {
         stream.push(block)
         continue
       }
-      if (pHamt) {
-        // TODO cache here
-        for await (const cid of pHamt.cids()) {
-          priorBlocks.add(cid.toString())
+
+      const priorCids = await this.#getHamtCids(pHamt)
+      const cids = await this.#getHamtCids(hamt)
+      for (const cidString of cids) {
+        assert.strictEqual(typeof cidString, 'string')
+        if (!priorCids.has(cidString)) {
+          const cid = CID.parse(cidString)
+          const [block] = await resolver(cid, { noObjectCache: true })
+          stream.push(block)
         }
       }
-      for await (const cid of hamt.cids()) {
-        // TODO cache here
-        if (priorBlocks.has(cid.toString())) {
-          continue
-        }
-        const [block] = await resolver(cid, { noObjectCache: true })
-        stream.push(block)
-      }
-      // readahead cache here
+
+      const tasks = []
       for await (const [key, value] of hamt.entries()) {
-        if (value instanceof IpldInterface) {
-          let pValue
-          // multithread here
-          if (await pHamt?.has(key)) {
-            pValue = await pHamt?.get(key)
+        const task = async () => {
+          if (value instanceof IpldInterface) {
+            let pValue
+            if (await pHamt?.has(key)) {
+              pValue = await pHamt.get(key)
+            }
+            this.#cidWalk(value, pValue, stream)
           }
-          this.#cidWalk(value, pValue, stream)
         }
+        tasks.push(task())
       }
+      await Promise.all(tasks)
     }
+  }
+  #hamtCidsCache = new Map()
+  #trimHamtCidsCache() {
+    const cacheLimit = 1000
+    if (this.#hamtCidsCache.size <= cacheLimit) {
+      return
+    }
+    for (const key of this.#hamtCidsCache.keys()) {
+      if (this.#hamtCidsCache.size <= cacheLimit) {
+        break
+      }
+      this.#hamtCidsCache.delete(key)
+    }
+  }
+  async #getHamtCids(hamt) {
+    if (!hamt) {
+      return new Set()
+    }
+    assert(hamt instanceof Hamt)
+    const key = hamt.cid.toString()
+    if (!this.#hamtCidsCache.has(key)) {
+      this.#trimHamtCidsCache()
+      let resolve
+      const promise = new Promise((_resolve) => {
+        resolve = _resolve
+      })
+      this.#hamtCidsCache.set(key, promise)
+      const cids = new Set()
+      for await (const cid of hamt.cids()) {
+        cids.add(cid.toString())
+      }
+      resolve(cids)
+    }
+    const cached = await this.#hamtCidsCache.get(key)
+    assert(cached instanceof Set)
+    return cached
   }
   #cidWalk(instance, prior, stream) {
     assert(instance instanceof IpldInterface)

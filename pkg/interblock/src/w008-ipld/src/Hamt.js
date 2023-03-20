@@ -237,6 +237,7 @@ export class Hamt extends IpldInterface {
    * @returns {AsyncGenerator<[string, any]>}
    */
   entries() {
+    // TODO use the caches here, and use readahead buffer
     assert(!this.isModified())
     return this.#hashmap.entries()
   }
