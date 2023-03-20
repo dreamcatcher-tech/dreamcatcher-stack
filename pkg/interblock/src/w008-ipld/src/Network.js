@@ -585,13 +585,18 @@ export class Network extends IpldStruct {
     }
 
     const collector = pushable({ objectMode: true })
-    const concurrency = 4
+    const concurrency = 10 // between 1 and 40 appears to have no effect
+    // but Inifity drowns the main thread for about 7s.
     const propeller = (source) => parallel(source, { concurrency })
     pipe(keys, tasker, propeller, async (source) => {
-      for await (const value of source) {
-        collector.push(value)
+      try {
+        for await (const value of source) {
+          collector.push(value)
+        }
+        collector.end()
+      } catch (error) {
+        collector.throw(error)
       }
-      collector.end()
     })
 
     const exporter = async function* (source) {

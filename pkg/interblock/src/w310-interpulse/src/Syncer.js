@@ -14,7 +14,7 @@ const debug = Debug('interblock:api:Syncer')
 const BAKE_TEAR = 'BAKE_TEAR'
 
 export class Syncer {
-  #concurrency = 20
+  #concurrency = 10
   #address
   #pulseId
   #pulseResolver
@@ -92,63 +92,95 @@ export class Syncer {
   async #drainBakeQueue() {
     const queue = this.#bakeQueue
     const abort = this.#abort
-    for await (const { address, pulseId } of queue) {
-      assert(address instanceof Address)
-      assert(pulseId instanceof PulseLink)
-      if (this.#cache.isBaked(address, pulseId)) {
-        continue
-      }
-      let pulse
-      if (this.#cache.hasPulse(address)) {
-        const lastPulse = this.#cache.getPulse(address)
-        assert(lastPulse instanceof Pulse)
-        if (lastPulse.getPulseLink().equals(pulseId)) {
-          pulse = lastPulse
-        }
-      }
-      if (!pulse) {
-        pulse = await this.#resolve(pulseId, abort)
-      }
-      if (this.#cache.isVirgin(address)) {
-        this.#cache.setVirginPulse(address, pulse)
-      }
-      await this.#bake(address, pulse, abort)
-      if (this.#bakeQueue === queue && queue.readableLength === 0) {
-        this.#isDeepLoaded = true
-        this.#yieldQueue.push({ type: 'DEEP_LOADED' })
-        queue.end()
-        debug('bake queue drained for %s', this.#pulseId, this.#crisp)
+    const syncer = this
+    let taskCounter = 0
+    const tasker = async function* (queue) {
+      for await (const { address, pulseId } of queue) {
+        taskCounter++
+        yield () => syncer.#processor(address, pulseId, abort)
       }
     }
+    const concurrency = this.#concurrency
+    const propeller = (source) => parallel(source, { concurrency })
+    return new Promise((resolve, reject) => {
+      pipe(queue, tasker, propeller, async (source) => {
+        try {
+          for await (const _ of source) {
+            taskCounter--
+            if (this.#bakeQueue === queue && taskCounter === 0) {
+              this.#isDeepLoaded = true
+              this.#yieldQueue.push({ type: 'DEEP_LOADED' })
+              queue.end()
+              debug('bake queue drained for %s', this.#pulseId, this.#crisp)
+            }
+          }
+          resolve()
+        } catch (error) {
+          reject(error)
+        }
+      })
+    })
   }
+  async #processor(address, pulseId, abort) {
+    assert(address instanceof Address)
+    assert(pulseId instanceof PulseLink)
+    assert(abort instanceof AbortController)
+    checkAbort(abort)
+    if (this.#cache.isBaked(address, pulseId)) {
+      return
+    }
+    let pulse
+    if (this.#cache.hasPulse(address)) {
+      const lastPulse = this.#cache.getPulse(address)
+      assert(lastPulse instanceof Pulse)
+      if (lastPulse.getPulseLink().equals(pulseId)) {
+        pulse = lastPulse
+      }
+    }
+    if (!pulse) {
+      pulse = await this.#resolve(pulseId, abort)
+    }
+    if (this.#cache.isVirgin(address)) {
+      this.#cache.setVirginPulse(address, pulse)
+    }
+    await this.#bake(address, pulse, abort)
+  }
+
   async #resolve(pulseId, abort) {
     assert(pulseId instanceof PulseLink)
     assert(abort instanceof AbortController)
     const TYPE = 'crispDeepPulse'
     const pulse = await this.#pulseResolver(pulseId, TYPE, abort)
-    if (abort.signal.aborted) {
-      throw new Error(BAKE_TEAR)
-    }
+    checkAbort(abort)
     return pulse
   }
+  #covenantResolveMap = new Map() // covenantPath -> promise
   async #resolveCovenant(covenantPath, abort) {
     assert.strictEqual(typeof covenantPath, 'string')
     assert(abort instanceof AbortController)
-    const covenant = await this.#covenantResolver(covenantPath, abort)
-    if (abort.signal.aborted) {
-      throw new Error(BAKE_TEAR)
+    if (!this.#covenantResolveMap.has(covenantPath)) {
+      const promise = new Promise((resolve, reject) => {
+        this.#covenantResolver(covenantPath, abort)
+          .then((covenant) => {
+            checkAbort(abort)
+            this.#cache.setCovenant(covenantPath, covenant)
+            resolve()
+          })
+          .catch(reject)
+      })
+
+      this.#covenantResolveMap.set(covenantPath, promise)
     }
-    return covenant
+    return await this.#covenantResolveMap.get(covenantPath)
   }
   async #bake(address, pulse, abort) {
     assert(address instanceof Address)
     assert(pulse instanceof Pulse)
     assert(abort instanceof AbortController)
     const covenantPath = pulse.getCovenantPath()
+    let covenantPromise
     if (!this.#cache.hasCovenant(covenantPath)) {
-      // TODO multithread this
-      const covenant = await this.#resolveCovenant(covenantPath, abort)
-      this.#cache.setCovenant(covenantPath, covenant)
+      covenantPromise = this.#resolveCovenant(covenantPath, abort)
     }
 
     let channels = Immutable.Map()
@@ -183,7 +215,7 @@ export class Syncer {
         this.#treeBake(address, latest)
         // if not done, updates, else ignores
         if (!this.#cache.isDone(address)) {
-          // this.#cache.updateChannels(address, channels)
+          // TODO update the size of children if we have it for skeletons
         }
       }
     }
@@ -197,8 +229,8 @@ export class Syncer {
         channels.size
       )
     }
-
     this.#cache.finalize(address, pulse, channels)
+    await covenantPromise
   }
   async #startYieldQueue() {
     for await (const { type } of this.#yieldQueue) {
@@ -209,12 +241,11 @@ export class Syncer {
       const cache = this.#cache
       const isDeepLoaded = this.#isDeepLoaded
       const args = [address, actions, chroot, cache, isDeepLoaded]
-      // throttled(() => {
+      // throttling here has no observable affect
       this.#crisp = Crisp.createRoot(...args)
       for (const subscriber of this.#subscribers) {
         subscriber.push(this.#crisp)
       }
-      // })
     }
   }
   subscribe() {
@@ -232,4 +263,9 @@ export class Syncer {
     this.#concurrency = value
   }
 }
-const throttled = throttle((fn) => fn(), 100)
+const checkAbort = (abort) => {
+  assert(abort instanceof AbortController)
+  if (abort.signal.aborted) {
+    throw new Error(abort.message || `aborted`)
+  }
+}

@@ -25,8 +25,6 @@ export default function ReactSyncer({ engine, path, children }) {
     const pathIterator = engine.subscribe(path)
     const crispIterator = syncer.subscribe()
 
-    debug('iterators', wdIterator, pathIterator, crispIterator)
-
     const updateWd = (current) => {
       if (!engine.wd.startsWith(path)) {
         if (current.wd !== '/') {
