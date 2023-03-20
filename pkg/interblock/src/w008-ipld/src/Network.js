@@ -571,10 +571,11 @@ export class Network extends IpldStruct {
     checkAbort(abort)
     assert(diff.added)
     assert(diff.modified)
+    assert(diff.deleted)
     const keys = [...diff.added, ...diff.modified]
     const network = this
 
-    const tasker = function* (keys) {
+    const taskMaker = function* (keys) {
       for (const key of keys) {
         yield async () => {
           const { value } = await network.channels.list.getBlock(key)
@@ -584,18 +585,19 @@ export class Network extends IpldStruct {
       }
     }
 
-    const collector = pushable({ objectMode: true })
-    const concurrency = 10 // between 1 and 40 appears to have no effect
+    const buffer = pushable({ objectMode: true })
+    // between 1 and 40 appears to have no effect
     // but Inifity drowns the main thread for about 7s.
+    const concurrency = 10
     const propeller = (source) => parallel(source, { concurrency })
-    pipe(keys, tasker, propeller, async (source) => {
+    pipe(keys, taskMaker, propeller, async (source) => {
       try {
         for await (const value of source) {
-          collector.push(value)
+          buffer.push(value)
         }
-        collector.end()
+        buffer.end()
       } catch (error) {
-        collector.throw(error)
+        buffer.throw(error)
       }
     })
 
@@ -605,7 +607,7 @@ export class Network extends IpldStruct {
         yield value
       }
     }
-    const iterator = exporter(collector)
+    const iterator = exporter(buffer)
     return [diff.deleted, iterator]
   }
 }

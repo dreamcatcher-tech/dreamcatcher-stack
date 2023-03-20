@@ -94,7 +94,7 @@ export class Syncer {
     const abort = this.#abort
     const syncer = this
     let taskCounter = 0
-    const tasker = async function* (queue) {
+    const taskMaker = async function* (queue) {
       for await (const { address, pulseId } of queue) {
         taskCounter++
         yield () => syncer.#processor(address, pulseId, abort)
@@ -103,7 +103,7 @@ export class Syncer {
     const concurrency = this.#concurrency
     const propeller = (source) => parallel(source, { concurrency })
     return new Promise((resolve, reject) => {
-      pipe(queue, tasker, propeller, async (source) => {
+      pipe(queue, taskMaker, propeller, async (source) => {
         try {
           for await (const _ of source) {
             taskCounter--
@@ -141,6 +141,7 @@ export class Syncer {
       pulse = await this.#resolve(pulseId, abort)
     }
     if (this.#cache.isVirgin(address)) {
+      // TODO update the size of children if we have it for skeletons
       this.#cache.setVirginPulse(address, pulse)
     }
     await this.#bake(address, pulse, abort)
@@ -167,6 +168,9 @@ export class Syncer {
             resolve()
           })
           .catch(reject)
+          .finally(() => {
+            this.#covenantResolveMap.delete(covenantPath)
+          })
       })
 
       this.#covenantResolveMap.set(covenantPath, promise)
@@ -185,24 +189,24 @@ export class Syncer {
 
     let channels = Immutable.Map()
     let prior
-    if (this.#cache.isDone(address)) {
+    if (this.#cache.isWalked(address)) {
       prior = this.#cache.getPulse(address)
+      assert(!prior.getPulseLink().equals(pulse.getPulseLink()))
       channels = this.#cache.getChannels(address)
     }
     const network = pulse.getNetwork()
     const priorNet = prior?.getNetwork()
-    const start = Date.now()
 
     const [deleted, dIterator] = await network.diffChannels(priorNet, abort)
-    const diff = Date.now() - start
-    const dstart = Date.now()
     for (const channelId of deleted) {
       assert(Number.isInteger(channelId))
       channels = channels.delete(channelId)
     }
-    const deletes = Date.now() - dstart
     const istart = Date.now()
+    let updateCount = 0
+    const throttleMultiple = 100
     for await (const channel of dIterator) {
+      updateCount++
       channels = channels.set(channel.channelId, channel)
       const latest = channel.rx.latest && PulseLink.parse(channel.rx.latest)
 
@@ -213,21 +217,16 @@ export class Syncer {
         }
         const address = Address.fromCID(channel.address)
         this.#treeBake(address, latest)
-        // if not done, updates, else ignores
-        if (!this.#cache.isDone(address)) {
-          // TODO update the size of children if we have it for skeletons
+        if (updateCount % throttleMultiple === 0) {
+          if (this.#cache.isVirgin(address)) {
+            this.#cache.updateChannels(address, channels)
+          }
         }
       }
     }
-    const inserts = Date.now() - istart
+    const iterations = Date.now() - istart
     if (channels.size > 10) {
-      debug(
-        'diff took %dms, %dms deletes, %dms inserts for size %i',
-        diff,
-        deletes,
-        inserts,
-        channels.size
-      )
+      debug('%i iterations took %s ms', channels.size, iterations)
     }
     this.#cache.finalize(address, pulse, channels)
     await covenantPromise
@@ -235,7 +234,6 @@ export class Syncer {
   async #startYieldQueue() {
     for await (const { type } of this.#yieldQueue) {
       const address = this.#address
-      // crisp should defer its pulse until asked for it
       const actions = this.#actions
       const chroot = this.#chroot
       const cache = this.#cache

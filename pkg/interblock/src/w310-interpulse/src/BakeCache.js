@@ -62,7 +62,7 @@ export class BakeCache {
       if (!tracker.pulse.getPulseLink().equals(pulseId)) {
         return false
       }
-      return !!tracker.done
+      return this.isWalked(address)
     }
     return false
   }
@@ -101,7 +101,7 @@ export class BakeCache {
     const { pulse, done, channels } = this.#chains.get(key)
     return !pulse && !done && !channels
   }
-  isDone(address) {
+  isWalked(address) {
     assert(address instanceof Address)
     const key = address.getChainId()
     assert(this.#chains.has(key), `not initialized: ${address}`)
@@ -141,7 +141,7 @@ export class BakeCache {
     assert(pulse instanceof Pulse)
     assert(Immutable.Map.isMap(channels))
     const key = address.getChainId()
-    const { done, pulseId } = this.#chains.get(key)
+    const { pulseId } = this.#chains.get(key)
     assert(pulseId.equals(pulse.getPulseLink()))
     this.#chains.set(key, { pulseId, pulse, channels, done: true })
     this.#yieldStream.push({ type: 'FINALIZE' })

@@ -196,7 +196,6 @@ export class Crisp {
     return this.#pulseSnapshot.getState().toJS()
   }
   get isLoadingChildren() {
-    // TODO isLoadingChildren can still have children to show during first load
     if (this.isLoading) {
       return true
     }
@@ -238,17 +237,16 @@ export class Crisp {
       }
     }
   }
-  *[Symbol.iterator]() {
+  [Symbol.iterator]() {
     if (this.isLoadingChildren) {
       throw new Error(`cannot get children from a loading Crisp: ${this.path}`)
     }
     this.#cacheAliases()
-    for (const alias of this.#cachedAliases.keys()) {
-      yield alias
-    }
+    return this.#cachedAliases.keys()
   }
   get sortedChildren() {
     const children = [...this]
+    // TODO sort the #cachedAliases map so no resorting
     children.sort((a, b) => {
       const ai = Number.parseInt(a)
       const bi = Number.parseInt(b)
