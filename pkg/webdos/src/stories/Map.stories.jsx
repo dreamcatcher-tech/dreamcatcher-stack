@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import { Engine, Syncer } from '..'
 import { Map, Glass } from '../components'
@@ -10,142 +11,53 @@ const {
 } = apps
 const debug = Debug('Map')
 
-const sectorsAdd = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
+const sectorsAdd = { add: { path: '/routing', installer: '/crm/routing' } }
 const sectorsBatch = faker.routing.generateBatch(5)
-const sectorsInsert = { 'routing/batch': { batch: sectorsBatch } }
-const listAdd = { add: { path: 'customers', installer: '/dpkg/crm/customers' } }
-const listBatch = faker.customers.generateBatchInside(sectorsBatch, 5)
-const listInsert = { 'customers/batch': { batch: listBatch } }
+const sectorsInsert = { '/routing/batch': { batch: sectorsBatch } }
+const listAdd = { add: { path: '/customers', installer: '/crm/customers' } }
+const listBatch = faker.customers.generateBatchInside(sectorsBatch, 15)
+const listInsert = { '/customers/batch': { batch: listBatch } }
+const update = { '/routing/update': { path: '/customers' } }
+const init = [sectorsAdd, sectorsInsert]
 
 export default {
   title: 'Map',
   component: Map,
-  args: {
-    onCreate: (geoJson) => {
-      console.log('create', geoJson)
-    },
-    onEdit: (geoJson) => {
-      console.log('edit', geoJson)
-    },
-    onSector: (sector) => {
-      console.log('sector', sector)
-    },
-    onMarker: (marker) => {
-      console.log('marker', marker)
-    },
-    dev: { '/dpkg/crm': apps.crm.covenant },
-    path: '/routing',
-    init: [sectorsAdd],
-  },
+  args: { dev: { '/crm': apps.crm.covenant }, init },
 }
-const enable = () => Debug.enable('*Map iplog *Syncer* crm:routing')
+const Controller = ({ crisp }) => {
+  let routing, customers
+  if (!crisp.isLoadingChildren) {
+    if (crisp.hasChild('routing')) {
+      routing = crisp.getChild('routing')
+    }
+    if (crisp.hasChild('customers')) {
+      customers = crisp.getChild('customers')
+    }
+  }
+  return <Map routing={routing} customers={customers} />
+}
+Controller.propTypes = { crisp: PropTypes.object }
 const Template = (args) => {
-  enable()
+  Debug.enable('*Map*')
   return (
     <Engine {...args}>
       <Syncer path="/">
-        <Syncer.UnWrapper path="/routing">
-          <Map {...args} />
-        </Syncer.UnWrapper>
+        <Controller />
       </Syncer>
     </Engine>
   )
 }
 
-export const Basic = Template.bind({})
+export const Sectors = Template.bind({})
+Sectors.args = {}
 
-export const NoPolygons = Template.bind({})
-NoPolygons.args = {
-  onCreate: undefined,
-}
-
-export const Polygons = Template.bind({})
-Polygons.args = {
-  init: [sectorsAdd, sectorsInsert],
-}
-
-export const WithCustomers = Template.bind({})
-WithCustomers.args = {
-  markers: true,
-  sector: '2',
-  init: [
-    sectorsAdd,
-    sectorsInsert,
-    listAdd,
-    listInsert,
-    { 'routing/update': { path: '/customers' } },
-  ],
-}
-export const ClickSectors = (args) => {
-  enable()
-  const [sector, onSector] = React.useState('0')
-  // use wd to know which sector is selected
-  return (
-    <div>
-      <Glass.Container>
-        <Glass.Left>
-          <Card>
-            <CardContent>Selected:{sector}</CardContent>
-          </Card>
-        </Glass.Left>
-      </Glass.Container>
-      <Engine {...args}>
-        <Syncer path={args.path}>
-          <Map {...args} onSector={onSector} sector={sector} />
-        </Syncer>
-      </Engine>
-    </div>
-  )
-  // TODO script some actual clicking
-}
-ClickSectors.args = {
-  init: [sectorsAdd, sectorsInsert],
-}
-
-export const ClickCustomers = (args) => {
-  enable()
-  const [marker, onMarker] = React.useState()
-  const [sector, onSector] = React.useState('4')
-
-  return (
-    <div>
-      <Glass.Container>
-        <Glass.Left>
-          <Card>
-            <CardContent>Selected Marker:{marker}</CardContent>
-          </Card>
-        </Glass.Left>
-      </Glass.Container>
-      <Engine {...args}>
-        <Syncer path="/">
-          <Syncer.UnWrapper path="/routing">
-            <Map
-              {...args}
-              onMarker={onMarker}
-              markers
-              onSector={onSector}
-              marker={marker}
-              sector={sector}
-            />
-          </Syncer.UnWrapper>
-        </Syncer>
-      </Engine>
-    </div>
-  )
-  // TODO script some actual clicking
-}
-ClickCustomers.args = {
-  init: [
-    sectorsAdd,
-    sectorsInsert,
-    listAdd,
-    listInsert,
-    { 'routing/update': { path: '/customers' } },
-  ],
+export const Customers = Template.bind({})
+Customers.args = {
+  init: [...init, listAdd, listInsert, update, { cd: { path: '/routing/0' } }],
 }
 
 export const CardColumn = (args) => {
-  enable()
   return (
     <>
       <Glass.Container>
