@@ -14,7 +14,7 @@ export class Crisp {
   #chroot // the chroot of the Syncer that made this Crisps root
   #wd = '/' // the working directory which is only set in the root Crisp
   #cache
-  #isDeepLoaded // if true, the pulse tree is now fully baked
+  #isDeepLoaded = false // if true, the pulse tree is now fully baked
 
   // snapshot tracking
   #isPulseAndChannelsSnapshotted = false
@@ -52,7 +52,7 @@ export class Crisp {
     }
     return Crisp.createRoot(address, actions, chroot)
   }
-  static createRoot(root, actions, chroot = '/', cache, isDeepLoaded) {
+  static createRoot(root, actions, chroot = '/', cache) {
     assert(root instanceof Address)
     assert.strictEqual(typeof actions, 'object')
     assert.strictEqual(typeof actions.dispatch, 'function')
@@ -64,7 +64,6 @@ export class Crisp {
     result.#rootActions = actions
     result.#chroot = chroot
     result.#cache = cache
-    result.#isDeepLoaded = !!isDeepLoaded
     return result
   }
   static #createChild(address, parent, name) {
@@ -288,6 +287,11 @@ export class Crisp {
       }
     }
   }
+  set isDeepLoaded(value) {
+    assert(this.isRoot, 'isDeepLoaded can only be set on the root')
+    assert.strictEqual(typeof value, 'boolean')
+    this.#isDeepLoaded = value
+  }
   get isDeepLoaded() {
     return this.root.#isDeepLoaded
   }
@@ -304,8 +308,5 @@ export class Crisp {
   isPathStale() {
     // TODO walk up to root and check if anything is stale
     // if so, means that we *might* be stale
-  }
-  _getCache() {
-    return this.#cache
   }
 }

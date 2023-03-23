@@ -237,10 +237,10 @@ export class Syncer {
       const actions = this.#actions
       const chroot = this.#chroot
       const cache = this.#cache
-      const isDeepLoaded = this.#isDeepLoaded
-      const args = [address, actions, chroot, cache, isDeepLoaded]
+      const args = [address, actions, chroot, cache]
       // throttling here has no observable affect
       this.#crisp = Crisp.createRoot(...args)
+      this.#crisp.isDeepLoaded = this.#isDeepLoaded
       for (const subscriber of this.#subscribers) {
         subscriber.push(this.#crisp)
       }

@@ -33,7 +33,7 @@ Selection.args = { init: [...init, { cd: { path: '/crm/customers' } }] }
 export const NoSettings = Template.bind({})
 NoSettings.args = { init: [...init, { rm: { path: '/crm/settings' } }] }
 
-const Toggler = ({ crisp, oscillate, isLoaded }) => {
+const Toggler = ({ crisp, oscillate, isLoaded = false }) => {
   assert(!(oscillate && isLoaded), 'cannot oscillate and be loaded')
   const [isDeepLoaded, setIsDeepLoaded] = React.useState(isLoaded)
   React.useEffect(() => {
@@ -46,12 +46,7 @@ const Toggler = ({ crisp, oscillate, isLoaded }) => {
     return () => clearInterval(interval)
   }, [])
   debug('isDeepLoaded', isDeepLoaded)
-  if (!crisp.isLoadingActions) {
-    const { pulse, actions, chroot } = crisp
-    const cache = crisp._getCache()
-    const address = pulse.getAddress()
-    crisp = Crisp.createRoot(address, actions, chroot, cache, isDeepLoaded)
-  }
+  crisp.isDeepLoaded = isDeepLoaded
   return <Nav crisp={crisp} />
 }
 Toggler.propTypes = {
