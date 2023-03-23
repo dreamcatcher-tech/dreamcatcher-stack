@@ -116,7 +116,7 @@ export class NetEndurance extends Endurance {
             let prior
             if (pNetwork) {
               const { channelId } = channel
-              if (pNetwork.channels.list.has(channelId)) {
+              if (await pNetwork.channels.list.has(channelId)) {
                 const pChannel = await pNetwork.channels.list.get(channelId)
                 prior = pChannel?.rx.latest
               }

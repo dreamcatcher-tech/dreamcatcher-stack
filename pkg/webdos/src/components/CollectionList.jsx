@@ -26,7 +26,11 @@ const CollectionList = ({ crisp }) => {
     // TODO show an enquiring modal UI over the top to get the data we need
     setIsAdding(true)
     const { add } = crisp.actions
-    await add({ formData: { name: 'bob' } })
+    try {
+      await add({ formData: { name: 'bob' } })
+    } catch (error) {
+      console.error('add error', error)
+    }
     setIsAdding(false)
   }
   const valueGetter = ({ id, field }) => {
@@ -51,22 +55,7 @@ const CollectionList = ({ crisp }) => {
     if (crisp.isLoadingChildren) {
       return []
     }
-    const rows = [...crisp]
-      .sort((a, b) => {
-        const ai = Number.parseInt(a)
-        const bi = Number.parseInt(b)
-        if (Number.isInteger(ai) && Number.isInteger(bi)) {
-          return ai - bi
-        }
-        if (Number.isInteger(ai)) {
-          return 1
-        }
-        if (Number.isInteger(bi)) {
-          return -1
-        }
-        return a.localeCompare(b)
-      })
-      .map((id) => ({ id }))
+    const rows = crisp.sortedChildren.map((id) => ({ id }))
     debug('rows generated', rows)
     return rows
   }, [crisp])

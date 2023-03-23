@@ -305,4 +305,7 @@ export class Crisp {
     // TODO walk up to root and check if anything is stale
     // if so, means that we *might* be stale
   }
+  _getCache() {
+    return this.#cache
+  }
 }

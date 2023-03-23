@@ -27,7 +27,9 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*Syncer* iplog crm:routing *Routing  *Sorter* *SorterDatum')
+  Debug.enable(
+    '*Syncer* iplog crm:routing *Routing  *Sorter* *SorterDatum *Map'
+  )
   debug('args', args)
   return (
     <Engine {...args}>

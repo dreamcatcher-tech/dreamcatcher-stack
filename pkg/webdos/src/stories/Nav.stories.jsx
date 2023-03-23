@@ -48,7 +48,9 @@ const Toggler = ({ crisp, oscillate, isLoaded }) => {
   debug('isDeepLoaded', isDeepLoaded)
   if (!crisp.isLoadingActions) {
     const { pulse, actions, chroot } = crisp
-    crisp = Crisp.createRoot(pulse, actions, chroot, isDeepLoaded)
+    const cache = crisp._getCache()
+    const address = pulse.getAddress()
+    crisp = Crisp.createRoot(address, actions, chroot, cache, isDeepLoaded)
   }
   return <Nav crisp={crisp} />
 }

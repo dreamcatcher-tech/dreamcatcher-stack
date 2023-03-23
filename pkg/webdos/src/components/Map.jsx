@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Crisp, api } from '@dreamcatcher-tech/interblock'
+import { Crisp } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
 import L from './leaflet'
 import Debug from 'debug'
@@ -43,7 +43,7 @@ export default function MapComponent({
       zoomDelta: 1,
       wheelPxPerZoomLevel: 350,
       pmIgnore: false,
-      // preferCanvas: true,
+      preferCanvas: true,
     }
     debug('creating map')
     const map = L.map(mapId, mapOptions)
@@ -295,9 +295,7 @@ export default function MapComponent({
     }
   }, [mapRef.current])
 
-  const { ref } = useResizeDetector({
-    onResize,
-  })
+  const { ref } = useResizeDetector({ onResize })
 
   return <div ref={ref} id={mapId} style={mapBackgroundStyle}></div>
 }

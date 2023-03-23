@@ -96,7 +96,7 @@
     "rollup-plugin-visualizer": "^5.9.0",
     "supports-color": "^9.3.1",
     "trace-unhandled": "^2.0.1",
-    "vite": "^4.1.4"
+    "vite": "^4.2.1"
   },
   "publishConfig": {
     "access": "public"
