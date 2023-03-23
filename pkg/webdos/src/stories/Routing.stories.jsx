@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import { Engine, Syncer } from '..'
 import { Routing } from '../components'
@@ -26,6 +27,21 @@ export default {
   },
 }
 
+const Controller = ({ crisp }) => {
+  if (crisp.isLoadingChildren) {
+    return null
+  }
+  let routing, customers
+  if (crisp.hasChild('routing')) {
+    routing = crisp.getChild('routing')
+  }
+  if (crisp.hasChild('customers')) {
+    customers = crisp.getChild('customers')
+  }
+  return <Routing crisp={routing} customers={customers} />
+}
+Controller.propTypes = { crisp: PropTypes.object }
+
 const Template = (args) => {
   Debug.enable(
     '*Syncer* iplog crm:routing *Routing  *Sorter* *SorterDatum *Map'
@@ -34,9 +50,7 @@ const Template = (args) => {
   return (
     <Engine {...args}>
       <Syncer>
-        <Syncer.UnWrapper path="/routing">
-          <Routing />
-        </Syncer.UnWrapper>
+        <Controller />
       </Syncer>
     </Engine>
   )

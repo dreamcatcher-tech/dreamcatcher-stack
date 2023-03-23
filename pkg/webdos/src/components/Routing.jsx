@@ -14,44 +14,40 @@ import assert from 'assert-fast'
 
 const debug = Debug('terminal:widgets:Routing')
 
-const Routing = ({ crisp }) => {
+const Routing = ({ crisp, customers }) => {
   const path = crisp.getSelectedChild()
+  const [isDefaultSet, setIsDefaultSet] = useState(!!path)
   const [isUpdating, setIsUpdating] = useState(false)
-  const [order, onOrder] = useState() // the dynamic changing data
+  const [reorder, onReorder] = useState() // the dynamic changing data
   const [isEditingSector, setIsEditingSector] = useState(false)
   const [isEditingOrder, setIsEditingOrder] = useState(false)
   const disabled = isEditingSector || isEditingOrder || isUpdating
-  const disabledRef = useRef()
-  disabledRef.current = disabled
-  const onSector = (sector) => {
-    debug('onSector', sector)
-    if (!disabledRef.current && !crisp.isLoadingActions) {
-      assert(crisp.hasChild(sector), `crisp has no child ${sector}`)
-      const path = crisp.absolutePath + '/' + sector
-      debug('onSector path', path)
-      const allowVirtual = true
-      crisp.actions.cd(path, allowVirtual)
+
+  if (!isDefaultSet) {
+    if (!crisp.isLoadingChildren) {
+      if (crisp.wd.startsWith(crisp.path)) {
+        if (crisp.sortedChildren.length) {
+          if (!path) {
+            const [first] = crisp.sortedChildren
+            const path = crisp.absolutePath + '/' + first
+            debug('selecting first sector', path)
+            const allowVirtual = true
+            crisp.actions.cd(path, allowVirtual)
+            setIsDefaultSet(true)
+          }
+        }
+      }
     }
   }
 
   const sector = path && crisp.hasChild(path) && crisp.getChild(path)
-  if (!sector && !crisp.isLoadingActions && crisp.sortedChildren.length) {
-    debug('no sector selected', crisp)
-    if (crisp.wd.startsWith(crisp.path)) {
-      const [first] = crisp.sortedChildren
-      debug('selecting first sector', first)
-      const firstChild = crisp.getChild(first)
-      if (!firstChild.isLoading) {
-        onSector(first)
-      }
-    }
-  }
 
   const onUpdate = async () => {
     debug('onUpdate')
     setIsUpdating(true)
     const result = await crisp.actions.update()
     debug('onUpdate result', result)
+    // TODO give some progress on update running
     setIsUpdating(false)
   }
   const dialDisabled = disabled || crisp.isLoadingActions
@@ -71,15 +67,16 @@ const Routing = ({ crisp }) => {
               <SorterDatum
                 crisp={sector}
                 viewOnly={isEditingSector}
-                onOrder={onOrder}
+                onOrder={onReorder}
                 onEdit={setIsEditingOrder}
+                customers={customers}
               />
             </>
           )}
         </Glass.Left>
       </Glass.Container>
       <RoutingSpeedDial disabled={dialDisabled} onUpdate={onUpdate} />
-      <Map crisp={crisp} order={order} markers />
+      <Map routing={crisp} customers={customers} reorder={reorder} />
     </>
   )
 }
@@ -88,6 +85,10 @@ Routing.propTypes = {
    * The Routing node
    */
   crisp: PropTypes.instanceOf(Crisp),
+  /**
+   * The customers Crisp
+   */
+  customers: PropTypes.instanceOf(Crisp),
 }
 
 export default Routing
