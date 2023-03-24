@@ -251,15 +251,6 @@ export class Hamt extends IpldInterface {
     }
     return keys
   }
-  bake(map) {
-    assert(Immutable.Map.isMap(map))
-    assert(!this.isModified())
-    this.#bakedMap = map
-  }
-  get bakedMap() {
-    assert(!this.isModified())
-    return this.#bakedMap
-  }
   async export(loggingResolver) {
     assert.strictEqual(typeof loggingResolver, 'function')
     assert(!this.isModified())
@@ -272,6 +263,9 @@ export class Hamt extends IpldInterface {
         await value.export(loggingResolver)
       }
     }
+  }
+  get isClassed() {
+    return !!this.#valueClass
   }
   async compare(other) {
     if (!other) {

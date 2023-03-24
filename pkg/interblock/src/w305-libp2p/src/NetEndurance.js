@@ -192,20 +192,29 @@ export class NetEndurance extends Endurance {
           stream.push(block)
         }
       }
+      if (!hamt.isClassed) {
+        continue
+      }
+      const { added, deleted, modified } = await hamt.compare(pHamt)
+      assert(added instanceof Set)
+      assert(deleted instanceof Set)
+      assert(modified instanceof Set)
+      const changes = [...added, ...modified]
 
       const tasks = []
-      for await (const [key, value] of hamt.entries()) {
+      for (const key of changes) {
         const task = async () => {
-          if (value instanceof IpldInterface) {
-            let pValue
-            if (await pHamt?.has(key)) {
-              pValue = await pHamt.get(key)
-            }
-            this.#cidWalk(value, pValue, stream)
+          const value = await hamt.get(key)
+          assert(value instanceof IpldInterface)
+          let pValue
+          if (await pHamt?.has(key)) {
+            pValue = await pHamt.get(key)
           }
+          this.#cidWalk(value, pValue, stream)
         }
         tasks.push(task())
       }
+      // TODO use a stream with parallism
       await Promise.all(tasks)
     }
   }
