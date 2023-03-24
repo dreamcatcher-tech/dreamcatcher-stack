@@ -69,6 +69,7 @@ const CollectionList = ({ crisp }) => {
   }
   const onRowDoubleClick = (params) => {
     debug('onRowDoubleClick', params)
+    // open up a modal to edit the customer
   }
   const onAdd = crisp.isLoadingActions ? null : crisp.actions.add
   return (
