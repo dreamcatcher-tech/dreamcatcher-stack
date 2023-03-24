@@ -10,6 +10,16 @@ export default function App({ crisp }) {
   const { wd } = crisp
   debug('wd', wd)
   // TODO replace lazy with https://www.npmjs.com/package/react-lazyload
+  let customers, routing, schedules
+  if (!crisp.isLoadingChildren && crisp.hasChild('customers')) {
+    customers = crisp.getChild('customers')
+  }
+  if (!crisp.isLoadingChildren && crisp.hasChild('routing')) {
+    routing = crisp.getChild('routing')
+  }
+  if (!crisp.isLoadingChildren && crisp.hasChild('schedules')) {
+    schedules = crisp.getChild('schedules')
+  }
   return (
     <Box
       sx={{
@@ -29,13 +39,13 @@ export default function App({ crisp }) {
         ) : (
           <>
             <Glass.Lazy show={wd.startsWith('/schedules')}>
-              <Schedules crisp={crisp.getChild('schedules')} />
+              <Schedules crisp={schedules} />
             </Glass.Lazy>
             <Glass.Lazy show={wd.startsWith('/customers')}>
-              <CollectionList crisp={crisp.getChild('customers')} />
+              <CollectionList crisp={customers} />
             </Glass.Lazy>
             <Glass.Lazy show={wd.startsWith('/routing')}>
-              <Routing crisp={crisp.getChild('routing')} />
+              <Routing crisp={routing} customers={customers} />
             </Glass.Lazy>
           </>
         )}

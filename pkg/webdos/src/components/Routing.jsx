@@ -18,7 +18,7 @@ const Routing = ({ crisp, customers }) => {
   const path = crisp.getSelectedChild()
   const [isDefaultSet, setIsDefaultSet] = useState(!!path)
   const [isUpdating, setIsUpdating] = useState(false)
-  const [reorder, onReorder] = useState() // the dynamic changing data
+  const [reorder, onReorder] = useState([])
   const [isEditingSector, setIsEditingSector] = useState(false)
   const [isEditingOrder, setIsEditingOrder] = useState(false)
   const disabled = isEditingSector || isEditingOrder || isUpdating
