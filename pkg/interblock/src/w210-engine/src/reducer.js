@@ -46,7 +46,9 @@ export const reducer = async (pool, isolate, latest) => {
   const reduceWithPulse = async (trail) => {
     pool = pool.setNetwork(network).setPending(pending)
     trail = trail.setMap({ pulse: pool, latest })
-    trail = await wrapReduce(trail, systemReducer)
+    const timeout = 10e3
+    // TODO make pulse reduction be an action so it is not part of callsites
+    trail = await wrapReduce(trail, systemReducer, timeout)
     pool = trail.pulse
     network = pool.getNetwork()
     trail = trail.delete('pulse').delete('latest')
