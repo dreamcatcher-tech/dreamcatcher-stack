@@ -1,5 +1,5 @@
 import { Crisp } from '@dreamcatcher-tech/interblock'
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
@@ -16,14 +16,20 @@ import ApproveAll from '@mui/icons-material/DoneAll'
 
 const debug = Debug('terminal:widgets:SorterDatum')
 
-function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
+function SorterDatum({ crisp, customers, viewOnly, onOrder, onEdit, editing }) {
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
-  const { order = [], unapproved = [] } = crisp.state.formData || {}
-  debug('order', crisp.state.formData)
+  const { order = [], unapproved = [] } = crisp?.state.formData || {}
   const [items, setItems] = useState(order)
   const [isPending, setIsPending] = useState(false)
   const [isEditing, setIsEditing] = useState(editing)
   const [initialOrder, setInitialOrder] = useState(order)
+  const enrich = useCallback(enrichCustomers(customers), [customers])
+
+  if (!crisp) {
+    return null
+  }
+
+  debug('order', crisp.state.formData)
   if (!equals(initialOrder, order)) {
     debug('initialOrder !== order')
     if (isEditing) {
@@ -35,7 +41,7 @@ function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
   }
   const isDirty = !equals(items, order)
   debug('isDirty', isDirty)
-  const marker = crisp.getSelectedChild()
+  const marker = crisp?.getSelectedChild()
   const onMarker = (marker) => {
     debug('onMarker', marker)
     if (!marker) {
@@ -102,7 +108,7 @@ function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
     ? null
     : Viewing
 
-  let { schema } = crisp.state
+  let { schema } = crisp?.state || {}
   if (schema === '..' && crisp.parent.state.template?.schema) {
     schema = crisp.parent.state.template.schema
   }
@@ -121,7 +127,7 @@ function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
       <CardContent sx={{ flexGrow: 1, p: 0 }}>
         <Sorter
           items={items}
-          enrich={enrichCustomers(crisp)}
+          enrich={enrich}
           selected={marker}
           onSort={viewOnly || !isEditing || isPending ? undefined : onSort}
           onSelected={onMarker}
@@ -131,7 +137,15 @@ function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
   )
 }
 SorterDatum.propTypes = {
+  /**
+   * The sector that is being sorted
+   */
   crisp: PropTypes.instanceOf(Crisp),
+
+  /**
+   * The customers that can be sorted.  Used to enrich the display.
+   */
+  customers: PropTypes.instanceOf(Crisp),
 
   /**
    * Show no edit button - all fields are readonly
@@ -160,12 +174,12 @@ const calcMinHeight = (items) => {
   const cardBottomPadding = 24
   return cardHeaderHeight + totalItemHeight + cardBottomPadding
 }
-const enrichCustomers = (sector, customers) => {
-  assert(sector instanceof Crisp)
+const enrichCustomers = (customers) => {
   assert(!customers || customers instanceof Crisp)
   return (id = '') => {
     assert.strictEqual(typeof id, 'string', `id must be a string, got ${id}`)
-    if (!customers || customers.isLoading || !customers.hasChild(id)) {
+    if (!customers || customers.isLoadingChildren || !customers.hasChild(id)) {
+      debug('did not have child', id, typeof id)
       return id
     }
     const customer = customers.getChild(id)

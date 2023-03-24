@@ -17,8 +17,8 @@ const minY = -37.922534
 const maxY = -37.692514
 let custNo = 777
 
-export const reset = () => {
-  faker.seed(0)
+export const reset = (seed = 0) => {
+  faker.seed(seed)
   custNo = 777
 }
 export const setCustNo = (newCustNo) => {
@@ -54,6 +54,13 @@ export const generateSingle = (lut, outside = false) => {
     })
   } while (!isValid(formData.serviceGps))
   formData.custNo = custNo++
+
+  if (formData.serviceGps.latitude) {
+    while (!formData.serviceAddress) {
+      formData.serviceAddress = faker.address.streetAddress()
+    }
+  }
+
   return { formData }
 }
 

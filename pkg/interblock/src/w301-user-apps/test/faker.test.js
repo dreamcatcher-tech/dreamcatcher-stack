@@ -41,8 +41,10 @@ describe('faker', () => {
   describe('customers', () => {
     test('single', async () => {
       const { customers } = await import('../src/crm/faker/index.js')
+      customers.reset()
       const single = customers.generateSingle()
       debug('single', single)
+      expect(single.formData.serviceAddress).toBeTruthy()
 
       const engine = await Interpulse.createCI({ overloads })
       await engine.add('customers', '/crm/customers')

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import { Engine, Syncer } from '..'
 import { Glass, SorterDatum } from '../components'
@@ -6,14 +7,14 @@ import Debug from 'debug'
 const debug = Debug('SorterDatum')
 const { faker } = apps.crm
 
-const sectorsAdd = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
+const sectorsAdd = { add: { path: '/routing', installer: '/crm/routing' } }
 const sectors = faker.routing.generateBatch(1)
-const sectorsInsert = { 'routing/batch': { batch: sectors } }
-const listAdd = { add: { path: 'customers', installer: '/dpkg/crm/customers' } }
+const sectorsInsert = { '/routing/batch': { batch: sectors } }
+const listAdd = { add: { path: '/customers', installer: '/crm/customers' } }
 faker.customers.reset()
 const lists = faker.customers.generateBatchInside(sectors, 5)
-const listInsert = { 'customers/batch': { batch: lists } }
-const update = { 'routing/update': { path: '/customers' } }
+const listInsert = { '/customers/batch': { batch: lists } }
+const update = { '/routing/update': { path: '/customers' } }
 const cd = { cd: { path: '/routing/0/779', allowVirtual: true } }
 
 const init = [sectorsAdd, listAdd, sectorsInsert, listInsert, update]
@@ -21,14 +22,27 @@ const init = [sectorsAdd, listAdd, sectorsInsert, listInsert, update]
 export default {
   title: 'SorterDatum',
   component: SorterDatum,
-  args: {
-    dev: { '/dpkg/crm': apps.crm.covenant },
-    init,
-  },
+  args: { dev: { '/crm': apps.crm.covenant }, init },
 }
+const Controller = ({ crisp, ...args }) => {
+  let sector, customers
+  if (!crisp.isLoadingChildren) {
+    if (crisp.hasChild('routing')) {
+      const routing = crisp.getChild('routing')
+      if (!routing.isLoadingChildren && routing.hasChild('0')) {
+        sector = routing.getChild('0')
+      }
+    }
+    if (crisp.hasChild('customers')) {
+      customers = crisp.getChild('customers')
+    }
+  }
+  return <SorterDatum crisp={sector} customers={customers} {...args} />
+}
+Controller.propTypes = { crisp: PropTypes.object }
 
 const Template = (args) => {
-  Debug.enable('*UnWrapper* *Datum *Sorter *SorterDatum')
+  Debug.enable('*Datum *Sorter *SorterDatum')
   const onOrder = (order) => {
     debug('onOrder', order)
   }
@@ -39,9 +53,7 @@ const Template = (args) => {
       <Glass.Left max>
         <Engine {...args}>
           <Syncer>
-            <Syncer.UnWrapper path="/routing/0">
-              <SorterDatum {...args} />
-            </Syncer.UnWrapper>
+            <Controller {...args} />
           </Syncer>
         </Engine>
       </Glass.Left>

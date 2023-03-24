@@ -116,7 +116,6 @@ export default function Sorter({
     }
     if (lastSelected && selected && lastSelected !== selected) {
       debug('lastSelected', lastSelected, 'selected', selected)
-      debug(enrich(lastSelected), enrich(selected))
       const lastIndex = items.indexOf(lastSelected)
       const selectedIndex = items.indexOf(selected)
       debug(lastIndex, selectedIndex)

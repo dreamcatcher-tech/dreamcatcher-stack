@@ -7,6 +7,7 @@ exports[`faker customers single 1`] = `
     "importedHash": "171e08cfb3ddfabbabbe2fec3beab29a54baa4c2",
     "mobile": "+61 4 7854 5398",
     "name": "Raquel Ryan",
+    "serviceAddress": "162 Cole Trail",
     "serviceGps": {
       "latitude": -37.918212,
       "longitude": 175.253737,
