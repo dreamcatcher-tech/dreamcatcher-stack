@@ -6,6 +6,7 @@ import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium'
 import assert from 'assert-fast'
 import Debug from 'debug'
 import FabAdd from './FabAdd'
+import posix from 'path-browserify'
 
 const debug = Debug('terminal:widgets:CollectionList')
 
@@ -51,17 +52,23 @@ const CollectionList = ({ crisp }) => {
     }
     return generateColumns(crisp.state.template, valueGetter)
   }, [template])
+  const sorted = crisp.isLoadingChildren ? [] : crisp.sortedChildren
   const rows = useMemo(() => {
-    if (crisp.isLoadingChildren) {
-      return []
-    }
-    const rows = crisp.sortedChildren.map((id) => ({ id }))
+    // TODO cache based on the sortedChildren map, not crisp
+    const rows = sorted.map((id) => ({ id }))
     debug('rows generated', rows)
     return rows
-  }, [crisp])
+  }, [sorted])
 
-  const onRow = (params) => {
-    debug('onRow', params)
+  const onRow = ({ id }) => {
+    const current = posix.resolve(crisp.path, id)
+    if (!crisp.wd.startsWith(current)) {
+      const path = crisp.absolutePath + '/' + id
+      crisp.actions.cd(path)
+    }
+  }
+  const onRowDoubleClick = (params) => {
+    debug('onRowDoubleClick', params)
   }
   const onAdd = crisp.isLoadingActions ? null : crisp.actions.add
   return (
@@ -75,6 +82,7 @@ const CollectionList = ({ crisp }) => {
         hideFooter
         onRowClick={onRow}
         loading={crisp.isLoadingChildren}
+        onRowDoubleClick={onRowDoubleClick}
       />
       {onAdd ? <FabAdd onClick={onAddCustomer} disabled={isAdding} /> : null}
     </>

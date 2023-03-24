@@ -219,9 +219,12 @@ export class Crisp {
     return child
   }
   #cacheAliases() {
-    if (!this.#cachedAliases) {
-      this.#snapshotPulse()
-      this.#cachedAliases = new Map()
+    if (this.#cachedAliases) {
+      return
+    }
+    this.#snapshotPulse()
+    if (!weakCache.has(this.#channelsSnapshot)) {
+      const map = new Map()
       for (const channel of this.#channelsSnapshot.values()) {
         if (!channel.aliases) {
           continue
@@ -229,12 +232,14 @@ export class Crisp {
         const [alias = ''] = channel.aliases
         assert.strictEqual(typeof alias, 'string', `invalid alias: ${alias}`)
         if (alias && alias !== '.' && alias !== '..') {
-          assert(!this.#cachedAliases.has(alias), `duplicate alias: ${alias}`)
+          assert(!map.has(alias), `duplicate alias: ${alias}`)
           const address = Address.fromCID(channel.address)
-          this.#cachedAliases.set(alias, address)
+          map.set(alias, address)
         }
       }
+      weakCache.set(this.#channelsSnapshot, { map })
     }
+    this.#cachedAliases = weakCache.get(this.#channelsSnapshot).map
   }
   [Symbol.iterator]() {
     if (this.isLoadingChildren) {
@@ -244,23 +249,26 @@ export class Crisp {
     return this.#cachedAliases.keys()
   }
   get sortedChildren() {
-    const children = [...this]
-    // TODO sort the #cachedAliases map so no resorting
-    children.sort((a, b) => {
-      const ai = Number.parseInt(a)
-      const bi = Number.parseInt(b)
-      if (Number.isNaN(ai) && Number.isNaN(bi)) {
-        return a.localeCompare(b)
-      }
-      if (Number.isNaN(ai)) {
-        return -1
-      }
-      if (Number.isNaN(bi)) {
-        return 1
-      }
-      return ai - bi
-    })
-    return children
+    this.#cacheAliases()
+    const cache = weakCache.get(this.#channelsSnapshot)
+    if (!cache.sorted) {
+      cache.sorted = [...this]
+      cache.sorted.sort((a, b) => {
+        const ai = Number.parseInt(a)
+        const bi = Number.parseInt(b)
+        if (Number.isNaN(ai) && Number.isNaN(bi)) {
+          return a.localeCompare(b)
+        }
+        if (Number.isNaN(ai)) {
+          return -1
+        }
+        if (Number.isNaN(bi)) {
+          return 1
+        }
+        return ai - bi
+      })
+    }
+    return cache.sorted
   }
   get covenantPath() {
     return this.pulse.getCovenantPath()
@@ -310,3 +318,4 @@ export class Crisp {
     // if so, means that we *might* be stale
   }
 }
+const weakCache = new WeakMap() // channelsSnapshot -> aliasMap
