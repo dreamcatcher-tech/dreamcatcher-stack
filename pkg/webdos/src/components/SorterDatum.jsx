@@ -62,7 +62,7 @@ function SorterDatum({ crisp, viewOnly, onOrder, onEdit, editing }) {
     debug('onSubmit', items)
     setIsPending(true)
     const formData = { ...crisp.state.formData, order: items }
-    crisp.actions.set(formData).then(() => {
+    crisp.actions.set({ formData }).then(() => {
       setIsPending(false)
       onIsEditing(false)
       onOrder()

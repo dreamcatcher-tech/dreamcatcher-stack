@@ -75,21 +75,10 @@ const reducer = async (request) => {
         state = convertToTemplate(payload)
       }
       state = { ...state, formData: payload.formData }
-      if (!state.network || !Object.keys(state.network).length) {
-        return
-      }
       // TODO WARNING if have changed children in current block, will be stale
       // TODO handle updating what the children should be
-      const awaits = []
-      for (const name in state.network) {
-        debug(`creating new child: `, name)
-        const spawn = Request.spawn(name, { covenant: 'datum' })
-        interchain(spawn)
-        // const promise = interchain(setChild, name)
-        // awaits.push(promise)
-      }
-      await Promise.all(awaits)
       // TODO remove deleted children
+      await setState(state)
       return
     }
     default:
@@ -181,7 +170,15 @@ const validateChildSchemas = (datum) => {
   }
 }
 const api = {
-  set: { type: 'object', title: 'SET', description: '' },
+  set: {
+    type: 'object',
+    title: 'SET',
+    description: '',
+    required: ['formData'],
+    properties: {
+      formData: { type: 'object' },
+    },
+  },
   // subscribe: (...paths) => ({ type: 'SUBSCRIBE', payload: paths }),
   // unsubscribe: (...paths) => ({ type: 'UN_SUBSCRIBE', payload: paths }),
   // setDirectEdit: () => ({ type: 'SET_DIRECT' }), // if isDirectEdit flag set, then can only be updated by the parent ? or fsm ?

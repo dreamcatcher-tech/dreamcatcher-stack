@@ -9,14 +9,14 @@ export default {
   title: 'SectorDatum',
   component: Datum,
   args: {
-    dev: { '/dpkg/crm': apps.crm.covenant },
+    dev: { '/crm': apps.crm.covenant },
     path: '/routing',
   },
 }
 
 const Template = (args) => {
-  Debug.enable('*Datum* iplog')
-  const install = { add: { path: 'routing', installer: '/dpkg/crm/routing' } }
+  Debug.enable('*atum iplog')
+  const install = { add: { path: 'routing', installer: '/crm/routing' } }
   const addSector = { 'routing/add': faker.routing.generateSingle() }
   const sectorId = '0'
   args.init = [install, addSector]
@@ -39,6 +39,6 @@ export const ReadOnly = Template.bind({})
 ReadOnly.args = { viewOnly: true }
 export const Collapsed = Template.bind({})
 Collapsed.args = { collapsed: true }
-export const Viewing = Template.bind({})
+export const Default = Template.bind({})
 export const Editing = Template.bind({})
 Editing.args = { editing: true }
