@@ -64,7 +64,8 @@ const CollectionList = ({ crisp }) => {
     const current = posix.resolve(crisp.path, id)
     if (!crisp.wd.startsWith(current)) {
       const path = crisp.absolutePath + '/' + id
-      crisp.actions.cd(path)
+      const allowVirtual = true
+      crisp.actions.cd(path, allowVirtual)
     }
   }
   const onRowDoubleClick = (params) => {

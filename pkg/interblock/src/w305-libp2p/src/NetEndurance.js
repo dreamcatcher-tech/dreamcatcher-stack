@@ -1,3 +1,5 @@
+import parallel from 'it-parallel'
+import drain from 'it-drain'
 import { pipe } from 'it-pipe'
 import bytes from 'pretty-bytes'
 import { CID } from 'multiformats/cid'
@@ -202,6 +204,7 @@ export class NetEndurance extends Endurance {
       const changes = [...added, ...modified]
 
       const tasks = []
+
       for (const key of changes) {
         const task = async () => {
           const value = await hamt.get(key)
@@ -212,10 +215,9 @@ export class NetEndurance extends Endurance {
           }
           this.#cidWalk(value, pValue, stream)
         }
-        tasks.push(task())
+        tasks.push(task)
       }
-      // TODO use a stream with parallism
-      await Promise.all(tasks)
+      await drain(parallel(tasks, { concurrency: 10 }))
     }
   }
   #hamtCidsCache = new Map()
