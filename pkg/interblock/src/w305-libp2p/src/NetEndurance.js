@@ -210,8 +210,10 @@ export class NetEndurance extends Endurance {
           const value = await hamt.get(key)
           assert(value instanceof IpldInterface)
           let pValue
-          if (await pHamt?.has(key)) {
-            pValue = await pHamt.get(key)
+          if (modified.has(key)) {
+            if (await pHamt?.has(key)) {
+              pValue = await pHamt.get(key)
+            }
           }
           this.#cidWalk(value, pValue, stream)
         }
