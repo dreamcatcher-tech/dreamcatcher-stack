@@ -51,10 +51,7 @@ export class Interpulse {
     let { net, crypto, endurance = Endurance.create() } = options
     let { repo, CI } = options
     if (options.ram) {
-      if (repo === undefined) {
-        repo = 'ram'
-      }
-      if (typeof repo === 'string') {
+      if (!repo || typeof repo === 'string') {
         debug('creating ram repo:', repo)
         repo = createRamRepo(repo)
       }
@@ -386,8 +383,11 @@ export class Interpulse {
             for await (const pulse of source) {
               debug('stream', pulse.toString())
               assert(pulse instanceof PulseLink)
+              // TODO allow to skip forwards
+              // TODO add checker to ensure all children are loaded
               const latest = await this.#endurance.recoverRemote(pulse, prior)
               const target = mtab.getAddress()
+              debug('updating %s with %s', address, latest)
               await this.#engine.updateLatest(target, latest)
               prior = latest.getPulseLink()
             }

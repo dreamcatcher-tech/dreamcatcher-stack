@@ -569,9 +569,9 @@ export class Network extends IpldStruct {
     checkAbort(abort)
     const diff = await this.channels.list.compare(prior?.channels.list)
     checkAbort(abort)
-    assert(diff.added)
-    assert(diff.modified)
-    assert(diff.deleted)
+    assert(diff.added instanceof Set)
+    assert(diff.modified instanceof Set)
+    assert(diff.deleted instanceof Set)
     const keys = [...diff.added, ...diff.modified]
     const network = this
 

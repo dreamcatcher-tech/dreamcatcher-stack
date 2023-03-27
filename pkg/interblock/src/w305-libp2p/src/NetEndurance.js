@@ -120,7 +120,8 @@ export class NetEndurance extends Endurance {
               const { channelId } = channel
               if (await pNetwork.channels.list.has(channelId)) {
                 const pChannel = await pNetwork.channels.list.get(channelId)
-                prior = pChannel?.rx.latest
+                assert(pChannel instanceof Channel)
+                prior = pChannel.rx.latest
               }
             }
             if (latest.equals(prior)) {
@@ -204,16 +205,13 @@ export class NetEndurance extends Endurance {
       const changes = [...added, ...modified]
 
       const tasks = []
-
       for (const key of changes) {
         const task = async () => {
           const value = await hamt.get(key)
           assert(value instanceof IpldInterface)
           let pValue
           if (modified.has(key)) {
-            if (await pHamt?.has(key)) {
-              pValue = await pHamt.get(key)
-            }
+            pValue = await pHamt.get(key)
           }
           this.#cidWalk(value, pValue, stream)
         }
@@ -307,28 +305,28 @@ export class NetEndurance extends Endurance {
   }
 
   /**
-   * @param {PulseLink} pulseLink
+   * @param {PulseLink} pulseId
    * @returns {Promise<Pulse>}
    */
-  async recover(pulseLink, type = 'hamtPulse', abort) {
-    assert(pulseLink instanceof PulseLink)
+  async recover(pulseId, type = 'hamtPulse', abort) {
+    assert(pulseId instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
 
-    const resolver = this.getResolver(pulseLink.cid)
+    const resolver = this.getResolver(pulseId.cid)
     try {
-      const pulse = await Pulse.uncrush(pulseLink.cid, resolver)
+      const pulse = await Pulse.uncrush(pulseId.cid, resolver)
       return pulse
     } catch (error) {
-      debug(`failed to locally recover pulse %s`, pulseLink, error)
+      debug(`failed to locally recover pulse %s`, pulseId, error)
       throw error
     }
   }
-  async recoverRemote(pulse, prior, abort) {
-    assert(pulse instanceof PulseLink)
+  async recoverRemote(pulseId, prior, abort) {
+    assert(pulseId instanceof PulseLink)
     assert(!prior || prior instanceof PulseLink)
-    this.#net.lift(pulse, prior, 'deepPulse')
+    this.#net.lift(pulseId, prior, 'deepPulse')
     // TODO recover should not require prior knowledge, only lift
-    const result = await this.recover(pulse, 'deepPulse', abort)
+    const result = await this.recover(pulseId, 'deepPulse', abort)
     return result
   }
   async recoverInterpulse(source, target) {
@@ -481,6 +479,7 @@ export class NetEndurance extends Endurance {
       tracker.resolve(block)
     }
     // TODO turn this back on once storing to disk
+    await this.#net.repo.blocks.put(block.cid, block.bytes)
     // await this.#bufferedWrite(block)
     return block
   }

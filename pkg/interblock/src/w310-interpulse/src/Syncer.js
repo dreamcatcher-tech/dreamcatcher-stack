@@ -1,6 +1,5 @@
 import parallel from 'it-parallel'
 import { pipe } from 'it-pipe'
-import throttle from 'lodash.throttle'
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import Debug from 'debug'
@@ -9,6 +8,7 @@ import { Crisp } from '..'
 import { BakeCache } from './BakeCache'
 import Immutable from 'immutable'
 import { pushable } from 'it-pushable'
+import { eventLoopSpinner } from 'event-loop-spinner'
 
 const debug = Debug('interblock:api:Syncer')
 const BAKE_TEAR = 'BAKE_TEAR'
@@ -46,21 +46,20 @@ export class Syncer {
     syncer.#startYieldQueue()
     return syncer
   }
-  async update(pulse) {
-    assert(pulse instanceof Pulse)
+  async update(nextPulse) {
+    assert(nextPulse instanceof Pulse)
     if (!this.#address) {
-      this.#address = pulse.getAddress()
+      this.#address = nextPulse.getAddress()
     } else {
-      assert(this.#address.equals(pulse.getAddress()))
+      assert(this.#address.equals(nextPulse.getAddress()))
     }
-    const pulseId = pulse.getPulseLink()
-    assert(!pulseId.equals(this.#pulseId), `identical update ${pulseId}`)
-    this.#tearBake(pulseId)
-    this.#pulseId = pulseId
+    const nextPulseId = nextPulse.getPulseLink()
+    assert(!nextPulseId.equals(this.#pulseId), `identical: ${nextPulseId}`)
+    this.#tearBake(nextPulseId)
+    const address = nextPulse.getAddress()
+    this.#treeBake(address, nextPulseId)
 
     try {
-      const address = pulse.getAddress()
-      this.#treeBake(address, pulseId)
       await this.#drainBakeQueue()
     } catch (error) {
       if (error.message === BAKE_TEAR) {
@@ -72,14 +71,16 @@ export class Syncer {
       }
     }
   }
-  #tearBake(nextPulse) {
-    debug('tearing bake for %s in favour of %s', this.#pulseId, nextPulse)
+  #tearBake(nextPulseId) {
+    assert(nextPulseId instanceof PulseLink)
+    debug('tearing bake for %s in favour of %s', this.#pulseId, nextPulseId)
     this.#bakeQueue?.throw(new Error(BAKE_TEAR))
     this.#bakeQueue = pushable({ objectMode: true })
     this.#abort?.abort('tear bake')
     this.#abort = new AbortController()
     this.#abort.message = BAKE_TEAR
     this.#isDeepLoaded = false
+    this.#pulseId = nextPulseId
   }
   #treeBake(address, pulseId) {
     assert(address instanceof Address)
@@ -89,7 +90,8 @@ export class Syncer {
     // assumes that in a given tree there is exactly one pulseId per address
     // this is false when we allow snapshots
   }
-  async #drainBakeQueue() {
+  #drainBakeQueue() {
+    debug('draining bake queue for %s', this.#pulseId)
     const queue = this.#bakeQueue
     const abort = this.#abort
     const syncer = this
@@ -97,6 +99,7 @@ export class Syncer {
     const taskMaker = async function* (queue) {
       for await (const { address, pulseId } of queue) {
         taskCounter++
+        // debug('taskCounter %i %s %s', taskCounter, address, pulseId)
         yield () => syncer.#processor(address, pulseId, abort)
       }
     }
@@ -106,16 +109,20 @@ export class Syncer {
       pipe(queue, taskMaker, propeller, async (source) => {
         try {
           for await (const _ of source) {
+            checkAbort(abort)
             taskCounter--
-            if (this.#bakeQueue === queue && taskCounter === 0) {
-              this.#isDeepLoaded = true
-              this.#yieldQueue.push({ type: 'DEEP_LOADED' })
-              queue.end()
-              debug('bake queue drained for %s', this.#pulseId, this.#crisp)
+            if (this.#bakeQueue === queue) {
+              if (taskCounter === 0) {
+                this.#isDeepLoaded = true
+                this.#yieldQueue.push({ type: 'DEEP_LOADED' })
+                queue.end()
+                debug('bake queue drained for %s', this.#pulseId, this.#crisp)
+              }
             }
           }
           resolve()
         } catch (error) {
+          debug('bake queue error', error)
           reject(error)
         }
       })
@@ -205,6 +212,7 @@ export class Syncer {
     const istart = Date.now()
     let updateCount = 0
     const throttleMultiple = 100
+
     for await (const channel of dIterator) {
       updateCount++
       channels = channels.set(channel.channelId, channel)
@@ -232,7 +240,13 @@ export class Syncer {
     await covenantPromise
   }
   async #startYieldQueue() {
-    for await (const { type } of this.#yieldQueue) {
+    for await (const { type: _ } of this.#yieldQueue) {
+      if (eventLoopSpinner.isStarving()) {
+        await eventLoopSpinner.spin()
+      }
+      if (this.#yieldQueue.readableLength) {
+        continue
+      }
       const address = this.#address
       const actions = this.#actions
       const chroot = this.#chroot

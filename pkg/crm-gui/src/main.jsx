@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client'
 import { Engine, Syncer, App } from '@dreamcatcher-tech/webdos'
 import { apps, Crisp } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
-Debug.enable('iplog *Lifter *Announcer *Syncer')
+Debug.enable('iplog *Lifter *Announcer *Syncer Interpulse')
 
 const { VITE_APP_CHAIN_ID, VITE_PEER_ID, VITE_PEER_MULTIADDR } = import.meta.env
 console.log('VITE_APP_CHAIN_ID', VITE_APP_CHAIN_ID)
