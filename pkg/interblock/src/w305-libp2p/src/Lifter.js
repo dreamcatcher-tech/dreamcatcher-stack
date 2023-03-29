@@ -37,7 +37,11 @@ export class Lifter {
       // WARNING streams are in parallel if no await for streamWalk
       this.#netEndurance.streamWalk(blockStream, pulse, prior, type)
       const stream = await this.#ensureConnection(peerIdString)
-      assert.strictEqual(typeof stream.push, 'function')
+      if (!(typeof stream.push === 'function')) {
+        console.error('stream.push is not a function')
+        console.dir(stream, { depth: 10 })
+        continue
+      }
       pipe(blockStream, async (source) => {
         for await (const block of source) {
           stream.push(block.bytes)

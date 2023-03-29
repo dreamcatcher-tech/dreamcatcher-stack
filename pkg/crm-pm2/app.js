@@ -1,3 +1,4 @@
+import delay from 'delay'
 import Debug from 'debug'
 import * as dotenv from 'dotenv'
 import JSONbig from 'json-bigint'
@@ -190,6 +191,7 @@ const boot = async () => {
     let result
     try {
       result = await engine.stop()
+      await delay(1000)
       debug('engine stopped')
     } catch (error) {
       debug('error stopping engine', error)
