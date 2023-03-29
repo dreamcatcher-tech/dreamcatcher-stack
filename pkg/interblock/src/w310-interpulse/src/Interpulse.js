@@ -380,16 +380,20 @@ export class Interpulse {
         const updater = async (source) => {
           let prior
           try {
-            for await (const pulse of source) {
-              debug('stream', pulse.toString())
-              assert(pulse instanceof PulseLink)
-              // TODO allow to skip forwards
-              // TODO add checker to ensure all children are loaded
-              const latest = await this.#endurance.recoverRemote(pulse, prior)
+            for await (const pulseId of source) {
+              debug('stream %s %s', address, pulseId)
+              assert(pulseId instanceof PulseLink)
+              // TODO insert syncer here and allow skipping
+              // or detach full syncer from mtab
+              const latest = await this.#endurance.recoverRemote(pulseId, prior)
+              assert(pulseId.equals(latest.getPulseLink()))
+              if (prior) {
+                assert(prior.equals(latest.provenance.lineages[0]))
+              }
               const target = mtab.getAddress()
               debug('updating %s with %s', address, latest)
               await this.#engine.updateLatest(target, latest)
-              prior = latest.getPulseLink()
+              prior = pulseId
             }
           } catch (error) {
             debug('updater error', error)

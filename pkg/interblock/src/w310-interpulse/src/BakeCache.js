@@ -36,7 +36,7 @@ export class BakeCache {
     assert(pulse instanceof Pulse)
     assert(!this.#covenants.has(path))
     this.#covenants.set(path, pulse)
-    this.#yieldStream.push({ type: 'COVENANT' })
+    this.#yieldStream.push({ type: 'COVENANT', path, pulse })
   }
   preBake(address, pulseId) {
     assert(address instanceof Address)
@@ -48,7 +48,7 @@ export class BakeCache {
     const tracker = this.#chains.get(key)
     if (!pulseId.equals(tracker.pulseId)) {
       this.#chains.set(key, { ...tracker, pulseId })
-      this.#yieldStream.push({ type: 'PRE_BAKE' })
+      this.#yieldStream.push({ type: 'PRE_BAKE', address, pulseId })
     }
   }
   isBaked(address, pulseId) {
@@ -92,7 +92,7 @@ export class BakeCache {
     assert(pulseId instanceof PulseLink)
     assert(pulseId.equals(pulse.getPulseLink()))
     this.#chains.set(key, { ...tracker, pulse })
-    this.#yieldStream.push({ type: 'VIRGIN_PULSE' })
+    this.#yieldStream.push({ type: 'VIRGIN_PULSE', address, pulse })
   }
   isVirgin(address) {
     assert(address instanceof Address)
@@ -134,7 +134,7 @@ export class BakeCache {
     const { done, ...rest } = this.#chains.get(key)
     assert(!done, `already done: ${address}`)
     this.#chains.set(key, { ...rest, channels })
-    this.#yieldStream.push({ type: 'UPDATE_CHANNELS' })
+    this.#yieldStream.push({ type: 'UPDATE_CHANNELS', address })
   }
   finalize(address, pulse, channels) {
     assert(address instanceof Address)
@@ -144,7 +144,7 @@ export class BakeCache {
     const { pulseId } = this.#chains.get(key)
     assert(pulseId.equals(pulse.getPulseLink()))
     this.#chains.set(key, { pulseId, pulse, channels, done: true })
-    this.#yieldStream.push({ type: 'FINALIZE' })
+    this.#yieldStream.push({ type: 'FINALIZE', address, pulse })
   }
   hasCovenant(path) {
     assert(posix.isAbsolute(path), `path must be absolute: ${path}`)

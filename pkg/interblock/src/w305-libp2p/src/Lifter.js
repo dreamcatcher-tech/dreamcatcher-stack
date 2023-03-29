@@ -34,6 +34,7 @@ export class Lifter {
       const { peerIdString, pulse, prior, type } = request
       debug('rxLifts %o', request)
       const blockStream = pushable({ objectMode: true })
+      // WARNING streams are in parallel if no await for streamWalk
       this.#netEndurance.streamWalk(blockStream, pulse, prior, type)
       const stream = await this.#ensureConnection(peerIdString)
       assert.strictEqual(typeof stream.push, 'function')
@@ -62,7 +63,7 @@ export class Lifter {
     pipe(source, buffer, async (source) => {
       for await (const bytes of source) {
         const block = await this.#netEndurance.pushLiftedBytes(bytes)
-        const tracker = this.#promises.get(block.cid.toString())
+        const [tracker] = this.#promises.get(block.cid.toString()) || []
         if (tracker) {
           tracker.resolve()
         }
@@ -85,32 +86,40 @@ export class Lifter {
     }
     return this.#connections.get(peerIdString)
   }
-  async lift(pulse, prior, type) {
-    assert(pulse instanceof PulseLink)
+  async lift(pulseId, prior, type) {
+    assert(pulseId instanceof PulseLink)
     assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type])
-    const cidString = pulse.cid.toString()
-    if (this.#promises.has(cidString)) {
-      return this.#promises.get(cidString).promise
+    // TODO dedupe on send and on server, since should not duplicate streams
+
+    const key = pulseId.cid.toString()
+    if (!this.#promises.has(key)) {
+      this.#promises.set(key, new Set())
     }
-    let tracker
+    const promises = this.#promises.get(key)
+    const tracker = {}
+    promises.add(tracker)
     const promise = new Promise((resolve, reject) => {
-      tracker = { resolve, reject }
+      Object.assign(tracker, { resolve, reject })
       // TODO get feedback from announcer
       try {
-        this.#announcer.broadCastLift(pulse, prior, type)
+        this.#announcer.broadCastLift(pulseId, prior, type)
       } catch (error) {
         reject(error)
       }
     })
-    tracker.promise = promise
-    this.#promises.set(cidString, tracker)
     try {
       await promise
     } finally {
-      debug('lift tip received for %s', pulse)
-      this.#promises.delete(cidString)
+      debug('lift tip received for %s of type %s', pulseId, type)
+      // loose requirement that lift tips come down in request order
+      assert(promises.has(tracker))
+      promises.delete(tracker)
+      if (promises.size === 0) {
+        this.#promises.delete(key)
+      }
     }
+    return promise
   }
   #getHandler() {
     return ({ stream, connection }) => {

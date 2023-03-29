@@ -16,7 +16,7 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   const listBatch = faker.customers.generateBatchInside(sectorsBatch, customers)
   const listInsert = { '/app/customers/batch': { batch: listBatch } }
   const update = { '/app/routing/update': { path: '/app/customers' } }
-  const cd = { '/cd': { path: '/app/routing' } }
+  const cd = { '/cd': { path: '/app/customers' } }
   return [install, sectorsInsert, listInsert, update, cd]
 }
 
@@ -30,7 +30,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*Nav iplog')
+  Debug.enable('*Nav iplog *Syncer')
   return (
     <Engine {...args}>
       <Syncer path="/app">

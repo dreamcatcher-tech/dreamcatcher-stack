@@ -182,12 +182,12 @@ export class PulseNet {
     return this.#announcer.subscribe(address)
     // TODO use a worker to verify and catch up on announcements
   }
-  async lift(pulse, prior, type) {
-    assert(pulse instanceof PulseLink)
+  async lift(pulseId, prior, type) {
+    assert(pulseId instanceof PulseLink)
     assert(!prior || prior instanceof PulseLink)
     assert(Lifter.RECOVERY_TYPES[type])
-    await this.#lifter.lift(pulse, prior, type)
-    debug('lifted %s', pulse)
+    await this.#lifter.lift(pulseId, prior, type)
+    debug('lifted %s prior %s type %s', pulseId, prior, type)
   }
   async stats() {
     const repo = await this.#repo.stat()

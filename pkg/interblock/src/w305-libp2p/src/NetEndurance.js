@@ -3,7 +3,6 @@ import drain from 'it-drain'
 import { pipe } from 'it-pipe'
 import bytes from 'pretty-bytes'
 import { CID } from 'multiformats/cid'
-import { eventLoopSpinner } from 'event-loop-spinner'
 import {
   Interpulse,
   Address,
@@ -37,7 +36,7 @@ export class NetEndurance extends Endurance {
   #writeResolve
   #writeCount = 0
   #writeStart() {
-    // TODO change all this to be streams
+    // TODO change all this to be stream and await the stream ending
     if (!this.#writeCount) {
       this.#writePromise = new Promise((resolve) => {
         this.#writeResolve = resolve
@@ -72,7 +71,7 @@ export class NetEndurance extends Endurance {
     assert(Lifter.RECOVERY_TYPES[type], `invalid recovery type ${type}`)
     const abort = new AbortController()
 
-    debug(`streamWalk ${pulse} ${type}`)
+    debug(`streamWalk pulse: %s prior: %s type: %s`, pulse, prior, type)
     const start = Date.now()
 
     const t = Lifter.RECOVERY_TYPES
@@ -138,13 +137,14 @@ export class NetEndurance extends Endurance {
         any.end()
       }
     }
-    debug('streamWalk done %s %s', pulse, type)
+    debug('streamWalk done %s %s %s', pulse, prior, type)
     const { bytes, hashes, count, ms } = stats(blockSet, start)
 
     debug(
       `streamWalk count: ${count} bytes: ${bytes} hashes: ${hashes} in ${ms}ms children: ${walkCount}`
     )
   }
+
   async #tipHamts(instance, prior, stream) {
     assert(instance instanceof Pulse)
     assert(!prior || prior instanceof Pulse)
@@ -185,8 +185,8 @@ export class NetEndurance extends Endurance {
         continue
       }
 
-      const priorCids = await this.#getHamtCids(pHamt)
       const cids = await this.#getHamtCids(hamt)
+      const priorCids = await this.#getHamtCids(pHamt)
       for (const cidString of cids) {
         assert.strictEqual(typeof cidString, 'string')
         if (!priorCids.has(cidString)) {
@@ -222,10 +222,8 @@ export class NetEndurance extends Endurance {
   }
   #hamtCidsCache = new Map()
   #trimHamtCidsCache() {
-    const cacheLimit = 1000
-    if (this.#hamtCidsCache.size <= cacheLimit) {
-      return
-    }
+    // TODO clean cache based on sizes
+    const cacheLimit = 100000
     for (const key of this.#hamtCidsCache.keys()) {
       if (this.#hamtCidsCache.size <= cacheLimit) {
         break
@@ -324,7 +322,7 @@ export class NetEndurance extends Endurance {
   async recoverRemote(pulseId, prior, abort) {
     assert(pulseId instanceof PulseLink)
     assert(!prior || prior instanceof PulseLink)
-    this.#net.lift(pulseId, prior, 'deepPulse')
+    await this.#net.lift(pulseId, prior, 'deepPulse')
     // TODO recover should not require prior knowledge, only lift
     const result = await this.recover(pulseId, 'deepPulse', abort)
     return result
@@ -346,10 +344,8 @@ export class NetEndurance extends Endurance {
     await super.endure(latest)
     this.#writeStart()
     const netEndurePromise = this.#net.endure(latest)
-    debug(`start ipfs put`, latest.getPulseLink())
     netEndurePromise
       .then(() => {
-        debug(`finish net endure`, latest.getPulseLink())
         this.#writeStop()
       })
       .then(() => this.#transmit(latest))
@@ -384,7 +380,6 @@ export class NetEndurance extends Endurance {
       }
     })
     await Promise.all(awaits)
-    debug('transmit complete', source.getAddress(), source.getPulseLink())
   }
   async #remotePath(channel) {
     assert(channel instanceof Channel)
@@ -420,9 +415,6 @@ export class NetEndurance extends Endurance {
     const cacheResolver = super.getResolver(treetop)
     const netResolver = this.#getNetResolver(treetop)
     return async (cid, options) => {
-      if (eventLoopSpinner.isStarving()) {
-        await eventLoopSpinner.spin()
-      }
       const cachedResult = await cacheResolver(cid, options)
       if (cachedResult[0]) {
         return cachedResult
@@ -467,35 +459,16 @@ export class NetEndurance extends Endurance {
     }
   }
   async pushLiftedBytes(bytes) {
-    if (eventLoopSpinner.isStarving()) {
-      await eventLoopSpinner.spin()
-    }
     let block = await decode(bytes)
     block = super.cacheBlock(block)
-
     const cidString = block.cid.toString()
     if (this.#wantList.has(cidString)) {
       const tracker = this.#wantList.get(cidString)
       tracker.resolve(block)
     }
-    // TODO turn this back on once storing to disk
+    // TODO use a queue to batch writes ?
     await this.#net.repo.blocks.put(block.cid, block.bytes)
-    // await this.#bufferedWrite(block)
     return block
-  }
-  #queue = []
-  async #bufferedWrite(block) {
-    this.#queue.push(block)
-    if (this.#queue.length === 1) {
-      setTimeout(() => {
-        const writes = this.#queue.map((block) => ({
-          key: block.cid,
-          value: block.bytes,
-        }))
-        this.#net.repo.blocks.putMany(writes)
-        this.#queue.length = 0
-      }, 500)
-    }
   }
   async stop() {
     super.stop()

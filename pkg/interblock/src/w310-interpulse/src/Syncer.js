@@ -99,7 +99,6 @@ export class Syncer {
     const taskMaker = async function* (queue) {
       for await (const { address, pulseId } of queue) {
         taskCounter++
-        // debug('taskCounter %i %s %s', taskCounter, address, pulseId)
         yield () => syncer.#processor(address, pulseId, abort)
       }
     }
@@ -203,7 +202,6 @@ export class Syncer {
     }
     const network = pulse.getNetwork()
     const priorNet = prior?.getNetwork()
-
     const [deleted, dIterator] = await network.diffChannels(priorNet, abort)
     for (const channelId of deleted) {
       assert(Number.isInteger(channelId))
@@ -240,18 +238,14 @@ export class Syncer {
     await covenantPromise
   }
   async #startYieldQueue() {
-    for await (const { type: _ } of this.#yieldQueue) {
+    for await (const _ of this.#yieldQueue) {
       if (eventLoopSpinner.isStarving()) {
         await eventLoopSpinner.spin()
       }
       if (this.#yieldQueue.readableLength) {
         continue
       }
-      const address = this.#address
-      const actions = this.#actions
-      const chroot = this.#chroot
-      const cache = this.#cache
-      const args = [address, actions, chroot, cache]
+      const args = [this.#address, this.#actions, this.#chroot, this.#cache]
       // throttling here has no observable affect
       this.#crisp = Crisp.createRoot(...args)
       this.#crisp.isDeepLoaded = this.#isDeepLoaded

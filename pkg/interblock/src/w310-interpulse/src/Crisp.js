@@ -52,15 +52,15 @@ export class Crisp {
     }
     return Crisp.createRoot(address, actions, chroot)
   }
-  static createRoot(root, actions, chroot = '/', cache) {
-    assert(root instanceof Address)
+  static createRoot(address, actions, chroot = '/', cache) {
+    assert(address instanceof Address)
     assert.strictEqual(typeof actions, 'object')
     assert.strictEqual(typeof actions.dispatch, 'function')
     assert(posix.isAbsolute(chroot), `chroot not absolute: ${chroot}`)
     cache = cache || BakeCache.createCI()
     assert(cache instanceof BakeCache)
     const result = new Crisp()
-    result.#address = root
+    result.#address = address
     result.#rootActions = actions
     result.#chroot = chroot
     result.#cache = cache
@@ -267,6 +267,7 @@ export class Crisp {
         }
         return ai - bi
       })
+      Object.freeze(cache.sorted)
     }
     return cache.sorted
   }
