@@ -1,16 +1,22 @@
+import { CID } from 'multiformats/cid'
 import { isNode } from 'wherearewe'
 import process from 'process'
 import { createRepo } from 'ipfs-repo'
 import { loadCodec } from '../src/loadCodec'
 import { createBackend } from '../src/createBackend'
 import assert from 'assert-fast'
-import { Address, Keypair, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
+import {
+  decode,
+  Address,
+  Keypair,
+  Pulse,
+  PulseLink,
+} from '../../w008-ipld/index.mjs'
 import { createLibp2p } from 'libp2p'
 import { mplex } from '@libp2p/mplex'
 import { noise } from '@chainsafe/libp2p-noise'
 import { webSockets } from '@libp2p/websockets'
 import { isMultiaddr, multiaddr as fromString } from '@multiformats/multiaddr'
-import all from 'it-all'
 import { createRepo as createHardRepo } from 'ipfs-core-config/repo'
 import { libp2pConfig } from 'ipfs-core-config/libp2p'
 import { Announcer } from './Announcer'
@@ -18,6 +24,7 @@ import { Lifter } from './Lifter'
 import { peerIdFromString } from '@libp2p/peer-id'
 import { all as filter } from '@libp2p/websockets/filters'
 import Debug from 'debug'
+import { pushable } from 'it-pushable'
 
 const debug = Debug('interpulse:libp2p:PulseNet')
 
@@ -102,9 +109,15 @@ export class PulseNet {
     this.#lifter = Lifter.create(this.#announcer, this.#libp2p)
 
     this.#repo = repo
+    this.#putsDrained = this.#drainPuts()
+    this.#getsDrained = this.#drainGets()
     debug('listening on', this.#libp2p.getMultiaddrs())
   }
   async stop() {
+    this.#puts.end()
+    this.#gets.end()
+    await this.#putsDrained
+    await this.#getsDrained
     await stopSafe(() => this.#announcer.stop())
     await stopSafe(() => this.#libp2p.stop())
     await stopSafe(() => this.#repo.close())
@@ -127,14 +140,11 @@ export class PulseNet {
 
     // TODO throw if stopped
     const blocks = pulse.getDiffBlocks()
-    const manyBlocks = [...blocks.entries()].map(([, block]) => {
-      return { key: block.cid, value: block.bytes }
-    })
-    const repoResults = await all(this.#repo.blocks.putMany(manyBlocks))
+    const promises = [...blocks.values()].map((block) => this.putBlock(block))
+    const repoResults = await Promise.all(promises)
     const address = pulse.getAddress()
     const pulselink = pulse.getPulseLink()
     this.#announcer.updatePulse(address, pulselink)
-
     return repoResults
   }
   async announce(source, target, address, root, path) {
@@ -203,6 +213,82 @@ export class PulseNet {
     const address = pulse.getAddress()
     const pulseLink = pulse.getPulseLink()
     this.#announcer.serve(address, pulseLink)
+  }
+  async hasBlock(cid, abort) {
+    assert(CID.asCID(cid))
+    return await this.#repo.blocks.has(cid)
+  }
+  async getBlock(cid, abort) {
+    assert(CID.asCID(cid))
+    let cb
+    const promise = new Promise((resolve) => (cb = resolve))
+    this.#gets.push({ cid, cb })
+    return await promise
+  }
+  #gets = pushable({ objectMode: true })
+  #getsDrained
+  async #drainGets() {
+    const buffer = []
+    const callbacks = new Map()
+    for await (const { cid, cb } of this.#gets) {
+      const key = cid.toString()
+      if (!callbacks.has(key)) {
+        callbacks.set(key, [])
+      }
+      const callbacksArray = callbacks.get(key)
+      callbacksArray.push(cb)
+      if (callbacksArray.length > 1) {
+        continue
+      }
+      buffer.push(cid)
+      if (this.#gets.readableLength) {
+        continue
+      }
+      for await (const bytes of this.#repo.blocks.getMany(buffer)) {
+        const block = await decode(bytes)
+        const callbacksArray = callbacks.get(block.cid.toString())
+        assert(callbacksArray.length)
+        callbacksArray.forEach((cb) => cb(block))
+      }
+      buffer.length = 0
+      callbacks.clear()
+    }
+  }
+  async putBlock(block, abort) {
+    assert(CID.asCID(block.cid))
+    let cb
+    const promise = new Promise((resolve) => (cb = resolve))
+    this.#puts.push({ block, cb })
+    return await promise
+  }
+  #puts = pushable({ objectMode: true })
+  #putsDrained
+  async #drainPuts() {
+    // TODO merge with #drainGets()
+    const buffer = []
+    const callbacks = new Map()
+    for await (const { block, cb } of this.#puts) {
+      const key = block.cid.toString()
+      if (!callbacks.has(key)) {
+        callbacks.set(key, [])
+      }
+      const callbacksArray = callbacks.get(key)
+      callbacksArray.push(cb)
+      if (callbacksArray.length > 1) {
+        continue
+      }
+      buffer.push({ key: block.cid, value: block.bytes })
+      if (this.#puts.readableLength) {
+        continue
+      }
+      for await (const { key } of this.#repo.blocks.putMany(buffer)) {
+        const callbacksArray = callbacks.get(key.toString())
+        assert(callbacksArray.length)
+        callbacksArray.forEach((cb) => cb())
+      }
+      buffer.length = 0
+      callbacks.clear()
+    }
   }
 }
 const stopSafe = async (fn) => {

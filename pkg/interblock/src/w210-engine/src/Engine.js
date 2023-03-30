@@ -261,6 +261,7 @@ export class Engine {
     assert(provenance.cid.equals(pulse.provenance.cid))
 
     await this.#endurance.endure(pulse)
+
     this.#notifySubscribers(pulse) // TODO move pierce tracker to a subscriber
     await lock.release()
     debug('lock released', pool.getAddress())

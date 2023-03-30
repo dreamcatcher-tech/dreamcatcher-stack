@@ -127,7 +127,7 @@ describe('Syncer', () => {
     const ping = await client.ping('/.mtab/server/nested1')
     expect(ping).toBeTruthy()
     debug('ping complete')
-    return end
+    await end
   })
 })
 const assertAllLoaded = (crisp) => {

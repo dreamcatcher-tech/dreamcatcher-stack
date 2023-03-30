@@ -32,26 +32,6 @@ export class NetEndurance extends Endurance {
     return instance
   }
   #net
-  #writePromise = Promise.resolve()
-  #writeResolve
-  #writeCount = 0
-  #writeStart() {
-    // TODO change all this to be stream and await the stream ending
-    if (!this.#writeCount) {
-      this.#writePromise = new Promise((resolve) => {
-        this.#writeResolve = resolve
-      })
-    }
-    this.#writeCount++
-  }
-  #writeStop() {
-    this.#writeCount--
-    if (!this.#writeCount) {
-      this.#writeResolve()
-      this.#writeResolve = undefined
-      this.#writePromise = Promise.resolve()
-    }
-  }
   async #start() {
     // TODO retransmit the tx's of latest pulse
     const { repo } = this.#net
@@ -342,18 +322,13 @@ export class NetEndurance extends Endurance {
   async endure(latest) {
     let isBootstrapPulse = !this.selfAddress
     await super.endure(latest)
-    this.#writeStart()
-    const netEndurePromise = this.#net.endure(latest)
-    netEndurePromise
-      .then(() => {
-        this.#writeStop()
-      })
-      .then(() => this.#transmit(latest))
+    await this.#net.endure(latest)
+    await this.#transmit(latest)
     if (isBootstrapPulse || this.selfAddress.equals(latest.getAddress())) {
       const pulselink = latest.getPulseLink().cid.toString()
+      // TODO wrap this in an interface
       await this.#net.repo.config.set('latest', pulselink)
     }
-    return netEndurePromise
   }
   async #transmit(source) {
     assert(source instanceof Pulse)
@@ -421,6 +396,7 @@ export class NetEndurance extends Endurance {
       }
       // TODO feed into the blockcache with ejection
       const block = await netResolver(cid)
+      assert(cid.equals(block.cid))
       super.cacheBlock(block)
       const result = await cacheResolver(cid, options)
       return result
@@ -442,9 +418,8 @@ export class NetEndurance extends Endurance {
         })
         tracker.promise = promise
         this.#wantList.set(cidString, tracker)
-        if (await this.#net.repo.blocks.has(cid)) {
-          const bytes = await this.#net.repo.blocks.get(cid, { signal })
-          const block = await decode(bytes)
+        if (await this.#net.hasBlock(cid)) {
+          const block = await this.#net.getBlock(cid, { signal })
           tracker.resolve(block)
         }
         const [raceCheck] = await raceResolver(cid, { noObjectCache: true })
@@ -467,12 +442,8 @@ export class NetEndurance extends Endurance {
       tracker.resolve(block)
     }
     // TODO use a queue to batch writes ?
-    await this.#net.repo.blocks.put(block.cid, block.bytes)
+    await this.#net.putBlock(block)
     return block
-  }
-  async stop() {
-    super.stop()
-    await this.#writePromise
   }
   async scrub(pulse, { history } = {}) {
     // walk the pulse, its interpulses, and optionally its history and binaries

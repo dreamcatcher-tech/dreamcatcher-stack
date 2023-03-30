@@ -241,8 +241,8 @@ export class Interpulse {
     for (const subscriber of this.#subscribers) {
       subscriber.return()
     }
-    await this.net?.stop()
     await this.#engine.stop() // stop all interpulsing
+    await this.net?.stop()
     await this.#crypto?.stop()
     await this.#endurance.stop()
   }
