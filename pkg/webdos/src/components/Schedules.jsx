@@ -76,7 +76,7 @@ const Schedules = ({ crisp, customers, routing, expanded }) => {
   return (
     <>
       <Glass.Container>
-        <Glass.Left>
+        <Glass.Left min={!schedule}>
           <Date
             runDate={runDate}
             onDateChange={onDateChange}

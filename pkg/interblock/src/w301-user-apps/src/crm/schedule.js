@@ -41,8 +41,8 @@ export const reducer = async (request) => {
         sectors.map(async (sectorId) => {
           debug('creating manifest for', sectorId)
           const [state] = await useState(routing + '/' + sectorId)
-          const { name, color, order = [] } = state.formData
-          const run = { name, color, order, runDate }
+          const { name, color, order = [], geometry } = state.formData
+          const run = { name, color, order, runDate, geometry }
           return addRun(sectorId, run, customers)
         })
       )
@@ -60,11 +60,11 @@ export const installer = {
 export const covenants = { run }
 
 const addRun = async (path, run, customers) => {
-  const { name, color, order, runDate } = run
+  const { name, color, order, runDate, geometry } = run
   debug('addRun', path, name)
   const state = {
     ...covenants.run.installer.state,
-    formData: { name, color, order, runDate },
+    formData: { name, color, order, runDate, geometry },
     customers,
   }
   const covenant = '#/run'

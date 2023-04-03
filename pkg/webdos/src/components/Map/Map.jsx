@@ -123,15 +123,18 @@ MapComponent.propTypes = {
    * Should the polygons be createable and editable ?
    */
   edit: PropTypes.bool,
+
   /**
    * Crisp representing the sectors to be displayed on the map
    */
   routing: PropTypes.instanceOf(Crisp),
+
   /**
    * The customers to be displayed on the map.
    * Implies markers will be shown.
    */
   customers: PropTypes.instanceOf(Crisp),
+
   /**
    * The modified sector order during editing
    */
