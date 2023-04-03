@@ -16,7 +16,7 @@ export default function MapComponent({ edit, routing, customers, reorder }) {
   const [map, setMap] = useState()
   const [sector, setSelectedSector] = useState()
   useEffect(() => {
-    L.Browser.touch = false
+    // L.Browser.touch = false
     const mapOptions = {
       center: [-37.76976, 175.27605],
       zoom: 12,

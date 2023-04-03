@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import { Engine, Syncer } from '..'
 import { Schedules } from '../components'
@@ -9,7 +10,7 @@ const { faker } = apps.crm
 const install = { add: { path: '/app', installer: '/crm' } }
 const sectorsBatch = faker.routing.generateBatch(1)
 const sectorsInsert = { '/app/routing/batch': { batch: sectorsBatch } }
-const listBatch = faker.customers.generateBatchInside(sectorsBatch, 1)
+const listBatch = faker.customers.generateBatchInside(sectorsBatch, 10)
 const listInsert = { '/app/customers/batch': { batch: listBatch } }
 const update = { '/app/routing/update': { path: '/app/customers' } }
 const cd = { cd: { path: `/app/schedules/${runDate}`, allowVirtual: true } }
@@ -33,14 +34,32 @@ export default {
   },
 }
 
+const Controller = ({ crisp }) => {
+  if (crisp.isLoadingChildren) {
+    return null
+  }
+  let schedules, customers, routing
+  if (crisp.hasChild('schedules')) {
+    schedules = crisp.getChild('schedules')
+  }
+  if (crisp.hasChild('customers')) {
+    customers = crisp.getChild('customers')
+  }
+  if (crisp.hasChild('routing')) {
+    routing = crisp.getChild('routing')
+  }
+  return <Schedules crisp={schedules} customers={customers} routing={routing} />
+}
+Controller.propTypes = { crisp: PropTypes.object }
+
 const Template = (args) => {
-  Debug.enable('iplog *Schedules crm:routing *SorterDatum')
+  Debug.enable(
+    'iplog *Schedules crm:routing *SorterDatum *ScheduleSpeedDial *Map:Sectors'
+  )
   return (
     <Engine {...args}>
       <Syncer path="/app">
-        <Syncer.UnWrapper path="schedules">
-          <Schedules {...args} />
-        </Syncer.UnWrapper>
+        <Controller />
       </Syncer>
     </Engine>
   )
@@ -54,5 +73,5 @@ Scheduled.args = {
 }
 
 // no date selected
-// saved with modified sectors
+// saved with modified order for sectors
 // unpublish

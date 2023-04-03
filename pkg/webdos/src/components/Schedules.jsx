@@ -14,14 +14,14 @@ import generatorFactory from '../pdfs'
 import { Date } from '.'
 import Debug from 'debug'
 import { apps } from '@dreamcatcher-tech/interblock'
-// TODO use binary in Complex
+// TODO use binary in Crisp
 import { templateUrl } from '../stories/data'
 import FabAdd from './FabAdd'
 import assert from 'assert-fast'
 const { utils } = apps.crm
 const debug = Debug('terminal:widgets:Schedules')
 
-const Schedules = ({ crisp, expanded }) => {
+const Schedules = ({ crisp, customers, routing, expanded }) => {
   debug('selectedChild', crisp.getSelectedChild(), crisp)
   const runDate = crisp.getSelectedChild() || Date.nearestWeekday()
   debug('runDate', runDate)
@@ -32,7 +32,7 @@ const Schedules = ({ crisp, expanded }) => {
       debug('no date change')
       return
     }
-    // don't close the date selector if there is no child
+    // do not close the date selector if there is no child
     crisp.actions.cd(crisp.absolutePath + '/' + date, true)
   }
 
@@ -42,6 +42,7 @@ const Schedules = ({ crisp, expanded }) => {
   const schedule =
     !crisp.isLoading && crisp.hasChild(runDate) ? crisp.getChild(runDate) : null
   debug('schedule', schedule)
+
   if (schedule && !schedule.isLoadingActions) {
     const [first] = schedule.sortedChildren
     const selected = schedule.getSelectedChild()
@@ -56,18 +57,17 @@ const Schedules = ({ crisp, expanded }) => {
   const onCreate = async () => {
     assert(!creating)
     setCreating(true)
-    const routing = crisp.parent.absolutePath + '/routing'
-    const customers = crisp.parent.absolutePath + '/customers'
-    debug('onCreate', runDate, routing, customers)
-    crisp.actions
-      .create(runDate, routing, customers)
-      .finally(() => setCreating(false))
-  }
-  const Fab = () => {
-    if (schedule) {
-      return <ScheduleSpeedDial events={events} />
+    debug('onCreate', runDate)
+
+    const unapproved = utils.unapprovedCustomers(runDate, routing)
+    if (unapproved.length) {
+      window.alert(unapproved.join('\n'))
+      setCreating(false)
+      return
     }
-    return <FabAdd onClick={onCreate} disabled={creating} />
+    crisp.actions
+      .create(runDate, routing.absolutePath, customers.absolutePath)
+      .finally(() => setCreating(false))
   }
   let run
   if (schedule && schedule.getSelectedChild()) {
@@ -83,14 +83,14 @@ const Schedules = ({ crisp, expanded }) => {
             expanded={!schedule}
           />
           {schedule && <SectorSelector crisp={schedule} />}
-          {run && <SorterDatum viewOnly crisp={run} />}
+          {run && <SorterDatum viewOnly crisp={run} customers={customers} />}
         </Glass.Left>
         <Glass.Center>
           {/* {schedule && <Manifest crisp={crisp} expanded={expanded} />} */}
         </Glass.Center>
       </Glass.Container>
-      <Fab />
-      <Map crisp={schedule} markers />
+      <Fab schedule={schedule} onCreate={onCreate} creating={creating} />
+      <Map routing={schedule} customers={customers} />
       {/* <PdfModal {...{ runDate, open, onClose }} /> */}
     </>
   )
@@ -99,9 +99,31 @@ Schedules.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),
 
   /**
+   * List of customers used to enrich the displayed customers
+   */
+  customers: PropTypes.instanceOf(Crisp),
+
+  /**
+   * List of sectors used for checking if a schedule can be created
+   */
+  routing: PropTypes.instanceOf(Crisp),
+
+  /**
    * Testing: Expand the manifest panel
    */
   expanded: PropTypes.bool,
+}
+
+const Fab = ({ schedule, onCreate, creating }) => {
+  if (schedule) {
+    return <ScheduleSpeedDial />
+  }
+  return <FabAdd onClick={onCreate} disabled={creating} />
+}
+Fab.propTypes = {
+  schedule: PropTypes.instanceOf(Crisp),
+  onCreate: PropTypes.func,
+  creating: PropTypes.bool,
 }
 
 export default Schedules

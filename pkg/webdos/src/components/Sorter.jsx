@@ -32,7 +32,7 @@ const debug = Debug('webdos:components:Sorter')
 
 function renderRow(props) {
   let { index, style, data, isScrolling } = props
-  const { items, enrich, selected, readOnly, onSelected } = data
+  const { items, unapproved, enrich, selected, readOnly, onSelected } = data
   const id = items[index]
   const value = enrich(id)
 
@@ -58,6 +58,7 @@ function renderRow(props) {
     <div ref={setNodeRef} {...attributes} {...listeners} style={sortableStyle}>
       <Item
         id={id}
+        unapproved={unapproved.includes(id)}
         value={value}
         label={index + 1}
         isDragging={!readOnly && isDragging}
@@ -67,14 +68,22 @@ function renderRow(props) {
     </div>
   )
 }
-const Item = ({ id, value, label, isDragging, isSelected, onClick }) => {
+const Item = ({
+  id,
+  unapproved,
+  value,
+  label,
+  isDragging,
+  isSelected,
+  onClick,
+}) => {
   value = isDragging ? ' ' : value
   label = isDragging ? ' ' : label
   return (
     <ListItem key={id} disablePadding>
       <ListItemButton selected={isSelected} onClick={onClick}>
         <ListItemIcon>
-          <Chip label={label} />
+          <Chip label={label} color={unapproved ? 'warning' : 'primary'} />
         </ListItemIcon>
         <ListItemText primary={value} />
       </ListItemButton>
@@ -83,6 +92,7 @@ const Item = ({ id, value, label, isDragging, isSelected, onClick }) => {
 }
 Item.propTypes = {
   id: PropTypes.string,
+  unapproved: PropTypes.bool,
   value: PropTypes.node,
   label: PropTypes.node,
   isDragging: PropTypes.bool,
@@ -91,6 +101,7 @@ Item.propTypes = {
 }
 export default function Sorter({
   items,
+  unapproved,
   enrich,
   selected,
   onSort,
@@ -155,7 +166,7 @@ export default function Sorter({
     }
   }
   const readOnly = !onSort
-  const data = { items, enrich, selected, readOnly, onSelected }
+  const data = { items, unapproved, enrich, selected, readOnly, onSelected }
 
   return (
     <AutoSizer>
@@ -193,6 +204,12 @@ export default function Sorter({
 }
 Sorter.propTypes = {
   items: PropTypes.arrayOf(PropTypes.string).isRequired,
+
+  /**
+   * List of ids that are not approved and must be visually decorated.
+   */
+  unapproved: PropTypes.arrayOf(PropTypes.string),
+
   /**
    * Function to get enriched data based on an id.
    * Eg: turning the id into a service address.

@@ -8,7 +8,7 @@ const maxZoom = 22
 const Gps = ({ center, zoom = 12 }) => {
   const mapId = useId()
   useEffect(() => {
-    L.Browser.touch = false
+    // L.Browser.touch = false
     const mapOptions = {
       center,
       zoom,

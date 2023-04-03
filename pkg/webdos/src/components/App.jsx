@@ -39,7 +39,11 @@ export default function App({ crisp }) {
         ) : (
           <>
             <Glass.Lazy show={wd.startsWith('/schedules')}>
-              <Schedules crisp={schedules} />
+              <Schedules
+                crisp={schedules}
+                customers={customers}
+                routing={routing}
+              />
             </Glass.Lazy>
             <Glass.Lazy show={wd.startsWith('/customers')}>
               <CollectionList crisp={customers} />

@@ -12,7 +12,6 @@ import PropTypes from 'prop-types'
 import Debug from 'debug'
 import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
-import ApproveAll from '@mui/icons-material/DoneAll'
 
 const debug = Debug('terminal:widgets:SorterDatum')
 
@@ -68,6 +67,7 @@ function SorterDatum({ crisp, customers, viewOnly, onOrder, onEdit, editing }) {
     debug('onSubmit', items)
     setIsPending(true)
     const formData = { ...crisp.state.formData, order: items }
+    delete formData.unapproved
     crisp.actions.set({ formData }).then(() => {
       setIsPending(false)
       onIsEditing(false)
@@ -127,6 +127,7 @@ function SorterDatum({ crisp, customers, viewOnly, onOrder, onEdit, editing }) {
       <CardContent sx={{ flexGrow: 1, p: 0 }}>
         <Sorter
           items={items}
+          unapproved={unapproved}
           enrich={enrich}
           selected={marker}
           onSort={viewOnly || !isEditing || isPending ? undefined : onSort}

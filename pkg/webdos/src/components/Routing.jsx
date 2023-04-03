@@ -21,7 +21,6 @@ const Routing = ({ crisp, customers }) => {
   const [reorder, onReorder] = useState([])
   const [isEditingSector, setIsEditingSector] = useState(false)
   const [isEditingOrder, setIsEditingOrder] = useState(false)
-  const disabled = isEditingSector || isEditingOrder || isUpdating
 
   if (!isDefaultSet) {
     if (!crisp.isLoadingChildren) {
@@ -50,6 +49,7 @@ const Routing = ({ crisp, customers }) => {
     // TODO give some progress on update running
     setIsUpdating(false)
   }
+  const disabled = isEditingSector || isEditingOrder || isUpdating
   const dialDisabled = disabled || crisp.isLoadingActions
   return (
     <>

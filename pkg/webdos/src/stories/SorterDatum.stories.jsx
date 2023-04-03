@@ -74,3 +74,5 @@ ReadOnly.args = { viewOnly: true }
 
 export const Editing = Template.bind({})
 Editing.args = { editing: true }
+
+export const Unapproved = Template.bind({})

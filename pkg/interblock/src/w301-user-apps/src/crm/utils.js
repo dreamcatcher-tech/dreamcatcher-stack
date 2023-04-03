@@ -71,6 +71,26 @@ export const generateManifest = (root, runDate) => {
   return manifest
 }
 
+export const unapprovedCustomers = (runDate, routing) => {
+  assert.strictEqual(typeof runDate, 'string', 'runDate must be a string')
+  assert(routing instanceof Crisp)
+  assert(!routing.isLoadingChildren)
+  const { commonDate } = routing.state.formData
+  const unapproved = []
+  for (const key of routing.sortedChildren) {
+    const sector = routing.getChild(key)
+    assert(!sector.isLoading)
+    const { formData } = sector.state
+    if (isSectorOnDate(formData, commonDate, runDate)) {
+      if (formData.unapproved?.length) {
+        const msg = `Sector "${formData.name}" has ${formData.unapproved.length} unapproved customers`
+        unapproved.push(msg)
+      }
+    }
+  }
+  return unapproved
+}
+
 export const COLORS = [
   'red',
   'orange',
