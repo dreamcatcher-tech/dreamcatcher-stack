@@ -19,7 +19,6 @@ import {
   Datum,
   Explorer,
   Nav,
-  OpenDialog,
   Settings,
   MapBackground,
   AppContainer,

@@ -6,6 +6,7 @@ import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium'
 import assert from 'assert-fast'
 import Debug from 'debug'
 import FabAdd from './FabAdd'
+import { CustomerModal } from '.'
 import posix from 'path-browserify'
 
 const debug = Debug('terminal:widgets:CollectionList')
@@ -68,11 +69,17 @@ const CollectionList = ({ crisp }) => {
       crisp.actions.cd(path, allowVirtual)
     }
   }
+
+  const [open, setOpen] = useState(false)
   const onRowDoubleClick = (params) => {
     debug('onRowDoubleClick', params)
-    // open up a modal to edit the customer
+    setOpen(true)
   }
+  const selected = crisp.getSelectedChild()
+  const customer =
+    selected && crisp.hasChild(selected) && crisp.getChild(selected)
   const onAdd = crisp.isLoadingActions ? null : crisp.actions.add
+  const onClose = () => setOpen(false)
   return (
     <>
       <DataGridPremium
@@ -87,6 +94,7 @@ const CollectionList = ({ crisp }) => {
         onRowDoubleClick={onRowDoubleClick}
       />
       {onAdd ? <FabAdd onClick={onAddCustomer} disabled={isAdding} /> : null}
+      {open && <CustomerModal customer={customer} onClose={onClose} />}
     </>
   )
 }

@@ -20,7 +20,7 @@ import Form from '@rjsf/mui'
 import validator from '@rjsf/validator-ajv8'
 const debug = Debug('terminal:widgets:Datum')
 
-const Datum = ({ crisp, viewOnly, collapsed, editing }) => {
+const Datum = ({ crisp, viewOnly, onEditChange, collapsed, editing }) => {
   debug('Datum', crisp.state)
   const theme = createTheme()
   const noDisabled = createTheme({ palette: { text: { disabled: '0 0 0' } } })
@@ -28,9 +28,14 @@ const Datum = ({ crisp, viewOnly, collapsed, editing }) => {
 
   const [formData, setFormData] = useState(crisp.state.formData)
   const [isPending, setIsPending] = useState(false)
-  const [isEditing, setIsEditing] = useState(editing)
+  const [isEditing, setIsEditingState] = useState(editing)
   const [expanded, setExpanded] = useState(!collapsed)
   const [startingState, setStartingState] = useState(crisp.state)
+
+  const setIsEditing = (isEditing) => {
+    setIsEditingState(isEditing)
+    onEditChange && onEditChange(isEditing)
+  }
 
   if (!equals(startingState, crisp.state)) {
     debug('state changed', startingState, crisp.state)
@@ -150,6 +155,12 @@ Datum.propTypes = {
    * Show no edit button - all fields are readonly
    */
   viewOnly: PropTypes.bool,
+
+  /**
+   * Callback when the edit status changes
+   */
+  onEditChange: PropTypes.func,
+
   /**
    * Used in testing to start the component in collapsed mode
    */

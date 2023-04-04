@@ -1,19 +1,15 @@
 import React from 'react'
 import Debug from 'debug'
-import { OpenDialog } from '.'
+import { Crisp } from '@dreamcatcher-tech/interblock'
+import PropTypes from 'prop-types'
 
 const debug = Debug('terminal:widgets:About')
 debug(`loaded`)
 
-const About = () => {
-  const { blocks, match, cwd } = useRouter()
-  const [block] = blocks
-  if (!block) {
-    debug(`not enough info to render`)
-    return null
+const About = ({ crisp }) => {
+  if (!crisp || crisp.isLoading) {
+    return
   }
-  const { state } = block
-  const { title, description } = state.formData || state.schema || {}
   return (
     <OpenDialog title={'About'}>
       <h2>{title}</h2>
@@ -21,5 +17,6 @@ const About = () => {
     </OpenDialog>
   )
 }
+About.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
 
 export default About

@@ -1,6 +1,6 @@
 import React from 'react'
 import Debug from 'debug'
-import { OpenDialog, Datum } from '.'
+import { Datum } from '.'
 const debug = Debug('terminal:widgets:Account')
 
 const Account = () => {
