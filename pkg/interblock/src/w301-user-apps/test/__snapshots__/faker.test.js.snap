@@ -3,14 +3,15 @@
 exports[`faker customers single 1`] = `
 {
   "formData": {
+    "billingAddress": "94 Monahan Manor",
     "custNo": 777,
-    "importedHash": "171e08cfb3ddfabbabbe2fec3beab29a54baa4c2",
-    "mobile": "+61 4 7854 5398",
-    "name": "Raquel Ryan",
-    "serviceAddress": "162 Cole Trail",
+    "mobile": "+61 485 453 980",
+    "name": "Lucia Adams",
+    "phone": "+61 0 6038 9718",
+    "serviceAddress": "17 Harber Crescent",
     "serviceGps": {
-      "latitude": -37.918212,
-      "longitude": 175.253737,
+      "latitude": -37.802814,
+      "longitude": 175.443957,
     },
   },
   "schema": "..",
