@@ -1,27 +1,21 @@
-import bytes from 'pretty-bytes'
-import { Datum } from '.'
+import { Datum, Gps } from '.'
 import { Crisp } from '@dreamcatcher-tech/interblock'
-import Stack from '@mui/material/Stack'
 import DialogTitle from '@mui/material/DialogTitle'
-import DialogActions from '@mui/material/DialogActions'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
-import OpenInNew from '@mui/icons-material/OpenInNew'
-import Download from '@mui/icons-material/Download'
-import Button from '@mui/material/Button'
-import React, { useEffect, useState } from 'react'
+import Grid from '@mui/material/Grid'
+
+import React, { useState } from 'react'
 import Debug from 'debug'
 import PropTypes from 'prop-types'
-import LinearProgress from '@mui/material/LinearProgress'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
 
 const debug = Debug('webdos:components:CustomerModal')
 const CustomerModal = ({ customer, onClose }) => {
   if (!customer) {
     return null
   }
-  const { custNo = '(loading...)', name = '' } = customer.state.formData || {}
+  const [formData, setFormData] = useState(customer.state.formData || {})
+  const { custNo = '(loading...)', name = '', isManualGps } = formData
   const title = `Customer ${custNo} ${name}`
   const [open, setOpen] = useState(!!customer)
   const [isEditing, setIsEditing] = useState(false)
@@ -33,37 +27,37 @@ const CustomerModal = ({ customer, onClose }) => {
     setOpen(false)
     onClose && onClose()
   }
-  const onEditChange = (isEditing) => {
+  const onEdit = (isEditing) => {
     setIsEditing(isEditing)
   }
+  let { uiSchema } = customer.state || {}
+
+  if (!isManualGps) {
+    uiSchema = { ...uiSchema, serviceAddress: { 'ui:readonly': true } }
+  }
+  const onUpdate = (formData) => {
+    debug('onChange', formData)
+    setFormData(formData)
+  }
+
   return (
-    <Dialog onClose={onCloseSafely} open={open} fullWidth>
+    <Dialog onClose={onCloseSafely} open={open} fullWidth maxWidth="xl">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <Datum crisp={customer} onEditChange={onEditChange} />
+        <Grid container spacing={2} justifyContent="center">
+          <Grid item xs={6} xl={3}>
+            <Datum
+              crisp={customer}
+              onEdit={onEdit}
+              uiSchema={uiSchema}
+              onUpdate={onUpdate}
+            />
+          </Grid>
+          <Grid item xs={6} sx={{ background: 'red' }}>
+            <Gps edit={isEditing && !isManualGps} />
+          </Grid>
+        </Grid>
       </DialogContent>
-      <DialogActions disableSpacing>
-        {/* <Stack direction="row" spacing={2}>
-          <Button
-            disabled={!url}
-            variant="contained"
-            href={url}
-            target="_blank"
-            type="application/pdf"
-          >
-            Open&nbsp; <OpenInNew />
-          </Button>
-          <Button
-            disabled={!url}
-            variant="contained"
-            href={url}
-            download={filename}
-          >
-            Download&nbsp; <Download />
-          </Button>
-          <Button onClick={close}>Cancel</Button>
-        </Stack> */}
-      </DialogActions>
     </Dialog>
   )
 }

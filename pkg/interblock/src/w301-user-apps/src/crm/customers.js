@@ -55,14 +55,19 @@ const installer = {
             type: 'string',
             faker: 'phone.number',
           },
+          isEmailVerified: {
+            title: 'Email Verified',
+            type: 'boolean',
+            default: false,
+          },
           email: {
             title: 'Email',
             type: 'string',
             format: 'email',
             faker: 'internet.email',
           },
-          isEmailVerified: {
-            title: 'Email Verified',
+          isManualGps: {
+            title: 'Manual GPS',
             type: 'boolean',
             default: false,
           },

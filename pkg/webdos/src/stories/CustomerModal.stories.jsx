@@ -41,14 +41,14 @@ const Controller = ({ crisp }) => {
       <Button variant="contained" onClick={onClick}>
         open dialog
       </Button>
-      <CustomerModal customer={child} onClose={onClose} />
+      <CustomerModal customer={child || null} onClose={onClose} />
     </>
   )
 }
 Controller.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
 
 const Template = (args) => {
-  Debug.enable('iplog *Datum *CustomerModal')
+  Debug.enable('iplog *Datum *CustomerModal *Gps')
   debug(customer)
   return (
     <Engine {...args}>

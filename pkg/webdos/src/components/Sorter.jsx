@@ -58,7 +58,7 @@ function renderRow(props) {
     <div ref={setNodeRef} {...attributes} {...listeners} style={sortableStyle}>
       <Item
         id={id}
-        unapproved={unapproved.includes(id)}
+        unapproved={unapproved?.includes(id)}
         value={value}
         label={index + 1}
         isDragging={!readOnly && isDragging}

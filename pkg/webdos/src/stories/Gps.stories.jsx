@@ -12,7 +12,11 @@ export default {
     zoom: 12,
   },
 }
-const Template = (args) => <Gps {...args} />
+const Template = (args) => (
+  <div style={{ height: '100vh', width: '100%', background: 'red' }}>
+    <Gps {...args} />
+  </div>
+)
 
 export const Basic = Template.bind({})
 

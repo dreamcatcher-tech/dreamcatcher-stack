@@ -20,7 +20,15 @@ import Form from '@rjsf/mui'
 import validator from '@rjsf/validator-ajv8'
 const debug = Debug('terminal:widgets:Datum')
 
-const Datum = ({ crisp, viewOnly, onEditChange, collapsed, editing }) => {
+const Datum = ({
+  crisp,
+  viewOnly,
+  onEdit,
+  collapsed,
+  editing,
+  uiSchema,
+  onUpdate,
+}) => {
   debug('Datum', crisp.state)
   const theme = createTheme()
   const noDisabled = createTheme({ palette: { text: { disabled: '0 0 0' } } })
@@ -34,7 +42,7 @@ const Datum = ({ crisp, viewOnly, onEditChange, collapsed, editing }) => {
 
   const setIsEditing = (isEditing) => {
     setIsEditingState(isEditing)
-    onEditChange && onEditChange(isEditing)
+    onEdit && onEdit(isEditing)
   }
 
   if (!equals(startingState, crisp.state)) {
@@ -49,6 +57,7 @@ const Datum = ({ crisp, viewOnly, onEditChange, collapsed, editing }) => {
   const onChange = ({ formData }) => {
     debug(`onChange: `, formData)
     setFormData(formData)
+    onUpdate && onUpdate(formData)
   }
   const onSubmit = () => {
     debug('onSubmit', formData)
@@ -99,13 +108,17 @@ const Datum = ({ crisp, viewOnly, onEditChange, collapsed, editing }) => {
     }
     setExpanded(isExpanded)
   }
-  let { schema = {}, uiSchema = {} } = crisp.state
+  let { schema = {}, uiSchema: uiSchemaBase = {} } = crisp.state
   if (schema === '..' && crisp.parent) {
     schema = crisp.parent.state.template.schema
-    uiSchema = crisp.parent.state.template.uiSchema
+    uiSchemaBase = crisp.parent.state.template.uiSchema
   }
-
-  uiSchema = { ...uiSchema, 'ui:submitButtonOptions': { norender: true } }
+  uiSchema = uiSchema || {}
+  uiSchema = {
+    ...uiSchemaBase,
+    ...uiSchema,
+    'ui:submitButtonOptions': { norender: true },
+  }
   const { title, ...noTitleSchema } = schema
   const noHidden = {
     ...noTitleSchema,
@@ -151,6 +164,7 @@ Datum.propTypes = {
    * The crisp instance backing this Datum
    */
   crisp: PropTypes.instanceOf(Crisp),
+
   /**
    * Show no edit button - all fields are readonly
    */
@@ -159,7 +173,13 @@ Datum.propTypes = {
   /**
    * Callback when the edit status changes
    */
-  onEditChange: PropTypes.func,
+  onEdit: PropTypes.func,
+
+  /** Override the uiSchema from the crisp */
+  uiSchema: PropTypes.object,
+
+  /** callback for when the form data changes */
+  onUpdate: PropTypes.func,
 
   /**
    * Used in testing to start the component in collapsed mode
