@@ -1,14 +1,30 @@
-import React, { useEffect, useId } from 'react'
+import { useResizeDetector } from 'react-resize-detector'
 import PropTypes from 'prop-types'
+import equals from 'fast-deep-equal'
+import { Crisp } from '@dreamcatcher-tech/interblock'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
+import React, { useState, useEffect, useCallback } from 'react'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import AccordionDetails from '@mui/material/AccordionDetails'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import CardHeader from '@mui/material/CardHeader'
+import Card from '@mui/material/Card'
+import IconButton from '@mui/material/IconButton'
+import Edit from '@mui/icons-material/Edit'
+import Cancel from '@mui/icons-material/Cancel'
+import Save from '@mui/icons-material/Save'
+import { Actions } from '.'
+import assert from 'assert-fast'
+import Form from '@rjsf/mui'
+import validator from '@rjsf/validator-ajv8'
 import L from './leaflet'
 import Debug from 'debug'
 import { useMap } from './Map/useMap'
 import '@geoapify/leaflet-address-search-plugin'
 import '@geoapify/leaflet-address-search-plugin/dist/L.Control.GeoapifyAddressSearch.min.css'
 import './Map/address.css'
-
-import CardHeader from '@mui/material/CardHeader'
-import Card from '@mui/material/Card'
+import { CardContent } from '@mui/material'
 
 const API_KEY = '10a96996c19e4b2184fcb5b482149a33'
 const debug = Debug('webdos:components:Gps')
@@ -41,9 +57,25 @@ const ham = [-37.76976, 175.27605]
  *
  */
 
-const Gps = ({ center = ham, zoom = 12, edit, ...props }) => {
-  const mapId = useId()
-  const map = useMap(mapId)
+const Gps = ({
+  crisp,
+  onEdit,
+  center = ham,
+  zoom = 12,
+  editing = false,
+  ...props
+}) => {
+  const [mapId, map] = useMap()
+  const onResize = useCallback(() => {
+    map && map.invalidateSize()
+    debug('onResize')
+  }, [map])
+  const { ref } = useResizeDetector({ onResize })
+  const [isEditing, setIsEditing] = useState(editing)
+  const [expanded, setExpanded] = useState(true)
+  const theme = createTheme()
+  const noDisabled = createTheme({ palette: { text: { disabled: '0 0 0' } } })
+
   useEffect(() => {
     if (!map || map.isRemoved) {
       return
@@ -67,8 +99,16 @@ const Gps = ({ center = ham, zoom = 12, edit, ...props }) => {
     }
   }, [map, center, zoom])
 
+  const onAddress = (name, latitude, longitude) => {
+    debug('onAddress', name, latitude, longitude)
+    if (formData.serviceAddress !== name) {
+      const gps = { latitude, longitude }
+      setFormData({ ...formData, serviceAddress: name, gps })
+    }
+  }
+
   useEffect(() => {
-    if (!edit || !map || map.isRemoved) {
+    if (!isEditing || !map || map.isRemoved) {
       return
     }
     debug('map', map)
@@ -76,25 +116,28 @@ const Gps = ({ center = ham, zoom = 12, edit, ...props }) => {
       position: 'topleft',
       className: 'custom-address-field',
       mapViewBias: true,
-
       resultCallback: (address) => {
-        console.log(address)
+        debug('resultCallback', address)
+        // move the map to this location
+        // use the callback to update the datum
+        const { name, lat, lon } = extract(address)
+        onAddress && onAddress(name, lat, lon)
       },
       suggestionsCallback: (suggestions) => {
-        console.log(suggestions)
+        debug('suggestionsCallback', suggestions)
       },
     })
     map.addControl(addressSearchControl)
     return () => {
       map.removeControl(addressSearchControl)
     }
-  }, [map, edit])
+  }, [map, isEditing])
 
   useEffect(() => {
     if (!map || map.isRemoved) {
       return
     }
-    if (!edit) {
+    if (!isEditing) {
       // TODO make the centre of the map fixed always
       // map.scrollWheelZoom.disable()
       map.dragging.disable()
@@ -116,7 +159,7 @@ const Gps = ({ center = ham, zoom = 12, edit, ...props }) => {
         map.tap.enable()
       }
     }
-  }, [map, edit])
+  }, [map, isEditing])
 
   const mapStyle = {
     flex: 1,
@@ -128,15 +171,96 @@ const Gps = ({ center = ham, zoom = 12, edit, ...props }) => {
     background: 'black',
   }
 
+  const onExpand = (e, isExpanded) => {
+    if (isEditing) {
+      if (isDirty) {
+        return
+      }
+      onCancel(e)
+    }
+    setExpanded(isExpanded)
+  }
+
+  const schema = {
+    type: 'object',
+    required: [],
+    properties: {
+      isManualGps: {
+        title: 'Manual GPS',
+        type: 'boolean',
+        default: false,
+      },
+      serviceAddress: {
+        title: 'Service Address',
+        type: 'string',
+        faker: 'address.streetAddress',
+      },
+    },
+  }
+  const uiSchema = {
+    'ui:submitButtonOptions': { norender: true },
+  }
+  const { isManualGps } = crisp.state.formData || {}
+  if (!isManualGps) {
+    uiSchema.serviceAddress = { 'ui:readonly': true }
+  }
+  let form
   return (
-    <Card {...props} style={mapStyle}>
-      <div id={mapId} style={{ height: '100%' }}></div>
+    <Card>
+      <Accordion expanded={expanded} onChange={onExpand}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon fontSize="large" />}
+          sx={{ display: 'flex' }}
+        >
+          <CardHeader title="Service Address" sx={{ p: 0, flexGrow: 1 }} />
+          {/* {isEditing ? Editing : viewOnly ? null : Viewing} */}
+        </AccordionSummary>
+        <AccordionDetails sx={{ display: 'flex', flexDirection: 'column' }}>
+          <ThemeProvider theme={isEditing ? theme : noDisabled}>
+            <Form
+              validator={validator}
+              // disabled={isPending || !isEditing || viewOnly}
+              schema={schema}
+              uiSchema={uiSchema}
+              // formData={formData}
+              // onChange={onChange}
+              // onSubmit={onSubmit}
+              ref={(_form) => (form = _form)}
+            />
+          </ThemeProvider>
+          <Card style={mapStyle} ref={ref} id={mapId} />
+        </AccordionDetails>
+      </Accordion>
     </Card>
   )
 }
 Gps.propTypes = {
   center: PropTypes.arrayOf(PropTypes.number),
   zoom: PropTypes.number,
-  edit: PropTypes.bool,
+
+  /**
+   * The customer for which address management is being done.
+   */
+  crisp: PropTypes.instanceOf(Crisp),
+
+  /**
+   * Callback when the edit status changes
+   */
+  onEdit: PropTypes.func,
+
+  /**
+   * Testing: start the component in edit mode
+   */
+  editing: PropTypes.bool,
 }
 export default Gps
+
+const extract = (address) => {
+  const { address_line1, city, lat, lon } = address
+  assert.strictEqual(typeof address_line1, 'string')
+  assert.strictEqual(typeof city, 'string')
+  assert.strictEqual(typeof lat, 'number')
+  assert.strictEqual(typeof lon, 'number')
+  const name = `${address_line1}, ${city}`
+  return { name, lat, lon }
+}

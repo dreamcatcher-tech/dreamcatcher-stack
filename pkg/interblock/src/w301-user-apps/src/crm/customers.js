@@ -79,6 +79,8 @@ const installer = {
       },
       uiSchema: {
         importedHash: { 'ui:widget': 'hidden' },
+        isManualGps: { 'ui:widget': 'hidden' },
+        serviceAddress: { 'ui:widget': 'hidden' },
         serviceGps: { 'ui:widget': 'hidden' },
         isEmailVerified: { 'ui:readonly': true },
         custNo: { 'ui:readonly': true },

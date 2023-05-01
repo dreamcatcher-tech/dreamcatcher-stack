@@ -24,7 +24,7 @@ export default {
   },
 }
 
-const Controller = ({ crisp }) => {
+const Controller = ({ crisp, editing }) => {
   if (!crisp || crisp.isLoadingChildren) {
     return
   }
@@ -41,22 +41,31 @@ const Controller = ({ crisp }) => {
       <Button variant="contained" onClick={onClick}>
         open dialog
       </Button>
-      <CustomerModal customer={child || null} onClose={onClose} />
+      <CustomerModal
+        customer={child || null}
+        onClose={onClose}
+        editing={editing}
+      />
     </>
   )
 }
-Controller.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
+Controller.propTypes = {
+  crisp: PropTypes.instanceOf(Crisp),
+  editing: PropTypes.bool,
+}
 
 const Template = (args) => {
-  Debug.enable('iplog *Datum *CustomerModal *Gps')
+  Debug.enable('iplog *Datum *CustomerModal *Gps *Map')
   debug(customer)
   return (
     <Engine {...args}>
       <Syncer path={args.path}>
-        <Controller />
+        <Controller editing={args.editing} />
       </Syncer>
     </Engine>
   )
 }
 
 export const Customer = Template.bind({})
+export const Editing = Template.bind({})
+Editing.args = { editing: true }

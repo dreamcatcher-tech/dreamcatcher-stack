@@ -10,15 +10,14 @@ import Debug from 'debug'
 import PropTypes from 'prop-types'
 
 const debug = Debug('webdos:components:CustomerModal')
-const CustomerModal = ({ customer, onClose }) => {
-  if (!customer) {
-    return null
-  }
+const CustomerModal = ({ customer, onClose, editing = false }) => {
   const [formData, setFormData] = useState(customer.state.formData || {})
-  const { custNo = '(loading...)', name = '', isManualGps } = formData
+  const { custNo = '(loading...)', name = '' } = formData
   const title = `Customer ${custNo} ${name}`
   const [open, setOpen] = useState(!!customer)
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditingGps, setIsEditingGps] = useState(editing ?? false)
+  const [isEditingDatum, setIsEditingDatum] = useState(editing ?? false)
+  const isEditing = isEditingGps || isEditingDatum
   const onCloseSafely = () => {
     if (isEditing) {
       debug('not closing because isEditing')
@@ -27,14 +26,8 @@ const CustomerModal = ({ customer, onClose }) => {
     setOpen(false)
     onClose && onClose()
   }
-  const onEdit = (isEditing) => {
-    setIsEditing(isEditing)
-  }
   let { uiSchema } = customer.state || {}
 
-  if (!isManualGps) {
-    uiSchema = { ...uiSchema, serviceAddress: { 'ui:readonly': true } }
-  }
   const onUpdate = (formData) => {
     debug('onChange', formData)
     setFormData(formData)
@@ -48,13 +41,14 @@ const CustomerModal = ({ customer, onClose }) => {
           <Grid item xs={6} xl={3}>
             <Datum
               crisp={customer}
-              onEdit={onEdit}
+              onEdit={setIsEditingDatum}
               uiSchema={uiSchema}
               onUpdate={onUpdate}
+              editing={editing}
             />
           </Grid>
-          <Grid item xs={6} sx={{ background: 'red' }}>
-            <Gps edit={isEditing && !isManualGps} />
+          <Grid item xs={6}>
+            <Gps crisp={customer} onEdit={setIsEditingGps} editing={editing} />
           </Grid>
         </Grid>
       </DialogContent>
@@ -71,6 +65,11 @@ CustomerModal.propTypes = {
    * Called when the dialog is closed.
    */
   onClose: PropTypes.func,
+
+  /**
+   * Testing: start in editing mode
+   */
+  editing: PropTypes.bool,
 }
 
 export default CustomerModal

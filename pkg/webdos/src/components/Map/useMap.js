@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useId } from 'react'
 import L from '../leaflet'
 import Debug from 'debug'
 
@@ -6,7 +6,8 @@ const debug = Debug('webdos:components:useMap')
 const maxNativeZoom = 18
 const maxZoom = 22
 
-export const useMap = (mapId) => {
+export const useMap = () => {
+  const mapId = useId()
   const [map, setMap] = useState()
   useEffect(() => {
     // L.Browser.touch = false
@@ -77,5 +78,5 @@ export const useMap = (mapId) => {
       _map.remove()
     }
   }, [])
-  return map
+  return [mapId, map]
 }

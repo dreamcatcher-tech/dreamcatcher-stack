@@ -1,7 +1,6 @@
 import React from 'react'
 import { Gps } from '../components'
 import Debug from 'debug'
-Debug.enable('*Map')
 
 export default {
   title: 'Gps',
@@ -12,11 +11,14 @@ export default {
     zoom: 12,
   },
 }
-const Template = (args) => (
-  <div style={{ height: '100vh', width: '100%', background: 'red' }}>
-    <Gps {...args} />
-  </div>
-)
+const Template = (args) => {
+  Debug.enable('*Map')
+  return (
+    <div style={{ height: '100vh', width: '100%', background: 'red' }}>
+      <Gps {...args} />
+    </div>
+  )
+}
 
 export const Basic = Template.bind({})
 
@@ -28,3 +30,6 @@ export const Windowed = (args) => {
   )
 }
 Windowed.parameters = { layout: 'centered' }
+
+export const Editing = Template.bind({})
+Editing.args = { editing: true }

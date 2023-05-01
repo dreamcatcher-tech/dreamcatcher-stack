@@ -46,7 +46,7 @@
     "eslint-plugin-react": "^7.31.10",
     "nodemon": "^2.0.20",
     "prettier": "^2.8.8",
-    "vite": "^4.3.2"
+    "vite": "^4.3.3"
   },
   "publishConfig": {
     "access": "public"
