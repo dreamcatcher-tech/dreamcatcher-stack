@@ -44,7 +44,8 @@ describe('protocol', () => {
 
     client.addAddressPeer(address, node2.peerId)
     const stream = client.subscribe(address)
-    await node1.peerStore.addressBook.set(node2.peerId, node2.getMultiaddrs())
+    const multiaddrs = node2.getMultiaddrs()
+    await node1.peerStore.merge(node2.peerId, { multiaddrs })
     debug(`nodes connected`)
     for await (const announcement of stream) {
       assert(pulselink.equals(announcement))

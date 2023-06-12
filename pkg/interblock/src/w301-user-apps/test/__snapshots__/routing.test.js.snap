@@ -3,7 +3,6 @@
 exports[`routing update 1`] = `
 [
   "780",
-  "778",
   "777",
 ]
 `;
@@ -11,7 +10,6 @@ exports[`routing update 1`] = `
 exports[`routing update 2`] = `
 [
   "780",
-  "778",
   "777",
 ]
 `;
@@ -20,6 +18,7 @@ exports[`routing update 3`] = `
 [
   "781",
   "779",
+  "778",
 ]
 `;
 
@@ -27,6 +26,7 @@ exports[`routing update 4`] = `
 [
   "781",
   "779",
+  "778",
 ]
 `;
 

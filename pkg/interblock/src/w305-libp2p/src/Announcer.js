@@ -33,11 +33,7 @@ export class Announcer {
     return (event) => {
       const { id: peerId, multiaddrs, protocols } = event.detail
       assert(isPeerId(peerId))
-      debug('peer:discovery multiaddrs:')
-      for (const addr of multiaddrs) {
-        debug(`  `, addr.toString())
-      }
-      debug(`protocols`, protocols)
+      debug('peer:discovery')
       const peerIdString = peerId.toString()
       const wantedChainIds = this.#getWantlist(peerIdString)
       if (!wantedChainIds.size) {

@@ -6,7 +6,7 @@ import { collection } from '../../../w212-system-covenants'
 const address = (title) => ({
   title,
   type: 'string',
-  faker: 'address.streetAddress',
+  faker: 'location.streetAddress',
 })
 const gps = {
   title: 'Service GPS',
@@ -15,8 +15,8 @@ const gps = {
   additionalProperties: false,
   required: [],
   properties: {
-    latitude: { type: 'number', faker: 'address.latitude' },
-    longitude: { type: 'number', faker: 'address.longitude' },
+    latitude: { type: 'number', faker: 'location.latitude' },
+    longitude: { type: 'number', faker: 'location.longitude' },
   },
 }
 const installer = {
@@ -44,7 +44,7 @@ const installer = {
             minimum: 1,
             maximum: 100000,
           },
-          name: { title: 'Name', type: 'string', faker: 'name.fullName' },
+          name: { title: 'Name', type: 'string', faker: 'person.fullName' },
           mobile: {
             title: 'Mobile',
             type: 'string',

@@ -6,8 +6,8 @@ exports[`faker customers single 1`] = `
     "custNo": 777,
     "isEmailVerified": true,
     "mobile": "+61 485 453 980",
-    "name": "Lucia Adams",
-    "serviceAddress": "3897 Victoria Terrace",
+    "name": "Lola Christiansen",
+    "serviceAddress": "4897 Sarah Terrace",
     "serviceGps": {
       "latitude": -37.902493,
       "longitude": 175.388791,

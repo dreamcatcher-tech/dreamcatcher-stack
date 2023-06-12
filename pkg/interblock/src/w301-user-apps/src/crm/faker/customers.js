@@ -8,7 +8,7 @@ const debug = Debug('faker:customers')
 faker.seed(0)
 JSONSchemaFaker.extend('faker', () => faker)
 JSONSchemaFaker.option('random', () => {
-  const random = faker.random.numeric()
+  const random = faker.string.numeric()
   return random
 })
 const minX = 175.118637
@@ -42,12 +42,12 @@ export const generateSingle = (lut, outside = false) => {
     return lut.includes(gps)
   }
   do {
-    formData.serviceGps.latitude = faker.datatype.number({
+    formData.serviceGps.latitude = faker.number.float({
       min: lut?.bounds.minY || minY,
       max: lut?.bounds.maxY || maxY,
       precision: 0.000001,
     })
-    formData.serviceGps.longitude = faker.datatype.number({
+    formData.serviceGps.longitude = faker.number.float({
       min: lut?.bounds.minX || minX,
       max: lut?.bounds.maxX || maxX,
       precision: 0.000001,
@@ -57,7 +57,7 @@ export const generateSingle = (lut, outside = false) => {
 
   if (formData.serviceGps.latitude) {
     while (!formData.serviceAddress) {
-      formData.serviceAddress = faker.address.streetAddress()
+      formData.serviceAddress = faker.location.streetAddress()
     }
   }
 

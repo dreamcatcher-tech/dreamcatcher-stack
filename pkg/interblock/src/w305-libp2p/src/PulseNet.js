@@ -1,3 +1,4 @@
+import { MemoryDatastore } from 'datastore-core/memory'
 import { CID } from 'multiformats/cid'
 import { isNode } from 'wherearewe'
 import process from 'process'
@@ -22,9 +23,10 @@ import { libp2pConfig } from 'ipfs-core-config/libp2p'
 import { Announcer } from './Announcer'
 import { Lifter } from './Lifter'
 import { peerIdFromString } from '@libp2p/peer-id'
-import { all as filter } from '@libp2p/websockets/filters'
+import { all } from '@libp2p/websockets/filters'
 import Debug from 'debug'
 import { pushable } from 'it-pushable'
+import delay from 'delay'
 
 const debug = Debug('interpulse:libp2p:PulseNet')
 
@@ -64,7 +66,7 @@ export class PulseNet {
       datastore: repo.datastore, // definitely correct as per ipfs
     }
     delete options.metrics // TODO remove once libp2p is fixed
-    const websocketsOptions = { filter }
+    const websocketsOptions = { filter: all }
     if (isNode) {
       const listen = [`/ip4/${tcpHost}/tcp/${tcpPort}/ws`]
       const { SSL_PRIVATE_KEY, SSL_CERT_CHAIN } = process.env
@@ -120,6 +122,10 @@ export class PulseNet {
     await this.#getsDrained
     await stopSafe(() => this.#announcer.stop())
     await stopSafe(() => this.#libp2p.stop())
+    const isRam = this.#repo.datastore instanceof MemoryDatastore
+    if (!isRam) {
+      await delay(100) // TODO remove when libp2p is fixed
+    }
     await stopSafe(() => this.#repo.close())
   }
   get repo() {
@@ -154,8 +160,8 @@ export class PulseNet {
     assert(other instanceof PulseNet)
     // make a direct connection to the other pulsenet, for testing
     const { peerId } = other.#libp2p
-    const addrs = other.#libp2p.getMultiaddrs()
-    await this.#libp2p.peerStore.addressBook.set(peerId, addrs)
+    const multiaddrs = other.#libp2p.getMultiaddrs()
+    await this.#libp2p.peerStore.merge(peerId, { multiaddrs })
     await this.#libp2p.dial(peerId)
   }
   addAddressPeer(address, peerId) {
@@ -176,7 +182,8 @@ export class PulseNet {
     assert(multiaddr.getPeerId())
     const peerId = peerIdFromString(multiaddr.getPeerId())
     debug('addMultiAddress', multiaddr.toString(), peerId.toString())
-    await this.#libp2p.peerStore.addressBook.set(peerId, [multiaddr])
+    const multiaddrs = [multiaddr]
+    await this.#libp2p.peerStore.merge(peerId, { multiaddrs })
   }
   subscribeInterpulses() {
     return this.#announcer.subscribeInterpulses()
