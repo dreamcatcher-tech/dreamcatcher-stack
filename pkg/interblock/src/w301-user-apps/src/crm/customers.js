@@ -66,8 +66,13 @@ const installer = {
             format: 'email',
             faker: 'internet.email',
           },
-          isManualGps: {
-            title: 'Manual GPS',
+          isGeocodedGps: {
+            title: 'Geocoded GPS',
+            type: 'boolean',
+            default: true,
+          },
+          isGpsValid: {
+            title: 'Is GPS Valid',
             type: 'boolean',
             default: false,
           },
@@ -79,7 +84,8 @@ const installer = {
       },
       uiSchema: {
         importedHash: { 'ui:widget': 'hidden' },
-        isManualGps: { 'ui:widget': 'hidden' },
+        isGeocodedGps: { 'ui:widget': 'hidden' },
+        isGpsValid: { 'ui:widget': 'hidden' },
         serviceAddress: { 'ui:widget': 'hidden' },
         serviceGps: { 'ui:widget': 'hidden' },
         isEmailVerified: { 'ui:readonly': true },

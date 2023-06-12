@@ -31,6 +31,15 @@ const debug = Debug('webdos:components:Gps')
 const maxNativeZoom = 18
 const maxZoom = 22
 const ham = [-37.76976, 175.27605]
+const mapStyle = {
+  flex: 1,
+  margin: 0,
+  height: '100%',
+  minHeight: '250px',
+  width: '100%',
+  minWidth: '250px',
+  background: 'black',
+}
 /**
  * Show the original geocoded address location, and show the adjusted location
  * that the user moved it to.
@@ -57,24 +66,199 @@ const ham = [-37.76976, 175.27605]
  *
  */
 
-const Gps = ({
-  crisp,
-  onEdit,
-  center = ham,
-  zoom = 12,
-  editing = false,
-  ...props
-}) => {
+/**
+ * The tick boxes.
+ *
+ * The only way Geocoded can become ticked is by the system setting that flag.
+ * Acts like isEmailVerified.
+ * If select Manual, then if geocoded address is changed, or GPS coordinates
+ * are altered, then the Geocoded flag is unticked.
+ *
+ */
+
+const Gps = ({ crisp, onEdit, viewOnly, editing = false }) => {
+  assert(crisp.state.formData)
+  const [formData, setFormData] = useState(crisp.state.formData)
+  const [isPending, setIsPending] = useState(false)
+  const [isEditing, setIsEditingState] = useState(editing)
+  const [expanded, setExpanded] = useState(true)
+  const [startingState, setStartingState] = useState(crisp.state)
+
+  const setIsEditing = (isEditing) => {
+    setIsEditingState(isEditing)
+    onEdit && onEdit(isEditing)
+  }
+
+  if (!equals(startingState, crisp.state)) {
+    debug('state changed', startingState, crisp.state)
+    setStartingState(crisp.state)
+    setFormData(crisp.state.formData)
+    // TODO alert if changes not saved
+  }
+  const isDirty = !equals(formData, startingState.formData)
+  debug('isDirty', isDirty)
+  const onChange = ({ formData }) => {
+    debug(`onChange: `, formData)
+    setFormData(formData)
+  }
+  const onSubmit = () => {
+    debug('onSubmit', formData)
+    setIsPending(true)
+    crisp.ownActions.set({ formData }).then(() => {
+      setIsPending(false)
+      setIsEditing(false)
+    })
+  }
+  const onSave = (e) => {
+    debug('onSave', e)
+    e.stopPropagation()
+    form.submit()
+  }
+  const onCancel = (e) => {
+    debug('onCancel', e)
+    e.stopPropagation()
+    setIsEditing(false)
+    setFormData(crisp.state.formData)
+  }
+  const Editing = (
+    <>
+      <IconButton onClick={isPending ? null : onSave}>
+        <Save color={isPending ? 'disabled' : 'primary'} />
+      </IconButton>
+      <IconButton onClick={isPending ? null : onCancel}>
+        <Cancel color={isPending ? 'disabled' : 'secondary'} />
+      </IconButton>
+    </>
+  )
+  const onStartEdit = (e) => {
+    debug('onEdit', e)
+    setExpanded(true)
+    e.stopPropagation()
+    setIsEditing(true)
+  }
+  const Viewing = (
+    <IconButton onClick={onStartEdit}>
+      <Edit color="primary" />
+    </IconButton>
+  )
+  const onExpand = (e, isExpanded) => {
+    if (isEditing) {
+      if (isDirty) {
+        return
+      }
+      onCancel(e)
+    }
+    setExpanded(isExpanded)
+  }
+
+  const theme = createTheme()
+  const noDisabled = createTheme({ palette: { text: { disabled: '0 0 0' } } })
+
+  const onAddress = (name, latitude, longitude) => {
+    debug('onAddress', name, latitude, longitude)
+    if (formData.serviceAddress !== name) {
+      const gps = { latitude, longitude }
+      setFormData({ ...formData, serviceAddress: name, gps })
+    }
+  }
+  const isGeocoding = isEditing && formData.isGeocodedGps
+  const [mapId, ref] = useGpsMap({ isGeocoding, onAddress })
+
+  const schema = {
+    type: 'object',
+    required: [],
+    properties: {
+      isGeocodedGps: {
+        title: 'Geocoded GPS',
+        type: 'boolean',
+        default: true,
+      },
+      serviceAddress: {
+        title: 'Service Address',
+        type: 'string',
+        faker: 'address.streetAddress',
+      },
+    },
+  }
+  const uiSchema = {
+    'ui:submitButtonOptions': { norender: true },
+  }
+  const { isGeocodedGps } = crisp.state.formData || {}
+  if (isGeocodedGps) {
+    uiSchema.serviceAddress = { 'ui:readonly': true }
+  }
+  let form
+  return (
+    <Card>
+      <Accordion expanded={expanded} onChange={onExpand}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon fontSize="large" />}
+          sx={{ display: 'flex' }}
+        >
+          <CardHeader title="Service Address" sx={{ p: 0, flexGrow: 1 }} />
+          {isEditing ? Editing : viewOnly ? null : Viewing}
+        </AccordionSummary>
+        <AccordionDetails sx={{ display: 'flex', flexDirection: 'column' }}>
+          <ThemeProvider theme={isEditing ? theme : noDisabled}>
+            <Form
+              validator={validator}
+              disabled={isPending || !isEditing || viewOnly}
+              schema={schema}
+              uiSchema={uiSchema}
+              formData={formData}
+              onChange={onChange}
+              onSubmit={onSubmit}
+              ref={(_form) => (form = _form)}
+            />
+          </ThemeProvider>
+          <Card style={mapStyle} ref={ref} id={mapId} />
+        </AccordionDetails>
+      </Accordion>
+    </Card>
+  )
+}
+Gps.propTypes = {
+  /**
+   * The customer for which address management is being done.
+   */
+  crisp: PropTypes.instanceOf(Crisp),
+
+  /**
+   * Callback when the edit status changes
+   */
+  onEdit: PropTypes.func,
+
+  /**
+   * View only mode, with no editing buttons displayed
+   */
+  viewOnly: PropTypes.bool,
+
+  /**
+   * Testing: start the component in edit mode
+   */
+  editing: PropTypes.bool,
+}
+export default Gps
+
+const extract = (address) => {
+  const { address_line1, city, lat, lon } = address
+  assert.strictEqual(typeof address_line1, 'string')
+  assert.strictEqual(typeof city, 'string')
+  assert.strictEqual(typeof lat, 'number')
+  assert.strictEqual(typeof lon, 'number')
+  const name = `${address_line1}, ${city}`
+  return { name, lat, lon }
+}
+
+const useGpsMap = ({ isGeocoding, onAddress }) => {
+  const center = ham
+  const zoom = 12
   const [mapId, map] = useMap()
   const onResize = useCallback(() => {
-    map && map.invalidateSize()
+    map && !map.isRemoved && map.invalidateSize()
     debug('onResize')
   }, [map])
   const { ref } = useResizeDetector({ onResize })
-  const [isEditing, setIsEditing] = useState(editing)
-  const [expanded, setExpanded] = useState(true)
-  const theme = createTheme()
-  const noDisabled = createTheme({ palette: { text: { disabled: '0 0 0' } } })
 
   useEffect(() => {
     if (!map || map.isRemoved) {
@@ -99,16 +283,8 @@ const Gps = ({
     }
   }, [map, center, zoom])
 
-  const onAddress = (name, latitude, longitude) => {
-    debug('onAddress', name, latitude, longitude)
-    if (formData.serviceAddress !== name) {
-      const gps = { latitude, longitude }
-      setFormData({ ...formData, serviceAddress: name, gps })
-    }
-  }
-
   useEffect(() => {
-    if (!isEditing || !map || map.isRemoved) {
+    if (!isGeocoding || !map || map.isRemoved) {
       return
     }
     debug('map', map)
@@ -131,13 +307,13 @@ const Gps = ({
     return () => {
       map.removeControl(addressSearchControl)
     }
-  }, [map, isEditing])
+  }, [map, isGeocoding])
 
   useEffect(() => {
     if (!map || map.isRemoved) {
       return
     }
-    if (!isEditing) {
+    if (!isGeocoding) {
       // TODO make the centre of the map fixed always
       // map.scrollWheelZoom.disable()
       map.dragging.disable()
@@ -159,108 +335,7 @@ const Gps = ({
         map.tap.enable()
       }
     }
-  }, [map, isEditing])
+  }, [map, isGeocoding])
 
-  const mapStyle = {
-    flex: 1,
-    margin: 0,
-    height: '100%',
-    minHeight: '250px',
-    width: '100%',
-    minWidth: '250px',
-    background: 'black',
-  }
-
-  const onExpand = (e, isExpanded) => {
-    if (isEditing) {
-      if (isDirty) {
-        return
-      }
-      onCancel(e)
-    }
-    setExpanded(isExpanded)
-  }
-
-  const schema = {
-    type: 'object',
-    required: [],
-    properties: {
-      isManualGps: {
-        title: 'Manual GPS',
-        type: 'boolean',
-        default: false,
-      },
-      serviceAddress: {
-        title: 'Service Address',
-        type: 'string',
-        faker: 'address.streetAddress',
-      },
-    },
-  }
-  const uiSchema = {
-    'ui:submitButtonOptions': { norender: true },
-  }
-  const { isManualGps } = crisp.state.formData || {}
-  if (!isManualGps) {
-    uiSchema.serviceAddress = { 'ui:readonly': true }
-  }
-  let form
-  return (
-    <Card>
-      <Accordion expanded={expanded} onChange={onExpand}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon fontSize="large" />}
-          sx={{ display: 'flex' }}
-        >
-          <CardHeader title="Service Address" sx={{ p: 0, flexGrow: 1 }} />
-          {/* {isEditing ? Editing : viewOnly ? null : Viewing} */}
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: 'flex', flexDirection: 'column' }}>
-          <ThemeProvider theme={isEditing ? theme : noDisabled}>
-            <Form
-              validator={validator}
-              // disabled={isPending || !isEditing || viewOnly}
-              schema={schema}
-              uiSchema={uiSchema}
-              // formData={formData}
-              // onChange={onChange}
-              // onSubmit={onSubmit}
-              ref={(_form) => (form = _form)}
-            />
-          </ThemeProvider>
-          <Card style={mapStyle} ref={ref} id={mapId} />
-        </AccordionDetails>
-      </Accordion>
-    </Card>
-  )
-}
-Gps.propTypes = {
-  center: PropTypes.arrayOf(PropTypes.number),
-  zoom: PropTypes.number,
-
-  /**
-   * The customer for which address management is being done.
-   */
-  crisp: PropTypes.instanceOf(Crisp),
-
-  /**
-   * Callback when the edit status changes
-   */
-  onEdit: PropTypes.func,
-
-  /**
-   * Testing: start the component in edit mode
-   */
-  editing: PropTypes.bool,
-}
-export default Gps
-
-const extract = (address) => {
-  const { address_line1, city, lat, lon } = address
-  assert.strictEqual(typeof address_line1, 'string')
-  assert.strictEqual(typeof city, 'string')
-  assert.strictEqual(typeof lat, 'number')
-  assert.strictEqual(typeof lon, 'number')
-  const name = `${address_line1}, ${city}`
-  return { name, lat, lon }
+  return [mapId, ref]
 }

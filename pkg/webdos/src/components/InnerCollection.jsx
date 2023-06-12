@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
 import calculateSize from 'calculate-size'
 import { Crisp } from '@dreamcatcher-tech/interblock'
-import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium'
+import { DataGridPro } from '@mui/x-data-grid-pro/DataGridPro'
 import assert from 'assert-fast'
 import Debug from 'debug'
 
@@ -23,7 +23,7 @@ const InnerCollection = ({ onAdd, onRow, crisp, template }) => {
   )
   return (
     <>
-      <DataGridPremium
+      <DataGridPro
         columns={columns}
         rows={rows}
         disableMultipleSelection
@@ -80,5 +80,5 @@ export default InnerCollection
 
 import { LicenseInfo } from '@mui/x-license-pro'
 LicenseInfo.setLicenseKey(
-  '61628ce74db2c1b62783a6d438593bc5Tz1NVUktRG9jLEU9MTY4MzQ0NzgyMTI4NCxTPXByZW1pdW0sTE09c3Vic2NyaXB0aW9uLEtWPTI='
+  '94a2a6180c0f4f3fe01a37fea6c43795Tz02NjAyMyxFPTE3MTUyMTY5Njk1NDEsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI='
 )

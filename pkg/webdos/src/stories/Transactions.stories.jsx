@@ -2,15 +2,15 @@ import { Engine, Syncer } from '..'
 import PropTypes from 'prop-types'
 import { apps, Crisp } from '@dreamcatcher-tech/interblock'
 import React from 'react'
-import { Gps } from '../components'
+import { Transactions } from '../components'
 import Debug from 'debug'
 const { faker } = apps.crm
 faker.customers.reset()
 const customer = faker.customers.generateSingle()
 
 export default {
-  title: 'Gps',
-  component: Gps,
+  title: 'Transactions',
+  component: Transactions,
   args: {
     dev: { '/crm': apps.crm.covenant },
     path: '/list',
@@ -31,7 +31,7 @@ const Controller = ({ crisp }) => {
   if (!child) {
     return <div>Loading...</div>
   }
-  return <Gps crisp={child} />
+  return <Transactions crisp={child} />
 }
 Controller.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),
@@ -54,7 +54,7 @@ export const Basic = Template.bind({})
 export const Windowed = (args) => {
   return (
     <div style={{ height: '200px', width: '200px' }}>
-      <Gps {...args} />
+      <Transactions {...args} />
     </div>
   )
 }
