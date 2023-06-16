@@ -53,7 +53,7 @@ const config = {
     VITE_GIT_HASH,
     VITE_GIT_DATE,
     // used by the 'util' module
-    'process.env.NODE_DEBUG': 'false',
+    // 'process.env.NODE_DEBUG': 'false',
   },
 }
 dotenv.config({ path: '../../.env' })
