@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types'
+import delay from 'delay'
 import React from 'react'
 import { Engine, Syncer } from '..'
 import { Map, Glass } from '../components'
@@ -14,7 +15,7 @@ const debug = Debug('Map')
 const sectorsAdd = { add: { path: '/routing', installer: '/crm/routing' } }
 const sectorsBatch = faker.routing.generateBatch(5)
 const sectorsInsert = { '/routing/batch': { batch: sectorsBatch } }
-const listAdd = { add: { path: '/customers', installer: '/crm/customers' } }
+const listAdd = { '/add': { path: '/customers', installer: '/crm/customers' } }
 const listBatch = faker.customers.generateBatchInside(sectorsBatch, 15)
 const listInsert = { '/customers/batch': { batch: listBatch } }
 const update = { '/routing/update': { path: '/customers' } }
@@ -53,8 +54,42 @@ export const Sectors = Template.bind({})
 Sectors.args = {}
 
 export const Customers = Template.bind({})
-Customers.args = {
-  init: [...init, listAdd, listInsert, update, { cd: { path: '/routing/0' } }],
+Customers.args = { init: [] }
+Customers.play = async ({ args, canvasElement, step, ...rest }) => {
+  debug('play', rest, args)
+  while (!globalThis.interpulse) {
+    await delay(100)
+  }
+  await step('add sectors', async () => {
+    await globalThis.interpulse.execute(sectorsAdd)
+  })
+  await step('insert sectors', async () => {
+    await globalThis.interpulse.execute(sectorsInsert)
+  })
+  await step('select sector', async () => {
+    await globalThis.interpulse.execute({ '/cd': { path: '/routing/0' } })
+  })
+  await step('add customers', async () => {
+    await globalThis.interpulse.execute(listAdd)
+  })
+  await step('insert customers', async () => {
+    await globalThis.interpulse.execute(listInsert)
+  })
+  await step('update routing', async () => {
+    await globalThis.interpulse.execute(update)
+  })
+  await step('select sector', async () => {
+    await globalThis.interpulse.execute({ '/cd': { path: '/routing/1' } })
+  })
+  await step('select sector', async () => {
+    await globalThis.interpulse.execute({ '/cd': { path: '/routing/2' } })
+  })
+  await step('select sector', async () => {
+    await globalThis.interpulse.execute({ '/cd': { path: '/routing/3' } })
+  })
+  await step('select sector', async () => {
+    await globalThis.interpulse.execute({ '/cd': { path: '/routing/4' } })
+  })
 }
 
 export const CardColumn = (args) => {

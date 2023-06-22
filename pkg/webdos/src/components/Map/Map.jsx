@@ -11,8 +11,7 @@ const debug = Debug('webdos:components:Map')
 
 export default function MapComponent({ edit, routing, customers, reorder }) {
   const [sector, setSelectedSector] = useState()
-  const mapId = useId()
-  const map = useMap(mapId)
+  const [mapId, map] = useMap()
   useEffect(() => {
     const selected = routing?.getSelectedChild()
     debug('selected', selected)

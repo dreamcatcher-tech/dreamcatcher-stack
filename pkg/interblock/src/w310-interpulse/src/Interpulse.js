@@ -115,7 +115,7 @@ export class Interpulse {
   }
   async execute(actionPath, ...payload) {
     if (typeof actionPath !== 'string') {
-      assert(actionPath === undefined)
+      assert.strictEqual(Object.keys(payload).length, 0)
       return this.executeConcurrent(actionPath)
     }
     assert.strictEqual(typeof actionPath, 'string')

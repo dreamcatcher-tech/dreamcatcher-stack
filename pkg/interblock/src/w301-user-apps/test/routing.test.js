@@ -42,6 +42,33 @@ describe('routing', () => {
     expect(state.formData.unassigned.length).toEqual(count)
     expect(state).toMatchSnapshot()
   })
+  test.only('update twice does not reset unapproved', async () => {
+    const engine = await Interpulse.createCI({
+      overloads: { '/crm': crm.covenant },
+    })
+    await engine.add('routing', '/crm/routing')
+    await engine.add('customers', '/crm/customers')
+
+    const rBatch = routing.generateSingle()
+    const { alias } = await engine.execute('routing/add', rBatch)
+    const batch = customers.generateBatchInside([rBatch], 5)
+    await engine.execute('customers/batch', { batch })
+    await engine.execute('routing/update', '/customers')
+
+    const sector = await engine.current(`routing/${alias}`)
+    const { formData } = sector.getState().toJS()
+    const { unapproved, ...rest } = formData
+    debug('order', rest.order, unapproved)
+    expect(unapproved).toEqual(rest.order)
+    await engine.execute(`routing/${alias}/set`, { formData: rest })
+    const allApproved = await engine.current(`routing/${alias}`)
+    expect(allApproved.getState().toJS().formData.unapproved).toBeUndefined()
+
+    await engine.execute('routing/update', '/customers')
+
+    const unchanged = await engine.current(`routing/${alias}`)
+    expect(unchanged.getState().toJS().formData.unapproved).toBeUndefined()
+  })
   test.todo('edit a sector')
   test.todo('edit a customer')
   test.todo('no sector adds to the unassigned sector')

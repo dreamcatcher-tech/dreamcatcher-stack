@@ -67,6 +67,7 @@ function SorterDatum({ crisp, customers, viewOnly, onOrder, onEdit, editing }) {
     debug('onSubmit', items)
     setIsPending(true)
     const formData = { ...crisp.state.formData, order: items }
+    // any operator interaction implies all locations are approved
     delete formData.unapproved
     crisp.actions.set({ formData }).then(() => {
       setIsPending(false)

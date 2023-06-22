@@ -225,7 +225,7 @@ const reducer = async (request) => {
       debug('begin')
       const hash = await lut.hash()
       const [state, setState] = await useState()
-      const isSectorsChanged = state.geometryHash !== hash
+      const isSectorsChanged = state.formData?.geometryHash !== hash
       debug('isSectorsChanged', isSectorsChanged)
       if (isSectorsChanged) {
         lut.reset()

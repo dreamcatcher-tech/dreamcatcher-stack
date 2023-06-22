@@ -15,13 +15,18 @@ export default {
 }
 
 const Template = ({ sector }) => {
-  Debug.enable('*PdfRunSheet ')
+  Debug.enable('*PdfRunSheet *pdfs')
   const [url, setUrl] = React.useState()
   useAsync(async () => {
-    const pdf = await runSheetPdf(sector, runDate)
-    const { url, size } = await saveToUrl(pdf)
-    debug('size', size)
-    setUrl(url)
+    try {
+      const pdf = await runSheetPdf(sector, runDate)
+      debug('pdf', pdf)
+      const { url, size } = await saveToUrl(pdf)
+      debug('size', size)
+      setUrl(url)
+    } catch (error) {
+      console.error(error)
+    }
   })
   if (!url) {
     return <div>Loading...</div>
