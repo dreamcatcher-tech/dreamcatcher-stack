@@ -46,6 +46,7 @@ export default function Engine({
         const overloads = dev
         engine = await Interpulse.create({ ram, repo, overloads })
         globalThis.interpulse = engine
+        console.info('starting engine', repo)
         setEngine(engine)
         debug(`Engine ready`)
         if (car) {
@@ -136,6 +137,7 @@ export default function Engine({
         debug('stopping', repo)
         params.isStopped = true
         delete globalThis.interpulse
+        console.info('shutting down engine', repo)
         setEngine()
         await awaitStart
         await engine.stop()
