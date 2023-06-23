@@ -54,7 +54,7 @@ export const Basic = Template.bind({})
 export const Windowed = (args) => {
   return (
     <div style={{ height: '200px', width: '200px' }}>
-      <Gps {...args} />
+      <Template {...args} />
     </div>
   )
 }

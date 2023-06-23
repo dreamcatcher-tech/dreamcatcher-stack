@@ -77,7 +77,7 @@ const mapStyle = {
  */
 
 const Gps = ({ crisp, onEdit, viewOnly, editing = false }) => {
-  assert(crisp.state.formData)
+  assert(crisp?.state?.formData)
   const [formData, setFormData] = useState(crisp.state.formData)
   const [isPending, setIsPending] = useState(false)
   const [isEditing, setIsEditingState] = useState(editing)
