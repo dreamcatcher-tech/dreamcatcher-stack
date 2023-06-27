@@ -7,6 +7,8 @@ import { apps } from '@dreamcatcher-tech/interblock'
 import Debug from 'debug'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import play from '../Interactions'
+
 const {
   crm: { faker },
 } = apps
@@ -55,42 +57,20 @@ Sectors.args = {}
 
 export const Customers = Template.bind({})
 Customers.args = { init: [] }
-Customers.play = async ({ args, canvasElement, step, ...rest }) => {
-  debug('play', rest, args)
-  while (!globalThis.interpulse) {
-    await delay(100)
-  }
-  await step('add sectors', async () => {
-    await globalThis.interpulse.execute(sectorsAdd)
-  })
-  await step('insert sectors', async () => {
-    await globalThis.interpulse.execute(sectorsInsert)
-  })
-  await step('select sector', async () => {
-    await globalThis.interpulse.execute({ '/cd': { path: '/routing/0' } })
-  })
-  await step('add customers', async () => {
-    await globalThis.interpulse.execute(listAdd)
-  })
-  await step('insert customers', async () => {
-    await globalThis.interpulse.execute(listInsert)
-  })
-  await step('update routing', async () => {
-    await globalThis.interpulse.execute(update)
-  })
-  await step('select sector', async () => {
-    await globalThis.interpulse.execute({ '/cd': { path: '/routing/1' } })
-  })
-  await step('select sector', async () => {
-    await globalThis.interpulse.execute({ '/cd': { path: '/routing/2' } })
-  })
-  await step('select sector', async () => {
-    await globalThis.interpulse.execute({ '/cd': { path: '/routing/3' } })
-  })
-  await step('select sector', async () => {
-    await globalThis.interpulse.execute({ '/cd': { path: '/routing/4' } })
-  })
-}
+const cd = (sectorId) => ({ '/cd': { path: `/routing/${sectorId}` } })
+const steps = [
+  sectorsAdd,
+  sectorsInsert,
+  cd(0),
+  listAdd,
+  listInsert,
+  update,
+  cd(1),
+  cd(2),
+  cd(3),
+  cd(4),
+]
+Customers.play = play(steps)
 
 export const CardColumn = (args) => {
   return (
