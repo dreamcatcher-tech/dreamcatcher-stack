@@ -10,7 +10,8 @@ export default {
     options: {},
   },
   features: {
-    // interactionsDebugger: true, // 👈 Enable playback controls
+    interactionsDebugger: true, // 👈 Enable playback controls
     storyStoreV7: true, // lazy load each story
+    buildStoriesJson: true
   },
 }
