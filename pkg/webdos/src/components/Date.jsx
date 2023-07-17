@@ -39,7 +39,7 @@ export default function Date({ runDate, onDateChange, expanded }) {
                   return <TextField {...params} />
                 }}
                 showDaysOutsideCurrentMonth
-                componentsProps={{
+                slotProps={{
                   actionBar: {
                     actions: ['today'],
                   },

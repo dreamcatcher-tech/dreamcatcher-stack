@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types'
+import play from '../Interactions'
 import React from 'react'
 import { Engine, Syncer } from '..'
 import { Schedules } from '../components'
@@ -8,12 +9,12 @@ import Debug from 'debug'
 const runDate = '2023-01-23'
 const { faker } = apps.crm
 const install = { add: { path: '/app', installer: '/crm' } }
+const cd = { '/cd': { path: `/app/schedules/${runDate}`, allowVirtual: true } }
 const sectorsBatch = faker.routing.generateBatch(1)
 const sectorsInsert = { '/app/routing/batch': { batch: sectorsBatch } }
 const listBatch = faker.customers.generateBatchInside(sectorsBatch, 10)
 const listInsert = { '/app/customers/batch': { batch: listBatch } }
 const update = { '/app/routing/update': { path: '/app/customers' } }
-const cd = { cd: { path: `/app/schedules/${runDate}`, allowVirtual: true } }
 const approve = { '/app/routing/approve': { sectorId: '0', approveAll: true } }
 const create = {
   '/app/schedules/create': {
@@ -23,14 +24,13 @@ const create = {
   },
 }
 
-const init = [install, sectorsInsert, listInsert, update, cd, approve]
+const init = [install, cd, sectorsInsert, listInsert, update, approve]
 
 export default {
   title: 'Schedules',
   component: Schedules,
   args: {
     dev: { '/crm': apps.crm.covenant },
-    init,
   },
 }
 
@@ -66,11 +66,10 @@ const Template = (args) => {
 }
 
 export const Blank = Template.bind({})
+Blank.play = play(init)
 
 export const Scheduled = Template.bind({})
-Scheduled.args = {
-  init: [...init, create],
-}
+Scheduled.play = play([...init, create])
 
 // no date selected
 // saved with modified order for sectors

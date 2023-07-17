@@ -4,23 +4,23 @@ import Button from '@mui/material/Button'
 import { Engine, Syncer } from '..'
 import { CustomerModal } from '../components'
 import { apps, Crisp } from '@dreamcatcher-tech/interblock'
+import play from '../Interactions'
 import Debug from 'debug'
 const debug = Debug('Datum')
 const { faker } = apps.crm
 faker.customers.reset()
 const customer = faker.customers.generateSingle()
-
+const steps = [
+  { '/add': { path: 'list', installer: '/crm/customers' } },
+  { '/list/add': customer },
+  { '/cd': { path: '/list/' + customer.formData.custNo } },
+]
 export default {
   title: 'Customer Modal',
   component: CustomerModal,
   args: {
     dev: { '/crm': apps.crm.covenant },
     path: '/list',
-    init: [
-      { add: { path: 'list', installer: '/crm/customers' } },
-      { '/list/add': customer },
-      { cd: { path: '/list/' + customer.formData.custNo } },
-    ],
   },
 }
 
@@ -67,5 +67,7 @@ const Template = (args) => {
 }
 
 export const Customer = Template.bind({})
+Customer.play = play(steps)
 export const Editing = Template.bind({})
 Editing.args = { editing: true }
+Editing.play = play(steps)

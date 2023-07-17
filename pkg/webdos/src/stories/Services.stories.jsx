@@ -3,22 +3,22 @@ import PropTypes from 'prop-types'
 import { apps, Crisp } from '@dreamcatcher-tech/interblock'
 import React from 'react'
 import { Services } from '../components'
+import play from '../Interactions'
 import Debug from 'debug'
 const { faker } = apps.crm
 faker.customers.reset()
 const customer = faker.customers.generateSingle()
-
+const steps = [
+  { add: { path: 'list', installer: '/crm/customers' } },
+  { 'list/add': customer },
+  { cd: { path: '/list/' + customer.formData.custNo } },
+]
 export default {
   title: 'Services',
   component: Services,
   args: {
     dev: { '/crm': apps.crm.covenant },
     path: '/list',
-    init: [
-      { add: { path: 'list', installer: '/crm/customers' } },
-      { '/list/add': customer },
-      { cd: { path: '/list/' + customer.formData.custNo } },
-    ],
   },
 }
 
@@ -50,15 +50,19 @@ const Template = (args) => {
 }
 
 export const Basic = Template.bind({})
+Basic.play = play(steps)
 
+const WindowedChild = Template.bind({})
 export const Windowed = (args) => {
   return (
     <div style={{ height: '200px', width: '200px' }}>
-      <Services {...args} />
+      <WindowedChild {...args} />
     </div>
   )
 }
 Windowed.parameters = { layout: 'centered' }
+Windowed.play = play(steps)
 
 export const Editing = Template.bind({})
 Editing.args = { editing: true }
+Editing.play = play(steps)

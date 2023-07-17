@@ -8,9 +8,13 @@ export default (steps) =>
     assert(Array.isArray(steps), `steps must be an array`)
     assert.strictEqual(typeof step, 'function', `step must be a function`)
     debug('play', steps)
+    const start = Date.now()
     while (!globalThis.interpulse) {
       // TODO make a cleaner way to get the nearest engine instance
       await delay(10)
+      if (Date.now() - start > 10000) {
+        throw new Error(`Interactions: no engine instance found after 10s`)
+      }
     }
     for (const action of steps) {
       debug(`executing`, action)

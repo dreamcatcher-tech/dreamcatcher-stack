@@ -80,6 +80,7 @@ const installer = {
           serviceGps: gps,
           billingAddress: address('Billing Address'),
           importedHash: { type: 'string', faker: 'git.commitSha' },
+          // services: { type: 'object',}
         },
       },
       uiSchema: {
