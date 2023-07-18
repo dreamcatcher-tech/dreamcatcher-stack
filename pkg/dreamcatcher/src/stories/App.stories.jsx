@@ -1,39 +1,14 @@
+import * as app from '../covenants/app'
 import App from '../App.jsx'
+import { EngineHOC } from '@dreamcatcher-tech/webdos'
+const init = [{ add: { path: '/app', installer: '/dpkg/app' } }]
 
 // More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction
 export default {
   title: 'Dreamcatcher/App',
-  component: App,
+  component: EngineHOC(App),
   tags: ['autodocs'],
-  argTypes: {
-    backgroundColor: { control: 'color' },
-  },
+  args: { dev: { '/dpkg/app': app }, init, path: '/app' },
 }
 
-// More on writing stories with args: https://storybook.js.org/docs/react/writing-stories/args
-export const Primary = {
-  args: {
-    primary: true,
-    label: 'Button',
-  },
-}
-
-export const Secondary = {
-  args: {
-    label: 'Button',
-  },
-}
-
-export const Large = {
-  args: {
-    size: 'large',
-    label: 'Button',
-  },
-}
-
-export const Small = {
-  args: {
-    size: 'small',
-    label: 'Button',
-  },
-}
+export const Basic = {}

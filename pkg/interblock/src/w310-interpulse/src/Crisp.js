@@ -78,6 +78,16 @@ export class Crisp {
     result.#name = name
     return result
   }
+  static #createLoadingChild(parent, name) {
+    assert(parent instanceof Crisp)
+    assert.strictEqual(typeof name, 'string')
+    assert(name)
+    assert(!posix.isAbsolute(name), `name must be relative: ${name}`)
+    const result = new Crisp()
+    result.#parent = parent
+    result.#name = name
+    return result
+  }
   get isLoading() {
     // this call should signal the reconciler that loading is required
     this.#snapshotPulse()
@@ -181,7 +191,7 @@ export class Crisp {
       return
     }
     this.#isPulseAndChannelsSnapshotted = true
-    if (this.root.#cache.hasPulse(this.#address)) {
+    if (this.#address && this.root.#cache.hasPulse(this.#address)) {
       this.#pulseSnapshot = this.root.#cache.getPulse(this.#address)
       if (this.root.#cache.hasChannels(this.#address)) {
         this.#channelsSnapshot = this.root.#cache.getChannels(this.#address)
@@ -218,11 +228,27 @@ export class Crisp {
     const child = Crisp.#createChild(address, this, path)
     return child
   }
+  tryGetChild(path) {
+    assert.strictEqual(typeof path, 'string')
+    this.#cacheAliases()
+    if (this.isLoadingChildren) {
+      return Crisp.#createLoadingChild(this, path)
+    }
+    if (!this.hasChild(path)) {
+      throw new Error(`child not found: ${path}`)
+    }
+    const address = this.#cachedAliases.get(path)
+    const child = Crisp.#createChild(address, this, path)
+    return child
+  }
   #cacheAliases() {
     if (this.#cachedAliases) {
       return
     }
     this.#snapshotPulse()
+    if (!this.#channelsSnapshot) {
+      return
+    }
     if (!weakCache.has(this.#channelsSnapshot)) {
       const map = new Map()
       for (const channel of this.#channelsSnapshot.values()) {
