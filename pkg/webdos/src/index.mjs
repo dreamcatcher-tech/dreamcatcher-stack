@@ -1,3 +1,5 @@
 export { default as Engine } from './Engine'
+export { EngineHOC } from './EngineHOC'
 export { default as Syncer } from './Syncer'
 export * from './components/index.mjs'
+export * from '@dreamcatcher-tech/interblock'

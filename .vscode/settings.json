@@ -5,9 +5,12 @@
   "eslint.packageManager": "yarn",
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "[javascript]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

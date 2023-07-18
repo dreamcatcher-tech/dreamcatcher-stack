@@ -15,6 +15,15 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@dreamcatcher-tech/webdos": "^1.0.97",
+    "@infura/sdk": "^2.4.3",
+    "@metamask/sdk": "^0.5.2",
+    "@mui/icons-material": "^5.14.0",
+    "@mui/material": "^5.14.0",
+    "assert-fast": "^1.0.3",
+    "ethers": "^6.6.4",
+    "lodash.merge": "^4.6.2",
+    "process": "^0.11.10",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
