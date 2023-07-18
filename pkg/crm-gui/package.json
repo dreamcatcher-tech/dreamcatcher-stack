@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/crm-gui",
-  "version": "1.0.97",
+  "version": "1.0.98",
   "description": "CRM GUI consuming the webdos component library",
   "author": "evil_liskov <evil_liskov@protonmail.com>",
   "homepage": "https://github.com/dreamcatcher-tech/interblock#readme",
@@ -14,8 +14,8 @@
     "url": "https://github.com/dreamcatcher-tech/interblock/issues"
   },
   "dependencies": {
-    "@dreamcatcher-tech/interblock": "^1.0.97",
-    "@dreamcatcher-tech/webdos": "^1.0.97",
+    "@dreamcatcher-tech/interblock": "^1.0.98",
+    "@dreamcatcher-tech/webdos": "^1.0.98",
     "debug": "^4.3.4",
     "dotenv": "^16.1.4",
     "react": "^18.2.0",
