@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "@dreamcatcher-tech/webdos": "^1.0.98",
-    "@infura/sdk": "^2.4.3",
     "@metamask/sdk": "^0.5.3",
     "@mui/icons-material": "^5.14.0",
     "@mui/material": "^5.14.0",
+    "@pinata/sdk": "^2.1.0",
     "assert-fast": "^1.0.3",
     "ethers": "^6.6.4",
     "lodash.merge": "^4.6.2",

@@ -1,4 +1,6 @@
 import * as packets from './packets'
+import * as drafts from './drafts'
+import * as changes from './changes'
 
 export const installer = {
   network: {
@@ -23,17 +25,15 @@ export const installer = {
       covenant: '#/packets',
     },
     drafts: {
-      // show proposed packets
-      // ? show your drafts too ?
-      covenant: 'collection',
+      covenant: '#/drafts',
     },
-    qa: {
-      covenant: 'collection',
+    changes: {
+      covenant: '#/changes',
     },
   },
 }
 
-export const covenants = { packets }
+export const covenants = { packets, drafts, changes }
 
 export const reducer = async () => {}
 

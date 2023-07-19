@@ -1,6 +1,16 @@
 import merge from 'lodash.merge'
 import assert from 'assert-fast'
 import { useState, collection } from '@dreamcatcher-tech/webdos'
+import base from './template'
+
+const template = merge({}, base, {
+  schema: {
+    title: 'Packet',
+    description: `Schema for a packet, designed to be a superset of the 
+    opensea token level standard`,
+  },
+  uiSchema: { type: { 'ui:widget': 'hidden' } },
+})
 
 const installer = {
   state: {
@@ -29,32 +39,7 @@ const installer = {
      * @param {string} background_color The background color of the token
      * @param {string} youtube_url The youtube url of the token
      */
-    template: {
-      // if draft, and has sent, show as pending
-      // store the tx so we can rebroadcast once net returns
-      type: 'DATUM',
-      schema: {
-        title: 'Packet',
-        description: `Schema for a packet, designed to be a superset of the 
-        opensea token level standard`,
-        type: 'object',
-        required: ['tokenId', 'title'],
-        properties: {
-          tokenId: {
-            title: 'ID',
-            type: 'integer',
-            minimum: 1,
-          },
-          name: { title: 'Name', type: 'string', faker: 'person.fullName' },
-          // TODO use hash schema
-          contents: { type: 'string', faker: 'git.commitSha' },
-        },
-      },
-      uiSchema: {
-        lastBlockNumber: { 'ui:widget': 'hidden' },
-      },
-      namePath: 'tokenId',
-    },
+    template,
   },
 }
 const { api, reducer } = collection

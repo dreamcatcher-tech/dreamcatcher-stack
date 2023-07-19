@@ -25,22 +25,26 @@ import PropTypes from 'prop-types'
 import Debug from 'debug'
 const debug = Debug('dreamcatcher:Stability')
 const CLIPDROP_URL = 'https://clipdrop-api.co/text-to-image/v1'
+// TODO move to https://platform.stability.ai/rest-api
 
 const styles = [
   'anime',
   'photographic',
-  'digital art',
-  'comic book',
-  'fantasy art',
-  'analog film',
-  'neonpunk',
+  'digital-art',
+  'enhance',
+  'comic-book',
+  'fantasy-art',
+  'analog-film',
+  'neon-punk',
   'isometric',
-  'lowpoly',
+  'low-poly',
   'origami',
-  'line art',
+  'line-art',
   'cinematic',
   '3d-model',
-  'pixel art',
+  'pixel-art',
+  'modeling-compound',
+  'tile-texture',
 ]
 const styleMenuItems = styles.map((style, key) => (
   <MenuItem value={style} key={key}>
@@ -55,7 +59,7 @@ styleMenuItems.unshift(
 
 export const Stability = ({ onImage }) => {
   const [prompt, setPrompt] = useState()
-  const [style, setStyle] = useState('anime')
+  const [style, setStyle] = useState('low-poly')
   const [isRequesting, setIsRequesting] = useState(false)
   const [image, setImage] = useState(
     'https://dreamcatcher.land/img/dreamcatcher.svg'
@@ -67,7 +71,7 @@ export const Stability = ({ onImage }) => {
     const form = new FormData()
     form.append('prompt', prompt)
     form.append('preset', style)
-    debug('form', form)
+    console.log('form', [...form.entries()])
     const response = await fetch(CLIPDROP_URL, {
       method: 'POST',
       headers: { 'x-api-key': import.meta.env.VITE_CLIPDROP_API_KEY },

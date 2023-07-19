@@ -93,7 +93,7 @@ const CollectionList = ({ crisp }) => {
         loading={crisp.isLoadingChildren}
         onRowDoubleClick={onRowDoubleClick}
       />
-      {onAdd ? <FabAdd onClick={onAddCustomer} disabled={isAdding} /> : null}
+      {/* {onAdd ? <FabAdd onClick={onAddCustomer} disabled={isAdding} /> : null} */}
       {open && <CustomerModal customer={customer} onClose={onClose} />}
     </>
   )
