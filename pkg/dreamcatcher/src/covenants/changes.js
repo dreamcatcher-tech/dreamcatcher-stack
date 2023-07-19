@@ -8,7 +8,7 @@ const template = merge({}, base, {
     title: 'Change',
     description: `System changes which are either a solution, a header, modification, or a dispute`,
   },
-  uiSchema: { type: { 'ui:widget': 'hidden' } },
+  uiSchema: { status: null },
 })
 
 const installer = {

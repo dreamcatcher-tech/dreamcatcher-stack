@@ -13,7 +13,7 @@ const template = {
   type: 'DATUM',
   schema: {
     type: 'object',
-    required: ['type', 'title'],
+    required: ['type', 'title', 'image', 'status', 'time'],
     properties: {
       changeId: {
         type: 'integer',
@@ -23,19 +23,27 @@ const template = {
       type: {
         title: 'Type',
         description: `The type of of the change`,
-        enum: ['solution', 'header', 'dispute', 'modification'],
+        enum: ['packet', 'solution', 'header', 'dispute', 'modification'],
       },
       status: {
         title: 'Status',
-        enum: ['pending', 'accepted', 'rejected', 'disputed'],
+        enum: [
+          'draft',
+          'unconfirmed',
+          'pending', // in the qa queue
+          'disputable',
+          'accepted',
+          'rejected',
+          'disputed',
+        ],
       },
       image: {
         type: 'string',
         title: 'Image',
         description: `The image of the Packet this draft targets`,
-        faker: 'image.imageUrl',
+        faker: 'image.url',
       },
-      title: { title: 'Title', type: 'string', faker: 'person.fullName' },
+      title: { title: 'Title', type: 'string', faker: 'company.buzzPhrase' },
       funds: {
         type: 'integer',
         title: '$USD',
@@ -60,8 +68,7 @@ const template = {
       downstreamIds: {
         type: 'array',
         title: 'Downstream IDs',
-        items: 'integer',
-        minimum: 1,
+        items: { type: 'integer', minimum: 1 },
         uniqueItems: true,
       },
       time: { type: 'integer', title: 'Created', faker: 'date.past' },
