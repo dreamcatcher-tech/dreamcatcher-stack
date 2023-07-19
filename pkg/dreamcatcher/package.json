@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/dreamcatcher",
-  "version": "1.0.100",
+  "version": "1.0.101",
   "main": "src/index.mjs",
   "private": false,
   "author": "Dreamcatcher Command",
@@ -15,7 +15,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@dreamcatcher-tech/webdos": "^1.0.100",
+    "@dreamcatcher-tech/webdos": "^1.0.101",
     "@faker-js/faker": "^8.0.2",
     "@metamask/sdk": "^0.5.3",
     "@mui/icons-material": "^5.14.0",
