@@ -1,10 +1,12 @@
 import * as app from '../covenants/app'
+import { packet } from '../covenants/faker'
 import React from 'react'
-import { EngineHOC } from '@dreamcatcher-tech/webdos'
+import { play, EngineHOC } from '@dreamcatcher-tech/webdos'
 import Packet from './Packet'
 import Debug from 'debug'
 const debug = Debug('Packets')
 const install = { add: { path: '/packets', installer: '/dpkg/app/packets' } }
+const add = { '/packets/add': packet() }
 // const create =
 /**
  * Shows a single packet and can optionally be turned into edit mode.
@@ -25,14 +27,17 @@ const install = { add: { path: '/packets', installer: '/dpkg/app/packets' } }
  * solution only.  This would be saved in the drafts list.
  */
 
+const FirstPacket = ({ crisp }) => <Packet crisp={crisp.tryGetChild('0')} />
+FirstPacket.propTypes = Packet.propTypes
+
 export default {
   title: 'Dreamcatcher/Packet',
-  component: EngineHOC(Packet),
+  component: EngineHOC(FirstPacket),
   args: {
     dev: { '/dpkg/app': app },
     path: '/packets',
-    init: [install],
   },
+  play: play([install, add]),
 }
 Debug.enable('*Packets  iplog')
 

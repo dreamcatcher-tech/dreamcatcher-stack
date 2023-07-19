@@ -56,9 +56,7 @@ jobs:
 
   chromatic-deployment:
     needs: [windows-test]
-    # Operating System
     runs-on: ubuntu-latest
-    # Job steps
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v3
@@ -67,14 +65,20 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-        # 👇 Adds Chromatic as a step in the workflow
-      - name: Publish to Chromatic
+      - name: Publish Webdos to Chromatic
         uses: chromaui/action@v1
         # Chromatic GitHub Action options
         with:
-          # 👇 Chromatic projectToken, refer to the manage page to obtain it.
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: pkg/webdos
+          # exitOnceUploaded: true
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+      - name: Publish Dreamcatcher to Chromatic
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: pkg/dreamcatcher
           # exitOnceUploaded: true
         env:
           NODE_OPTIONS: --max-old-space-size=8192

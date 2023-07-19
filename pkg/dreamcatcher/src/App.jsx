@@ -1,6 +1,7 @@
 import './App.css'
 import React, { useState, useMemo } from 'react'
-import { Glass, Nav, Crisp, CollectionList } from '@dreamcatcher-tech/webdos'
+import { Nav, Crisp } from '@dreamcatcher-tech/webdos'
+import List from './stories/List'
 import { Container } from '@mui/material'
 import PropTypes from 'prop-types'
 import TabContext from '@mui/lab/TabContext'
@@ -58,6 +59,27 @@ const fabSolveStyle = {
     bgcolor: green[600],
   },
 }
+const columns = [
+  {
+    width: 80,
+    disableColumnMenu: true,
+    hideable: false,
+    sortable: false,
+    resizable: false,
+  },
+  { flex: 1 },
+  {},
+  {
+    width: 150,
+    type: 'dateTime',
+    valueFormatter: (params) => {
+      if (typeof params.value !== 'number') {
+        return
+      }
+      return new Date(params.value).toDateString()
+    },
+  },
+]
 function App({ crisp }) {
   const { wd } = crisp
   console.log(crisp)
@@ -86,19 +108,19 @@ function App({ crisp }) {
       <Nav crisp={crisp} />
       <TabContext value={index}>
         <TabPanel value="packets" sx={sxTabPanel}>
-          <CollectionList crisp={crisp.tryGetChild('packets')}></CollectionList>
+          <List crisp={crisp.tryGetChild('packets')} columns={columns} />
+          <Fab variant="extended" sx={fabCreateStyle}>
+            <CreateIcon sx={{ mr: 1 }} />
+            Create
+          </Fab>
         </TabPanel>
         <TabPanel value="drafts" sx={sxTabPanel}>
-          <CollectionList crisp={crisp.tryGetChild('drafts')} />
+          <List crisp={crisp.tryGetChild('drafts')} />
         </TabPanel>
         <TabPanel value="changes" sx={sxTabPanel}>
-          <CollectionList crisp={crisp.tryGetChild('changes')} />
+          <List crisp={crisp.tryGetChild('changes')} />
         </TabPanel>
       </TabContext>
-      {/* <Fab variant="extended" sx={fabCreateStyle} >
-        <CreateIcon sx={{ mr: 1 }} />
-        Create
-      </Fab> */}
       {/* <Fab variant="extended" sx={fabMintStyle} >
         <MintIcon sx={{ mr: 1 }} />
         Mint
@@ -111,10 +133,10 @@ function App({ crisp }) {
         <DisputeIcon sx={{ mr: 1 }} />
         Dispute
       </Fab> */}
-      <Fab variant="extended" sx={fabSolveStyle}>
+      {/* <Fab variant="extended" sx={fabSolveStyle}>
         <SolveIcon sx={{ mr: 1 }} />
         Solve
-      </Fab>
+      </Fab> */}
     </Container>
   )
 }

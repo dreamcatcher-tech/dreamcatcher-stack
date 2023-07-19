@@ -18,7 +18,7 @@ export default (steps) =>
     }
     for (const action of steps) {
       debug(`executing`, action)
-      const { wd } = globalThis.interpulse
+      const { wd = 'NO ENGINE FOUND' } = globalThis.interpulse || {}
       const name = `exec: ${Object.keys(action).join(',')} (wd: ${wd})`
       await step(name, async () => await globalThis.interpulse.execute(action))
     }

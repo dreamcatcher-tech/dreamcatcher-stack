@@ -8,6 +8,7 @@ const template = merge({}, base, {
     title: 'Draft',
     description: `Draft of either a solution or a header or a dispute`,
   },
+  uiSchema: { funds: { 'ui:widget': 'hidden' } },
 })
 
 const installer = {

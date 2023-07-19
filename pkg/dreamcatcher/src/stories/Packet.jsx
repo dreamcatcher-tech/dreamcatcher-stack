@@ -28,7 +28,6 @@ const Datum = ({
   uiSchema,
   onUpdate,
 }) => {
-  debug('Datum', crisp.state)
   const theme = createTheme()
   const noDisabled = createTheme({ palette: { text: { disabled: '0 0 0' } } })
   assert(!viewOnly || !editing, 'viewOnly and editing are mutually exclusive')
