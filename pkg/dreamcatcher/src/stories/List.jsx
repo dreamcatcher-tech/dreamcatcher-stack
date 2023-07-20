@@ -1,6 +1,5 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
+import { useMemo, useState, useRef, useEffect, useId } from 'react'
 import PropTypes from 'prop-types'
-import calculateSize from 'calculate-size'
 import { Crisp } from '@dreamcatcher-tech/webdos'
 import { DataGridPro } from '@mui/x-data-grid-pro/DataGridPro'
 import assert from 'assert-fast'
@@ -29,7 +28,7 @@ const List = ({ crisp, columns }) => {
     if (crisp.isLoadingChildren) {
       return []
     }
-    return crisp.sortedChildren
+    return crisp.sortedChildren.map((id) => ({ id }))
   }, [crisp])
 
   const onRow = ({ id }) => {
@@ -42,13 +41,6 @@ const List = ({ crisp, columns }) => {
     }
   }
 
-  useEffect(() => {
-    console.log('mounting')
-    return () => {
-      console.log('unmounting')
-    }
-  })
-
   return (
     <>
       <DataGridPro
@@ -56,8 +48,7 @@ const List = ({ crisp, columns }) => {
         backgroundColor="paper"
         columns={columnHeaders}
         rows={rows}
-        getRowId={(row) => row}
-        disableMultipleSelection
+        disableMultipleRowSelection
         hideFooter
         onRowClick={onRow}
         loading={crisp.isLoadingChildren}
@@ -73,7 +64,6 @@ List.propTypes = {
 const generateColumns = (crisp, columns = []) => {
   assert(crisp instanceof Crisp, 'crisp must be a Crisp')
   assert(!crisp.isLoading)
-  debug(`generating columns`, crisp)
   const columnHeaders = []
   const { template } = crisp.state
   assert(template.schema, 'template must have a schema')
@@ -90,14 +80,26 @@ const generateColumns = (crisp, columns = []) => {
     description = description || title
     if (type === 'integer') {
       type = 'number'
+    } else if (type !== 'boolean') {
+      type = 'string'
     }
+    /**
+     * Native types:
+      'string' (default)
+      'number'
+      'date'
+      'dateTime'
+      'boolean'
+      'singleSelect'
+      'actions'
+     */
     const props = columnPropsStack.shift()
     columnHeaders.push({
       field: key,
       headerName: title,
       description,
       type,
-      valueGetter: ({ id, field, ...rest }) => {
+      valueGetter: ({ id, field }) => {
         const child = crisp.getChild(id)
         if (child.isLoading) {
           return

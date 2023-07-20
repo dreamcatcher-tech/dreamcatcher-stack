@@ -26,7 +26,7 @@ const InnerCollection = ({ onAdd, onRow, crisp, template }) => {
       <DataGridPro
         columns={columns}
         rows={rows}
-        disableMultipleSelection
+        disableMultipleRowSelection
         hideFooter
         onRowClick={onRow}
         loading={isLoading}

@@ -23,7 +23,7 @@ const template = {
       type: {
         title: 'Type',
         description: `The type of of the change`,
-        enum: ['packet', 'solution', 'header', 'dispute', 'modification'],
+        enum: ['packet', 'solution', 'header', 'dispute', 'edit'],
       },
       status: {
         title: 'Status',

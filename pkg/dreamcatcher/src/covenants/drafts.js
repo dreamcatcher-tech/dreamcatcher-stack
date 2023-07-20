@@ -1,6 +1,5 @@
 import merge from 'lodash.merge'
-import assert from 'assert-fast'
-import { useState, collection } from '@dreamcatcher-tech/webdos'
+import { collection, Request, interchain } from '@dreamcatcher-tech/webdos'
 import base from './template'
 
 const template = merge({}, base, {
@@ -10,6 +9,7 @@ const template = merge({}, base, {
   },
   uiSchema: { funds: { 'ui:widget': 'hidden' } },
 })
+template.schema.required = ['type', 'status', 'time']
 
 const installer = {
   state: {
@@ -23,7 +23,35 @@ const installer = {
     template,
   },
 }
-const { api, reducer } = collection
+const reducer = async (request) => {
+  switch (request.type) {
+    case 'HEADER': {
+      const { time } = request.payload
+      const formData = { type: 'header', status: 'draft', time }
+      const state = { schema: '..', formData }
+      const covenant = 'datum'
+      const installer = { state, covenant }
+      const name = undefined
+      const spawn = Request.createSpawn(name, installer)
+      const result = await interchain(spawn)
+      return result
+    }
+  }
+  return await collection.reducer(request)
+}
+const api = {
+  ...collection.api,
+  createDraftHeader: {
+    type: 'object',
+    title: 'HEADER',
+    description: 'Create a draft packet header',
+    additionalProperties: false,
+    required: ['time'],
+    properties: {
+      time: { type: 'integer', minimum: 1 },
+    },
+  },
+}
 const name = 'Packets'
 export { name, reducer, api, installer }
 

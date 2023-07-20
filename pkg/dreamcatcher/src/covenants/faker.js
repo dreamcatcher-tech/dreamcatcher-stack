@@ -2,8 +2,8 @@ import { JSONSchemaFaker } from 'json-schema-faker'
 import { faker } from '@faker-js/faker/locale/en_AU'
 import Debug from 'debug'
 import template from './template'
-import assert from 'assert-fast'
 const debug = Debug('dreamcatcher:faker')
+
 faker.seed(0)
 JSONSchemaFaker.extend('faker', () => faker)
 JSONSchemaFaker.option('random', () => {
@@ -59,6 +59,9 @@ export const draft = () => {
   formData.type = types[faker.number.int({ min: 0, max: types.length - 1 })]
   formData.time = time()
   delete formData.funds
+  formData.image =
+    faker.helpers.maybe(() => faker.image.url()) ||
+    'https://dreamcatcher.land/img/dreamcatcher.svg'
   return { formData }
 }
 

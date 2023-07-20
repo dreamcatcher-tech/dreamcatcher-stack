@@ -87,7 +87,7 @@ const CollectionList = ({ crisp }) => {
         backgroundColor="paper"
         columns={columns}
         rows={rows}
-        disableMultipleSelection
+        disableMultipleRowSelection
         hideFooter
         onRowClick={onRow}
         loading={crisp.isLoadingChildren}

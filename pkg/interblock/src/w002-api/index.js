@@ -58,3 +58,5 @@ export const isSystemAction = (request) => {
 }
 
 export { schemaToFunctions } from './src/schemaToFunctions'
+
+export { Request }
