@@ -3,6 +3,9 @@
   "version": "1.0.103",
   "main": "src/index.mjs",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0",
   "scripts": {
