@@ -6,6 +6,8 @@ import PropTypes from 'prop-types'
 import TabContext from '@mui/lab/TabContext'
 import TabPanel from '@mui/lab/TabPanel'
 import { Packets } from './stories/Packets'
+import { Drafts } from './stories/Drafts'
+import { Changes } from './stories/Changes'
 
 // relative position so the fab positions correctly
 
@@ -55,10 +57,10 @@ function App({ crisp }) {
           <Packets crisp={crisp.tryGetChild('packets')} onCreate={onCreate} />
         </TabPanel>
         <TabPanel value="drafts" sx={{ flexGrow: 1, padding: 0 }}>
-          <List crisp={crisp.tryGetChild('drafts')} />
+          <Drafts crisp={crisp.tryGetChild('drafts')} onCreate={onCreate} />
         </TabPanel>
         <TabPanel value="changes" sx={{ flexGrow: 1, padding: 0 }}>
-          <List crisp={crisp.tryGetChild('changes')} />
+          <Changes crisp={crisp.tryGetChild('changes')} onCreate={onCreate} />
         </TabPanel>
       </TabContext>
     </Box>

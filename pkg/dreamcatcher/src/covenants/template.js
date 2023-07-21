@@ -29,8 +29,8 @@ const template = {
         title: 'Status',
         enum: [
           'draft',
-          'unconfirmed',
-          'pending', // in the qa queue
+          'pending',
+          'judging',
           'disputable',
           'accepted',
           'rejected',
@@ -44,19 +44,19 @@ const template = {
         faker: 'image.url',
       },
       name: { title: 'Title', type: 'string', faker: 'company.buzzPhrase' },
-      funds: {
-        type: 'integer',
-        title: '$USD',
-        minimum: 0,
-      },
       description: {
         type: 'string',
         title: 'Description',
         faker: 'lorem.paragraphs',
       },
+      funds: {
+        type: 'integer',
+        title: '$USD',
+        minimum: 0,
+      },
       details: {
         type: 'string',
-        title: 'Description',
+        title: 'Details',
         faker: 'lorem.paragraphs',
       },
       contents: {
@@ -81,7 +81,7 @@ const template = {
   },
   uiSchema: {
     contents: { 'ui:widget': 'hidden' },
-    description: { 'ui:widget': 'hidden' },
+    details: { 'ui:widget': 'hidden' },
     upstreamId: { 'ui:widget': 'hidden' },
     downstreamIds: { 'ui:widget': 'hidden' },
     changeId: { 'ui:widget': 'hidden' },

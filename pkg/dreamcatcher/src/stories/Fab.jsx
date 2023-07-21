@@ -4,9 +4,7 @@ import MintIcon from '@mui/icons-material/AutoFixHigh'
 import FundIcon from '@mui/icons-material/SwitchAccessShortcut'
 import DisputeIcon from '@mui/icons-material/LocalFireDepartment'
 import SolveIcon from '@mui/icons-material/TipsAndUpdates'
-import { green, purple, amber, red, lightGreen } from '@mui/material/colors'
-import React, { useState, useMemo } from 'react'
-import { Crisp } from '@dreamcatcher-tech/webdos'
+import { green, purple, amber, red } from '@mui/material/colors'
 import PropTypes from 'prop-types'
 const fabCreateStyle = {
   position: 'absolute',
@@ -20,10 +18,12 @@ const fabCreateStyle = {
   },
 }
 const fabMintStyle = {
-  ...fabCreateStyle,
+  width: 130,
   bgcolor: purple[500],
+  color: 'common.white',
   '&:hover': {
     bgcolor: purple[600],
+    color: 'common.black',
   },
 }
 const fabFundStyle = {

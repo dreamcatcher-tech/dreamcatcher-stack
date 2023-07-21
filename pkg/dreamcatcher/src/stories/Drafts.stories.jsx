@@ -21,9 +21,10 @@ export default {
 export const Basic = {}
 export const Empty = { play: play([install]) }
 export const Loading = { play: play([]) }
-export const New = {
+export const Create = {
   play: play([
     install,
-    { cd: { path: '/drafts/newHeader', allowVirtual: true } },
+    { '/drafts/createDraftHeader': { time: Date.now() } },
+    { cd: { path: '/drafts/0' } },
   ]),
 }

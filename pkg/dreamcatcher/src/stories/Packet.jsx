@@ -30,8 +30,8 @@ export default function Packet({ crisp }) {
   }
 
   const { formData = {} } = crisp?.state || {}
-  const {
-    title,
+  let {
+    name,
     description,
     image,
     time,
@@ -39,7 +39,8 @@ export default function Packet({ crisp }) {
     funds,
     downstreamIds = [],
   } = formData
-  const formattedTime = time && new Date(time).toISOString()
+  time = time && new Date(time).toISOString()
+  funds = funds && funds.toLocaleString()
 
   return (
     <Dialog
@@ -66,12 +67,12 @@ export default function Packet({ crisp }) {
       </AppBar>
       <Stack spacing={1} sx={{ p: 2 }}>
         <Typography variant="h5" sx={{ p: 2 }}>
-          {title}
+          {name}
         </Typography>
         <Paper sx={{ p: 2, m: 2, textAlign: 'center' }}>
           <img src={image} width={512} />
           <Typography>
-            created: <b>{formattedTime}</b>
+            created: <b>{time}</b>
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, m: 2 }}>

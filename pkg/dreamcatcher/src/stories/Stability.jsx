@@ -97,11 +97,13 @@ export const Stability = ({ onImage }) => {
     }
   }
   return (
-    <Card sx={{ maxWidth: '600px' }}>
+    <Card>
       <CardMedia
-        sx={{ height: '600px', width: '600px' }}
+        sx={{ objectFit: 'contain' }}
+        component="img"
+        height={400}
         image={image}
-        title="green iguana"
+        title={prompt}
       />
       <CardContent>
         <FormControl fullWidth variant="outlined">

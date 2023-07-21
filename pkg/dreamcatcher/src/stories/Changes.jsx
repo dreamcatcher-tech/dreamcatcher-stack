@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Crisp } from '@dreamcatcher-tech/webdos'
 import List from './List'
 import PropTypes from 'prop-types'
 import Fab from './Fab'
-import Packet from './Packet'
-import { packets } from './columns'
+import { changes } from './columns'
 import Box from '@mui/material/Box'
+import DraftHeader from './DraftHeader'
 
-export const Packets = ({ crisp, onCreate }) => {
+export const Changes = ({ crisp, onCreate }) => {
   let selected = useMemo(() => {
     const selected = crisp.getSelectedChild()
     if (selected) {
@@ -22,13 +22,13 @@ export const Packets = ({ crisp, onCreate }) => {
         position: 'relative', // for Fab positioning
       }}
     >
-      <List crisp={crisp} columns={packets} />
+      <List crisp={crisp} columns={changes} />
       <Fab type="create" disabled={!onCreate} onClick={onCreate} />
-      <Packet crisp={selected} />
+      <DraftHeader crisp={selected} />
     </Box>
   )
 }
-Packets.propTypes = {
+Changes.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),
   /**
    * Will cd into Drafts and create a new draft.
