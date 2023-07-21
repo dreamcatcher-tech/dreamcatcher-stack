@@ -13,7 +13,7 @@ const template = {
   type: 'DATUM',
   schema: {
     type: 'object',
-    required: ['type', 'title', 'image', 'status', 'time'],
+    required: ['type', 'name', 'image', 'status', 'time', 'description'],
     properties: {
       changeId: {
         type: 'integer',
@@ -43,7 +43,7 @@ const template = {
         description: `The image of the Packet this draft targets`,
         faker: 'image.url',
       },
-      title: { title: 'Title', type: 'string', faker: 'company.buzzPhrase' },
+      name: { title: 'Title', type: 'string', faker: 'company.buzzPhrase' },
       funds: {
         type: 'integer',
         title: '$USD',
@@ -52,7 +52,12 @@ const template = {
       description: {
         type: 'string',
         title: 'Description',
-        faker: 'git.commitSha',
+        faker: 'lorem.paragraphs',
+      },
+      details: {
+        type: 'string',
+        title: 'Description',
+        faker: 'lorem.paragraphs',
       },
       contents: {
         type: 'string',

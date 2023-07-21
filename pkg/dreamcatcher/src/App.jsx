@@ -29,12 +29,13 @@ function App({ crisp }) {
       return
     }
     setIsCreating(true)
-    return drafts.actions
+    drafts.actions
       .createDraftHeader(Date.now())
       .then(({ alias }) => crisp.actions.cd(`/app/drafts/${alias}`))
       .finally(() => setIsCreating(false))
   }, [crisp])
-  onCreate = isCreating ? undefined : onCreate
+  const isCreateable = crisp.tryGetChild('drafts')?.isLoadingActions
+  onCreate = isCreating || isCreateable ? undefined : onCreate
 
   return (
     <Container

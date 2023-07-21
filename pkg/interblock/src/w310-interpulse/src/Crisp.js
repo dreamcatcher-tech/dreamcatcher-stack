@@ -144,6 +144,9 @@ export class Crisp {
     }
     return this.#parent.path + '/' + this.#name
   }
+  get name() {
+    return this.#name
+  }
   get absolutePath() {
     if (this.isRoot) {
       return this.chroot

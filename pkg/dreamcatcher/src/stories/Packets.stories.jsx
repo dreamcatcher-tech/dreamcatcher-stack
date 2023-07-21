@@ -16,6 +16,7 @@ export default {
     dev: { '/dpkg/app': app },
     path: '/packets',
     init: [install, batch],
+    onCreate: () => {},
   },
 }
 Debug.enable('*Packets  iplog')

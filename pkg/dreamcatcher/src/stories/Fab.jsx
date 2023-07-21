@@ -14,11 +14,11 @@ const fabCreateStyle = {
   right: 16,
   mr: 3,
   color: 'common.white',
+  width: 130,
   bgcolor: green[500],
   '&:hover': {
     bgcolor: green[600],
   },
-  width: 130,
 }
 const fabMintStyle = {
   ...fabCreateStyle,
@@ -28,11 +28,11 @@ const fabMintStyle = {
   },
 }
 const fabFundStyle = {
-  ...fabCreateStyle,
-  color: 'common.black',
+  width: 130,
   bgcolor: amber[500],
   '&:hover': {
     bgcolor: amber[600],
+    color: 'common.white',
   },
 }
 const fabDisputeStyle = {
