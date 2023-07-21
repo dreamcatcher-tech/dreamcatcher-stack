@@ -147,6 +147,12 @@ export class Crisp {
   get name() {
     return this.#name
   }
+  absPathTo(relativePath) {
+    assert.strictEqual(typeof relativePath, 'string')
+    assert(relativePath)
+    assert(!posix.isAbsolute(relativePath), `path must be relative`)
+    return posix.normalize(this.absolutePath + '/' + relativePath)
+  }
   get absolutePath() {
     if (this.isRoot) {
       return this.chroot

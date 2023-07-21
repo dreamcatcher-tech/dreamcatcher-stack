@@ -17,11 +17,17 @@ export const Packets = ({ crisp, onCreate }) => {
   }, [crisp])
   const isLoading = crisp.isLoading || !onCreate
   return (
-    <>
+    <Box
+      sx={{
+        height: '100%',
+        width: '100%',
+        position: 'relative', // for Fab positioning
+      }}
+    >
       <List crisp={crisp} columns={packets} />
       <Fab type="create" disabled={isLoading} onClick={onCreate} />
       <Packet crisp={packet} />
-    </>
+    </Box>
   )
 }
 Packets.propTypes = {

@@ -3,7 +3,7 @@ import { Crisp } from '@dreamcatcher-tech/webdos'
 import List from './List'
 import PropTypes from 'prop-types'
 import Fab from './Fab'
-import { packets } from './columns'
+import { drafts } from './columns'
 import Debug from 'debug'
 const debug = Debug('dreamcatcher:Drafts')
 
@@ -14,7 +14,7 @@ export const Drafts = ({ crisp }) => {
   )
   return (
     <>
-      <List crisp={crisp} columns={packets} />
+      <List crisp={crisp} columns={drafts} />
       <Fab type="create" disabled={crisp.isLoadingActions} onClick={onCreate} />
     </>
   )

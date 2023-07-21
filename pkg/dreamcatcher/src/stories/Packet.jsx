@@ -36,7 +36,7 @@ export default function Packet({ crisp }) {
     image,
     time,
     details,
-    funding,
+    funds,
     downstreamIds = [],
   } = formData
   const formattedTime = time && new Date(time).toISOString()
@@ -82,22 +82,13 @@ export default function Packet({ crisp }) {
           <Stack direction="row" spacing={1}>
             <Typography variant="h6">Funding</Typography>
 
-            <Chip
-              avatar={<Avatar src={DAI} />}
-              label={`DAI: ${funding || 0}`}
-            />
-            <Chip
-              avatar={<Avatar src={ETH} />}
-              label={`ETH: ${funding || 0}`}
-            />
+            <Chip avatar={<Avatar src={DAI} />} label={`DAI: $${funds || 0}`} />
+            <Chip avatar={<Avatar src={ETH} />} label={`ETH: ${funds || 0}`} />
             <Chip
               avatar={<Avatar src={SILD} />}
-              label={`West Coast NFTs: ${funding || 0}`}
+              label={`West Coast NFTs: ${funds || 0}`}
             />
-            <Chip
-              avatar={<Avatar src={HNT} />}
-              label={`HNT: ${funding || 0}`}
-            />
+            <Chip avatar={<Avatar src={HNT} />} label={`HNT: ${funds || 0}`} />
           </Stack>
         </Paper>
         <Paper sx={{ p: 2, m: 2 }}>

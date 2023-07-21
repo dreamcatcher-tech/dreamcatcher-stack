@@ -23,3 +23,4 @@ const columns = [
 ]
 
 export const packets = columns
+export const drafts = [{}, ...columns]

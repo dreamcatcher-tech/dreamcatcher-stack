@@ -20,6 +20,7 @@ export default function Engine({
   car,
   reset,
   children,
+  ...rest
 }) {
   const [latest, setLatest] = useState()
   const [state, setState] = useState({})
@@ -174,7 +175,7 @@ export default function Engine({
     }
   }, [])
 
-  const props = { engine, latest, state, wd, isPending }
+  const props = { engine, latest, state, wd, isPending, ...rest }
   children = React.cloneElement(children, props)
   return children
 }

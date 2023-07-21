@@ -12,7 +12,6 @@ const fabCreateStyle = {
   position: 'absolute',
   bottom: 16,
   right: 16,
-  mr: 3,
   color: 'common.white',
   width: 130,
   bgcolor: green[500],

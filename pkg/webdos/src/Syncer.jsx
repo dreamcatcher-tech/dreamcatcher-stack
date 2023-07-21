@@ -10,7 +10,7 @@ import posix from 'path-browserify'
 
 const debug = Debug('webdos:Syncer')
 
-export default function ReactSyncer({ engine, path, children }) {
+export default function ReactSyncer({ engine, path, children, ...rest }) {
   assert(posix.isAbsolute(path), `path must be absolute: ${path}`)
   path = stripTrailingSlash(path)
   const [crisp, setCrisp] = useState(Crisp.createLoading())
@@ -64,7 +64,7 @@ export default function ReactSyncer({ engine, path, children }) {
       setCrisp(Crisp.createLoading())
     }
   }, [path, engine])
-  children = React.cloneElement(children, { crisp })
+  children = React.cloneElement(children, { crisp, ...rest })
   return children
 }
 ReactSyncer.propTypes = {

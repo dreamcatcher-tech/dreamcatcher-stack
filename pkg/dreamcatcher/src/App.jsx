@@ -1,8 +1,7 @@
-import './App.css'
 import { useCallback, useState, useMemo } from 'react'
 import { Nav, Crisp } from '@dreamcatcher-tech/webdos'
 import List from './stories/List'
-import { Container } from '@mui/material'
+import Box from '@mui/material/Box'
 import PropTypes from 'prop-types'
 import TabContext from '@mui/lab/TabContext'
 import TabPanel from '@mui/lab/TabPanel'
@@ -31,20 +30,22 @@ function App({ crisp }) {
     setIsCreating(true)
     drafts.actions
       .createDraftHeader(Date.now())
-      .then(({ alias }) => crisp.actions.cd(`/app/drafts/${alias}`))
+      .then(({ alias }) => crisp.actions.cd(crisp.absPathTo(`drafts/${alias}`)))
       .finally(() => setIsCreating(false))
   }, [crisp])
-  const isCreateable = crisp.tryGetChild('drafts')?.isLoadingActions
-  onCreate = isCreating || isCreateable ? undefined : onCreate
+  const isCreateable =
+    !crisp.isLoadingChildren &&
+    crisp.hasChild('drafts') &&
+    !crisp.getChild('drafts').isLoadingActions
+  onCreate = isCreating || !isCreateable ? undefined : onCreate
 
   return (
-    <Container
+    <Box
       sx={{
-        height: '100%',
-        width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        position: 'relative',
+        height: '100%',
+        width: '100%',
         overflow: 'hidden',
       }}
     >
@@ -60,7 +61,7 @@ function App({ crisp }) {
           <List crisp={crisp.tryGetChild('changes')} />
         </TabPanel>
       </TabContext>
-    </Container>
+    </Box>
   )
 }
 App.propTypes = { crisp: PropTypes.instanceOf(Crisp) }

@@ -11,8 +11,8 @@ export const EngineHOC = (Component, debugLogs) => {
   }
   const WrappedComponent = (props) => (
     <Engine {...props}>
-      <Syncer {...props}>
-        <Component {...props} />
+      <Syncer>
+        <Component />
       </Syncer>
     </Engine>
   )

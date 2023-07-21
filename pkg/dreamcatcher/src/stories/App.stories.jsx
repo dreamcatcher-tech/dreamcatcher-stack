@@ -6,8 +6,8 @@ import {
 } from '../covenants/faker'
 import App from '../App.jsx'
 import { play, EngineHOC } from '@dreamcatcher-tech/webdos'
-const cd = (path) => ({ cd: { path: '/app/' + path } })
 const add = { add: { path: '/app', installer: '/dpkg/app' } }
+const cd = (path) => ({ cd: { path: '/app/' + path } })
 const pBatch = { '/app/packets/batch': { batch: generatePacketBatch(10) } }
 const dBatch = { '/app/drafts/batch': { batch: generateDraftBatch(10) } }
 const cBatch = { '/app/changes/batch': { batch: generateChangeBatch(10) } }
