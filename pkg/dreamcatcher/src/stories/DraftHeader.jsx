@@ -37,7 +37,7 @@ export default function DraftHeader({ crisp }) {
     }
   }
 
-  const { name, description, image, time, details } = initialData
+  const { name, description, image, prompt, style, time, details } = initialData
 
   const updated = useCallback(
     (key) => (event) => {
@@ -46,6 +46,10 @@ export default function DraftHeader({ crisp }) {
     },
     []
   )
+  const onImage = useCallback(({ prompt, style, image }) => {
+    setUpdates((state) => ({ ...state, prompt, style, image }))
+  }, [])
+
   return (
     <Dialog
       fullScreen
@@ -81,7 +85,12 @@ export default function DraftHeader({ crisp }) {
               onChange={updated('name')}
               defaultValue={name}
             />
-            <Stability />
+            <Stability
+              image={image}
+              prompt={prompt}
+              style={style}
+              onImage={onImage}
+            />
             <TextField
               fullWidth
               label="Summary"

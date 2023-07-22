@@ -1,4 +1,5 @@
 export const styles = [
+  '',
   'anime',
   'photographic',
   'digital-art',
@@ -63,14 +64,13 @@ const template = {
         description: `The image of the Packet this draft targets`,
         faker: 'image.url',
       },
-      imagePrompt: {
+      prompt: {
         type: 'string',
         title: 'Prompt',
         description: `The prompt used to generate the image`,
         faker: 'lorem.sentence',
       },
-      imageStyle: {
-        type: 'string',
+      style: {
         title: 'Style',
         description: `The style used to generate the image`,
         enum: styles,
@@ -119,8 +119,8 @@ const template = {
     changeId: { 'ui:widget': 'hidden' },
     chainId: { 'ui:widget': 'hidden' },
     status: { 'ui:widget': 'hidden' },
-    imagePrompt: { 'ui:widget': 'hidden' },
-    imageStyle: { 'ui:widget': 'hidden' },
+    prompt: { 'ui:widget': 'hidden' },
+    style: { 'ui:widget': 'hidden' },
   },
 }
 Object.freeze(template)

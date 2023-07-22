@@ -28,6 +28,9 @@ export const reset = (seed = 0) => {
 export const packet = () => {
   const { schema } = template
   const formData = JSONSchemaFaker.generate(schema)
+  if (!formData.style) {
+    delete formData.style
+  }
   formData.changeId = changeId++
   formData.status = 'draft'
   formData.type = 'packet'
@@ -53,6 +56,9 @@ export const generatePacketBatch = (count = 20, noReset = false) => {
 export const draft = () => {
   const { schema } = template
   const formData = JSONSchemaFaker.generate(schema)
+  if (!formData.style) {
+    delete formData.style
+  }
   formData.changeId = 0
   formData.status = 'draft'
   const types = schema.properties.type.enum.filter((v) => v !== 'packet')
@@ -79,6 +85,9 @@ export const generateDraftBatch = (count = 20, noReset = false) => {
 export const change = () => {
   const { schema } = template
   const formData = JSONSchemaFaker.generate(schema)
+  if (!formData.style) {
+    delete formData.style
+  }
   formData.changeId = changeId++
   const statii = schema.properties.status.enum.filter((v) => v !== 'draft')
   formData.status = statii[faker.number.int({ min: 0, max: statii.length - 1 })]
