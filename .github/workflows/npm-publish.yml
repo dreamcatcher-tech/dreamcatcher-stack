@@ -77,7 +77,7 @@ jobs:
       - name: Publish Dreamcatcher to Chromatic
         uses: chromaui/action@v1
         with:
-          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          projectToken: ${{ secrets.CHROMATIC_DREAMCATCHER_PROJECT_TOKEN }}
           workingDir: pkg/dreamcatcher
           # exitOnceUploaded: true
         env:
