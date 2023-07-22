@@ -72,8 +72,6 @@ export const Stability = ({ onImage }) => {
     form.append('prompt', prompt)
     form.append('preset', style)
     console.log('form', [...form.entries()])
-    const apiKey = import.meta.env.VITE_CLIPDROP_API_KEY
-    console.log('apiKey', apiKey, import.meta.env, import.meta.env.PROD)
     const response = await fetch(CLIPDROP_URL, {
       method: 'POST',
       headers: { 'x-api-key': import.meta.env.VITE_CLIPDROP_API_KEY },
