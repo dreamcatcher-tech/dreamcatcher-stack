@@ -109,6 +109,7 @@ export const Stability = ({ onImage, prompt, style, image }) => {
             onKeyDown={handleKeyDown}
             disabled={isRequesting}
             defaultValue={prompt}
+            multiline
           />
         </FormControl>
       </CardContent>

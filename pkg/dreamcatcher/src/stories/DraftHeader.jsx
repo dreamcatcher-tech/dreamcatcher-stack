@@ -15,6 +15,8 @@ import TextField from '@mui/material/TextField'
 import equals from 'fast-deep-equal'
 import Box from '@mui/material/Box'
 import { Stability } from './Stability'
+import Debug from 'debug'
+const debug = Debug('dreamcatcher:DraftHeader')
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />
@@ -49,6 +51,17 @@ export default function DraftHeader({ crisp }) {
   const onImage = useCallback(({ prompt, style, image }) => {
     setUpdates((state) => ({ ...state, prompt, style, image }))
   }, [])
+  const onMint = useCallback(() => {
+    console.log('mint', crisp.state.formData)
+    // check we have everything we need for the minting process
+    // open up the wallet
+    // craft the transaction using the ipfs hash of the crisp state
+
+    // if the wallet says the transaction was approved, then push to pinata
+    // move the transaction into the changes list as pending
+    // let it show as a packet header that is pending
+    // can re-edit if you think something was wrong with it
+  }, [crisp?.state?.formData])
 
   return (
     <Dialog
@@ -70,7 +83,11 @@ export default function DraftHeader({ crisp }) {
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
             Draft Packet Header: {crisp?.name}
           </Typography>
-          <Fab type="mint" disabled={crisp?.isLoadingActions} />
+          <Fab
+            type="mint"
+            disabled={crisp?.isLoadingActions}
+            onClick={onMint}
+          />
         </Toolbar>
       </AppBar>
       <Box sx={{ p: 2 }}>

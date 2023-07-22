@@ -33,6 +33,16 @@ const generateFormData = () => {
   } else {
     formData.style = faker.helpers.arrayElement(schema.properties.style.enum)
   }
+  if (formData.type === 'dispute') {
+    // cannot dispute a dispute
+    formData.disputeType = faker.helpers.arrayElement([
+      'draft',
+      'pending',
+      'judging',
+      'accepted',
+      'rejected',
+    ])
+  }
   return formData
 }
 
