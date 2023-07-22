@@ -21,13 +21,17 @@ const CLIPDROP_URL = 'https://clipdrop-api.co/text-to-image/v1'
 
 const styleMenuItems = styles.map((style, key) => (
   <MenuItem value={style} key={key}>
-    {style || '(No Style)'}
+    {style}
   </MenuItem>
 ))
-
+styleMenuItems.unshift(
+  <MenuItem value="" key={-1}>
+    <em>None</em>
+  </MenuItem>
+)
 export const Stability = ({ onImage, prompt, style, image }) => {
   const [newPrompt, setNewPrompt] = useState(prompt)
-  const [newStyle, setNewStyle] = useState(style || styles[1])
+  const [newStyle, setNewStyle] = useState(style || styles[0])
   const [isRequesting, setIsRequesting] = useState(false)
   const [newImage, setNewImage] = useState(
     image || 'https://dreamcatcher.land/img/dreamcatcher.svg'

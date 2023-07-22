@@ -117,7 +117,7 @@ export const validateFormData = (payload, template) => {
   const isValid = ajv.validate(template.schema, payload.formData)
   if (!isValid) {
     const errors = ajv.errorsText(ajv.errors)
-    debug(`error validating:`, payload)
+    console.error(`error validating:`, payload)
     throw new Error(`${template.schema.title} failed validation: ${errors}`)
   }
   if (!template.network) {

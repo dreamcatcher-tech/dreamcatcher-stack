@@ -2,6 +2,7 @@
   "name": "@dreamcatcher-tech/dreamcatcher",
   "version": "1.0.114",
   "main": "src/index.mjs",
+  "type": "module",
   "private": false,
   "publishConfig": {
     "access": "public"
@@ -9,7 +10,8 @@
   "author": "Dreamcatcher Command",
   "license": "AGPL-3.0",
   "scripts": {
-    "test": "eslint src && DEBUG_COLORS=1 DEBUG='' node --experimental-vm-modules node_modules/.bin/jest --bail",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --bail --testTimeout=20000",
+    "watch": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --watch",
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
