@@ -1,51 +1,24 @@
-import * as React from 'react'
 import { useState } from 'react'
-import IconButton from '@mui/material/IconButton'
-import Input from '@mui/material/Input'
-import FilledInput from '@mui/material/FilledInput'
 import OutlinedInput from '@mui/material/OutlinedInput'
 import InputLabel from '@mui/material/InputLabel'
 import InputAdornment from '@mui/material/InputAdornment'
-import FormHelperText from '@mui/material/FormHelperText'
 import FormControl from '@mui/material/FormControl'
-import TextField from '@mui/material/TextField'
-import Visibility from '@mui/icons-material/Visibility'
-import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import SendIcon from '@mui/icons-material/Send'
 import LoadingButton from '@mui/lab/LoadingButton'
 import Card from '@mui/material/Card'
-import CardActions from '@mui/material/CardActions'
 import CardContent from '@mui/material/CardContent'
 import CardMedia from '@mui/material/CardMedia'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import PropTypes from 'prop-types'
+import { styles } from '../covenants/template'
+import 'jimp/browser/lib/jimp.js'
+const { Jimp } = globalThis
 import Debug from 'debug'
 const debug = Debug('dreamcatcher:Stability')
 const CLIPDROP_URL = 'https://clipdrop-api.co/text-to-image/v1'
 // TODO move to https://platform.stability.ai/rest-api
 
-const styles = [
-  'anime',
-  'photographic',
-  'digital-art',
-  'enhance',
-  'comic-book',
-  'fantasy-art',
-  'analog-film',
-  'neon-punk',
-  'isometric',
-  'low-poly',
-  'origami',
-  'line-art',
-  'cinematic',
-  '3d-model',
-  'pixel-art',
-  'modeling-compound',
-  'tile-texture',
-]
 const styleMenuItems = styles.map((style, key) => (
   <MenuItem value={style} key={key}>
     {style}
@@ -57,20 +30,20 @@ styleMenuItems.unshift(
   </MenuItem>
 )
 
-export const Stability = ({ onImage }) => {
-  const [prompt, setPrompt] = useState()
-  const [style, setStyle] = useState('low-poly')
+export const Stability = ({ onImage, prompt, style, image }) => {
+  const [newPrompt, setNewPrompt] = useState(prompt)
+  const [newStyle, setNewStyle] = useState(style)
   const [isRequesting, setIsRequesting] = useState(false)
-  const [image, setImage] = useState(
-    'https://dreamcatcher.land/img/dreamcatcher.svg'
+  const [newImage, setNewImage] = useState(
+    image || 'https://dreamcatcher.land/img/dreamcatcher.svg'
   )
 
   const handleGenerate = async () => {
     debug('click')
     setIsRequesting(true)
     const form = new FormData()
-    form.append('prompt', prompt)
-    form.append('preset', style)
+    form.append('prompt', newPrompt)
+    form.append('preset', newStyle)
     console.log('form', [...form.entries()])
     const response = await fetch(CLIPDROP_URL, {
       method: 'POST',
@@ -78,20 +51,21 @@ export const Stability = ({ onImage }) => {
       body: form,
     })
 
-    const image = await response.blob()
-    const url = URL.createObjectURL(image)
-    // URL.revokeObjectURL(img.src); // free memory
-    setImage(url)
+    const buffer = await response.arrayBuffer()
+    const image = await Jimp.read(buffer)
+    image.quality(90)
+    const uri = await image.getBase64Async(Jimp.MIME_JPEG)
+    setNewImage(uri)
     setIsRequesting(false)
-    onImage({ prompt, image })
+    onImage({ prompt: newPrompt, style: newStyle, image: uri })
   }
   const handleStyle = (event) => {
-    setStyle(event.target.value)
+    setNewStyle(event.target.value)
   }
   const handleKeyDown = (event) => {
     debug('User pressed: ', event.key)
     if (event.key === 'Enter') {
-      if (prompt) {
+      if (newPrompt) {
         handleGenerate()
       }
     }
@@ -102,8 +76,8 @@ export const Stability = ({ onImage }) => {
         sx={{ objectFit: 'contain' }}
         component="img"
         height={400}
-        image={image}
-        title={prompt}
+        image={newImage}
+        title={newPrompt}
       />
       <CardContent>
         <FormControl fullWidth variant="outlined">
@@ -114,7 +88,7 @@ export const Stability = ({ onImage }) => {
               <InputAdornment position="end">
                 <Select
                   sx={{ m: 1, width: 150 }}
-                  value={style}
+                  value={newStyle}
                   label="Style"
                   onChange={handleStyle}
                   disabled={isRequesting}
@@ -127,15 +101,15 @@ export const Stability = ({ onImage }) => {
                   loading={isRequesting}
                   loadingPosition="end"
                   variant="contained"
-                  disabled={!prompt}
+                  disabled={!newPrompt}
                 />
               </InputAdornment>
             }
             label="Prompt"
-            onChange={(event) => setPrompt(event.target.value)}
+            onChange={(event) => setNewPrompt(event.target.value)}
             onKeyDown={handleKeyDown}
-            multiline
             disabled={isRequesting}
+            defaultValue={prompt}
           />
         </FormControl>
       </CardContent>
@@ -147,7 +121,23 @@ Stability.propTypes = {
    * Callback to be called when the image is loaded.
    * Is passed an object with the following properties:
    * - `prompt`: The prompt that was used to generate the image.
+   * - `style`: The style that was used to generate the image.
    * - `image`: The image data as a base64 encoded string.
    */
   onImage: PropTypes.func.isRequired,
+
+  /**
+   * The prompt that was used to generate the image, if any
+   */
+  prompt: PropTypes.string,
+
+  /**
+   * The style used to generate the image, if any
+   */
+  style: PropTypes.string,
+
+  /**
+   * The existing image, if any, as either a url or a base64 encoded string.
+   */
+  image: PropTypes.string,
 }

@@ -1,3 +1,23 @@
+export const styles = [
+  'anime',
+  'photographic',
+  'digital-art',
+  'enhance',
+  'comic-book',
+  'fantasy-art',
+  'analog-film',
+  'neon-punk',
+  'isometric',
+  'low-poly',
+  'origami',
+  'line-art',
+  'cinematic',
+  '3d-model',
+  'pixel-art',
+  'modeling-compound',
+  'tile-texture',
+]
+
 /**
  * @param {string} name Name of the token
  * @param {string} description description of the token
@@ -43,11 +63,23 @@ const template = {
         description: `The image of the Packet this draft targets`,
         faker: 'image.url',
       },
+      imagePrompt: {
+        type: 'string',
+        title: 'Prompt',
+        description: `The prompt used to generate the image`,
+        faker: 'lorem.sentence',
+      },
+      imageStyle: {
+        type: 'string',
+        title: 'Style',
+        description: `The style used to generate the image`,
+        enum: styles,
+      },
       name: { title: 'Title', type: 'string', faker: 'company.buzzPhrase' },
       description: {
         type: 'string',
         title: 'Description',
-        faker: 'lorem.paragraphs',
+        faker: 'lorem.paragraph',
       },
       funds: {
         type: 'integer',
@@ -87,7 +119,10 @@ const template = {
     changeId: { 'ui:widget': 'hidden' },
     chainId: { 'ui:widget': 'hidden' },
     status: { 'ui:widget': 'hidden' },
+    imagePrompt: { 'ui:widget': 'hidden' },
+    imageStyle: { 'ui:widget': 'hidden' },
   },
 }
 Object.freeze(template)
+Object.freeze(styles)
 export default template
