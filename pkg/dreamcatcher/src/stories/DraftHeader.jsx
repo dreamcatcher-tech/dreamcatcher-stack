@@ -1,3 +1,5 @@
+import { MetaMaskSDK } from '@metamask/sdk'
+
 import PropTypes from 'prop-types'
 import React, { useCallback, useState } from 'react'
 import { Crisp } from '@dreamcatcher-tech/webdos'
@@ -51,7 +53,7 @@ export default function DraftHeader({ crisp }) {
   const onImage = useCallback(({ prompt, style, image }) => {
     setUpdates((state) => ({ ...state, prompt, style, image }))
   }, [])
-  const onMint = useCallback(() => {
+  const onMint = useCallback(async () => {
     console.log('mint', crisp.state.formData)
     // check we have everything we need for the minting process
     // open up the wallet
@@ -61,6 +63,21 @@ export default function DraftHeader({ crisp }) {
     // move the transaction into the changes list as pending
     // let it show as a packet header that is pending
     // can re-edit if you think something was wrong with it
+
+    const MMSDK = new MetaMaskSDK()
+
+    /**
+     * Use the crisp model to interact with the wallet nicely
+     * Only the top level chain should interact with the wallet provider
+     * It also checks if this person is a QA or not.
+     */
+
+    const ethereum = MMSDK.getProvider()
+    const result = ethereum.request({
+      method: 'eth_requestAccounts',
+      params: [],
+    })
+    console.log(result)
   }, [crisp?.state?.formData])
 
   return (
