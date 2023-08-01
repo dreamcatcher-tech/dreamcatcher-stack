@@ -80,15 +80,22 @@ const template = {
         title: 'Description',
         faker: 'lorem.paragraph',
       },
-      funds: {
-        type: 'integer',
-        title: '$USD',
-        minimum: 0,
-      },
       details: {
         type: 'string',
         title: 'Details',
         faker: 'lorem.paragraphs',
+      },
+      dependencies: {
+        type: 'array',
+        title: 'Dependencies',
+        schema: 'integer', // TODO fix
+        description: `Any packets that this packet depends upon.  Used for Gantt chart construction.
+        Order denotes importance and is used for ranking when displaying with dependencies.`
+      },
+      funds: {
+        type: 'integer',
+        title: '$USD',
+        minimum: 0,
       },
       contents: {
         type: 'string',
