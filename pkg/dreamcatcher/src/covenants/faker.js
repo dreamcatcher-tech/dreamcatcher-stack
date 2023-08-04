@@ -45,11 +45,14 @@ const generateFormData = () => {
   }
   return formData
 }
+const packetStatusEnum = template.schema.properties.status.enum.filter(
+  (v) => v !== 'draft' && v !== 'pending'
+)
 
 export const packet = () => {
   const formData = generateFormData()
   formData.changeId = changeId++
-  formData.status = 'draft'
+  formData.status = faker.helpers.arrayElement(packetStatusEnum)
   formData.type = 'packet'
   formData.time = time()
   formData.funds = packetFunds()

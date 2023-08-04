@@ -50,6 +50,7 @@ const template = {
         enum: [
           'draft',
           'pending',
+          'open',
           'judging',
           'disputable',
           'accepted',
@@ -88,9 +89,9 @@ const template = {
       dependencies: {
         type: 'array',
         title: 'Dependencies',
-        schema: 'integer', // TODO fix
+        // schema: 'integer', // TODO fix
         description: `Any packets that this packet depends upon.  Used for Gantt chart construction.
-        Order denotes importance and is used for ranking when displaying with dependencies.`
+        Order denotes importance and is used for ranking when displaying with dependencies.`,
       },
       funds: {
         type: 'integer',
