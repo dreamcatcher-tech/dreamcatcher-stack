@@ -11,6 +11,11 @@ const template = merge({}, base, {
   },
   uiSchema: { type: { 'ui:widget': 'hidden' } },
 })
+const statuses = template.schema.properties.status.enum.filter(
+  (v) => v !== 'draft' && v !== 'pending'
+)
+template.schema.properties.status.enum = statuses
+delete template.uiSchema.status
 
 const installer = {
   state: {

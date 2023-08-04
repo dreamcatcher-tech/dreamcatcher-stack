@@ -4,6 +4,7 @@ import RejectedIcon from '@mui/icons-material/ThumbDown'
 import JudgingIcon from '@mui/icons-material/Gavel'
 import MintIcon from '@mui/icons-material/AutoFixHigh'
 import EditIcon from '@mui/icons-material/Edit'
+import FundIcon from '@mui/icons-material/SwitchAccessShortcut'
 import DisputeIcon from '@mui/icons-material/LocalFireDepartment'
 import SolveIcon from '@mui/icons-material/TipsAndUpdates'
 
@@ -98,6 +99,10 @@ const status = {
         color = 'default'
         icon = <EditIcon />
         break
+      case 'open':
+        color = 'warning'
+        icon = <FundIcon />
+        break
       case 'judging':
         color = 'warning'
         icon = <JudgingIcon />
@@ -132,7 +137,7 @@ const status = {
     )
   },
 }
-export const packets = [image, title, description, funds, time]
+export const packets = [status, image, title, description, funds, time]
 
 export const drafts = [type, image, title, description, time]
 
