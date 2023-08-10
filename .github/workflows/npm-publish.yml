@@ -24,6 +24,7 @@ jobs:
         working-directory: ./pkg/interblock
       - run: yarn run test
         working-directory: ./pkg/interblock
+
         # 👇 Ensure the package can at least build for the browser
       - run: yarn run build
         working-directory: ./pkg/interblock
@@ -35,6 +36,9 @@ jobs:
           npm set //registry.npmjs.org/:_authToken=${{secrets.NPM_AUTH_TOKEN}}
           npm whoami
           yarn run lerna publish patch --yes --no-private    
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
 
   windows-test:
     # make sure the interblock library runs on windows
