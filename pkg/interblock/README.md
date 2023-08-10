@@ -1,14 +1,12 @@
 # Interblock
 
-The blockchain protocol of the Dreamcatcher
-
 [![npm package][npm-badge]][npm]
 [![Coverage Status](https://coveralls.io/repos/github/dreamcatcher-tech/dreamcatcher-stack/badge.svg?branch=master)](https://coveralls.io/github/dreamcatcher-tech/dreamcatcher-stack?branch=master)
 
-Describe interblock-next here.
+[npm-badge]: <https://img.shields.io/npm/v/@dreamcatcher-tech/interblock?logo=npm>
+[npm]: <https://www.npmjs.org/package/@dreamcatcher-tech/interblock>
 
-[npm-badge]: https://img.shields.io/npm/v/npm-package.png?style=flat-square
-[npm]: https://www.npmjs.org/package/@dreamcatcher-tech/interblock
+The blockchain protocol of the Dreamcatcher
 
 ## License
 
