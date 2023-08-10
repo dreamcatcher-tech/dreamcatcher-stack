@@ -2,18 +2,13 @@
 
 The blockchain protocol of the Dreamcatcher
 
-[![Travis][build-badge]][build]
 [![npm package][npm-badge]][npm]
-[![Coveralls][coveralls-badge]][coveralls]
+[![Coverage Status](https://coveralls.io/repos/github/dreamcatcher-tech/dreamcatcher-stack/badge.svg?branch=master)](https://coveralls.io/github/dreamcatcher-tech/dreamcatcher-stack?branch=master)
 
 Describe interblock-next here.
 
-[build-badge]: https://img.shields.io/travis/user/repo/master.png?style=flat-square
-[build]: https://travis-ci.org/user/repo
 [npm-badge]: https://img.shields.io/npm/v/npm-package.png?style=flat-square
-[npm]: https://www.npmjs.org/package/npm-package
-[coveralls-badge]: https://img.shields.io/coveralls/user/repo/master.png?style=flat-square
-[coveralls]: https://coveralls.io/github/user/repo
+[npm]: https://www.npmjs.org/package/@dreamcatcher-tech/interblock
 
 ## License
 
