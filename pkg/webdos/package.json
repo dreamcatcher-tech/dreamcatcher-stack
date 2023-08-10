@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/webdos",
-  "version": "1.0.119",
+  "version": "1.0.120",
   "description": "Web components for DOS",
   "main": "src/index.mjs",
   "type": "module",
@@ -21,8 +21,8 @@
     "@dnd-kit/core": "^6.0.8",
     "@dnd-kit/modifiers": "^6.0.1",
     "@dnd-kit/sortable": "^7.0.2",
-    "@dreamcatcher-tech/dos": "^1.0.119",
-    "@dreamcatcher-tech/interblock": "^1.0.119",
+    "@dreamcatcher-tech/dos": "^1.0.120",
+    "@dreamcatcher-tech/interblock": "^1.0.120",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@geoapify/geocoder-autocomplete": "^1.5.1",
