@@ -19,14 +19,16 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
         
-      - name: Test
+      - name: Lint
         run: yarn run lint
         working-directory: ./pkg/interblock
-      - run: yarn run test
+      - name: Test
+        run: yarn run test
         working-directory: ./pkg/interblock
 
         # 👇 Ensure the package can at least build for the browser
-      - run: yarn run build
+      - name: Build
+        run: yarn run build
         working-directory: ./pkg/interblock
 
       - name: Publish
