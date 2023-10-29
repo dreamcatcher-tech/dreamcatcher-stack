@@ -11,17 +11,17 @@
   },
   "dependencies": {
     "@dreamcatcher-tech/interblock": "^1.0.123",
-    "@pm2/io": "^5.0.0",
+    "@pm2/io": "^5.0.2",
     "ansi-colors-browserify": "^4.1.2",
     "assert-fast": "^1.0.3",
     "cliui": "^8.0.1",
     "debug": "^4.3.4",
     "delay": "^6.0.0",
-    "dotenv": "^16.1.4",
+    "dotenv": "^16.3.1",
     "du": "^1.0.0",
     "json-bigint": "^1.0.0",
     "pmx": "1.6.7",
-    "pretty-bytes": "^6.1.0",
+    "pretty-bytes": "^6.1.1",
     "process": "^0.11.10"
   },
   "devDependencies": {
