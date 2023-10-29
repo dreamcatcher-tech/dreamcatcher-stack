@@ -190,7 +190,7 @@ By way of example, the format of the state within the Covenant is:
 The lifecycle of the usage of a Covenant is:
 
 1. Develop: code is loaded live while the developer makes changes, to remove publishing from the feedback loop
-1. Publish: here the code is transformed into a filesystem image that can be loaded up and executed. Code dependencies are fetched here, and build steps are run
+1. Publish: here the code is transformed into a filesystem image that can be loaded up and executed. Code dependencies are fetched here, and build steps are run, with build provenance provided
 1. Resolve: A string in config is resolved into a pulselink that contains a Covenant
 1. Install: A covenant is set as the running covenant of a new chain, and any children that are part of the installation are created. Note this may trigger nested covenants to begin their own installation process.
 1. Load: A Covenants binary image is reified and within the isolation boundaries turned into executable code
@@ -209,11 +209,11 @@ Each `covenant` instance is, by way of the chains that house them, capable of an
 
 Given that covenants are a pulsechain, and interpulse itself is published as a pulsechain, our design goal is that running interpulse on interpulse is possible by specifying interpulse as the covenant of a chain, and configuring the engine to run optimally within chain land. Furthermore the loader can be supplied as a covenant, allowing custom loaders and publishers to be created.
 
-The Covenant System is made of at least two distinct Covenants. The `covenant` Covenant, which is the final step before the binary it contains is executed, and the `repo` covenant, which acts as a parent for the Covenant, holding reference to its source code, lineage, and other published artefacts. Ideally a Repo is a general purpose object used to model all kinds of code projects, whereas a Covenant is the minimum interface we need to be able to use ipfs data as executable code in a safe and chargeable way.
+The Covenant System is made of at least two distinct Covenants. The `covenant` Covenant, which is the final step before the binary it contains is executed, and the `repo` covenant, which acts as a parent for the Covenant, holding reference to its source code, lineage, and other published artefacts. Ideally a `repo` is a general purpose object used to model all kinds of code projects, whereas a Covenant is the minimum interface we need to be able to use ipfs data as executable code in a safe and chargeable way.
 
 ### The `repo` Covenant
 
-A Repo chain represents a top level code repository that is used to produce executable assets of various kinds. In order to not constrain its use to solely interblock, the repo represents any kind of code that is version controlled by git. It will hopefully be able to run build steps triggered by commit, similar to github actions.
+A chain running the `repo` covenant represents a top level code repository that is used to produce executable assets of various kinds. In order to not constrain its use to solely interblock, the repo represents any kind of code that is version controlled by git. It will hopefully be able to run build steps triggered by commit, similar to github actions.
 
 Under the `releases` child of the repo, there is another child for each type of asset being released. For npm packages, this child is named `npm`, for python packages `pip` and for Rust crates `crate` and so on. Likely, a build step would have been required to produce each child.
 
@@ -308,7 +308,6 @@ type ACL struct {
 
 ## State
 
-
 The result of running a covenant is stored here, and must be serializable.
 
 State is special in that it wraps an object directly, with no predefined keys.
@@ -326,7 +325,6 @@ Tracks each of the covenant Requests that caused the reducer to return a promise
 Each new set of Requests from each rerun are also tracked.  Each rerun must produce the exact same requests and replies each time, in the exact same order.
 
 The AsyncTrail consists of two arrays - one of all the outbound requests the covenant made: `txs`, and another of all the so far received replies: `settles`. The reducer is not re-invoked until all the empty slots in the `settles` array have been filled.
-
 
 ```sh
 type RequestId struct {
@@ -563,6 +561,7 @@ This does introduce non-determinism, as the timing of when something occurred ca
 Network handles turning strings into channelIds
 
 In essence, the Network is 3 maps:
+
 1. Path strings to channelId integers (for devs)
 1. Address strings to channelId integers (for interpulse crypto)
 1. ChannelId integers to channel objects (for interpulse comms)
@@ -649,6 +648,7 @@ uncrush process not to look any further.
 If the program needs to dereference the actual Pulse, then it needs to do so explicitly, and should also free up the object when finished, to avoid holding any entire blockchains history in ram.
 
 Generically, there are three types of hashlinked data in any CAS system:
+
 1. Internal to the object
 2. External to the object
 3. Historical to the object (could be internal or external)
@@ -658,6 +658,7 @@ type PulseLink link
 ```
 
 ## HistoricalPulseLink
+
 All Content Addressed systems have a notion of current and history, since they are all implicitly CoW.  Having content that points to other content addresses is common.  When the content is mutated, the new content should reference the old, for audit reasons.  When asking to view the content in full, with all links resolved, we often do not want the historical view unless we specifically ask for it.
 
 In order to automatically inflate the notion of 'current' without inflating all of the linked history, a distinction is provided for developers to indicate history.

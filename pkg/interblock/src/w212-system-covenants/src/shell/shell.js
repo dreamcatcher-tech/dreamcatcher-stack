@@ -176,8 +176,8 @@ const reducer = async (request) => {
       const installer = { covenant: 'covenant', state: covenant }
 
       const { add } = api
-      const apiFn = schemaToFunctions({ add })
-      const result = await interchain(apiFn.add(path, installer))
+      const action = schemaToFunctions({ add }).add(path, installer)
+      const result = await interchain(action)
       debug(result)
       return { path }
     }
