@@ -2,7 +2,7 @@
 
 The Dreamcatcher Operating System
 
-This package is a terminal application that uses GPT4+ to be the presentation layer of an underlying blockchain application.  The natural language is interpreted and sometimes a system level action is enacted.  The tree of the chain system provides natural scoping for the system.  The bot is able to modify the api and the code within the covenants using a rigorous process where with many checks.
+This package is a terminal application that uses GPT4+ to be the presentation layer of an underlying blockchain application.  The natural language is interpreted and sometimes a system level action is enacted.  The tree of the chain system provides natural scoping for the system.  The bot is able to modify the api and the code within the covenants using a rigorous process with many checks.
 
 If the user types in an instruction that is exactly a command in the filesystem, they can cause it to execute directly using shift+enter, otherwise the input will go to gpt4 for interpretation.
 
