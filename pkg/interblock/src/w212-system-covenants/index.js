@@ -7,10 +7,21 @@ import * as probe from './src/probe'
 import * as unity from './src/unity'
 import * as root from './src/unity'
 import * as covenant from './src/covenant'
-
+import * as ai from './src/ai.js'
 import { Address } from '../w008-ipld/index.mjs'
 
-export { collection, datum, hyper, probe, shell, unity, root, covenant, net }
+export {
+  collection,
+  datum,
+  hyper,
+  probe,
+  shell,
+  unity,
+  root,
+  covenant,
+  net,
+  ai,
+}
 
 /**
  * Idea here is to provide a set of functions that can be used by any covenant to lock the current version of the system covenants that are in use.

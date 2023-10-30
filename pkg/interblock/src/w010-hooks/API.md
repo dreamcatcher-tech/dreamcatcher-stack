@@ -20,7 +20,21 @@ Requests to other chains, including to self. Result is the return value of execu
 
 ### `async effect( type, fn, ...args ) => ( resolve | reject )`
 
-Side effects that can do anything at all. Type is required as a friendly name, nothing else. `fn` is a function that will be executed with `...args` in the isolated context that the reducer is currently running in.
+Side effects that can do anything at all. Type is required as a friendly name, nothing else. `fn` is a function that will be executed with `...args` in the isolated context that the reducer is currently running in.  Different access controls can be set on different isolated contexts, and so in this way side effects can be leaked to the outside world precisely.
+
+Idea is that in total isolation, the effects are simply ignored, but when it has some freedom, rerunning the pulse would cause the effect function to run.
+
+Possibly this can have signature `useEffect( fn, [deps])` just like react.  The effect would be rerun when any of the args changed.  This would require some background accounting to store references in a slot on the block.  This makes triggering the effect easier, since the same result can be done with the `effect( fn )` signature.  This accounting might only need to be done by the isolation context, not the actual block.
+
+Using dependencies makes it easy to run a function whenever it first mounts on an isolator.  Also maybe makes it possible to send actions back into the chain, since we can have `setState()` access inside the function closure.
+
+? how can an effect pierce something back into the chain ?
+
+eg: an API call.  
+```js
+const result = await usePromise(() => api.call(arg1, arg2))
+```
+This is a compromise between full blown react like effects with dependencies, and a simple promise based interface to make a single external call.  Generators would need a similar interface.
 
 ### `async useLockedBinary( ?path, ?start, ?length ) => [ binary, async setBinary( ?binary', ?start, ?length ]`
 

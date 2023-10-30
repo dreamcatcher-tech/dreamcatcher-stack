@@ -13,6 +13,13 @@
  * Since the updates are ephemeral, provide them out of band.
  * Once the action resolves, replace with a permanent thing.
  */
+import all from 'it-all'
+import OpenAI from 'openai'
+import dotenv from 'dotenv'
+import Debug from 'debug'
+dotenv.config()
+const debug = Debug('interblock:apps:ai')
+const openAi = new OpenAI()
 
 const api = {
   prompt: {
@@ -21,41 +28,57 @@ const api = {
     description:
       'Send a prompt to the AI and start streaming back the response. The reply will be the full reply from the model. Partial results need to be sampled out of band',
     additionalProperties: false,
-    required: ['prompt'],
+    required: ['prompt', 'history'],
     properties: {
-      formData: { type: 'object' },
-      network: {
-        type: 'object',
-        description: 'Recursively defined children',
-        // patternProperties: { '(.*?)': { $ref: '#' } },
+      // make a selector that stores history in the state
+      prompt: { type: 'string' },
+      history: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['role', 'content'],
+          properties: {
+            role: { enum: ['system', 'user', 'assistant'] },
+            content: { type: 'string' },
+          },
+        },
       },
     },
   },
-  batch: {
-    type: 'object',
-    title: 'BATCH',
-    description: 'Add multiple elements to the collection as a batch',
-    additionalProperties: false,
-    required: ['batch'],
-    properties: {
-      batch: { type: 'array' }, // TODO use 'add' schema
-    },
-  },
-  setTemplate: {
-    type: 'object',
-    title: 'SET_TEMPLATE',
-    description: 'Change the template of the elements of this collection',
-    additionalProperties: false,
-    required: ['schema'],
-    properties: {
-      type: { type: 'string' },
-      schema: { type: 'object' },
-      network: { type: 'object' },
-    },
-  },
-  search: {
-    type: 'object',
-    title: 'SEARCH',
-    description: 'Search through this collection',
-  },
 }
+const context = {}
+
+const reducer = async (request) => {
+  debug('request', request)
+  const { prompt, history, topP } = request.payload
+  switch (request.type) {
+    case 'PROMPT': {
+      const message = { role: 'user', content: prompt }
+      const messages = [...history, message]
+      const result = await all(stream(messages))
+      return result.join('')
+    }
+    default: {
+      if (request.type !== '@@INIT') {
+        throw new Error(`unknown request: ${request.type}`)
+      }
+    }
+  }
+}
+async function* stream(messages) {
+  const results = []
+  debug('messages', messages)
+  const stream = await openAi.chat.completions.create({
+    model: 'gpt-4',
+    messages,
+    stream: true,
+  })
+  for await (const part of stream) {
+    const result = part.choices[0]?.delta?.content || ''
+    results.push(result)
+    yield result
+  }
+}
+
+const name = 'ai'
+export { name, api, reducer }
