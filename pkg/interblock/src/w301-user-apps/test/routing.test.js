@@ -42,7 +42,7 @@ describe('routing', () => {
     expect(state.formData.unassigned.length).toEqual(count)
     expect(state).toMatchSnapshot()
   })
-  test.only('update twice does not reset unapproved', async () => {
+  test('update twice does not reset unapproved', async () => {
     const engine = await Interpulse.createCI({
       overloads: { '/crm': crm.covenant },
     })

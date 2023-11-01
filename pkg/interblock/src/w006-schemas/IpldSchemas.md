@@ -320,9 +320,9 @@ CID links inside the State are not allowed - the correct way for apps to break d
 
 ## Pending
 
-Tracks each of the covenant Requests that caused the reducer to return a promise in an AsyncTrail, which holds the channelId and requestId of the origin Request it is tracking.  The reducer is then rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.  
+Tracks each of the covenant Requests that caused the reducer to return a promise in an AsyncTrail, which holds the channelId and requestId of the origin Request it is tracking.  The reducer is then rerun once replies have been received that settle all the outbound requests, to avoid wasteful rerunning.  Caching may reuse a current isolation context and resolve the promises in it, so it doesn't have to rerun the reducer again.
 
-Each new set of Requests from each rerun are also tracked.  Each rerun must produce the exact same requests and replies each time, in the exact same order.
+Each new set of Requests from each rerun are also tracked.  Each rerun must produce the exact same requests and replies each time, in the exact same order.  This includes any side effects - the functions should be checked against a signature to ensure the same thing came out.
 
 The AsyncTrail consists of two arrays - one of all the outbound requests the covenant made: `txs`, and another of all the so far received replies: `settles`. The reducer is not re-invoked until all the empty slots in the `settles` array have been filled.
 
@@ -377,6 +377,7 @@ type Config struct {
     entropy Entropy
 }
 ```
+TODO perhaps the version of interpulse should be based on the Covenant, and not be independent.
 
 ## Dmz
 

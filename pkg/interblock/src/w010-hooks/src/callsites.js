@@ -50,7 +50,7 @@ export const wrapReduce = async (trail, reducer, timeout = 500) => {
 }
 const awaitActivity = async (result, id, timeout) => {
   if (result !== undefined && typeof result !== 'object') {
-    // TODO relax this contstraint
+    // TODO relax this contstraint to allow primitives
     throw new Error(`Must return either undefined, or an object`)
   }
   assert(activeInvocations.has(id))
@@ -93,7 +93,7 @@ const awaitActivity = async (result, id, timeout) => {
 }
 const getInvocation = () => {
   const { stackTraceLimit } = Error
-  Error.stackTraceLimit = Infinity // usually defaults to 100
+  Error.stackTraceLimit = Infinity // nodejs usually defaults to 100
   const stack = callsites()
   Error.stackTraceLimit = stackTraceLimit
   let invokeId
@@ -171,6 +171,7 @@ const useState = async (path) => {
 
 if (globalThis[Symbol.for('interblock:api:hook')]) {
   console.error('interblock:api:hook already defined')
+  throw new Error('interblock:api:hook already defined')
 }
 globalThis[Symbol.for('interblock:api:hook')] = { interchain, useState }
 
