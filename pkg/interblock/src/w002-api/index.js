@@ -1,13 +1,13 @@
 import assert from 'assert-fast'
 import { Request } from '../w008-ipld/index.mjs'
-
+const hookSymbol = Symbol.for('interblock:api:hook')
 export const interchain = (type, payload, to) => {
-  const { interchain } = globalThis[Symbol.for('interblock:api:hook')]
+  const { interchain } = globalThis[hookSymbol]
   assert(interchain, `global hook detached`)
   return interchain(type, payload, to)
 }
 export const useState = (path = '.') => {
-  const { useState } = globalThis[Symbol.for('interblock:api:hook')]
+  const { useState } = globalThis[hookSymbol]
   assert(useState, `global hook detached`)
   return useState(path)
 }
@@ -43,8 +43,8 @@ export const ensureChild = async (path, installer = 'unity') => {
     // TODO assert covenant matches
   } catch (error) {
     // TODO work with any child
-    const msg = `Segment not present: /.mtab of: .mtab`
-    if (error.message !== msg) {
+    const ignoreMessage = `Segment not present: /.mtab of: .mtab`
+    if (error.message !== ignoreMessage) {
       throw error
     }
     const spawnAction = Request.createSpawn(path, installer)

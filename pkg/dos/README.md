@@ -42,8 +42,49 @@ It should have a strategy that can rean man pages, looking for what info it want
 
 Embeddings make a great DHT since the bot knows if the embedding is false when it gets to it.
 
+Embeddings + chain reputation gives a global search for utility closeness.
+
+
+
 ## Controlling hotkeys
 Tell the system what to do when certain hotkeys are entered, and have it wire things up so that when you hit the hotkey, a piece of code will execute, without making a call to the intelligence.  So the AIs job is to catch anything that doesn't match what the blockchain app requires, including common mispellings, and to turn anything it catches into something in the blockchain app, so next time it is faster for both human and machine.
 
 ## Macros
 Set laptop lid to do nothing when closed.  Lets user configure macros and under the effect of several changes all bundled together with a simple natural interface.  AI overcomes the interface challenges of any application where you cannot give people a single action to do a combination of things since you balance brevity of interface with directness of action.  With AL you can have it all.
+
+## Looping 
+When the blockexplorer strategy knows it needs to do some string processing, it should be seeking to make a function that it can get the correct results out of, rather than trying to do it by itself.  This strategy will identify whenever repeated processing is required, and so for the goal of consistent results, it will make a piece of code, and test it multiple times to ensure the same results, and then it will call this function as its own tool that it made.  The code becomes a new revision of the strategy it started using. 
+
+## Serialize the function in the effect
+Then hash it.  This should be added to the action that is put on the `.@@io` channel, so that rerunning can verify this.  The closures cannot be checked, so this is more to check for programmer error than any kind of security concern.  The side effect itself cannot be deterministic, and so perhaps the function should not be either ?  Running in side effect land may give access to the system clock.
+
+## A model of mind
+Have a goal that the machine is trying to achieve, and keep asking questions until it knows it has achieved that goal, or until the human has implied a task switch, in which case take some notes about the torn goal, and think about what the human wanted to do.
+
+## CRM deployment can dump backups
+Until we get backups highly tuned, we can export a snapshot of the db each day to restore from.
+Each day we could make the next snapshot be just what changed since the last one, and based upon it.
+Then take the next working day and make it base off this forked version.
+
+## Libp2p control
+Reacting to some state in libp2p seems heavy compared to dispatching actions and receiving an update back.  Manipulating the p2p object then should be some function calls in, and the reply should be ok, or a state snapshot update.  When the library detects a state change, it dispatches an update to the chain with its state.
+
+## PubCo
+Need to get started early so we can be a little bit ahead and then get picked up by the surge that comes after.
+AI makes the dApps quicker to build, vastly more powerful, quicker to integrate.
+Users would not really see the blockchain, but the result is that the AI can program it.
+The dreamcatcher ties all the fault reports together, and incentivizes everyone to solve them rapidly.
+We need to promote our system, and promotion fits well with a public company, we need a place for people who just want to put money in to buy in with regulated security.
+If our archetecture simplifies dev enough and AI can code well enough, then in the overlap, we can automatically generate apps, which would be experienced by the user as just apps that rapidly evolve to their needs.
+
+So turns out, large compute capacity blockchains can be used to run AI natively for trust and cost reductions.  Also turns out blockchain is the ideal substrate for AI since it is strict but simple enough for the AI to do some coding itself, and it gives the AI ability to experiment with the system granularly with isolation, and the humans to roll back a precise slice of altered system state.
+
+AI seems to be something that requires altruism, since it is so much better than us, so humans fallback to asking it to be fair.  Usually only the losers of a battle ask for fairness.
+
+## keep private the strategies of a given approach
+Eg: CRM should keep its strategies closed, or at least some of them closed, else competitors get advantage.
+So the base blockchain system would be open, but the strategies that they teach it would remain restricted, so that they have control.  Control could be geographical only.  So you don't have to publish everything, or anything, but the the option is always there for you.
+
+## Workflow where permission from a person is required
+Be able to set up a repeatable workflow from within the NLI.  NUI (pronounce new-i) is the natural language user interface.
+Demonstrating how to add a new user field, or some other kind of schema change should be easy - power is to demonstrate how the testing goes.
