@@ -11,6 +11,11 @@ export const useState = (path = '.') => {
   assert(useState, `global hook detached`)
   return useState(path)
 }
+export const useAsync = (fn) => {
+  const { useAsync } = globalThis[hookSymbol]
+  assert(useAsync, 'global hook detached')
+  return useAsync(fn)
+}
 export const usePulse = async (path = '.') => {
   assert.strictEqual(typeof path, 'string')
   assert(path)
