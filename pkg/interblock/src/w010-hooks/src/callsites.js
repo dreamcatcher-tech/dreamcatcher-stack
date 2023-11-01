@@ -128,6 +128,9 @@ const interchain = (type, payload, to, binary) => {
   }
   to = to || '.'
   assert(to !== '.@@io')
+  return invoke(request, to)
+}
+const invoke = (request, to) => {
   const { settles, txs, ripcord } = getInvocation()
   if (!settles.length) {
     if (ripcord) {
@@ -151,6 +154,52 @@ const interchain = (type, payload, to, binary) => {
   }
 }
 
+const useAsync = async (fn) => {
+  assert.strictEqual(typeof fn, 'function', `must supply a function`)
+  /**
+   * This function gets executed in the context of the isolator.
+   * An action is dispatched into io to signal the pending execution.
+   * then the function is run
+   * the result is then turned into a reply to the original io action
+   *
+   * does an interchain to the io channel
+   * this gets picked up by an external system.
+   * Use a weakmap to whisper the function across
+   * So in the isolation context, if you are running as the effector,
+   * you can then call the function using the weak whisper
+   * You would know there was an action to be run, since the pulse will have
+   * dangling io actions that are outbound.
+   *
+   * These outbound actions are detected when the block is completed, and
+   * then in order, the actions are pulled out of the whisperer.
+   * Once executed, they are removed from the whisperer.
+   * Whisperer should store the id as part of the key, so objects can be retrieved
+   * Should the actions on the channel always be unique then ?
+   *
+   * Whisperer could be explicit, such that it is only used when we know we
+   * are running as the effector.  In this case, they are just a straight
+   * queue of functions to be called, in what order.
+   *
+   *
+   */
+  const hash = toHex(sha256(fn.toString()))
+  const request = Request.create('@@ASYNC', { hash })
+  assert(!asyncWhisper.has(request))
+  asyncWhisper.set(request, fn)
+  const { result } = await invoke(request, '.@@io')
+  return result
+}
+const asyncWhisper = new WeakMap() // actions to functions
+export const popAsyncWhisper = (request) => {
+  assert(request instanceof Request)
+  assert(asyncWhisper.has(request))
+  const fn = asyncWhisper.get(request)
+  asyncWhisper.delete(request)
+  return fn
+}
+import { sha256 } from '@noble/hashes/sha256' // ECMAScript modules (ESM) and Common.js
+import { bytesToHex as toHex } from '@noble/hashes/utils'
+
 const useState = async (path) => {
   assert.strictEqual(typeof path, 'string', `path must be a string`)
   assert(path, `path cannot be null`)
@@ -173,7 +222,11 @@ if (globalThis[Symbol.for('interblock:api:hook')]) {
   console.error('interblock:api:hook already defined')
   throw new Error('interblock:api:hook already defined')
 }
-globalThis[Symbol.for('interblock:api:hook')] = { interchain, useState }
+globalThis[Symbol.for('interblock:api:hook')] = {
+  interchain,
+  useState,
+  useAsync,
+}
 
 export const usePulse = () => {
   // only used by the system reducer

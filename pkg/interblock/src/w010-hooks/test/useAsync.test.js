@@ -1,40 +1,37 @@
-import { useState } from '../../w002-api'
-import { wrapReduce } from '..'
+import { useState, useAsync } from '../../w002-api'
+import { wrapReduce, popAsyncWhisper } from '../index.js'
 import { Reply, RequestId, AsyncTrail, RxReply } from '../../w008-ipld'
 import assert from 'assert-fast'
 
 describe('useAsync', () => {
-  test('basic', async () => {
-    const reducer = async () => {
-      let [state, setState] = await useState()
-      expect(state).toEqual({ init: true })
-      await setState({ test: true })
-      return { plain: true }
+  test.only('basic', async () => {
+    const effect = async () => {
+      return await new Promise((r) => setTimeout(r, 100, 'result'))
     }
-
+    const reducer = async () => {
+      const result = await useAsync(effect)
+      expect(result).toEqual('result')
+    }
     let trail = AsyncTrail.createCI()
     trail = await wrapReduce(trail, reducer)
-    let [get] = trail.txs
-    assert.strictEqual(get.request.type, '@@GET_STATE')
+    let [io] = trail.txs
+    expect(io.request.type).toBe('@@ASYNC')
+    const fn = popAsyncWhisper(io.request)
+    expect(fn).toEqual(effect)
+    const result = await fn()
+    expect(result).toEqual('result')
+
     let requestId = RequestId.createCI()
-    get = get.setId(requestId)
-    trail = trail.updateTxs([get])
-    const reply = Reply.createResolve({ state: { init: true } })
+    io = io.setId(requestId)
+    trail = trail.updateTxs([io])
+
+    const reply = Reply.createResolve({ result })
     let rxReply = RxReply.create(reply, requestId)
     trail = trail.settleTx(rxReply)
     trail = await wrapReduce(trail, reducer)
-    assert(trail.isPending())
-    let [set] = trail.txs
-    assert.strictEqual(set.request.type, '@@SET_STATE')
-    requestId = requestId.setMap({ requestIndex: 1 })
-    set = set.setId(requestId)
-    trail = trail.updateTxs([set])
-    rxReply = RxReply.create(reply, requestId)
-    trail = trail.settleTx(rxReply)
-    trail = await wrapReduce(trail, reducer)
 
-    assert(!trail.isPending())
-    assert(!trail.txs.length)
-    assert(trail.reply.payload.plain)
+    expect(trail.isPending()).toBeFalsy()
+    let [set] = trail.txs
   })
+  it.todo('throws on fn throw')
 })
