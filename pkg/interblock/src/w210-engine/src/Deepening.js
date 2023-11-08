@@ -1,5 +1,12 @@
 import assert from 'assert-fast'
-import { Address, Pulse, Request, Interpulse } from '../../w008-ipld/index.mjs'
+import {
+  Address,
+  Pulse,
+  Request,
+  Interpulse,
+  Reply,
+  RequestId,
+} from '../../w008-ipld/index.mjs'
 /**
  * Deepens the pool by one of three actions:
  * 1. Interpulse from a remote chain
@@ -10,6 +17,7 @@ export class Deepening {
   static INTERPULSE = 'INTERPULSE'
   static PIERCE = 'PIERCE'
   static UPDATE = 'UPDATE'
+  static REPLY_PIERCE = 'REPLY_PIERCE'
 
   static createInterpulse(interpulse, source) {
     assert(interpulse instanceof Interpulse)
@@ -29,6 +37,15 @@ export class Deepening {
     const instance = new Deepening(target)
     instance.type = Deepening.PIERCE
     instance.payload = { request, piercer }
+    return instance
+  }
+  static createReplyPierce(target, reply, requestId) {
+    assert(target instanceof Address)
+    assert(reply instanceof Reply)
+    assert(requestId instanceof RequestId)
+    const instance = new Deepening(target)
+    instance.type = Deepening.REPLY_PIERCE
+    instance.payload = { reply, requestId }
     return instance
   }
   static createUpdate(target, source) {

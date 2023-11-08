@@ -11,18 +11,38 @@ export class RxQueue extends TxQueue {
   blank() {
     throw new Error('cannot tx in rx')
   }
+  settlePromise() {
+    throw new Error('cannot tx in rx')
+  }
   expandPiercings(q) {
+    // takes in the current q where "this" is the piercings
     assert(q instanceof RxQueue)
     let { requests, requestsLength, replies, repliesLength } = this
     if (requestsLength !== q.requestsLength) {
-      const difference = q.requestsLength - this.requestsLength
+      // TODO why not just set the whole thing every time ?
+      const difference = q.requestsLength - requestsLength
       assert(difference >= 0)
       requestsLength = q.requestsLength
       const expansion = q.requests.slice(-1 * difference)
       requests = [...requests, ...expansion]
     }
-    // TODO do replies and promises
-    return this.setMap({ requests, requestsLength, replies, repliesLength })
+    if (repliesLength !== q.repliesLength) {
+      const difference = q.repliesLength - repliesLength
+      assert(difference >= 0)
+      repliesLength = q.repliesLength
+      const expansion = q.replies.slice(-1 * difference)
+      replies = [...replies, ...expansion]
+    }
+    // TODO pretty sure it is wrong to clobber like this ?
+    const { promisedReplies, promisedRequestIds } = q
+    return this.setMap({
+      requests,
+      requestsLength,
+      replies,
+      repliesLength,
+      promisedRequestIds,
+      promisedReplies,
+    })
   }
   ingestTxQueue(q) {
     assert(q instanceof TxQueue)

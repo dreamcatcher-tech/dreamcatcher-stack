@@ -1,6 +1,7 @@
 import assert from 'assert-fast'
 import { Request } from '../../w008-ipld/index.mjs'
 import { useState, interchain } from '../../w002-api'
+import merge from 'lodash.merge'
 import Debug from 'debug'
 const debug = Debug('interblock:dmz:install')
 
@@ -12,15 +13,17 @@ export const installReducer = async (payload) => {
   const covenant = await interchain('@@COVENANT')
   debug(`covenant`, covenant)
   let { installer } = covenant.state
-  installer = { ...installer, ...payload.installer }
-  const { network = {}, state = {} } = installer
+  installer = merge({}, installer, payload.installer)
+  const { network = {}, state = {}, config = {} } = installer
   assert.strictEqual(typeof network, 'object')
   assert.strictEqual(typeof state, 'object')
+  assert.strictEqual(typeof config, 'object')
   if (!payload.installer.state && isState(covenant)) {
     const [currentState, setState] = await useState()
     assert.strictEqual(Object.keys(currentState).length, 0)
     await setState(state)
   }
+  await interchain('@@CONFIG', config)
 
   // TODO clean up failed partial deployments ?
   // TODO accomodate existing children already ? or throw ?

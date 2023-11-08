@@ -22,6 +22,7 @@ import {
 } from '.'
 import { Hamt } from './Hamt'
 import { IpldStruct } from './IpldStruct'
+import { PromisedReply } from './TxQueue'
 const debug = Debug('interblock:ipld:Network')
 // values are significant in that they dictate order of exhaustion
 const FIXED = { LOOPBACK: 0, PARENT: 1, IO: 2 }
@@ -174,10 +175,32 @@ export class Network extends IpldStruct {
     const next = await this.updateIo(io)
     return [next, requestId]
   }
-  async pierceIoReply(reply) {
-    // TODO these can only be reducer replies, never system
-    // as making an outbound system request is nonsense.
-    throw new Error('not implemented')
+  async pierceIoReply(reply, requestId) {
+    assert(reply instanceof Reply)
+    assert(!reply.isSystem(), `No system replies ever leave the system`)
+    assert(requestId instanceof RequestId)
+    assert(!requestId.isSystem(), `No system replies ever leave the system`)
+    let io = await this.getIo()
+    const { reducer } = io.rx
+    let { replies, repliesLength, promisedRequestIds, promisedReplies } =
+      reducer
+    const { requestIndex } = requestId
+    if (reply.isPromise()) {
+      assert(!promisedRequestIds.includes(requestIndex))
+      assert.strictEqual(repliesLength, requestIndex)
+      replies = [...replies, reply]
+      repliesLength++
+      promisedRequestIds = [...promisedRequestIds, requestIndex]
+    } else {
+      assert(promisedRequestIds.includes(requestIndex))
+      const promisedReply = PromisedReply.create(requestIndex, reply)
+      promisedReplies = [...promisedReplies, promisedReply]
+    }
+
+    io = io.setMap({ rx: { reducer: { replies, repliesLength } } })
+    io = io.setMap({ rx: { reducer: { promisedRequestIds, promisedReplies } } })
+    const next = await this.updateIo(io)
+    return next
   }
   async addUplink(address) {
     assert(address instanceof Address)

@@ -23,7 +23,7 @@ export class IsolateContainer {
     } else if (system[covenantString]) {
       covenant = system[covenantString]
     }
-    return new IsolateContainer(covenant, timeout)
+    return new IsolateContainer(covenant)
   }
   constructor(covenant) {
     assert.strictEqual(typeof covenant, 'object')
@@ -42,11 +42,6 @@ export class IsolateContainer {
     const reducer = this.#covenant.reducer || defaultReducer
     trail = await wrapReduce(trail, reducer)
     return trail
-  }
-  async effects() {
-    // cannot modify the state at all
-    // after invocation, can never call reduce again ?
-    debug('effects')
   }
 }
 export class Isolate {

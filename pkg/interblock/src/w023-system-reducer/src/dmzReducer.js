@@ -215,6 +215,11 @@ const pulseReducer = async (type, payload) => {
       setPulse(pulse)
       return
     }
+    case '@@CONFIG': {
+      pulse = pulse.setMap({ provenance: { dmz: { config: payload } } })
+      setPulse(pulse)
+      return
+    }
     default:
       throw new Error(`Unrecognized type: ${type}`)
   }

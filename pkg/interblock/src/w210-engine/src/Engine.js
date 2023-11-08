@@ -1,7 +1,10 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import { pushable } from 'it-pushable'
+import { popAsyncWhisper } from '../../w010-hooks'
 import {
+  Reply,
+  RequestId,
   Network,
   Address,
   Pulse,
@@ -33,7 +36,7 @@ const debug = Debug('interpulse:Engine')
  * through the engine.
  */
 export class Engine {
-  #isolate
+  #isolateContainer
   #crypto
   #endurance
   #scale
@@ -65,14 +68,14 @@ export class Engine {
     return instance
   }
   constructor({ isolate, crypto, endurance, scale } = {}) {
-    this.#isolate = isolate || Isolate.create()
+    this.#isolateContainer = isolate || Isolate.create()
     this.#crypto = crypto || Crypto.createCI()
     this.#endurance = endurance || Endurance.create()
     this.#scale = scale || Scale.create()
   }
   overload(overloads) {
     assert.strictEqual(typeof overloads, 'object')
-    this.#isolate.overload(overloads)
+    this.#isolateContainer.overload(overloads)
   }
   async #init(CI) {
     if (!this.#endurance.selfAddress) {
@@ -154,11 +157,21 @@ export class Engine {
         }
         case Deepening.PIERCE: {
           const { dmz } = pool.provenance
-          assert(dmz.config.isPierced, `Attempt to pierce unpierced chain`)
+          assert(dmz.config.isPierced, `Cannot pierce an unpierced chain`)
           const { piercer, request } = payload
           const [network, requestId] = await pool.getNetwork().pierceIo(request)
           pool = pool.setNetwork(network)
           piercer.requestId = requestId
+          break
+        }
+        case Deepening.REPLY_PIERCE: {
+          const { dmz } = pool.provenance
+          assert(dmz.config.isPierced, `Cannot pierce reply an unpierced chain`)
+          const { reply, requestId } = payload
+          const network = await pool
+            .getNetwork()
+            .pierceIoReply(reply, requestId)
+          pool = pool.setNetwork(network)
           break
         }
         case Deepening.UPDATE: {
@@ -265,6 +278,8 @@ export class Engine {
     this.#notifySubscribers(pulse) // TODO move pierce tracker to a subscriber
     await lock.release()
     debug('lock released', pool.getAddress())
+
+    this.#effects(pulse)
     await this.#internalTransmit(pulse)
   }
   async #fork(pool) {
@@ -310,7 +325,7 @@ export class Engine {
     assert(pool instanceof Pulse)
     assert(pool.isModified())
     const timeout = 2000 // TODO move to config
-    const isolate = await this.#isolate.load(pool, timeout)
+    const isolate = await this.#isolateContainer.load(pool, timeout)
     let rootPulse = this.selfLatest
     if (await pool.isRoot()) {
       rootPulse = pool
@@ -363,8 +378,8 @@ export class Engine {
     }
     assert(rootPulse instanceof Pulse, `no root for path: ${path}`)
     debug('latestByPath', path)
-    if (this.#isolate.isCovenant(path)) {
-      return this.#isolate.getCovenantPulse(path)
+    if (this.#isolateContainer.isCovenant(path)) {
+      return this.#isolateContainer.getCovenantPulse(path)
     }
     let pulse = rootPulse
     assert(pulse instanceof Pulse)
@@ -550,6 +565,47 @@ export class Engine {
     while (this.#poolBuffers.size) {
       for (const cycle of this.#poolBuffers.values()) {
         await cycle.promise
+      }
+    }
+  }
+  async #effects(pulse) {
+    // TODO use a genuine replay rather than this leaky patch
+    // TODO make effects be abortable on engine shutdown
+    assert(pulse instanceof Pulse)
+    assert(pulse.isVerified())
+    if (!pulse.getConfig().isPierced) {
+      return
+    }
+    // TODO honour the sideEffectsConfig also
+    // TODO make reducer throw if try tx to an unpierced io
+    const { tx, channelId } = await pulse.getNetwork().getIo()
+    assert.strictEqual(channelId, Network.FIXED_IDS.IO)
+    if (!tx.isEmpty()) {
+      const { reducer, system } = tx
+      assert(!system.requestsLength, 'cannot tx system requests to io')
+      let requestIndex = reducer.requestsLength - 1
+      for (const request of reducer.requests) {
+        // TODO if we are not the side effector, then just pop with no execute
+        const effect = popAsyncWhisper(request)
+        assert.strictEqual(typeof effect, 'function')
+
+        const requestId = RequestId.create(channelId, 'reducer', requestIndex)
+        requestIndex++
+        const promise = Reply.createPromise()
+        const target = pulse.getAddress()
+        const deepen = Deepening.createReplyPierce(target, promise, requestId)
+        this.#pool(deepen)
+        Promise.resolve()
+          .then(() => effect())
+          .then((result) => Reply.createResolve({ result }))
+          .catch(Reply.createError)
+          .then((reply) => {
+            if (!this.#started) {
+              return
+            }
+            const settle = Deepening.createReplyPierce(target, reply, requestId)
+            return this.#pool(settle)
+          })
       }
     }
   }
