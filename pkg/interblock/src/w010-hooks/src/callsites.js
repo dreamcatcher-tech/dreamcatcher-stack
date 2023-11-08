@@ -9,19 +9,13 @@ import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 import callsites from 'callsites'
 import Debug from 'debug'
+import { sha256 } from '@noble/hashes/sha256'
+import { bytesToHex as toHex } from '@noble/hashes/utils'
 
 const debug = Debug('interblock:api:callsites')
 
 let invokeId = 0
 let activeInvocations = new Map()
-/**
- * 
- * @param {*} request 
- * @param {*} reducer 
- * @param {*} settles 
- * @returns { reply, txs }
-
- */
 export const wrapReduce = async (trail, reducer, timeout = 500) => {
   assert(trail instanceof AsyncTrail)
   assert(trail.isPending())
@@ -142,7 +136,7 @@ const invoke = (request, to) => {
   }
   const priorRequest = settles.shift()
   assert(priorRequest instanceof AsyncRequest)
-  assert(priorRequest.isRequestMatch(request))
+  assert(priorRequest.isRequestMatch(request), `Requests differ`)
   assert(priorRequest.settled)
   const reply = priorRequest.settled
   if (reply.isResolve()) {
@@ -156,49 +150,26 @@ const invoke = (request, to) => {
 
 const useAsync = async (fn) => {
   assert.strictEqual(typeof fn, 'function', `must supply a function`)
-  /**
-   * This function gets executed in the context of the isolator.
-   * An action is dispatched into io to signal the pending execution.
-   * then the function is run
-   * the result is then turned into a reply to the original io action
-   *
-   * does an interchain to the io channel
-   * this gets picked up by an external system.
-   * Use a weakmap to whisper the function across
-   * So in the isolation context, if you are running as the effector,
-   * you can then call the function using the weak whisper
-   * You would know there was an action to be run, since the pulse will have
-   * dangling io actions that are outbound.
-   *
-   * These outbound actions are detected when the block is completed, and
-   * then in order, the actions are pulled out of the whisperer.
-   * Once executed, they are removed from the whisperer.
-   * Whisperer should store the id as part of the key, so objects can be retrieved
-   * Should the actions on the channel always be unique then ?
-   *
-   * Whisperer could be explicit, such that it is only used when we know we
-   * are running as the effector.  In this case, they are just a straight
-   * queue of functions to be called, in what order.
-   *
-   *
-   */
   const hash = toHex(sha256(fn.toString()))
   const request = Request.create('@@ASYNC', { hash })
-  assert(!asyncWhisper.has(request))
-  asyncWhisper.set(request, fn)
+  assert(!asyncWhisper.has(hash))
+  asyncWhisper.set(hash, fn)
   const { result } = await invoke(request, '.@@io')
   return result
 }
-const asyncWhisper = new WeakMap() // actions to functions
+// TODO purge this map if side effects will never run
+const asyncWhisper = new Map() // actions to functions
 export const popAsyncWhisper = (request) => {
   assert(request instanceof Request)
-  assert(asyncWhisper.has(request))
-  const fn = asyncWhisper.get(request)
-  asyncWhisper.delete(request)
+  assert.strictEqual(request.type, '@@ASYNC')
+  const { hash } = request.payload
+  assert.strictEqual(typeof hash, 'string')
+  assert(asyncWhisper.has(hash))
+
+  const fn = asyncWhisper.get(hash)
+  asyncWhisper.delete(hash)
   return fn
 }
-import { sha256 } from '@noble/hashes/sha256' // ECMAScript modules (ESM) and Common.js
-import { bytesToHex as toHex } from '@noble/hashes/utils'
 
 const useState = async (path) => {
   assert.strictEqual(typeof path, 'string', `path must be a string`)

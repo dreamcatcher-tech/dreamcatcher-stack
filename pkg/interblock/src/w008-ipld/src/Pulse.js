@@ -224,6 +224,9 @@ export class Pulse extends IpldStruct {
   getCovenantPath() {
     return this.provenance.dmz.getCovenantPath()
   }
+  getConfig() {
+    return this.provenance.dmz.config
+  }
   async addChild(alias, installer) {
     assert(this.isModified())
     assert(typeof alias === 'string')

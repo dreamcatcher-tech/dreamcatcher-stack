@@ -17,6 +17,7 @@ import all from 'it-all'
 import OpenAI from 'openai'
 import dotenv from 'dotenv'
 import Debug from 'debug'
+import { useAsync } from '../../w002-api'
 dotenv.config()
 const debug = Debug('interblock:apps:ai')
 const openAi = new OpenAI()
@@ -55,8 +56,13 @@ const reducer = async (request) => {
     case 'PROMPT': {
       const message = { role: 'user', content: prompt }
       const messages = [...history, message]
-      const result = await all(stream(messages))
-      return result.join('')
+      const results = await useAsync(() => {
+        if (injectedResponses.length) {
+          return [injectedResponses.pop()]
+        }
+        return all(stream(messages))
+      })
+      return { result: results.join('') }
     }
     default: {
       if (request.type !== '@@INIT') {
@@ -81,4 +87,10 @@ async function* stream(messages) {
 }
 
 const name = 'ai'
-export { name, api, reducer }
+const installer = { config: { isPierced: true } }
+export { name, api, reducer, installer }
+
+const injectedResponses = []
+export function injectResponses(...responses) {
+  injectedResponses.push(...responses)
+}

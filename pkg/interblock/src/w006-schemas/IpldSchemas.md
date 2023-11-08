@@ -401,12 +401,23 @@ type Dmz struct {
     timestamp Timestamp                 # changes every block
     network Network                     # block implies network changed
     state &State
+    embeddings &Embeddings
     pending optional &Pending
     appRoot optional HistoricalPulseLink          # The latest known approot
     binary optional Binary
     covenant Covenant
 }
 ```
+## Embeddings
+Embeddings represent the current AI embedding of the state and / or the binary in a way that can be used by vector databases to find similarity.  There can be multiple embeddings for a particular Pulse.  A flag is present to indicate if the embedding is current or not, as the generation of an embedding can be asynchronous to the change of the State or the Binary.
+
+The types of embedding are specified in the approot.
+
+Embeddings are used by peers to pull up relevant chains from anywhere in the application.  These queries are intended to be run in ram, where the chains are loaded up in ram, and so fetching the embeddings is very quick.  In some use cases they serve as hints, in others they
+
+The only requirement is that they be acceptably determinisitic - so an AI query can be run without a complete set of embeddings being returned, and in some cases this is acceptable.  In others, a full embeddings search may be required.  Eitherway, the proposer declares the results of the query so the witnesses can reproduce the query.
+
+The approot has a function that can be called to fetch embeddings that is optionally narrowed down to any given path.  This means that an AI can request some embeddings from anything below a given path, and get back some relevant info before making a response.  It could ask for functions, in which case we would look up covenants and then find chains that used that covenant.
 
 ## Tx
 
@@ -484,6 +495,7 @@ queues.
 
 Each connection side has a transmit and a receive.
 Each connection side transmits requests and replies to the other.
+Confusingly, a transmit of a reply goes on the Tx channel, since Tx is used to form Interpulses, and Rx is used to receive interpulses.  All outbound comms, no matter if Request or Reply, must go via the Tx channel.
 
 Transmit = Sum( Channel )
 Receive = Sum( Interblock( Channel ) )

@@ -40,4 +40,5 @@ describe('hooker', () => {
   test.todo('awaiting on self alone rejects')
   // set up a reducer that gets tampered with after promise resolves
   test.todo('covenant must make requests in same order')
+  test.todo('concurrent async requests resolved out of order')
 })
