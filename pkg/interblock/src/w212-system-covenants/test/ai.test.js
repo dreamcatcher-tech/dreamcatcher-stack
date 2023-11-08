@@ -4,7 +4,7 @@ import Debug from 'debug'
 const debug = Debug('test')
 
 describe('ai', () => {
-  it.only('makes an api call to openai', async () => {
+  it('makes an api call to openai', async () => {
     injectResponses('bob your uncle')
     const engine = await Interpulse.createCI()
     await engine.add('ai', { covenant: 'ai' })
