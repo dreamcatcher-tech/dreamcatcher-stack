@@ -5,7 +5,7 @@ import { crm } from '../../w301-user-apps'
 import { Pulse } from '../../w008-ipld/src'
 import { BakeCache } from '../src/BakeCache'
 import Debug from 'debug'
-import Immutable from 'immutable'
+import { Map as IMap } from 'immutable'
 const debug = Debug('tests')
 
 const actions = { dispatch: (...args) => debug('CI dispatch', args) }
@@ -16,7 +16,7 @@ const createCiCache = (pulse) => {
   const address = pulse.getAddress()
   cache.preBake(address, pulseId)
   cache.setVirginPulse(address, pulse)
-  const channels = Immutable.Map().set(3, {
+  const channels = IMap().set(3, {
     aliases: ['child'],
     address: address.cid,
   })

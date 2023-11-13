@@ -95,4 +95,5 @@ jobs:
           VITE_INFURA_IPFS_KEY: ${{ secrets.VITE_INFURA_IPFS_KEY }}
           VITE_PINATA_API_KEY: ${{ secrets.VITE_PINATA_API_KEY }}
           VITE_PINATA_API_SECRET: ${{ secrets.VITE_PINATA_API_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 

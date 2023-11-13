@@ -2,7 +2,7 @@ import assert from 'assert-fast'
 import posix from 'path-browserify'
 import Debug from 'debug'
 import { Address, Pulse, PulseLink } from '../../w008-ipld'
-import Immutable from 'immutable'
+import { Map as IMap } from 'immutable'
 import { pushable } from 'it-pushable'
 
 const debug = Debug('interblock:api:BakeCache')
@@ -108,7 +108,7 @@ export class BakeCache {
     const { done, pulse, channels } = this.#chains.get(key)
     if (done) {
       assert(pulse instanceof Pulse)
-      assert(Immutable.Map.isMap(channels))
+      assert(IMap.isMap(channels))
     }
     return !!done
   }
@@ -124,12 +124,12 @@ export class BakeCache {
     const key = address.getChainId()
     assert(this.#chains.has(key), `not initialized: ${address}`)
     const { channels } = this.#chains.get(key)
-    assert(Immutable.Map.isMap(channels))
+    assert(IMap.isMap(channels))
     return channels
   }
   updateChannels(address, channels) {
     assert(address instanceof Address)
-    assert(Immutable.Map.isMap(channels))
+    assert(IMap.isMap(channels))
     const key = address.getChainId()
     const { done, ...rest } = this.#chains.get(key)
     assert(!done, `already done: ${address}`)
@@ -139,7 +139,7 @@ export class BakeCache {
   finalize(address, pulse, channels) {
     assert(address instanceof Address)
     assert(pulse instanceof Pulse)
-    assert(Immutable.Map.isMap(channels))
+    assert(IMap.isMap(channels))
     const key = address.getChainId()
     const { pulseId } = this.#chains.get(key)
     assert(pulseId.equals(pulse.getPulseLink()))
