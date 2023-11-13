@@ -1,17 +1,10 @@
 /**
- * ? how to stream back an AI response into a chain ?
- * Probably make a new pulse each response that comes in, and then do a
- * history shortcut when its finished, so the stream path can be pruned.
- * Stream back a generator, so can be yielded multiple times
- * Provide a hack where a side channel can be used to tap partial responses
- *
- * Want to load up the whole filesystem, copy in the files, then start bots.
- *
- * Could make all AI requests go thru a gateway, so it can be throttled, and
- * logged globally.
- *
- * Since the updates are ephemeral, provide them out of band.
- * Once the action resolves, replace with a permanent thing.
+ * Manages multiple threads, segregated by path they were called at.
+ * Will open a new thread if none is present.
+ * Can reconstruct a thread if none exists.
+ * May ask for results of function calls.
+ * Will fork and apply the function calls, so the end result can be considered
+ * so we avoid catastrophe and give the AI time to consider.
  */
 import all from 'it-all'
 import OpenAI from 'openai'
@@ -96,10 +89,7 @@ export function injectResponses(...responses) {
 }
 
 /**
- * Do not change an ainode just by talking to it
- * All the threading should be managed in the shell, or in a child chain
- * Reasoning should be tracked in chains.
- *
+ * Where should ai covenants go ?
  * In the shell means that shell would read from the Be's of the chain
  * and then make the call, and then give the result back.
  * Shell could be extended with AI call capabilities and the ability to make
@@ -119,19 +109,5 @@ export function injectResponses(...responses) {
  * ls --description to get a description about what an object is.
  * Use threads since that is fastest way to get high quality output going.
  *
- * ? How to use the behaviours in a given ainode ?
- * It would be a different thread, or we might make a new thread for it ?
- * Or, it could carry on its last thread, for more context ?
- * So HAL's role is to limit what the ainodes can consider.
- * Assistant definitely needed for parsing bank statements.
- * Might need to teach it how to write mango queries with an iteration loop.
  *
- * Could upload text of the whole db so it can be searched.
- * Keep it updated on change.
- *
- * Could upload the whole xml file of the db for code interpreter to process.
- *
- * Can make new threads to allow agents to work separately without wrecking
- * a thread they were not supposed to change ?
- * Or, just give them some isolated space.
  */
