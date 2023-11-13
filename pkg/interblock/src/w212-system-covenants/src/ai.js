@@ -15,12 +15,9 @@
  */
 import all from 'it-all'
 import OpenAI from 'openai'
-import dotenv from 'dotenv'
 import Debug from 'debug'
 import { useAsync } from '../../w002-api'
-dotenv.config()
 const debug = Debug('interblock:apps:ai')
-const openAi = new OpenAI()
 
 const api = {
   prompt: {
@@ -74,7 +71,10 @@ const reducer = async (request) => {
 async function* stream(messages) {
   const results = []
   debug('messages', messages)
-  const stream = await openAi.chat.completions.create({
+  if (!context.openAi) {
+    context.openAi = new OpenAI()
+  }
+  const stream = await context.openAi.chat.completions.create({
     model: 'gpt-4',
     messages,
     stream: true,

@@ -1,7 +1,9 @@
 import { Interpulse } from '../..'
+import dotenv from 'dotenv'
 import { injectResponses } from '../src/ai'
 import Debug from 'debug'
 const debug = Debug('test')
+dotenv.config({ path: '../../.env' })
 
 describe('ai', () => {
   it('makes an api call to openai', async () => {

@@ -1,6 +1,6 @@
 import equals from 'fast-deep-equal'
 import { toString } from 'uint8arrays/to-string'
-import Immutable from 'immutable'
+import { Map as IMap, Set as ISet } from 'immutable'
 import { IpldInterface } from './IpldInterface'
 import { IpldStruct } from './IpldStruct'
 import { create, load } from 'ipld-hashmap'
@@ -26,9 +26,9 @@ export class Hamt extends IpldInterface {
   #isMutable
   #putStore
   #hashmap
-  #gets = Immutable.Map()
-  #sets = Immutable.Map()
-  #deletes = Immutable.Set()
+  #gets = IMap()
+  #sets = IMap()
+  #deletes = ISet()
   #bakedMap
   #bitWidth = hamtOptions.bitWidth
   #bucketSize = hamtOptions.bucketSize
