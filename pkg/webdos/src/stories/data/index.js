@@ -1,6 +1,6 @@
-import templateUrl from './template.pdf'
+import templateUrl from './template.pdf?url'
 import Debug from 'debug'
-
+console.log('data', templateUrl)
 const debug = Debug('webdos:stories:data')
 
 const dataPrefix =

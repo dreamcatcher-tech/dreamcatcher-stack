@@ -6,7 +6,7 @@ import Debug from 'debug'
 import { Address, Pulse, PulseLink } from '../../w008-ipld'
 import { Crisp } from '..'
 import { BakeCache } from './BakeCache'
-import Immutable from 'immutable'
+import { Map as IMap } from 'immutable'
 import { pushable } from 'it-pushable'
 import { eventLoopSpinner } from 'event-loop-spinner'
 
@@ -193,7 +193,7 @@ export class Syncer {
       covenantPromise = this.#resolveCovenant(covenantPath, abort)
     }
 
-    let channels = Immutable.Map()
+    let channels = IMap()
     let prior
     if (this.#cache.isWalked(address)) {
       prior = this.#cache.getPulse(address)
