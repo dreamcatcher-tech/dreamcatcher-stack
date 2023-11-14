@@ -1,7 +1,7 @@
 import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder'
 import { LiveAudioVisualizer } from 'react-audio-visualize'
 import { Crisp } from '@dreamcatcher-tech/interblock'
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -25,6 +25,7 @@ const Send = ({ crisp }) => (
     <SendIcon />
   </IconButton>
 )
+Send.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
 
 const Mic = ({ crisp, start, stop }) => (
   <IconButton
@@ -36,9 +37,15 @@ const Mic = ({ crisp, start, stop }) => (
     <MicIcon />
   </IconButton>
 )
+Mic.propTypes = {
+  crisp: PropTypes.instanceOf(Crisp),
+  start: PropTypes.func.isRequired,
+  stop: PropTypes.func.isRequired,
+}
 
 const Input = ({ crisp }) => {
-  const [value, setValue] = React.useState('')
+  const [value, setValue] = useState('')
+  const [disabled, setDisabled] = useState(false)
   const {
     startRecording,
     stopRecording,
@@ -46,17 +53,24 @@ const Input = ({ crisp }) => {
     isRecording,
     mediaRecorder,
   } = useAudioRecorder()
+  const start = useCallback(() => {
+    startRecording()
+    setDisabled(true)
+  }, [startRecording])
+
   useEffect(() => {
-    if (recordingBlob) {
-      const file = new File([recordingBlob], 'recording.webm', {
-        type: recordingBlob.type,
-      })
-      openai.audio.transcriptions
-        .create({ file, model: 'whisper-1' })
-        .then((transcription) => {
-          setValue(transcription.text)
-        })
+    if (!recordingBlob) {
+      return
     }
+    const file = new File([recordingBlob], 'recording.webm', {
+      type: recordingBlob.type,
+    })
+    openai.audio.transcriptions
+      .create({ file, model: 'whisper-1' })
+      .then((transcription) => {
+        setValue(transcription.text)
+      })
+      .finally(() => setDisabled(false))
   }, [recordingBlob])
 
   const inputProps = {
@@ -73,13 +87,13 @@ const Input = ({ crisp }) => {
                 mediaRecorder={mediaRecorder}
               />
             )}
-            <Mic crisp={crisp} start={startRecording} stop={stopRecording} />
+            <Mic crisp={crisp} start={start} stop={stopRecording} />
           </>
         )}
       </InputAdornment>
     ),
   }
-  if (!isRecording) {
+  if (!disabled) {
     inputProps.startAdornment = (
       <InputAdornment position="start">
         <Attach fontSize="medium" />
@@ -89,14 +103,15 @@ const Input = ({ crisp }) => {
 
   return (
     <TextField
-      value={isRecording ? ' ' : value}
+      value={disabled ? ' ' : value}
       multiline
       fullWidth
       variant="outlined"
       label="Input"
-      placeholder={isRecording ? null : 'Message DreamcatcherGPT...'}
+      placeholder={disabled ? null : 'Message DreamcatcherGPT...'}
       InputProps={inputProps}
       onChange={(e) => setValue(e.target.value)}
+      disabled={disabled}
     />
   )
 }
