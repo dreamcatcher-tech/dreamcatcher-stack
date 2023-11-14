@@ -21,6 +21,10 @@ deps['leaflet.markercluster/dist/MarkerCluster.Default.css'] = true
 deps['leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css'] = true
 deps['leaflet-extra-markers/dist/js/leaflet.extra-markers.min'] = true
 
+dotenv.config({ path: '../../.env' })
+const { env } = process
+env.VITE_OPENAI_API_KEY = env.OPENAI_API_KEY
+
 const gitPath = '../..'
 const VITE_GIT_HASH = JSON.stringify(git.long(gitPath))
 const VITE_GIT_DATE = JSON.stringify(git.date())
@@ -42,12 +46,8 @@ const config = {
   define: {
     VITE_GIT_HASH,
     VITE_GIT_DATE,
-    // used by the 'util' module
-    // 'process.env.NODE_DEBUG': 'false',
   },
 }
-dotenv.config({ path: '../../.env' })
-const { env } = process
 if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
   Object.assign(config.server, {
     https: {

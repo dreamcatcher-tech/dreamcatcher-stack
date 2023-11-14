@@ -15,6 +15,9 @@ import ImageIcon from '@mui/icons-material/Image'
 import WorkIcon from '@mui/icons-material/Work'
 import BeachAccessIcon from '@mui/icons-material/BeachAccess'
 import DaveIcon from '@mui/icons-material/SentimentDissatisfied'
+import Paper from '@mui/material/Paper'
+import process from 'process'
+
 const debug = Debug('AI:ThreeBox')
 debug(`loaded`)
 
@@ -51,25 +54,15 @@ const ThreeBox = ({ crisp }) => {
         flexDirection: 'column',
         height: '100%',
         width: '100%',
-        overflow: 'hidden',
-        backgroundColor: 'red',
       }}
     >
-      <Grid
-        container
-        xs="auto"
-        sx={{ backgroundColor: 'blue', height: '100%' }}
-      >
+      <Grid container xs="auto" sx={{ height: '100%' }}>
         <Stack
           direction="column"
           alignItems="flex-start"
           justifyContent="flex-end"
           flexGrow={1}
-          sx={{
-            backgroundColor: 'orange',
-            maxWidth: '400px',
-            width: '400px',
-          }}
+          sx={{ maxWidth: '400px', width: '400px' }}
           spacing={1}
           p={1}
         >
@@ -85,15 +78,8 @@ const ThreeBox = ({ crisp }) => {
           <Input />
         </Stack>
       </Grid>
-      <Grid
-        sx={{
-          flexGrow: '1',
-          backgroundColor: 'green',
-          height: '100%',
-          width: '100%',
-        }}
-      >
-        asdf
+      <Grid sx={{ flexGrow: '1' }} container>
+        <Paper elevation={2} sx={{ flexGrow: 1 }}></Paper>
       </Grid>
     </Grid>
   )

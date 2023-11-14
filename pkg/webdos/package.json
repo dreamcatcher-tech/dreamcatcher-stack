@@ -62,6 +62,7 @@
     "leaflet.markercluster": "^1.5.3",
     "lodash.throttle": "^4.1.1",
     "mock-stdin-browserify": "^1.0.8",
+    "openai": "^4.17.5",
     "path-browserify": "^1.0.1",
     "pdf-lib": "^1.17.1",
     "pretty-bytes": "^6.1.1",
