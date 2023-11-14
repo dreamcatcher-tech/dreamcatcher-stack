@@ -5,7 +5,7 @@ import { Crisp } from '@dreamcatcher-tech/interblock'
 import React from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-
+import Box from '@mui/material/Box'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
@@ -47,28 +47,34 @@ const ThreeBox = ({ crisp }) => {
     return
   }
   return (
-    <Grid
-      container
+    <Box
       sx={{
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         height: '100%',
         width: '100%',
+        // background: 'purple',
       }}
     >
-      <Grid container xs="auto" sx={{ height: '100%' }}>
+      <Box
+        sx={{
+          height: '100%',
+          maxWidth: '400px',
+          width: '400px',
+          minWidth: '400px',
+          // backgroundColor: 'lightGray',
+          display: 'flex',
+        }}
+      >
         <Stack
           direction="column"
           alignItems="flex-start"
           justifyContent="flex-end"
-          flexGrow={1}
-          sx={{ maxWidth: '400px', width: '400px' }}
-          spacing={1}
           p={1}
         >
           <List sx={{ width: '100%' }}>
             <HAL message={'this is a message'} />
-            <Dave message={'i am dave'} />
+            <Dave message={'i am dave and i suck at computing'} />
             <HAL
               message={
                 'this is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is '
@@ -77,11 +83,11 @@ const ThreeBox = ({ crisp }) => {
           </List>
           <Input />
         </Stack>
-      </Grid>
-      <Grid sx={{ flexGrow: '1' }} container>
-        <Paper elevation={2} sx={{ flexGrow: 1 }}></Paper>
-      </Grid>
-    </Grid>
+      </Box>
+      <Box sx={{ flexGrow: 1, p: 1, pl: 0 }}>
+        <Paper elevation={12} sx={{ height: '100%', flexGrow: 1 }}></Paper>
+      </Box>
+    </Box>
   )
 }
 ThreeBox.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
