@@ -1,23 +1,43 @@
-import Box from '@mui/system/Box'
+import Input from './Input'
 import Grid from '@mui/material/Unstable_Grid2'
 import Stack from '@mui/material/Stack'
-import Paper from '@mui/material/Paper'
 import { Crisp } from '@dreamcatcher-tech/interblock'
 import React from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
-import Send from '@mui/icons-material/Send'
-import Input from '@mui/material/Input'
-import InputLabel from '@mui/material/InputLabel'
-import InputAdornment from '@mui/material/InputAdornment'
-import FormControl from '@mui/material/FormControl'
-import TextField from '@mui/material/TextField'
-import AccountCircle from '@mui/icons-material/AccountCircle'
-import ArrowUpwardIconValid from '@mui/icons-material/ArrowUpwardTwoTone'
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpwardRounded'
 
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import Avatar from '@mui/material/Avatar'
+import ImageIcon from '@mui/icons-material/Image'
+import WorkIcon from '@mui/icons-material/Work'
+import BeachAccessIcon from '@mui/icons-material/BeachAccess'
+import DaveIcon from '@mui/icons-material/SentimentDissatisfied'
 const debug = Debug('AI:ThreeBox')
 debug(`loaded`)
+
+const HAL = ({ message }) => (
+  <ListItem alignItems="flex-start">
+    <ListItemAvatar>
+      <Avatar src="https://dreamcatcher.land/img/dreamcatcher.svg"></Avatar>
+    </ListItemAvatar>
+    <ListItemText primary="HAL" secondary={message} />
+  </ListItem>
+)
+HAL.propTypes = { message: PropTypes.string }
+const Dave = ({ message }) => (
+  <ListItem alignItems="flex-start">
+    <ListItemAvatar>
+      <Avatar>
+        <DaveIcon />
+      </Avatar>
+    </ListItemAvatar>
+    <ListItemText primary="Dave" secondary={message} />
+  </ListItem>
+)
+Dave.propTypes = { message: PropTypes.string }
 
 const ThreeBox = ({ crisp }) => {
   if (!crisp || crisp.isLoading) {
@@ -35,57 +55,46 @@ const ThreeBox = ({ crisp }) => {
         backgroundColor: 'red',
       }}
     >
-      <Grid xs="auto" sx={{ backgroundColor: 'blue', height: '100%' }}>
+      <Grid
+        container
+        xs="auto"
+        sx={{ backgroundColor: 'blue', height: '100%' }}
+      >
         <Stack
           direction="column"
           alignItems="flex-start"
           justifyContent="flex-end"
-          sx={{ backgroundColor: 'orange', height: '100%' }}
+          flexGrow={1}
+          sx={{
+            backgroundColor: 'orange',
+            maxWidth: '400px',
+            width: '400px',
+          }}
+          spacing={1}
+          p={1}
         >
-          <TextField
-            multiline
-            placeholder="Message DreamcatcherGPT..."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AccountCircle />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <ArrowUpwardIcon sx={{ backgroundColor: 'gray' }} />
-                </InputAdornment>
-              ),
-            }}
-            variant="standard"
-          />
+          <List sx={{ width: '100%' }}>
+            <HAL message={'this is a message'} />
+            <Dave message={'i am dave'} />
+            <HAL
+              message={
+                'this is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is a really long piece of text that goes on for a while and is really long and is '
+              }
+            />
+          </List>
+          <Input />
         </Stack>
       </Grid>
-      <Grid xs="2" sx={{ backgroundColor: 'green', height: '100%' }}>
+      <Grid
+        sx={{
+          flexGrow: '1',
+          backgroundColor: 'green',
+          height: '100%',
+          width: '100%',
+        }}
+      >
         asdf
       </Grid>
-      {/* <Box sx={{ zIndex: 1 }}>
-          <Nav crisp={crisp} />
-        </Box>
-        {isLoading(crisp) ? (
-          <div>Loading...</div>
-        ) : (
-          <>
-            <Glass.Lazy show={wd.startsWith('/schedules')}>
-              <Schedules
-                crisp={schedules}
-                customers={customers}
-                routing={routing}
-              />
-            </Glass.Lazy>
-            <Glass.Lazy show={wd.startsWith('/customers')}>
-              <CollectionList crisp={customers} />
-            </Glass.Lazy>
-            <Glass.Lazy show={wd.startsWith('/routing')}>
-              <Routing crisp={routing} customers={customers} />
-            </Glass.Lazy>
-          </>
-        )} */}
     </Grid>
   )
 }
