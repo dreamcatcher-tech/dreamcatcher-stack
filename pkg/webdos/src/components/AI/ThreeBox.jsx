@@ -1,5 +1,4 @@
 import Input from './Input'
-import Grid from '@mui/material/Unstable_Grid2'
 import Stack from '@mui/material/Stack'
 import { Crisp } from '@dreamcatcher-tech/interblock'
 import React from 'react'
@@ -11,12 +10,8 @@ import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Avatar from '@mui/material/Avatar'
-import ImageIcon from '@mui/icons-material/Image'
-import WorkIcon from '@mui/icons-material/Work'
-import BeachAccessIcon from '@mui/icons-material/BeachAccess'
 import DaveIcon from '@mui/icons-material/SentimentDissatisfied'
 import Paper from '@mui/material/Paper'
-import process from 'process'
 
 const debug = Debug('AI:ThreeBox')
 debug(`loaded`)
@@ -84,8 +79,8 @@ const ThreeBox = ({ crisp }) => {
           <Input />
         </Stack>
       </Box>
-      <Box sx={{ flexGrow: 1, p: 1, pl: 0 }}>
-        <Paper elevation={12} sx={{ height: '100%', flexGrow: 1 }}></Paper>
+      <Box sx={{ flexGrow: 1, p: 1 }}>
+        <Paper elevation={6} sx={{ height: '100%', flexGrow: 1 }}></Paper>
       </Box>
     </Box>
   )

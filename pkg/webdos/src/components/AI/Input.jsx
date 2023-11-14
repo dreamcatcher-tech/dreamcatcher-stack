@@ -1,4 +1,5 @@
-import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder'
+import { useAudioRecorder } from 'react-audio-voice-recorder'
+import { useFilePicker } from 'use-file-picker'
 import { LiveAudioVisualizer } from 'react-audio-visualize'
 import { Crisp } from '@dreamcatcher-tech/interblock'
 import React, { useCallback, useEffect, useState } from 'react'
@@ -7,11 +8,10 @@ import Debug from 'debug'
 import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
-import Button from '@mui/material/Button'
 import MicIcon from '@mui/icons-material/Mic'
 import Attach from '@mui/icons-material/AttachFile'
 import SendIcon from '@mui/icons-material/ArrowUpwardRounded'
-import OpenAI, { toFile } from 'openai'
+import OpenAI from 'openai'
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -20,14 +20,14 @@ const openai = new OpenAI({
 
 const debug = Debug('AI:Input')
 
-const Send = ({ crisp }) => (
-  <IconButton>
+const Send = ({ send }) => (
+  <IconButton onClick={send}>
     <SendIcon />
   </IconButton>
 )
-Send.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
+Send.propTypes = { send: PropTypes.func }
 
-const Mic = ({ crisp, start, stop }) => (
+const Mic = ({ start, stop }) => (
   <IconButton
     onTouchStart={start}
     onTouchEnd={stop}
@@ -38,7 +38,6 @@ const Mic = ({ crisp, start, stop }) => (
   </IconButton>
 )
 Mic.propTypes = {
-  crisp: PropTypes.instanceOf(Crisp),
   start: PropTypes.func.isRequired,
   stop: PropTypes.func.isRequired,
 }
@@ -57,6 +56,9 @@ const Input = ({ crisp }) => {
     startRecording()
     setDisabled(true)
   }, [startRecording])
+  const send = useCallback(() => {
+    console.log('send', value)
+  }, [value])
 
   useEffect(() => {
     if (!recordingBlob) {
@@ -70,6 +72,7 @@ const Input = ({ crisp }) => {
       .then((transcription) => {
         setValue(transcription.text)
       })
+      .catch(console.error)
       .finally(() => setDisabled(false))
   }, [recordingBlob])
 
@@ -81,11 +84,7 @@ const Input = ({ crisp }) => {
         ) : (
           <>
             {isRecording && (
-              <LiveAudioVisualizer
-                height={35}
-                width={310}
-                mediaRecorder={mediaRecorder}
-              />
+              <LiveAudioVisualizer width={310} mediaRecorder={mediaRecorder} />
             )}
             <Mic crisp={crisp} start={start} stop={stopRecording} />
           </>
@@ -93,13 +92,31 @@ const Input = ({ crisp }) => {
       </InputAdornment>
     ),
   }
+  const { openFilePicker, filesContent, loading } = useFilePicker({
+    accept: '.txt',
+  })
   if (!disabled) {
     inputProps.startAdornment = (
       <InputAdornment position="start">
-        <Attach fontSize="medium" />
+        <IconButton onClick={openFilePicker}>
+          <Attach fontSize="medium" />
+        </IconButton>
       </InputAdornment>
     )
   }
+
+  const onKeyDown = useCallback((e) => {
+    const isUnmodified = !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey
+    if (e.key === 'Enter' && isUnmodified) {
+      e.preventDefault()
+      send(value)
+      setValue('')
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setValue('')
+    }
+  })
 
   return (
     <TextField
@@ -112,6 +129,7 @@ const Input = ({ crisp }) => {
       InputProps={inputProps}
       onChange={(e) => setValue(e.target.value)}
       disabled={disabled}
+      onKeyDown={onKeyDown}
     />
   )
 }
