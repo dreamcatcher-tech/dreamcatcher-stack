@@ -44,7 +44,6 @@ export const installer = {
         },
       },
     },
-    ai: { covenant: 'ai' },
   },
 }
 
