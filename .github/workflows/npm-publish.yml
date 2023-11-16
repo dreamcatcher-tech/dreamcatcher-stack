@@ -25,7 +25,9 @@ jobs:
       - name: Test
         run: yarn run test
         working-directory: ./pkg/interblock
-
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          
         # 👇 Ensure the package can at least build for the browser
       - name: Build
         run: yarn run build
@@ -59,6 +61,9 @@ jobs:
       - run: yarn run test
         shell: cmd
         working-directory: ./pkg/interblock
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
 
   chromatic-deployment:
     needs: [windows-test]
@@ -95,5 +100,5 @@ jobs:
           VITE_INFURA_IPFS_KEY: ${{ secrets.VITE_INFURA_IPFS_KEY }}
           VITE_PINATA_API_KEY: ${{ secrets.VITE_PINATA_API_KEY }}
           VITE_PINATA_API_SECRET: ${{ secrets.VITE_PINATA_API_SECRET }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VITE_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
