@@ -41,6 +41,9 @@ const ThreeBox = ({ crisp }) => {
   if (!crisp || crisp.isLoading) {
     return
   }
+  if (crisp.absolutePath !== '/.HAL') {
+    throw new Error(`${crisp.absolutePath} !== '/.HAL'`)
+  }
   return (
     <Box
       sx={{
@@ -76,7 +79,7 @@ const ThreeBox = ({ crisp }) => {
               }
             />
           </List>
-          <Input />
+          <Input crisp={crisp} />
         </Stack>
       </Box>
       <Box sx={{ flexGrow: 1, p: 1 }}>

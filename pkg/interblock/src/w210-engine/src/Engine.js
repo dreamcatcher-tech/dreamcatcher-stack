@@ -1,7 +1,6 @@
 import assert from 'assert-fast'
 import posix from 'path-browserify'
 import { pushable } from 'it-pushable'
-import { popAsyncWhisper } from '../../w010-hooks'
 import {
   Reply,
   RequestId,
@@ -36,7 +35,7 @@ const debug = Debug('interpulse:Engine')
  * through the engine.
  */
 export class Engine {
-  #isolateContainer
+  #isolate
   #crypto
   #endurance
   #scale
@@ -68,14 +67,14 @@ export class Engine {
     return instance
   }
   constructor({ isolate, crypto, endurance, scale } = {}) {
-    this.#isolateContainer = isolate || Isolate.create()
+    this.#isolate = isolate || Isolate.create()
     this.#crypto = crypto || Crypto.createCI()
     this.#endurance = endurance || Endurance.create()
     this.#scale = scale || Scale.create()
   }
   overload(overloads) {
     assert.strictEqual(typeof overloads, 'object')
-    this.#isolateContainer.overload(overloads)
+    this.#isolate.overload(overloads)
   }
   async #init(CI) {
     if (!this.#endurance.selfAddress) {
@@ -325,7 +324,7 @@ export class Engine {
     assert(pool instanceof Pulse)
     assert(pool.isModified())
     const timeout = 2000 // TODO move to config
-    const isolate = await this.#isolateContainer.load(pool, timeout)
+    const isolate = await this.#isolate.load(pool, timeout)
     let rootPulse = this.selfLatest
     if (await pool.isRoot()) {
       rootPulse = pool
@@ -378,8 +377,8 @@ export class Engine {
     }
     assert(rootPulse instanceof Pulse, `no root for path: ${path}`)
     debug('latestByPath', path)
-    if (this.#isolateContainer.isCovenant(path)) {
-      return this.#isolateContainer.getCovenantPulse(path)
+    if (this.#isolate.isCovenant(path)) {
+      return this.#isolate.getCovenantPulse(path)
     }
     let pulse = rootPulse
     assert(pulse instanceof Pulse)
@@ -467,9 +466,9 @@ export class Engine {
     const updateParent = this.#updateParent(source)
     awaits.unshift(updateParent)
     await Promise.all(awaits)
-    if (source.getAddress().equals(this.selfAddress)) {
+    if (source.getConfig().isPierced) {
       const io = await network.getIo()
-      this.#checkPierceTracker(io, this.selfAddress)
+      this.#checkPierceTracker(io, source.getAddress())
     }
     debug('transmit complete', source.getAddress(), source.getPulseLink())
   }
@@ -506,7 +505,7 @@ export class Engine {
     assert(request instanceof Request)
     debug(`pierce`, request.type, address)
 
-    const piercer = {}
+    const piercer = { address }
     const promise = new Promise((resolve, reject) =>
       Object.assign(piercer, { resolve, reject })
     )
@@ -527,11 +526,10 @@ export class Engine {
     assert.strictEqual(io.channelId, Network.FIXED_IDS.IO)
     assert(address instanceof Address)
     assert(address.isRemote())
-    assert(address.equals(this.selfAddress))
     const { tx } = io
     if (!tx.isEmpty()) {
       for (const piercer of this.#piercers) {
-        if (!piercer.requestId) {
+        if (!piercer.requestId || !piercer.address.equals(address)) {
           continue
         }
         const { stream, requestIndex } = piercer.requestId
@@ -574,9 +572,10 @@ export class Engine {
     assert(pulse instanceof Pulse)
     assert(pulse.isVerified())
     if (!pulse.getConfig().isPierced) {
+      // if not pierced, then there is no way to get the results back in
+      // TODO honour the sideEffectsConfig also
       return
     }
-    // TODO honour the sideEffectsConfig also
     // TODO make reducer throw if try tx to an unpierced io
     const { tx, channelId } = await pulse.getNetwork().getIo()
     assert.strictEqual(channelId, Network.FIXED_IDS.IO)
@@ -585,8 +584,7 @@ export class Engine {
       assert(!system.requestsLength, 'cannot tx system requests to io')
       let requestIndex = reducer.requestsLength - 1
       for (const request of reducer.requests) {
-        // TODO if we are not the side effector, then just pop with no execute
-        const effect = popAsyncWhisper(request)
+        const effect = this.#isolate.popAsyncWhisper(pulse, request)
         assert.strictEqual(typeof effect, 'function')
 
         const requestId = RequestId.create(channelId, 'reducer', requestIndex)
@@ -595,6 +593,7 @@ export class Engine {
         const target = pulse.getAddress()
         const deepen = Deepening.createReplyPierce(target, promise, requestId)
         this.#pool(deepen)
+        // TODO add some context in as an arg to give a hook back out
         Promise.resolve()
           .then(() => effect())
           .then((result) => Reply.createResolve({ result }))

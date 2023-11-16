@@ -10,7 +10,7 @@ import {
   Request,
   RxReply,
 } from '../../w008-ipld/index.mjs'
-import { IsolateContainer } from './Isolate'
+import { Isolate } from './Isolate'
 import { wrapReduce } from '../../w010-hooks'
 import { reducer as systemReducer } from '../../w023-system-reducer'
 
@@ -21,7 +21,7 @@ export const reducer = async (pool, isolate, latest) => {
   assert(pool instanceof Pulse)
   assert(pool.isModified())
   assert(pool.getNetwork().channels.rxs.length)
-  assert(isolate instanceof IsolateContainer)
+  assert(Isolate.isContainer(isolate))
   assert.strictEqual(typeof latest, 'function')
   let network = pool.getNetwork()
   let { pending } = pool.provenance.dmz
@@ -49,6 +49,7 @@ export const reducer = async (pool, isolate, latest) => {
     const timeout = 10e3
     // TODO make pulse reduction be an action so it is not part of callsites
     trail = await wrapReduce(trail, systemReducer, timeout)
+    // as a system reduction, we know it does not use side effects
     pool = trail.pulse
     network = pool.getNetwork()
     trail = trail.delete('pulse').delete('latest')

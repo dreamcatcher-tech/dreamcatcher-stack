@@ -1,22 +1,9 @@
-/**
- * ? how to stream back an AI response into a chain ?
- * Probably make a new pulse each response that comes in, and then do a
- * history shortcut when its finished, so the stream path can be pruned.
- * Stream back a generator, so can be yielded multiple times
- * Provide a hack where a side channel can be used to tap partial responses
- *
- * Want to load up the whole filesystem, copy in the files, then start bots.
- *
- * Could make all AI requests go thru a gateway, so it can be throttled, and
- * logged globally.
- *
- * Since the updates are ephemeral, provide them out of band.
- * Once the action resolves, replace with a permanent thing.
- */
 import all from 'it-all'
 import OpenAI from 'openai'
 import Debug from 'debug'
 import { useAsync } from '../../w002-api'
+import process from 'process'
+
 const debug = Debug('interblock:apps:ai')
 
 const api = {
@@ -26,20 +13,12 @@ const api = {
     description:
       'Send a prompt to the AI and start streaming back the response. The reply will be the full reply from the model. Partial results need to be sampled out of band',
     additionalProperties: false,
-    required: ['prompt', 'history'],
+    required: ['prompt', 'key'],
     properties: {
-      // make a selector that stores history in the state
       prompt: { type: 'string' },
-      history: {
-        type: 'array',
-        items: {
-          type: 'object',
-          required: ['role', 'content'],
-          properties: {
-            role: { enum: ['system', 'user', 'assistant'] },
-            content: { type: 'string' },
-          },
-        },
+      key: {
+        type: 'string',
+        description: `unique key for this request to allow side band access to streaming data`,
       },
     },
   },
@@ -48,32 +27,56 @@ const context = {}
 
 const reducer = async (request) => {
   debug('request', request)
-  const { prompt, history } = request.payload
+  const { prompt, key } = request.payload
   switch (request.type) {
     case 'PROMPT': {
       const message = { role: 'user', content: prompt }
-      const messages = [...history, message]
+      const messages = [message]
       const results = await useAsync(() => {
         if (injectedResponses.length) {
           return [injectedResponses.pop()]
         }
         return all(stream(messages))
-      })
-      return { result: results.join('') }
+      }, key)
+      const result = results.join('')
+      debug('result', result)
+      return { result }
+    }
+    case '@@INIT': {
+      if (!context.openAi) {
+        const { OPENAI_API_KEY } = process.env
+        context.openAi = new OpenAI({
+          apiKey: OPENAI_API_KEY,
+          dangerouslyAllowBrowser: true,
+        })
+      }
+      return
     }
     default: {
-      if (request.type !== '@@INIT') {
-        throw new Error(`unknown request: ${request.type}`)
-      }
+      throw new Error(`unknown request: ${request.type}`)
     }
   }
 }
+
+/**
+ * Threads api usage
+ * Each new message that comes in, add to the thread and invoke the assistant
+ * We should always have a link to the artifact that we shadow
+ * The shadow contains the assistant
+ * The caller contains the thread
+ *
+ * So you would add a message to the thread, ensure an assistant was created
+ * for the target you wanted to chat with, and then start up a run instance
+ * to get the cycle going.
+ *
+ * Each add to the thread checks that we still have a good model of remote
+ *
+ */
+
 async function* stream(messages) {
   const results = []
   debug('messages', messages)
-  if (!context.openAi) {
-    context.openAi = new OpenAI()
-  }
+
   const stream = await context.openAi.chat.completions.create({
     model: 'gpt-4',
     messages,

@@ -1,7 +1,6 @@
-import { useState, useAsync } from '../../w002-api'
-import { wrapReduce, popAsyncWhisper } from '../index.js'
+import { useAsync } from '../../w002-api'
+import { wrapReduceEffects } from '../index.js'
 import { Reply, RequestId, AsyncTrail, RxReply } from '../../w008-ipld'
-import assert from 'assert-fast'
 
 describe('useAsync', () => {
   test('basic', async () => {
@@ -9,14 +8,16 @@ describe('useAsync', () => {
       return await new Promise((r) => setTimeout(r, 100, 'result'))
     }
     const reducer = async () => {
-      const result = await useAsync(effect)
+      const result = await useAsync(effect, 'key')
       expect(result).toEqual('result')
     }
     let trail = AsyncTrail.createCI()
-    trail = await wrapReduce(trail, reducer)
+    const whisper = new Map()
+    trail = await wrapReduceEffects(trail, reducer, whisper)
     let [io] = trail.txs
     expect(io.request.type).toBe('@@ASYNC')
-    const fn = popAsyncWhisper(io.request)
+    expect(io.request.payload.key).toBe('key')
+    const fn = whisper.get(io.request.payload.key)
     expect(fn).toEqual(effect)
     const result = await fn()
     expect(result).toEqual('result')
@@ -28,8 +29,7 @@ describe('useAsync', () => {
     const reply = Reply.createResolve({ result })
     let rxReply = RxReply.create(reply, requestId)
     trail = trail.settleTx(rxReply)
-    trail = await wrapReduce(trail, reducer)
-
+    trail = await wrapReduceEffects(trail, reducer, whisper)
     expect(trail.isPending()).toBeFalsy()
   })
   it('throws on fn throw', async () => {
@@ -39,17 +39,19 @@ describe('useAsync', () => {
     }
     const reducer = async () => {
       try {
-        await useAsync(effect)
+        await useAsync(effect, 'key')
       } catch (caught) {
         expect(caught.message).toBe(error.message)
         return { result: 'caught' }
       }
     }
     let trail = AsyncTrail.createCI()
-    trail = await wrapReduce(trail, reducer)
+    const whisper = new Map()
+    trail = await wrapReduceEffects(trail, reducer, whisper)
     let [io] = trail.txs
     expect(io.request.type).toBe('@@ASYNC')
-    const fn = popAsyncWhisper(io.request)
+    expect(io.request.payload.key).toBe('key')
+    const fn = whisper.get(io.request.payload.key)
     expect(fn).toEqual(effect)
     let result
     try {
@@ -66,7 +68,8 @@ describe('useAsync', () => {
     const reply = Reply.createError(result)
     let rxReply = RxReply.create(reply, requestId)
     trail = trail.settleTx(rxReply)
-    trail = await wrapReduce(trail, reducer)
+    whisper.clear()
+    trail = await wrapReduceEffects(trail, reducer, whisper)
 
     expect(trail.isPending()).toBeFalsy()
     expect(trail.getReply().payload).toEqual({ result: 'caught' })

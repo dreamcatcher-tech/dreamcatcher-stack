@@ -11,10 +11,10 @@ export const useState = (path = '.') => {
   assert(useState, `global hook detached`)
   return useState(path)
 }
-export const useAsync = (fn) => {
+export const useAsync = (...args) => {
   const { useAsync } = globalThis[hookSymbol]
   assert(useAsync, 'global hook detached')
-  return useAsync(fn)
+  return useAsync(...args)
 }
 export const usePulse = async (path = '.') => {
   assert.strictEqual(typeof path, 'string')
@@ -47,9 +47,7 @@ export const ensureChild = async (path, installer = 'unity') => {
     await interchain(Request.tryPath(path))
     // TODO assert covenant matches
   } catch (error) {
-    // TODO work with any child
-    const ignoreMessage = `Segment not present: /.mtab of: .mtab`
-    if (error.message !== ignoreMessage) {
+    if (!error.message.startsWith(`Segment not present: `)) {
       throw error
     }
     const spawnAction = Request.createSpawn(path, installer)

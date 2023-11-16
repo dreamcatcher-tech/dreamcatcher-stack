@@ -13,12 +13,21 @@ describe('ai', () => {
     const actions = await engine.actions('ai')
     debug('ai actions', actions)
 
-    const result = await actions.prompt('repeat this: "bob your uncle"', [])
+    const result = await actions.prompt('repeat this: "bob your uncle"', 'key')
 
     debug('result', result)
   })
   it.todo('streams back results')
   it('runs a shell command', async () => {
+    const engine = await Interpulse.createCI()
+    // Debug.enable('iplog *:ai')
+    await engine.bootHal()
+    const actions = await engine.actions('.HAL')
+    console.log(actions)
+    const response = await actions.prompt('meow', 'key')
+    console.log(response)
+    // .ai is a thread management system
+
     // give a prompt to HAL, see it change directory.
     const prompt = 'change directory to the crm'
 

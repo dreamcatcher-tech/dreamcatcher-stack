@@ -198,6 +198,10 @@ const reducer = async (request) => {
       const ln = Request.createLn(target, linkName)
       return await interchain(ln)
     }
+    case 'BOOT_HAL': {
+      await ensureChild('.HAL', 'ai')
+      return
+    }
     // check if action is part of mtab api
     // if so, ensure mtab then pass the action thru
     default: {

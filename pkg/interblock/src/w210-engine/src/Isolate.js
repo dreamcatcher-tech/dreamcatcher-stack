@@ -1,18 +1,22 @@
 import assert from 'assert-fast'
-import { Pulse, AsyncTrail } from '../../w008-ipld/index.mjs'
+import { Pulse, AsyncTrail, Request } from '../../w008-ipld/index.mjs'
 import * as system from '../../w212-system-covenants'
-import { wrapReduce } from '../../w010-hooks'
+import { wrapReduce, wrapReduceEffects } from '../../w010-hooks'
 import Debug from 'debug'
 const debug = Debug('interblock:engine:Isolate')
 const defaultReducer = (request) => {
   debug(`default reducer`, request)
 }
-export class IsolateContainer {
+class IsolateContainer {
   #covenant
-  static async create(pulse, overloads, timeout) {
+  #isEffects = false
+  #whisper
+  #timeout
+  static async create(pulse, overloads, whisper, timeout) {
     assert(pulse instanceof Pulse)
     assert(pulse.isModified())
     assert.strictEqual(typeof overloads, 'object')
+    assert(!whisper || whisper instanceof Map)
     assert(Number.isInteger(timeout))
     const { covenant: covenantString } = pulse.provenance.dmz
 
@@ -23,7 +27,15 @@ export class IsolateContainer {
     } else if (system[covenantString]) {
       covenant = system[covenantString]
     }
-    return new IsolateContainer(covenant)
+    const container = new IsolateContainer(covenant)
+    // TODO use full check for if we are effects capable
+    container.#isEffects = pulse.getConfig().isPierced
+    if (container.#isEffects) {
+      assert(whisper instanceof Map, `whisper is required for effects`)
+    }
+    container.#whisper = whisper
+    container.#timeout = timeout
+    return container
   }
   constructor(covenant) {
     assert.strictEqual(typeof covenant, 'object')
@@ -40,15 +52,26 @@ export class IsolateContainer {
     assert(this.#covenant, `Covenant not loaded`)
     debug('reduce', trail.origin.request.type)
     const reducer = this.#covenant.reducer || defaultReducer
-    trail = await wrapReduce(trail, reducer)
+    const timeout = this.#timeout
+    const whisper = this.#whisper
+    if (this.#isEffects) {
+      trail = await wrapReduceEffects(trail, reducer, whisper, timeout)
+    } else {
+      trail = await wrapReduce(trail, reducer, timeout)
+    }
     return trail
   }
 }
 export class Isolate {
   #overloads = {}
   #overloadPulses = new Map()
+  #whispers = new Map() // chainId -> { key -> fn }
+
   static create() {
     return new Isolate()
+  }
+  static isContainer(container) {
+    return container instanceof IsolateContainer
   }
   overload(overloads) {
     // the dev supplied covenants to override blockchained ones
@@ -115,9 +138,35 @@ export class Isolate {
     return this.#overloadPulses.get(path)
   }
   async load(pulse, timeout) {
-    debug('load')
+    assert(pulse instanceof Pulse)
     const overloads = this.#overloads
-    return await IsolateContainer.create(pulse, overloads, timeout)
+    let whisper
+    if (pulse.getConfig().isPierced) {
+      const chainId = pulse.getAddress().getChainId()
+      if (!this.#whispers.has(chainId)) {
+        this.#whispers.set(chainId, new Map())
+      }
+      whisper = this.#whispers.get(chainId)
+    }
+    return await IsolateContainer.create(pulse, overloads, whisper, timeout)
+  }
+  popAsyncWhisper(pulse, request) {
+    assert(pulse instanceof Pulse)
+    assert(request instanceof Request)
+    assert.strictEqual(request.type, '@@ASYNC')
+    // TODO handle config changing partway thru execution
+    assert(pulse.getConfig().isPierced, `chain is not side effect capable`)
+    const { key } = request.payload
+    assert.strictEqual(typeof key, 'string')
+
+    const chainId = pulse.getAddress().getChainId()
+    assert(this.#whispers.has(chainId), `no whispers for ${chainId}`)
+    const whispers = this.#whispers.get(chainId)
+    assert(whispers.has(key), `no whisper for ${key}`)
+
+    const fn = whispers.get(key)
+    whispers.delete(key)
+    return fn
   }
 }
 

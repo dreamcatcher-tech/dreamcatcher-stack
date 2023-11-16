@@ -10,6 +10,7 @@ const debug = Debug('App')
 const { faker } = apps.crm
 faker.customers.reset()
 const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
+  const ai = { bootHal: {} }
   const install = { add: { path: '/app', installer: '/crm' } }
   const cd = { '/cd': { path: '/app/customers' } }
   const sectorsBatch = faker.routing.generateBatch(sectors)
@@ -17,7 +18,7 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   const listBatch = faker.customers.generateBatchInside(sectorsBatch, customers)
   const listInsert = { '/app/customers/batch': { batch: listBatch } }
   const update = { '/app/routing/update': { path: '/app/customers' } }
-  return [install, cd, sectorsInsert, listInsert, update]
+  return [ai, install, cd, sectorsInsert, listInsert, update]
 }
 
 export default {
@@ -30,7 +31,7 @@ const Template = (args) => {
   Debug.enable('*Nav iplog *Syncer')
   return (
     <Engine {...args}>
-      <Syncer path="/app">
+      <Syncer path="/.HAL">
         <ThreeBox />
       </Syncer>
     </Engine>

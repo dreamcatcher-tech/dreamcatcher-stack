@@ -9,18 +9,30 @@ import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 import callsites from 'callsites'
 import Debug from 'debug'
-import { sha256 } from '@noble/hashes/sha256'
-import { bytesToHex as toHex } from '@noble/hashes/utils'
 
 const debug = Debug('interblock:api:callsites')
 
 let invokeId = 0
 let activeInvocations = new Map()
-export const wrapReduce = async (trail, reducer, timeout = 500) => {
+
+export const wrapReduceEffects = async (trail, reducer, whisper, timeout) => {
+  assert(whisper instanceof Map)
+  return _wrapReduce(trail, reducer, whisper, timeout)
+}
+
+export const wrapReduce = async (trail, reducer, timeout) => {
+  const discardedWhisper = undefined
+  return _wrapReduce(trail, reducer, discardedWhisper, timeout)
+}
+const _wrapReduce = async (trail, reducer, whisper, timeout = 500) => {
   assert(trail instanceof AsyncTrail)
   assert(trail.isPending())
   assert(trail.isFulfilled())
   assert.strictEqual(typeof reducer, 'function')
+  assert(!whisper || whisper instanceof Map)
+  assert.strictEqual(typeof timeout, 'number')
+  assert(timeout > 0)
+
   const id = `@@INVOKE\\ ${invokeId++}` // basically just a difficult name
   const wrapper = {
     async [id]() {
@@ -31,7 +43,7 @@ export const wrapReduce = async (trail, reducer, timeout = 500) => {
   }
   const settles = trail.getSettles()
   const txs = []
-  const invocation = { settles, txs, trail }
+  const invocation = { settles, txs, trail, whisper }
   activeInvocations.set(id, invocation)
 
   try {
@@ -148,27 +160,24 @@ const invoke = (request, to) => {
   }
 }
 
-const useAsync = async (fn) => {
+const useAsync = async (fn, key) => {
   assert.strictEqual(typeof fn, 'function', `must supply a function`)
-  const hash = toHex(sha256(fn.toString()))
-  const request = Request.create('@@ASYNC', { hash })
-  assert(!asyncWhisper.has(hash))
-  asyncWhisper.set(hash, fn)
+  assert.strictEqual(typeof key, 'string', `key must be a string`)
+  assert(key, `key cannot be nullish: ${key}`)
+  const request = Request.create('@@ASYNC', { key })
+  // TODO if we are not to execute these effects, then do not whisper them
+  const { whisper, settles } = getInvocation()
+  if (!(whisper instanceof Map)) {
+    throw new Error(`Chain is not side effect capable`)
+  }
+  if (settles.length) {
+    assert(!whisper.has(key), `Whisper ${key} not popped`)
+  } else {
+    assert(!whisper.has(key), `Whisper already exists for ${key}`)
+  }
+  whisper.set(key, fn)
   const { result } = await invoke(request, '.@@io')
   return result
-}
-// TODO purge this map if side effects will never run
-const asyncWhisper = new Map() // actions to functions
-export const popAsyncWhisper = (request) => {
-  assert(request instanceof Request)
-  assert.strictEqual(request.type, '@@ASYNC')
-  const { hash } = request.payload
-  assert.strictEqual(typeof hash, 'string')
-  assert(asyncWhisper.has(hash))
-
-  const fn = asyncWhisper.get(hash)
-  asyncWhisper.delete(hash)
-  return fn
 }
 
 const useState = async (path) => {

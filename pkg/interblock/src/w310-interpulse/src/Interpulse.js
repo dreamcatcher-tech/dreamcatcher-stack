@@ -14,7 +14,7 @@ import { NetEndurance } from '../../w305-libp2p/src/NetEndurance'
 import { Crypto } from '../../w210-engine/src/Crypto'
 import { isBrowser, isNode } from 'wherearewe'
 import { CarReader, CarWriter } from '@ipld/car'
-import { Address, PulseLink, Pulse, Interpulse as Inter } from '../../w008-ipld'
+import { Address, PulseLink, Pulse } from '../../w008-ipld'
 import { createRamRepo } from '../../w305-libp2p'
 
 const debug = Debug('Interpulse')
@@ -90,6 +90,21 @@ export class Interpulse {
   async pierce(request) {
     return await this.#engine.pierce(request)
   }
+
+  async hal(prompt) {
+    // TODO block .HAL from being overwritten in the shell
+    let address
+    try {
+      const hal = await this.current('.HAL')
+      address = hal.getAddress()
+    } catch (error) {
+      const { chainId } = await this.add('.HAL', { covenant: 'ai' })
+      address = Address.fromChainId(chainId)
+    }
+    assert(address, 'no .HAL found')
+    const request = { type: 'PROMPT', payload: { prompt } }
+    return this.#engine.pierce(request, address)
+  }
   async actions(path = '.') {
     if (path === '/') {
       return this.#actions
@@ -105,7 +120,11 @@ export class Interpulse {
       for (const key of Object.keys(actions)) {
         dispatches[key] = (...payload) => {
           const action = actions[key](...payload)
-          return this.dispatch(action, path)
+          if (pulse.getConfig().isPierced) {
+            return this.#engine.pierce(action, pulse.getAddress())
+          } else {
+            return this.dispatch(action, path)
+          }
         }
       }
       return dispatches

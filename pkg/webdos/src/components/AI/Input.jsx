@@ -12,6 +12,11 @@ import MicIcon from '@mui/icons-material/Mic'
 import Attach from '@mui/icons-material/AttachFile'
 import SendIcon from '@mui/icons-material/ArrowUpwardRounded'
 import OpenAI from 'openai'
+import process from 'process'
+if (!import.meta.env.VITE_OPENAI_API_KEY) {
+  throw new Error('VITE_OPENAI_API_KEY is not defined')
+}
+process.env.OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -27,20 +32,14 @@ const Send = ({ send }) => (
 )
 Send.propTypes = { send: PropTypes.func }
 
-const Mic = ({ start, stop }) => (
-  <IconButton
-    onTouchStart={start}
-    onTouchEnd={stop}
-    onMouseDown={start}
-    onMouseUp={stop}
-  >
+const Mic = ({ onEvent }) => (
+  <IconButton onClick={onEvent}>
     <MicIcon />
   </IconButton>
 )
-Mic.propTypes = {
-  start: PropTypes.func.isRequired,
-  stop: PropTypes.func.isRequired,
-}
+Mic.propTypes = { onEvent: PropTypes.func.isRequired }
+
+let key = 0
 
 const Input = ({ crisp }) => {
   const [value, setValue] = useState('')
@@ -57,8 +56,15 @@ const Input = ({ crisp }) => {
     setDisabled(true)
   }, [startRecording])
   const send = useCallback(() => {
-    console.log('send', value)
-  }, [value])
+    setValue('')
+    setDisabled(true)
+    key++
+    crisp.ownActions
+      .prompt(value, key + '')
+      .then(console.log)
+      .catch(console.error)
+      .finally(() => setDisabled(false))
+  }, [crisp, value])
 
   useEffect(() => {
     if (!recordingBlob) {
@@ -80,13 +86,13 @@ const Input = ({ crisp }) => {
     endAdornment: (
       <InputAdornment position="end">
         {value ? (
-          <Send crisp={crisp} />
+          <Send send={send} />
         ) : (
           <>
             {isRecording && (
               <LiveAudioVisualizer width={310} mediaRecorder={mediaRecorder} />
             )}
-            <Mic crisp={crisp} start={start} stop={stopRecording} />
+            <Mic onEvent={isRecording ? stopRecording : start} />
           </>
         )}
       </InputAdornment>
@@ -110,7 +116,6 @@ const Input = ({ crisp }) => {
     if (e.key === 'Enter' && isUnmodified) {
       e.preventDefault()
       send(value)
-      setValue('')
     }
     if (e.key === 'Escape') {
       e.preventDefault()

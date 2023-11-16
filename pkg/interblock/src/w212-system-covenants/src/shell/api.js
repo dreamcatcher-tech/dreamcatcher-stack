@@ -155,6 +155,14 @@ export const api = {
       },
     },
   },
+  bootHal: {
+    type: 'object',
+    title: 'BOOT_HAL',
+    description: `Boot the HAL assistant`,
+    additionalProperties: false,
+    required: [],
+    properties: {},
+  },
   validators: {
     type: 'object',
     title: 'VALIDATORS',
