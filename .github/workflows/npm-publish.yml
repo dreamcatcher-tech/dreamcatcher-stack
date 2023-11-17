@@ -66,7 +66,7 @@ jobs:
 
 
   chromatic-deployment:
-    needs: [windows-test]
+    needs: [linux-publish]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -95,10 +95,10 @@ jobs:
           onlyChanged: true
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           VITE_CLIPDROP_API_KEY: ${{ secrets.VITE_CLIPDROP_API_KEY }}
           VITE_INFURA_API_KEY: ${{ secrets.VITE_INFURA_API_KEY }}
           VITE_INFURA_IPFS_KEY: ${{ secrets.VITE_INFURA_IPFS_KEY }}
           VITE_PINATA_API_KEY: ${{ secrets.VITE_PINATA_API_KEY }}
           VITE_PINATA_API_SECRET: ${{ secrets.VITE_PINATA_API_SECRET }}
-          VITE_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 

@@ -16,7 +16,6 @@ import process from 'process'
 if (!import.meta.env.VITE_OPENAI_API_KEY) {
   throw new Error('VITE_OPENAI_API_KEY is not defined')
 }
-process.env.OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
