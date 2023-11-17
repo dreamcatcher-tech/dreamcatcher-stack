@@ -54,7 +54,7 @@ const reducer = async (request) => {
           throw new Error('missing openai api key')
         }
         context.openAi = new OpenAI({
-          apiKey: OPENAI_API_KEY,
+          apiKey,
           dangerouslyAllowBrowser: true,
         })
       }
