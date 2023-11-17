@@ -47,7 +47,8 @@ const reducer = async (request) => {
     }
     case '@@INIT': {
       if (!context.openAi) {
-        const { VITE_OPENAI_API_KEY, OPENAI_API_KEY } = process.env
+        const env = import.meta.env || process.env
+        const { VITE_OPENAI_API_KEY, OPENAI_API_KEY } = env
         const apiKey = VITE_OPENAI_API_KEY || OPENAI_API_KEY
         if (!apiKey) {
           throw new Error('missing openai api key')
