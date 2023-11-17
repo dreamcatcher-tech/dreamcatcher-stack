@@ -505,6 +505,7 @@ export class Engine {
     assert(request instanceof Request)
     debug(`pierce`, request.type, address)
 
+    // TODO ensure that we are locally hosting the pierced chain
     const piercer = { address }
     const promise = new Promise((resolve, reject) =>
       Object.assign(piercer, { resolve, reject })
