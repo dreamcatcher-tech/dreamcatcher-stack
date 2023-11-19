@@ -57,5 +57,7 @@ if (env.SSL_PRIVATE_KEY && env.SSL_CERT_CHAIN && env.SSL_HOSTNAME) {
     },
   })
 }
-// https://vitejs.dev/config/
+// TODO may require the vite ssl plugins:
+// https://github.com/liuweiGL/vite-plugin-mkcert
+
 export default defineConfig(config)
