@@ -12,7 +12,6 @@ import MicIcon from '@mui/icons-material/Mic'
 import Attach from '@mui/icons-material/AttachFile'
 import SendIcon from '@mui/icons-material/ArrowUpwardRounded'
 import OpenAI from 'openai'
-import process from 'process'
 if (!import.meta.env.VITE_OPENAI_API_KEY) {
   throw new Error('VITE_OPENAI_API_KEY is not defined')
 }
