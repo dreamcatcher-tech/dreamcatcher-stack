@@ -1,4 +1,3 @@
-import delay from 'delay'
 import PropTypes from 'prop-types'
 import assert from 'assert-fast'
 import React, { useState, useEffect, useRef } from 'react'
