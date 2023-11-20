@@ -2,7 +2,7 @@
 
 exports[`provenance basic 1`] = `
 [
-  "bafyreiaujlybdkncezfj7vqob7qnrn345j5ur5utx5rktaeihv74r54fjm",
+  "bafyreiayth33ipi3dapl4yolxj6a5xi662kvjffzaip27hgysl7wnwumw4",
   "bafyreiciavtdqojmryr4xb6ikuovrgkc5w5hau7gmlnyjzlipjizttsdfi",
   "bafyreigurnbmacoa6vokasdxnhknxmjf2jj3vzujitejowaeq3ihna5zxm",
 ]
@@ -15,7 +15,7 @@ exports[`provenance basic 2`] = `
       "/": "QmZTKF2kuFHy8isKWXpNeNa5zjeJwsHUbPbTNF1fS8HkpB",
     },
     "dmz": {
-      "/": "bafyreibrj5vwnz5s7fb5o72j33ognf4rknylxvjlijrs4zk7sensb55ldm",
+      "/": "bafyreict2skx24avqphob5yqd4m6h2e5px3s7bocthhh2s2mztlkpyuyt4",
     },
     "lineages": [],
     "states": "TODO",

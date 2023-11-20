@@ -17,7 +17,7 @@ describe('ai', () => {
 
     debug('result', result)
   })
-  test.only('nested async', async () => {
+  test('nested async', async () => {
     const effect = async () => {
       return await new Promise((r) => setTimeout(r, 100, 'result'))
     }
@@ -55,7 +55,6 @@ describe('ai', () => {
     const actions = await engine.actions('.HAL')
     Debug.enable('iplog *:ai')
     const response = await actions.prompt('meow', 'key')
-    console.log(response)
 
     // give a prompt to HAL, see it change directory.
     const prompt = 'change directory to the crm'
