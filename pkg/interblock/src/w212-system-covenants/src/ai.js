@@ -35,11 +35,13 @@ const reducer = async (request) => {
     case 'PROMPT': {
       const message = { role: 'user', content: prompt }
       const messages = [message]
-      const results = await useAsync(() => {
+      const results = await useAsync(async () => {
         if (injectedResponses.length) {
           return [injectedResponses.pop()]
         }
-        return all(stream(messages))
+        const results = await all(stream(messages))
+        debug('effect results', results)
+        return results
       }, key)
       const result = results.join('')
       debug('result', result)
@@ -82,7 +84,6 @@ const reducer = async (request) => {
  */
 
 async function* stream(messages) {
-  const results = []
   debug('messages', messages)
 
   const stream = await context.openAi.chat.completions.create({
@@ -92,7 +93,6 @@ async function* stream(messages) {
   })
   for await (const part of stream) {
     const result = part.choices[0]?.delta?.content || ''
-    results.push(result)
     yield result
   }
 }

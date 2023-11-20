@@ -32,6 +32,7 @@ describe('useAsync', () => {
     trail = await wrapReduceEffects(trail, reducer, whisper)
     expect(trail.isPending()).toBeFalsy()
   })
+
   it('throws on fn throw', async () => {
     const error = new Error('throws')
     const effect = async () => {

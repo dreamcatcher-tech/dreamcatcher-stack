@@ -278,7 +278,7 @@ export class Engine {
     await lock.release()
     debug('lock released', pool.getAddress())
 
-    this.#effects(pulse)
+    await this.#effects(pulse)
     await this.#internalTransmit(pulse)
   }
   async #fork(pool) {
@@ -595,19 +595,25 @@ export class Engine {
         const deepen = Deepening.createReplyPierce(target, promise, requestId)
         this.#pool(deepen)
         // TODO add some context in as an arg to give a hook back out
-        Promise.resolve()
-          .then(() => effect())
-          .then((result) => Reply.createResolve({ result }))
-          .catch(Reply.createError)
-          .then((reply) => {
-            if (!this.#started) {
-              return
-            }
-            const settle = Deepening.createReplyPierce(target, reply, requestId)
-            return this.#pool(settle)
-          })
+        this.#runEffect(target, effect, requestId)
       }
     }
+  }
+  async #runEffect(target, effect, requestId) {
+    await Promise.resolve()
+    let reply
+    try {
+      // TODO supply some context to the effect
+      const result = await effect()
+      reply = Reply.createResolve({ result })
+    } catch (error) {
+      reply = Reply.createError(error)
+    }
+    if (!this.#started) {
+      return
+    }
+    const settle = Deepening.createReplyPierce(target, reply, requestId)
+    return this.#pool(settle)
   }
 }
 const split = (path) => {

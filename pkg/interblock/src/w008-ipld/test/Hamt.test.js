@@ -67,7 +67,7 @@ describe('Hamt', () => {
       expect(diffs.size).toBe(2)
       expect(diffs).toMatchSnapshot()
       const resolver = (cid) => [diffs.get(cid.toString())]
-      hamt = await Hamt.uncrush(hamt.cid, resolver, TestClass)
+      hamt = await Hamt.uncrush(hamt.cid, resolver, { valueClass: TestClass })
       const result = await hamt.get('test')
       assert(result instanceof TestClass)
     })

@@ -144,13 +144,16 @@ export class IpldStruct extends IpldInterface {
     }
     return blockMap
   }
-  static async uncrush(initial, resolver, options) {
+  static async uncrush(initial, resolver, options = {}) {
     assert(typeof resolver === 'function', `resolver must be a function`)
     let block, resolveUncrush
     if (CID.asCID(initial)) {
       const [raw, cache] = await resolver(initial)
       assert(raw instanceof Block, `not Block ${CID.asCID(initial)}`)
       if (raw.uncrushed) {
+        if (!(raw.uncrushed instanceof this)) {
+          console.log(initial.toString())
+        }
         assert(raw.uncrushed instanceof this)
         return raw.uncrushed
       }
@@ -163,30 +166,35 @@ export class IpldStruct extends IpldInterface {
     }
 
     const instance = new this()
-    const uncrushKey = async (key) => {
+    const uncrushKey = async (key, options) => {
       const value = initial[key]
       const isChildCidLink = this.isCidLink(key)
+      const pathed = extendPath(options, key)
       if (CID.asCID(value)) {
         assert(isChildCidLink)
         const childClass = this.getClassFor(key)
-        instance[key] = await childClass.uncrush(value, resolver, options)
+        instance[key] = await childClass.uncrush(value, resolver, pathed)
       } else if (Array.isArray(value)) {
         const awaits = value.map((v) => {
           if (this.classMap[key]) {
-            return this.classMap[key].uncrush(v, resolver, options)
+            return this.classMap[key].uncrush(v, resolver, pathed)
           }
           return v
         })
         instance[key] = await Promise.all(awaits)
       } else if (this.classMap[key]) {
-        instance[key] = await this.classMap[key].uncrush(value, resolver)
+        instance[key] = await this.classMap[key].uncrush(
+          value,
+          resolver,
+          pathed
+        )
       } else {
         instance[key] = value
       }
     }
     const awaits = [] // parallelize bitswap network requests
     for (const key in initial) {
-      awaits.push(uncrushKey(key))
+      awaits.push(uncrushKey(key, options))
     }
     await Promise.all(awaits)
 
@@ -266,4 +274,9 @@ const merge = (dst, src) => {
   for (const [key, value] of src) {
     dst.set(key, value)
   }
+}
+const extendPath = (options, key) => {
+  const path = options.path || ''
+  const next = { ...options, path: `${path}/${key}` }
+  return next
 }

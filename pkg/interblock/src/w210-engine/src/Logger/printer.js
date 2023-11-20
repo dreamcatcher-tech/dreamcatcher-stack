@@ -130,12 +130,12 @@ const networkPrint = async (pulse, options) => {
       channelId === 0
         ? '.'
         : channelId === 1
-        ? '..'
-        : channelId === 2
-        ? '.@@io'
-        : alias0 !== undefined
-        ? alias0
-        : '(other)'
+          ? '..'
+          : channelId === 2
+            ? '.@@io'
+            : alias0 !== undefined
+              ? alias0
+              : '(other)'
     const channelHeader = {
       msg,
       height,

@@ -212,7 +212,7 @@ export class Hamt extends IpldInterface {
     next.#putStore = putStore
     return next
   }
-  static async uncrush(cid, resolver, valueClass, isMutable) {
+  static async uncrush(cid, resolver, { valueClass, isMutable } = {}) {
     assert(CID.asCID(cid), `rootCid must be a CID, got ${cid}`)
     assert(typeof resolver === 'function', `resolver must be a function`)
 

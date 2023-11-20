@@ -152,6 +152,7 @@ export class Channels extends IpldStruct {
     if (rxs !== this.rxs) {
       // ensure loopback, parent, and io come before others
       rxs.sort((a, b) => a - b)
+      // TODO do this check on incoming interpulses
     }
     if (!channel.tx.isEmpty()) {
       assert(!address.isRoot())

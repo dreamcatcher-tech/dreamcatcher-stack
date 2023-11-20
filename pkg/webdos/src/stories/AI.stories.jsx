@@ -28,7 +28,7 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('*Nav iplog *Syncer')
+  // Debug.enable('*Nav iplog *Syncer')
   return (
     <Engine {...args}>
       <Syncer path="/.HAL">

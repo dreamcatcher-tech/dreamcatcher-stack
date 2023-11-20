@@ -44,7 +44,7 @@ type Network struct {
     symlinks optional HashMapRoot           # local paths : any paths
     hardlinks optional HashMapRoot          # local paths : any paths
 
-    piercings optional Tx
+    piercings optional Rx
 }
  */
 export class Network extends IpldStruct {
@@ -60,6 +60,13 @@ export class Network extends IpldStruct {
 
     piercings: Rx,
   }
+  static cidLinks = [
+    'children',
+    'uplinks',
+    'downlinks',
+    'symlinks',
+    'hardlinks',
+  ]
 
   static async createRoot() {
     const parent = Channel.createRoot()
@@ -145,6 +152,7 @@ export class Network extends IpldStruct {
       system = system.expandPiercings(rx.system)
       reducer = reducer.expandPiercings(rx.reducer)
       piercings = piercings.setMap({ system, reducer })
+      assert(piercings instanceof Rx)
       next = next.setMap({ piercings })
     }
     const channels = await next.channels.updateChannel(io)

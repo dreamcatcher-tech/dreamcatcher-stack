@@ -167,23 +167,24 @@ export class Endurance {
         await this.#uncrushings.get(key)
         assert(block.uncrushed, `uncrushed not set for ${key}`)
       }
-      if (block && !block.uncrushed) {
-        let resolve
-        const promise = new Promise((r) => (resolve = r))
-        this.#uncrushings.set(key, promise)
-        // TODO this is an annoying interface - make opt in
-        resolveUncrush = (uncrushed) => {
-          assert(uncrushed)
-          assert(!uncrushed.isModified())
-          assert.strictEqual(uncrushed.ipldBlock, block)
-          block.uncrushed = uncrushed
-          this.#uncrushings.delete(key)
-          resolve(block)
+      if (block) {
+        if (block.uncrushed) {
+          cacheCount += block.bytes.length
+          debug('cache total saved', cacheCount)
+        } else {
+          let resolve
+          const promise = new Promise((r) => (resolve = r))
+          this.#uncrushings.set(key, promise)
+          // TODO this is an annoying interface - make opt in
+          resolveUncrush = (uncrushed) => {
+            assert(uncrushed)
+            assert(!uncrushed.isModified())
+            assert.strictEqual(uncrushed.ipldBlock, block)
+            block.uncrushed = uncrushed
+            this.#uncrushings.delete(key)
+            resolve(block)
+          }
         }
-      }
-      if (block && block.uncrushed) {
-        cacheCount += block.bytes.length
-        debug('cache total saved', cacheCount)
       }
 
       return [block, resolveUncrush]
