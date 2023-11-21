@@ -24,13 +24,12 @@ const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
 export default {
   title: 'AI',
   component: ThreeBox,
-  args: { dev: { '/crm': apps.crm.covenant } },
 }
 
 const Template = (args) => {
   // Debug.enable('*Nav iplog *Syncer')
   return (
-    <Engine {...args}>
+    <Engine dev={{ '/crm': apps.crm.covenant }} {...args}>
       <Syncer path="/.HAL">
         <ThreeBox />
       </Syncer>

@@ -71,7 +71,7 @@ ReactSyncer.propTypes = {
   /**
    * The Interpulse engine
    */
-  engine: PropTypes.instanceOf(Object),
+  engine: PropTypes.instanceOf(Interpulse),
   /**
    * What path is the root of this Complex ?
    */
