@@ -4,7 +4,7 @@
 import all from 'it-all'
 import OpenAI from 'openai'
 import Debug from 'debug'
-import { useAsync } from '../../w002-api'
+import { useAsync, useState } from '../../w002-api'
 import process from 'process'
 
 const debug = Debug('interblock:apps:ai')
@@ -24,6 +24,20 @@ const api = {
         description: `unique key for this request to allow side band access to streaming data`,
       },
     },
+  },
+  target: {
+    type: 'object',
+    title: 'TARGET',
+    description: 'Set the target for the AI to converse about',
+    additionalProperties: false,
+    required: ['path'],
+    properties: {
+      path: {
+        type: 'string',
+        description: `path to the chain to converse about`,
+      },
+    },
+    // this should really be set at creation time and not change ?
   },
 }
 const context = {}
@@ -62,6 +76,27 @@ const reducer = async (request) => {
       }
       return
     }
+    case 'TARGET': {
+      // set the target chain for the AI to converse about
+      const { path } = request.payload
+      debug('path', path)
+      // verify we can access the path
+
+      const [state, setState] = useState()
+      if (state.path !== path) {
+        await setState({ path })
+      }
+      return
+    }
+    case 'THREAD': {
+      // takes in a path to a thread object, and will use that thread to
+      // run the assistant that this object represents.
+      // check the functions in the assistant are loaded up correctly
+
+      // if we are root, we own our own thread, otherwise we receive
+      // the thread
+      return
+    }
     default: {
       throw new Error(`unknown request: ${request.type}`)
     }
@@ -69,17 +104,15 @@ const reducer = async (request) => {
 }
 
 /**
- * Threads api usage
- * Each new message that comes in, add to the thread and invoke the assistant
- * We should always have a link to the artifact that we shadow
- * The shadow contains the assistant
- * The caller contains the thread
+ * Think this covenant is an AINode ? Acts as a decorator around the complex.
+ * Get our current path in the complex.
+ * Contact the openai api to see if there is an assistant at this path.
+ * If not, make one, using the defaults.
+ * If there is, then use it.
  *
- * So you would add a message to the thread, ensure an assistant was created
- * for the target you wanted to chat with, and then start up a run instance
- * to get the cycle going.
+ * How to know what our current path is ?
  *
- * Each add to the thread checks that we still have a good model of remote
+ * Talk to self should both own the conversation and respond to it
  *
  */
 

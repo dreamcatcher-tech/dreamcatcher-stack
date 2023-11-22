@@ -228,6 +228,62 @@ export default {
         valueType: 'Any',
       },
     },
+    GPT4: {
+      struct: {
+        fields: {
+          system: {
+            type: 'String',
+          },
+          topP: {
+            type: 'Int',
+          },
+        },
+        representation: {
+          map: {},
+        },
+      },
+    },
+    Falcon40b: {
+      struct: {
+        fields: {},
+        representation: {
+          map: {},
+        },
+      },
+    },
+    Claude: {
+      struct: {
+        fields: {},
+        representation: {
+          map: {},
+        },
+      },
+    },
+    Llama: {
+      struct: {
+        fields: {},
+        representation: {
+          map: {},
+        },
+      },
+    },
+    AI: {
+      union: {
+        members: ['GPT4', 'Falcon40b', 'Claude', 'Llama'],
+        representation: {
+          envelope: {
+            discriminantKey: 'name',
+            contentKey: 'payload',
+            discriminantTable: {
+              GPT4: 'GPT4',
+              Falcon40b: 'Falcon40b',
+              Claude: 'Claude',
+              Llama: 'Llama',
+            },
+          },
+        },
+      },
+    },
     RequestId: {
       struct: {
         fields: {
@@ -458,6 +514,13 @@ export default {
             type: {
               link: {
                 expectedType: 'State',
+              },
+            },
+          },
+          embeddings: {
+            type: {
+              link: {
+                expectedType: 'Embeddings',
               },
             },
           },
@@ -707,7 +770,7 @@ export default {
             optional: true,
           },
           piercings: {
-            type: 'Tx',
+            type: 'Rx',
             optional: true,
           },
         },

@@ -448,6 +448,38 @@ size, so long as break points are well thought out. In the browser, this state
 management allows for background managed memory eviction too, so as not to
 overwhelm restricted devices.
 
+## AI
+
+Each node can be configured to be amplified by different kinds of AI. This
+config can be set in the covenant, but it can also be set independently. This
+can allow for a standard covenant like a datum to be used but let it have wildly
+different behaviors depending on where it is in the Complex.
+
+```sh
+type GPT4 struct {
+    system String
+    topP Int
+}
+type Falcon40b struct {
+
+}
+type Claude struct {
+
+}
+type Llama struct {
+
+}
+type AI union {
+  | GPT4 "GPT4"
+  | Falcon40b "Falcon40b"
+  | Claude "Claude"
+  | Llama "Llama"
+} representation envelope {
+  discriminantKey "name"
+  contentKey "payload"
+}
+```
+
 ## Pending
 
 Tracks each of the covenant Requests that caused the reducer to return a promise
@@ -586,10 +618,10 @@ application. These queries are intended to be run in ram, where the chains are
 loaded up in ram, and so fetching the embeddings is very quick. In some use
 cases they serve as hints, in others they
 
-The only requirement is that they be acceptably determinisitic - so an AI query
+The only requirement is that they be acceptably deterministic - so an AI query
 can be run without a complete set of embeddings being returned, and in some
 cases this is acceptable. In others, a full embeddings search may be required.
-Eitherway, the proposer declares the results of the query so the witnesses can
+Either way, the proposer declares the results of the query so the witnesses can
 reproduce the query.
 
 The approot has a function that can be called to fetch embeddings that is
