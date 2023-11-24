@@ -11,6 +11,11 @@ export const useState = (path = '.') => {
   assert(useState, `global hook detached`)
   return useState(path)
 }
+export const useAI = (path = '.') => {
+  const { useAI } = globalThis[hookSymbol]
+  assert(useAI, `global hook detached`)
+  return useAI(path)
+}
 export const useAsync = (...args) => {
   const { useAsync } = globalThis[hookSymbol]
   assert(useAsync, 'global hook detached')

@@ -85,4 +85,7 @@ export class Rx extends IpldStruct {
     const reducer = this.reducer.shiftRequests()
     return this.setMap({ reducer })
   }
+  get cid() {
+    throw new Error('Rx cannot be crushed since it is schema identical to Tx')
+  }
 }

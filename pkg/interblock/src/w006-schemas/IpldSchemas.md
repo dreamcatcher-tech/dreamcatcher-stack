@@ -457,7 +457,7 @@ different behaviors depending on where it is in the Complex.
 
 ```sh
 type GPT4 struct {
-    system String
+    instructions String
     topP Int
 }
 type Falcon40b struct {
@@ -476,7 +476,7 @@ type AI union {
   | Llama "Llama"
 } representation envelope {
   discriminantKey "name"
-  contentKey "payload"
+  contentKey "assistant"
 }
 ```
 

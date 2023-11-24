@@ -107,14 +107,6 @@ const pulseReducer = async (type, payload) => {
       const state = stateModel.toJS()
       return { state }
     }
-    case '@@COVENANT': {
-      // TODO remove when can query pulses from reducers
-      const path = pulse.getCovenantPath()
-      debug(`@@COVENANT`, path)
-      const covenant = await latest(path)
-      const state = covenant.getState().toJS()
-      return { state, path }
-    }
     case '@@SET_STATE': {
       const { state } = payload
       assert.strictEqual(typeof state, 'object')
@@ -122,6 +114,41 @@ const pulseReducer = async (type, payload) => {
       pulse = pulse.setState(nextState)
       setPulse(pulse)
       return
+    }
+    case '@@GET_AI': {
+      const { path } = payload
+      let remotePulse = pulse
+      if (path !== '.') {
+        // TODO make latest handle relative paths
+        if (posix.isAbsolute(path)) {
+          remotePulse = await latest(path)
+        } else {
+          remotePulse = await latest(path, pulse)
+        }
+      }
+      const ai = remotePulse.getAI()
+      // need a default of some kind
+      if (ai) {
+        return { ai }
+      }
+      return
+    }
+    case '@@SET_AI': {
+      const { name, instructions } = payload
+      assert.strictEqual(typeof name, 'string')
+      assert.strictEqual(typeof ai, 'object')
+      const nextAI = pulse.getAi().setMap({ name, instructions })
+      pulse = pulse.setAi(nextAI)
+      setPulse(pulse)
+      return
+    }
+    case '@@COVENANT': {
+      // TODO remove when can query pulses from reducers
+      const path = pulse.getCovenantPath()
+      debug(`@@COVENANT`, path)
+      const covenant = await latest(path)
+      const state = covenant.getState().toJS()
+      return { state, path }
     }
     case '@@USE_PULSE': {
       const { path } = payload

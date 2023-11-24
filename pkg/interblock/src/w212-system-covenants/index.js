@@ -8,6 +8,7 @@ import * as unity from './src/unity'
 import * as root from './src/unity'
 import * as covenant from './src/covenant'
 import * as ai from './src/ai.js'
+import * as threads from './src/threads.js'
 import { Address } from '../w008-ipld/index.mjs'
 
 export {
@@ -21,6 +22,7 @@ export {
   covenant,
   net,
   ai,
+  threads,
 }
 
 /**

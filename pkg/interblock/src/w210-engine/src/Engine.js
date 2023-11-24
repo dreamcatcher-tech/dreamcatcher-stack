@@ -20,6 +20,7 @@ import { Crypto, CryptoLock } from './Crypto'
 import { Endurance } from './Endurance'
 import { Deepening } from './Deepening'
 import Debug from 'debug'
+import merge from 'lodash.merge'
 const debug = Debug('interpulse:Engine')
 
 /**
@@ -63,7 +64,7 @@ export class Engine {
     if (overloads) {
       instance.overload(overloads)
     }
-    await instance.#init(CI) // CI means make deterministic chain addresses
+    await instance.#init(CI, overloads?.root) // CI => deterministic address
     return instance
   }
   constructor({ isolate, crypto, endurance, scale } = {}) {
@@ -76,11 +77,17 @@ export class Engine {
     assert.strictEqual(typeof overloads, 'object')
     this.#isolate.overload(overloads)
   }
-  async #init(CI) {
+  async #init(CI, rootOverload) {
     if (!this.#endurance.selfAddress) {
       const { publicKey } = this.#crypto
       const validators = Validators.create([publicKey])
-      const latest = await Pulse.createRoot({ CI, validators })
+      // TODO if shell was deployed, do a proper install
+      let params = { CI, validators }
+      if (rootOverload) {
+        assert(rootOverload.installer instanceof Object)
+        params = merge({}, rootOverload.installer, params)
+      }
+      const latest = await Pulse.createRoot(params)
       await this.#endurance.endure(latest)
     }
     assert(this.selfLatest instanceof Pulse)
@@ -604,8 +611,14 @@ export class Engine {
     let reply
     try {
       // TODO supply some context to the effect
+      // such as a pierce channel back in, some connection outside like
+      // progress bars, or a way to abort the effect
       const result = await effect()
-      reply = Reply.createResolve({ result })
+      const payload = {}
+      if (result !== undefined) {
+        payload.result = result
+      }
+      reply = Reply.createResolve(payload)
     } catch (error) {
       reply = Reply.createError(error)
     }

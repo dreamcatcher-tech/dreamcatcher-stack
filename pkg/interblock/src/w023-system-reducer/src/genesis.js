@@ -7,7 +7,8 @@ const debug = Debug('interblock:dmz:genesis')
  * The first request that any new child chain sees.
  * This reponder initializes the reducer with the '@@INIT' action.
  * If the reducer does not throw, the child is born.
- * '@@INIT' may return modified installer parameters.
+ * '@@INIT' may return modified installer parameters,
+ * which allows covenant to modify its installation options
  *
  * The payload appears untouched here, but it was used
  * by the system to generate the genesis block when it saw
@@ -22,8 +23,8 @@ const genesisReducer = async (payload) => {
   const initResult = await interchain('@@INIT', payload)
   debug(`initResult`, initResult)
   let { installer = {} } = initResult
-  // allows covenant to modify its installation options
   installer = { ...payload.installer, ...installer }
+  debug(`modified installer`, installer)
   const installResult = await interchain('@@INSTALL', { installer })
   debug('installResult', installResult)
 }

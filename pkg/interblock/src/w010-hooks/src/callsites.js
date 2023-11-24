@@ -159,21 +159,18 @@ const invoke = (request, to) => {
     throw reply.getRejectionError()
   }
 }
-
-const useAsync = async (fn, key) => {
+const useAsync = async (fn, key = '') => {
   assert.strictEqual(typeof fn, 'function', `must supply a function`)
   assert.strictEqual(typeof key, 'string', `key must be a string`)
-  assert(key, `key cannot be nullish: ${key}`)
+  assert(key, `key cannot be nullish`)
+
+  // TODO find how to tolerate no key being sent in - must be deterministic
+  // use the requestId as one key, but also attach a user defined key
   const request = Request.create('@@ASYNC', { key })
   // TODO if we are not to execute these effects, then do not whisper them
-  const { whisper, settles } = getInvocation()
+  const { whisper } = getInvocation()
   if (!(whisper instanceof Map)) {
     throw new Error(`Chain is not side effect capable`)
-  }
-  if (settles.length) {
-    assert(!whisper.has(key), `Whisper ${key} not popped`)
-  } else {
-    assert(!whisper.has(key), `Whisper already exists for ${key}`)
   }
   whisper.set(key, fn)
   const { result } = await invoke(request, '.@@io')
@@ -198,6 +195,24 @@ const useState = async (path) => {
   return [state, setState]
 }
 
+const useAI = async (path) => {
+  assert.strictEqual(typeof path, 'string', `path must be a string`)
+  assert(path, `path cannot be null`)
+  const getAI = Request.createGetAI(path)
+  const { ai } = await interchain(getAI)
+  const setAI = (nextAi) => {
+    if (typeof nextAi !== 'object') {
+      throw new Error(`AI must be an object, but was: ${typeof nextAi}`)
+    }
+    if (equals(nextAi, ai)) {
+      return
+    }
+    const setAIRequest = Request.createSetAI(nextAi)
+    return interchain(setAIRequest, path)
+  }
+  return [ai, setAI]
+}
+
 if (globalThis[Symbol.for('interblock:api:hook')]) {
   console.error('interblock:api:hook already defined')
   throw new Error('interblock:api:hook already defined')
@@ -206,6 +221,7 @@ globalThis[Symbol.for('interblock:api:hook')] = {
   interchain,
   useState,
   useAsync,
+  useAI,
 }
 
 export const usePulse = () => {

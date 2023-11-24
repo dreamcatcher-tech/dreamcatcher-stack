@@ -55,7 +55,11 @@ export class Dmz extends IpldStruct {
     const defaultParams = getDefaultParams(CI)
     for (const key in params) {
       if (key === 'covenant') {
-        assert.strictEqual(typeof key, 'string')
+        assert.strictEqual(typeof params[key], 'string')
+        continue
+      }
+      if (key === 'ai') {
+        assert.strictEqual(typeof params[key], 'object')
         continue
       }
       assert(this.classMap[key], `key ${key} not mapped to CID class`)

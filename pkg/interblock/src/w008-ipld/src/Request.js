@@ -50,6 +50,8 @@ export class Request extends IpldStruct {
     '@@INSTALL',
     '@@GET_STATE',
     '@@SET_STATE',
+    '@@GET_AI',
+    '@@SET_AI',
     '@@USE_PULSE',
     '@@SELF_ID',
     '@@RESOLVE_DOWNLINK',
@@ -78,6 +80,16 @@ export class Request extends IpldStruct {
   static createSetState(state, binary) {
     assert.strictEqual(typeof state, 'object')
     return this.create('@@SET_STATE', { state }, binary)
+  }
+  static createGetAI(path) {
+    // TODO maybe we could make a generic slice getter for any key in pulse ?
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    return this.create('@@GET_AI', { path })
+  }
+  static createSetAI(ai, binary) {
+    assert.strictEqual(typeof ai, 'object')
+    return this.create('@@SET_AI', { ai }, binary)
   }
   static createSpawn(alias, installer = {}) {
     const payload = { alias, installer }
