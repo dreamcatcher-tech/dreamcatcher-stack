@@ -113,7 +113,7 @@ const pulseReducer = async (type, payload) => {
       const nextState = pulse.getState().setMap(state)
       pulse = pulse.setState(nextState)
       setPulse(pulse)
-      return
+      return nextState.toJS()
     }
     case '@@GET_AI': {
       const { path } = payload

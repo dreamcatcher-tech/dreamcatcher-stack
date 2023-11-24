@@ -181,16 +181,18 @@ const useState = async (path) => {
   assert.strictEqual(typeof path, 'string', `path must be a string`)
   assert(path, `path cannot be null`)
   const getState = Request.createGetState(path)
-  const { state } = await interchain(getState)
-  const setState = (nextState) => {
-    if (typeof nextState !== 'object') {
-      throw new Error(`state must be an object, but was: ${typeof nextState}`)
+  let { state } = await interchain(getState)
+  const setState = (changes) => {
+    if (typeof changes !== 'object') {
+      throw new Error(`state must be an object, but was: ${typeof changes}`)
     }
+    const nextState = { ...state, ...changes }
     if (equals(nextState, state)) {
       return
     }
     const setStateRequest = Request.createSetState(nextState)
-    return interchain(setStateRequest, path)
+    state = interchain(setStateRequest, path)
+    return state
   }
   return [state, setState]
 }

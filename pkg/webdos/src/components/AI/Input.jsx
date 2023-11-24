@@ -37,9 +37,7 @@ const Mic = ({ onEvent }) => (
 )
 Mic.propTypes = { onEvent: PropTypes.func.isRequired }
 
-let key = 0
-
-const Input = ({ crisp }) => {
+const Input = ({ onSend }) => {
   const [value, setValue] = useState('')
   const [disabled, setDisabled] = useState(false)
   const {
@@ -56,13 +54,8 @@ const Input = ({ crisp }) => {
   const send = useCallback(() => {
     setValue('')
     setDisabled(true)
-    key++
-    crisp.ownActions
-      .prompt(value, key + '')
-      .then(console.log)
-      .catch(console.error)
-      .finally(() => setDisabled(false))
-  }, [crisp, value])
+    onSend(value).finally(() => setDisabled(false))
+  }, [onSend, value])
 
   useEffect(() => {
     if (!recordingBlob) {
@@ -136,6 +129,6 @@ const Input = ({ crisp }) => {
     />
   )
 }
-Input.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
+Input.propTypes = { onSend: PropTypes.func.isRequired }
 
 export default Input

@@ -47,11 +47,13 @@ const reducer = async (request) => {
       let api = shell.api
       if (path !== '(default)') {
         const [ai] = await useAI(path)
-        assert(ai.name === 'GPT4', `ai name is ${ai.name}`)
-        name = ai.name
-        assistant = ai.assistant
-        // const covenant = await interchain('@@COVENANT', {}, path)
-        // api = covenant.api
+        if (ai) {
+          assert(ai.name === 'GPT4', `ai name is ${ai.name}`)
+          name = ai.name
+          assistant = ai.assistant
+          // const covenant = await interchain('@@COVENANT', {}, path)
+          // api = covenant.api
+        }
       }
       let tools
       if (!assistantId) {
@@ -62,13 +64,14 @@ const reducer = async (request) => {
           // TODO loop to get all assistants
           return list.data
         }, 'key-assistant-list')
-        const existing = assistants.find((a) => a.name === path)
+        let existing = assistants.find((a) => a.name === path)
         debug('assistant', existing.id, existing.name)
         if (existing) {
           assistantId = existing.id
+          await setState({ assistantId })
           tools = existing.tools
           const gpt4Api = transformToGpt4Api(api)
-          const updated = await useAsync(
+          existing = await useAsync(
             async () =>
               context.openAI.beta.assistants.update(assistantId, {
                 tools: gpt4Api,
@@ -89,13 +92,13 @@ const reducer = async (request) => {
             })
             debug('create assistant', result.id, result.name)
             return result
-          })
+          }, 'key-assistant-create')
           assistantId = result.id
           await setState({ assistantId })
         }
       } else {
         // check that the assistant is still valid
-        throw new Error('TODO')
+        // throw new Error('TODO')
       }
 
       if (!threadId) {
