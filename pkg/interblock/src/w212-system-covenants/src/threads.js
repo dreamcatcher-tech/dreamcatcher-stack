@@ -136,9 +136,7 @@ const reducer = async (request) => {
 
       let isRunning = true
       while (isRunning) {
-        // poll the run
         let run = await useAsync(async () => {
-          Debug.enable('iplog *:threads')
           const run = await context.openAI.beta.threads.runs.retrieve(
             threadId,
             runId

@@ -6,15 +6,12 @@ const debug = Debug('test')
 dotenv.config({ path: '../../.env' })
 
 describe('threads', () => {
-  it.only('runs a shell command', async () => {
+  it('runs a shell command', async () => {
     // start a thread, which targets /
-    Debug.enable('iplog')
     const engine = await Interpulse.createCI()
-    await engine.add('.HAL', { covenant: 'threads', state: { path: '/' } })
-    Debug.enable('iplog')
+    await engine.bootHal()
 
     const actions = await engine.actions('.HAL')
-    Debug.enable('iplog')
     const response = await actions.user('ping me HAL', 'key-1')
     console.log(response)
 
