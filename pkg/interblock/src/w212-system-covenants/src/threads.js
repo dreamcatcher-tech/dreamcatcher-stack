@@ -13,6 +13,7 @@ import process from 'process'
 import assert from 'assert-fast'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:threads')
+const endings = ['cancelled', 'failed', 'completed', 'expired']
 
 const api = {
   user: {
@@ -130,10 +131,12 @@ const reducer = async (request) => {
             threadId,
             runId
           )
+          if (!endings.includes(result.status)) {
+            await new Promise((r) => setTimeout(r, 300))
+          }
           return result
         }, 'key-run-poll')
         debug('poll runId', run.id)
-        const endings = ['cancelled', 'failed', 'completed', 'expired']
         if (endings.includes(run.status)) {
           isRunning = false
         }
@@ -149,7 +152,7 @@ const reducer = async (request) => {
         return result.data[0]
       }, 'key-message-list')
 
-      // TODO throw if there was an error
+      debug('message', message)
 
       return { text: message.content[0].text.value }
     }
