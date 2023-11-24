@@ -22,7 +22,7 @@ describe('reload', () => {
     await reboot.cd('/child1')
 
     await reboot.stop()
-    expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
+    expect(latest.getState().toJS()).toEqual({ root: '/', wd: '/child1' })
   })
   test('interpulse disk reload', async () => {
     const repo = `tmp/reload-${Math.random()}`
@@ -43,7 +43,7 @@ describe('reload', () => {
       debug('latest fetched')
       await reboot.stop()
       debug('reboot stopped')
-      expect(latest.getState().toJS()).toEqual({ wd: '/child1' })
+      expect(latest.getState().toJS()).toEqual({ root: '/', wd: '/child1' })
     } finally {
       debug(`deleting ${repo}`)
       removeSync(repo)

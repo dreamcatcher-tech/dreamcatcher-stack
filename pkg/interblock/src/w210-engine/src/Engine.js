@@ -83,7 +83,7 @@ export class Engine {
       const validators = Validators.create([publicKey])
       // TODO if shell was deployed, do a proper install
       let params = { CI, validators }
-      if (rootOverload) {
+      if (rootOverload && rootOverload.installer) {
         assert(rootOverload.installer instanceof Object)
         params = merge({}, rootOverload.installer, params)
       }
