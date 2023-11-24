@@ -6,7 +6,7 @@ const debug = Debug('test')
 dotenv.config({ path: '../../.env' })
 
 describe('threads', () => {
-  it('runs a shell command', async () => {
+  it.only('runs a shell command', async () => {
     // start a thread, which targets /
     Debug.enable('iplog')
     const engine = await Interpulse.createCI()
@@ -15,7 +15,7 @@ describe('threads', () => {
 
     const actions = await engine.actions('.HAL')
     Debug.enable('iplog')
-    const response = await actions.user('hello HAL', 'key-1')
+    const response = await actions.user('ping me HAL', 'key-1')
     console.log(response)
 
     // give a prompt to HAL, see it change directory.
@@ -35,5 +35,5 @@ describe('threads', () => {
     // want it to run several levels of ls to dig around, or look up everything from a table as a retrieval.
 
     // if you need to discover more functions, use ls at path to get more
-  })
+  }, 30000)
 })

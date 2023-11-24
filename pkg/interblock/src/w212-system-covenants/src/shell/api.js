@@ -172,6 +172,9 @@ export const api = {
       Validators must accept the role before the handover is complete.
       Can be used to force a change if a chain has stalled.
       `,
+    properties: {},
+    additionalProperties: false,
+
     // TODO make this a subset of all ACL type of operations
   },
   insert: {

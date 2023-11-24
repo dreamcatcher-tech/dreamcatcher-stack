@@ -212,6 +212,25 @@ const useAI = async (path) => {
   }
   return [ai, setAI]
 }
+// TODO switch to a general form for modifying all slices of a pulse
+const useCovenant = async (path) => {
+  // WARNING THIS IS NOT FINISHED
+  assert.strictEqual(typeof path, 'string', `path must be a string`)
+  assert(path, `path cannot be null`)
+  const getAI = Request.createGetAI(path)
+  const { ai } = await interchain(getAI)
+  const setAI = (nextAi) => {
+    if (typeof nextAi !== 'object') {
+      throw new Error(`AI must be an object, but was: ${typeof nextAi}`)
+    }
+    if (equals(nextAi, ai)) {
+      return
+    }
+    const setAIRequest = Request.createSetAI(nextAi)
+    return interchain(setAIRequest, path)
+  }
+  return [ai, setAI]
+}
 
 if (globalThis[Symbol.for('interblock:api:hook')]) {
   console.error('interblock:api:hook already defined')

@@ -7,8 +7,10 @@
  * so we avoid catastrophe and give the AI time to consider.
  */
 import OpenAI from 'openai'
+import { serializeError } from 'serialize-error'
 import posix from 'path-browserify'
-import { useAsync, useAI, useState } from '../../w002-api'
+import { interchain, useAsync, useAI, useState } from '../../w002-api'
+import { shell } from '..'
 import process from 'process'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -42,21 +44,21 @@ const reducer = async (request) => {
       const { key } = request.payload
       let [{ threadId, assistantId, path }, setState] = await useState()
       let { name, assistant } = defaultAI
-
+      let api = shell.api
       if (path !== '(default)') {
         const [ai] = await useAI(path)
         assert(ai.name === 'GPT4', `ai name is ${ai.name}`)
         name = ai.name
         assistant = ai.assistant
+        // const covenant = await interchain('@@COVENANT', {}, path)
+        // api = covenant.api
       }
-
+      let tools
       if (!assistantId) {
         // see if there is an assistant with this name
         const assistants = await useAsync(async () => {
-          const list = await context.openAI.beta.assistants.list({
-            order: 'desc',
-            limit: '100',
-          })
+          const params = { order: 'desc', limit: '100' }
+          const list = await context.openAI.beta.assistants.list(params)
           // TODO loop to get all assistants
           return list.data
         }, 'key-assistant-list')
@@ -64,13 +66,20 @@ const reducer = async (request) => {
         debug('assistant', existing.id, existing.name)
         if (existing) {
           assistantId = existing.id
-          // compare with what we expect the assistant to be
-          // warn if different
-          // update the API function calls
-          // add a special synthetic call to query another bot
+          tools = existing.tools
+          const gpt4Api = transformToGpt4Api(api)
+          const updated = await useAsync(
+            async () =>
+              context.openAI.beta.assistants.update(assistantId, {
+                tools: gpt4Api,
+              }),
+            'key-update-tools'
+          )
+
+          // TODO add a special synthetic call to query another bot
         } else {
           // create the assistant
-          const assistantId = await useAsync(async () => {
+          const result = await useAsync(async () => {
             const { tools, model, instructions } = assistant
             const result = await context.openAI.beta.assistants.create({
               name: path,
@@ -79,13 +88,16 @@ const reducer = async (request) => {
               model,
             })
             debug('create assistant', result.id, result.name)
-            return result.id
+            return result
           })
+          assistantId = result.id
           await setState({ assistantId })
         }
       } else {
         // check that the assistant is still valid
+        throw new Error('TODO')
       }
+
       if (!threadId) {
         // create the thread and set the ID
         threadId = await useAsync(async () => {
@@ -125,17 +137,54 @@ const reducer = async (request) => {
       let isRunning = true
       while (isRunning) {
         // poll the run
-        const run = await useAsync(async () => {
+        let run = await useAsync(async () => {
           Debug.enable('iplog *:threads')
-          const result = await context.openAI.beta.threads.runs.retrieve(
+          const run = await context.openAI.beta.threads.runs.retrieve(
             threadId,
             runId
           )
-          if (!endings.includes(result.status)) {
+          if (run.required_action) {
+            return run
+          }
+          if (!endings.includes(run.status)) {
             await new Promise((r) => setTimeout(r, 300))
           }
-          return result
+          return run
         }, 'key-run-poll')
+
+        if (run.required_action) {
+          debug('required action')
+          const calls = run.required_action.submit_tool_outputs.tool_calls
+          const tool_outputs = await Promise.all(
+            calls.map(async (call) => {
+              const { id: tool_call_id, type, function: fn } = call
+              assert.strictEqual(type, 'function')
+              const { name, arguments: args } = fn
+              let output
+              try {
+                // TODO standardize names
+                const type = api[name].title
+                const payload = JSON.parse(args)
+                const result = await interchain(type, payload, '..')
+                output = JSON.stringify(result, null, '  ')
+              } catch (error) {
+                output =
+                  'ERROR!!\n' +
+                  JSON.stringify(serializeError(error), null, '  ')
+              }
+              return { tool_call_id, output }
+            })
+          )
+          run = await useAsync(
+            () =>
+              context.openAI.beta.threads.runs.submitToolOutputs(
+                threadId,
+                runId,
+                { tool_outputs }
+              ),
+            'key-submit-tool-outputs'
+          )
+        }
         debug('poll runId', run.id)
         if (endings.includes(run.status)) {
           isRunning = false
@@ -151,8 +200,6 @@ const reducer = async (request) => {
         assert(result.data.length === 1, `message count: ${result.data.length}`)
         return result.data[0]
       }, 'key-message-list')
-
-      debug('message', message)
 
       return { text: message.content[0].text.value }
     }
@@ -197,4 +244,12 @@ export { name, api, reducer, installer }
 const injectedResponses = []
 export function injectResponses(...responses) {
   injectedResponses.push(...responses)
+}
+const transformToGpt4Api = (api) => {
+  assert(api instanceof Object)
+  return Object.keys(api).map((name) => {
+    const { title, description: _description, ...parameters } = api[name]
+    const description = title + '\n' + _description
+    return { type: 'function', function: { name, description, parameters } }
+  })
 }
