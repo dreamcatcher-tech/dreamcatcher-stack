@@ -12,6 +12,8 @@ import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Avatar from '@mui/material/Avatar'
 import DaveIcon from '@mui/icons-material/SentimentDissatisfied'
 import Paper from '@mui/material/Paper'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const debug = Debug('AI:ThreeBox')
 debug(`loaded`)
@@ -21,19 +23,32 @@ const HAL = ({ message }) => (
     <ListItemAvatar>
       <Avatar src="https://dreamcatcher.land/img/dreamcatcher.svg"></Avatar>
     </ListItemAvatar>
-    <ListItemText primary="HAL" secondary={message} />
+    <ListItemText
+      primary="HAL"
+      secondaryTypographyProps={{ component: 'div', color: 'text.primary' }}
+      secondary={<Markdown remarkPlugins={[remarkGfm]}>{message}</Markdown>}
+    />
   </ListItem>
 )
 HAL.propTypes = { message: PropTypes.string }
 const Dave = ({ message }) => (
-  <ListItem alignItems="flex-start">
-    <ListItemAvatar>
-      <Avatar>
-        <DaveIcon />
-      </Avatar>
-    </ListItemAvatar>
-    <ListItemText primary="Dave" secondary={message} />
-  </ListItem>
+  <>
+    <ListItem alignItems="flex-start">
+      <ListItemAvatar>
+        <Avatar>
+          <DaveIcon />
+        </Avatar>
+      </ListItemAvatar>
+      <ListItemText
+        primary="Dave"
+        secondaryTypographyProps={{
+          component: 'div',
+          color: 'text.primary',
+        }}
+        secondary={<Markdown remarkPlugins={[remarkGfm]}>{message}</Markdown>}
+      />
+    </ListItem>
+  </>
 )
 Dave.propTypes = { message: PropTypes.string }
 

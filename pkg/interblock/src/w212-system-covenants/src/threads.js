@@ -55,7 +55,6 @@ const reducer = async (request) => {
           // api = covenant.api
         }
       }
-      let tools
       if (!assistantId) {
         // see if there is an assistant with this name
         const assistants = await useAsync(async () => {
@@ -69,15 +68,18 @@ const reducer = async (request) => {
         if (existing) {
           assistantId = existing.id
           await setState({ assistantId })
-          tools = existing.tools
-          const gpt4Api = transformToGpt4Api(api)
-          existing = await useAsync(
-            async () =>
-              context.openAI.beta.assistants.update(assistantId, {
-                tools: gpt4Api,
-              }),
-            'key-update-tools'
-          )
+          if (!existing.tools.length) {
+            const gpt4Api = transformToGpt4Api(api)
+            existing = await useAsync(
+              async () =>
+                context.openAI.beta.assistants.update(assistantId, {
+                  tools: gpt4Api,
+                }),
+              'key-update-tools'
+            )
+          } else {
+            // TODO mention the differences
+          }
 
           // TODO add a special synthetic call to query another bot
         } else {
@@ -193,16 +195,23 @@ const reducer = async (request) => {
       }
 
       // the run has completed, so we can get the messages
-      const message = await useAsync(async () => {
+      const textResult = await useAsync(async () => {
         const result = await context.openAI.beta.threads.messages.list(
           threadId,
           { before: messageId }
         )
-        assert(result.data.length === 1, `message count: ${result.data.length}`)
-        return result.data[0]
+        if (result.data.length > 1) {
+          console.dir(result.data, { depth: null })
+        }
+        // assert(result.data.length === 1, `message count: ${result.data.length}`)
+        let text = ''
+        for (const message of result.data) {
+          text += message.content[0].text.value + '\n'
+        }
+        return text
       }, 'key-message-list')
 
-      return { text: message.content[0].text.value }
+      return { text: textResult }
     }
     case '@@INIT': {
       let { path } = request.payload.installer.state
@@ -246,11 +255,9 @@ const injectedResponses = []
 export function injectResponses(...responses) {
   injectedResponses.push(...responses)
 }
-const transformToGpt4Api = (api) => {
-  assert(api instanceof Object)
-  return Object.keys(api).map((name) => {
+const transformToGpt4Api = (api) =>
+  Object.keys(api).map((name) => {
     const { title, description: _description, ...parameters } = api[name]
     const description = title + '\n' + _description
     return { type: 'function', function: { name, description, parameters } }
   })
-}

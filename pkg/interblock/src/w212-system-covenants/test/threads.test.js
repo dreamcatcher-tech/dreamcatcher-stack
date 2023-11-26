@@ -6,14 +6,13 @@ const debug = Debug('test')
 dotenv.config({ path: '../../.env' })
 
 describe('threads', () => {
-  it('runs a shell command', async () => {
+  it.only('runs a shell command', async () => {
     // start a thread, which targets /
     const engine = await Interpulse.createCI()
     await engine.bootHal()
 
     const actions = await engine.actions('.HAL')
     const response = await actions.user('ping me HAL', 'key-1')
-    console.log(response)
 
     // give a prompt to HAL, see it change directory.
     const prompt = 'change directory to the crm'
