@@ -5,7 +5,7 @@ import assert from 'assert-fast'
 
 describe('api', () => {
   describe('useState', () => {
-    test('basic', async () => {
+    test.only('basic', async () => {
       const reducer = async () => {
         let [state, setState] = await useState()
         expect(state).toEqual({ init: true })
@@ -25,7 +25,14 @@ describe('api', () => {
       trail = trail.settleTx(rxReply)
       trail = await wrapReduce(trail, reducer)
       assert(trail.isPending())
-      let [set] = trail.txs
+
+      // the second get that occurs whenever set is called
+      let [reGet] = trail.txs
+      assert.strictEqual(reGet.request.type, '@@GET_STATE')
+      requestId = RequestId.createCI()
+      reGet = reGet.setId(requestId)
+      trail = trail.updateTxs([reGet])
+
       assert.strictEqual(set.request.type, '@@SET_STATE')
       requestId = requestId.setMap({ requestIndex: 1 })
       set = set.setId(requestId)

@@ -11,6 +11,7 @@ import { serializeError } from 'serialize-error'
 import posix from 'path-browserify'
 import { interchain, useAsync, useAI, useState } from '../../w002-api'
 import { shell } from '..'
+import merge from 'lodash.merge'
 import process from 'process'
 import assert from 'assert-fast'
 import Debug from 'debug'
@@ -37,12 +38,31 @@ const defaultAI = {
 
 // Each state change should represent a single piece of the conversation
 
+const STATUS = {
+  USER: {
+    BOOTING: 'BOOTING',
+    CHECKING: 'CHECKING',
+    CREATING: 'CREATING',
+    THREADING: 'THREADING',
+    MESSAGING: 'MESSAGING',
+    DONE: 'DONE',
+  },
+  HAL: {
+    BOOTING: 'BOOTING',
+    THINKING: 'THINKING',
+    EXECUTING: 'EXECUTING',
+    DONE: 'DONE',
+  },
+}
+
 const reducer = async (request) => {
   debug('request', request)
   switch (request.type) {
     case 'USER': {
       const { key } = request.payload
       let [{ threadId, assistantId, path }, setState] = await useState()
+      await addUserMessage(request.payload.text)
+
       let { name, assistant } = defaultAI
       let api = shell.api
       if (path !== '(default)') {
@@ -84,6 +104,7 @@ const reducer = async (request) => {
           // TODO add a special synthetic call to query another bot
         } else {
           // create the assistant
+          await updateMessageStatus(STATUS.USER.CREATING)
           const result = await useAsync(async () => {
             const { tools, model, instructions } = assistant
             const result = await context.openAI.beta.assistants.create({
@@ -102,7 +123,7 @@ const reducer = async (request) => {
         // check that the assistant is still valid
         // throw new Error('TODO')
       }
-
+      await updateMessageStatus(STATUS.USER.THREADING)
       if (!threadId) {
         // create the thread and set the ID
         threadId = await useAsync(async () => {
@@ -118,7 +139,7 @@ const reducer = async (request) => {
         // check the thread data matches what we have on chain
       }
 
-      // add the message
+      await updateMessageStatus(STATUS.USER.MESSAGING)
       const { text } = request.payload
       const messageId = await useAsync(async () => {
         const result = await context.openAI.beta.threads.messages.create(
@@ -129,40 +150,39 @@ const reducer = async (request) => {
         return result.id
       }, 'key-message-create')
       debug('messageId', messageId)
+      await updateMessageStatus(STATUS.USER.DONE)
 
       // TODO block concurrent runs occuring
+      await addHalMessage()
       const runId = await useAsync(async () => {
         const result = await context.openAI.beta.threads.runs.create(threadId, {
           assistant_id: assistantId,
         })
         return result.id
       }, 'key-run-create')
+      await updateMessageStatus(STATUS.HAL.THINKING)
 
       debug('runId', runId)
 
       // run step status: in_progress, cancelled, failed, completed, expired
       let steps = []
       let isRunComplete = false
-      let lastLoop = false
       do {
-        Debug.enable('interblock:apps:threads')
-        if (lastLoop) {
-          isRunComplete = true
-        } else {
-          lastLoop = await getRunStatus(threadId, runId)
-        }
-
         const lastStepId = getLastStepId(steps)
-        const nextSteps = await pollSteps(lastStepId, threadId, runId, lastLoop)
-        steps = splat(steps, nextSteps)
+        const { done, next } = await pollSteps(lastStepId, threadId, runId)
+        isRunComplete = done
+        steps = splat(steps, next)
 
-        // update any messasges
+        await updateSteps(steps)
 
         const last = steps[steps.length - 1]
         if (last.status === 'in_progress' && last.type === 'tool_calls') {
+          await updateMessageStatus(STATUS.HAL.EXECUTING)
           await tools(last.step_details, threadId, runId)
+          await updateMessageStatus(STATUS.HAL.THINKING)
         }
       } while (!isRunComplete)
+      await updateMessageStatus(STATUS.HAL.DONE)
       return
     }
     case '@@INIT': {
@@ -188,7 +208,7 @@ const reducer = async (request) => {
           dangerouslyAllowBrowser: true,
         })
       }
-      return { installer: { state: { path } } }
+      return { installer: { state: { path, messages: [] } } }
     }
     default: {
       throw new Error(`unknown request: ${request.type}`)
@@ -270,31 +290,118 @@ const getLastStepId = (steps) => {
   }
   return lastStepId
 }
-const pollSteps = async (lastStepId, threadId, runId, once) =>
+const pollSteps = async (lastStepId, threadId, runId) =>
   useAsync(async () => {
-    let result
-    while (!result?.data?.length) {
-      result = await context.openAI.beta.threads.runs.steps.list(
+    const result = {}
+    while (!result.next?.length) {
+      const run = await context.openAI.beta.threads.runs.retrieve(
+        threadId,
+        runId
+      )
+      result.done = endings.includes(run.status)
+      const steps = await context.openAI.beta.threads.runs.steps.list(
         threadId,
         runId,
         { limit: 100, order: 'asc', after: lastStepId }
       )
-      if (!result.data.length) {
-        if (once) {
-          return []
+      result.next = steps.data
+
+      // if message creation, and completed, then retrive the message by id
+      result.next = result.next.map(async (step) => {
+        const { type, step_details, status } = step
+        if (type === 'message_creation' && status === 'completed') {
+          assert(!step_details.message_creation.text, 'text is not empty')
+          const { message_id } = step_details.message_creation
+          const message = await context.openAI.beta.threads.messages.retrieve(
+            threadId,
+            message_id
+          )
+          const { content } = message
+          assert(Array.isArray(content), 'content is not an array')
+          assert(content.length === 1, `content length is ${content.length}`)
+          const [
+            {
+              text: { value: text },
+            },
+          ] = content
+          return merge({}, step, {
+            step_details: { message_creation: { text } },
+          })
         }
+        return step
+      })
+      result.next = await Promise.all(result.next)
+
+      if (result.done) {
+        return result
+      }
+      if (!result.next.length) {
         await new Promise((r) => setTimeout(r, 300))
       }
     }
-    debug('steps', result.data)
-    return result.data
+    return result
   }, 'key-run-step-list')
 
-const getRunStatus = (threadId, runId) =>
-  useAsync(async () => {
-    const result = await context.openAI.beta.threads.runs.retrieve(
-      threadId,
-      runId
-    )
-    return endings.includes(result.status)
-  }, 'key-run-status')
+const updateSteps = async (rawSteps) => {
+  // TODO tools could use the actual data from the chain to populate results
+  assert(Array.isArray(rawSteps))
+  const [state, setState] = await useState()
+  const { messages = [] } = state
+
+  const next = [...messages]
+  const last = next.pop()
+  assert(last.type === 'HAL', `last message is ${last.type}`)
+
+  const steps = rawSteps.map((step, index) => {
+    const { id, type, step_details } = step
+    if (last.steps[index]) {
+      assert.strictEqual(last.steps[index].id, id, `step id is ${id}`)
+    }
+    const { message_creation, tool_calls } = step_details
+    // TODO enrich the status
+    const status =
+      step.status === 'completed' ? STATUS.HAL.DONE : STATUS.HAL.THINKING
+    if (message_creation) {
+      const { text = '' } = message_creation // updated by us
+      return { id, type: 'message', status, text }
+    } else {
+      const tools = tool_calls.map((call) => {
+        const { id: callId, function: fn } = call
+        const { name, arguments: args } = fn
+        return { callId, cmd: name, args }
+      })
+      return { id, type: 'tools', status, tools }
+    }
+  })
+
+  next.push({ ...last, steps })
+  await setState({ messages: next })
+}
+const addUserMessage = async (text) => {
+  const [state, setState] = await useState()
+  const user = {
+    type: 'USER',
+    text,
+    status: STATUS.USER.BOOTING,
+  }
+  await setState({ messages: [...state.messages, user] })
+}
+const addHalMessage = async () => {
+  const [state, setState] = await useState()
+  const HAL = {
+    type: 'HAL',
+    steps: [],
+    status: STATUS.HAL.BOOTING,
+  }
+  await setState({ messages: [...state.messages, HAL] })
+}
+const updateMessageStatus = async (status) => {
+  const [state, setState] = await useState()
+  const { messages } = state
+  assert(Array.isArray(messages))
+  const next = [...messages]
+  const last = next.pop()
+  assert(last.type === 'USER' || last.type === 'HAL')
+  next.push({ ...last, status })
+  await setState({ messages: next })
+}

@@ -190,17 +190,18 @@ const useState = async (path) => {
   assert(path, `path cannot be null`)
   const getState = Request.createGetState(path)
   let { state } = await interchain(getState)
-  const setState = (changes) => {
+  const setState = async (changes) => {
     if (typeof changes !== 'object') {
       throw new Error(`state must be an object, but was: ${typeof changes}`)
     }
+    // TODO push the get patch up into dmz
+    const { state } = await interchain(getState)
     const nextState = { ...state, ...changes }
     if (equals(nextState, state)) {
       return
     }
     const setStateRequest = Request.createSetState(nextState)
-    state = interchain(setStateRequest, path)
-    return state
+    return interchain(setStateRequest, path)
   }
   return [state, setState]
 }

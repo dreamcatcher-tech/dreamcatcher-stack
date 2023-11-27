@@ -61,6 +61,7 @@
     "it-length-prefixed": "^9.0.3",
     "it-parallel": "^3.0.6",
     "it-pushable": "^3.2.3",
+    "jest-diff": "^29.7.0",
     "json-schema-faker": "^0.5.4",
     "libp2p": "0.46.21",
     "lodash.merge": "^4.6.2",

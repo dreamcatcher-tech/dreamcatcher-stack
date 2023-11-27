@@ -2,6 +2,7 @@ import assert from 'assert-fast'
 import equals from 'fast-deep-equal'
 import { serializeError, deserializeError } from 'serialize-error'
 import { Request, Pulse } from '.'
+import { diff } from 'jest-diff'
 
 export class Reply extends Request {
   static createPromise() {
@@ -30,7 +31,12 @@ export class Reply extends Request {
       payload = serializeError(payload)
     } else {
       const cloned = JSON.parse(JSON.stringify(payload))
-      assert(equals(payload, cloned), 'payload must be stringifiable')
+      if (!equals(payload, cloned)) {
+        const difference = diff(payload, cloned)
+        throw new Error(
+          `payload must be stringifiable. Differences: ${difference}`
+        )
+      }
     }
     const reply = { type, payload }
     if (binary) {

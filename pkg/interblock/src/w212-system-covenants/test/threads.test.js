@@ -1,4 +1,5 @@
 import { Interpulse, useAsync } from '../..'
+import equal from 'fast-deep-equal'
 import dotenv from 'dotenv'
 import { injectResponses } from '../src/ai'
 import Debug from 'debug'
@@ -6,36 +7,34 @@ const debug = Debug('test')
 dotenv.config({ path: '../../.env' })
 
 describe('threads', () => {
-  it.only('runs a shell command', async () => {
+  it('runs a shell command', async () => {
     // start a thread, which targets /
     const engine = await Interpulse.createCI()
     await engine.bootHal()
 
     const actions = await engine.actions('.HAL')
+    // Debug.enable('iplog Interpulse')
+    const stream = engine.subscribe('.HAL')
+    print(stream)
     const response = await actions.user('ping me HAL', 'key-1')
     const state = (await engine.latest('.HAL')).getState().toJS()
-    console.dir(state, { depth: Infinity })
 
     // give a prompt to HAL, see it change directory.
     const prompt = 'change directory to the crm'
 
     const add = 'add a new customer'
     const nearly = 'addj bob' // if nearly a command, gpt should recognize
-    /**
-     * shell receives a prompt since nothing else matched.
-     * shell then continues on the thread whose id it tracks.
-     *    past blocks record the thread history, so it can be recreated
-     * function call continuations are handled on chain
-     */
-
-    // how would it know what a customer is, if we didn't tell it ?
-    // should the description of each path be part of the retrievals ?
-    // want it to run several levels of ls to dig around, or look up everything from a table as a retrieval.
-
-    // if you need to discover more functions, use ls at path to get more
   }, 30000)
 })
 
-/**
- * Messages should show the actions in json schema form
- */
+const print = async (stream) => {
+  let prior
+  for await (const message of stream) {
+    const state = message.getState().toJS()
+    if (equal(state, prior)) {
+      continue
+    }
+    prior = state
+    // console.dir(state, { depth: Infinity })
+  }
+}
