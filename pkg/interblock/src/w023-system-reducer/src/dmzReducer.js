@@ -9,6 +9,7 @@ import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
 import posix from 'path-browserify'
+import merge from 'lodash.merge'
 const debug = Debug('interblock:dmz')
 
 /**
@@ -108,12 +109,14 @@ const pulseReducer = async (type, payload) => {
       return { state }
     }
     case '@@SET_STATE': {
-      const { state } = payload
-      assert.strictEqual(typeof state, 'object')
-      const nextState = pulse.getState().setMap(state)
+      const { changes, replace } = payload
+      assert.strictEqual(typeof changes, 'object')
+      const state = pulse.getState().toJS()
+      const merged = replace ? changes : merge({}, state, changes)
+      const nextState = pulse.getState().setMap(merged)
       pulse = pulse.setState(nextState)
       setPulse(pulse)
-      return nextState.toJS()
+      return pulse.getState().toJS()
     }
     case '@@GET_AI': {
       const { path } = payload

@@ -1,6 +1,10 @@
 import assert from 'assert-fast'
 import { collection } from '../../../w212-system-covenants'
 import { COLORS } from './utils'
+import { interchain, usePulse, useState } from '../../../w002-api'
+import Debug from 'debug'
+import { PolygonLut } from './PolygonLut'
+const debug = Debug('crm:routing')
 
 const geometry = {
   type: 'object',
@@ -180,10 +184,6 @@ const api = {
 }
 const name = 'Routing'
 
-import { interchain, usePulse, useState } from '../../../w002-api'
-import Debug from 'debug'
-import { PolygonLut } from './PolygonLut'
-const debug = Debug('crm:routing')
 const reducer = async (request) => {
   const { type, payload } = request
   switch (type) {
@@ -286,7 +286,7 @@ const reducer = async (request) => {
       if (!unapproved.size) {
         delete formData.unapproved
       }
-      await setState({ ...state, formData })
+      await setState({ ...state, formData }, { replace: true })
       return
     }
     default:

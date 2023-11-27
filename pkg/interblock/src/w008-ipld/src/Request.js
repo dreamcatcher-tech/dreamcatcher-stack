@@ -77,9 +77,9 @@ export class Request extends IpldStruct {
     assert(path)
     return this.create('@@GET_STATE', { path })
   }
-  static createSetState(state, binary) {
-    assert.strictEqual(typeof state, 'object')
-    return this.create('@@SET_STATE', { state }, binary)
+  static createSetState(changes, binary, replace) {
+    assert.strictEqual(typeof changes, 'object')
+    return this.create('@@SET_STATE', { changes, replace }, binary)
   }
   static createGetAI(path) {
     // TODO maybe we could make a generic slice getter for any key in pulse ?

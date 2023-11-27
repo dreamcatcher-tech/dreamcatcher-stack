@@ -78,7 +78,7 @@ const reducer = async (request) => {
       // TODO WARNING if have changed children in current block, will be stale
       // TODO handle updating what the children should be
       // TODO remove deleted children
-      await setState(state)
+      await setState(state, { replace: true })
       return
     }
     default:

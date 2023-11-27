@@ -188,19 +188,19 @@ const useAsync = async (fn, key = '') => {
 const useState = async (path) => {
   assert.strictEqual(typeof path, 'string', `path must be a string`)
   assert(path, `path cannot be null`)
+
   const getState = Request.createGetState(path)
   let { state } = await interchain(getState)
-  const setState = async (changes) => {
+  const setState = async (changes, options = {}) => {
     if (typeof changes !== 'object') {
       throw new Error(`state must be an object, but was: ${typeof changes}`)
     }
-    // TODO push the get patch up into dmz
-    const { state } = await interchain(getState)
-    const nextState = { ...state, ...changes }
-    if (equals(nextState, state)) {
-      return
-    }
-    const setStateRequest = Request.createSetState(nextState)
+    assert(typeof options === 'object', `options must be an object`)
+    const { replace = false, ...rest } = options
+    assert.strictEqual(typeof replace, 'boolean', `replace must be a boolean`)
+    assert(Object.keys(rest).length === 0, `unknowns ${Object.keys(rest)}`)
+    const binary = null
+    const setStateRequest = Request.createSetState(changes, binary, replace)
     return interchain(setStateRequest, path)
   }
   return [state, setState]
