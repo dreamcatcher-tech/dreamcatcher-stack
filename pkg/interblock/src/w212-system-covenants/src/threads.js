@@ -137,81 +137,33 @@ const reducer = async (request) => {
         })
         return result.id
       }, 'key-run-create')
+
       debug('runId', runId)
 
-      let isRunning = true
-      while (isRunning) {
-        let run = await useAsync(async () => {
-          const run = await context.openAI.beta.threads.runs.retrieve(
-            threadId,
-            runId
-          )
-          if (run.required_action) {
-            return run
-          }
-          if (!endings.includes(run.status)) {
-            await new Promise((r) => setTimeout(r, 300))
-          }
-          return run
-        }, 'key-run-poll')
+      // run step status: in_progress, cancelled, failed, completed, expired
+      let steps = []
+      let isRunComplete = false
+      let lastLoop = false
+      do {
+        Debug.enable('interblock:apps:threads')
+        if (lastLoop) {
+          isRunComplete = true
+        } else {
+          lastLoop = await getRunStatus(threadId, runId)
+        }
 
-        if (run.required_action) {
-          debug('required action')
-          const calls = run.required_action.submit_tool_outputs.tool_calls
-          const tool_outputs = await Promise.all(
-            calls.map(async (call) => {
-              const { id: tool_call_id, type, function: fn } = call
-              assert.strictEqual(type, 'function')
-              const { name, arguments: args } = fn
-              let output
-              try {
-                // TODO standardize names
-                const type = api[name].title
-                const payload = JSON.parse(args)
-                const result = await interchain(type, payload, '..')
-                output = JSON.stringify(result, null, '  ')
-              } catch (error) {
-                output =
-                  'ERROR!!\n' +
-                  JSON.stringify(serializeError(error), null, '  ')
-              }
-              return { tool_call_id, output }
-            })
-          )
-          run = await useAsync(
-            () =>
-              context.openAI.beta.threads.runs.submitToolOutputs(
-                threadId,
-                runId,
-                { tool_outputs }
-              ),
-            'key-submit-tool-outputs'
-          )
-        }
-        debug('poll runId', run.id)
-        if (endings.includes(run.status)) {
-          isRunning = false
-        }
-      }
+        const lastStepId = getLastStepId(steps)
+        const nextSteps = await pollSteps(lastStepId, threadId, runId, lastLoop)
+        steps = splat(steps, nextSteps)
 
-      // the run has completed, so we can get the messages
-      const textResult = await useAsync(async () => {
-        const result = await context.openAI.beta.threads.messages.list(
-          threadId,
-          { before: messageId }
-        )
-        if (result.data.length > 1) {
-          console.dir(result.data, { depth: null })
-        }
-        // assert(result.data.length === 1, `message count: ${result.data.length}`)
-        let text = ''
-        for (const message of result.data) {
-          text += message.content[0].text.value + '\n'
-        }
-        return text
-      }, 'key-message-list')
+        // update any messasges
 
-      return { text: textResult }
+        const last = steps[steps.length - 1]
+        if (last.status === 'in_progress' && last.type === 'tool_calls') {
+          await tools(last.step_details, threadId, runId)
+        }
+      } while (!isRunComplete)
+      return
     }
     case '@@INIT': {
       let { path } = request.payload.installer.state
@@ -255,9 +207,94 @@ const injectedResponses = []
 export function injectResponses(...responses) {
   injectedResponses.push(...responses)
 }
+
 const transformToGpt4Api = (api) =>
-  Object.keys(api).map((name) => {
-    const { title, description: _description, ...parameters } = api[name]
-    const description = title + '\n' + _description
-    return { type: 'function', function: { name, description, parameters } }
+  Object.entries(api).map(
+    ([name, { title: t, description: d, ...parameters }]) => ({
+      type: 'function',
+      function: { name, description: `${t}\n${d}`, parameters },
+    })
+  )
+const tools = async (toolCalls, threadId, runId) => {
+  const { type, tool_calls } = toolCalls
+  assert(Array.isArray(tool_calls), 'tool_calls is not an array')
+  assert(type === 'tool_calls', `step type is ${type}`)
+  assert(tool_calls.length, 'tool_calls is empty')
+  const calls = tool_calls.map(async (call) => {
+    const { id: tool_call_id, type, function: fn } = call
+    assert.strictEqual(type, 'function')
+    const { name, arguments: args } = fn
+    let output
+    try {
+      // TODO standardize names for title and key
+      const type = api[name].title
+      const payload = JSON.parse(args)
+      const result = await interchain(type, payload, '..')
+      output = JSON.stringify(result, null, '  ')
+    } catch (error) {
+      error.stack =
+        error.stack.split('\n').slice(0, 3).join('\n') + '\n(...truncated)'
+      const string = serializeError(error, { maxDepth: 2 })
+      output = 'ERROR!!\n' + JSON.stringify(string, null, '  ')
+    }
+    return { tool_call_id, output }
   })
+  const tool_outputs = await Promise.all(calls)
+  await useAsync(
+    () =>
+      context.openAI.beta.threads.runs.submitToolOutputs(threadId, runId, {
+        tool_outputs,
+      }),
+    'key-submit-tool-outputs'
+  )
+}
+const splat = (existing, next) => {
+  const result = [...existing]
+  for (const item of next) {
+    const index = result.findIndex((e) => e.id === item.id)
+    if (index !== -1) {
+      result[index] = item
+    } else {
+      result.push(item)
+    }
+  }
+  return result
+}
+const getLastStepId = (steps) => {
+  let lastStepId
+  for (const step of steps) {
+    if (step.status === 'in_progress') {
+      break
+    }
+    lastStepId = step.id
+  }
+  return lastStepId
+}
+const pollSteps = async (lastStepId, threadId, runId, once) =>
+  useAsync(async () => {
+    let result
+    while (!result?.data?.length) {
+      result = await context.openAI.beta.threads.runs.steps.list(
+        threadId,
+        runId,
+        { limit: 100, order: 'asc', after: lastStepId }
+      )
+      if (!result.data.length) {
+        if (once) {
+          return []
+        }
+        await new Promise((r) => setTimeout(r, 300))
+      }
+    }
+    debug('steps', result.data)
+    return result.data
+  }, 'key-run-step-list')
+
+const getRunStatus = (threadId, runId) =>
+  useAsync(async () => {
+    const result = await context.openAI.beta.threads.runs.retrieve(
+      threadId,
+      runId
+    )
+    return endings.includes(result.status)
+  }, 'key-run-status')

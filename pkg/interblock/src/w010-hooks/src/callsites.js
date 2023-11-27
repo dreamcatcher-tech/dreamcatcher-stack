@@ -166,6 +166,14 @@ const useAsync = async (fn, key = '') => {
 
   // TODO find how to tolerate no key being sent in - must be deterministic
   // use the requestId as one key, but also attach a user defined key
+  // Use an array instead, and use the originating request id as
+  // a mapping so the caller can get access to the array index if needed.
+  // a tree structure should emerge where a single trigger can make more than
+  // one action that results.
+  // This status tracking can be used for both chainland and async actions
+  // can help the UI show richer information about where the process is up to
+  // Effectively surfaces the supervisor tree.
+
   const request = Request.create('@@ASYNC', { key })
   // TODO if we are not to execute these effects, then do not whisper them
   const { whisper } = getInvocation()

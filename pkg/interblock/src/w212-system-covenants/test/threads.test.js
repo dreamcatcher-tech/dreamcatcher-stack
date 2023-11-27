@@ -13,6 +13,8 @@ describe('threads', () => {
 
     const actions = await engine.actions('.HAL')
     const response = await actions.user('ping me HAL', 'key-1')
+    const state = (await engine.latest('.HAL')).getState().toJS()
+    console.dir(state, { depth: Infinity })
 
     // give a prompt to HAL, see it change directory.
     const prompt = 'change directory to the crm'
@@ -33,3 +35,7 @@ describe('threads', () => {
     // if you need to discover more functions, use ls at path to get more
   }, 30000)
 })
+
+/**
+ * Messages should show the actions in json schema form
+ */
