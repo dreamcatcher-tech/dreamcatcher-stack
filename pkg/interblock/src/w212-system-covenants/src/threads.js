@@ -199,9 +199,6 @@ const reducer = async (request) => {
       // TODO check the instruction against the api schema format
       if (!context.openAI) {
         const env = import.meta.env || process.env
-        console.dir(import.meta.env, { depth: Infinity })
-        console.dir(process.env, { depth: Infinity })
-
         const { VITE_OPENAI_API_KEY, OPENAI_API_KEY } = env
         const apiKey = VITE_OPENAI_API_KEY || OPENAI_API_KEY
         if (!apiKey) {
@@ -225,7 +222,7 @@ const installer = {
   state: { threadId: null, assistantId: null },
   config: { isPierced: true },
 }
-export { name, api, reducer, installer }
+export { name, api, reducer, installer, STATUS }
 
 const injectedResponses = []
 export function injectResponses(...responses) {

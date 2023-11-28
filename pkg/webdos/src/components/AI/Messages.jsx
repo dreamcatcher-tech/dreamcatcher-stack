@@ -1,5 +1,7 @@
 import { ObjectInspector, chromeDark } from 'react-inspector'
-import { Crisp } from '@dreamcatcher-tech/interblock'
+import CircularProgress from '@mui/material/CircularProgress'
+import { green } from '@mui/material/colors'
+import { Crisp, system } from '@dreamcatcher-tech/interblock'
 import React from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
@@ -16,7 +18,9 @@ import TimelineDot from '@mui/lab/TimelineDot'
 import Typography from '@mui/material/Typography'
 
 const debug = Debug('AI:ThreeBox')
-debug(`loaded`)
+
+const { STATUS } = system.threads
+
 const HAL = ({ steps, status }) => {
   return (
     <>
@@ -29,8 +33,23 @@ const HAL = ({ steps, status }) => {
                   <TimelineItem key={`tools-${stepsIndex}-${toolsIndex}`}>
                     <TimelineSeparator>
                       <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
-                      <TimelineDot color="secondary">
+                      <TimelineDot
+                        color="secondary"
+                        sx={{ position: 'relative' }}
+                      >
                         <ToolIcon />
+                        {status !== STATUS.USER.DONE && (
+                          <CircularProgress
+                            size={42}
+                            sx={{
+                              color: green[500],
+                              position: 'absolute',
+                              top: -5,
+                              left: -5,
+                              zIndex: 1,
+                            }}
+                          />
+                        )}
                       </TimelineDot>
                       <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
                     </TimelineSeparator>
@@ -51,8 +70,20 @@ const HAL = ({ steps, status }) => {
             <TimelineItem key={`steps-${stepsIndex}`}>
               <TimelineSeparator>
                 <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
-                <TimelineDot color="secondary">
+                <TimelineDot color="secondary" sx={{ position: 'relative' }}>
                   <HalIcon />
+                  {status !== STATUS.USER.DONE && (
+                    <CircularProgress
+                      size={42}
+                      sx={{
+                        color: green[500],
+                        position: 'absolute',
+                        top: -5,
+                        left: -5,
+                        zIndex: 1,
+                      }}
+                    />
+                  )}
                 </TimelineDot>
                 <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
               </TimelineSeparator>
@@ -94,8 +125,20 @@ HAL.propTypes = {
 const Dave = ({ text, status, url }) => (
   <TimelineItem>
     <TimelineSeparator onClick={() => window.open(url, '_blank')}>
-      <TimelineDot color="primary">
+      <TimelineDot color="primary" sx={{ position: 'relative' }}>
         <DaveIcon />
+        {status !== STATUS.USER.DONE && (
+          <CircularProgress
+            size={42}
+            sx={{
+              color: green[500],
+              position: 'absolute',
+              top: -5,
+              left: -5,
+              zIndex: 1,
+            }}
+          />
+        )}
       </TimelineDot>
     </TimelineSeparator>
     <TimelineContent>

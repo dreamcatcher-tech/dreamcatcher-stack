@@ -1,7 +1,7 @@
 import Input from './Input'
 import Stack from '@mui/material/Stack'
 import { Crisp } from '@dreamcatcher-tech/interblock'
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import Box from '@mui/material/Box'
@@ -31,6 +31,9 @@ const ThreeBox = ({ crisp }) => {
   if (error) {
     throw error
   }
+  useEffect(() => {
+    window.scrollTo(0, document.body.scrollHeight)
+  }, [crisp])
   return (
     <Stack
       direction="column"

@@ -17,7 +17,7 @@ const state = {
     {
       type: 'USER',
       text: 'list all customers',
-      status: 'DONE',
+      status: 'THINKING',
     },
     {
       type: 'HAL',
@@ -25,7 +25,7 @@ const state = {
         {
           id: 'step_evddfrLyNpMuc3JuzAzXabcG',
           type: 'tools',
-          status: 'DONE',
+          status: 'THINKING',
           tools: [
             {
               callId: 'call_rKr0rUpzdG6iCP1qZTnZg7kx',
