@@ -27,7 +27,7 @@ export default {
 }
 
 const Template = (args) => {
-  // Debug.enable('*Nav iplog *Syncer')
+  Debug.enable('')
   return (
     <Engine dev={{ '/crm': apps.crm.covenant }} {...args}>
       <Syncer path="/.HAL">

@@ -32,16 +32,27 @@ const ThreeBox = ({ crisp }) => {
     throw error
   }
   return (
+    <Stack
+      direction="column"
+      alignItems="flex-start"
+      justifyContent="flex-end"
+      p={1}
+      sx={{ width: '100%', minHeight: '100%' }}
+    >
+      <Messages crisp={crisp} />
+      <Input onSend={onSend} />
+    </Stack>
+  )
+  return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'row',
         height: '100%',
         width: '100%',
-        // background: 'purple',
       }}
     >
-      <Box
+      {/* <Box
         sx={{
           height: '100%',
           maxWidth: '400px',
@@ -50,21 +61,21 @@ const ThreeBox = ({ crisp }) => {
           // backgroundColor: 'lightGray',
           display: 'flex',
         }}
+      > */}
+      <Stack
+        direction="column"
+        alignItems="flex-start"
+        justifyContent="flex-end"
+        p={1}
+        sx={{ width: '100%' }}
       >
-        <Stack
-          direction="column"
-          alignItems="flex-start"
-          justifyContent="flex-end"
-          p={1}
-          sx={{ width: '100%' }}
-        >
-          <Messages crisp={crisp} />
-          <Input onSend={onSend} />
-        </Stack>
-      </Box>
-      <Box sx={{ flexGrow: 1, p: 1 }}>
+        <Messages crisp={crisp} />
+        <Input onSend={onSend} />
+      </Stack>
+      {/* </Box> */}
+      {/* <Box sx={{ flexGrow: 1, p: 1 }}>
         <Paper elevation={6} sx={{ height: '100%', flexGrow: 1 }}></Paper>
-      </Box>
+      </Box> */}
     </Box>
   )
 }

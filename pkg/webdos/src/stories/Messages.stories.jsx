@@ -30,7 +30,7 @@ const state = {
             {
               callId: 'call_rKr0rUpzdG6iCP1qZTnZg7kx',
               cmd: 'ls',
-              args: '{"path":"/customers"}',
+              args: { path: '/customers' },
             },
           ],
         },
@@ -42,7 +42,7 @@ const state = {
             {
               callId: 'call_dOSrdKKY3Hk8v3xrBzDtaMyS',
               cmd: 'add',
-              args: '{"path":"/customers"}',
+              args: { path: '/customers' },
             },
           ],
         },
@@ -64,7 +64,6 @@ const state = {
 }
 
 const Template = (args) => {
-  Debug.enable('iplog')
   return (
     <Engine dev={{ threads: { installer: { state } } }} {...args}>
       <Syncer path="/.HAL">

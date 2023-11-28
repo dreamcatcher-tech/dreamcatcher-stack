@@ -20,13 +20,13 @@ debug(`loaded`)
 const HAL = ({ steps, status }) => {
   return (
     <>
-      {steps.map(({ type, status, tools, text }, index) => {
+      {steps.map(({ type, status, tools, text }, stepsIndex) => {
         if (type === 'tools') {
           return (
-            <>
-              {tools.map(({ cmd, args, output = {} }) => {
+            <div key={`steps-${stepsIndex}`}>
+              {tools.map(({ cmd, args, output }, toolsIndex) => {
                 return (
-                  <TimelineItem key={index}>
+                  <TimelineItem key={`tools-${stepsIndex}-${toolsIndex}`}>
                     <TimelineSeparator>
                       <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
                       <TimelineDot color="secondary">
@@ -38,17 +38,17 @@ const HAL = ({ steps, status }) => {
                       <Typography variant="h6" component="span">
                         {cmd}
                       </Typography>
-                      <ObjectInspector name="args" data={JSON.parse(args)} />
+                      <ObjectInspector name="args" data={args} />
                       <ObjectInspector name="output" data={output} />
                     </TimelineContent>
                   </TimelineItem>
                 )
               })}
-            </>
+            </div>
           )
         } else if (type === 'message') {
           return (
-            <TimelineItem key={index}>
+            <TimelineItem key={`steps-${stepsIndex}`}>
               <TimelineSeparator>
                 <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
                 <TimelineDot color="secondary">
@@ -60,7 +60,8 @@ const HAL = ({ steps, status }) => {
                 <Typography variant="h6" component="span">
                   HAL
                 </Typography>
-                <Typography>{text}</Typography>
+                <br />
+                <Markdown>{text}</Markdown>
               </TimelineContent>
             </TimelineItem>
           )
@@ -80,8 +81,8 @@ HAL.propTypes = {
         PropTypes.shape({
           callId: PropTypes.string,
           cmd: PropTypes.string,
-          args: PropTypes.string,
-          output: PropTypes.string,
+          args: PropTypes.object,
+          output: PropTypes.object,
         })
       ),
       text: PropTypes.string,

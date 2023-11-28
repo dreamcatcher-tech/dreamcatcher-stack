@@ -168,17 +168,18 @@ const reducer = async (request) => {
       let steps = []
       let isRunComplete = false
       do {
-        const lastStepId = getLastStepId(steps)
-        const { done, next } = await pollSteps(lastStepId, threadId, runId)
+        const lastId = getLastStepId(steps)
+        const { done, next, tools } = await pollSteps(lastId, threadId, runId)
         isRunComplete = done
         steps = splat(steps, next)
 
         await updateSteps(steps)
 
         const last = steps[steps.length - 1]
-        if (last.status === 'in_progress' && last.type === 'tool_calls') {
+        if (tools) {
+          assert(last.status === 'in_progress' && last.type === 'tool_calls')
           await updateMessageStatus(STATUS.HAL.EXECUTING)
-          await tools(last.step_details, threadId, runId)
+          await execTools(last.step_details, threadId, runId)
           await updateMessageStatus(STATUS.HAL.THINKING)
         }
       } while (!isRunComplete)
@@ -235,7 +236,7 @@ const transformToGpt4Api = (api) =>
       function: { name, description: `${t}\n${d}`, parameters },
     })
   )
-const tools = async (toolCalls, threadId, runId) => {
+const execTools = async (toolCalls, threadId, runId) => {
   const { type, tool_calls } = toolCalls
   assert(Array.isArray(tool_calls), 'tool_calls is not an array')
   assert(type === 'tool_calls', `step type is ${type}`)
@@ -247,7 +248,7 @@ const tools = async (toolCalls, threadId, runId) => {
     let output
     try {
       // TODO standardize names for title and key
-      const type = api[name].title
+      const type = shell.api[name].title
       const payload = JSON.parse(args)
       const result = await interchain(type, payload, '..')
       output = JSON.stringify(result, null, '  ')
@@ -299,6 +300,7 @@ const pollSteps = async (lastStepId, threadId, runId) =>
         runId
       )
       result.done = endings.includes(run.status)
+      result.tools = !!run.required_action
       const steps = await context.openAI.beta.threads.runs.steps.list(
         threadId,
         runId,
@@ -358,7 +360,6 @@ const updateSteps = async (rawSteps) => {
       assert.strictEqual(last.steps[index].id, id, `step id is ${id}`)
     }
     const { message_creation, tool_calls } = step_details
-    // TODO enrich the status
     const status =
       step.status === 'completed' ? STATUS.HAL.DONE : STATUS.HAL.THINKING
     if (message_creation) {
@@ -367,10 +368,19 @@ const updateSteps = async (rawSteps) => {
     } else {
       const tools = tool_calls.map((call) => {
         const { id: callId, function: fn } = call
-        const { name, arguments: args, output } = fn
-        const transformed = { callId, cmd: name, args }
+        let { name, arguments: args, output } = fn
+        const transformed = { callId, cmd: name }
+        if (args) {
+          transformed.args = JSON.parse(args)
+        }
         if (output) {
-          transformed.output = output
+          if (output.startsWith('ERROR!!\n')) {
+            output = output.slice('ERROR!!\n'.length)
+            const error = JSON.parse(output)
+            transformed.output = error
+          } else {
+            transformed.output = JSON.parse(output)
+          }
         }
         return transformed
       })

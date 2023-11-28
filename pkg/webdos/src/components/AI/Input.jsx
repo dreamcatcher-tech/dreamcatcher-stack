@@ -38,7 +38,9 @@ const Mic = ({ onEvent }) => (
 Mic.propTypes = { onEvent: PropTypes.func.isRequired }
 
 const Input = ({ onSend }) => {
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(
+    'Add a customer by cd /app/customers then add'
+  )
   const [disabled, setDisabled] = useState(false)
   const {
     startRecording,

@@ -56,7 +56,7 @@ const reducer = async (request) => {
       return { loginResult }
     }
     case 'ADD': {
-      let { path, installer = {} } = payload
+      let { path = '', installer = {} } = payload
       assert.strictEqual(typeof path, 'string')
       debug('installer', installer)
       if (typeof installer === 'string') {
