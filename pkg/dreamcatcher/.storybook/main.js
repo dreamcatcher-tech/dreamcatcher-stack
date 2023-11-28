@@ -13,5 +13,9 @@ const config = {
   docs: {
     autodocs: 'tag',
   },
+  typescript: {
+    // bug in that doesn't like interpulse when it tries to deduce stories
+    reactDocgen: false,
+  },
 }
 export default config
