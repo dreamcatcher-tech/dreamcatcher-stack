@@ -1,6 +1,6 @@
 {
   "name": "@dreamcatcher-tech/iporm",
-  "version": "1.0.151",
+  "version": "1.0.152",
   "main": "src/index.mjs",
   "private": false,
   "author": "Dreamcatcher Command",
