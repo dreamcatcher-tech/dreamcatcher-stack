@@ -199,10 +199,12 @@ const reducer = async (request) => {
       // TODO check the instruction against the api schema format
       if (!context.openAI) {
         const env = import.meta.env || process.env
+        console.dir(import.meta.env, { depth: Infinity })
+        console.dir(process.env, { depth: Infinity })
+
         const { VITE_OPENAI_API_KEY, OPENAI_API_KEY } = env
         const apiKey = VITE_OPENAI_API_KEY || OPENAI_API_KEY
         if (!apiKey) {
-          console.dir(env)
           throw new Error('missing openai api key')
         }
         context.openAI = new OpenAI({
