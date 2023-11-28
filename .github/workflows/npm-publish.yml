@@ -86,6 +86,7 @@ jobs:
           onlyChanged: true
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Publish Dreamcatcher to Chromatic
         uses: chromaui/action@v1
         with:

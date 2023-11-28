@@ -25,9 +25,6 @@ dotenv.config({ path: '../../.env' })
 const { env } = process
 env.VITE_OPENAI_API_KEY = env.OPENAI_API_KEY
 
-console.log('OPENAI_API_KEY', env.OPENAI_API_KEY?.slice(0, 5))
-console.log('VITE', env.VITE_OPENAI_API_KEY?.slice(0, 5))
-
 const gitPath = '../..'
 const VITE_GIT_HASH = JSON.stringify(git.long(gitPath))
 const VITE_GIT_DATE = JSON.stringify(git.date())
