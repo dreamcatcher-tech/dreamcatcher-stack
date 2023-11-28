@@ -13,8 +13,6 @@ import Attach from '@mui/icons-material/AttachFile'
 import SendIcon from '@mui/icons-material/ArrowUpwardRounded'
 import OpenAI from 'openai'
 
-console.dir(import.meta.env, { depth: null })
-
 if (!import.meta.env.VITE_OPENAI_API_KEY) {
   throw new Error('VITE_OPENAI_API_KEY is not defined')
 }
@@ -45,6 +43,7 @@ const Input = ({ onSend }) => {
     'Add a customer by cd /app/customers then add'
   )
   const [disabled, setDisabled] = useState(false)
+  const [isTransReady, setIsTransReady] = useState(false)
   const {
     startRecording,
     stopRecording,
@@ -73,10 +72,18 @@ const Input = ({ onSend }) => {
       .create({ file, model: 'whisper-1' })
       .then((transcription) => {
         setValue(transcription.text)
+        setIsTransReady(true)
       })
       .catch(console.error)
       .finally(() => setDisabled(false))
   }, [recordingBlob])
+  useEffect(() => {
+    if (!isTransReady) {
+      return
+    }
+    setIsTransReady(false)
+    send()
+  }, [isTransReady, send])
 
   const inputProps = {
     endAdornment: (
@@ -86,7 +93,7 @@ const Input = ({ onSend }) => {
         ) : (
           <>
             {isRecording && (
-              <LiveAudioVisualizer width={310} mediaRecorder={mediaRecorder} />
+              <LiveAudioVisualizer height={50} mediaRecorder={mediaRecorder} />
             )}
             <Mic onEvent={isRecording ? stopRecording : start} />
           </>
