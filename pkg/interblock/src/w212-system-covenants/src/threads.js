@@ -198,11 +198,11 @@ const reducer = async (request) => {
       assert.strictEqual(name, 'GPT4', `ai name is ${name}`)
       // TODO check the instruction against the api schema format
       if (!context.openAI) {
-        debugger
         const env = import.meta.env || process.env
         const { VITE_OPENAI_API_KEY, OPENAI_API_KEY } = env
         const apiKey = VITE_OPENAI_API_KEY || OPENAI_API_KEY
         if (!apiKey) {
+          console.dir(env)
           throw new Error('missing openai api key')
         }
         context.openAI = new OpenAI({
