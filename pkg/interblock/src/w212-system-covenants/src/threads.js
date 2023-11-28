@@ -367,8 +367,12 @@ const updateSteps = async (rawSteps) => {
     } else {
       const tools = tool_calls.map((call) => {
         const { id: callId, function: fn } = call
-        const { name, arguments: args } = fn
-        return { callId, cmd: name, args }
+        const { name, arguments: args, output } = fn
+        const transformed = { callId, cmd: name, args }
+        if (output) {
+          transformed.output = output
+        }
+        return transformed
       })
       return { id, type: 'tools', status, tools }
     }
