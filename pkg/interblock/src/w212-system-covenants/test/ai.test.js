@@ -46,7 +46,7 @@ describe('ai', () => {
       config: { isPierced: true },
     })
     Debug.enable('iplog')
-    await engine.dispatch({ type: 'TEST' }, 'test')
+    await engine.dispatch({ type: 'TEST', payload: {} }, 'test')
   })
   it.todo('streams back results')
 })

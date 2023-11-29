@@ -423,7 +423,7 @@ const createAI = () => {
     dangerouslyAllowBrowser: true,
   })
 
-  const retryOptions = { forever: true, minTimeout: 500, maxTimeout: 3000 }
+  const retryOptions = { forever: false, minTimeout: 500, maxTimeout: 3000 }
   const factory = (fn) => {
     assert(fn instanceof Function, `fn is not a function`)
     return (...args) => {

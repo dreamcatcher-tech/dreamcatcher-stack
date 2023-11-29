@@ -94,7 +94,7 @@ describe('dmzReducer', () => {
       const remote = await engine.current('agent/target')
       const state = remote.getState().toJS()
       expect(state).toEqual({ foo: 'bar' })
-      await engine.dispatch({ type: 'BEGIN' }, 'agent')
+      await engine.dispatch({ type: 'BEGIN', payload: {} }, 'agent')
       const nextRemote = await engine.current('agent/target')
       const nextState = nextRemote.getState().toJS()
       expect(nextState).toEqual({ foo: 'baz' })
