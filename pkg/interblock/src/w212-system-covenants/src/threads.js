@@ -14,6 +14,7 @@ import { shell } from '..'
 import merge from 'lodash.merge'
 import process from 'process'
 import assert from 'assert-fast'
+import retry from 'retry'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:threads')
 const endings = ['cancelled', 'failed', 'completed', 'expired']
@@ -79,7 +80,7 @@ const reducer = async (request) => {
         // see if there is an assistant with this name
         const assistants = await useAsync(async () => {
           const params = { order: 'desc', limit: '100' }
-          const list = await context.openAI.beta.assistants.list(params)
+          const list = await context.ai.assistantsList(params)
           // TODO loop to get all assistants
           return list.data
         }, 'key-assistant-list')
@@ -92,7 +93,7 @@ const reducer = async (request) => {
             const gpt4Api = transformToGpt4Api(api)
             existing = await useAsync(
               async () =>
-                context.openAI.beta.assistants.update(assistantId, {
+                context.ai.assistantsUpdate(assistantId, {
                   tools: gpt4Api,
                 }),
               'key-update-tools'
@@ -107,7 +108,7 @@ const reducer = async (request) => {
           await updateMessageStatus(STATUS.USER.CREATING)
           const result = await useAsync(async () => {
             const { tools, model, instructions } = assistant
-            const result = await context.openAI.beta.assistants.create({
+            const result = await context.ai.assistantsCreate({
               name: path,
               instructions,
               tools,
@@ -127,7 +128,7 @@ const reducer = async (request) => {
       if (!threadId) {
         // create the thread and set the ID
         threadId = await useAsync(async () => {
-          const thread = await context.openAI.beta.threads.create()
+          const thread = await context.ai.threadsCreate()
           // TODO add metadata for the root chainId, path, and thread pulseId
           debug('create thread', thread)
           return thread.id
@@ -142,10 +143,10 @@ const reducer = async (request) => {
       await updateMessageStatus(STATUS.USER.MESSAGING)
       const { text } = request.payload
       const messageId = await useAsync(async () => {
-        const result = await context.openAI.beta.threads.messages.create(
-          threadId,
-          { role: 'user', content: text }
-        )
+        const result = await context.ai.messagesCreate(threadId, {
+          role: 'user',
+          content: text,
+        })
         debug('message', result.thread_id, result.id)
         return result.id
       }, 'key-message-create')
@@ -155,7 +156,7 @@ const reducer = async (request) => {
       // TODO block concurrent runs occuring
       await addHalMessage()
       const runId = await useAsync(async () => {
-        const result = await context.openAI.beta.threads.runs.create(threadId, {
+        const result = await context.ai.runsCreate(threadId, {
           assistant_id: assistantId,
         })
         return result.id
@@ -197,17 +198,8 @@ const reducer = async (request) => {
       const { name, instructions } = ai
       assert.strictEqual(name, 'GPT4', `ai name is ${name}`)
       // TODO check the instruction against the api schema format
-      if (!context.openAI) {
-        const env = import.meta.env || process.env
-        const { VITE_OPENAI_API_KEY, OPENAI_API_KEY } = env
-        const apiKey = VITE_OPENAI_API_KEY || OPENAI_API_KEY
-        if (!apiKey) {
-          throw new Error('missing openai api key')
-        }
-        context.openAI = new OpenAI({
-          apiKey,
-          dangerouslyAllowBrowser: true,
-        })
+      if (!context.ai) {
+        context.ai = createAI()
       }
       return { installer: { state: { path, messages: [] } } }
     }
@@ -262,10 +254,7 @@ const execTools = async (toolCalls, threadId, runId) => {
   })
   const tool_outputs = await Promise.all(calls)
   await useAsync(
-    () =>
-      context.openAI.beta.threads.runs.submitToolOutputs(threadId, runId, {
-        tool_outputs,
-      }),
+    () => context.ai.submitToolOutputs(threadId, runId, { tool_outputs }),
     'key-submit-tool-outputs'
   )
 }
@@ -295,17 +284,14 @@ const pollSteps = async (lastStepId, threadId, runId) =>
   useAsync(async () => {
     const result = {}
     while (!result.next?.length) {
-      const run = await context.openAI.beta.threads.runs.retrieve(
-        threadId,
-        runId
-      )
+      const run = await context.ai.runsRetrieve(threadId, runId)
       result.done = endings.includes(run.status)
       result.tools = !!run.required_action
-      const steps = await context.openAI.beta.threads.runs.steps.list(
-        threadId,
-        runId,
-        { limit: 100, order: 'asc', after: lastStepId }
-      )
+      const steps = await context.ai.stepsList(threadId, runId, {
+        limit: 100,
+        order: 'asc',
+        after: lastStepId,
+      })
       result.next = steps.data
 
       // if message creation, and completed, then retrive the message by id
@@ -314,7 +300,7 @@ const pollSteps = async (lastStepId, threadId, runId) =>
         if (type === 'message_creation' && status === 'completed') {
           assert(!step_details.message_creation.text, 'text is not empty')
           const { message_id } = step_details.message_creation
-          const message = await context.openAI.beta.threads.messages.retrieve(
+          const message = await context.ai.messagesRetrieve(
             threadId,
             message_id
           )
@@ -418,4 +404,58 @@ const updateMessageStatus = async (status) => {
   assert(last.type === 'USER' || last.type === 'HAL')
   next.push({ ...last, status })
   await setState({ messages: next })
+}
+const createAI = () => {
+  const env = import.meta.env || process.env
+  const { VITE_OPENAI_API_KEY, OPENAI_API_KEY } = env
+  const apiKey = VITE_OPENAI_API_KEY || OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('missing openai api key')
+  }
+  const ai = new OpenAI({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  })
+
+  const retryOptions = { forever: true, minTimeout: 500, maxTimeout: 3000 }
+  const factory = (fn) => {
+    assert(fn instanceof Function, `fn is not a function`)
+    return (...args) => {
+      let resolve, reject
+      const promise = new Promise((r, j) => {
+        resolve = r
+        reject = j
+      })
+      const operation = retry.operation(retryOptions)
+      operation.attempt(async () => {
+        try {
+          const result = await fn(...args)
+          resolve(result)
+        } catch (error) {
+          console.error(error)
+          if (operation.retry(error)) {
+            return
+          }
+          reject(operation.mainError())
+        }
+      })
+      return promise
+    }
+  }
+  return {
+    assistantsList: factory((...a) => ai.beta.assistants.list(...a)),
+    assistantsUpdate: factory((...a) => ai.beta.assistants.update(...a)),
+    assistantsCreate: factory((...a) => ai.beta.assistants.create(...a)),
+    threadsCreate: factory((...a) => ai.beta.threads.create(...a)),
+    messagesCreate: factory((...a) => ai.beta.threads.messages.create(...a)),
+    messagesRetrieve: factory((...a) =>
+      ai.beta.threads.messages.retrieve(...a)
+    ),
+    runsCreate: factory((...a) => ai.beta.threads.runs.create(...a)),
+    runsRetrieve: factory((...a) => ai.beta.threads.runs.retrieve(...a)),
+    submitToolOutputs: factory((...a) =>
+      ai.beta.threads.runs.submitToolOutputs(...a)
+    ),
+    stepsList: factory((...a) => ai.beta.threads.runs.steps.list(...a)),
+  }
 }

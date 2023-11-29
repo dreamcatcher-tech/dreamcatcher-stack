@@ -21,11 +21,51 @@ const debug = Debug('AI:ThreeBox')
 
 const { STATUS } = system.threads
 
-const HAL = ({ steps, status }) => {
+const Progress = () => (
+  <CircularProgress
+    size={42}
+    sx={{
+      color: green[500],
+      position: 'absolute',
+      top: -5,
+      left: -5,
+      zIndex: 1,
+    }}
+  />
+)
+
+const HalThinking = ({ isTool = false }) => (
+  <TimelineItem>
+    <TimelineSeparator>
+      <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
+      <TimelineDot color="secondary" sx={{ position: 'relative' }}>
+        {isTool ? <ToolIcon /> : <HalIcon />}
+        <Progress />
+      </TimelineDot>
+      <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
+    </TimelineSeparator>
+    <TimelineContent>
+      <Typography variant="h6" component="span">
+        HAL
+      </Typography>
+      <Typography fontStyle="italic">(thinking...)</Typography>
+    </TimelineContent>
+  </TimelineItem>
+)
+HalThinking.propTypes = { isTool: PropTypes.bool }
+
+const HAL = ({ steps }) => {
+  if (!steps.length) {
+    return <HalThinking />
+  }
   return (
     <>
       {steps.map(({ type, status, tools, text }, stepsIndex) => {
         if (type === 'tools') {
+          const key = `steps-${stepsIndex}`
+          if (!tools.length) {
+            return <HalThinking key={key} isTool />
+          }
           return (
             <div key={`steps-${stepsIndex}`}>
               {tools.map(({ cmd, args, output }, toolsIndex) => {
@@ -38,18 +78,7 @@ const HAL = ({ steps, status }) => {
                         sx={{ position: 'relative' }}
                       >
                         <ToolIcon />
-                        {status !== STATUS.USER.DONE && (
-                          <CircularProgress
-                            size={42}
-                            sx={{
-                              color: green[500],
-                              position: 'absolute',
-                              top: -5,
-                              left: -5,
-                              zIndex: 1,
-                            }}
-                          />
-                        )}
+                        {status !== STATUS.HAL.DONE && <Progress />}
                       </TimelineDot>
                       <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
                     </TimelineSeparator>
@@ -72,18 +101,7 @@ const HAL = ({ steps, status }) => {
                 <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
                 <TimelineDot color="secondary" sx={{ position: 'relative' }}>
                   <HalIcon />
-                  {status !== STATUS.USER.DONE && (
-                    <CircularProgress
-                      size={42}
-                      sx={{
-                        color: green[500],
-                        position: 'absolute',
-                        top: -5,
-                        left: -5,
-                        zIndex: 1,
-                      }}
-                    />
-                  )}
+                  {status !== STATUS.HAL.DONE && <Progress />}
                 </TimelineDot>
                 <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
               </TimelineSeparator>
@@ -92,7 +110,11 @@ const HAL = ({ steps, status }) => {
                   HAL
                 </Typography>
                 <br />
-                <Markdown>{text}</Markdown>
+                {text ? (
+                  <Markdown>{text}</Markdown>
+                ) : (
+                  <Typography fontStyle="italic">(writing...)</Typography>
+                )}
               </TimelineContent>
             </TimelineItem>
           )
@@ -119,7 +141,6 @@ HAL.propTypes = {
       text: PropTypes.string,
     })
   ),
-  status: PropTypes.string,
 }
 
 const Dave = ({ text, status, url }) => (
@@ -127,18 +148,7 @@ const Dave = ({ text, status, url }) => (
     <TimelineSeparator onClick={() => window.open(url, '_blank')}>
       <TimelineDot color="primary" sx={{ position: 'relative' }}>
         <DaveIcon />
-        {status !== STATUS.USER.DONE && (
-          <CircularProgress
-            size={42}
-            sx={{
-              color: green[500],
-              position: 'absolute',
-              top: -5,
-              left: -5,
-              zIndex: 1,
-            }}
-          />
-        )}
+        {status !== STATUS.USER.DONE && <Progress />}
       </TimelineDot>
     </TimelineSeparator>
     <TimelineContent>
@@ -176,7 +186,7 @@ const Messages = ({ crisp }) => {
     >
       {messages.map(({ type, status, text, steps }, index) => {
         if (type === 'HAL') {
-          return <HAL key={index} steps={steps} status={status} />
+          return <HAL key={index} steps={steps} />
         }
         return <Dave key={index} text={text} status={status} url={url} />
       })}

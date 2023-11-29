@@ -151,9 +151,6 @@ export class IpldStruct extends IpldInterface {
       const [raw, cache] = await resolver(initial)
       assert(raw instanceof Block, `not Block ${CID.asCID(initial)}`)
       if (raw.uncrushed) {
-        if (!(raw.uncrushed instanceof this)) {
-          console.log(initial.toString())
-        }
         assert(raw.uncrushed instanceof this)
         return raw.uncrushed
       }

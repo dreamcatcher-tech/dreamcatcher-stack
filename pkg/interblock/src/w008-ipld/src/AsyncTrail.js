@@ -73,7 +73,7 @@ export class AsyncTrail extends IpldStruct {
   }
   assertLogic() {
     assert(!this.pulse)
-    assert(!this.txs.every((tx) => tx.isSettled()))
+    assert(!this.txs.length || !this.txs.every((tx) => tx.isSettled()))
     assert(this.settles.every((tx) => tx.isSettled()))
     assert(!this.reply, `can only crush promised trails`)
   }

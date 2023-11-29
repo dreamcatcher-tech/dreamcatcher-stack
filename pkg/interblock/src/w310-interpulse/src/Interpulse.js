@@ -91,20 +91,6 @@ export class Interpulse {
     return await this.#engine.pierce(request)
   }
 
-  async hal(prompt) {
-    // TODO block .HAL from being overwritten in the shell
-    let address
-    try {
-      const hal = await this.current('.HAL')
-      address = hal.getAddress()
-    } catch (error) {
-      const { chainId } = await this.add('.HAL', { covenant: 'ai' })
-      address = Address.fromChainId(chainId)
-    }
-    assert(address, 'no .HAL found')
-    const request = { type: 'PROMPT', payload: { prompt } }
-    return this.#engine.pierce(request, address)
-  }
   async actions(path = '.') {
     if (path === '/') {
       return this.#actions

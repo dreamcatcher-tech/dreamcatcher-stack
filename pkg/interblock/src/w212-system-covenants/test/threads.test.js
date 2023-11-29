@@ -7,7 +7,7 @@ const debug = Debug('test')
 dotenv.config({ path: '../../.env' })
 
 describe('threads', () => {
-  it.skip('runs a shell command', async () => {
+  it('runs a shell command', async () => {
     // start a thread, which targets /
     const engine = await Interpulse.createCI()
     await engine.bootHal()
@@ -16,7 +16,7 @@ describe('threads', () => {
     // Debug.enable('iplog Interpulse')
     const stream = engine.subscribe('.HAL')
     print(stream)
-    const response = await actions.user('ping me HAL', 'key-1')
+    const response = await actions.user('add a new customer', 'key-1')
     const state = (await engine.latest('.HAL')).getState().toJS()
 
     // give a prompt to HAL, see it change directory.

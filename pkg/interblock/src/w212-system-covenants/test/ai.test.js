@@ -16,7 +16,7 @@ describe('ai', () => {
     const result = await actions.prompt('repeat this: "bob your uncle"', 'key')
 
     debug('result', result)
-  })
+  }, 20000)
   test('nested async', async () => {
     const effect = async () => {
       return await new Promise((r) => setTimeout(r, 100, 'result'))
