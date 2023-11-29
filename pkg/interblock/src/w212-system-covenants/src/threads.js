@@ -9,7 +9,13 @@
 import OpenAI from 'openai'
 import { serializeError } from 'serialize-error'
 import posix from 'path-browserify'
-import { interchain, useAsync, useAI, useState } from '../../w002-api'
+import {
+  interchain,
+  useAsync,
+  useAI,
+  useState,
+  schemaToFunctions,
+} from '../../w002-api'
 import { shell } from '..'
 import merge from 'lodash.merge'
 import process from 'process'
@@ -81,45 +87,40 @@ const reducer = async (request) => {
         const assistants = await useAsync(async () => {
           const params = { order: 'desc', limit: '100' }
           const list = await context.ai.assistantsList(params)
-          // TODO loop to get all assistants
+          // TODO loop if more than 100 assistants
           return list.data
         }, 'key-assistant-list')
-        let existing = assistants.find((a) => a.name === path)
-        debug('assistant', existing.id, existing.name)
-        if (existing) {
-          assistantId = existing.id
+        let remote = assistants.find((a) => a.name === path)
+        if (remote) {
+          debug('assistant', remote.id, remote.name)
+          assistantId = remote.id
           await setState({ assistantId })
-          if (!existing.tools.length) {
-            const gpt4Api = transformToGpt4Api(api)
-            existing = await useAsync(
-              async () =>
-                context.ai.assistantsUpdate(assistantId, {
-                  tools: gpt4Api,
-                }),
-              'key-update-tools'
-            )
-          } else {
-            // TODO mention the differences
-          }
 
           // TODO add a special synthetic call to query another bot
         } else {
           // create the assistant
           await updateMessageStatus(STATUS.USER.CREATING)
-          const result = await useAsync(async () => {
+          remote = await useAsync(async () => {
             const { tools, model, instructions } = assistant
             const result = await context.ai.assistantsCreate({
               name: path,
-              instructions,
-              tools,
               model,
+              tools,
+              instructions,
             })
-            debug('create assistant', result.id, result.name)
             return result
           }, 'key-assistant-create')
-          assistantId = result.id
+          assistantId = remote.id
           await setState({ assistantId })
         }
+        const gpt4Api = transformToGpt4Api(api)
+        remote = await useAsync(
+          async () =>
+            context.ai.assistantsUpdate(assistantId, {
+              tools: gpt4Api,
+            }),
+          'key-update-tools'
+        )
       } else {
         // check that the assistant is still valid
         // throw new Error('TODO')
@@ -233,16 +234,19 @@ const execTools = async (toolCalls, threadId, runId) => {
   assert(Array.isArray(tool_calls), 'tool_calls is not an array')
   assert(type === 'tool_calls', `step type is ${type}`)
   assert(tool_calls.length, 'tool_calls is empty')
+
+  // TODO standardize names for title and key
+  const actions = schemaToFunctions(shell.api)
+
   const calls = tool_calls.map(async (call) => {
     const { id: tool_call_id, type, function: fn } = call
     assert.strictEqual(type, 'function')
     const { name, arguments: args } = fn
     let output
     try {
-      // TODO standardize names for title and key
-      const type = shell.api[name].title
       const payload = JSON.parse(args)
-      const result = await interchain(type, payload, '..')
+      const action = actions[name](payload)
+      const result = await interchain(action, '..')
       output = JSON.stringify(result, null, '  ')
     } catch (error) {
       error.stack =
