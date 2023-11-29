@@ -102,8 +102,15 @@ export const api = {
     additionalProperties: false,
     required: ['action', 'path'],
     properties: {
-      action: { type: 'object' },
-      path: { type: 'string', default: '.' }, // TODO regex
+      action: {
+        type: 'object',
+        description:
+          'The action that will be dispatched into the target chain at the given path.  This action must match the json-schema advertised by the api of the target, where the type of the action is the title of the schema, and the payload complies with the properties the schema defines',
+        required: ['type', 'payload'],
+        additionalProperties: false,
+        properties: { type: { type: 'string' }, payload: { type: 'object' } },
+      },
+      path: { type: 'string', description: '', default: '.' }, // TODO regex
     },
   },
   publish: {
