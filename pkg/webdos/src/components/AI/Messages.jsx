@@ -54,7 +54,7 @@ const HalThinking = ({ isTool = false }) => (
 )
 HalThinking.propTypes = { isTool: PropTypes.bool }
 
-const HAL = ({ steps }) => {
+const HAL = ({ steps, status }) => {
   if (!steps.length) {
     return <HalThinking />
   }
@@ -122,6 +122,10 @@ const HAL = ({ steps }) => {
           throw new Error(`unknown type ${type}`)
         }
       })}
+      {status !== STATUS.HAL.DONE &&
+        steps.every(({ status }) => status === STATUS.HAL.DONE) && (
+          <HalThinking />
+        )}
     </>
   )
 }
@@ -141,6 +145,7 @@ HAL.propTypes = {
       text: PropTypes.string,
     })
   ),
+  status: PropTypes.string,
 }
 
 const Dave = ({ text, status, url }) => (
@@ -186,7 +191,7 @@ const Messages = ({ crisp }) => {
     >
       {messages.map(({ type, status, text, steps }, index) => {
         if (type === 'HAL') {
-          return <HAL key={index} steps={steps} />
+          return <HAL key={index} steps={steps} status={status} />
         }
         return <Dave key={index} text={text} status={status} url={url} />
       })}

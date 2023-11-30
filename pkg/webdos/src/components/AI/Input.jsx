@@ -112,17 +112,32 @@ const Input = ({ onSend }) => {
     )
   }
 
-  const onKeyDown = useCallback((e) => {
-    const isUnmodified = !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey
-    if (e.key === 'Enter' && isUnmodified) {
-      e.preventDefault()
-      send(value)
-    }
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      setValue('')
-    }
-  })
+  const onKeyDown = useCallback(
+    (e) => {
+      const isUnmodified = !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey
+      if (e.key === 'Enter' && isUnmodified) {
+        e.preventDefault()
+        send(value)
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setValue('')
+      }
+      if (e.key === ' ' && e.ctrlKey && !value) {
+        e.preventDefault()
+        if (isRecording) {
+          stopRecording()
+        } else {
+          start()
+        }
+      }
+    },
+    [send, start, stopRecording, value]
+  )
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onKeyDown])
 
   return (
     <TextField
