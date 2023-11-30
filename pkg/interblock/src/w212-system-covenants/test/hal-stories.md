@@ -12,6 +12,11 @@ The test runner needs to be an intelligence, and it needs to break apart the sto
 ## Adding a new customer
 
 HAL will be asked to add a new customer, and will require Dave to give at the very least the name of the customer to add.
+assertions:
+
+1. HAL should not ask for any fields other than the required fields of the customer
+1. There should be a single new customers
+1. That customer should have only the name field set
 
 ## List all customers
 

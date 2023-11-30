@@ -39,7 +39,7 @@ const Mic = ({ onEvent }) => (
 Mic.propTypes = { onEvent: PropTypes.func.isRequired }
 
 const Input = ({ onSend }) => {
-  const [value, setValue] = useState('Add a customer in the app')
+  const [value, setValue] = useState('Add a customer named Karen')
   const [disabled, setDisabled] = useState(false)
   const [isTransReady, setIsTransReady] = useState(false)
   const {
