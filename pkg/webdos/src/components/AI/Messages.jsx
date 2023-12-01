@@ -171,7 +171,7 @@ Dave.propTypes = {
   url: PropTypes.string,
 }
 
-const Messages = ({ crisp }) => {
+const Messages = ({ crisp, isTranscribing }) => {
   if (!crisp || crisp.isLoading) {
     return
   }
@@ -195,9 +195,15 @@ const Messages = ({ crisp }) => {
         }
         return <Dave key={index} text={text} status={status} url={url} />
       })}
+      {isTranscribing && (
+        <Dave text="(transcribing..." status="TRANSCRIBING" url={url} />
+      )}
     </Timeline>
   )
 }
-Messages.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
+Messages.propTypes = {
+  crisp: PropTypes.instanceOf(Crisp),
+  isTranscribing: PropTypes.bool,
+}
 
 export default Messages

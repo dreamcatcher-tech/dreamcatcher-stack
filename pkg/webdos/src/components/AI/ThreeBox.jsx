@@ -26,6 +26,10 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
   useEffect(() => {
     window.scrollTo(0, document.body.scrollHeight)
   }, [crisp])
+  const [isTranscribing, setIsTranscribing] = useState(false)
+  const onTranscription = useCallback((isTranscribing) => {
+    setIsTranscribing(isTranscribing)
+  })
   if (!crisp || crisp.isLoading) {
     // TODO do not remount the tree just because the crisp is loading
     return
@@ -41,8 +45,13 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
       p={1}
       sx={{ width: '100%', minHeight: '100%' }}
     >
-      <Messages crisp={crisp} />
-      <Input onSend={onSend} preload={preload} preSubmit={preSubmit} />
+      <Messages crisp={crisp} isTranscribing={isTranscribing} />
+      <Input
+        onSend={onSend}
+        preload={preload}
+        preSubmit={preSubmit}
+        onTranscription={onTranscription}
+      />
     </Stack>
   )
   // return (

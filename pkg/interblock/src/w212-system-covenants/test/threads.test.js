@@ -1,4 +1,4 @@
-import { Interpulse, useAsync } from '../..'
+import { Interpulse } from '../..'
 import equal from 'fast-deep-equal'
 import dotenv from 'dotenv'
 import { injectResponses } from '../src/ai'
@@ -16,7 +16,7 @@ describe('threads', () => {
     // Debug.enable('iplog Interpulse')
     const stream = engine.subscribe('.HAL')
     print(stream)
-    const response = await actions.user('add a new customer', 'key-1')
+    const response = await actions.user('add a new customer')
     const state = (await engine.latest('.HAL')).getState().toJS()
 
     // give a prompt to HAL, see it change directory.
@@ -25,6 +25,7 @@ describe('threads', () => {
     const add = 'add a new customer'
     const nearly = 'addj bob' // if nearly a command, gpt should recognize
   }, 30000)
+  it('rejects on concurrent prompt attempts')
 })
 
 const print = async (stream) => {

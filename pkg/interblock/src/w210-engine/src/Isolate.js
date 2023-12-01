@@ -16,8 +16,11 @@ class IsolateContainer {
     assert(pulse instanceof Pulse)
     assert(pulse.isModified())
     assert.strictEqual(typeof overloads, 'object')
-    assert(!whisper || whisper instanceof Map)
     assert(Number.isInteger(timeout))
+    if (whisper) {
+      assert(Array.isArray(whisper))
+      assert(!whisper.length, `whisper already has ${whisper.length} entries`)
+    }
     const { covenant: covenantString } = pulse.provenance.dmz
 
     let covenant = { reducer: defaultReducer }
@@ -31,7 +34,7 @@ class IsolateContainer {
     // TODO use full check for if we are effects capable
     container.#isEffects = pulse.getConfig().isPierced
     if (container.#isEffects) {
-      assert(whisper instanceof Map, `whisper is required for effects`)
+      assert(whisper, `whisper is required for effects`)
     }
     container.#whisper = whisper
     container.#timeout = timeout
@@ -65,7 +68,7 @@ class IsolateContainer {
 export class Isolate {
   #overloads = {}
   #overloadPulses = new Map()
-  #whispers = new Map() // chainId -> { key -> fn }
+  #whispers = new Map() // chainId -> function[]
 
   static create() {
     return new Isolate()
@@ -144,35 +147,22 @@ export class Isolate {
     if (pulse.getConfig().isPierced) {
       const chainId = pulse.getAddress().getChainId()
       if (!this.#whispers.has(chainId)) {
-        this.#whispers.set(chainId, new Map())
+        this.#whispers.set(chainId, [])
       }
       whisper = this.#whispers.get(chainId)
-      assert(whisper.size === 0, `whisper already has ${whisper.size} entries`)
+      assert(!whisper.length, `whisper already has ${whisper.length} entries`)
     }
-    // TODO force all whispers to have been popped before a later pulse
-    // or block pushing any whispers if the previous pulse hasn't been popped
     return await IsolateContainer.create(pulse, overloads, whisper, timeout)
   }
-  popAsyncWhisper(pulse, request) {
+  getWhispersReference(pulse) {
     assert(pulse instanceof Pulse)
-    assert(request instanceof Request)
-    assert.strictEqual(request.type, '@@ASYNC')
     // TODO handle config changing partway thru execution
     assert(pulse.getConfig().isPierced, `chain is not side effect capable`)
-    const { key } = request.payload
-    assert.strictEqual(typeof key, 'string')
 
     const chainId = pulse.getAddress().getChainId()
-    assert(this.#whispers.has(chainId), `no whispers for ${chainId}`)
     const whispers = this.#whispers.get(chainId)
-    if (!whispers.has(key)) {
-      debugger
-    }
-    assert(whispers.has(key), `no whisper for ${key}`)
-
-    const fn = whispers.get(key)
-    whispers.delete(key)
-    return fn
+    assert(Array.isArray(whispers), `no whisper array for ${chainId}`)
+    return whispers
   }
 }
 

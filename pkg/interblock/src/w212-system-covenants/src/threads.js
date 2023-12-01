@@ -91,7 +91,7 @@ const reducer = async (request) => {
           const list = await context.ai.assistantsList(params)
           // TODO loop if more than 100 assistants
           return list.data
-        }, 'key-assistant-list')
+        })
         let remote = assistants.find((a) => a.name === path)
         if (remote) {
           debug('assistant', remote.id, remote.name)
@@ -111,17 +111,15 @@ const reducer = async (request) => {
               instructions,
             })
             return result
-          }, 'key-assistant-create')
+          })
           assistantId = remote.id
           await setState({ assistantId })
         }
         const gpt4Api = transformToGpt4Api(api)
-        remote = await useAsync(
-          async () =>
-            context.ai.assistantsUpdate(assistantId, {
-              tools: gpt4Api,
-            }),
-          'key-update-tools'
+        remote = await useAsync(async () =>
+          context.ai.assistantsUpdate(assistantId, {
+            tools: gpt4Api,
+          })
         )
       } else {
         // check that the assistant is still valid
@@ -135,7 +133,7 @@ const reducer = async (request) => {
           // TODO add metadata for the root chainId, path, and thread pulseId
           debug('create thread', thread)
           return thread.id
-        }, 'key-thread-create')
+        })
         debug('threadId', threadId)
         await setState({ threadId })
       } else {
@@ -152,7 +150,7 @@ const reducer = async (request) => {
         })
         debug('message', result.thread_id, result.id)
         return result.id
-      }, 'key-message-create')
+      })
       debug('messageId', messageId)
       await updateMessageStatus(STATUS.USER.DONE)
 
@@ -163,7 +161,7 @@ const reducer = async (request) => {
           assistant_id: assistantId,
         })
         return result.id
-      }, 'key-run-create')
+      })
       await updateMessageStatus(STATUS.HAL.THINKING)
 
       debug('runId', runId)
@@ -261,9 +259,8 @@ const execTools = async (toolCalls, threadId, runId) => {
     return { tool_call_id, output }
   })
   const tool_outputs = await Promise.all(calls)
-  await useAsync(
-    () => context.ai.submitToolOutputs(threadId, runId, { tool_outputs }),
-    'key-submit-tool-outputs'
+  await useAsync(() =>
+    context.ai.submitToolOutputs(threadId, runId, { tool_outputs })
   )
 }
 const splat = (existing, next) => {
@@ -336,7 +333,7 @@ const pollSteps = async (lastStepId, threadId, runId) =>
       }
     }
     return result
-  }, 'key-run-step-list')
+  })
 
 const updateSteps = async (rawSteps) => {
   // TODO tools could use the actual data from the chain to populate results

@@ -16,7 +16,7 @@ let invokeId = 0
 let activeInvocations = new Map()
 
 export const wrapReduceEffects = async (trail, reducer, whisper, timeout) => {
-  assert(whisper instanceof Map)
+  assert(Array.isArray(whisper))
   return _wrapReduce(trail, reducer, whisper, timeout)
 }
 
@@ -29,7 +29,7 @@ const _wrapReduce = async (trail, reducer, whisper, timeout = 500) => {
   assert(trail.isPending())
   assert(trail.isFulfilled())
   assert.strictEqual(typeof reducer, 'function')
-  assert(!whisper || whisper instanceof Map)
+  assert(!whisper || Array.isArray(whisper))
   assert.strictEqual(typeof timeout, 'number')
   assert(timeout > 0)
 
@@ -159,30 +159,19 @@ const invoke = (request, to) => {
     throw reply.getRejectionError()
   }
 }
-const useAsync = async (fn, key = '') => {
+const useAsync = async (fn, ...rest) => {
   assert.strictEqual(typeof fn, 'function', `must supply a function`)
-  assert.strictEqual(typeof key, 'string', `key must be a string`)
-  assert(key, `key cannot be nullish`)
+  assert(!rest.length, `unknown args: ${rest}`)
 
-  // TODO find how to tolerate no key being sent in - must be deterministic
-  // use the requestId as one key, but also attach a user defined key
-  // Use an array instead, and use the originating request id as
-  // a mapping so the caller can get access to the array index if needed.
-  // a tree structure should emerge where a single trigger can make more than
-  // one action that results.
-  // This status tracking can be used for both chainland and async actions
-  // can help the UI show richer information about where the process is up to
-  // Effectively surfaces the supervisor tree.
-
-  const request = Request.create('@@ASYNC', { key })
+  const request = Request.create('@@ASYNC')
   // TODO if we are not to execute these effects, then do not whisper them
-  const { whisper } = getInvocation()
-  if (!(whisper instanceof Map)) {
-    throw new Error(`Chain is not side effect capable`)
+  const { whisper, settles } = getInvocation()
+  if (!Array.isArray(whisper)) {
+    throw new Error(`No whisper => chain is not side effect capable`)
   }
-  assert(!whisper.has(key), `key already in use: ${key}`)
-  whisper.set(key, fn)
-  console.log(`whispering ${key}`, fn)
+  if (!settles.length) {
+    whisper.push(fn)
+  }
   const { result } = await invoke(request, '.@@io')
   return result
 }

@@ -38,7 +38,7 @@ const Mic = ({ onEvent }) => (
 )
 Mic.propTypes = { onEvent: PropTypes.func.isRequired }
 
-const Input = ({ onSend, preload, preSubmit }) => {
+const Input = ({ onSend, preload, preSubmit, onTranscription }) => {
   const [value, setValue] = useState(preload || '')
   const [disabled, setDisabled] = useState(false)
   const [isTransReady, setIsTransReady] = useState(false)
@@ -51,6 +51,7 @@ const Input = ({ onSend, preload, preSubmit }) => {
   } = useAudioRecorder()
   const start = useCallback(() => {
     startRecording()
+    onTranscription && onTranscription(true)
     setDisabled(true)
   }, [startRecording])
   const send = useCallback(() => {
@@ -73,7 +74,10 @@ const Input = ({ onSend, preload, preSubmit }) => {
         setIsTransReady(true)
       })
       .catch(console.error)
-      .finally(() => setDisabled(false))
+      .finally(() => {
+        onTranscription && onTranscription(false)
+        setDisabled(false)
+      })
   }, [recordingBlob])
   useEffect(() => {
     if (!isTransReady) {
@@ -93,7 +97,7 @@ const Input = ({ onSend, preload, preSubmit }) => {
             {isRecording && (
               <LiveAudioVisualizer height={50} mediaRecorder={mediaRecorder} />
             )}
-            <Mic onEvent={isRecording ? stopRecording : start} />
+            <Mic onEvent={isRecording ? stop : start} />
           </>
         )}
       </InputAdornment>
@@ -117,27 +121,33 @@ const Input = ({ onSend, preload, preSubmit }) => {
       const isUnmodified = !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey
       if (e.key === 'Enter' && isUnmodified) {
         e.preventDefault()
-        send(value)
+        send()
       }
       if (e.key === 'Escape') {
         e.preventDefault()
         setValue('')
       }
-      if (e.key === ' ' && e.ctrlKey && !value) {
+    },
+    [send]
+  )
+  useEffect(() => {
+    const listener = (e) => {
+      if (e.key === ' ' && e.ctrlKey) {
+        if (disabled && !isRecording) {
+          return
+        }
         e.preventDefault()
+        setValue('')
         if (isRecording) {
           stopRecording()
         } else {
           start()
         }
       }
-    },
-    [send, start, stopRecording, value]
-  )
-  useEffect(() => {
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onKeyDown])
+    }
+    window.addEventListener('keydown', listener)
+    return () => window.removeEventListener('keydown', listener)
+  }, [[start, stop, disabled]])
 
   useEffect(() => {
     if (!preSubmit) {
@@ -165,6 +175,7 @@ Input.propTypes = {
   onSend: PropTypes.func.isRequired,
   preload: PropTypes.string,
   preSubmit: PropTypes.bool,
+  onTranscription: PropTypes.func,
 }
 
 export default Input

@@ -44,7 +44,7 @@ const context = {}
 
 const reducer = async (request) => {
   debug('request', request)
-  const { prompt, key } = request.payload
+  const { prompt } = request.payload
   switch (request.type) {
     case 'PROMPT': {
       const message = { role: 'user', content: prompt }
@@ -56,7 +56,7 @@ const reducer = async (request) => {
         const results = await all(stream(messages))
         debug('effect results', results)
         return results
-      }, key)
+      })
       const result = results.join('')
       debug('result', result)
       return { result }

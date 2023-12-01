@@ -587,12 +587,16 @@ export class Engine {
     // TODO make reducer throw if try tx to an unpierced io
     const { tx, channelId } = await pulse.getNetwork().getIo()
     assert.strictEqual(channelId, Network.FIXED_IDS.IO)
+
     if (!tx.isEmpty()) {
+      const whispers = this.#isolate.getWhispersReference(pulse)
       const { reducer, system } = tx
       assert(!system.requestsLength, 'cannot tx system requests to io')
       let requestIndex = reducer.requestsLength - 1
+      assert(whispers.length === reducer.requests.length, `whisper count error`)
       for (const request of reducer.requests) {
-        const effect = this.#isolate.popAsyncWhisper(pulse, request)
+        assert(request.type === '@@ASYNC', `request type: ${request.type}`)
+        const effect = whispers.shift()
         assert.strictEqual(typeof effect, 'function')
 
         const requestId = RequestId.create(channelId, 'reducer', requestIndex)
@@ -607,7 +611,6 @@ export class Engine {
     }
   }
   async #runEffect(target, effect, requestId) {
-    await Promise.resolve()
     let reply
     try {
       // TODO supply some context to the effect

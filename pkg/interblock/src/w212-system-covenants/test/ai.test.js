@@ -25,7 +25,7 @@ describe('ai', () => {
       if (type === '@@INIT') {
         return
       }
-      const result = await useAsync(effect, 'key')
+      const result = await useAsync(effect)
       expect(result).toEqual('result')
     }
     const api = {
