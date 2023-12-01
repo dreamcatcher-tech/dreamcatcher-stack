@@ -147,7 +147,10 @@ export class Isolate {
         this.#whispers.set(chainId, new Map())
       }
       whisper = this.#whispers.get(chainId)
+      assert(whisper.size === 0, `whisper already has ${whisper.size} entries`)
     }
+    // TODO force all whispers to have been popped before a later pulse
+    // or block pushing any whispers if the previous pulse hasn't been popped
     return await IsolateContainer.create(pulse, overloads, whisper, timeout)
   }
   popAsyncWhisper(pulse, request) {
@@ -162,6 +165,9 @@ export class Isolate {
     const chainId = pulse.getAddress().getChainId()
     assert(this.#whispers.has(chainId), `no whispers for ${chainId}`)
     const whispers = this.#whispers.get(chainId)
+    if (!whispers.has(key)) {
+      debugger
+    }
     assert(whispers.has(key), `no whisper for ${key}`)
 
     const fn = whispers.get(key)

@@ -282,10 +282,10 @@ export class Engine {
     await this.#endurance.endure(pulse)
 
     this.#notifySubscribers(pulse) // TODO move pierce tracker to a subscriber
+
+    await this.#effects(pulse) // do before lock to stop race conditions
     await lock.release()
     debug('lock released', pool.getAddress())
-
-    await this.#effects(pulse)
     await this.#internalTransmit(pulse)
   }
   async #fork(pool) {

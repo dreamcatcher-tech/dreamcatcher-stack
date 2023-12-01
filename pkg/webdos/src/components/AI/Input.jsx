@@ -38,8 +38,8 @@ const Mic = ({ onEvent }) => (
 )
 Mic.propTypes = { onEvent: PropTypes.func.isRequired }
 
-const Input = ({ onSend }) => {
-  const [value, setValue] = useState('Add a customer named Karen')
+const Input = ({ onSend, preload, preSubmit }) => {
+  const [value, setValue] = useState(preload || '')
   const [disabled, setDisabled] = useState(false)
   const [isTransReady, setIsTransReady] = useState(false)
   const {
@@ -139,6 +139,13 @@ const Input = ({ onSend }) => {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onKeyDown])
 
+  useEffect(() => {
+    if (!preSubmit) {
+      return
+    }
+    send(value)
+  }, [])
+
   return (
     <TextField
       value={disabled ? ' ' : value}
@@ -154,6 +161,10 @@ const Input = ({ onSend }) => {
     />
   )
 }
-Input.propTypes = { onSend: PropTypes.func.isRequired }
+Input.propTypes = {
+  onSend: PropTypes.func.isRequired,
+  preload: PropTypes.string,
+  preSubmit: PropTypes.bool,
+}
 
 export default Input

@@ -62,6 +62,8 @@ const STATUS = {
   },
 }
 
+// TODO use actions to do more of the threading to reduce the replay
+
 const reducer = async (request) => {
   debug('request', request)
   switch (request.type) {

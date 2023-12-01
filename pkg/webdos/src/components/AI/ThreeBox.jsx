@@ -11,7 +11,7 @@ debug(`loaded`)
 
 let key = 0
 
-const ThreeBox = ({ crisp }) => {
+const ThreeBox = ({ crisp, preload, preSubmit }) => {
   const [error, setError] = useState()
   const onSend = useCallback(
     (value) => {
@@ -27,6 +27,7 @@ const ThreeBox = ({ crisp }) => {
     window.scrollTo(0, document.body.scrollHeight)
   }, [crisp])
   if (!crisp || crisp.isLoading) {
+    // TODO do not remount the tree just because the crisp is loading
     return
   }
   if (crisp.absolutePath !== '/.HAL') {
@@ -41,7 +42,7 @@ const ThreeBox = ({ crisp }) => {
       sx={{ width: '100%', minHeight: '100%' }}
     >
       <Messages crisp={crisp} />
-      <Input onSend={onSend} />
+      <Input onSend={onSend} preload={preload} preSubmit={preSubmit} />
     </Stack>
   )
   // return (
@@ -80,6 +81,10 @@ const ThreeBox = ({ crisp }) => {
   //   </Box>
   // )
 }
-ThreeBox.propTypes = { crisp: PropTypes.instanceOf(Crisp) }
+ThreeBox.propTypes = {
+  crisp: PropTypes.instanceOf(Crisp),
+  preload: PropTypes.string,
+  preSubmit: PropTypes.bool,
+}
 
 export default ThreeBox

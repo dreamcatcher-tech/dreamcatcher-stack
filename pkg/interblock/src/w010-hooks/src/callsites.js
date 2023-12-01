@@ -180,7 +180,9 @@ const useAsync = async (fn, key = '') => {
   if (!(whisper instanceof Map)) {
     throw new Error(`Chain is not side effect capable`)
   }
+  assert(!whisper.has(key), `key already in use: ${key}`)
   whisper.set(key, fn)
+  console.log(`whispering ${key}`, fn)
   const { result } = await invoke(request, '.@@io')
   return result
 }
