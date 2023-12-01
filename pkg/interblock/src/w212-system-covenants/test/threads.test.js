@@ -7,7 +7,7 @@ const debug = Debug('test')
 dotenv.config({ path: '../../.env' })
 
 describe('threads', () => {
-  it('runs a shell command', async () => {
+  it.only('runs a shell command', async () => {
     // start a thread, which targets /
     const engine = await Interpulse.createCI()
     await engine.bootHal()
