@@ -234,7 +234,7 @@ const execTools = async (toolCalls, threadId, runId) => {
   assert(Array.isArray(tool_calls), 'tool_calls is not an array')
   assert(type === 'tool_calls', `step type is ${type}`)
   assert(tool_calls.length, 'tool_calls is empty')
-
+  debug('tool_calls', tool_calls)
   // TODO standardize names for title and key
   const actions = schemaToFunctions(shell.api)
 

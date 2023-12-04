@@ -226,6 +226,9 @@ export class Pulse extends IpldStruct {
   }
   setAI(ai) {
     assert(ai instanceof Object)
+    const { name, assistant } = ai
+    assert.strictEqual(typeof name, 'string')
+    assert.strictEqual(typeof assistant, 'object')
     return this.setMap({ provenance: { dmz: { ai } } })
   }
 

@@ -210,6 +210,13 @@ describe('shell', () => {
       const state = covenant.getState().toJS()
       assert.strictEqual(state.name, 'collection')
     })
+    test('add needed non existent path throws', async () => {
+      const engine = await Engine.createCI({ overloads: { root: shell } })
+      Debug.enable('*openPath iplog *shell *reducer')
+      await expect(() =>
+        engine.pierce(api.add('child1/nested'))
+      ).rejects.toThrow('path must be foreign')
+    })
     test.todo('invalid parent path rejects')
     test.todo('grandchild can spawn')
   })

@@ -73,14 +73,16 @@ export class AsyncTrail extends IpldStruct {
   }
   assertLogic() {
     assert(!this.pulse)
-    assert(!this.txs.length || !this.txs.every((tx) => tx.isSettled()))
     assert(this.settles.every((tx) => tx.isSettled()))
     assert(!this.reply, `can only crush promised trails`)
+    if (this.txs) {
+      this.#checkTxs(this.txs)
+    }
   }
   isFulfilled() {
     return (
       !this.txs.length &&
-      this.settles.every((s) => s.isSettled()) &&
+      this.settles.every((tx) => tx.isSettled()) &&
       !this.openPaths
     )
   }
@@ -88,20 +90,18 @@ export class AsyncTrail extends IpldStruct {
     return this.isFulfilled() && !this.isPending()
   }
   setTxs(txs) {
+    this.#checkTxs(txs)
+    return this.setMap({ txs })
+  }
+  #checkTxs(txs) {
     assert(Array.isArray(txs))
     assert(txs.every((tx) => tx instanceof AsyncRequest))
     assert(txs.every((tx) => !tx.isSettled() || tx.isRejection()))
-    return this.setMap({ txs })
   }
   updateTxs(txs) {
-    // used for adding requestIds to txs
-    assert(Array.isArray(txs))
+    // TODO check requests match and only update requestIds
     assert.strictEqual(this.txs.length, txs.length)
-    if (!txs.length) {
-      return this
-    }
-    // TODO check requests match
-    return this.setTxs(txs)
+    return this.setTxs(txs).#updateSettlement()
   }
   settleOrigin(reply) {
     assert(reply instanceof Reply)
@@ -146,12 +146,17 @@ export class AsyncTrail extends IpldStruct {
       return tx
     })
     assert(isMatched, `no match found for ${rxReply.requestId}`)
-    let { settles } = this
+
+    return this.setMap({ txs }).#updateSettlement()
+  }
+  #updateSettlement() {
+    let { txs, settles } = this
     if (txs.every((tx) => tx.isSettled())) {
       settles = settles.concat(txs)
       txs = []
+      return this.setMap({ txs, settles })
     }
-    return this.setMap({ txs, settles })
+    return this
   }
   getSettles() {
     return [...this.settles]

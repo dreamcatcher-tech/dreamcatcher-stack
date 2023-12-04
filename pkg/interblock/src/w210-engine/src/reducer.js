@@ -74,7 +74,11 @@ export const reducer = async (pool, isolate, latest) => {
     trail = nextTrail
     network = nextNet
     pending = pending.updateTrail(trail)
-    // TODO if fulfilled by still pending due to transmit errors, reexecute
+
+    if (trail.isFulfilled() && !trail.isSettled()) {
+      // transmit errors can cause fulfillment, so we must re-execute
+      await reduceFulfilledTrail(trail)
+    }
   }
   // reassigns: pending, network, softpulse
   while (network.channels.rxs.length && counter++ < 10000) {
@@ -198,6 +202,7 @@ const transmitTrailTxs = async (trail, network, pending) => {
       txs.push(tx.settleError(error))
     }
   }
+
   trail = trail.updateTxs(txs)
   return [trail, network]
 }

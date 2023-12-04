@@ -33,6 +33,7 @@ describe('hooker', () => {
     assert(loopback.tx.isSettled())
     expect(loopback).toMatchSnapshot()
   })
+
   test.todo('throw if pending and tx a request to self')
   // if only request from pending is a request to self, then know it will never resolve
   // basically cannot raise pending, then request something to self

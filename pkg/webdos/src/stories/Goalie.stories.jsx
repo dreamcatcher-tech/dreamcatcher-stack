@@ -13,6 +13,8 @@ We should be able to make a dedicated covenant that knows how to run some tests 
 So in storybook, we would load up HAL like normal, install the app for doing Goalie tests, then dump in the prompt requesting it to do the test.  The Goalie should detect that we want to test the Goalie, and begin operating this app.
 
 Goals should be prefixed by the path, so like "add new item" should have a path like "apps/crm/customers" so that it scopes the goal to the right app.
+
+Goaling also helps find help using embeddings since goals are what help is indexes on.
  */
 
 const makeInit = () => {

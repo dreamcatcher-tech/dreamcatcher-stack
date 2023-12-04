@@ -137,11 +137,9 @@ const pulseReducer = async (type, payload) => {
       return
     }
     case '@@SET_AI': {
-      const { name, instructions } = payload
-      assert.strictEqual(typeof name, 'string')
-      assert.strictEqual(typeof ai, 'object')
-      const nextAI = pulse.getAi().setMap({ name, instructions })
-      pulse = pulse.setAi(nextAI)
+      // TODO check format against ai schema and action schema
+      const { ai } = payload
+      pulse = pulse.setAI(ai)
       setPulse(pulse)
       return
     }

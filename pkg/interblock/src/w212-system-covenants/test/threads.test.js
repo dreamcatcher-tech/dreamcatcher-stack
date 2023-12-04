@@ -7,7 +7,7 @@ const debug = Debug('test')
 dotenv.config({ path: '../../.env' })
 
 describe('threads', () => {
-  it.only('runs a shell command', async () => {
+  it('runs a shell command', async () => {
     // start a thread, which targets /
     const engine = await Interpulse.createCI()
     await engine.bootHal()
@@ -25,7 +25,7 @@ describe('threads', () => {
     const add = 'add a new customer'
     const nearly = 'addj bob' // if nearly a command, gpt should recognize
   }, 30000)
-  it('rejects on concurrent prompt attempts')
+  it.todo('rejects on concurrent prompt attempts')
 })
 
 const print = async (stream) => {
