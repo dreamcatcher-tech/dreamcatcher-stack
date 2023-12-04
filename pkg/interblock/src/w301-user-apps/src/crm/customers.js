@@ -69,7 +69,7 @@ const installer = {
           isGeocodedGps: {
             title: 'Geocoded GPS',
             type: 'boolean',
-            default: true,
+            default: false,
           },
           isGpsValid: {
             title: 'Is GPS Valid',

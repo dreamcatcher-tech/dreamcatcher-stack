@@ -97,7 +97,7 @@ const Input = ({ onSend, preload, preSubmit, onTranscription }) => {
             {isRecording && (
               <LiveAudioVisualizer height={50} mediaRecorder={mediaRecorder} />
             )}
-            <Mic onEvent={isRecording ? stop : start} />
+            <Mic onEvent={isRecording ? stopRecording : start} />
           </>
         )}
       </InputAdornment>
