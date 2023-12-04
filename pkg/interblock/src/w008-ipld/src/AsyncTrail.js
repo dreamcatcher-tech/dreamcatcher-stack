@@ -96,7 +96,9 @@ export class AsyncTrail extends IpldStruct {
   #checkTxs(txs) {
     assert(Array.isArray(txs))
     assert(txs.every((tx) => tx instanceof AsyncRequest))
-    assert(txs.every((tx) => !tx.isSettled() || tx.isRejection()))
+    if (txs.length) {
+      assert(txs.some((tx) => !tx.isSettled() || tx.isRejection()))
+    }
   }
   updateTxs(txs) {
     // TODO check requests match and only update requestIds

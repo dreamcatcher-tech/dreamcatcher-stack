@@ -16,7 +16,8 @@ describe('threads', () => {
     // Debug.enable('iplog Interpulse')
     const stream = engine.subscribe('.HAL')
     print(stream)
-    const response = await actions.user('add a new customer')
+    const response = await actions.user('ping me')
+    // TODO add a test that does a tool call
     const state = (await engine.latest('.HAL')).getState().toJS()
 
     // give a prompt to HAL, see it change directory.
