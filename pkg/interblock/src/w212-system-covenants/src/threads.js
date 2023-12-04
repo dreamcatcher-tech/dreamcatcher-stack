@@ -434,7 +434,15 @@ const createAI = () => {
       const operation = retry.operation(retryOptions)
       operation.attempt(async () => {
         try {
-          const result = await fn(...args)
+          const result = await new Promise((resolve, reject) => {
+            const timeout = 10000
+            const error = new Error(`timeout after ${timeout}ms`)
+            const id = setTimeout(() => reject(error), 10000)
+            fn(...args).then((result) => {
+              clearTimeout(id)
+              resolve(result)
+            }, reject)
+          })
           resolve(result)
         } catch (error) {
           console.error(error)

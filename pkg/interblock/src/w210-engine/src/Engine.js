@@ -622,7 +622,11 @@ export class Engine {
         payload.result = result
       }
       reply = Reply.createResolve(payload)
-    } catch (error) {
+    } catch (rawError) {
+      let error = rawError
+      if (!(rawError instanceof Error)) {
+        error = new Error(rawError)
+      }
       reply = Reply.createError(error)
     }
     if (!this.#started) {
