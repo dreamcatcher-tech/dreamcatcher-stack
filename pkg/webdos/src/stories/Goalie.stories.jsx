@@ -15,6 +15,16 @@ So in storybook, we would load up HAL like normal, install the app for doing Goa
 Goals should be prefixed by the path, so like "add new item" should have a path like "apps/crm/customers" so that it scopes the goal to the right app.
 
 Goaling also helps find help using embeddings since goals are what help is indexes on.
+
+Where is the goaling chain ?
+It could be an AI node, or it could be done within HALs logic.
+But we need a list of goals, so we could store in state, or we could make it be children
+
+send() calls into the goaler first, which gives us back a goal.
+Depending on the status HALs goal changes - figure out what HAL wants, or proceed with the given goal.
+First we would fire up the thread with the goalie, which is the threadmaster
+Then when we get the response from the goalie, we set up HALs directions.
+
  */
 
 const makeInit = () => {
@@ -41,12 +51,13 @@ const Template = (args) => {
 export const Goalie = Template.bind({})
 Goalie.play = play(makeInit())
 
-const tests = `add a customer
+const tests = 'add a customer'
+// const tests = `add a customer
 
-change directory
+// change directory
 
-who much are bananas ?
+// who much are bananas ?
 
-Do I need an umbrella in kincardine ?
+// Do I need an umbrella in kincardine ?
 
-delete this customer`
+// delete this customer`

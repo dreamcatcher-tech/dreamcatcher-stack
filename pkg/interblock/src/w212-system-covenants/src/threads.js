@@ -60,6 +60,11 @@ const STATUS = {
     EXECUTING: 'EXECUTING',
     DONE: 'DONE',
   },
+  GOAL: {
+    BOOTING: 'BOOTING',
+    THINKING: 'THINKING',
+    DONE: 'DONE',
+  },
 }
 
 // TODO use actions to do more of the threading to reduce the replay
@@ -436,7 +441,7 @@ const createAI = () => {
         try {
           const result = await new Promise((resolve, reject) => {
             const timeout = 10000
-            const error = new Error(`timeout after ${timeout}ms`)
+            const error = new Error(`OpenAI timeout after ${timeout}ms`)
             const id = setTimeout(() => reject(error), 10000)
             fn(...args).then((result) => {
               clearTimeout(id)

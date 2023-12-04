@@ -20,6 +20,18 @@ const state = {
       status: 'THINKING',
     },
     {
+      type: 'GOAL',
+      titles: ['CRM', 'list customers'],
+      summary: 'list all customers',
+      status: 'THINKING',
+    },
+    {
+      type: 'GOAL',
+      titles: ['CRM', 'list customers'],
+      summary: 'list all customers',
+      status: 'DONE',
+    },
+    {
       type: 'HAL',
       steps: [
         {
@@ -58,6 +70,12 @@ const state = {
     {
       type: 'USER',
       text: 'well what can you actually do then ?',
+      status: 'DONE',
+    },
+    {
+      type: 'GOAL',
+      titles: ['HELP'],
+      summary: 'Find out what capabilities are present',
       status: 'DONE',
     },
   ],

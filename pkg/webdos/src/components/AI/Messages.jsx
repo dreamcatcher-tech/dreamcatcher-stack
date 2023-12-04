@@ -8,6 +8,7 @@ import Debug from 'debug'
 import DaveIcon from '@mui/icons-material/SentimentDissatisfied'
 import ToolIcon from '@mui/icons-material/Construction'
 import HalIcon from '@mui/icons-material/Psychology'
+import GoalIcon from '@mui/icons-material/GpsFixed'
 import Markdown from 'markdown-to-jsx'
 import Timeline from '@mui/lab/Timeline'
 import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem'
@@ -16,6 +17,9 @@ import TimelineConnector from '@mui/lab/TimelineConnector'
 import TimelineContent from '@mui/lab/TimelineContent'
 import TimelineDot from '@mui/lab/TimelineDot'
 import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import LeafIcon from '@mui/icons-material/EnergySavingsLeaf'
+import NodeIcon from '@mui/icons-material/ChevronRight'
 
 const debug = Debug('AI:ThreeBox')
 
@@ -171,6 +175,62 @@ Dave.propTypes = {
   url: PropTypes.string,
 }
 
+const Goal = ({ titles, summary, status, url }) => {
+  return (
+    <TimelineItem>
+      <TimelineSeparator onClick={() => window.open(url, '_blank')}>
+        <TimelineDot color="warning" sx={{ position: 'relative' }}>
+          <GoalIcon />
+          {status !== STATUS.GOAL.DONE && <Progress />}
+        </TimelineDot>
+      </TimelineSeparator>
+      <TimelineContent>
+        {status !== STATUS.GOAL.DONE ? (
+          <>
+            <Typography variant="h6" component="span">
+              Goal
+            </Typography>
+            <br />
+            <Typography component="span" fontStyle="italic">
+              thinking...
+            </Typography>
+          </>
+        ) : (
+          <>
+            {titles.map((title, key) => {
+              const icon =
+                key === titles.length - 1 ? (
+                  <LeafIcon fontSize="small" />
+                ) : (
+                  <NodeIcon fontSize="small" />
+                )
+              return (
+                <Button
+                  key={key}
+                  variant="outlined"
+                  color="warning"
+                  size="small"
+                  sx={{ mr: 1 }}
+                  endIcon={icon}
+                >
+                  {title}
+                </Button>
+              )
+            })}
+            <Typography>{summary}</Typography>
+          </>
+        )}
+      </TimelineContent>
+    </TimelineItem>
+  )
+}
+Goal.propTypes = {
+  titles: PropTypes.arrayOf(PropTypes.string),
+  summary: PropTypes.string,
+  status: PropTypes.string,
+  url: PropTypes.string,
+}
+
 const Messages = ({ crisp, isTranscribing }) => {
   if (!crisp || crisp.isLoading) {
     return
@@ -180,6 +240,7 @@ const Messages = ({ crisp, isTranscribing }) => {
   }
   const { messages, threadId, assistantId } = crisp.state
   const url = `https://platform.openai.com/playground?assistant=${assistantId}&mode=assistant&thread=${threadId}`
+  // TODO add a different url for the goals and goalbot
   return (
     <Timeline
       sx={{
@@ -189,11 +250,25 @@ const Messages = ({ crisp, isTranscribing }) => {
         },
       }}
     >
-      {messages.map(({ type, status, text, steps }, index) => {
-        if (type === 'HAL') {
-          return <HAL key={index} steps={steps} status={status} />
+      {messages.map(({ type, status, text, steps, titles, summary }, index) => {
+        switch (type) {
+          case 'HAL':
+            return <HAL key={index} steps={steps} status={status} />
+          case 'USER':
+            return <Dave key={index} text={text} status={status} url={url} />
+          case 'GOAL':
+            return (
+              <Goal
+                key={index}
+                titles={titles}
+                summary={summary}
+                status={status}
+                url={url}
+              />
+            )
+          default:
+            throw new Error(`unknown type ${type}`)
         }
-        return <Dave key={index} text={text} status={status} url={url} />
       })}
       {isTranscribing && (
         <Dave text="(transcribing..." status="TRANSCRIBING" url={url} />
