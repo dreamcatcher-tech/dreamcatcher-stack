@@ -73,7 +73,6 @@ const reducer = async (request) => {
   debug('request', request)
   switch (request.type) {
     case 'USER': {
-      const { key } = request.payload
       let [{ threadId, assistantId, path }, setState] = await useState()
       await addUserMessage(request.payload.text)
 

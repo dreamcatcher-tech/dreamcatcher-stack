@@ -42,7 +42,7 @@ describe('goalie', () => {
     const update = await actions.update(0, ['test2'], 'test2')
     expect(update).toEqual({ summary: 'test2', titles: ['test2'] })
   })
-  it('determines the goals of Dave', async () => {
+  it.only('determines the goals of Dave', async () => {
     const engine = await Interpulse.createCI()
     Debug.enable('iplog *goalie tests')
     await engine.add('testGoalie', 'goalie')

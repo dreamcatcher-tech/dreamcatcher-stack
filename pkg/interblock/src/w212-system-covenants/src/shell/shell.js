@@ -201,7 +201,11 @@ const reducer = async (request) => {
       return await interchain(ln)
     }
     case 'BOOT_HAL': {
-      await ensureChild('.HAL', { covenant: 'threads', state: { path: '/' } })
+      await ensureChild('.goalie', 'goalie')
+      await ensureChild('.HAL', {
+        covenant: 'threads',
+        state: { path: '/' },
+      })
       return
     }
     // check if action is part of mtab api
