@@ -13,6 +13,7 @@ import {
   interchain,
   useAsync,
   useAI,
+  useApi,
   useState,
   schemaToFunctions,
 } from '../../w002-api'
@@ -32,7 +33,7 @@ const api = {
     description: 'A user prompt, which is a request for the AI to do something',
     additionalProperties: false,
     required: ['text'],
-    properties: { text: { type: 'string' }, key: { type: 'string' } },
+    properties: { text: { type: 'string' } },
   },
 }
 const context = {}
@@ -77,15 +78,13 @@ const reducer = async (request) => {
       await addUserMessage(request.payload.text)
 
       let { name, assistant } = defaultAI
-      let api = shell.api
+      const { api, functions } = await useApi(path)
       if (path !== '(default)') {
         const [ai] = await useAI(path)
         if (ai) {
           assert(ai.name === 'GPT4', `ai name is ${ai.name}`)
           name = ai.name
           assistant = ai.assistant
-          // const covenant = await interchain('@@COVENANT', {}, path)
-          // api = covenant.api
         }
       }
       if (!assistantId) {
@@ -144,6 +143,8 @@ const reducer = async (request) => {
         // check the thread has the assistant set
         // check the thread data matches what we have on chain
       }
+      const url = `https://platform.openai.com/playground?assistant=${assistantId}&mode=assistant&thread=${threadId}`
+      debug('url', url)
 
       await updateMessageStatus(STATUS.USER.MESSAGING)
       const { text } = request.payload
@@ -185,7 +186,7 @@ const reducer = async (request) => {
         if (tools) {
           assert(last.status === 'in_progress' && last.type === 'tool_calls')
           await updateMessageStatus(STATUS.HAL.EXECUTING)
-          await execTools(last.step_details, threadId, runId)
+          await execTools(functions, last.step_details, threadId, runId)
           await updateMessageStatus(STATUS.HAL.THINKING)
         }
       } while (!isRunComplete)
@@ -200,8 +201,12 @@ const reducer = async (request) => {
         ai = defaultAI
         path = '(default)'
       }
-      const { name, instructions } = ai
+      const { name, assistant } = ai
       assert.strictEqual(name, 'GPT4', `ai name is ${name}`)
+      assert(assistant instanceof Object)
+      assert(assistant.instructions, 'instructions is missing')
+      assert(assistant.model, 'model is missing')
+
       // TODO check the instruction against the api schema format
       if (!context.ai) {
         context.ai = createAI()
@@ -233,14 +238,13 @@ const transformToGpt4Api = (api) =>
       function: { name, description: `${t}\n${d}`, parameters },
     })
   )
-const execTools = async (toolCalls, threadId, runId) => {
+const execTools = async (functions, toolCalls, threadId, runId) => {
   const { type, tool_calls } = toolCalls
   assert(Array.isArray(tool_calls), 'tool_calls is not an array')
   assert(type === 'tool_calls', `step type is ${type}`)
   assert(tool_calls.length, 'tool_calls is empty')
   debug('tool_calls', tool_calls)
   // TODO standardize names for title and key
-  const actions = schemaToFunctions(shell.api)
 
   const calls = tool_calls.map(async (call) => {
     const { id: tool_call_id, type, function: fn } = call
@@ -249,8 +253,7 @@ const execTools = async (toolCalls, threadId, runId) => {
     let output
     try {
       const payload = JSON.parse(args)
-      const action = actions[name](payload)
-      const result = await interchain(action, '..')
+      const result = await functions[name](payload)
       output = JSON.stringify(result, null, '  ')
     } catch (error) {
       if (error.stack) {

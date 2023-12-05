@@ -30,7 +30,7 @@ const Template = (args) => {
   Debug.enable('')
   return (
     <Engine dev={{ '/crm': apps.crm.covenant }} {...args}>
-      <Syncer path="/.HAL">
+      <Syncer path="/.HAL/.goalie">
         <ThreeBox />
       </Syncer>
     </Engine>

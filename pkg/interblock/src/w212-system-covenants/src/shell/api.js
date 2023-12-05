@@ -55,6 +55,26 @@ export const api = {
     required: ['path'],
     properties: {
       path: { type: 'string', default: '.' }, // TODO regex
+      all: {
+        type: 'boolean',
+        default: false,
+        description: `List all children, including hidden ones that start with a dot`,
+      },
+      schema: {
+        type: 'boolean',
+        default: false,
+        description: `List the schema of each child at the given path`,
+      },
+      state: {
+        type: 'boolean',
+        default: false,
+        description: `List the state of each child at the given path`,
+      },
+      description: {
+        type: 'boolean',
+        default: false,
+        description: `List the description held in the schema of each child at the given path`,
+      },
     },
   },
   rm: {

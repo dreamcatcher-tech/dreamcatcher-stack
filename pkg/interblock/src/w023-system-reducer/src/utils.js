@@ -30,14 +30,18 @@ const getChannelParams = (channel) => {
   }
   return params
 }
-const listChildren = async (pulse) => {
+const listChildren = async (pulse, all = false) => {
   assert(pulse instanceof Pulse)
+  assert(typeof all === 'boolean')
   const children = {}
   const childrenHamt = pulse.getNetwork().children
   // TODO assign aliases to each channel, grouped by type
   // then listChildren just accumulates all those entries
   for await (const [alias, channelId] of childrenHamt.entries()) {
     const channel = await pulse.getNetwork().channels.getChannel(channelId)
+    if (!all && alias.startsWith('.')) {
+      continue
+    }
     children[alias] = getChannelParams(channel)
   }
   const parent = await pulse.getNetwork().getParent()
@@ -55,11 +59,15 @@ const listChildren = async (pulse) => {
   }
   return children
 }
-const listHardlinks = async (pulse) => {
+const listHardlinks = async (pulse, all = false) => {
   assert(pulse instanceof Pulse)
+  assert(typeof all === 'boolean')
   const hardlinks = {}
   const hardlinksHamt = pulse.getNetwork().hardlinks
   for await (const [alias, channelId] of hardlinksHamt.entries()) {
+    if (!all && alias.startsWith('.')) {
+      continue
+    }
     const channel = await pulse.getNetwork().channels.getChannel(channelId)
     hardlinks[alias] = getChannelParams(channel)
   }

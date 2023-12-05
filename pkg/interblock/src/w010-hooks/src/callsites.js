@@ -5,6 +5,7 @@ import {
   AsyncTrail,
   Pulse,
 } from '../../w008-ipld/index.mjs'
+import { schemaToFunctions } from '../../w002-api'
 import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 import callsites from 'callsites'
@@ -215,23 +216,22 @@ const useAI = async (path) => {
   return [ai, setAI]
 }
 // TODO switch to a general form for modifying all slices of a pulse
-const useCovenant = async (path) => {
-  // WARNING THIS IS NOT FINISHED
+const useApi = async (path) => {
   assert.strictEqual(typeof path, 'string', `path must be a string`)
   assert(path, `path cannot be null`)
-  const getAI = Request.createGetAI(path)
-  const { ai } = await interchain(getAI)
-  const setAI = (nextAi) => {
-    if (typeof nextAi !== 'object') {
-      throw new Error(`AI must be an object, but was: ${typeof nextAi}`)
+
+  const getApi = Request.create('@@API', { path })
+  const api = await interchain(getApi)
+
+  const actions = schemaToFunctions(api)
+  const functions = {} // TODO merge with Engine.js usage
+  for (const key of Object.keys(actions)) {
+    functions[key] = (...payload) => {
+      const action = actions[key](...payload)
+      return interchain(action, path)
     }
-    if (equals(nextAi, ai)) {
-      return
-    }
-    const setAIRequest = Request.createSetAI(nextAi)
-    return interchain(setAIRequest, path)
   }
-  return [ai, setAI]
+  return { api, functions }
 }
 
 if (globalThis[Symbol.for('interblock:api:hook')]) {
@@ -243,9 +243,11 @@ globalThis[Symbol.for('interblock:api:hook')] = {
   useState,
   useAsync,
   useAI,
+  useApi,
 }
 
 export const usePulse = () => {
+  // TODO block the use of this in reducers
   // only used by the system reducer
   const invocation = getInvocation()
   const { settles, txs, ripcord, trail } = invocation

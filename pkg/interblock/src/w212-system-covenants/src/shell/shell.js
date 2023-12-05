@@ -96,20 +96,20 @@ const reducer = async (request) => {
       return { absolutePath }
     }
     case 'LS': {
-      const { path } = payload
+      const { path, all, schema, state } = payload
       assert.strictEqual(typeof path, 'string')
       const [{ wd = '/' }] = await useState()
       const absPath = posix.resolve(wd, path)
       debug(`listActors`, absPath)
       const pulse = await usePulse(absPath)
       assert(pulse instanceof Pulse)
-      const aC = listChildren(pulse)
-      const aH = listHardlinks(pulse)
+      const aC = listChildren(pulse, all)
+      const aH = listHardlinks(pulse, all)
       const aS = usePulse(pulse.getCovenantPath())
       const [children, hardlinks, covenant] = await Promise.all([aC, aH, aS])
-      const state = covenant.getState().toJS()
-      const { api = {} } = state
+      const { api = {} } = covenant.getState().toJS()
       // TODO add ability to get each childs state and schema, or any other slice
+      // BUT api is for the current object, not the children ?
       return { children, hardlinks, api }
     }
     case 'CD': {
@@ -201,11 +201,13 @@ const reducer = async (request) => {
       return await interchain(ln)
     }
     case 'BOOT_HAL': {
-      await ensureChild('.goalie', 'goalie')
-      await ensureChild('.HAL', {
-        covenant: 'threads',
-        state: { path: '/' },
-      })
+      const { add } = schemaToFunctions({ add: api.add })
+      const addGoalie = add('.goalie', { covenant: 'goalie' })
+      const addHal = add('.HAL', { covenant: 'hal' })
+
+      await interchain(addGoalie)
+      await interchain(addHal)
+
       return
     }
     // check if action is part of mtab api

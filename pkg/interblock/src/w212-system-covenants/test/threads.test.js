@@ -10,15 +10,15 @@ describe('threads', () => {
   it('runs a shell command', async () => {
     // start a thread, which targets /
     const engine = await Interpulse.createCI()
-    await engine.bootHal()
+    await engine.add('threads', { covenant: 'threads', state: { path: '/' } })
 
-    const actions = await engine.actions('.HAL')
+    const actions = await engine.actions('threads')
     // Debug.enable('iplog Interpulse')
-    const stream = engine.subscribe('.HAL')
+    const stream = engine.subscribe('threads')
     print(stream)
     const response = await actions.user('ping me')
     // TODO add a test that does a tool call
-    const state = (await engine.latest('.HAL')).getState().toJS()
+    const state = (await engine.latest('threads')).getState().toJS()
 
     // give a prompt to HAL, see it change directory.
     const prompt = 'change directory to the crm'

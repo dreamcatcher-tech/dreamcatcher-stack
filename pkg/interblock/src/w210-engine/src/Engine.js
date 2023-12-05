@@ -261,7 +261,7 @@ export class Engine {
       pool = await this.#reducer(pool)
     }
     if (pool.getNetwork().channels.cxs) {
-      // cxs is a transient variable
+      // cxs is a transient variable representing change updates to parent
       pool = await this.#updateTree(pool)
       assert(!pool.getNetwork().channels.cxs)
     }

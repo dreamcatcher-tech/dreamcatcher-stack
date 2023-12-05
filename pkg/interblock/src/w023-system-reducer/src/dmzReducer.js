@@ -94,16 +94,7 @@ const pulseReducer = async (type, payload) => {
       return
     }
     case '@@GET_STATE': {
-      const { path } = payload
-      let remotePulse = pulse
-      if (path !== '.') {
-        // TODO make latest handle relative paths
-        if (posix.isAbsolute(path)) {
-          remotePulse = await latest(path)
-        } else {
-          remotePulse = await latest(path, pulse)
-        }
-      }
+      const remotePulse = await getRemotePulse(payload, pulse, latest)
       const stateModel = remotePulse.getState()
       const state = stateModel.toJS()
       return { state }
@@ -119,16 +110,7 @@ const pulseReducer = async (type, payload) => {
       return pulse.getState().toJS()
     }
     case '@@GET_AI': {
-      const { path } = payload
-      let remotePulse = pulse
-      if (path !== '.') {
-        // TODO make latest handle relative paths
-        if (posix.isAbsolute(path)) {
-          remotePulse = await latest(path)
-        } else {
-          remotePulse = await latest(path, pulse)
-        }
-      }
+      const remotePulse = await getRemotePulse(payload, pulse, latest)
       const ai = remotePulse.getAI()
       // need a default of some kind
       if (ai) {
@@ -151,21 +133,15 @@ const pulseReducer = async (type, payload) => {
       const state = covenant.getState().toJS()
       return { state, path }
     }
+    case '@@API': {
+      const remotePulse = await getRemotePulse(payload, pulse, latest)
+      const covenantPath = remotePulse.getCovenantPath()
+      const covenant = await latest(covenantPath)
+      const { api } = covenant.getState().toJS()
+      return api
+    }
     case '@@USE_PULSE': {
-      const { path } = payload
-      let remotePulse = pulse
-      if (path !== '.') {
-        // TODO use the pool pulse as root for walking
-        if (!posix.isAbsolute(path)) {
-          remotePulse = await latest(path, pulse)
-        } else {
-          remotePulse = await latest(path)
-        }
-        // TODO verify that this is consistent with the approot
-      }
-      assert(remotePulse instanceof Pulse)
-      // TODO remove the network object, to provide a static pulse
-      return remotePulse
+      return getRemotePulse(payload, pulse, latest)
     }
     case '@@DEEPEST_SEGMENT': {
       return deepestSegment(pulse, payload)
@@ -251,6 +227,26 @@ const pulseReducer = async (type, payload) => {
     default:
       throw new Error(`Unrecognized type: ${type}`)
   }
+}
+
+const getRemotePulse = async (payload, pulse, latest) => {
+  const { path } = payload
+  assert(pulse instanceof Pulse)
+  assert(latest instanceof Function)
+
+  let remotePulse = pulse
+  if (path !== '.') {
+    // TODO use the pool pulse as root for walking
+    if (!posix.isAbsolute(path)) {
+      remotePulse = await latest(path, pulse)
+    } else {
+      remotePulse = await latest(path)
+    }
+    // TODO verify that this is consistent with the approot
+  }
+  assert(remotePulse instanceof Pulse)
+  // TODO remove the network object, to provide a static pulse
+  return remotePulse
 }
 
 export { reducer }

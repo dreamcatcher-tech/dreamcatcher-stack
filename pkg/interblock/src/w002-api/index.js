@@ -1,29 +1,21 @@
 import assert from 'assert-fast'
 import { Request } from '../w008-ipld/index.mjs'
 const hookSymbol = Symbol.for('interblock:api:hook')
-export const interchain = (type, payload, to) => {
-  const { interchain } = globalThis[hookSymbol]
-  assert(interchain, `global hook detached`)
-  return interchain(type, payload, to)
+
+const getHook = (hookName) => {
+  const globalHook = globalThis[hookSymbol]
+  assert(globalHook[hookName], `global hook detached: ${hookName}`)
+  return globalHook[hookName]
 }
-export const useState = (path = '.') => {
-  const { useState } = globalThis[hookSymbol]
-  assert(useState, `global hook detached`)
-  return useState(path)
-}
-export const useAI = (path = '.') => {
-  const { useAI } = globalThis[hookSymbol]
-  assert(useAI, `global hook detached`)
-  return useAI(path)
-}
-export const useAsync = (...args) => {
-  const { useAsync } = globalThis[hookSymbol]
-  assert(useAsync, 'global hook detached')
-  return useAsync(...args)
-}
+
+export const interchain = (type, payload, to) =>
+  getHook('interchain')(type, payload, to)
+export const useState = (path = '.') => getHook('useState')(path)
+export const useAI = (path = '.') => getHook('useAI')(path)
+export const useApi = (path = '.') => getHook('useApi')(path)
+export const useAsync = (...args) => getHook('useAsync')(...args)
 export const usePulse = async (path = '.') => {
   assert.strictEqual(typeof path, 'string')
-  assert(path)
   const reply = interchain('@@USE_PULSE', { path })
   return reply
 }

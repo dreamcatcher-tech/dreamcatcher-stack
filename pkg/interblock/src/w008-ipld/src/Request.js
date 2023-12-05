@@ -61,6 +61,7 @@ export class Request extends IpldStruct {
     '@@LN',
     '@@HARDLINK',
     '@@COVENANT', // TODO remove this when can usePulse()
+    '@@API', // TODO remove this when can usePulse()
     '@@RM',
     '@@SET_SUB', // TODO installers should allow an init array
     '@@CONFIG',

@@ -183,12 +183,13 @@ const installer = {
   ai: {
     name: 'GPT4',
     assistant: {
-      // model: 'gpt-3.5-turbo-1106',
       model: 'gpt-4-1106-preview',
       instructions: `
-        Figure out what Dave wants to do.
+        Figure out what the user wants to do.
         You can only call functions, never anything else.
         Your text messages will be completely discarded, so don't bother talking.
+
+        If you're not sure, create a new goal named 'no idea 🤷'
       `,
     },
   },

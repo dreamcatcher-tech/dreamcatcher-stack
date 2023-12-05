@@ -9,6 +9,25 @@ export const openPath = async ({ path }) => {
   assert(path)
   debug(`openPath`, path)
 
+  // if absolute, then we can walk to the root,
+  // then walk down, doing child opens as we go
+
+  // so get the pulse for the path, either relative of absolute
+  // then see if we have a channel for that address.
+
+  // could change the action to be @@CONNECT and just let it thru ?
+
+  // why even require any kind of open, why not just let the first action thru ?
+
+  // if its internal, then we let it in, and so all external connections
+  // need to go thru a socket chain, so that we can control it ?
+  // can buffer external actions so they all trigger after root has accepted
+  // them as tensioned, so we can process all as one large chunk, which
+  // reduces the intermediary states, increases replayability ?
+
+  // so basically, grab the pulse, resolve the address,
+  // then start transmitting.  If it is local, it will let us in.
+
   try {
     // TODO resolve relative paths
     // TODO resolve higher paths like ../sibling

@@ -1,4 +1,4 @@
-import { schemaToFunctions } from '../../w002-api'
+import { interchain, schemaToFunctions } from '../../w002-api'
 import { Engine } from '../../w210-engine'
 import { shell } from '..'
 import Debug from 'debug'
@@ -20,5 +20,30 @@ describe('openPaths', () => {
     const false1 = engine.pierce(api.ping(path))
     await expect(false1).rejects.toThrow(`Invalid Path: ${path}`)
   })
+  test(`deep add throws`, async () => {
+    const engine = await Engine.createCI({ overloads: { root: shell } })
+    // TODO make error message be more specific
+    await expect(() =>
+      engine.pierce(api.add('child1/nested1'))
+    ).rejects.toThrow(`path must be foreign`)
+  })
+  test.only(`opens absolute paths`, async () => {
+    const reducer = async (request) => {
+      if (request.type === 'TEST') {
+        await interchain('@@PING', {}, '/')
+      }
+    }
+
+    const engine = await Engine.createCI({
+      overloads: { root: shell, '/test': { reducer } },
+    })
+    await engine.pierce(api.add('child1', '/test'))
+    // await engine.pierce(api.add('child1/nested1', '/test'))
+    // await engine.pierce(api.add('child2'))
+    // await engine.pierce(api.add('child2/nested1'))
+
+    Debug.enable('iplog *openPath')
+    await engine.pierce(api.dispatch({ type: 'TEST', payload: {} }, 'child1'))
+  }, 300)
   test.todo('no double open')
 })

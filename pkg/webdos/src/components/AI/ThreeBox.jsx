@@ -36,8 +36,8 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
     // TODO do not remount the tree just because the crisp is loading
     return
   }
-  if (crisp.absolutePath !== '/.HAL') {
-    throw new Error(`${crisp.absolutePath} !== '/.HAL'`)
+  if (crisp.absolutePath !== '/.HAL/.goalie') {
+    throw new Error(`${crisp.absolutePath} !== '/.HAL/.goalie'`)
   }
   return (
     <Stack

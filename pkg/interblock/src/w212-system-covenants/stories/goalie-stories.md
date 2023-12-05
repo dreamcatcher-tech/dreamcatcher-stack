@@ -36,3 +36,16 @@ archived over time.
 If the user says something that doesn't fit in the current goal, and makes
 little sense, it will be inserted into a new thread that will in discovery mode
 where it tries to find out wtf the user meant.
+
+## General knowledge
+
+Seems harmless to let the user ask some questions that are totally unrelated for
+the sake of fun - these responses should be kept short and continually nudge
+back to something useful
+
+## Word definitions
+
+Eg: What's the difference between strategy and tactic ? What's the difference
+between implies and therefore ?
+
+These should be acceptable and are useful in the daily business.
