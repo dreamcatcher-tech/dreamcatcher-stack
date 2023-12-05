@@ -24,7 +24,9 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
     throw error
   }
   useEffect(() => {
-    window.scrollTo(0, document.body.scrollHeight)
+    setTimeout(() => {
+      window.scrollTo(0, document.body.scrollHeight)
+    }, 100)
   }, [crisp])
   const [isTranscribing, setIsTranscribing] = useState(false)
   const onTranscription = useCallback((isTranscribing) => {

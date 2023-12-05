@@ -1,18 +1,7 @@
 import OpenAI from 'openai'
 import { serializeError } from 'serialize-error'
 import posix from 'path-browserify'
-import {
-  interchain,
-  useAsync,
-  useAI,
-  useState,
-  schemaToFunctions,
-} from '../../w002-api'
-import { shell } from '..'
-import merge from 'lodash.merge'
-import process from 'process'
-import assert from 'assert-fast'
-import retry from 'retry'
+import { interchain, useState, Request } from '../../w002-api'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:threads')
 
@@ -22,86 +11,100 @@ const schema = {
   title: 'The Goalie',
   description: `The Goalie is a goal management system for the AI
         It works as follows:
-            1. Receives the prompt first, directly from the user.
-            2. Is run on the current thread, so it has the context within it.
-            3. If no current thread, it will create one.
+            1. It receives the user prompt, in context of the entire interaction
+            2. Then i determines which goal the user is currently working on, or if they are starting a new goal
+            3. Also it determines if the user is done with any current goals, and if so, closes them
+            4. Finally it reprioritizes the goals based on the latest prompt
+            5. Control is then passed back to HAL, with HALs context isolated to be the current goal only
     `,
   additionalProperties: false,
   properties: {
-    goals: {
-      type: 'array',
-      description: `An array of all the goals in the AI, where their index in this array is their goalId`,
-      items: { type: 'object' }, // TODO reuse the goal schema
-    },
     order: {
       type: 'array',
-      description: `An array of all the goalIds in the order they should be in`,
+      description: `An array of all the goalIds in the order they should be in.
+      The goalIds are the names of the children of this object, and are integers.`,
       items: { type: 'integer' },
     },
   },
 }
 
-const api = {
-  prompt: {
-    type: 'object',
-    title: 'PROMPT',
-    description:
-      'A user prompt, which is a request for the AI to do something.  This will be processed by the AI for goal determination',
-    additionalProperties: false,
-    required: ['text'],
-    properties: { text: { type: 'string' }, key: { type: 'string' } },
+// a goal contains the thread of the progress towards that goal so far
+// the goals might be in a map, which favours bucketing
+// or the map might be in the state, so it presented clearer
+
+const properties = {
+  titles: {
+    type: 'array',
+    minItems: 1,
+    uniqueItems: true,
+    items: {
+      type: 'string',
+      description: `Each title of the goal, which should be as short as possible.  Good examples are: 'Add Customer', 'Check Email', 'Get Weather', 'Find Ungeocoded Customers`,
+      maxLength: 40,
+    },
+    description: `An array of titles of increasingly granularity that
+    describe this goal.  The first title should be the most general, and
+    the last title should be the most specific`,
   },
-  addGoal: {
+  summary: {
+    type: 'string',
+    description: `The description of the goal which allows for richer information that just what is in the title array.  This can be up to 500 characters in length`,
+    maxLength: 500,
+  },
+}
+const rmReasons = {
+  COMPLETED: 'completed',
+  IRRELEVANT: 'irrelevant',
+  FAILED: 'failed',
+}
+
+const api = {
+  add: {
     type: 'object',
     title: 'ADD_GOAL',
-    description: `Add a new goal to the AI.  The default status of the goal is 'CREATED'`,
+    description: `Add a new goal that has been detected from the users input.
+    Returns the list of all goals in priority order, with the newly created goal at index zero, which represents the top priority goal`,
     additionalProperties: false,
-    required: ['title', 'description'],
-    properties: {
-      title: {
-        type: 'string',
-        description: `title of the goal that should be as short as possible, and no more than 40 characters.  Good examples are: 'Add Customer', 'Check Email', 'Get Weather', 'Find Ungeocoded Customers`,
-        maxLength: 40,
-      },
-      description: {
-        type: 'string',
-        description: `The description of the goal which allows for richer information that just what is in the title.  This can be up to 500 characters in length`,
-        maxLength: 500,
-      },
-    },
+    required: ['titles', 'summary'],
+    properties,
   },
-  updateGoal: {
+  update: {
     type: 'object',
     title: 'UPDATE_GOAL',
-    description: `Update an existing goal to the AI based on the latest prompt`,
+    description: `Update an existing goal AI based on the latest prompt`,
     additionalProperties: false,
-    required: ['goalId'],
-    oneOf: [{ required: ['title'] }, { required: ['description'] }],
+    required: ['goalId', 'titles', 'summary'],
+    properties: { goalId: { type: 'integer' }, ...properties },
+  },
+  rm: {
+    type: 'object',
+    title: 'RM_GOAL',
+    description: `Close a goal from the AI.  Returns the list of all remaining goals in priority order, with the highest priority at index 0`,
+    additionalProperties: false,
+    required: ['goalId', 'reason'],
     properties: {
-      goalId: { type: 'integer', description: `The id of the goal to update` },
-      title: {
-        type: 'string',
-        description: `title of the goal that should be as short as possible, and no more than 40 characters.  Good examples are: 'Add Customer', 'Check Email', 'Get Weather', 'Find Ungeocoded Customers`,
-        maxLength: 40,
+      goalId: {
+        type: 'integer',
+        description: `The id of the goal to remove`,
       },
-      description: {
-        type: 'string',
-        description: `The description of the goal which allows for richer information that just what is in the title.  This can be up to 500 characters in length`,
-        maxLength: 500,
+      reason: {
+        enum: Object.values(rmReasons),
+        description: `The reason the goal is being closed.  This can be 'completed', 'irrelevant', or 'failed'`,
       },
     },
   },
-  reorder: {
+  prioritize: {
     type: 'object',
-    title: 'REORDER',
-    description: `Reorder the goals in the AI`,
+    title: 'PRIORITIZE',
+    description: `Reorder the goals in the AI.  Returns the list of all goals in priority order, with the highest priority at index 0`,
     additionalProperties: false,
     required: ['goalIds'],
     properties: {
       goalIds: {
         type: 'array',
-        description: `An array of all the goal ids in the new order they should be in`,
+        description: `An array of the goal ids where the first index in the array is the highest priority.  Only the supplied goal ids will be reordered, so if you want to move a goal to the top, only a single goalId is required`,
         items: { type: 'integer' },
+        minItems: 1,
       },
     },
   },
@@ -109,23 +112,96 @@ const api = {
 
 const reducer = async (request) => {
   debug('request', request)
-  const { text } = request.payload
   switch (request.type) {
-    case 'PROMPT': {
-      const ai = await useAI('.')
-      const [state, setState] = await useState('.')
-      const { prompt } = state
-      const nextPrompt = merge({}, prompt, { text })
-      setState({ prompt: nextPrompt })
-      return { prompt: nextPrompt }
+    case 'ADD_GOAL': {
+      const { titles, summary } = request.payload
+      const basename = undefined
+      const spawnAction = Request.createSpawn(basename, {
+        state: { titles, summary },
+      })
+      const { alias } = await interchain(spawnAction)
+      const goalId = parseInt(alias)
+      const [{ order }, setState] = await useState()
+      const newOrder = [goalId, ...order]
+      await setState({ order: newOrder })
+      return { order: newOrder }
+    }
+    case 'PRIORITIZE': {
+      const { goalIds } = request.payload
+      const [{ order }, setState] = await useState()
+      const existing = new Set(order)
+      const newOrder = []
+      for (const goalId of goalIds) {
+        if (!existing.has(goalId)) {
+          throw new Error(`goalId ${goalId} not found in order`)
+        }
+        existing.delete(goalId)
+        newOrder.push(goalId)
+      }
+      newOrder.push(...existing)
+      await setState({ order: newOrder })
+      return { order: newOrder }
+    }
+    case 'RM_GOAL': {
+      const { goalId, reason } = request.payload
+      const [{ order }, setState] = await useState()
+      const existing = new Set(order)
+      if (!existing.has(goalId)) {
+        throw new Error(`goalId ${goalId} not found in order`)
+      }
+      existing.delete(goalId)
+      const newOrder = [...existing]
+      const [, setGoalState] = await useState(goalId.toString())
+      // TODO dispatch the reasoning to the child first
+      // await setGoalState({ reason })
+      const rm = Request.createRemoveActor(goalId.toString())
+      await interchain(rm)
+      await setState({ order: newOrder })
+      return { order: newOrder }
+    }
+    case 'UPDATE_GOAL': {
+      const { goalId, titles, summary } = request.payload
+      const [{ order }] = await useState()
+      if (!order.includes(goalId)) {
+        throw new Error(`goalId ${goalId} not found in order`)
+      }
+      const [, setState] = await useState(goalId.toString())
+      return setState({ titles, summary })
+    }
+    case '@@INIT': {
+      return
     }
     default:
       throw new Error(`unknown request ${request.type}`)
   }
 }
 
+const name = 'goalie'
+const installer = {
+  schema,
+  state: { order: [] },
+  ai: {
+    name: 'GPT4',
+    assistant: {
+      // model: 'gpt-3.5-turbo-1106',
+      model: 'gpt-4-1106-preview',
+      instructions: `
+        Figure out what Dave wants to do.
+        You can only call functions, never anything else.
+        Your text messages will be completely discarded, so don't bother talking.
+      `,
+    },
+  },
+}
+
+export { name, api, reducer, installer, rmReasons }
+
 /**
-How can this be done using the ai slice in the pulse ?
+Hey goalie, here's the thread you're currently on,
+here's a list of other threads we are tracking,
+and here's the latest message.
 
+Want it to signal any changes to any goals in the list, but only the one we switch to.
 
+Use an echo bot that inserts a message into the thread as tho it was HAL
  */

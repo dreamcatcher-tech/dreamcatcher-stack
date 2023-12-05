@@ -30,11 +30,12 @@ const createAction = (type, schema) => {
   const validate = ajv.compile(schema)
   return (payload, ...rest) => {
     // TODO set function parameter names
-    const isObject = typeof payload === 'object'
+    const isObject = typeof payload === 'object' && !Array.isArray(payload)
     if (!isObject || rest.length) {
       rest.unshift(payload)
       payload = {}
       const { properties = {} } = schema
+      // TODO prioritize the required fields as being supplied first
       for (const key of Object.keys(properties)) {
         const value = rest.shift()
         if (value === undefined) {

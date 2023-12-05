@@ -2,7 +2,7 @@ import { useAudioRecorder } from 'react-audio-voice-recorder'
 import { useFilePicker } from 'use-file-picker'
 import { LiveAudioVisualizer } from 'react-audio-visualize'
 import { Crisp } from '@dreamcatcher-tech/interblock'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useRef, useCallback, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -158,6 +158,14 @@ const Input = ({ onSend, preload, preSubmit, onTranscription }) => {
 
   return (
     <TextField
+      inputRef={(ref) => {
+        if (!ref) {
+          return
+        }
+        if (!disabled) {
+          ref.focus()
+        }
+      }}
       value={disabled ? ' ' : value}
       multiline
       fullWidth

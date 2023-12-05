@@ -109,6 +109,7 @@ const reducer = async (request) => {
       const [children, hardlinks, covenant] = await Promise.all([aC, aH, aS])
       const state = covenant.getState().toJS()
       const { api = {} } = state
+      // TODO add ability to get each childs state and schema, or any other slice
       return { children, hardlinks, api }
     }
     case 'CD': {
