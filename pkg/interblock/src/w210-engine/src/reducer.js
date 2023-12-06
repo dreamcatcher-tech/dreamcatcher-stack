@@ -3,11 +3,8 @@ import posix from 'path-browserify'
 import {
   AsyncRequest,
   AsyncTrail,
-  Channel,
   Network,
-  Pending,
   Pulse,
-  Request,
   RxReply,
 } from '../../w008-ipld/index.mjs'
 import { Isolate } from './Isolate'
@@ -208,30 +205,6 @@ const transmitTrailTxs = async (trail, network, latest, pool) => {
 
   trail = trail.updateTxs(txs)
   return [trail, network]
-}
-const isOpeningSent = (to, loopback, pending) => {
-  assert.strictEqual(typeof to, 'string')
-  assert(to)
-  assert(loopback instanceof Channel)
-  assert(loopback.address.isLoopback())
-  assert(pending instanceof Pending)
-
-  for (const request of loopback.tx.system.requests) {
-    if (request.type === '@@OPEN_PATH') {
-      if (request.payload.to === to) {
-        return true
-      }
-    }
-  }
-  for (const trail of pending.system) {
-    const { request } = trail.origin
-    if (request.type === '@@OPEN_PATH') {
-      if (request.payload.to === to) {
-        return true
-      }
-    }
-  }
-  return false
 }
 const maybeTransmitTrailReply = async (trail, network) => {
   assert(trail instanceof AsyncTrail)

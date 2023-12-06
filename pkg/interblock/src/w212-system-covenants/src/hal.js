@@ -41,18 +41,18 @@ const reducer = async (request) => {
   debug('request', request)
   switch (request.type) {
     case 'PROMPT': {
-      await interchain('@@PING', {}, '/')
-      // hit the goalie with the prompt
       const text = request.payload.prompt
       const action = { type: 'USER', payload: { text } }
       const result = await interchain(action, '.goalie')
+      // TODO error handling if no goals are set
+      const [{ order }] = await useState('/.goalie')
+      const [topGoal] = order
+      const [goal] = await useState('/.goalie/' + topGoal)
+      console.log(order, topGoal, goal)
       return result
     }
     case '@@INIT': {
-      const target = '..'
-      const linkName = '/'
-      const ln = Request.createLn(target, linkName)
-      return await interchain(ln)
+      return
     }
     default: {
       throw new Error(`unknown request: ${request.type}`)

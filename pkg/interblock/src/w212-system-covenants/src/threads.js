@@ -105,8 +105,9 @@ const reducer = async (request) => {
         } else {
           // create the assistant
           await updateMessageStatus(STATUS.USER.CREATING)
+          const tools = transformToGpt4Api(api)
           remote = await useAsync(async () => {
-            const { tools, model, instructions } = assistant
+            const { model, instructions } = assistant
             const result = await context.ai.assistantsCreate({
               name: path,
               model,
@@ -118,12 +119,6 @@ const reducer = async (request) => {
           assistantId = remote.id
           await setState({ assistantId })
         }
-        const gpt4Api = transformToGpt4Api(api)
-        remote = await useAsync(async () =>
-          context.ai.assistantsUpdate(assistantId, {
-            tools: gpt4Api,
-          })
-        )
       } else {
         // check that the assistant is still valid
         // throw new Error('TODO')
@@ -206,8 +201,6 @@ const reducer = async (request) => {
       assert(assistant instanceof Object)
       assert(assistant.instructions, 'instructions is missing')
       assert(assistant.model, 'model is missing')
-
-      // await interchain('@@PING', {}, path)
 
       // TODO check the instruction against the api schema format
       if (!context.ai) {

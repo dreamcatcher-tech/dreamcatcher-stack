@@ -3,7 +3,7 @@ import chalk from 'ansi-colors-browserify'
 import pad from 'pad-left'
 import prettyBytes from 'pretty-bytes'
 import columnify from 'columnify'
-import { Interpulse } from '../../../w008-ipld/index.mjs'
+import { Interpulse, Network } from '../../../w008-ipld/index.mjs'
 const grayUndefined = chalk.blackBright.bgWhiteBright('undefined')
 
 const interPrint = (interpulse, msg, path, bg, fg) => {
@@ -97,16 +97,7 @@ const headerPrint = (pulse, path, isNewChain, isDuplicate, options) => {
 const networkPrint = async (pulse, options) => {
   const network = pulse.getNetwork()
   const messages = []
-  const { txs, rxs } = network.channels
-  const actives = [...txs, ...rxs]
-  const io = await network.getIo()
-  if (!io.tx.isEmpty() || !io.rx.isEmpty()) {
-    actives.unshift(io.channelId)
-  }
-  const loopback = await network.getLoopback()
-  if (!loopback.tx.isEmpty() || !loopback.rx.isEmpty()) {
-    actives.unshift(loopback.channelId)
-  }
+  const actives = await getActiveChannelIds(pulse)
   for (const channelId of actives) {
     const channel = await network.channels.getChannel(channelId)
     const { address } = channel
@@ -152,7 +143,7 @@ const networkPrint = async (pulse, options) => {
     if (!rx.isEmpty()) {
       // beware that rx is always empty given that we drain it fully for now
     }
-    if (channelId === io.channelId && network.piercings) {
+    if (channelId === Network.FIXED_IDS.IO && network.piercings) {
       const msg = chalk.yellow('  └─rxIO')
       messages.push(...printStream(msg, network.piercings.reducer))
       messages.push(...printStream(msg, network.piercings.system))
@@ -173,6 +164,21 @@ const networkPrint = async (pulse, options) => {
 
   return messages
 }
+export const getActiveChannelIds = async (pulse) => {
+  const network = pulse.getNetwork()
+  const { txs, rxs } = network.channels
+  const actives = [...txs, ...rxs]
+  const io = await network.getIo()
+  if (!io.tx.isEmpty() || !io.rx.isEmpty()) {
+    actives.unshift(io.channelId)
+  }
+  const loopback = await network.getLoopback()
+  if (!loopback.tx.isEmpty() || !loopback.rx.isEmpty()) {
+    actives.unshift(loopback.channelId)
+  }
+  return actives
+}
+
 const printStream = (msg, stream) => {
   let index = stream.requestsLength - stream.requests.length
   const actions = []

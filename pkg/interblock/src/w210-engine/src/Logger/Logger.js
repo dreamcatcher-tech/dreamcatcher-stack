@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { pulsePrint } from './printer'
+import { pulsePrint, getActiveChannelIds } from './printer'
 import { Pulse } from '../../../w008-ipld/index.mjs'
 import Debug from 'debug'
 import { isBrowser } from 'wherearewe'
@@ -32,6 +32,10 @@ export class Logger {
     const chainId = pulse.getAddress().getChainId()
     const latest = this.#cache.get(chainId)
     const isNew = !latest && pulse.isGenesis()
+    const activeChannelIds = await getActiveChannelIds(pulse)
+    if (!activeChannelIds.length && !isNew) {
+      return
+    }
     const isDupe = latest && latest.cid.equals(pulse.cid)
     if (isDupe) {
       return

@@ -40,7 +40,7 @@ const properties = {
     items: {
       type: 'string',
       description: `Each title of the goal, which should be as short as possible.  Good examples are: 'Add Customer', 'Check Email', 'Get Weather', 'Find Ungeocoded Customers`,
-      maxLength: 40,
+      maxLength: 30,
     },
     description: `An array of titles of increasingly granularity that
     describe this goal.  The first title should be the most general, and
@@ -49,7 +49,7 @@ const properties = {
   summary: {
     type: 'string',
     description: `The description of the goal which allows for richer information that just what is in the title array.  This can be up to 500 characters in length`,
-    maxLength: 500,
+    maxLength: 50,
   },
 }
 const rmReasons = {
