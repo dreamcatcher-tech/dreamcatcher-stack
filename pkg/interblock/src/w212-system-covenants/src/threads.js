@@ -207,6 +207,8 @@ const reducer = async (request) => {
       assert(assistant.instructions, 'instructions is missing')
       assert(assistant.model, 'model is missing')
 
+      // await interchain('@@PING', {}, path)
+
       // TODO check the instruction against the api schema format
       if (!context.ai) {
         context.ai = createAI()

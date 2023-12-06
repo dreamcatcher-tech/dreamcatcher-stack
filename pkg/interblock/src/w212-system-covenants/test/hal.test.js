@@ -13,7 +13,7 @@ describe('goalie', () => {
     // HAL is the executing AI
     const actions = await engine.actions('.HAL')
     debug('HAL actions', actions)
-    // const result = await actions.prompt('hello')
+    const result = await actions.prompt('hello')
     // debug('goalie result', result)
   }, 600)
 })

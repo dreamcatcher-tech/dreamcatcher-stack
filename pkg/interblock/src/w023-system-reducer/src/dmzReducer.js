@@ -1,5 +1,5 @@
 import assert from 'assert-fast'
-import { openPath, deepestSegment, openChild } from './openPath'
+import { openPath, openChild } from './openPath'
 import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
 import { installReducer } from './install'
@@ -65,6 +65,8 @@ const reducer = (request) => {
  * @returns
  */
 const pulseReducer = async (type, payload) => {
+  // TODO this is the soft pulse, we need a way to get baked unaltered pulses
+  // and store them in pending by their hash alone
   let [pulse, setPulse, latest] = usePulse()
   switch (type) {
     case '@@ADD_CHILD': {
@@ -143,9 +145,6 @@ const pulseReducer = async (type, payload) => {
     case '@@USE_PULSE': {
       return getRemotePulse(payload, pulse, latest)
     }
-    case '@@DEEPEST_SEGMENT': {
-      return deepestSegment(pulse, payload)
-    }
     case '@@CONNECT': {
       const { chainId } = payload
       const address = Address.fromChainId(chainId)
@@ -165,6 +164,10 @@ const pulseReducer = async (type, payload) => {
       const address = Address.fromChainId(chainId)
       assert(address.isRemote())
       let network = pulse.getNetwork()
+      // BUT what if it is an alias, but now we have data on the channel ?
+      // could we copy over the data, and it would still work ?
+      // only if it didn't have ids yet would this work
+
       network = await network.resolveDownlink(path, address)
       pulse = pulse.setNetwork(network)
       setPulse(pulse)
@@ -184,13 +187,14 @@ const pulseReducer = async (type, payload) => {
       setPulse(pulse)
       return
     }
-    case '@@TRY_PATH': {
+    case '@@GET_ADDRESS': {
       const { path } = payload
       assert.strictEqual(typeof path, 'string')
       assert(path)
-      debug(`@@TRY_PATH`, path)
-      await latest(path)
-      return
+      debug(`@@GET_ADDRESS`, path)
+      const pulse = await latest(path)
+      const chainId = pulse.getAddress().getChainId()
+      return { chainId }
     }
     case '@@LN': {
       const { target, linkName } = payload

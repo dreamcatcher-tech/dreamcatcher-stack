@@ -45,7 +45,6 @@ export class Request extends IpldStruct {
     '@@ACCEPT',
     '@@OPEN_PATH',
     '@@OPEN_CHILD',
-    '@@DEEPEST_SEGMENT',
     '@@DEPLOY',
     '@@INSTALL',
     '@@GET_STATE',
@@ -56,7 +55,7 @@ export class Request extends IpldStruct {
     '@@SELF_ID',
     '@@RESOLVE_DOWNLINK',
     '@@INVALIDATE',
-    '@@TRY_PATH',
+    '@@GET_ADDRESS',
     '@@MOUNT',
     '@@LN',
     '@@HARDLINK',
@@ -115,11 +114,6 @@ export class Request extends IpldStruct {
     assert.strictEqual(typeof path, 'string')
     assert(path)
     return this.create('@@OPEN_PATH', { path })
-  }
-  static tryPath(path) {
-    assert.strictEqual(typeof path, 'string')
-    assert(path)
-    return this.create('@@TRY_PATH', { path })
   }
   static createMount(chainId, name) {
     assert.strictEqual(typeof chainId, 'string')

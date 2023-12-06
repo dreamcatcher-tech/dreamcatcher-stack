@@ -34,6 +34,7 @@ describe('Car', () => {
     await blank.ping('forked/schedules')
     debug('end write to fork')
     const forkedSchedule = await blank.current('forked/schedules')
-    expect(forkedSchedule.getAddress()).not.toBe(originalAddress)
+    const forkedAddress = forkedSchedule.getAddress()
+    expect(forkedAddress.toString()).not.toBe(originalAddress.toString())
   })
 })

@@ -60,6 +60,7 @@ export class Channels extends IpldStruct {
     const next = this.setMap({ list })
     // TODO may send a signal to the child
     // TODO reject all actions and promises
+    // TODO may only allow this on a channel that is invalidated
     channel = channel.setMap({ address: Address.createDeleted() })
     return next.#updateActives(channel)
   }
@@ -106,13 +107,15 @@ export class Channels extends IpldStruct {
 
     let { addresses } = this
     if (channel.isRemote()) {
+      // TODO is it even possible that a channel address changes ?
+      // perhaps it should be fixed, and a recreation is required ?
       if (!previous || !channel.address.equals(previous.address)) {
-        addresses = await addresses.set(channel.address, channelId)
         if (previous && previous.address.isRemote()) {
           if (await addresses.has(previous.address)) {
             addresses = await addresses.delete(previous.address)
           }
         }
+        addresses = await addresses.set(channel.address, channelId)
       }
     }
     const next = this.setMap({ list, addresses })

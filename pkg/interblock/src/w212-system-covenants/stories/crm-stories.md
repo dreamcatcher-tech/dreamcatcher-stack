@@ -32,3 +32,9 @@ stateboard. Drilling down into each item should reveal what that item was.
 
 In the stateboard, narrow down the search, select a subset of customers, then
 proceed to operate on that subset by having it feedback into the chat.
+
+## Draft a welcome email for a customer
+
+When a new customer has been added, we want to send them an email to welcome
+them and confirm their details. We should generate this email and include it
+under their customer record.

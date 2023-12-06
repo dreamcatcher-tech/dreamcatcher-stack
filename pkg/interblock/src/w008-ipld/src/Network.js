@@ -242,6 +242,7 @@ export class Network extends IpldStruct {
       const channels = await this.channels.updateChannel(channel)
       return this.setMap({ channels })
     } else {
+      // TODO this should check for an existing channel with the address
       const channelId = this.channels.counter
       const channel = Channel.create(channelId, address).addAlias(path)
       const channels = await this.channels.addChannel(channel)
@@ -461,17 +462,26 @@ export class Network extends IpldStruct {
     }
     return false
   }
-  async addDownlink(path) {
+  async addDownlink(path, address) {
     assert.strictEqual(typeof path, 'string')
     assert(path)
     assert(isForeign(path), `path must be foreign: ${path}`)
+    assert(address instanceof Address)
     if (await this.downlinks.has(path)) {
       throw new Error(`path already present: ${path}`)
     }
-    const channelId = this.channels.counter
-    const channel = Channel.create(channelId).addAlias(path)
-    const channels = await this.channels.addChannel(channel)
-    const downlinks = await this.downlinks.setDownlink(path, channelId)
+    let channel
+    let { channels } = this
+    if (await this.hasAddress(address)) {
+      channel = await this.getByAddress(address)
+      channel = channel.addAlias(path)
+    } else {
+      const channelId = this.channels.counter
+      channel = Channel.create(channelId).addAlias(path).resolve(address)
+      channels = await channels.addChannel(channel)
+    }
+    channels = await channels.updateChannel(channel)
+    const downlinks = await this.downlinks.setDownlink(path, channel.channelId)
 
     return this.setMap({ channels, downlinks })
   }

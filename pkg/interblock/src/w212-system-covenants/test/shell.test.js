@@ -214,7 +214,7 @@ describe('shell', () => {
       const engine = await Engine.createCI({ overloads: { root: shell } })
       await expect(() =>
         engine.pierce(api.add('child1/nested'))
-      ).rejects.toThrow('path must be foreign')
+      ).rejects.toThrow('Segment not present')
     })
     test.todo('invalid parent path rejects')
     test.todo('grandchild can spawn')

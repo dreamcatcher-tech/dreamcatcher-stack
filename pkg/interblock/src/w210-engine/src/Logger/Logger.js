@@ -82,12 +82,15 @@ export class Logger {
       }
       const parent = this.#cache.get(parentChainId)
       const childAddress = pulse.getAddress()
-      let childChannel = await parent
-        .getNetwork()
-        .channels.getByAddress(childAddress)
-      const [alias] = childChannel.aliases
-      path = !path ? alias : alias + '/' + path
-      pulse = parent
+      // TODO walking seems broken after removing path walking
+      if (await parent.getNetwork().hasAddress(childAddress)) {
+        let childChannel = await parent
+          .getNetwork()
+          .channels.getByAddress(childAddress)
+        const [alias] = childChannel.aliases
+        path = !path ? alias : alias + '/' + path
+        pulse = parent
+      }
     }
     return this.#paths.get(chainId) || unknown
   }

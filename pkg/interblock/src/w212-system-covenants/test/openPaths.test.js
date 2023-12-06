@@ -18,16 +18,16 @@ describe('openPaths', () => {
     await engine.pierce(api.add('child1/nested1'))
     const path = 'child1/nested1/false1'
     const false1 = engine.pierce(api.ping(path))
-    await expect(false1).rejects.toThrow(`Invalid Path: ${path}`)
+    await expect(false1).rejects.toThrow(`Segment not present: /${path}`)
   })
   test(`deep add throws`, async () => {
     const engine = await Engine.createCI({ overloads: { root: shell } })
     // TODO make error message be more specific
     await expect(() =>
       engine.pierce(api.add('child1/nested1'))
-    ).rejects.toThrow(`path must be foreign`)
+    ).rejects.toThrow(`Segment not present: `)
   })
-  test.only(`opens absolute paths`, async () => {
+  test(`opens absolute paths`, async () => {
     const reducer = async (request) => {
       if (request.type === 'TEST') {
         await interchain('@@PING', {}, '/')
@@ -38,12 +38,8 @@ describe('openPaths', () => {
       overloads: { root: shell, '/test': { reducer } },
     })
     await engine.pierce(api.add('child1', '/test'))
-    // await engine.pierce(api.add('child1/nested1', '/test'))
-    // await engine.pierce(api.add('child2'))
-    // await engine.pierce(api.add('child2/nested1'))
 
-    Debug.enable('iplog *openPath')
     await engine.pierce(api.dispatch({ type: 'TEST', payload: {} }, 'child1'))
-  }, 300)
+  })
   test.todo('no double open')
 })

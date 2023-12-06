@@ -150,6 +150,7 @@ export class Engine {
     const [first] = queue
     assert(queue.every(({ chainId }) => first.chainId === chainId))
     const { address } = first
+    // TODO the pool should be softened without any deepening item dependency
     let pool = await this.#generatePool(first)
     while (queue.length) {
       prioritizeUpdates(queue)
@@ -157,6 +158,8 @@ export class Engine {
       debug('deepening %s for %s', type, address)
       switch (type) {
         case Deepening.INTERPULSE: {
+          // TODO split out for remote interpulses ?
+          // TODO insert ACL check with approot here ?
           const { interpulse } = payload
           pool = await pool.ingestInterpulse(interpulse)
           break
@@ -339,13 +342,15 @@ export class Engine {
     const latest = async (pathOrPulseLink, startingPulse = rootPulse) => {
       assert(startingPulse instanceof Pulse)
       if (typeof pathOrPulseLink === 'string') {
-        pathOrPulseLink = posix.normalize(pathOrPulseLink)
-        return await this.latestByPath(pathOrPulseLink, startingPulse)
-      } else {
-        assert(pathOrPulseLink instanceof PulseLink, 'not string or PulseLink')
+        const path = posix.normalize(pathOrPulseLink)
+        return await this.latestByPath(path, startingPulse)
+      } else if (pathOrPulseLink instanceof PulseLink) {
+        assert(startingPulse === rootPulse, `pulselinks are absolute`)
         const child = await this.#endurance.recover(pathOrPulseLink)
         assert(child instanceof Pulse)
         return child
+      } else {
+        throw new Error(`Invalid pathOrPulseLink: ${pathOrPulseLink}`)
       }
     }
     return reducer(pool, isolate, latest)
@@ -379,6 +384,9 @@ export class Engine {
   }
   async latestByPath(path, rootPulse) {
     assert.strictEqual(typeof path, 'string')
+    if (!posix.isAbsolute(path)) {
+      assert(rootPulse instanceof Pulse, `no start for relative path: ${path}`)
+    }
     if (!rootPulse) {
       rootPulse = this.selfLatest
     }
@@ -388,12 +396,13 @@ export class Engine {
       return this.#isolate.getCovenantPulse(path)
     }
     let pulse = rootPulse
-    assert(pulse instanceof Pulse)
     if (path === '/') {
+      assert(pulse.isRoot(), 'root pulse must be root')
       return pulse
     }
     path = posix.normalize(path)
     const segments = split(path)
+    // TODO WARNING this appears not to support relative paths
     const depth = ['/']
     while (segments.length) {
       const segment = segments.shift()

@@ -183,13 +183,15 @@ export class Pulse extends IpldStruct {
     if (!interpulse.tx.isGenesisRequest()) {
       const isChannel = await network.channels.hasAddress(source)
       if (!isChannel) {
+        network = await network.connectPublicly(source)
+        // TODO redo the public opening protocol
         if (this.provenance.dmz.config.isPublicChannelOpen) {
           // TODO require a specific action to be able to open
           // to give the reducer a chance to reject
           debug('public channel to %s from %s', target, source)
-          network = await network.connectPublicly(source)
+          // network = await network.connectPublicly(source)
         } else {
-          throw new Error(`public channel shut in %s from %s`, target, source)
+          // throw new Error(`public channel shut in %s from %s`, target, source)
         }
       }
     }

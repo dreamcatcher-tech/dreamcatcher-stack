@@ -41,7 +41,7 @@ export const ensureChild = async (path, installer = 'unity') => {
   }
   assert.strictEqual(typeof installer, 'object')
   try {
-    await interchain(Request.tryPath(path))
+    await useState(path)
     // TODO assert covenant matches
   } catch (error) {
     if (!error.message.startsWith(`Segment not present: `)) {

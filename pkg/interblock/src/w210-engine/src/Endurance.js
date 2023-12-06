@@ -216,6 +216,7 @@ export class Endurance {
       const evilFullPulse = await this.recover(tip)
       const { validators } = evilFullPulse.provenance
       if (fromPulse.provenance.validators.hasOverlap(validators)) {
+        // TODO should be in the same approot, not just same validators
         return true
       }
       return false

@@ -70,7 +70,12 @@ export const reducer = async (pool, isolate, latest) => {
       trail = await isolate.reduce(trail)
     }
     network = await maybeTransmitTrailReply(trail, network)
-    const [nextTrail, nextNet] = await transmitTrailTxs(trail, network, pending)
+    const [nextTrail, nextNet] = await transmitTrailTxs(
+      trail,
+      network,
+      latest,
+      pool
+    )
     trail = nextTrail
     network = nextNet
     pending = pending.updateTrail(trail)
@@ -150,7 +155,7 @@ export const reducer = async (pool, isolate, latest) => {
   pool = pool.setNetwork(network).setPending(pending)
   return pool
 }
-const transmitTrailTxs = async (trail, network, pending) => {
+const transmitTrailTxs = async (trail, network, latest, pool) => {
   assert(trail instanceof AsyncTrail)
   assert(network instanceof Network)
   const txs = []
@@ -176,26 +181,24 @@ const transmitTrailTxs = async (trail, network, pending) => {
 
     try {
       if (!(await network.hasChannel(to))) {
-        network = await network.addDownlink(to)
+        // TODO latest does not handle relative paths
+        // TODO this lookup should be done after pulsing, due to lookup delays
+        // https://github.com/dreamcatcher-tech/dreamcatcher-stack/issues/179
+
+        const target = posix.isAbsolute(to)
+          ? await latest(to)
+          : await latest(to, pool)
+        const address = target.getAddress()
+        if (address) {
+          assert(address.isRemote())
+          network = await network.addDownlink(to, address)
+        }
       }
       let channel = await network.getChannel(to)
       const requestId = channel.getNextRequestId(request)
       channel = channel.txRequest(request)
       network = await network.updateChannel(channel)
       txs.push(tx.setId(requestId))
-
-      if (!channel.address.isResolved()) {
-        let loopback = await network.getLoopback()
-        const isOpening = isOpeningSent(to, loopback, pending)
-        if (!isOpening) {
-          const openRequest = Request.createOpenPath(to)
-          const requestId = loopback.getNextRequestId(openRequest)
-          loopback = loopback.txRequest(openRequest)
-          network = await network.updateChannel(loopback)
-          trail = trail.awaitOpenPath(requestId)
-          debug(`openPath:`, to)
-        }
-      }
     } catch (error) {
       // TODO should that error the whole trail, before anything is started ?
       // console.error(error)

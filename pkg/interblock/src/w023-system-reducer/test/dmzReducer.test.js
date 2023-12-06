@@ -43,8 +43,8 @@ describe('dmzReducer', () => {
       const engine = await Engine.createCI()
       engine.overload({ root })
       const request = Request.create({ type: 'TEST_SPAWN' })
-      const msg = 'path must be foreign: child1'
       assert.strictEqual(engine.logger.pulseCount, 1)
+      const msg = 'Segment not present: /child1'
       await expect(engine.pierce(request)).rejects.toThrow(msg)
     })
     test('system ping', async () => {
