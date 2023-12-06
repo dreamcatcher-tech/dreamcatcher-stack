@@ -251,10 +251,6 @@ const execTools = async (functions, toolCalls, threadId, runId) => {
       const result = await functions[name](payload)
       output = JSON.stringify(result, null, '  ')
     } catch (error) {
-      if (error.stack) {
-        error.stack =
-          error.stack.split('\n').slice(0, 3).join('\n') + '\n(...truncated)'
-      }
       const string = serializeError(error, { maxDepth: 2 })
       output = 'ERROR!!\n' + JSON.stringify(string, null, '  ')
     }

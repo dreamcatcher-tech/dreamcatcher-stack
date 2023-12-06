@@ -7,7 +7,7 @@ const debug = Debug('interblock:api:schemaToFunctions')
 let _ajv
 const loadAjv = () => {
   if (!_ajv) {
-    _ajv = new Ajv({ useDefaults: true, allErrors: true, verbose: true })
+    _ajv = new Ajv({ useDefaults: true, allErrors: true })
     AjvFormats(_ajv)
   }
   return _ajv
@@ -54,7 +54,11 @@ const createAction = (type, schema) => {
         }
         concat += message
       })
-      throw type + ': ' + concat
+      const error = new Error('Validation Error for: ' + type)
+      error.stack = errors
+        .map((obj) => JSON.stringify(obj, null, '  '))
+        .join('\n')
+      throw error
     }
     return { type, payload }
   }
