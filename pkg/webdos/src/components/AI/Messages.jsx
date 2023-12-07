@@ -235,9 +235,6 @@ const Messages = ({ crisp, isTranscribing }) => {
   if (!crisp || crisp.isLoading) {
     return
   }
-  if (crisp.absolutePath !== '/.HAL/.goalie') {
-    throw new Error(`${crisp.absolutePath} !== '/.HAL/.goalie'`)
-  }
   const { messages, threadId, assistantId } = crisp.state
   const url = `https://platform.openai.com/playground?assistant=${assistantId}&mode=assistant&thread=${threadId}`
   // TODO add a different url for the goals and goalbot

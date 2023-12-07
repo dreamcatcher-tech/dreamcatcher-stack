@@ -4,7 +4,7 @@ import Debug from 'debug'
 const debug = Debug('tests')
 dotenv.config({ path: '../../.env' })
 
-describe('goalie', () => {
+describe('HAL', () => {
   it.only('prompt marshalling', async () => {
     const engine = await Interpulse.createCI()
     // Debug.enable('iplog *hal tests *threads *openPath ')
@@ -14,6 +14,7 @@ describe('goalie', () => {
     debug('HAL actions', actions)
     Debug.enable('iplog')
     const result = await actions.prompt('I want to add a customer')
+    console.dir(result, { depth: Infinity })
     // debug('goalie result', result)
   }, 60000)
 })

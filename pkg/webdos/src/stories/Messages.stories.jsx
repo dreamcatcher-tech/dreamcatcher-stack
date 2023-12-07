@@ -84,7 +84,7 @@ const state = {
 const Template = (args) => {
   return (
     <Engine dev={{ threads: { installer: { state } } }} {...args}>
-      <Syncer path="/.HAL">
+      <Syncer path="/.HAL/.goalie">
         <Messages />
       </Syncer>
     </Engine>

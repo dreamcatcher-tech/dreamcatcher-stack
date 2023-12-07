@@ -16,16 +16,16 @@ const loadAjv = () => {
 export const schemaToFunctions = (jsonSchema) => {
   assert.strictEqual(typeof jsonSchema, 'object')
   const actions = {}
-  for (const key of Object.keys(jsonSchema)) {
-    const schema = jsonSchema[key]
-    const type = schema.title || key
-    const action = createAction(type, schema)
+  for (const fnName of Object.keys(jsonSchema)) {
+    const schema = jsonSchema[fnName]
+    const type = schema.title || fnName
+    const action = createAction(fnName, type, schema)
     action.schema = schema
-    actions[key] = action
+    actions[fnName] = action
   }
   return actions
 }
-const createAction = (type, schema) => {
+const createAction = (fnName, type, schema) => {
   const ajv = loadAjv()
   const validate = ajv.compile(schema)
   return (payload, ...rest) => {
@@ -54,7 +54,7 @@ const createAction = (type, schema) => {
         }
         concat += message
       })
-      const error = new Error('Validation Error for: ' + type)
+      const error = new Error('Parameters Validation Error for: ' + fnName)
       error.stack = errors
         .map((obj) => JSON.stringify(obj, null, '  '))
         .join('\n')

@@ -16,7 +16,7 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
   const onSend = useCallback(
     (value) => {
       key++
-      return crisp.ownActions.user(value, key + '').catch(setError)
+      return crisp.ownActions.prompt(value, key + '').catch(setError)
     },
     [crisp]
   )
@@ -32,12 +32,11 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
   const onTranscription = useCallback((isTranscribing) => {
     setIsTranscribing(isTranscribing)
   })
-  if (!crisp || crisp.isLoading) {
-    // TODO do not remount the tree just because the crisp is loading
+  if (!crisp || crisp.isLoadingChildren) {
     return
   }
-  if (crisp.absolutePath !== '/.HAL/.goalie') {
-    throw new Error(`${crisp.absolutePath} !== '/.HAL/.goalie'`)
+  if (crisp.absolutePath !== '/.HAL') {
+    throw new Error(`${crisp.absolutePath} !== '/.HAL'`)
   }
   return (
     <Stack
@@ -47,7 +46,10 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
       p={1}
       sx={{ width: '100%', minHeight: '100%' }}
     >
-      <Messages crisp={crisp} isTranscribing={isTranscribing} />
+      <Messages
+        crisp={crisp.getChild('.goalie')}
+        isTranscribing={isTranscribing}
+      />
       <Input
         onSend={onSend}
         preload={preload}

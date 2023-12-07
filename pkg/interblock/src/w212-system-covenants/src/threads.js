@@ -9,6 +9,7 @@
 import OpenAI from 'openai'
 import { serializeError } from 'serialize-error'
 import posix from 'path-browserify'
+import { isBrowser } from 'wherearewe'
 import {
   interchain,
   useAsync,
@@ -74,7 +75,8 @@ const reducer = async (request) => {
   debug('request', request)
   switch (request.type) {
     case 'USER': {
-      let [{ threadId, assistantId, path }, setState] = await useState()
+      let [{ threadId, assistantId, path, messages }, setState] =
+        await useState()
       await addUserMessage(request.payload.text)
 
       let { name, assistant } = defaultAI
@@ -186,7 +188,8 @@ const reducer = async (request) => {
         }
       } while (!isRunComplete)
       await updateMessageStatus(STATUS.HAL.DONE)
-      return
+      const [{ messages: newMessages }] = await useState()
+      return newMessages.slice(messages.length)
     }
     case '@@INIT': {
       let { path } = request.payload.installer.state
@@ -421,7 +424,7 @@ const createAI = () => {
   })
 
   const retryOptions = { forever: false, minTimeout: 500, maxTimeout: 3000 }
-  const factory = (fn) => {
+  const factory = (fn, name) => {
     assert(fn instanceof Function, `fn is not a function`)
     return (...args) => {
       let resolve, reject
@@ -436,6 +439,9 @@ const createAI = () => {
             const timeout = 10000
             const error = new Error(`OpenAI timeout after ${timeout}ms`)
             const id = setTimeout(() => reject(error), 10000)
+            if (isBrowser) {
+              console.log('OpenAI', name + '\t', ...args)
+            }
             fn(...args).then((result) => {
               clearTimeout(id)
               resolve(result)
@@ -443,7 +449,7 @@ const createAI = () => {
           })
           resolve(result)
         } catch (error) {
-          console.error(error)
+          console.error(error.message)
           if (operation.retry(error)) {
             return
           }
@@ -454,19 +460,45 @@ const createAI = () => {
     }
   }
   return {
-    assistantsList: factory((...a) => ai.beta.assistants.list(...a)),
-    assistantsUpdate: factory((...a) => ai.beta.assistants.update(...a)),
-    assistantsCreate: factory((...a) => ai.beta.assistants.create(...a)),
-    threadsCreate: factory((...a) => ai.beta.threads.create(...a)),
-    messagesCreate: factory((...a) => ai.beta.threads.messages.create(...a)),
-    messagesRetrieve: factory((...a) =>
-      ai.beta.threads.messages.retrieve(...a)
+    assistantsList: factory(
+      (...a) => ai.beta.assistants.list(...a),
+      'assistantsList   '
     ),
-    runsCreate: factory((...a) => ai.beta.threads.runs.create(...a)),
-    runsRetrieve: factory((...a) => ai.beta.threads.runs.retrieve(...a)),
-    submitToolOutputs: factory((...a) =>
-      ai.beta.threads.runs.submitToolOutputs(...a)
+    assistantsUpdate: factory(
+      (...a) => ai.beta.assistants.update(...a),
+      'assistantsUpdate '
     ),
-    stepsList: factory((...a) => ai.beta.threads.runs.steps.list(...a)),
+    assistantsCreate: factory(
+      (...a) => ai.beta.assistants.create(...a),
+      'assistantsCreate '
+    ),
+    threadsCreate: factory(
+      (...a) => ai.beta.threads.create(...a),
+      'threadsCreate    '
+    ),
+    messagesCreate: factory(
+      (...a) => ai.beta.threads.messages.create(...a),
+      'messagesCreate   '
+    ),
+    messagesRetrieve: factory(
+      (...a) => ai.beta.threads.messages.retrieve(...a),
+      'messagesRetrieve '
+    ),
+    runsCreate: factory(
+      (...a) => ai.beta.threads.runs.create(...a),
+      'runsCreate       '
+    ),
+    runsRetrieve: factory(
+      (...a) => ai.beta.threads.runs.retrieve(...a),
+      'runsRetrieve     '
+    ),
+    submitToolOutputs: factory(
+      (...a) => ai.beta.threads.runs.submitToolOutputs(...a),
+      'submitToolOutputs'
+    ),
+    stepsList: factory(
+      (...a) => ai.beta.threads.runs.steps.list(...a),
+      'stepsList        '
+    ),
   }
 }

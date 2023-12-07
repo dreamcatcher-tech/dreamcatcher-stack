@@ -27,10 +27,10 @@ export default {
 }
 
 const Template = (args) => {
-  Debug.enable('')
+  Debug.enable('iplog')
   return (
     <Engine dev={{ '/crm': apps.crm.covenant }} {...args}>
-      <Syncer path="/.HAL/.goalie">
+      <Syncer path="/.HAL">
         <ThreeBox />
       </Syncer>
     </Engine>

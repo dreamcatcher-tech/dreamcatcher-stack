@@ -19,7 +19,7 @@ const schema = {
     `,
   additionalProperties: false,
   properties: {
-    order: {
+    allGoalIdsPrioritized: {
       type: 'array',
       description: `An array of all the goalIds in the order they should be in.
       The goalIds are the names of the children of this object, and are integers.`,
@@ -48,7 +48,7 @@ const properties = {
   },
   summary: {
     type: 'string',
-    description: `The description of the goal which allows for richer information that just what is in the title array.  This can be up to 500 characters in length`,
+    description: `The description of the goal which allows for richer information that just what is in the title array`,
     maxLength: 50,
   },
 }
@@ -121,15 +121,15 @@ const reducer = async (request) => {
       })
       const { alias } = await interchain(spawnAction)
       const goalId = parseInt(alias)
-      const [{ order }, setState] = await useState()
-      const newOrder = [goalId, ...order]
-      await setState({ order: newOrder })
-      return { order: newOrder }
+      const [{ allGoalIdsPrioritized }, setState] = await useState()
+      const newOrder = [goalId, ...allGoalIdsPrioritized]
+      await setState({ allGoalIdsPrioritized: newOrder })
+      return { success: true, goalId, allGoalIdsPrioritized: newOrder }
     }
     case 'PRIORITIZE': {
       const { goalIds } = request.payload
-      const [{ order }, setState] = await useState()
-      const existing = new Set(order)
+      const [{ allGoalIdsPrioritized }, setState] = await useState()
+      const existing = new Set(allGoalIdsPrioritized)
       const newOrder = []
       for (const goalId of goalIds) {
         if (!existing.has(goalId)) {
@@ -139,13 +139,13 @@ const reducer = async (request) => {
         newOrder.push(goalId)
       }
       newOrder.push(...existing)
-      await setState({ order: newOrder })
-      return { order: newOrder }
+      await setState({ allGoalIdsPrioritized: newOrder })
+      return { allGoalIdsPrioritized: newOrder }
     }
     case 'RM_GOAL': {
       const { goalId, reason } = request.payload
-      const [{ order }, setState] = await useState()
-      const existing = new Set(order)
+      const [{ allGoalIdsPrioritized }, setState] = await useState()
+      const existing = new Set(allGoalIdsPrioritized)
       if (!existing.has(goalId)) {
         throw new Error(`goalId ${goalId} not found in order`)
       }
@@ -156,13 +156,13 @@ const reducer = async (request) => {
       // await setGoalState({ reason })
       const rm = Request.createRemoveActor(goalId.toString())
       await interchain(rm)
-      await setState({ order: newOrder })
-      return { order: newOrder }
+      await setState({ allGoalIdsPrioritized: newOrder })
+      return { allGoalIdsPrioritized: newOrder }
     }
     case 'UPDATE_GOAL': {
       const { goalId, titles, summary } = request.payload
-      const [{ order }] = await useState()
-      if (!order.includes(goalId)) {
+      const [{ allGoalIdsPrioritized }] = await useState()
+      if (!allGoalIdsPrioritized.includes(goalId)) {
         throw new Error(`goalId ${goalId} not found in order`)
       }
       const [, setState] = await useState(goalId.toString())
@@ -179,7 +179,7 @@ const reducer = async (request) => {
 const name = 'goalie'
 const installer = {
   schema,
-  state: { order: [] },
+  state: { allGoalIdsPrioritized: [] },
   ai: {
     name: 'GPT4',
     assistant: {
@@ -196,13 +196,3 @@ const installer = {
 }
 
 export { name, api, reducer, installer, rmReasons }
-
-/**
-Hey goalie, here's the thread you're currently on,
-here's a list of other threads we are tracking,
-and here's the latest message.
-
-Want it to signal any changes to any goals in the list, but only the one we switch to.
-
-Use an echo bot that inserts a message into the thread as tho it was HAL
- */
