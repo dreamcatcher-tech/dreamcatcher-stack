@@ -1,7 +1,8 @@
 import assert from 'assert-fast'
 import Debug from 'debug'
-import { interchain } from '../../w002-api'
-import { Request } from '../../w008-ipld/index.mjs'
+import { interchain, useState } from '../../w002-api'
+import { Dmz, Request } from '../../w008-ipld/index.mjs'
+import merge from 'lodash.merge'
 const debug = Debug('interblock:dmz:spawn')
 
 const spawnReducer = async (payload) => {
@@ -18,10 +19,16 @@ const spawnReducer = async (payload) => {
   // may reject any actions other than cancel deploy while deploying ?
 
   if (installer.covenant?.startsWith('#')) {
-    const { path } = await interchain('@@COVENANT')
-    const covenant = path + installer.covenant.slice('#'.length)
+    const covenant = installer.covenant.slice('#'.length)
     debug(`covenant path`, covenant)
     installer = { ...installer, covenant }
+  }
+  if (installer.covenant) {
+    const path = Dmz.convertToCovenantPath(installer.covenant)
+    const [state] = await useState(path)
+    if (state.installer) {
+      installer = merge({}, state.installer, installer)
+    }
   }
 
   const addChild = Request.createAddChild(alias, installer)

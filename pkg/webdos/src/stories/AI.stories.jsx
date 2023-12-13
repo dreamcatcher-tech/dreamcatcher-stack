@@ -11,14 +11,14 @@ const { faker } = apps.crm
 faker.customers.reset()
 const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   const ai = { bootHal: {} }
-  const install = { add: { path: '/app', installer: '/crm' } }
-  const cd = { '/cd': { path: '/app/customers' } }
+  const add = { add: { path: '/apps' } }
+  const install = { add: { path: '/apps/crm', installer: '/crm' } }
   const sectorsBatch = faker.routing.generateBatch(sectors)
-  const sectorsInsert = { '/app/routing/batch': { batch: sectorsBatch } }
+  const sectorsInsert = { '/apps/crm/routing/batch': { batch: sectorsBatch } }
   const listBatch = faker.customers.generateBatchInside(sectorsBatch, customers)
-  const listInsert = { '/app/customers/batch': { batch: listBatch } }
-  const update = { '/app/routing/update': { path: '/app/customers' } }
-  return [ai, install, cd, sectorsInsert, listInsert, update]
+  const listInsert = { '/apps/crm/customers/batch': { batch: listBatch } }
+  const update = { '/apps/crm/routing/update': { path: '/apps/crm/customers' } }
+  return [ai, add, install, sectorsInsert, listInsert, update]
 }
 
 export default {

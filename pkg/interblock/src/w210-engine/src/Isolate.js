@@ -112,12 +112,12 @@ export class Isolate {
     if (!path.startsWith('/system:/')) {
       return false
     }
-    const systemName = path.substring('/system:/'.length)
+    const systemName = desystemize(path)
     return !!system[systemName]
   }
   async #getSystemPulse(path) {
     assert(this.#isSystem(path))
-    const systemName = path.substring('/system:/'.length)
+    const systemName = desystemize(path)
     assert(system[systemName], `unknown system covenant: ${systemName}`)
     if (!this.#overloadPulses.has(path)) {
       const covenant = system[systemName]

@@ -20,16 +20,17 @@ const gps = {
   },
 }
 const installer = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    title: 'Customers',
+    description: `Manages a list of customers.  The customer number is automatically generated and is unique.  The schema for new items in this collection is given in the state key 'template'`,
+    properties: {
+      maxCustNo: { type: 'integer', minimum: 1 },
+    },
+  },
   state: {
     type: 'COLLECTION',
-    schema: {
-      type: 'object',
-      additionalProperties: false,
-      title: 'Customers',
-      properties: {
-        maxCustNo: { type: 'integer', minimum: 1 },
-      },
-    },
     formData: { maxCustNo: 0 },
     template: {
       type: 'DATUM',

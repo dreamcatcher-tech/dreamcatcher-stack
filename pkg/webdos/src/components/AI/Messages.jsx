@@ -181,14 +181,14 @@ const Goal = ({ titles, summary, status, url }) => {
       <TimelineSeparator onClick={() => window.open(url, '_blank')}>
         <TimelineDot color="warning" sx={{ position: 'relative' }}>
           <GoalIcon />
-          {status !== STATUS.GOAL.DONE && <Progress />}
+          {status !== STATUS.GOALIE.DONE && <Progress />}
         </TimelineDot>
       </TimelineSeparator>
       <TimelineContent>
-        {status !== STATUS.GOAL.DONE ? (
+        {status !== STATUS.GOALIE.DONE ? (
           <>
             <Typography variant="h6" component="span">
-              Goal
+              Goal...
             </Typography>
             <br />
             <Typography component="span" fontStyle="italic">
@@ -197,6 +197,9 @@ const Goal = ({ titles, summary, status, url }) => {
           </>
         ) : (
           <>
+            <Typography variant="h6" component="span" sx={{ mr: 1 }}>
+              Goal
+            </Typography>
             {titles.map((title, key) => {
               const icon =
                 key === titles.length - 1 ? (

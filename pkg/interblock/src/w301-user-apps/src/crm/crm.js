@@ -2,8 +2,18 @@ import * as customers from './customers'
 import * as settings from './settings'
 import * as routing from './routing'
 import * as schedules from './schedules'
-
+const schema = {
+  type: 'object',
+  title: 'CRM - Customer Relationship Management',
+  description: `
+  A Customer Relationship Management (CRM) system designed for truck routing is specialized software that streamlines and optimizes the delivery process for businesses that rely on truck transportation. Its primary functions include:
+  
+  Route Optimization: The CRM system analyzes various factors such as traffic patterns, weather conditions, and delivery windows to create efficient truck routes. This helps in reducing fuel consumption and travel time, ensuring timely deliveries.
+  
+  Customer Management: It stores and manages detailed customer information, including delivery locations, preferred delivery times, and special instructions. This data is used to enhance customer satisfaction by personalizing the delivery experience.`,
+}
 export const installer = {
+  schema,
   network: {
     schedules: { covenant: '#/schedules' },
     customers: { covenant: '#/customers' },

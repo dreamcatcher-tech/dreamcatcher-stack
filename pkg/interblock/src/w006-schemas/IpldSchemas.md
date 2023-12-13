@@ -589,6 +589,8 @@ AppRoot cannot be inferred, since its state would be indeterminate depending on
 what the Validator was perceiving. Order of operations for a given perception is
 deterministic, but perceptions may be different but non conflicting.
 
+Schema is a slice in the DMZ but is not a dedicated class.
+
 ```sh
 type Dmz struct {
     config &Config

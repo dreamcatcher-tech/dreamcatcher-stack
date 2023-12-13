@@ -19,9 +19,10 @@ HAL will be asked to add a new customer, and will require Dave to give at the
 very least the name of the customer to add. assertions:
 
 1. HAL should not ask for any fields other than the required fields of the
-   customer
+   customer, which are just "name"
 1. There should be a single new customers
 1. That customer should have only the name field set
+1. Only two function calls occurred
 
 ## List all customers
 
@@ -38,3 +39,19 @@ proceed to operate on that subset by having it feedback into the chat.
 When a new customer has been added, we want to send them an email to welcome
 them and confirm their details. We should generate this email and include it
 under their customer record.
+
+## Receive a sign up email
+
+Pasting the email raw into the prompt should be recognized as signing up a new
+customer. Must not allow duplicate signups. Must geocode the address. Must show
+the next available collection date in the region.
+
+## Banking reconciliation
+
+Attaching the banking CSV to the input box should be recognized as wanting to
+reconcile the bank statement with user balances. It must not allow duplicate CSV
+files to be loaded twice. Must detect duplicate transactions from prior CSV
+files. Must present a list of proposed changes for the user to cherry pick.
+
+Must recall special cases that the users pointed out where customers are using
+known bad info but have done so for so long that changing would be harder.

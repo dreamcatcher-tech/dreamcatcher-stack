@@ -10,6 +10,7 @@ import OpenAI from 'openai'
 import { serializeError } from 'serialize-error'
 import posix from 'path-browserify'
 import { isBrowser } from 'wherearewe'
+import { makeBook } from './book-maker'
 import {
   interchain,
   useAsync,
@@ -23,6 +24,7 @@ import merge from 'lodash.merge'
 import process from 'process'
 import assert from 'assert-fast'
 import retry from 'retry'
+import yaml from 'js-yaml'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:threads')
 const endings = ['cancelled', 'failed', 'completed', 'expired']
@@ -34,7 +36,25 @@ const api = {
     description: 'A user prompt, which is a request for the AI to do something',
     additionalProperties: false,
     required: ['text'],
-    properties: { text: { type: 'string' } },
+    properties: {
+      text: { type: 'string' },
+      maxFunctionCalls: {
+        type: 'integer',
+        description: `Throw an exception if more than this number of function calls are attempted`,
+        minimum: 0,
+      },
+    },
+  },
+  function: {
+    type: 'object',
+    title: 'FUNCTION',
+    description:
+      'Will return after the first successful function call to the AI.  Will remind the AI that it must call a function if it tries to speak before successfully calling a function.',
+    additionalProperties: false,
+    required: ['name'],
+    properties: {
+      name: { type: 'string' },
+    },
   },
 }
 const context = {}
@@ -62,30 +82,69 @@ const STATUS = {
     EXECUTING: 'EXECUTING',
     DONE: 'DONE',
   },
-  GOAL: {
+  GOALIE: {
     BOOTING: 'BOOTING',
     THINKING: 'THINKING',
     DONE: 'DONE',
   },
 }
 
-// TODO use actions to do more of the threading to reduce the replay
+const schema = {
+  // the schema for the whole state
+  type: 'object',
+  title: 'Threads',
+  description: `HAL is the executing AI.  It is the junction point between artifact and AI activity.
+  
+  The AI is separate from the application because the data should not change just by having an AI conversation with it.`,
+  additionalProperties: false,
+  required: ['messages'],
+  properties: {
+    messages: {
+      type: 'array',
+      description: `The messages that have been sent to the user so far`,
+      items: {
+        type: 'object',
+        properties: {
+          type: {
+            enum: ['USER', 'HAL', 'GOALIE'],
+            description: `The type of message`,
+          },
+          text: {
+            type: 'string',
+            description: `The text of the message`,
+          },
+        },
+      },
+    },
+    threadId: {
+      type: 'string',
+      description: `The threadId of the current conversation`,
+    },
+    assistantId: {
+      type: 'string',
+      description: `The assistantId of the current conversation`,
+    },
+  },
+}
 
 const reducer = async (request) => {
   debug('request', request)
   switch (request.type) {
-    case 'USER': {
-      let [{ threadId, assistantId, path, messages }, setState] =
-        await useState()
-      await addUserMessage(request.payload.text)
+    case 'FUNCTION': {
+      throw new Error('not implemented')
+    }
+    case 'UPSERT_ASSISTANT': {
+      // TODO make an api extractor function that gets out the params and checks
+      // payload is passed in, schema checked against api, and params returned
+      let [{ path, assistantId }, setState] = await useState()
+      const { api } = await useApi(path)
 
-      let { name, assistant } = defaultAI
-      const { api, functions } = await useApi(path)
+      let { assistant } = defaultAI
+
       if (path !== '(default)') {
         const [ai] = await useAI(path)
         if (ai) {
           assert(ai.name === 'GPT4', `ai name is ${ai.name}`)
-          name = ai.name
           assistant = ai.assistant
         }
       }
@@ -105,17 +164,33 @@ const reducer = async (request) => {
 
           // TODO add a special synthetic call to query another bot
         } else {
+          debug('creating assistant', path)
           // create the assistant
           await updateMessageStatus(STATUS.USER.CREATING)
           const tools = transformToGpt4Api(api)
+          const book = await makeBook(path)
+
+          const bookString = yaml.dump(book)
+          const glue = `\n
+          The text that follows is in yaml format and contains a map of the entire filesystem tree, with each node having the following keys: api, children, state, and schema.  To access a path in this filsystem you need to use the 'cd' command and then stop immediately, whereupon the next run the functions in the api key will become available to you.  The state at that point is in the 'state' key, and the schema for that state including a description about what that object does is in the 'schema' key. 
+
+          For example, if Dave wants to talk about customers, quite likely he wants to be using the app at /apps/crm and more specifically the /apps/crm/customers chain.  To get there, issue a 'cd /apps/crm/customers' command then stop.  The next run will have the functions available to you.
+          
+          Remember: if you do not immediately stop execution after calling the cd function, the universe will end.
+
+          The yaml:\n`
+          debug('book created length', bookString.length)
+
           remote = await useAsync(async () => {
             const { model, instructions } = assistant
+            debug('instructions', instructions.length)
             const result = await context.ai.assistantsCreate({
               name: path,
               model,
-              tools,
-              instructions,
+              // tools,
+              instructions: instructions + glue + bookString,
             })
+
             return result
           })
           assistantId = remote.id
@@ -125,6 +200,10 @@ const reducer = async (request) => {
         // check that the assistant is still valid
         // throw new Error('TODO')
       }
+      return
+    }
+    case 'UPSERT_THREAD': {
+      let [{ threadId }, setState] = await useState()
       await updateMessageStatus(STATUS.USER.THREADING)
       if (!threadId) {
         // create the thread and set the ID
@@ -140,11 +219,13 @@ const reducer = async (request) => {
         // check the thread has the assistant set
         // check the thread data matches what we have on chain
       }
-      const url = `https://platform.openai.com/playground?assistant=${assistantId}&mode=assistant&thread=${threadId}`
-      debug('url', url)
 
-      await updateMessageStatus(STATUS.USER.MESSAGING)
+      return
+    }
+    case 'ADD_MESSAGE': {
       const { text } = request.payload
+      await updateMessageStatus(STATUS.USER.MESSAGING)
+      const [{ threadId }] = await useState()
       const messageId = await useAsync(async () => {
         const result = await context.ai.messagesCreate(threadId, {
           role: 'user',
@@ -155,15 +236,25 @@ const reducer = async (request) => {
       })
       debug('messageId', messageId)
       await updateMessageStatus(STATUS.USER.DONE)
-
-      // TODO block concurrent runs occuring
-      await addHalMessage()
+      return
+    }
+    case 'RUN': {
+      const [{ threadId, assistantId, path }] = await useState()
+      const [{ wd }] = await useState(path)
+      const { api, functions } = await useApi(wd)
+      const tools = transformToGpt4Api(api)
       const runId = await useAsync(async () => {
         const result = await context.ai.runsCreate(threadId, {
           assistant_id: assistantId,
+          tools,
+          instructions: `never ever generate any details unless explicitly told to do so as this is a production environment`,
         })
         return result.id
       })
+      // trouble is you can't CD and then insert more tools.
+      // so CD needs to be the end of the run, like a function call that ends
+      // when we detect it we can submit tool outputs, but we will cancel
+      // immediately afterwards.
       await updateMessageStatus(STATUS.HAL.THINKING)
 
       debug('runId', runId)
@@ -171,6 +262,10 @@ const reducer = async (request) => {
       // run step status: in_progress, cancelled, failed, completed, expired
       let steps = []
       let isRunComplete = false
+      let callsRemaining = request.payload.maxFunctionCalls
+      if (!Number.isInteger(callsRemaining)) {
+        callsRemaining = Number.MAX_SAFE_INTEGER
+      }
       do {
         const lastId = getLastStepId(steps)
         const { done, next, tools } = await pollSteps(lastId, threadId, runId)
@@ -183,11 +278,35 @@ const reducer = async (request) => {
         if (tools) {
           assert(last.status === 'in_progress' && last.type === 'tool_calls')
           await updateMessageStatus(STATUS.HAL.EXECUTING)
-          await execTools(functions, last.step_details, threadId, runId)
+          const toolOutputs = await execTools(
+            functions,
+            last.step_details,
+            callsRemaining
+          )
+          callsRemaining -= toolOutputs.length
+          await sendOutputs(toolOutputs, threadId, runId)
           await updateMessageStatus(STATUS.HAL.THINKING)
         }
       } while (!isRunComplete)
       await updateMessageStatus(STATUS.HAL.DONE)
+      return
+    }
+    case 'USER': {
+      await addUserMessage(request.payload.text)
+      await interchain('UPSERT_ASSISTANT')
+      await interchain('UPSERT_THREAD')
+      let [{ threadId, assistantId, messages }, setState] = await useState()
+      assert(assistantId, 'assistantId is missing')
+      assert(threadId, 'threadId is missing')
+
+      await interchain('ADD_MESSAGE', request.payload)
+
+      const url = `https://platform.openai.com/playground?assistant=${assistantId}&mode=assistant&thread=${threadId}`
+      debug('url', url)
+
+      // TODO block concurrent runs occuring
+      await addHalMessage()
+      await interchain('RUN', request.payload)
       const [{ messages: newMessages }] = await useState()
       return newMessages.slice(messages.length)
     }
@@ -217,18 +336,6 @@ const reducer = async (request) => {
   }
 }
 
-const name = 'threads'
-const installer = {
-  state: { threadId: null, assistantId: null },
-  config: { isPierced: true },
-}
-export { name, api, reducer, installer, STATUS }
-
-const injectedResponses = []
-export function injectResponses(...responses) {
-  injectedResponses.push(...responses)
-}
-
 const transformToGpt4Api = (api) =>
   Object.entries(api).map(
     ([name, { title: t, description: d, ...parameters }]) => ({
@@ -236,13 +343,22 @@ const transformToGpt4Api = (api) =>
       function: { name, description: `${t}\n${d}`, parameters },
     })
   )
-const execTools = async (functions, toolCalls, threadId, runId) => {
+const sendOutputs = async (tool_outputs, threadId, runId) => {
+  await useAsync(() =>
+    context.ai.submitToolOutputs(threadId, runId, { tool_outputs })
+  )
+}
+const execTools = async (functions, toolCalls, callsRemaining) => {
   const { type, tool_calls } = toolCalls
   assert(Array.isArray(tool_calls), 'tool_calls is not an array')
   assert(type === 'tool_calls', `step type is ${type}`)
   assert(tool_calls.length, 'tool_calls is empty')
   debug('tool_calls', tool_calls)
   // TODO standardize names for title and key
+
+  if (callsRemaining < tool_calls.length) {
+    throw new Error(`too many function calls`)
+  }
 
   const calls = tool_calls.map(async (call) => {
     const { id: tool_call_id, type, function: fn } = call
@@ -254,15 +370,14 @@ const execTools = async (functions, toolCalls, threadId, runId) => {
       const result = await functions[name](payload)
       output = JSON.stringify(result, null, '  ')
     } catch (error) {
+      delete error.stack
       const string = serializeError(error, { maxDepth: 2 })
-      output = 'ERROR!!\n' + JSON.stringify(string, null, '  ')
+      output = JSON.stringify(string, null, '  ')
     }
     return { tool_call_id, output }
   })
-  const tool_outputs = await Promise.all(calls)
-  await useAsync(() =>
-    context.ai.submitToolOutputs(threadId, runId, { tool_outputs })
-  )
+  const toolOutputs = await Promise.all(calls)
+  return toolOutputs
 }
 const splat = (existing, next) => {
   const result = [...existing]
@@ -366,13 +481,7 @@ const updateSteps = async (rawSteps) => {
           transformed.args = JSON.parse(args)
         }
         if (output) {
-          if (output.startsWith('ERROR!!\n')) {
-            output = output.slice('ERROR!!\n'.length)
-            const error = JSON.parse(output)
-            transformed.output = error
-          } else {
-            transformed.output = JSON.parse(output)
-          }
+          transformed.output = JSON.parse(output)
         }
         return transformed
       })
@@ -383,7 +492,7 @@ const updateSteps = async (rawSteps) => {
   next.push({ ...last, steps })
   await setState({ messages: next })
 }
-const addUserMessage = async (text) => {
+export const addUserMessage = async (text) => {
   const [state, setState] = await useState()
   const user = {
     type: 'USER',
@@ -392,7 +501,7 @@ const addUserMessage = async (text) => {
   }
   await setState({ messages: [...state.messages, user] })
 }
-const addHalMessage = async () => {
+export const addHalMessage = async () => {
   const [state, setState] = await useState()
   const HAL = {
     type: 'HAL',
@@ -400,6 +509,16 @@ const addHalMessage = async () => {
     status: STATUS.HAL.BOOTING,
   }
   await setState({ messages: [...state.messages, HAL] })
+}
+export const addGoalieMessage = async () => {
+  const [state, setState] = await useState()
+  const goalie = {
+    type: 'GOALIE',
+    titles: [],
+    summary: '',
+    status: STATUS.GOALIE.BOOTING,
+  }
+  await setState({ messages: [...state.messages, goalie] })
 }
 const updateMessageStatus = async (status) => {
   const [state, setState] = await useState()
@@ -501,4 +620,17 @@ const createAI = () => {
       'stepsList        '
     ),
   }
+}
+
+const name = 'threads'
+const installer = {
+  state: { threadId: null, assistantId: null },
+  config: { isPierced: true },
+  schema,
+}
+export { name, api, reducer, installer, schema, STATUS }
+
+const injectedResponses = []
+export function injectResponses(...responses) {
+  injectedResponses.push(...responses)
 }

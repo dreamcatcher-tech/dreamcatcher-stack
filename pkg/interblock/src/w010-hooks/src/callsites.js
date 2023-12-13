@@ -5,7 +5,7 @@ import {
   AsyncTrail,
   Pulse,
 } from '../../w008-ipld/index.mjs'
-import { schemaToFunctions } from '../../w002-api'
+import { schemaToFunctions, loadAjv, throwIfNotValid } from '../../w002-api'
 import equals from 'fast-deep-equal'
 import assert from 'assert-fast'
 import callsites from 'callsites'
@@ -197,6 +197,22 @@ const useState = async (path) => {
   }
   return [state, setState]
 }
+const useSchema = async (path) => {
+  assert.strictEqual(typeof path, 'string', `path must be a string`)
+  assert(path, `path cannot be null`)
+
+  const getSchema = Request.createGetSchema(path)
+  let { schema } = await interchain(getSchema)
+  const setSchema = async (schema) => {
+    const ajv = loadAjv()
+    const validator = ajv.compile(schema)
+    throwIfNotValid(validator.errors, `setSchema( ${path} )`)
+
+    const setSchemaRequest = Request.createSetSchema(schema)
+    return interchain(setSchemaRequest, path)
+  }
+  return [schema, setSchema]
+}
 
 const useAI = async (path) => {
   assert.strictEqual(typeof path, 'string', `path must be a string`)
@@ -241,6 +257,7 @@ if (globalThis[Symbol.for('interblock:api:hook')]) {
 globalThis[Symbol.for('interblock:api:hook')] = {
   interchain,
   useState,
+  useSchema,
   useAsync,
   useAI,
   useApi,

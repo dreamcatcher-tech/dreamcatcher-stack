@@ -7,7 +7,7 @@ const debug = Debug('interblock:apps:collection')
 
 const { convertToTemplate, validateDatumTemplate, validateFormData } = datum
 
-const add = async (payload, template) => {
+const addFn = async (payload, template) => {
   debug('add', payload)
   assertFormData(payload)
   validateDatumTemplate(template)
@@ -42,13 +42,13 @@ const reducer = async (request) => {
     case 'ADD': {
       // TODO cause the child to fetch the template when it is spawned
       const [{ template }] = await useState()
-      return await add(payload, template)
+      return await addFn(payload, template)
     }
     case 'BATCH': {
       const { batch } = payload
       assert(Array.isArray(batch))
       const [{ template }] = await useState()
-      return await Promise.all(batch.map((payload) => add(payload, template)))
+      return await Promise.all(batch.map((payload) => addFn(payload, template)))
     }
     case 'SET_TEMPLATE': {
       // TODO useState() should be able to set this remotely ?
@@ -107,22 +107,23 @@ const getChildName = (template, formData) => {
   return formData
 }
 
-const api = {
-  add: {
-    type: 'object',
-    title: 'ADD',
-    description: 'Add an element to this collection',
-    additionalProperties: false,
-    required: ['formData'],
-    properties: {
-      formData: { type: 'object' },
-      network: {
-        type: 'object',
-        description: 'Recursively defined children',
-        // patternProperties: { '(.*?)': { $ref: '#' } },
-      },
+const add = {
+  type: 'object',
+  title: 'ADD',
+  description: 'Add an element to this collection',
+  additionalProperties: false,
+  required: ['formData'],
+  properties: {
+    formData: { type: 'object' },
+    network: {
+      type: 'object',
+      description: 'Recursively defined children',
+      // patternProperties: { '(.*?)': { $ref: '#' } },
     },
   },
+}
+const api = {
+  add,
   batch: {
     type: 'object',
     title: 'BATCH',
@@ -130,26 +131,21 @@ const api = {
     additionalProperties: false,
     required: ['batch'],
     properties: {
-      batch: { type: 'array' }, // TODO use 'add' schema
+      batch: { type: 'array', items: add },
     },
   },
-  setTemplate: {
-    type: 'object',
-    title: 'SET_TEMPLATE',
-    description: 'Change the template of the elements of this collection',
-    additionalProperties: false,
-    required: ['schema'],
-    properties: {
-      type: { type: 'string' },
-      schema: { type: 'object' },
-      network: { type: 'object' },
-    },
-  },
-  search: {
-    type: 'object',
-    title: 'SEARCH',
-    description: 'Search through this collection',
-  },
+  // setTemplate: {
+  //   type: 'object',
+  //   title: 'SET_TEMPLATE',
+  //   description: 'Change the template of the elements of this collection',
+  //   additionalProperties: false,
+  //   required: ['schema'],
+  //   properties: {
+  //     type: { type: 'string' },
+  //     schema: { type: 'object' },
+  //     network: { type: 'object' },
+  //   },
+  // },
 }
 const installer = { state: { type: 'COLLECTION', schema: {} } }
 const name = 'collection'

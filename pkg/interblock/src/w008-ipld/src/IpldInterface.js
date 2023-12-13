@@ -5,9 +5,6 @@ import Debug from 'debug'
 const debug = Debug('interpulse:models:IpldInterface')
 
 export class IpldInterface {
-  get schema() {
-    throw new Error('Not Implemented')
-  }
   isModified() {
     throw new Error('Not Implemented')
   }

@@ -651,6 +651,11 @@ export class Network extends IpldStruct {
     const iterator = exporter(buffer)
     return [diff.deleted, iterator]
   }
+  static isSpecialChannel(channelId) {
+    assert(Number.isInteger(channelId))
+    assert(channelId >= 0)
+    return Object.values(FIXED).includes(channelId)
+  }
 }
 const checkAbort = (abort) => {
   assert(abort instanceof AbortController)

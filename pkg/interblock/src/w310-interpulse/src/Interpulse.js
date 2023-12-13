@@ -503,15 +503,16 @@ const mapShell = (engine) => {
     Object.assign(actions[key], api[key])
   }
   const { publish } = actions
-  assert(publish)
-  actions.publish = (name, covenant = {}, parentPath = '.') => {
-    // TODO use the covenant schema to pluck out what is valid
-    // or by default strip out any functions
+  if (publish) {
+    actions.publish = (name, covenant = {}, parentPath = '.') => {
+      // TODO use the covenant schema to pluck out what is valid
+      // or by default strip out any functions
 
-    const noReducers = withoutReducers(covenant)
-    return publish(name, noReducers, parentPath)
+      const noReducers = withoutReducers(covenant)
+      return publish(name, noReducers, parentPath)
+    }
+    Object.assign(actions.publish, api.publish)
   }
-  Object.assign(actions.publish, api.publish)
 
   return actions
 }

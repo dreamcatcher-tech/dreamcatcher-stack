@@ -26,10 +26,18 @@ First we would fire up the thread with the goalie, which is the threadmaster
 Then when we get the response from the goalie, we set up HALs directions.
 
  */
-
-const makeInit = () => {
+const { faker } = apps.crm
+faker.customers.reset()
+const makeInit = ({ sectors = 2, customers = 10 } = {}) => {
   const ai = { bootHal: {} }
-  return [ai]
+  const add = { add: { path: '/apps' } }
+  const install = { add: { path: '/apps/crm', installer: '/crm' } }
+  const sectorsBatch = faker.routing.generateBatch(sectors)
+  const sectorsInsert = { '/apps/crm/routing/batch': { batch: sectorsBatch } }
+  const listBatch = faker.customers.generateBatchInside(sectorsBatch, customers)
+  const listInsert = { '/apps/crm/customers/batch': { batch: listBatch } }
+  const update = { '/apps/crm/routing/update': { path: '/apps/crm/customers' } }
+  return [ai, add, install, sectorsInsert, listInsert, update]
 }
 
 export default {

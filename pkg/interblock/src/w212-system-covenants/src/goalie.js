@@ -68,6 +68,13 @@ const api = {
     required: ['titles', 'summary'],
     properties,
   },
+  noop: {
+    type: 'object',
+    title: 'NOOP',
+    description: `Do nothing.  This is a placeholder for the AI to use when no changes are required, such as when the goal remains unchanged and the priority order is unchanged`,
+    additionalProperties: false,
+    properties: {},
+  },
   update: {
     type: 'object',
     title: 'UPDATE_GOAL',
@@ -167,6 +174,9 @@ const reducer = async (request) => {
       }
       const [, setState] = await useState(goalId.toString())
       return setState({ titles, summary })
+    }
+    case 'NOOP': {
+      return
     }
     case '@@INIT': {
       return

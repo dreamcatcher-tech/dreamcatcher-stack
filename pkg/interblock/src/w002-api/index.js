@@ -11,6 +11,7 @@ const getHook = (hookName) => {
 export const interchain = (type, payload, to) =>
   getHook('interchain')(type, payload, to)
 export const useState = (path = '.') => getHook('useState')(path)
+export const useSchema = (path = '.') => getHook('useSchema')(path)
 export const useAI = (path = '.') => getHook('useAI')(path)
 export const useApi = (path = '.') => getHook('useApi')(path)
 export const useAsync = (...args) => getHook('useAsync')(...args)
@@ -57,6 +58,10 @@ export const isSystemAction = (request) => {
   return Request.SYSTEM_TYPES.includes(request.type)
 }
 
-export { schemaToFunctions } from './src/schemaToFunctions'
+export {
+  schemaToFunctions,
+  loadAjv,
+  throwIfNotValid,
+} from './src/schemaToFunctions'
 
 export { Request }

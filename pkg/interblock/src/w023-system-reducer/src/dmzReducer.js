@@ -4,7 +4,7 @@ import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
 import { installReducer } from './install'
 import { genesisReducer } from './genesis'
-import { Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
+import { Network, Address, Pulse, PulseLink } from '../../w008-ipld/index.mjs'
 import { usePulse } from '../../w010-hooks'
 import { autoAlias } from './utils'
 import Debug from 'debug'
@@ -109,7 +109,19 @@ const pulseReducer = async (type, payload) => {
       const nextState = pulse.getState().setMap(merged)
       pulse = pulse.setState(nextState)
       setPulse(pulse)
-      return pulse.getState().toJS()
+      return merged
+    }
+    case '@@GET_SCHEMA': {
+      const remotePulse = await getRemotePulse(payload, pulse, latest)
+      const schema = remotePulse.getSchema()
+      return { schema }
+    }
+    case '@@SET_SCHEMA': {
+      const { schema } = payload
+      assert.strictEqual(typeof schema, 'object')
+      pulse = pulse.setSchema(schema)
+      setPulse(pulse)
+      return
     }
     case '@@GET_AI': {
       const remotePulse = await getRemotePulse(payload, pulse, latest)
@@ -227,6 +239,20 @@ const pulseReducer = async (type, payload) => {
       pulse = pulse.setMap({ provenance: { dmz: { config: payload } } })
       setPulse(pulse)
       return
+    }
+    case '@@LS': {
+      // TODO make this a stream somehow ?
+      const remotePulse = await getRemotePulse(payload, pulse, latest)
+      const children = []
+      const childrenHamt = remotePulse.getNetwork().children
+      for await (const [alias, channelId] of childrenHamt.entries()) {
+        // TODO skip anything that is a genesis request
+        if (Network.isSpecialChannel(channelId)) {
+          continue
+        }
+        children.push(alias)
+      }
+      return { children }
     }
     default:
       throw new Error(`Unrecognized type: ${type}`)

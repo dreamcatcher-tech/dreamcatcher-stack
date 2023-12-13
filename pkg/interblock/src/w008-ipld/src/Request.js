@@ -7,6 +7,7 @@ import schemas from '../../w006-schemas'
 
 export class Request extends IpldStruct {
   static create(request, payload = {}, binary) {
+    // TODO this should use the schema of the target
     if (typeof request === 'undefined') {
       throw new Error(`Actions cannot be undefined`)
     }
@@ -49,6 +50,8 @@ export class Request extends IpldStruct {
     '@@INSTALL',
     '@@GET_STATE',
     '@@SET_STATE',
+    '@@GET_SCHEMA',
+    '@@SET_SCHEMA',
     '@@GET_AI',
     '@@SET_AI',
     '@@USE_PULSE',
@@ -64,6 +67,7 @@ export class Request extends IpldStruct {
     '@@RM',
     '@@SET_SUB', // TODO installers should allow an init array
     '@@CONFIG',
+    '@@LS',
   ]
   isSystem() {
     return Request.SYSTEM_TYPES.includes(this.type)
@@ -80,6 +84,15 @@ export class Request extends IpldStruct {
   static createSetState(changes, binary, replace) {
     assert.strictEqual(typeof changes, 'object')
     return this.create('@@SET_STATE', { changes, replace }, binary)
+  }
+  static createGetSchema(path) {
+    assert.strictEqual(typeof path, 'string')
+    assert(path)
+    return this.create('@@GET_SCHEMA', { path })
+  }
+  static createSetSchema(schema) {
+    assert.strictEqual(typeof schema, 'object')
+    return this.create('@@SET_SCHEMA', { schema })
   }
   static createGetAI(path) {
     // TODO maybe we could make a generic slice getter for any key in pulse ?

@@ -22,6 +22,7 @@ const getDefaultParams = (CI = false) => {
       state: State.create(),
       pending: Pending.create(),
       covenant: 'unity',
+      schema: { type: 'object' },
     }
   }
   if (CI) {
@@ -62,6 +63,10 @@ export class Dmz extends IpldStruct {
         assert.strictEqual(typeof params[key], 'object')
         continue
       }
+      if (key === 'schema') {
+        assert.strictEqual(typeof params[key], 'object')
+        continue
+      }
       assert(this.classMap[key], `key ${key} not mapped to CID class`)
       const isInstanceOf = params[key] instanceof this.classMap[key]
       if (!isInstanceOf) {
@@ -79,8 +84,11 @@ export class Dmz extends IpldStruct {
   }
   getCovenantPath() {
     const { covenant } = this
-    assert.strictEqual(typeof covenant, 'string')
-    let covenantPath = covenant
+    return Dmz.convertToCovenantPath(covenant)
+  }
+  static convertToCovenantPath(path) {
+    assert.strictEqual(typeof path, 'string')
+    let covenantPath = path
     if (!posix.isAbsolute(covenantPath)) {
       // TODO be precise about assumption this is a system covenant
       covenantPath = '/system:/' + covenantPath

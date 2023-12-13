@@ -17,7 +17,7 @@ describe('openPaths', () => {
     await engine.pierce(api.add('child1'))
     await engine.pierce(api.add('child1/nested1'))
     const path = 'child1/nested1/false1'
-    const false1 = engine.pierce(api.ping(path))
+    const false1 = engine.pierce(api.ls(path))
     await expect(false1).rejects.toThrow(`Segment not present: /${path}`)
   })
   test(`deep add throws`, async () => {

@@ -9,14 +9,11 @@ import Messages from './Messages'
 const debug = Debug('AI:ThreeBox')
 debug(`loaded`)
 
-let key = 0
-
 const ThreeBox = ({ crisp, preload, preSubmit }) => {
   const [error, setError] = useState()
   const onSend = useCallback(
     (value) => {
-      key++
-      return crisp.ownActions.prompt(value, key + '').catch(setError)
+      return crisp.ownActions.user(value).catch(setError)
     },
     [crisp]
   )
@@ -46,10 +43,7 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
       p={1}
       sx={{ width: '100%', minHeight: '100%' }}
     >
-      <Messages
-        crisp={crisp.getChild('.goalie')}
-        isTranscribing={isTranscribing}
-      />
+      <Messages crisp={crisp} isTranscribing={isTranscribing} />
       <Input
         onSend={onSend}
         preload={preload}

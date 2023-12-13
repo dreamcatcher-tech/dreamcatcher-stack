@@ -5,7 +5,7 @@ import Debug from 'debug'
 const debug = Debug('interblock:api:schemaToFunctions')
 
 let _ajv
-const loadAjv = () => {
+export const loadAjv = () => {
   if (!_ajv) {
     _ajv = new Ajv({ useDefaults: true, allErrors: true })
     AjvFormats(_ajv)
@@ -46,20 +46,21 @@ const createAction = (fnName, type, schema) => {
     }
     debug('payload: %O', payload)
     if (!validate(payload)) {
-      const { errors = [] } = validate
-      let concat = ''
-      errors.forEach(({ message }) => {
-        if (concat) {
-          concat += ', '
-        }
-        concat += message
-      })
-      const error = new Error('Parameters Validation Error for: ' + fnName)
-      error.stack = errors
-        .map((obj) => JSON.stringify(obj, null, '  '))
-        .join('\n')
-      throw error
+      throwIfNotValid(validate.errors, fnName)
     }
     return { type, payload }
   }
+}
+export const throwIfNotValid = (ajvErrors, fnName) => {
+  if (!ajvErrors) {
+    return
+  }
+  assert(Array.isArray(ajvErrors))
+  const reasons = ajvErrors
+    .map((obj) => JSON.stringify(obj, null, '  '))
+    .join('\n')
+  const error = new Error(
+    `Parameters Validation Error for: ${fnName}: \n${reasons}`
+  )
+  throw error
 }

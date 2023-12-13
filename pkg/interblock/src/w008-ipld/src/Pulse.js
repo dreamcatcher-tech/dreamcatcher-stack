@@ -223,6 +223,13 @@ export class Pulse extends IpldStruct {
     assert(state instanceof State)
     return this.setMap({ provenance: { dmz: { state } } })
   }
+  getSchema() {
+    return this.provenance.dmz.schema
+  }
+  setSchema(schema) {
+    assert(schema instanceof Object)
+    return this.setMap({ provenance: { dmz: { schema } } })
+  }
   getAI() {
     return this.provenance.dmz.ai
   }

@@ -1,6 +1,6 @@
 import assert from 'assert-fast'
 import { Request } from '../../w008-ipld/index.mjs'
-import { useState, useAI, interchain } from '../../w002-api'
+import { useState, useAI, useSchema, interchain } from '../../w002-api'
 import merge from 'lodash.merge'
 import equals from 'fast-deep-equal'
 import Debug from 'debug'
@@ -15,7 +15,7 @@ export const installReducer = async (payload) => {
   debug(`covenant`, covenant)
   let { installer } = covenant.state
   installer = merge({}, installer, payload.installer)
-  const { network = {}, state = {}, config = {}, ai = {} } = installer
+  const { network = {}, state = {}, config = {}, ai = {}, schema } = installer
   assert.strictEqual(typeof network, 'object')
   assert.strictEqual(typeof state, 'object')
   assert.strictEqual(typeof config, 'object')
@@ -28,6 +28,10 @@ export const installReducer = async (payload) => {
   if (!equals(ai, {})) {
     const [, setAI] = await useAI()
     await setAI(ai)
+  }
+  if (schema) {
+    const [, setSchema] = await useSchema()
+    await setSchema(schema)
   }
   // TODO make all slices of the DMZ be updatable by a general interface
   await interchain('@@CONFIG', config)

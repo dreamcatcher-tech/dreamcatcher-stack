@@ -68,10 +68,10 @@ describe('crm', () => {
       })
       await engine.add('app', '/crm')
       const actions = await engine.actions('/app/customers')
-      await engine.ping('/app/customers')
       const result = await actions.add({
         formData: { custNo: 1234, name: 'test1' },
       })
+      expect(result).toBeTruthy()
     })
     test('customer add', async () => {
       const engine = await Interpulse.createCI({
@@ -85,7 +85,7 @@ describe('crm', () => {
       const latest = await engine.current('/app/customers/100')
       debug(`latest`, latest.getState().toJS())
       const state = latest.getState().toJS()
-      expect(state.formData).toBe(formData)
+      expect(state.formData).toEqual(formData)
       expect(state.schema).toBe('..')
     })
     test.todo('add customer with test data using .processes/addTestCustomer')
