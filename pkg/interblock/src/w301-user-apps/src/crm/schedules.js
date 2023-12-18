@@ -6,7 +6,7 @@ import * as schedule from './schedule'
 import posix from 'path-browserify'
 import Debug from 'debug'
 import assert from 'assert-fast'
-const debug = Debug('crm:schedule')
+const debug = Debug('crm:schedules')
 
 const template = {
   type: 'COLLECTION',

@@ -157,6 +157,14 @@ const reducer = async (request) => {
           return list.data
         })
         let remote = assistants.find((a) => a.name === path)
+
+        if (remote) {
+          await useAsync(async () => {
+            await context.ai.assistantsDelete(remote.id)
+          })
+          remote = undefined
+        }
+
         if (remote) {
           debug('assistant', remote.id, remote.name)
           assistantId = remote.id
@@ -172,7 +180,7 @@ const reducer = async (request) => {
 
           const bookString = yaml.dump(book)
           const glue = `\n
-          The text that follows is in yaml format and contains a map of the entire filesystem tree, with each node having the following keys: api, children, state, and schema.  To access a path in this filsystem you need to use the 'cd' command and then stop immediately, whereupon the next run the functions in the api key will become available to you.  The state at that point is in the 'state' key, and the schema for that state including a description about what that object does is in the 'schema' key. 
+          The text that follows is in yaml format and contains a map of the entire filesystem tree, with each node having the following keys: api, children, state, and schema.  To access a path in this filesystem you need to use the 'cd' command and then stop immediately, whereupon the next run the functions in the api key will become available to you.  The state at that point is in the 'state' key, and the schema for that state including a description about what that object does is in the 'schema' key. 
 
           For example, if Dave wants to talk about customers, quite likely he wants to be using the app at /apps/crm and more specifically the /apps/crm/customers chain.  To get there, issue a 'cd /apps/crm/customers' command then stop.  The next run will have the functions available to you.
           
@@ -591,6 +599,10 @@ const createAI = () => {
       (...a) => ai.beta.assistants.create(...a),
       'assistantsCreate '
     ),
+    assistantsDelete: factory(
+      (...a) => ai.beta.assistants.del(...a),
+      'assistantsDelete '
+    ),
     threadsCreate: factory(
       (...a) => ai.beta.threads.create(...a),
       'threadsCreate    '
@@ -606,6 +618,10 @@ const createAI = () => {
     runsCreate: factory(
       (...a) => ai.beta.threads.runs.create(...a),
       'runsCreate       '
+    ),
+    runsCancel: factory(
+      (...a) => ai.beta.threads.runs.cancel(...a),
+      'runsCancel       '
     ),
     runsRetrieve: factory(
       (...a) => ai.beta.threads.runs.retrieve(...a),

@@ -101,11 +101,14 @@ export class Isolate {
   isCovenant(path) {
     return this.#isOverload(path) || this.#isSystem(path)
   }
+  isRelativeCovenant(path) {
+    return path.startsWith('#/')
+  }
   async getCovenantPulse(path) {
-    assert(this.isCovenant(path))
     if (this.#isOverload(path)) {
       return await this.#getOverloadPulse(path)
     }
+    assert(this.isCovenant(path))
     return await this.#getSystemPulse(path)
   }
   #isSystem(path) {

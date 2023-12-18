@@ -1,6 +1,3 @@
-/**
- * This is the thread management system for the AI.
- */
 import all from 'it-all'
 import OpenAI from 'openai'
 import Debug from 'debug'

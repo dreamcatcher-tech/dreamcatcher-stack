@@ -11,8 +11,9 @@ describe('Car', () => {
       overloads: { '/crm': crm.covenant },
     })
     await engine.add('app', '/crm')
+    debug('begin export')
     const car = await engine.export('/app')
-    debug('car', car)
+    debug('export complete')
 
     const blank = await Interpulse.createCI()
     debug('import start')
@@ -23,18 +24,23 @@ describe('Car', () => {
     const [imported] = roots
     expect(imported).toBeInstanceOf(Pulse)
 
-    await blank.insert(imported.cid.toString(), 'forked')
+    const result = await blank.insert(imported.cid.toString(), 'forked')
     const forkedCurrent = await blank.current('forked')
     expect(imported.cid.toString()).toBe(forkedCurrent.cid.toString())
+    // TODO address should be different at the insertion ?
     const schedule = await blank.current('forked/schedules')
     expect(schedule).toBeInstanceOf(Pulse)
-    const originalAddress = schedule.getAddress()
+    const originalPulseId = schedule.toString()
+    debug('originalPulseId', originalPulseId)
 
     debug('begin write to fork')
     await blank.ping('forked/schedules')
     debug('end write to fork')
+
     const forkedSchedule = await blank.current('forked/schedules')
-    const forkedAddress = forkedSchedule.getAddress()
-    expect(forkedAddress.toString()).not.toBe(originalAddress.toString())
+    // ? did it not update its parent ?
+    const forkedPulseId = forkedSchedule.toString()
+    debug('forkedPulseId', forkedPulseId)
+    expect(forkedPulseId).not.toBe(originalPulseId)
   })
 })

@@ -395,6 +395,39 @@ export class Engine {
     if (this.#isolate.isCovenant(path)) {
       return this.#isolate.getCovenantPulse(path)
     }
+    if (this.#isolate.isRelativeCovenant(path)) {
+      // if this is a relative covenant, then we need to walk to find the parent
+      // # means the nearest installer ?
+      // whichever covenant made the relative path is root
+      const pathTrimmed = path.substring('#/'.length)
+      const baseCovenantPath = rootPulse.getCovenantPath()
+      let fullPath
+      if (baseCovenantPath === path) {
+        // do a relative lookup to get the parent
+        // so the old way was to resolve the covenant at install time
+        let startingPulse = rootPulse
+        do {
+          const parent = await startingPulse.getNetwork().getParent()
+          if (!parent) {
+            throw new Error(`No parent found for ${path}`)
+          }
+          const parentAddress = parent.address
+          const parentPulse = await this.#endurance.findLatest(parentAddress)
+          if (!parentPulse) {
+            throw new Error(`No parent pulse found for ${parentAddress}`)
+          }
+          const parentCovenantPath = parentPulse.getCovenantPath() //?
+          if (posix.isAbsolute(parentCovenantPath)) {
+            fullPath = posix.join(parentCovenantPath, pathTrimmed) //?
+          }
+          // TODO test more complicated lookup cases
+          rootPulse = parentPulse
+        } while (!posix.isAbsolute(fullPath))
+      } else {
+        fullPath = posix.join(baseCovenantPath, pathTrimmed) //?
+      }
+      return this.#isolate.getCovenantPulse(fullPath)
+    }
     let pulse = rootPulse
     if (path === '/') {
       assert(pulse.isRoot(), 'root pulse must be root')

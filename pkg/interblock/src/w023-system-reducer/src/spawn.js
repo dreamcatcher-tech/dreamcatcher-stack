@@ -18,11 +18,13 @@ const spawnReducer = async (payload) => {
   // TODO reject if spawn requested while deploy is unresolved
   // may reject any actions other than cancel deploy while deploying ?
 
-  if (installer.covenant?.startsWith('#')) {
-    const covenant = installer.covenant.slice('#'.length)
-    debug(`covenant path`, covenant)
-    installer = { ...installer, covenant }
-  }
+  // BUT want to lookup the covenant based on the root covenant
+  // this should be deferred until as late as possible
+  // if (installer.covenant?.startsWith('#')) {
+  // const covenant = installer.covenant.slice('#'.length)
+  // debug(`covenant path`, covenant)
+  // installer = { ...installer, covenant }
+  // }
   if (installer.covenant) {
     const path = Dmz.convertToCovenantPath(installer.covenant)
     const [state] = await useState(path)

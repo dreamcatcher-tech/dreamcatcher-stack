@@ -143,7 +143,7 @@ const pulseReducer = async (type, payload) => {
       // TODO remove when can query pulses from reducers
       const path = pulse.getCovenantPath()
       debug(`@@COVENANT`, path)
-      const covenant = await latest(path)
+      const covenant = await latest(path, pulse)
       const state = covenant.getState().toJS()
       return { state, path }
     }

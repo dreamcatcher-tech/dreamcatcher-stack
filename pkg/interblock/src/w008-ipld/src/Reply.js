@@ -23,12 +23,9 @@ export class Reply extends Request {
   }
   static create(type = '@@RESOLVE', payload = {}, binary) {
     if (type === '@@REJECT' && payload instanceof Error) {
-      if (payload.name === 'AssertionError') {
-        if (payload.actual === undefined) {
-          payload.actual = null
-        }
-      }
       payload = serializeError(payload)
+      payload = nullifyUndefined(payload)
+      // turn all undefined into null
     } else {
       const cloned = JSON.parse(JSON.stringify(payload))
       if (!equals(payload, cloned)) {
@@ -80,4 +77,18 @@ export class Reply extends Request {
     assert(type)
     return type === '@@RESOLVE' || type === '@@REJECT' || type === '@@PROMISE'
   }
+}
+
+const nullifyUndefined = (obj) => {
+  if (obj === undefined || obj === null) {
+    return null
+  }
+  if (typeof obj === 'object') {
+    const result = {}
+    for (const key of Object.keys(obj)) {
+      result[key] = nullifyUndefined(obj[key])
+    }
+    return result
+  }
+  return obj
 }

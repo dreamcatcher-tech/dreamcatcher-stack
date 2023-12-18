@@ -89,7 +89,8 @@ export class Dmz extends IpldStruct {
   static convertToCovenantPath(path) {
     assert.strictEqual(typeof path, 'string')
     let covenantPath = path
-    if (!posix.isAbsolute(covenantPath)) {
+
+    if (!path.startsWith('#/') && !posix.isAbsolute(covenantPath)) {
       // TODO be precise about assumption this is a system covenant
       covenantPath = '/system:/' + covenantPath
     }
