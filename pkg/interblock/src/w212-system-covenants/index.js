@@ -12,6 +12,7 @@ import * as threads from './src/threads.js'
 import * as goalie from './src/goalie.js'
 import * as hal from './src/hal.js'
 import * as bookMaker from './src/book-maker.js'
+import * as stucks from './src/stucks.js'
 import { Address } from '../w008-ipld/index.mjs'
 
 export {
@@ -29,6 +30,7 @@ export {
   goalie,
   hal,
   bookMaker,
+  stucks,
 }
 
 /**

@@ -2,7 +2,13 @@
  * This is the thread management system for the AI.
  */
 import Debug from 'debug'
-import { interchain, useAsync, useState } from '../../w002-api'
+import {
+  useApi,
+  ensureChild,
+  interchain,
+  useAsync,
+  useState,
+} from '../../w002-api'
 import merge from 'lodash.merge'
 import all from 'it-all'
 import OpenAI from 'openai'
@@ -85,6 +91,15 @@ const reducer = async (request) => {
         return { content }
       } else {
         // make the tool call
+        assert(toolCalls.length === 1, 'only one tool call supported')
+        const toolCall = toolCalls[0].function
+        assert(toolCall.name === 'stuckloop', 'only stuckloop supported')
+
+        const { functions } = await useApi('stucks')
+        const { helps } = await functions.help(toolCall.arguments)
+        debug('helps', helps)
+
+        await useWithHelp(messages, helps)
         // debug('toolCalls', toolCalls)
       }
       return
@@ -102,21 +117,9 @@ const reducer = async (request) => {
           dangerouslyAllowBrowser: true,
         })
       }
+      await ensureChild('stucks', { covenant: 'stucks' })
       return
     }
-    case 'TARGET': {
-      // set the target chain for the AI to converse about
-      const { path } = request.payload
-      debug('path', path)
-      // verify we can access the path
-
-      const [state, setState] = useState()
-      if (state.path !== path) {
-        await setState({ path })
-      }
-      return
-    }
-    // maybe a thread should be just limited to the stuck being executed
     default: {
       throw new Error(`unknown request: ${request.type}`)
     }
@@ -125,6 +128,16 @@ const reducer = async (request) => {
 const name = 'hal'
 const installer = { state: { path: '/' }, config: { isPierced: true }, schema }
 export { name, api, reducer, installer }
+
+const useWithHelp = async (messages, helps) => {
+  const bot = {
+    role: 'system',
+    content: `You are an expert in following instructions from the help system. The instructions for using the help are provided below:
+  
+  ${helps[0].instructions}`,
+  }
+  messages = [...messages, bot]
+}
 
 async function* stream(messages) {
   debug('messages', messages)
@@ -199,5 +212,8 @@ const accumulate = (results) => {
       }
     }
   }
+  toolCalls.map((call) => {
+    call.function.arguments = JSON.parse(call.function.arguments)
+  })
   return { content, toolCalls }
 }
