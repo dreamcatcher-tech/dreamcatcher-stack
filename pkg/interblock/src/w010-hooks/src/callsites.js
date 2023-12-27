@@ -187,6 +187,9 @@ const useState = async (path) => {
     if (typeof changes !== 'object') {
       throw new Error(`state must be an object, but was: ${typeof changes}`)
     }
+    if (Array.isArray(changes)) {
+      throw new Error(`state must be an object, but was: Array`)
+    }
     assert(typeof options === 'object', `options must be an object`)
     const { replace = false, ...rest } = options
     assert.strictEqual(typeof replace, 'boolean', `replace must be a boolean`)

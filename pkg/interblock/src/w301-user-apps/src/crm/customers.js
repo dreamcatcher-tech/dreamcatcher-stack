@@ -27,6 +27,9 @@ const installer = {
     description: `Manages a list of customers.  The customer number is automatically generated and is unique.  The schema for new items in this collection is given in the state key 'template'`,
     properties: {
       maxCustNo: { type: 'integer', minimum: 1 },
+      formData: { type: 'object' }, // TODO hoist into pulse level schema
+      template: { type: 'object' },
+      type: { const: 'COLLECTION' },
     },
   },
   state: {
@@ -37,7 +40,7 @@ const installer = {
       schema: {
         title: 'Customer',
         type: 'object',
-        required: ['custNo', 'name'],
+        required: ['name'],
         properties: {
           custNo: {
             title: 'Customer Number',
@@ -105,13 +108,12 @@ const reducer = async (request) => {
       formData: { maxCustNo },
     } = state
     assert(Number.isInteger(maxCustNo), 'maxCustNo is not an integer')
-    const { formData } = payload
-    const { custNo = maxCustNo + 1 } = formData
+    const { custNo = maxCustNo + 1 } = payload
     if (custNo <= maxCustNo) {
       throw new Error(`Customer number ${custNo} is > ${maxCustNo}`)
     }
-    if (custNo !== formData.custNo) {
-      payload = merge({}, payload, { formData: { custNo } })
+    if (custNo !== payload.custNo) {
+      payload = merge({}, payload, { custNo })
     }
     const result = await collection.reducer({ type, payload })
     await setState(merge({}, state, { formData: { maxCustNo: custNo } }))
@@ -121,8 +123,7 @@ const reducer = async (request) => {
     const { batch } = payload
     const [state, setState] = await useState()
     let { maxCustNo } = state.formData
-    for (const { formData } of batch) {
-      const { custNo } = formData
+    for (const { custNo } of batch) {
       if (custNo > maxCustNo) {
         maxCustNo = custNo
       }

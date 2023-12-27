@@ -31,6 +31,7 @@ const VITE_GIT_DATE = JSON.stringify(git.date())
 
 const config = {
   plugins: [react()],
+  assetsInclude: ['/sb-preview/runtime.js'], // https://github.com/vitejs/vite/issues/15374
   build: {
     // done only so the size of the bundle can be inspected
     target: 'es2020',

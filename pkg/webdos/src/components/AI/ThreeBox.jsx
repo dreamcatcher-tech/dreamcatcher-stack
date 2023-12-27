@@ -13,7 +13,7 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
   const [error, setError] = useState()
   const onSend = useCallback(
     (value) => {
-      return crisp.ownActions.user(value).catch(setError)
+      return crisp.ownActions.prompt(value).catch(setError)
     },
     [crisp]
   )

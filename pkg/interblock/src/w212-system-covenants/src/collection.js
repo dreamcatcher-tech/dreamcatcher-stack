@@ -42,7 +42,8 @@ const reducer = async (request) => {
     case 'ADD': {
       // TODO cause the child to fetch the template when it is spawned
       const [{ template }] = await useState()
-      return await addFn(payload, template)
+      // TODO fix so that formData is removed
+      return await addFn({ formData: payload }, template)
     }
     case 'BATCH': {
       const { batch } = payload
@@ -111,15 +112,15 @@ const add = {
   type: 'object',
   title: 'ADD',
   description: 'Add an element to this collection',
-  additionalProperties: false,
-  required: ['formData'],
+  // additionalProperties: false,
+  required: [],
   properties: {
-    formData: { type: 'object' },
-    network: {
-      type: 'object',
-      description: 'Recursively defined children',
-      // patternProperties: { '(.*?)': { $ref: '#' } },
-    },
+    // formData: { type: 'object' },
+    // network: {
+    //   type: 'object',
+    //   description: 'Recursively defined children',
+    //   // patternProperties: { '(.*?)': { $ref: '#' } },
+    // },
   },
 }
 const api = {

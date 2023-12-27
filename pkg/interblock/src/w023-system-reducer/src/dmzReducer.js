@@ -1,4 +1,5 @@
 import assert from 'assert-fast'
+import { validate } from '../../w002-api'
 import { openPath, openChild } from './openPath'
 import { pingReducer } from './ping'
 import { spawnReducer } from './spawn'
@@ -106,6 +107,10 @@ const pulseReducer = async (type, payload) => {
       assert.strictEqual(typeof changes, 'object')
       const state = pulse.getState().toJS()
       const merged = replace ? changes : merge({}, state, changes)
+
+      const schema = pulse.getSchema()
+      validate('setState', schema, merged)
+
       const nextState = pulse.getState().setMap(merged)
       pulse = pulse.setState(nextState)
       setPulse(pulse)

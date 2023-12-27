@@ -7,7 +7,7 @@ const debug = Debug('interblock:api:schemaToFunctions')
 let _ajv
 export const loadAjv = () => {
   if (!_ajv) {
-    _ajv = new Ajv({ useDefaults: true, allErrors: true })
+    _ajv = new Ajv({ allErrors: true })
     AjvFormats(_ajv)
   }
   return _ajv
@@ -64,3 +64,24 @@ export const throwIfNotValid = (ajvErrors, fnName) => {
   )
   throw error
 }
+
+export const validate = (name, schema, payload) => {
+  const ajv = loadAjv()
+  const validate = ajv.compile(schema)
+  if (!validate(payload)) {
+    throwIfNotValid(validate.errors, name)
+  }
+}
+
+export const transformToGpt4Api = (api) =>
+  Object.entries(api).map(
+    ([name, { title: t, description: d, ...parameters }]) => ({
+      type: 'function',
+      function: { name, description: `${name}\n${t}\n${d}`, parameters },
+    })
+  )
+
+export const toGpt4 = (s, n, { title: t, description: d, ...parameters }) => ({
+  type: 'function',
+  function: { name: s, description: `${n}\n${t}\n${d}`, parameters },
+})

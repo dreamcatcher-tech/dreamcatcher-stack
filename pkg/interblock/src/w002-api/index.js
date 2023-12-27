@@ -62,6 +62,9 @@ export {
   schemaToFunctions,
   loadAjv,
   throwIfNotValid,
+  validate,
+  transformToGpt4Api,
+  toGpt4,
 } from './src/schemaToFunctions'
 
 export { Request }

@@ -35,13 +35,11 @@ const reducer = async (request) => {
     case 'HELP': {
       const helps = [
         {
-          goal: 'add a customer',
-          helps: [
-            {
-              instructions: `The CRM is installed at the path /apps/crm so you need to navigate to /apps/crm/customers and then add a customer with the command found at that location named 'add'.  The minimum information you must provide is the customer name.  Never provide the custNo field as this is automatically generated.  In the response from CD you will get the current state stored at the /apps/crm/customers path.  There will be a key named 'template'.  This describes the json-schema required for the call to the 'add' command to add a customer at this location`,
-              // steps: [`CD `],
-            },
-          ],
+          type: 'Artifact',
+          instructions: `The CRM is installed at the path /apps/crm.  The customers collection is at the path /apps/crm/customers.  To add a customer, the minimum information that the user has to provide is the customer name.  Once added, use the 'cd' command to change directory into the new customer path that will look something like: /apps/crm/customers/{custNo}`,
+          done: `You should see a new customer at the path /apps/crm/customers/{custNo} with the information you provided to the 'add' function`,
+          tld: '/apps/crm/customers',
+          cmds: ['/cd', '/apps/crm/customers/add'],
         },
       ]
       return { helps }

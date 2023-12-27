@@ -1,9 +1,9 @@
 import React from 'react'
-import { Engine, Syncer } from '..'
-import ThreeBox from '../components/AI/ThreeBox'
+import { Engine, Syncer } from '../..'
+import ThreeBox from '../../components/AI/ThreeBox'
 import { apps } from '@dreamcatcher-tech/interblock'
 import PropTypes from 'prop-types'
-import play from '../Interactions'
+import play from '../../Interactions'
 import Debug from 'debug'
 const debug = Debug('App')
 

@@ -17,7 +17,7 @@ import {
   useAI,
   useApi,
   useState,
-  schemaToFunctions,
+  transformToGpt4Api,
 } from '../../w002-api'
 import { shell } from '..'
 import merge from 'lodash.merge'
@@ -344,13 +344,6 @@ const reducer = async (request) => {
   }
 }
 
-const transformToGpt4Api = (api) =>
-  Object.entries(api).map(
-    ([name, { title: t, description: d, ...parameters }]) => ({
-      type: 'function',
-      function: { name, description: `${t}\n${d}`, parameters },
-    })
-  )
 const sendOutputs = async (tool_outputs, threadId, runId) => {
   await useAsync(() =>
     context.ai.submitToolOutputs(threadId, runId, { tool_outputs })

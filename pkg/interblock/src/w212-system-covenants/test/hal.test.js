@@ -47,8 +47,41 @@ describe('HAL', () => {
     const actions = await engine.actions('.HAL')
     const result = await actions.prompt('add a customer then fix my car')
 
+    const result2 = await actions.prompt('Karen')
+
     console.dir(result, { depth: Infinity })
   }, 20000)
+
+  it('isolated goal test', async () => {
+    const prompt = `Order Type: Bag
+    Pickup Cycle: One Off
+    Address: 17 Windham Lane
+    Suburb: Marikihi
+    Town: McLeans Island
+    Postcode: 3850
+    First Name: Charlotte
+    Last Name: Orton
+    Mobile: 0212247007
+    Email: gbanger74@outlook.net
+    Payment: Internet banking
+    Instructions: (not provided)
+    Terms: Agreed to terms and conditions
+    g-recaptcha-response: v1`
+
+    // this test is to be able to ingest a copy of a customer sign up email
+    // and then correctly process that into a customer record, and
+    // start the next set of actions required for it to be added.
+
+    // we should be able to test the goalie in isolation
+    // test that it generates an anonymized goal.
+    // make it loop until the output passes the PID test.
+  })
+  it('goals to find a customer based on a name', async () => {
+    const prompt = `Elizabeth Arden`
+    // given this single string, it should know to search for all
+    // customers that sounds similar and present them in a list.
+    // but if there is only one result, it should navigate to them.
+  })
 })
 
 /**

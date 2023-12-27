@@ -2,7 +2,6 @@
   "recommendations": [
     "icrawl.discord-vscode",
     "aaron-bond.better-comments",
-    "github.codespaces",
     "github.copilot",
     "ms-vscode.vscode-js-profile-flame",
     "codeandstuff.package-json-upgrade",
