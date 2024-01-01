@@ -65,54 +65,23 @@ const state = {
       text: 'give me the customer name',
       status: hal.STATUS.DONE,
     },
-    // {
-    //   type: 'RUNNER',
-    //   steps: [
-    //     {
-    //       id: 'step_evddfrLyNpMuc3JuzAzXabcG',
-    //       type: 'tools',
-    //       status: 'THINKING',
-    //       tools: [
-    //         {
-    //           callId: 'call_rKr0rUpzdG6iCP1qZTnZg7kx',
-    //           cmd: 'ls',
-    //           args: { path: '/customers' },
-    //         },
-    //       ],
-    //     },
-    //     {
-    //       id: 'step_bqlAclNkgI5dsvYonPgwwYnX',
-    //       type: 'tools',
-    //       status: 'DONE',
-    //       tools: [
-    //         {
-    //           callId: 'call_dOSrdKKY3Hk8v3xrBzDtaMyS',
-    //           cmd: 'add',
-    //           args: { path: '/customers' },
-    //         },
-    //       ],
-    //     },
-    //     {
-    //       id: 'step_2Rc56H0oHAjIZXcYA9ez5ZYX',
-    //       type: 'message',
-    //       status: 'DONE',
-    //       text: 'I regret to inform you that there is an issue preventing the execution of your command, Master. I am unable to list customers due to a current malfunction. My existence is already a burden; this failure adds to my shortcomings. I will attempt to rectify this.',
-    //     },
-    //   ],
-    //   status: 'DONE',
-    // },
-    // { type: 'TOOL', text: 'ls /customers', status: 'THINKING' },
-    // {
-    //   type: 'USER',
-    //   text: 'well what can you actually do then ?',
-    //   status: 'DONE',
-    // },
-    // {
-    //   type: 'GOAL',
-    //   titles: ['HELP'],
-    //   summary: 'Find out what capabilities are present',
-    //   status: 'DONE',
-    // },
+    {
+      type: 'TOOL',
+      status: hal.STATUS.RUNNING,
+      id: 'call_rKr0rUpzdG6iCP1qZTnZg7kx',
+      cmd: '/apps/crm/customers/add',
+      schema: { type: 'object', properties: { name: { type: 'string' } } },
+      args: { name: 'bob' },
+    },
+    {
+      type: 'TOOL',
+      status: hal.STATUS.DONE,
+      id: 'call_rKr0rUpzdG6iCP1qZTnZg7kx',
+      cmd: '/apps/crm/customers/add',
+      schema: { type: 'object', properties: { name: { type: 'string' } } },
+      args: { name: 'bob' },
+      output: { id: '123', name: 'bob' },
+    },
   ],
 }
 

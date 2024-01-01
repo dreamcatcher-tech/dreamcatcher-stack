@@ -25,7 +25,7 @@ const addFn = async (payload, template) => {
   const result = await interchain(spawn)
 
   debug(`datum added`, result.alias)
-  return result
+  return { path: result.alias }
 }
 
 // TODO allow collection to also store formData as tho it was a datum, without children spec

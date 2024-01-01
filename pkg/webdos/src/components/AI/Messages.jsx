@@ -1,4 +1,3 @@
-import { ObjectInspector } from 'react-inspector'
 import CircularProgress from '@mui/material/CircularProgress'
 import { green } from '@mui/material/colors'
 import Chip from '@mui/material/Chip'
@@ -8,7 +7,6 @@ import PropTypes from 'prop-types'
 import Debug from 'debug'
 import DaveIcon from '@mui/icons-material/SentimentDissatisfied'
 import ToolIcon from '@mui/icons-material/Construction'
-import HalIcon from '@mui/icons-material/Psychology'
 import GoalIcon from '@mui/icons-material/GpsFixed'
 import Markdown from 'markdown-to-jsx'
 import Timeline from '@mui/lab/Timeline'
@@ -21,7 +19,7 @@ import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'
 import Alert from '@mui/material/Alert'
 import List from '@mui/material/List'
-import SendIcon from '@mui/icons-material/Send'
+import Terminal from '@mui/icons-material/Terminal'
 import ListItem from '@mui/material/ListItem'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
@@ -29,6 +27,7 @@ import DraftsIcon from '@mui/icons-material/Drafts'
 import FolderIcon from '@mui/icons-material/Folder'
 import RuleIcon from '@mui/icons-material/Rule'
 import Tooltip from '@mui/material/Tooltip'
+import { ToolAction } from './ToolAction'
 
 const debug = Debug('AI:ThreeBox')
 
@@ -60,7 +59,7 @@ const Chat = ({ text, status, type }) => (
         {chatTitles[type]}
       </Typography>
       <br />
-      <Markdown wrapper={React.Fragment}>{text}</Markdown>
+      <Markdown wrapper="React.Fragment">{text}</Markdown>
     </TimelineContent>
   </TimelineItem>
 )
@@ -131,7 +130,7 @@ const Goal = ({ text, status, helps }) => {
               <Tooltip title="Commands" arrow placement="left">
                 <ListItem dense>
                   <ListItemIcon>
-                    <SendIcon />
+                    <Terminal />
                   </ListItemIcon>
                   <ListItemText
                     primary={cmds.map((cmd, key) => (
@@ -153,7 +152,7 @@ const Goal = ({ text, status, helps }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary={
-                      <Markdown wrapper={React.Fragment}>
+                      <Markdown wrapper="React.Fragment">
                         {instructions}
                       </Markdown>
                     }
@@ -167,7 +166,7 @@ const Goal = ({ text, status, helps }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary={
-                      <Markdown wrapper={React.Fragment}>{done}</Markdown>
+                      <Markdown wrapper="React.Fragment">{done}</Markdown>
                     }
                   />
                 </ListItem>
@@ -180,13 +179,13 @@ const Goal = ({ text, status, helps }) => {
   )
 }
 Goal.propTypes = {
-  text: PropTypes.string.required,
-  status: PropTypes.oneOf(Object.values(STATUS)).required,
+  text: PropTypes.string.isRequired,
+  status: PropTypes.oneOf(Object.values(STATUS)).isRequired,
   helps: PropTypes.arrayOf(
     PropTypes.shape({
       type: PropTypes.string,
     })
-  ).required,
+  ).isRequired,
 }
 
 // required: ['type', 'cmd', 'schema', 'args', 'output', 'consequences'],
@@ -201,11 +200,7 @@ const Tool = ({ status, cmd, schema, args, output, consequences }) => (
       <TimelineConnector sx={{ bgcolor: 'secondary.main' }} />
     </TimelineSeparator>
     <TimelineContent>
-      <Typography variant="h6" component="span">
-        {cmd}
-      </Typography>
-      <ObjectInspector name="args" data={args} />
-      <ObjectInspector name="output" data={output} />
+      <ToolAction name={cmd} schema={schema} args={args} output={output} />
     </TimelineContent>
   </TimelineItem>
 )
@@ -244,6 +239,8 @@ const Messages = ({ crisp, isTranscribing }) => {
             return <Runner key={i} text={text} status={status} />
           case 'TOOL':
             return <Tool key={i} {...rest} status={status} />
+          case 'GOAL_END':
+            return null
           default:
             throw new Error(`unknown type ${type}`)
         }

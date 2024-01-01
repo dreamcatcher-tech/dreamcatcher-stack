@@ -59,7 +59,7 @@ const Template = (args) => {
 export const Goalie = Template.bind({})
 Goalie.play = play(makeInit())
 
-const tests = 'add a customer'
+const tests = 'add a customer named Karen'
 // const tests = `add a customer
 
 // change directory

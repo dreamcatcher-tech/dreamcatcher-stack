@@ -12,24 +12,24 @@ import {
   useState,
 } from '../../w002-api'
 import merge from 'lodash.merge'
-import all from 'it-all'
+import { isBrowser } from 'wherearewe'
 import OpenAI from 'openai'
 import assert from 'assert-fast'
 import process from 'process'
 
 const debug = Debug('interblock:apps:hal')
-const forwardedMessageTypes = ['USER', 'GOALIE', 'RUNNER', 'TOOL']
 const status = { enum: ['RUNNING', 'DONE', 'ERROR'] }
 
 const goaliePrompt = {
   role: 'system',
-  content: `You are an expert at goal detection.  Keep your replies to less than 160 characters.  You may use emoji which does not count against the 160 character limit of your responses. 
+  name: 'goalie',
+  content: `You are an expert at goal detection.  Keep all your replies as short as possible.
   
-  Tackling the users requests one at a time, your job is to figure out what the user wants to do enough to call the stuckloop function.  The stuckloop function will then provide you with the instructions to complete the task.  The answers are arranged in an FAQ style format so think of calling the stuckloop like making a search query in stackoverflow.
+  Tackling the users requests one at a time, your job is to figure out what the user wants to do enough to call the 'help' function.  The 'help' function will cause the task to be completed by another agent, named the 'runner'.  The 'help' function will return with two parameters, the first is the 'done' parameter, and the second is the 'runnerMessages' parameter.  The 'done' parameter is a boolean that indicates if the task is complete.  The 'runnerMessages' parameter is an array of messages that the 'runner' sent to the user during the execution of the task, which may contain information helpful to future goals.
 
-  The query should be generic and not include any specific nouns - remember you are searching the public internet for instructions with this call.
+  The 'help' function must be called with two paramemters.  The first is the 'goal'.  This should be generic and anonymized and not include any specific nouns - the 'goal' should be suitable for searching the public internet with this call value as a query.
 
-  If you are not clear on how to structure this query, ask clarifying questions until you are confident in making the stuckloop call.
+  Only call the 'help' function one goal at a time.
   `,
 }
 
@@ -110,9 +110,10 @@ const goal = {
   title: 'Goal',
   description: `The goal is the current task that the user is trying to accomplish.  The goal is used to search the help system for instructions on how to accomplish the task.`,
   additionalProperties: false,
-  required: ['type', 'text', 'helps'],
+  required: ['type', 'id', 'text', 'helps'],
   properties: {
     type: { const: 'GOAL' },
+    id: { type: 'string', description: `The id of the goal` },
     text: { type: 'string', description: `The text of the goal` },
     status,
     key,
@@ -121,6 +122,22 @@ const goal = {
       description: `The helps that were recovered from the goal space search, in relevance order.`,
       items: help,
     },
+  },
+}
+
+const goalEnd = {
+  type: 'object',
+  title: 'GoalEnd',
+  description: `The goal end is the end of the current task that the user is trying to accomplish.  The goal end is used to mark when control is to be passed back to the goalie.`,
+  additionalProperties: false,
+  required: ['type', 'id'],
+  properties: {
+    type: { const: 'GOAL_END' },
+    id: {
+      type: 'string',
+      description: `The id of the goal used to pass a tool call back to the goalie`,
+    },
+    // TODO apply a status like done, error
   },
 }
 
@@ -144,7 +161,7 @@ const tool = {
   title: 'Tool',
   description: `A tool is a single function that can be called to accomplish a task.`,
   additionalProperties: false,
-  required: ['type', 'cmd', 'args', 'output'],
+  required: ['type', 'status', 'id', 'cmd', 'args'],
   properties: {
     type: { const: 'TOOL' },
     status,
@@ -175,7 +192,7 @@ const tool = {
 const schema = {
   // the schema for the whole HAL state
   type: 'object',
-  title: 'Threads',
+  title: 'HAL',
   description: `HAL is the executing AI.  It is the junction point between artifact and AI activity.  HAL is a combination of two AIs, the Goalie and the Runner.  The Goalie is the AI that is responsible for detecting the goal of the user.  The Runner is the AI that is responsible for executing the instructions retrieved by the Goalie to complete the goal detected by the Goalie from the user prompts.`,
   additionalProperties: false,
   required: ['messages', 'mode'],
@@ -183,7 +200,7 @@ const schema = {
     messages: {
       type: 'array',
       description: `The messages between the user and HAL`,
-      items: { anyOf: [user, goalie, goal, runner, tool] },
+      items: { anyOf: [user, goalie, goal, runner, tool, goalEnd] },
     },
     mode: {
       type: 'string',
@@ -220,12 +237,11 @@ const context = {}
 // suggest things that were said before, like a partial form filling function
 
 const reducer = async (request) => {
-  debug('request', request)
   switch (request.type) {
     case 'PROMPT': {
       const { text } = request.payload
       const [{ messages, mode }, setState] = await useState()
-      const message = { type: 'USER', text }
+      const message = { type: 'USER', text, status: STATUS.DONE }
       await setState({ messages: [...messages, message] })
       await interchain(mode)
       return
@@ -261,88 +277,173 @@ const reducer = async (request) => {
 }
 
 const invokeGoalie = async () => {
+  // TODO get some local context first somehow
+  // probably by vector search amongst things we have locally installed
   const [{ messages, mode }, setState] = await useState()
   assert(mode === 'GOALIE', `mode must be GOALIE ${mode}`)
   const { api, functions } = await useApi('stucks')
   const tools = transformToGpt4Api(api)
   const { content, toolCalls } = await useAsync(async () => {
-    const streamCall = await context.ai.chat.completions.create({
+    const args = {
       model,
       temperature: 0,
-      messages: [...transformMessages(messages), goaliePrompt],
+      messages: [goaliePrompt, ...goalieFilter(messages)],
       stream: true,
       seed: 1337,
       tools,
-    })
+    }
+    if (isBrowser) {
+      console.log('Goalie OpenAI args', args)
+    }
+    const streamCall = await context.ai.chat.completions.create(args)
     const accumulator = []
     for await (const part of streamCall) {
       const content = part.choices[0]?.delta?.content || ''
       const toolCalls = part.choices[0]?.delta?.tool_calls || []
-      if (content) {
-        debug('content', content)
-      }
       accumulator.push({ content, toolCalls })
     }
     const result = accumulate(accumulator)
-    debug('result', result)
     return result
   })
   if (content) {
-    const message = { type: 'GOALIE', text: content }
+    const message = { type: 'GOALIE', text: content, status: STATUS.DONE }
     await setState({ messages: [...messages, message] })
   } else {
     assert(toolCalls.length, 'Must have at least one tool call')
     // TODO store the goals, if multiple ones, and come back to them
     const toolCall = toolCalls[0].function
-    assert(toolCall.name === 'help', 'only help supported')
-    const { helps } = await functions[toolCall.name](toolCall.arguments)
-    // TODO handle no helps founds
-    assert(helps.length, 'Must have at least one help')
-    const text = toolCall.arguments.goal
+    debug('toolCall', toolCall)
+    const { id } = toolCalls[0]
+    assert(toolCall.name === 'help', `only help supported: ${toolCall.name}`)
+    const { goal: text } = toolCall.arguments
     assert(typeof text === 'string', `text must be a string: ${text}`)
+    const { helps } = await functions[toolCall.name](toolCall.arguments)
+    // TODO handle no helps found, or multiple
+    assert(helps.length, 'Must have at least one help')
     const [{ messages }, setState] = await useState()
-    const message = { type: 'GOAL', text, helps }
+    const message = { type: 'GOAL', id, text, helps, status: STATUS.DONE }
     await setState({ messages: [...messages, message], mode: 'RUNNER' })
     await interchain('RUNNER')
   }
 }
-const transformMessages = (messages) => {
+
+const goalieFilter = (messages) => {
   const transformed = []
+  let gobbler
   for (const message of messages) {
-    if (!forwardedMessageTypes.includes(message.type)) {
-      continue
-    }
-    // const message = { role: 'tool', content, tool_call_id: toolCall.id }
-    const { text, type } = message
-    if (type === 'USER') {
-      transformed.push({ role: 'user', content: text })
-    } else if (type === 'GOALIE') {
-      transformed.push({ role: 'assistant', name: 'goalie', content: text })
-    } else if (type === 'RUNNER') {
-      transformed.push({ role: 'assistant', name: 'runner', content: text })
-    } else if (type === 'TOOL') {
-      const name = slugify(message.cmd)
-      transformed.push({
-        role: 'assistant',
-        name: 'runner',
-        // TODO handle concurrent tool calls as a single tool call
-        tool_calls: [
-          {
-            id: message.id,
-            type: 'function',
-            function: { name, arguments: JSON.stringify(message.args) },
-          },
-        ],
-      })
-      if (message.output) {
+    const { type, text } = message
+    switch (type) {
+      case MESSAGE_TYPES.GOAL: {
+        gobbler = []
+        transformed.push({
+          role: 'assistant',
+          name: 'goalie',
+          tool_calls: [
+            {
+              id: message.id,
+              type: 'function',
+              function: { name: 'help', arguments: JSON.stringify(text) },
+            },
+          ],
+        })
+        break
+      }
+      case MESSAGE_TYPES.GOAL_END: {
+        assert(gobbler, 'Must have a gobbler')
+        const { id } = message
         transformed.push({
           role: 'tool',
-          content: JSON.stringify(message.output),
-          tool_call_id: message.id,
+          content: JSON.stringify({ done: true, runnerMessages: gobbler }),
+          tool_call_id: id,
         })
+        gobbler = undefined
+        break
       }
-    } else {
-      throw new Error(`unknown message type: ${type}`)
+      case MESSAGE_TYPES.TOOL: {
+        assert(gobbler, 'Must have a gobbler')
+        break
+      }
+      case MESSAGE_TYPES.RUNNER: {
+        assert(gobbler, 'Must have a gobbler')
+        gobbler.push({ role: 'assistant', name: 'runner', content: text })
+        break
+      }
+      case MESSAGE_TYPES.USER: {
+        if (gobbler) {
+          gobbler.push({ role: 'user', content: text })
+        } else {
+          transformed.push({ role: 'user', content: text })
+        }
+        break
+      }
+      case MESSAGE_TYPES.GOALIE: {
+        transformed.push({ role: 'assistant', name: 'goalie', content: text })
+        break
+      }
+      default: {
+        throw new Error(`unknown message type: ${type}`)
+      }
+    }
+  }
+  assert(!gobbler, 'Must not have a gobbler')
+  return transformed
+}
+
+const MESSAGE_TYPES = {
+  USER: 'USER',
+  GOALIE: 'GOALIE',
+  GOAL: 'GOAL',
+  RUNNER: 'RUNNER',
+  TOOL: 'TOOL',
+  GOAL_END: 'GOAL_END',
+}
+const getRunnerMessages = async (runnerPrompt) => {
+  let [{ messages }] = await useState()
+  const goalIndex = messages.findLastIndex((m) => m.type === 'GOAL')
+  assert(goalIndex !== -1, 'Must have a goal')
+
+  const prefix = goalieFilter(messages.slice(0, goalIndex))
+  const suffix = runnerFilter(messages.slice(goalIndex + 1))
+  return [...prefix, runnerPrompt, ...suffix]
+}
+const runnerFilter = (messages) => {
+  const transformed = []
+  for (const message of messages) {
+    const { text, type } = message
+    switch (type) {
+      case MESSAGE_TYPES.USER: {
+        transformed.push({ role: 'user', content: text })
+        break
+      }
+      case MESSAGE_TYPES.RUNNER: {
+        transformed.push({ role: 'assistant', name: 'runner', content: text })
+        break
+      }
+      case MESSAGE_TYPES.TOOL: {
+        const name = slugify(message.cmd)
+        transformed.push({
+          role: 'assistant',
+          name: 'runner',
+          // TODO handle concurrent tool calls as a single tool call
+          tool_calls: [
+            {
+              id: message.id,
+              type: 'function',
+              function: { name, arguments: JSON.stringify(message.args) },
+            },
+          ],
+        })
+        if (message.output) {
+          transformed.push({
+            role: 'tool',
+            content: JSON.stringify(message.output),
+            tool_call_id: message.id,
+          })
+        }
+        break
+      }
+      default:
+        throw new Error(`unknown message type: ${type}`)
     }
   }
   return transformed
@@ -352,37 +453,42 @@ const invokeRunner = async () => {
   const [{ messages, mode }, setState] = await useState()
   assert(mode === 'RUNNER', `mode must be RUNNER ${mode}`)
   // TODO check we actually asked for something back in
-  const goal = getLastGoal(messages)
+  const runStart = getLastGoal(messages)
 
   // TODO handle multiple goals coming back
-  const help = goal.helps[0]
+  const help = runStart.helps[0]
   const { tld } = help
   await ensureTld(tld)
 
-  const { content, toolCalls, functions } = await aiRunner(help)
+  const { text } = runStart
+  const { content, toolCalls, functions } = await aiRunner(text, help)
 
   if (content) {
     const message = { type: 'RUNNER', text: content, status: STATUS.DONE }
     await setState({ messages: [...messages, message] })
   } else {
-    // would expect these to have been partially fulfilled inside aiRunner
     assert(toolCalls.length, 'Must have at least one tool call')
-    console.log('toolCalls', toolCalls[0])
+
+    // this causes a tool call result to the goalie with the runner chat history
+    if (toolCalls[0].function.name === '___done') {
+      const message = { type: 'GOAL_END', id: runStart.id }
+      await setState({ mode: 'GOALIE', messages: [...messages, message] })
+      await interchain('GOALIE')
+      return
+    }
+
     await addToolMessages(toolCalls, functions)
 
-    await Promise.all(
-      toolCalls.map(async (toolCall) => {
-        const { name, arguments: args } = toolCall.function
-        assert(typeof name === 'string', `name must be a string: ${name}`)
-        assert(typeof args === 'object', `args must be an object: ${args}`)
-        const func = functions[name]
-        assert(func, `unknown function: ${name}`)
-        // TODO handle rejections
-        const result = await func(args)
-        await updateToolMessage(toolCall.id, result)
-        console.log('result', result)
-      })
-    )
+    for (const toolCall of toolCalls) {
+      const { name, arguments: args } = toolCall.function
+      assert(typeof name === 'string', `name must be a string: ${name}`)
+      assert(typeof args === 'object', `args must be an object: ${args}`)
+      const func = functions[name]
+      assert(func, `unknown function: ${name}`)
+      // TODO handle rejections
+      const result = await func(args)
+      await updateToolMessage(toolCall.id, result)
+    }
     await interchain('RUNNER')
   }
 }
@@ -407,9 +513,17 @@ const addToolMessages = async (toolCalls, functions) => {
     const { name, arguments: args } = toolCall.function
     assert(typeof name === 'string', `name must be a string: ${name}`)
     assert(typeof args === 'object', `args must be an object: ${args}`)
-    const { cmd } = functions[name]
+    const { cmd, schema } = functions[name]
     assert(typeof cmd === 'string', `unknown function: ${name}`)
-    return { type: 'TOOL', status: STATUS.RUNNING, id, cmd, args, output: {} }
+    return {
+      type: 'TOOL',
+      status: STATUS.RUNNING,
+      id,
+      cmd,
+      schema,
+      args,
+      output: {},
+    }
   })
   await setState({ messages: [...messages, ...toolMessages] })
 }
@@ -443,11 +557,14 @@ const accumulate = (results) => {
   return { content, toolCalls }
 }
 
-const getRunnerPrompt = (state, help) => {
+const getRunnerPrompt = (text, help, state) => {
   const { instructions, tld, done, cmds } = help
   return {
     role: 'system',
-    content: `You are a CLI and an expert in following instructions from the help system. You must converse with your user to get any parameters you need keeping your reply length to a minimum.  
+    name: 'runner',
+    content: `You are a machine that strictly follows instructions from the help system. If you are uncertain about a any parameters you must converse with your user to get values for those parameters you are unclear about, keeping your questions brief and machine like.  You must never proceed with anything other than information that came from the user.  Never make information up.  Changes you make will be in an enterprise database, so it is paramount the information be factual.  You will be given a goal, help system instructions, a directory path, a state, a list of commands, and a done condition.  Once done, call the function '___done'.
+
+    Your goal is to: ${text}
     
     The help system instructions are: ${instructions}
 
@@ -458,21 +575,16 @@ const getRunnerPrompt = (state, help) => {
     The commands you will need to use are: ${cmds.join(', ')}
     
     Once done, check that the done condition is met: ${done}
-    
-    Once done, call the cmd 'done'.
-    
-    If you cannot proceed, call the cmd 'error'.
-    
-    If you think the information the user has given you in response to one of your questions is not related to the current goal, call the cmd 'dunno'.
+
     `,
   }
 }
 
-const aiRunner = async (help) => {
+const aiRunner = async (goalText, help) => {
   const { cmds, tld } = help
   const [state] = await useState(tld)
-  const [{ messages }] = await useState()
-  const runnerPrompt = getRunnerPrompt(state, help)
+  const runnerPrompt = getRunnerPrompt(goalText, help, state)
+  const messages = await getRunnerMessages(runnerPrompt)
 
   const { functions, tools } = await populateTools(cmds)
 
@@ -484,15 +596,28 @@ const aiRunner = async (help) => {
   delete tools[1].function.parameters.properties.formData
   delete tools[1].function.parameters.properties.network
 
+  tools.push({
+    type: 'function',
+    function: {
+      name: '___done',
+      description: `call when the job is done`,
+      parameters: {},
+    },
+  })
+
   const { content, toolCalls } = await useAsync(async () => {
-    const streamCall = await context.ai.chat.completions.create({
+    const args = {
       model,
       temperature: 0,
-      messages: [...transformMessages(messages), runnerPrompt],
+      messages,
       stream: true,
       seed: 1337,
       tools,
-    })
+    }
+    if (isBrowser) {
+      console.log('Runner OpenAI args', args)
+    }
+    const streamCall = await context.ai.chat.completions.create(args)
     const accumulator = []
     for await (const part of streamCall) {
       const content = part.choices[0]?.delta?.content || ''
@@ -521,6 +646,7 @@ const populateTools = async (cmds) => {
       const slug = slugify(cmd)
       functions[slug] = _functions[name]
       functions[slug].cmd = cmd
+      functions[slug].schema = api[name]
       return toGpt4(slug, cmd, api[name])
     })
   )

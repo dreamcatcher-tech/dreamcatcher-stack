@@ -108,9 +108,7 @@ export const api = {
       allowVirtual: {
         type: 'boolean',
         title: 'Allow Virtual Paths',
-        description: `Allow wd to be set to a path that does not exist.
-        This will be interpreted by the developer to mean something,
-        much as virtual routing works for URLs in web apps`,
+        description: `Permit virtual routing mode`,
         default: false,
       },
     },

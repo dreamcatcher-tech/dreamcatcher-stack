@@ -28,7 +28,9 @@ const Actions = ({ crisp, exclude, include }) => {
       continue
     }
     const action = ownActions[key]
-    cards.push(<Action action={action} key={cards.length} />)
+    cards.push(
+      <Action action={action} schema={action.schema} key={cards.length} />
+    )
   }
   return <Stack spacing={2}>{cards}</Stack>
 }
@@ -39,8 +41,7 @@ Actions.propTypes = {
   /** Array of action names to exclude */
   exclude: PropTypes.arrayOf(PropTypes.string),
 }
-const Action = ({ action }) => {
-  const { schema = {} } = action
+export const Action = ({ action, schema }) => {
   const { title, ...noTitleSchema } = schema
 
   const [liveFormData, setLiveFormData] = useState({})
@@ -108,7 +109,7 @@ const Action = ({ action }) => {
 }
 Action.propTypes = {
   action: PropTypes.func,
-  onAction: PropTypes.func,
+  schema: PropTypes.object,
 }
 Actions.Action = Action
 export default Actions
