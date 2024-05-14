@@ -23,7 +23,7 @@ export const ToolAction = ({ name, schema, args = {}, output }) => {
   const { title, ...noTitleSchema } = schema
 
   return (
-    <Card sx={{ maxWidth: 345 }}>
+    <Card>
       <ThemeProvider theme={noDisabled}>
         <CardHeader
           title={name}

@@ -237,6 +237,52 @@ export class Crisp {
     const child = Crisp.#createChild(address, this, path)
     return child
   }
+  hasPath(path) {
+    return this.#walkPath(path, 'hasPath')
+  }
+  getPath(path) {
+    return this.#walkPath(path, 'getPath')
+  }
+  #walkPath(path, fnName) {
+    assert(['hasPath', 'getPath'].includes(fnName))
+    assert.strictEqual(typeof path, 'string', `invalid path: ${path}`)
+    assert(path, 'path must be non-empty')
+    this.#cacheAliases()
+    if (!this.isRoot && posix.isAbsolute(path)) {
+      return this.root.#walkPath(path, fnName)
+    }
+    if (this.isRoot && path === '/') {
+      return this
+    }
+    const segments = posix
+      .normalize(path)
+      .split('/')
+      .filter((s) => !!s)
+
+    // /foo/bar/baz
+    // ../foo/bar/baz
+    // ./
+
+    const top = segments.shift()
+    if (!segments.length) {
+      if (top === '.') {
+        return this
+      }
+      if (top === '..') {
+        return this.parent
+      }
+      return this.getChild(top)
+    }
+    const remnant = segments.join('/')
+    if (top === '..') {
+      return this.parent.#walkPath(remnant, fnName)
+    }
+    if (top === '.') {
+      return this.#walkPath(remnant, fnName)
+    }
+    return this.getChild(top).#walkPath(remnant, fnName)
+  }
+
   tryGetChild(path) {
     assert.strictEqual(typeof path, 'string')
     this.#cacheAliases()

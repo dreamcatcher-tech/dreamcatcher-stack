@@ -5,17 +5,14 @@ import { Request } from '../../w008-ipld/index.mjs'
 import Debug from 'debug'
 const debug = Debug('interblock:apps:collection')
 
-const { convertToTemplate, validateDatumTemplate, validateFormData } = datum
+const { validateDatumTemplate, validatePayload } = datum
 
 const addFn = async (payload, template) => {
   debug('add', payload)
-  assertFormData(payload)
   validateDatumTemplate(template)
-  const { formData } = payload
-  const name = getChildName(template, formData)
+  const name = getChildName(template, payload)
 
-  validateFormData(payload, template)
-  const state = { schema: '..', formData }
+  const state = payload
   const covenant = 'datum'
   const installer = { state, covenant }
   if (template.network) {
@@ -42,8 +39,7 @@ const reducer = async (request) => {
     case 'ADD': {
       // TODO cause the child to fetch the template when it is spawned
       const [{ template }] = await useState()
-      // TODO fix so that formData is removed
-      return await addFn({ formData: payload }, template)
+      return await addFn(payload, template)
     }
     case 'BATCH': {
       const { batch } = payload
@@ -51,77 +47,36 @@ const reducer = async (request) => {
       const [{ template }] = await useState()
       return await Promise.all(batch.map((payload) => addFn(payload, template)))
     }
-    case 'SET_TEMPLATE': {
-      // TODO useState() should be able to set this remotely ?
-      checkNoFormData(payload)
-      const template = convertToTemplate(payload)
-      const [state, setState] = await useState()
-      await setState({ ...state, template })
-      return
-    }
     default:
-      debug(type)
       throw new Error(`Unknown action type: ${type}`)
   }
 }
-const assertFormData = (payload) => {
-  const { formData, network, ...rest } = payload
-  if (typeof formData === 'undefined') {
-    throw new Error(`Must provide formData key`)
-  }
-  if (Object.keys(rest).length) {
-    throw new Error(`Only allowed keys are formData and network`)
-  }
-  if (!network) {
-    return
-  }
-  if (typeof network !== 'object') {
-    throw new Error(`network must be object`)
-  }
-  const networkValues = Object.values(network)
-  return networkValues.every((child) => assertFormData(child.state))
-}
-const checkNoFormData = (datum) => {
-  if (datum.formData) {
-    throw new Error(`No formData allowed on datum template`)
-  }
-  if (!datum.network) {
-    return
-  }
-  const networkValues = Object.values(datum.network)
-  return networkValues.every(checkNoFormData)
-}
+// TODO set up network to use the installer
 
-const getChildName = (template, formData) => {
+const getChildName = (template, payload) => {
   if (!template.namePath || !template.namePath.length) {
     debug(`getChildName is blank`)
     return
   }
   const { namePath } = template
   if (namePath) {
-    formData = formData[namePath]
+    payload = payload[namePath]
   }
-  if (typeof formData === 'number') {
-    formData = formData + ''
+  if (typeof payload === 'number') {
+    payload = payload + ''
   }
-  debug(`getChildName`, formData)
-  return formData
+  debug(`getChildName`, payload)
+  return payload
 }
 
 const add = {
   type: 'object',
   title: 'ADD',
   description: 'Add an element to this collection',
+  // TODO make this auto generated
   // additionalProperties: false,
   required: [],
-  properties: {
-    // formData: { type: 'object' },
-    // network: {
-    //   type: 'object',
-    //   description: 'Recursively defined children',
-    //   // patternProperties: { '(.*?)': { $ref: '#' } },
-    // },
-  },
+  properties: {},
 }
 const api = {
   add,
@@ -135,18 +90,6 @@ const api = {
       batch: { type: 'array', items: add },
     },
   },
-  // setTemplate: {
-  //   type: 'object',
-  //   title: 'SET_TEMPLATE',
-  //   description: 'Change the template of the elements of this collection',
-  //   additionalProperties: false,
-  //   required: ['schema'],
-  //   properties: {
-  //     type: { type: 'string' },
-  //     schema: { type: 'object' },
-  //     network: { type: 'object' },
-  //   },
-  // },
 }
 const installer = { state: { type: 'COLLECTION', schema: {} } }
 const name = 'collection'

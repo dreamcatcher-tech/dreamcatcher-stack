@@ -245,7 +245,9 @@ const Messages = ({ crisp, isTranscribing }) => {
             throw new Error(`unknown type ${type}`)
         }
       })}
-      {isTranscribing && <Dave text="(transcribing..." status="TRANSCRIBING" />}
+      {isTranscribing && (
+        <Dave text="(transcribing...)" status="TRANSCRIBING" />
+      )}
     </Timeline>
   )
 }

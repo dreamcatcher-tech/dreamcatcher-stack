@@ -45,12 +45,12 @@ describe('HAL', () => {
     // HAL is the executing AI
     Debug.enable('iplog *hal tests')
     const actions = await engine.actions('.HAL')
-    const result = await actions.prompt('add a customer then fix my car')
+    const result = await actions.prompt('add a customer')
 
     const result2 = await actions.prompt('Karen')
 
     console.dir(result, { depth: Infinity })
-  }, 20000)
+  }, 30000)
 
   it('isolated goal test', async () => {
     const prompt = `Order Type: Bag

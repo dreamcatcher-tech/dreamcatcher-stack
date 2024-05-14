@@ -30,8 +30,8 @@ export const generateSingle = (lut, outside = false) => {
   assert(!lut || lut instanceof PolygonLut, 'lut must be a PolygonLut')
   assert.strictEqual(typeof outside, 'boolean', 'outside must be a boolean')
   const { schema } = installer.state.template
-  const formData = JSONSchemaFaker.generate(schema)
-  formData.serviceGps = {}
+  const payload = JSONSchemaFaker.generate(schema)
+  payload.serviceGps = {}
   const isValid = (gps) => {
     if (!lut) {
       return true
@@ -42,26 +42,26 @@ export const generateSingle = (lut, outside = false) => {
     return lut.includes(gps)
   }
   do {
-    formData.serviceGps.latitude = faker.number.float({
+    payload.serviceGps.latitude = faker.number.float({
       min: lut?.bounds.minY || minY,
       max: lut?.bounds.maxY || maxY,
       precision: 0.000001,
     })
-    formData.serviceGps.longitude = faker.number.float({
+    payload.serviceGps.longitude = faker.number.float({
       min: lut?.bounds.minX || minX,
       max: lut?.bounds.maxX || maxX,
       precision: 0.000001,
     })
-  } while (!isValid(formData.serviceGps))
-  formData.custNo = custNo++
+  } while (!isValid(payload.serviceGps))
+  payload.custNo = custNo++
 
-  if (formData.serviceGps.latitude) {
-    while (!formData.serviceAddress) {
-      formData.serviceAddress = faker.location.streetAddress()
+  if (payload.serviceGps.latitude) {
+    while (!payload.serviceAddress) {
+      payload.serviceAddress = faker.location.streetAddress()
     }
   }
 
-  return { formData }
+  return payload
 }
 
 export const generateBatch = (count = 20, bounds, outside, noReset = false) => {

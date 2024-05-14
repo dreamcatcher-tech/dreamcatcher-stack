@@ -77,8 +77,8 @@ const mapStyle = {
  */
 
 const Gps = ({ crisp, onEdit, viewOnly, editing = false }) => {
-  assert(crisp?.state?.formData)
-  const [formData, setFormData] = useState(crisp.state.formData)
+  assert(crisp?.state)
+  const [state, setState] = useState(crisp.state)
   const [isPending, setIsPending] = useState(false)
   const [isEditing, setIsEditingState] = useState(editing)
   const [expanded, setExpanded] = useState(true)
@@ -92,19 +92,19 @@ const Gps = ({ crisp, onEdit, viewOnly, editing = false }) => {
   if (!equals(startingState, crisp.state)) {
     debug('state changed', startingState, crisp.state)
     setStartingState(crisp.state)
-    setFormData(crisp.state.formData)
+    setState(crisp.state.formData)
     // TODO alert if changes not saved
   }
-  const isDirty = !equals(formData, startingState.formData)
+  const isDirty = !equals(state, startingState.formData)
   debug('isDirty', isDirty)
   const onChange = ({ formData }) => {
     debug(`onChange: `, formData)
-    setFormData(formData)
+    setState(formData)
   }
   const onSubmit = () => {
-    debug('onSubmit', formData)
+    debug('onSubmit', state)
     setIsPending(true)
-    crisp.ownActions.set({ formData }).then(() => {
+    crisp.ownActions.set({ formData: state }).then(() => {
       setIsPending(false)
       setIsEditing(false)
     })
@@ -118,7 +118,7 @@ const Gps = ({ crisp, onEdit, viewOnly, editing = false }) => {
     debug('onCancel', e)
     e.stopPropagation()
     setIsEditing(false)
-    setFormData(crisp.state.formData)
+    setState(crisp.state.formData)
   }
   const Editing = (
     <>
@@ -156,12 +156,12 @@ const Gps = ({ crisp, onEdit, viewOnly, editing = false }) => {
 
   const onAddress = (name, latitude, longitude) => {
     debug('onAddress', name, latitude, longitude)
-    if (formData.serviceAddress !== name) {
+    if (state.serviceAddress !== name) {
       const gps = { latitude, longitude }
-      setFormData({ ...formData, serviceAddress: name, gps })
+      setState({ ...state, serviceAddress: name, gps })
     }
   }
-  const isGeocoding = isEditing && formData.isGeocodedGps
+  const isGeocoding = isEditing && state.isGeocodedGps
   const [mapId, ref] = useGpsMap({ isGeocoding, onAddress })
 
   const schema = {
@@ -205,7 +205,7 @@ const Gps = ({ crisp, onEdit, viewOnly, editing = false }) => {
               disabled={isPending || !isEditing || viewOnly}
               schema={schema}
               uiSchema={uiSchema}
-              formData={formData}
+              formData={state}
               onChange={onChange}
               onSubmit={onSubmit}
               ref={(_form) => (form = _form)}

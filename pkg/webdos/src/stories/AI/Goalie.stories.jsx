@@ -45,11 +45,11 @@ export default {
   component: ThreeBox,
 }
 
-const Template = (args) => {
-  Debug.enable('')
+const Template = () => {
+  Debug.enable('*StateBoard')
   return (
-    <Engine dev={{ '/crm': apps.crm.covenant }} {...args}>
-      <Syncer path="/.HAL">
+    <Engine dev={{ '/crm': apps.crm.covenant }}>
+      <Syncer path="/">
         <ThreeBox preload={tests} preSubmit />
       </Syncer>
     </Engine>

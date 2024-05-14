@@ -1,22 +1,22 @@
 import Input from './Input'
+import Box from '@mui/material/Box'
+import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import { Crisp } from '@dreamcatcher-tech/interblock'
+import { StateBoard } from './StateBoard'
 import React, { useState, useCallback, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Debug from 'debug'
 import Messages from './Messages'
 
 const debug = Debug('AI:ThreeBox')
-debug(`loaded`)
 
 const ThreeBox = ({ crisp, preload, preSubmit }) => {
+  if (crisp.absolutePath !== '/') {
+    throw new Error(`${crisp.absolutePath} !== '/'`)
+  }
+  const [hal, setHal] = useState()
   const [error, setError] = useState()
-  const onSend = useCallback(
-    (value) => {
-      return crisp.ownActions.prompt(value).catch(setError)
-    },
-    [crisp]
-  )
   if (error) {
     throw error
   }
@@ -24,69 +24,60 @@ const ThreeBox = ({ crisp, preload, preSubmit }) => {
     setTimeout(() => {
       window.scrollTo(0, document.body.scrollHeight)
     }, 100)
-  }, [crisp])
+  }, [hal])
   const [isTranscribing, setIsTranscribing] = useState(false)
   const onTranscription = useCallback((isTranscribing) => {
     setIsTranscribing(isTranscribing)
   })
-  if (!crisp || crisp.isLoadingChildren) {
+  const onSend = useCallback(
+    (value) => hal.ownActions.prompt(value).catch(setError),
+    [hal]
+  )
+  useEffect(() => {
+    if (!crisp || crisp.isLoadingChildren || !crisp.hasChild('.HAL')) {
+      return
+    }
+    const next = crisp.getChild('.HAL')
+    if (next !== hal) {
+      debug('setHal', next)
+      setHal(next)
+    }
+  }, [crisp])
+  if (!hal || hal.isLoadingActions) {
     return
   }
-  if (crisp.absolutePath !== '/.HAL') {
-    throw new Error(`${crisp.absolutePath} !== '/.HAL'`)
-  }
   return (
-    <Stack
-      direction="column"
-      alignItems="flex-start"
-      justifyContent="flex-end"
-      p={1}
-      sx={{ width: '100%', minHeight: '100%' }}
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        height: '100%',
+        width: '100%',
+      }}
     >
-      <Messages crisp={crisp} isTranscribing={isTranscribing} />
-      <Input
-        onSend={onSend}
-        preload={preload}
-        preSubmit={preSubmit}
-        onTranscription={onTranscription}
-      />
-    </Stack>
+      <Stack
+        direction="column"
+        alignItems="flex-start"
+        justifyContent="flex-end"
+        pb={3}
+        pr={1}
+        sx={{ minHeight: '100%', maxWidth: '500px' }}
+      >
+        <Messages crisp={hal} isTranscribing={isTranscribing} />
+        <Input
+          onSend={onSend}
+          preload={preload}
+          preSubmit={preSubmit}
+          onTranscription={onTranscription}
+        />
+      </Stack>
+      <Box sx={{ flexGrow: 1, p: 1 }}>
+        <Paper elevation={6} sx={{ height: '100%', flexGrow: 1 }}>
+          <StateBoard crisp={crisp} />
+        </Paper>
+      </Box>
+    </Box>
   )
-  // return (
-  //   <Box
-  //     sx={{
-  //       display: 'flex',
-  //       flexDirection: 'row',
-  //       height: '100%',
-  //       width: '100%',
-  //     }}
-  //   >
-  //     {/* <Box
-  //       sx={{
-  //         height: '100%',
-  //         maxWidth: '400px',
-  //         width: '400px',
-  //         minWidth: '400px',
-  //         // backgroundColor: 'lightGray',
-  //         display: 'flex',
-  //       }}
-  //     > */}
-  //     <Stack
-  //       direction="column"
-  //       alignItems="flex-start"
-  //       justifyContent="flex-end"
-  //       p={1}
-  //       sx={{ width: '100%' }}
-  //     >
-  //       <Messages crisp={crisp} />
-  //       <Input onSend={onSend} />
-  //     </Stack>
-  //     {/* </Box> */}
-  //     {/* <Box sx={{ flexGrow: 1, p: 1 }}>
-  //       <Paper elevation={6} sx={{ height: '100%', flexGrow: 1 }}></Paper>
-  //     </Box> */}
-  //   </Box>
-  // )
 }
 ThreeBox.propTypes = {
   crisp: PropTypes.instanceOf(Crisp),

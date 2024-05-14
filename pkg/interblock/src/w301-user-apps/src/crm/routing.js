@@ -217,7 +217,7 @@ const reducer = async (request) => {
       await Promise.all(
         sectorKeys.map(async (path) => {
           const [state, setState] = await useState(path)
-          sectors[path] = state.formData
+          sectors[path] = state
           setStates[path] = [state, setState]
         })
       )
@@ -225,7 +225,7 @@ const reducer = async (request) => {
       debug('begin')
       const hash = await lut.hash()
       const [state, setState] = await useState()
-      const isSectorsChanged = state.formData?.geometryHash !== hash
+      const isSectorsChanged = state.geometryHash !== hash
       debug('isSectorsChanged', isSectorsChanged)
       if (isSectorsChanged) {
         lut.reset()
@@ -239,7 +239,7 @@ const reducer = async (request) => {
       await Promise.all(
         custNos.map(async (custNo) => {
           const [state] = await useState(path + '/' + custNo)
-          const gps = state.formData?.serviceGps
+          const gps = state.serviceGps
           if (!gps) {
             debug('no gps', custNo, state)
           }
@@ -248,18 +248,16 @@ const reducer = async (request) => {
       )
       // TODO store the customer collection as a hardlink, for diffing
       await Promise.all(
-        Object.entries(lut.changes).map(async ([changedKey, formData]) => {
-          const [state, setState] = setStates[changedKey]
+        Object.entries(lut.changes).map(async ([changedKey, changes]) => {
+          const [, setState] = setStates[changedKey]
           assert.strictEqual(typeof setState, 'function')
           debug('update order', changedKey)
-          await setState({ ...state, formData })
+          await setState(changes)
         })
       )
-      let { unassigned = [] } = state.formData
-      unassigned = [...unassigned]
-      unassigned.push(...lut.unassigned)
-      const formData = { ...state.formData, geometryHash: hash, unassigned }
-      await setState({ ...state, formData })
+      let { unassigned = [] } = state
+      unassigned = [...unassigned, ...lut.unassigned]
+      await setState({ geometryHash: hash, unassigned })
       return
     }
     case 'APPROVE': {
@@ -272,8 +270,8 @@ const reducer = async (request) => {
       }
       debug('approve', sectorId, approved, approveAll)
       const [state, setState] = await useState(sectorId)
-      const unapproved = new Set(state.formData.unapproved || [])
-      const toApprove = approveAll ? state.formData.unapproved : approved
+      const unapproved = new Set(state.unapproved || [])
+      const toApprove = approveAll ? state.unapproved : approved
       toApprove.forEach((custNo) => {
         if (!unapproved.has(custNo)) {
           throw new Error(`Tried to approve missing customer: ${custNo}`)
@@ -281,12 +279,11 @@ const reducer = async (request) => {
         unapproved.delete(custNo)
       })
       debug('unapproved', unapproved)
-      let { formData } = state
-      formData = { ...formData, unapproved: [...unapproved] }
-      if (!unapproved.size) {
-        delete formData.unapproved
-      }
-      await setState({ ...state, formData }, { replace: true })
+      // TODO remove the need for replace if we send in a key with undefined
+      await setState(
+        { unapproved: unapproved.size ? [...unapproved] : undefined },
+        { replace: true }
+      )
       return
     }
     default:
